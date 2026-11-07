@@ -11,7 +11,8 @@
   <a href="https://github.com/arnaudgelas/ontolint/issues"><img alt="Open issues" src="https://img.shields.io/github/issues/arnaudgelas/ontolint"></a>
 </p>
 <p align="center">
-  <a href="https://www.python.org/"><img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white"></a>
+  <a href="https://pypi.org/project/ontolint/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/ontolint"></a>
+  <a href="https://pypi.org/project/ontolint/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/ontolint"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 228 of 307" src="https://img.shields.io/badge/rules-228%2F307_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
@@ -52,30 +53,30 @@ automatically a logical inconsistency.
 
 ## Requirements and installation
 
-Python 3.13 or later is required. ontolint installs a command named `ontolint`.
+Python 3.13 or later is required. ontolint is published on
+[PyPI](https://pypi.org/project/ontolint/) and installs a command named `ontolint`.
 
 Install it as a standalone tool, isolated from your other Python packages:
 
 ```bash
 # uv (recommended)
-uv tool install git+https://github.com/arnaudgelas/ontolint
+uv tool install ontolint
 
 # or pipx
-pipx install git+https://github.com/arnaudgelas/ontolint
+pipx install ontolint
 
 # or into the current environment
-python -m pip install git+https://github.com/arnaudgelas/ontolint
+python -m pip install ontolint
 ```
 
 Run it once without installing it:
 
 ```bash
-uvx --from git+https://github.com/arnaudgelas/ontolint ontolint ontology.ttl
+uvx ontolint ontology.ttl
 ```
 
-From a clone of the repository, `uv tool install .` installs the checkout and
-`uv tool install --editable .` keeps it linked to your working copy. Check the
-installation with:
+Upgrade with `uv tool upgrade ontolint`, `pipx upgrade ontolint` or
+`python -m pip install --upgrade ontolint`. Check the installation with:
 
 ```bash
 ontolint --version
@@ -83,6 +84,11 @@ ontolint --help
 ```
 
 `python -m ontolint` works as well. Docker is needed only for `--owl-profile`.
+
+To try the unreleased development version, install from GitHub instead, for
+example `uv tool install git+https://github.com/arnaudgelas/ontolint`. From a
+clone of the repository, `uv tool install .` installs the checkout and
+`uv tool install --editable .` keeps it linked to your working copy.
 
 ### Development setup
 
