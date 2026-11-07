@@ -7,7 +7,7 @@ import re
 from rdflib import BNode, Graph, URIRef
 
 from ontolint.context import GraphContext
-from ontolint.models import Finding
+from ontolint.models import CONFIDENCES, Finding
 from ontolint.policy import Policy
 
 from .specs import FIXES, SEVERITY
@@ -63,6 +63,8 @@ class RuleContext:
 
     def add(self, code: str, focus: object, message: str, *, confidence: str = "heuristic") -> None:
         """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs."""
+        if confidence not in CONFIDENCES:
+            raise ValueError(f"{code}: confidence must be one of {sorted(CONFIDENCES)}, not {confidence!r}")
         text = self._focus_text(focus)
         message = self._message_text(message)
         key = (code, text, message)

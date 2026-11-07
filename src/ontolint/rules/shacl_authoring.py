@@ -232,7 +232,7 @@ def _ordered_pair(
     lo, hi = _single(sg, shape, bounds[0]), _single(sg, shape, bounds[1])
     lo_n, hi_n = _natural(lo), _natural(hi)
     if lo_n is not None and hi_n is not None and lo_n > hi_n:
-        ctx.add(report[0], shape, report[1].format(lo=lo_n, hi=hi_n), confidence="deterministic")
+        ctx.add(report[0], shape, report[1].format(lo=lo_n, hi=hi_n), confidence="certain")
 
 
 def _cardinality_order(ctx: RuleContext, sg: Graph, shape: Node) -> None:

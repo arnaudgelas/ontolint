@@ -59,6 +59,10 @@ class ExecutionStatus(StrEnum):
     FAILED = "failed"
 
 
+# The only values a rule may report as the confidence of a finding.
+CONFIDENCES: frozenset[str] = frozenset({"certain", "heuristic"})
+
+
 @dataclass(frozen=True)
 class Finding:
     """A deterministic, actionable observation made by one linter rule."""

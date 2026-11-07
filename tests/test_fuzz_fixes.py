@@ -321,3 +321,23 @@ def test_graphs_without_blank_nodes_leave_messages_untouched() -> None:
     data.add((_ex("A"), RDFS.label, Literal("")))
     findings = _run(data, "CLS001", "SKOS013")
     assert all("_:" not in message for _rule, _focus, message in findings)
+
+
+# --- confidence values --------------------------------------------------------------------------------------
+
+
+def test_rule_context_rejects_a_confidence_outside_the_two_known_values() -> None:
+    """A rule once passed its category ('deterministic') as the confidence; fail fast instead of reporting it."""
+    import pytest  # noqa: PLC0415 -- local to the one test.
+
+    from ontolint.models import CONFIDENCES  # noqa: PLC0415
+
+    assert {"certain", "heuristic"} == CONFIDENCES
+    context = Linter(Graph()).rule_context
+    for confidence in ("certain", "heuristic"):
+        context.add("ONT001", "x", f"message {confidence}", confidence=confidence)
+    with pytest.raises(
+        ValueError, match=r"ONT001: confidence must be one of \['certain', 'heuristic'\], not 'deterministic'"
+    ):
+        context.add("ONT001", "x", "other", confidence="deterministic")
+    assert [f.confidence for f in context.findings] == ["certain", "heuristic"]

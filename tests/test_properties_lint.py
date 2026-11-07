@@ -29,16 +29,15 @@ from rdflib.namespace import OWL, RDF, RDFS
 
 from ontolint import Linter
 from ontolint.engine import build_context, execute
-from ontolint.models import ExecutionStatus, Finding
+from ontolint.models import CONFIDENCES, ExecutionStatus, Finding
 from ontolint.policy import Policy
-from ontolint.profiles import is_opt_in
+from ontolint.profiles import OPT_IN_FAMILIES, is_opt_in
 from ontolint.rules.registry import default_registry
 from ontolint.rules.specs import SEVERITY
 
 pytestmark = pytest.mark.slow
 
 SEVERITIES = {"error", "warning", "info"}
-CONFIDENCES = {"certain", "heuristic"}
 SPECS = default_registry().all()
 OPT_IN_IDS = tuple(s.rule_id for s in SPECS if is_opt_in(s.family))
 Key = tuple[str, str, str, str]
@@ -225,10 +224,10 @@ def test_policy_ignored_rules_remove_exactly_their_findings(graph: Graph, ignore
 @budget(2)
 @given(rdf_graphs)
 def test_opt_in_rules_only_appear_when_selected(graph: Graph) -> None:
-    """INVARIANT: OBO rules are absent from default runs and present, unchanged, in an explicit selection."""
+    """INVARIANT: opt-in rules are absent from default runs and present, unchanged, in an explicit selection."""
     default = Linter(graph).execute()
     default_run = Linter(graph).run()
-    explicit = Linter(graph).execute(["OBO"])
+    explicit = Linter(graph).execute(sorted(OPT_IN_FAMILIES))
 
     assert not {f.rule for f in default.findings} & set(OPT_IN_IDS)
     assert not {f.rule for f in default_run} & set(OPT_IN_IDS)
