@@ -1,0 +1,18 @@
+source_id,smell,coverage,our_rule_ids,caveat
+1,Lazy class,implemented heuristic,CLS002,Only asserted instances/subclasses in loaded graph
+2,Missing label,implemented,LEX001,Configurable per local vocabulary
+3,Missing domain/range,implemented heuristic,OWL005;OWL006,Global schema domain/range optional
+4,Singleton hierarchy,implemented heuristic,CLS007,Chains >=3 by default
+5,Property soup,implemented heuristic,CLS008,>15 domain properties by default
+6,Orphan class,implemented heuristic,CLS001,Top-level roots are allowed
+7,Missing inverse,planned heuristic,METRIC006,Do not require universally
+8,No SHACL coverage,implemented partial,SHQ006,Direct targets and asserted instances only
+9,Label language gap,implemented,LEX006,Mixed tagged and untagged labels
+10,Deep hierarchy,implemented heuristic,CLS005,Threshold 7 by default
+11,Cyclic subClassOf,implemented heuristic,CLS003,Not automatically an OWL inconsistency
+12,Multiple inheritance,implemented heuristic,CLS006,Threshold >3 by default
+13,Missing comment,implemented,LEX002,Accepts several definition predicates
+14,Ambiguous namespace,implemented heuristic,IRI003,"This means local-name collision, not OOPS P39"
+15,Potentially symmetric,planned heuristic,OWL021,Bidirectional data is not proof of symmetry
+16,Deprecated entity used,implemented partial,GOV001,Tracks object/predicate usages in loaded graph
+17,Redundant subClassOf,implemented,CLS004,Checks alternative asserted subclass paths

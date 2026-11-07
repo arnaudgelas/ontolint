@@ -1,0 +1,42 @@
+source_id,pitfall,coverage,our_rule_ids,caveat
+P01,Polysemous identifiers,human review,LEX018;LEX017,Meaning is domain dependent
+P02,Synonyms modeled as equivalent classes,planned heuristic,ALIGN001;LEX015,Synonyms do not necessarily imply redundant IRIs
+P03,Generic is predicate instead of semantic predicates,planned heuristic,CLS016,Review local-name is and usage context
+P04,Isolated ontology elements,implemented heuristic,CLS001,Explicit top-level classes may be intentional
+P05,Incorrect inverse relations,partial/contextual,OWL009;OWL018,Type errors automatic; semantic inverse correctness needs review
+P06,Subclass cycles,implemented heuristic,CLS003,OWL allows cycles and inferred equivalence
+P07,Multiple ideas merged into one class,human review,LEX018,NLP only assists
+P08,Missing human annotations,implemented,LEX001;LEX002,Label and documentation checks
+P09,Missing domain knowledge,domain requirements,CQ007,Cannot derive completeness without scope requirements
+P10,Missing disjointness,domain requirements,CLS015,Do not invent disjointness
+P11,Missing global property domain or range,implemented heuristic,OWL005;OWL006,Missing global domain can be good design
+P12,Missing equivalentProperty,domain requirements,ALIGN002,Needs proof of equal intended meaning
+P13,Missing inverse property,planned heuristic,METRIC006,Do not require an inverse for every property
+P14,allValuesFrom misuse,implemented review-only,OWL011,Universal restriction does not assert existence
+P15,some-not versus not-some,domain requirements,OWL033,Intent cannot be inferred from syntax alone
+P16,Primitive versus defined class,domain requirements,CLS017,Requires desired classification behavior
+P17,Overspecialized class hierarchy,partial heuristic,CLS002;CLS005;CLS012,Complex classes can intentionally have no instances
+P18,Overly narrow domain or range,planned heuristic,OWL026,Need corpus or domain requirements
+P19,Multiple domains/ranges interpreted conjunctively,implemented,OWL004,Semantically valid and not always a defect
+P20,Misused annotations,partial,LEX005;LEX013,Misuse includes contextual annotation meaning
+P21,Miscellaneous remainder class,human review,CLS013,Possible names Other/Miscellaneous are weak signals
+P22,Inconsistent naming convention,implemented heuristic,LEX007,Configurable local policy
+P23,Duplicate builtin datatype modeling,domain requirements,OWL038,Requires knowing intended meaning
+P24,Recursive definitions,partial,CLS003;OWL012,Some recursive definitions are legal
+P25,Self-inverse property,implemented heuristic,OWL007,Can be restated as symmetry
+P26,Inverse relation defined for symmetric property,implemented heuristic,OWL008,Not necessarily logically inconsistent
+P27,Wrong equivalent properties,domain requirements,OWL017,Not derivable from declaration alone
+P28,Wrong symmetry,domain requirements,OWL021,Cannot judge intended relation from data absence
+P29,Wrong transitivity,domain requirements,OWL022,Domain meaning required
+P30,Missing equivalent classes,domain requirements,ALIGN001,No definitive graph-only detector
+P31,Incorrect equivalent classes,domain requirements,ALIGN003,"Reasoning can reveal consequences, not intent"
+P32,Multiple classes with identical label,implemented heuristic,LEX004,Acceptable cross-context homonyms possible
+P33,One-element property chain,implemented,OWL010,Redundant modeling choice
+P34,Undeclared class,implemented partial,OWL001;GOV003,Covers subclass and equivalent-class usage
+P35,Undeclared property,implemented partial,OWL002;OWL015,Covers domain/range and local predicate usage
+P36,Ontology IRI ends in file extension,implemented heuristic,IRI002,Publishing style only
+P37,Ontology unavailable on Web,external planned,IRI007;FAIR001,Needs controlled network checks
+P38,Missing ontology declaration,implemented,ONT001,Ontology header only
+P39,Ambiguous namespace or base,partial/planned,ONT001;IRI004,Original source syntax may be required
+P40,Namespace hijacking,external planned,IRI015;ALIGN009,Requires ownership/registry evidence
+P41,Missing ontology license,implemented,ONT003,May have externally governed license metadata

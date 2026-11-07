@@ -1,0 +1,113 @@
+[project]
+name = "ontolint"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Arnaud Gelas", email = "arnaudgelas+ontolint@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pyshacl>=0.40.2",
+    "rdflib>=7.6.0",
+]
+
+[project.scripts]
+ontolint = "ontolint:main"
+
+[tool.mypy]
+files = ["src"]
+python_version = "3.13"
+check_untyped_defs = true
+warn_unused_configs = true
+strict_equality = true
+extra_checks = true
+warn_redundant_casts = true
+strict_equality_for_none = true
+local_partial_types = true
+pretty = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C90",  # McCabe complexity
+    "C4",   # flake8-comprehensions
+    "PL",   # Pylint
+    "S",    # flake8-bandit
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "PGH",  # pygrep-hooks (enforces specific codes on type: ignore and noqa)
+    "A",    # flake8-builtins (prevents shadowing builtins)
+    "T10",  # flake8-debugger (forbids breakpoint/pdb)
+    "TID",  # flake8-tidy-imports (enforces banned relative imports)
+    "YTT",  # flake8-2020 (guards sys.version misuse)
+    "PIE",  # flake8-pie (guards against useless pass/duplicate keys)
+    "RSE",  # flake8-raise (guards raise syntax)
+    "SLOT", # flake8-slots (enforces __slots__ on immutable types)
+    "RUF012", # mutable class default
+    "RUF013", # implicit optional ban
+    "RUF015", # unnecessary iterable allocation
+    "RUF018", # assignment in assert
+    "RUF021", # parenthesize and inside or
+]
+ignore = []
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-positional-args = 5
+max-returns = 6
+
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pyright]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+# Internal helpers are intentionally exercised by white-box tests and re-exported
+# through adapters.engine; Ruff remains the source of truth for unused symbols.
+reportPrivateUsage = false
+reportUnusedFunction = false
+reportUnusedVariable = false
+reportConstantRedefinition = false
+reportPossiblyUnboundVariable = false
+reportUnnecessaryComparison = false
+reportUnnecessaryIsInstance = false
+reportUnusedImport = false
+reportMissingTypeArgument = false
+# JSON/YAML payloads are schema-validated at runtime and explicitly typed at
+# their loading boundaries. Pyright otherwise propagates Unknown through every
+# post-validation dict/list access, obscuring the concrete strict diagnostics.
+reportUnknownArgumentType = false
+reportUnknownLambdaType = false
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "pyright>=1.1.414",
+    "ruff>=0.17.4",
+]
