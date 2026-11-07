@@ -207,7 +207,7 @@ rule_id,family,title,status,category,backend,test_requirement
 "FAIR016","FAIR","FAIR publishing quality candidate FAIR016","proposed","context-dependent","controlled network backend","mocked HTTP and metadata fixture"
 "FAIR017","FAIR","FAIR publishing quality candidate FAIR017","proposed","context-dependent","controlled network backend","mocked HTTP and metadata fixture"
 "FAIR018","FAIR","FAIR publishing quality candidate FAIR018","proposed","context-dependent","controlled network backend","mocked HTTP and metadata fixture"
-"SEM001","SEM","Semantic reasoning candidate SEM001","proposed","deterministic","OWL reasoner","reasoner integration fixture"
+"SEM001","SEM","ROBOT OWL profile validation","implemented","deterministic","ROBOT Docker backend","mocked adapter test and container integration fixture"
 "SEM002","SEM","Semantic reasoning candidate SEM002","proposed","deterministic","OWL reasoner","reasoner integration fixture"
 "SEM003","SEM","Semantic reasoning candidate SEM003","proposed","deterministic","OWL reasoner","reasoner integration fixture"
 "SEM004","SEM","Semantic reasoning candidate SEM004","proposed","deterministic","OWL reasoner","reasoner integration fixture"

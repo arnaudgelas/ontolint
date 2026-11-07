@@ -10,7 +10,9 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
+import tempfile
 from collections import Counter, defaultdict, deque
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
@@ -86,6 +88,7 @@ SEVERITY = {
     "SHACL001": "error",
     "INPUT001": "error",
     "TOOL001": "error",
+    "SEM001": "error",
 }
 
 FIXES = {
@@ -151,6 +154,7 @@ FIXES = {
     "SHACL001": "Fix the supplied SHACL shapes or data, and inspect the SHACL report.",
     "INPUT001": "Fix RDF syntax or explicitly choose the input serialization format.",
     "TOOL001": "Correct the configuration or execution error and run the linter again.",
+    "SEM001": "Correct the reported OWL profile violations, or select the intended OWL profile.",
 }
 
 KINDS = (
@@ -733,7 +737,71 @@ def _sarif(findings: list[Finding]):
     }
 
 
-def main(argv: Sequence[str] | None = None) -> int:  # noqa: PLR0915 -- CLI parsing and execution are intentionally colocated.
+def _robot_profile_issues(ontology: Path, profile: str, image: str, timeout: int) -> list[Finding]:
+    """Run ROBOT profile validation in an isolated Docker container.
+
+    The ontology's parent directory is mounted read-only and the container has no
+    network access. Use a digest-pinned ``image`` in CI for reproducibility.
+    """
+    source = ontology.resolve()
+    if not source.is_file():
+        raise FileNotFoundError(source)
+    with tempfile.TemporaryDirectory(prefix="ontolint-robot-") as output_dir:
+        output = Path(output_dir)
+        report = output / "profile.txt"
+        command = [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--memory",
+            "2g",
+            "--pids-limit",
+            "256",
+            "--cpus",
+            "2",
+            "--cap-drop",
+            "ALL",
+            "--security-opt",
+            "no-new-privileges",
+            "-v",
+            f"{source.parent}:/input:ro",
+            "-v",
+            f"{output}:/output",
+            "-w",
+            "/output",
+            image,
+            "validate-profile",
+            "--profile",
+            profile,
+            "--input",
+            f"/input/{source.name}",
+            "--output",
+            "/output/profile.txt",
+        ]
+        completed = subprocess.run(  # noqa: S603 -- fixed Docker executable and constructed argument list.
+            command, capture_output=True, text=True, timeout=timeout, check=False
+        )
+        if completed.returncode == 0:
+            return []
+        details = report.read_text(encoding="utf-8", errors="replace").strip() if report.exists() else ""
+        details = details or completed.stderr.strip() or completed.stdout.strip() or "ROBOT did not produce a report."
+        return [
+            Finding(
+                "SEM001",
+                SEVERITY["SEM001"],
+                str(source),
+                f"ROBOT OWL {profile} profile validation failed: {details[:4000]}",
+                FIXES["SEM001"],
+                "certain",
+            )
+        ]
+
+
+def main(  # noqa: C901, PLR0915 -- CLI parsing and execution are intentionally colocated.
+    argv: Sequence[str] | None = None,
+) -> int:
     ap = argparse.ArgumentParser(description="Ontology anti-pattern linter. No automatic network/import access.")
     ap.add_argument("ontology", help="Ontology RDF file (Turtle, RDF/XML, JSON-LD, etc.)")
     ap.add_argument("--shapes", help="Optional SHACL shapes graph (requires pyshacl)")
@@ -745,6 +813,9 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: PLR0915 -- CLI pars
     ap.add_argument("--depth-limit", type=int)
     ap.add_argument("--inheritance-limit", type=int)
     ap.add_argument("--soup-limit", type=int)
+    ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
+    ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
+    ap.add_argument("--robot-timeout", type=int, default=120)
     ap.add_argument("--format", choices=["text", "json", "sarif"], default="text")
     ap.add_argument("--output", help="Output file (default stdout)")
     ap.add_argument("--fail-on", choices=["error", "warning", "info", "never"], default="error")
@@ -771,6 +842,8 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: PLR0915 -- CLI pars
         issues = lint.run()
         if sg is not None:
             issues += _shacl_issues(g, sg)
+        if args.owl_profile:
+            issues += _robot_profile_issues(Path(args.ontology), args.owl_profile, args.robot_image, args.robot_timeout)
         ignored = set(config.get("ignored_rules", []))
         changes = config.get("severity_overrides", {})
         if any(level not in ("error", "warning", "info") for level in changes.values()):
