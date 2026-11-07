@@ -11,6 +11,13 @@ in `.github/workflows/validation.yml`.
 uv run pytest --gremlins --no-cov --gremlin-parallel --gremlin-cache
 ```
 
+Do not run any other pytest session in the same checkout while a mutation run is in
+progress. The run pre-scans coverage into the repository-root `.coverage` (statement
+data), and a concurrent `pytest -n auto` writes branch-coverage worker files that
+cannot be combined with it, which aborts that session with `coverage.exceptions.DataError:
+Can't combine branch coverage data with statement data`. If it happens, stop both runs,
+delete `.coverage` and `.coverage.*`, and start again.
+
 CI adds `--gremlin-report=console,json,html --gremlin-max-pardons-pct=5
 --gremlin-audit-pardons`. Reports are written to `coverage/gremlins/`
 (`gremlins.json`, HTML) and uploaded as the `mutation-reports` artifact.
