@@ -78,6 +78,10 @@ class Policy:
     ignored_rules: frozenset[str] = frozenset()
     severity_overrides: tuple[tuple[str, str], ...] = ()
 
+    def __post_init__(self) -> None:
+        for name in LOADER_LIMIT_DEFAULTS:
+            _check_limit(name, getattr(self, name))
+
     @property
     def severity_mapping(self) -> dict[str, str]:
         """Return overrides in the shape expected by report filtering."""
@@ -141,9 +145,15 @@ def _iri_list(data: Mapping[str, Any], name: str) -> tuple[str, ...]:
 
 
 def _real(name: str, value: Any) -> float:
-    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
+    if isinstance(value, bool) or not isinstance(value, int | float):
         raise ValueError(f"{name} must be a finite number")
-    return float(value)
+    try:
+        number = float(value)  # an int beyond the float range raises OverflowError
+    except OverflowError:
+        raise ValueError(f"{name} must be a finite number") from None
+    if not math.isfinite(number):
+        raise ValueError(f"{name} must be a finite number")
+    return number
 
 
 def _metric_values(data: Mapping[str, Any]) -> dict[str, Any]:
@@ -172,15 +182,19 @@ def _metric_values(data: Mapping[str, Any]) -> dict[str, Any]:
     return values
 
 
+def _check_limit(name: str, value: Any) -> None:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{name} must be an integer")
+    if value < 1:
+        raise ValueError(f"{name} must be at least 1")
+
+
 def _loader_limits(data: Mapping[str, Any]) -> dict[str, int]:
     """Validate the safe-loader limits: positive integers."""
     values: dict[str, int] = {}
     for name, default in LOADER_LIMIT_DEFAULTS.items():
         value = data.get(name, default)
-        if not isinstance(value, int) or isinstance(value, bool):
-            raise ValueError(f"{name} must be an integer")
-        if value < 1:
-            raise ValueError(f"{name} must be at least 1")
+        _check_limit(name, value)
         values[name] = value
     return values
 

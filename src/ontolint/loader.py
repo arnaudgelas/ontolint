@@ -12,9 +12,12 @@ must never do that, so every input is read through :func:`load_graph`:
   rdflib refuse every external JSON-LD context; ``owl:imports`` are never fetched;
 * the number of triples is bounded while the graph is being built.
 
-Problems are raised as :class:`InputRejected` carrying the rule id (``SEC001`` ...) so the CLI can report
-them like ``INPUT001``.  Network blocking patches process-global state, so the guard is serialised by a
-lock and is meant for one parse at a time (the CLI is single threaded).
+Problems are raised as :class:`LoadError`: :class:`InputRejected` carries the rule id (``SEC001`` ...) of a refusal,
+:class:`ParseFailure` (also a ``ValueError``, reported as ``INPUT001``) wraps every failure of the RDF parser itself,
+whatever internal exception type rdflib raised, so library callers only ever have to catch ``LoadError``.
+
+Network blocking patches process-global state, so the guard is serialised by a lock and is meant
+for one parse at a time (the CLI is single threaded).
 """
 
 from __future__ import annotations
@@ -34,6 +37,7 @@ from typing import Any
 
 from rdflib import Graph
 from rdflib.plugins.shared.jsonld import context as jsonld_context
+from rdflib.plugins.stores.memory import Memory
 from rdflib.util import guess_format
 
 from .paths import InputFile
@@ -50,13 +54,31 @@ COMPRESSION_MAGIC: tuple[tuple[bytes, str], ...] = (
 )
 
 
-class InputRejected(Exception):  # noqa: N818 -- a rejection, not an error condition of the program.
+class LoadError(Exception):
+    """Base of everything :func:`load_graph` raises on purpose (except ``OSError`` for unreadable files)."""
+
+
+class InputRejected(LoadError):  # noqa: N818 -- a rejection, not an error condition of the program.
     """An input was refused or could not be read safely; ``rule_id`` is the SEC rule that describes why."""
 
     def __init__(self, rule_id: str, message: str) -> None:
         super().__init__(message)
         self.rule_id = rule_id
         self.message = message
+
+
+class ParseFailure(LoadError, ValueError):
+    """The RDF parser failed on the input (malformed text, encoding, hostile structure); reported as ``INPUT001``.
+
+    ``cause_type`` names the parser's own exception (chained as ``__cause__``); ``detail`` is its message.
+    """
+
+    rule_id = "INPUT001"
+
+    def __init__(self, cause_type: str, detail: str) -> None:
+        super().__init__(f"{cause_type}: {detail}")
+        self.cause_type = cause_type
+        self.detail = detail
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.
@@ -120,20 +142,61 @@ def network_disabled() -> Generator[NetworkAttempts]:
         yield attempts
 
 
-class _BoundedGraph(Graph):
-    """A graph that stops the parser as soon as it holds more than ``limit`` triples."""
+MAX_TERM_EXPANSION_DEPTH = 64
+"""How many prefix expansions one JSON-LD term may chain; real contexts need a handful, cycles never end."""
+
+
+@contextlib.contextmanager
+def term_expansion_bounded(limit: int = MAX_TERM_EXPANSION_DEPTH) -> Generator[None]:
+    """Make rdflib's JSON-LD term expansion fail fast on cyclic definitions instead of recursing ~1000 levels.
+
+    ``{"a": "b:x", "b": "a:y"}`` makes ``Context._rec_expand`` recurse until the interpreter's own limit, which costs
+    seconds on a long value.  Past ``limit`` nested calls a ``RecursionError`` is raised (the same failure, earlier);
+    :func:`load_graph` reports it as :class:`ParseFailure`.  The interpreter's recursion limit is never changed.
+    """
+    original = jsonld_context.Context._rec_expand  # noqa: SLF001
+    depth = 0
+
+    def bounded(self: Any, source: Any, expr: Any, prev: Any = None) -> Any:
+        nonlocal depth
+        if depth >= limit:
+            raise RecursionError(f"JSON-LD term expansion is nested more than {limit} levels")
+        depth += 1
+        try:
+            return original(self, source, expr, prev)
+        finally:
+            depth -= 1
+
+    with _LOCK:
+        jsonld_context.Context._rec_expand = bounded  # type: ignore[method-assign]  # noqa: SLF001
+        try:
+            yield
+        finally:
+            jsonld_context.Context._rec_expand = original  # type: ignore[method-assign]  # noqa: SLF001
+
+
+class _BoundedStore(Memory):
+    """A store that stops the parser as soon as it holds more than ``limit`` distinct triples, in any context.
+
+    Parsers add through ``Graph.add``, ``Graph.addN``, formulae and quoted graphs (N3), which all end in the store, so
+    the bound lives here.  ``limit = None`` switches it off once loading is done.
+    """
 
     def __init__(self, limit: int) -> None:
         super().__init__()
-        self._limit = limit
-        self._adds = 0
+        self.limit: int | None = limit
 
-    def add(self, triple: Any) -> Any:  # noqa: D102 -- documented on the base class.
-        self._adds += 1
-        # gremlin: pardon[equivalent] fewer than limit adds cannot reach len >= limit, so >= and > agree here
-        if self._adds > self._limit and len(self) >= self._limit and triple not in self:
-            raise InputRejected("SEC002", f"graph has more than {self._limit} triples (max_triples)")
-        return super().add(triple)
+    def _check(self) -> None:
+        if self.limit is not None and len(self) > self.limit:
+            raise InputRejected("SEC002", f"graph has more than {self.limit} triples (max_triples)")
+
+    def add(self, triple: Any, context: Any, quoted: bool = False) -> None:  # noqa: D102 -- documented on the base.
+        super().add(triple, context, quoted)
+        self._check()
+
+    def addN(self, quads: Any) -> None:  # noqa: D102, N802 -- documented on the base class.
+        for s, p, o, c in quads:
+            self.add((s, p, o), c)
 
 
 _PROLOG_CODECS: tuple[tuple[bytes, str], ...] = (
@@ -274,8 +337,17 @@ def _network_problem(item: InputFile, attempts: NetworkAttempts) -> InputRejecte
     return None
 
 
+def _describe(failure: Exception) -> str:
+    """The message of a parser failure; recursion and memory exhaustion get a readable one."""
+    if isinstance(failure, RecursionError):
+        return "input is nested too deeply (or defines cyclic JSON-LD terms) to be parsed"
+    if isinstance(failure, MemoryError):
+        return "input needs more memory than is available to be parsed"
+    return str(failure)
+
+
 def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Graph:
-    """Parse ``item`` safely; raises :class:`InputRejected` for refused input and parser errors otherwise."""
+    """Parse ``item`` safely; raises :class:`InputRejected` (refused) or :class:`ParseFailure` (parser error)."""
     check_path(item, root if root is not None else Path.cwd())
     data = _read_limited(item, policy.max_input_bytes)
     kind = compression_of(data)
@@ -285,21 +357,29 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
     problem = dtd_problem(data, policy.max_input_bytes) if fmt in RDF_XML_FORMATS else None
     if problem is not None:
         raise InputRejected("SEC010", f"{item.display} {problem}")
-    graph = _BoundedGraph(policy.max_triples)
+    store = _BoundedStore(policy.max_triples)
+    graph = Graph(store=store)
     failure: Exception | None = None
-    with network_disabled() as attempts:
+    with network_disabled() as attempts, term_expansion_bounded():
         try:
             with warnings.catch_warnings():
-                # rdflib's JSON-LD parser builds a ConjunctiveGraph and warns about its own deprecation.
+                # rdflib's JSON-LD parser builds a ConjunctiveGraph and warns about its own deprecation, and the
+                # N3/N-Quads parsers touch the deprecated Dataset.default_context.
                 warnings.filterwarnings("ignore", message="ConjunctiveGraph is deprecated", category=DeprecationWarning)
+                warnings.filterwarnings(
+                    "ignore", message="Dataset.default_context is deprecated", category=DeprecationWarning
+                )
                 graph.parse(data=data, format=fmt, publicID=item.path.as_uri())
-        except Exception as exc:  # noqa: BLE001 -- classified below; unknown failures are re-raised.
+        except Exception as exc:  # noqa: BLE001 -- classified below; nothing but a LoadError leaves this function.
             failure = exc
     rejection = _network_problem(item, attempts)
     if rejection is not None:
         raise rejection from failure
-    if isinstance(failure, InputRejected):
+    if isinstance(failure, LoadError):
         raise failure
     if failure is not None:
-        raise failure
+        raise ParseFailure(type(failure).__name__, _describe(failure)) from failure
+    store.limit = None  # a plain graph: pySHACL and other consumers copy it and must not hit the bound
+    if len(graph) > policy.max_triples:  # pragma: no cover - the store bound fires first; defence in depth
+        raise InputRejected("SEC002", f"graph has more than {policy.max_triples} triples (max_triples)")
     return graph

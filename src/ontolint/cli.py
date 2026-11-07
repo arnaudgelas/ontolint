@@ -21,7 +21,7 @@ from rdflib import Graph
 from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
-from .loader import InputRejected, load_graph
+from .loader import InputRejected, ParseFailure, load_graph
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
 from .policy import Policy
@@ -32,6 +32,17 @@ from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .selection import Selection, SelectorSyntaxError, resolve_selection, split_selectors, unknown_selector_help
 
 FORMATS = ["text", "json", "sarif"]
+
+
+def _positive_int(text: str) -> int:
+    """argparse type for the loader limits: an integer of at least 1."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"must be a positive integer, got {text!r}") from None
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"must be a positive integer (at least 1), got {value}")
+    return value
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -51,8 +62,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--depth-limit", type=int)
     ap.add_argument("--inheritance-limit", type=int)
     ap.add_argument("--soup-limit", type=int)
-    ap.add_argument("--max-input-bytes", type=int, help="Refuse input files larger than this (default 64 MiB)")
-    ap.add_argument("--max-triples", type=int, help="Refuse inputs with more triples than this (default 5000000)")
+    ap.add_argument(
+        "--max-input-bytes", type=_positive_int, help="Refuse input files larger than this (default 64 MiB)"
+    )
+    ap.add_argument(
+        "--max-triples", type=_positive_int, help="Refuse inputs with more triples than this (default 5000000)"
+    )
     ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
     ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
     ap.add_argument("--robot-timeout", type=int, default=120)
@@ -174,10 +189,16 @@ def _parse_inputs(inputs: list[InputFile]) -> tuple[list[Graph], list[str]]:
         except InputRejected as exc:
             where = f" for {item.display}" if len(inputs) > 1 and item.display not in exc.message else ""
             errors.append(f"{exc.rule_id}: {exc.message}{where}")
-        except Exception as exc:  # noqa: BLE001 -- any parser failure is a reportable input error.
-            where = f" for {item.display}" if len(inputs) > 1 else ""
-            errors.append(f"INPUT001: RDF input parsing failed{where}: {type(exc).__name__}: {exc}")
+        except Exception as exc:  # noqa: BLE001 -- any other failure (unreadable file ...) is a reportable input error.
+            errors.append(_parse_error(exc, item.display if len(inputs) > 1 else None))
     return graphs, errors
+
+
+def _parse_error(exc: Exception, display: str | None) -> str:
+    """The ``INPUT001`` line for a parse failure; ``display`` names the file when several were given."""
+    where = f" for {display}" if display else ""
+    name, detail = (exc.cause_type, exc.detail) if isinstance(exc, ParseFailure) else (type(exc).__name__, str(exc))
+    return f"INPUT001: RDF input parsing failed{where}: {name}: {detail}"
 
 
 def _info_command(args: argparse.Namespace) -> int | None:
@@ -234,6 +255,9 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
             shapes = load_graph(resolve_inputs([args.shapes], Path.cwd())[0], limits)
         except InputRejected as exc:
             print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
+            return 2
+        except ParseFailure as exc:
+            print(_parse_error(exc, None), file=sys.stderr)
             return 2
     stage[0] = "lint execution"
     plan = _plan(args, config, shapes, registry)

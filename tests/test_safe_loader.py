@@ -8,7 +8,9 @@ import os
 import socket
 import stat
 import sys
+from dataclasses import replace
 from pathlib import Path
+from typing import Any
 
 import pytest
 from rdflib import Graph, URIRef
@@ -18,6 +20,7 @@ from ontolint.loader import InputRejected, load_graph, network_disabled
 from ontolint.paths import InputFile, resolve_inputs
 from ontolint.policy import DEFAULT_MAX_INPUT_BYTES, DEFAULT_MAX_TRIPLES, Policy
 
+FIXTURES = Path(__file__).parent / "fixtures"
 TTL = "@prefix e: <http://e/> .\ne:a e:p 1, 2, 3 .\n"
 REMOTE = '{"@context": "http://127.0.0.1:9/ctx.jsonld", "@id": "http://e/a", "http://e/p": "x"}'
 RDFXML = (
@@ -316,3 +319,81 @@ def test_parse_errors_stay_input001(
     monkeypatch.chdir(tmp_path)
     assert main(["bad.ttl"]) == 2
     assert capsys.readouterr().err.startswith("INPUT001: RDF input parsing failed: ")
+
+
+def test_parse_errors_name_the_file_when_several_are_given_and_keep_the_original_type(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    (tmp_path / "bad.ttl").write_text("this is not turtle", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert main(["a.ttl", "bad.ttl"]) == 2
+    line = capsys.readouterr().err.splitlines()[0]
+    assert line.startswith("INPUT001: RDF input parsing failed for bad.ttl: BadSyntax: ")
+    assert "ParseFailure" not in line
+
+
+def test_unparseable_shapes_are_input001_not_a_traceback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    (tmp_path / "s.ttl").write_text("this is not turtle", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert main(["a.ttl", "--shapes", "s.ttl"]) == 2
+    line = capsys.readouterr().err.splitlines()[0]
+    assert line.startswith("INPUT001: RDF input parsing failed: BadSyntax: ")
+
+
+def test_shapes_validation_works_with_a_tight_max_triples(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ontology = (FIXTURES / "clean.ttl").read_text(encoding="utf-8")
+    shapes = (FIXTURES / "clean_shapes.ttl").read_text(encoding="utf-8")
+    (tmp_path / "a.ttl").write_text(ontology, encoding="utf-8")
+    (tmp_path / "s.ttl").write_text(shapes, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    limit = max(len(load_graph(item(tmp_path / n, tmp_path), Policy(), tmp_path)) for n in ("a.ttl", "s.ttl"))
+    for max_triples in (limit, limit + 1):
+        assert main(["a.ttl", "--shapes", "s.ttl", "--select", "SHACL001", "--max-triples", str(max_triples)]) in (0, 1)
+        assert "triples" not in capsys.readouterr().err
+    assert main(["a.ttl", "--shapes", "s.ttl", "--max-triples", str(limit - 1)]) == 2
+    assert capsys.readouterr().err.startswith("SEC002: ")
+
+
+@pytest.mark.parametrize("option", ["--max-input-bytes", "--max-triples"])
+@pytest.mark.parametrize(
+    ("value", "message"), [("0", "got 0"), ("-1", "got -1"), ("x", "got 'x'"), ("1.5", "got '1.5'")]
+)
+def test_cli_loader_limits_must_be_positive_integers(
+    capsys: pytest.CaptureFixture[str], option: str, value: str, message: str
+) -> None:
+    with pytest.raises(SystemExit) as info:
+        main(["a.ttl", option, value])
+    assert info.value.code == 2
+    err = capsys.readouterr().err
+    assert f"argument {option}: must be a positive integer" in err
+    assert message in err
+
+
+@pytest.mark.parametrize("option", ["--max-input-bytes", "--max-triples"])
+def test_cli_loader_limit_of_one_is_accepted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, option: str) -> None:
+    (tmp_path / "a.ttl").write_text("<http://e/a> <http://e/p> <http://e/o> .\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    limit = "41" if option == "--max-input-bytes" else "1"
+    assert main(["a.ttl", option, limit, "--select", "ONT001"]) in (0, 1)
+
+
+def limit_kwargs(name: str, value: object) -> dict[str, Any]:
+    return {name: value}
+
+
+def test_policy_constructor_validates_loader_limits_too() -> None:
+    for name in ("max_input_bytes", "max_triples"):
+        assert getattr(Policy(**limit_kwargs(name, 1)), name) == 1
+        for bad in (0, -1, 1.5, "9", True):
+            with pytest.raises(ValueError, match=f"{name} must be"):
+                Policy(**limit_kwargs(name, bad))
+    with pytest.raises(ValueError, match="max_triples must be at least 1"):
+        replace(Policy(), max_triples=0)
+    with pytest.raises(ValueError, match="max_input_bytes must be an integer"):
+        Policy(max_input_bytes=2.0)  # type: ignore[arg-type]

@@ -16,10 +16,10 @@ from collections.abc import Callable, Collection
 from pathlib import Path
 from unittest import mock
 
+from rdflib import Graph
 from rule_harness import probed, rule_cases
 
 from ontolint import main
-from ontolint.loader import _BoundedGraph  # noqa: PLC2701 -- the parser seam the SEC013 probe replaces.
 
 TTL = "@prefix e: <http://e/> .\ne:a e:p 1, 2, 3, 4 .\n"
 JSONLD_REMOTE = '{"@context": "http://127.0.0.1:9/ctx.jsonld", "@id": "http://e/a", "http://e/p": "x"}'
@@ -79,7 +79,7 @@ def _network_attempt(swallow: bool) -> Collection[str]:
             if not swallow:
                 raise
 
-    with mock.patch.object(_BoundedGraph, "parse", parse):
+    with mock.patch.object(Graph, "parse", parse):
         return cli_codes("a.ttl", TTL)()
 
 

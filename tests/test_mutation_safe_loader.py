@@ -6,8 +6,10 @@ from __future__ import annotations
 
 import socket
 from pathlib import Path
+from typing import Any
 
 import pytest
+from rdflib import Graph
 
 from ontolint import loader
 from ontolint.loader import InputRejected, compression_of, dtd_problem, load_graph, network_disabled
@@ -47,18 +49,50 @@ def test_triple_message_and_exact_boundary(tmp_path: Path) -> None:
     assert len(load_graph(resolve_inputs(["ok.ttl"], tmp_path)[0], Policy(max_triples=3), tmp_path)) == 3
 
 
-def test_bounded_graph_counts_distinct_triples_only() -> None:
-    graph = loader._BoundedGraph(2)  # noqa: SLF001
+def _bounded(limit: int) -> tuple[Any, loader._BoundedStore]:  # noqa: SLF001
+    from rdflib import Graph  # noqa: PLC0415
+
+    store = loader._BoundedStore(limit)  # noqa: SLF001
+    return Graph(store=store), store
+
+
+def test_bounded_store_counts_distinct_triples_only() -> None:
     from rdflib import Literal, URIRef  # noqa: PLC0415
 
+    graph, _ = _bounded(2)
     s, p = URIRef("http://e/s"), URIRef("http://e/p")
-    graph.add((s, p, Literal(1)))
-    graph.add((s, p, Literal(1)))
-    graph.add((s, p, Literal(1)))
-    graph.add((s, p, Literal(2)))
+    for value in (1, 1, 1, 2):
+        graph.add((s, p, Literal(value)))
     assert len(graph) == 2
     with pytest.raises(InputRejected, match="more than 2 triples"):
         graph.add((s, p, Literal(3)))
+
+
+def test_bounded_store_bounds_addn_and_other_contexts() -> None:
+    from rdflib import Graph, Literal, URIRef  # noqa: PLC0415
+
+    graph, store = _bounded(3)
+    s, p = URIRef("http://e/s"), URIRef("http://e/p")
+    graph.addN((s, p, Literal(i), graph) for i in range(3))
+    assert len(graph) == 3
+    other = Graph(store=store, identifier=URIRef("http://e/other"))
+    other.add((s, p, Literal(0)))  # the same triple in another context is not a new triple
+    with pytest.raises(InputRejected, match="more than 3 triples"):
+        other.add((s, p, Literal(99)))
+    graph2, _ = _bounded(1)
+    with pytest.raises(InputRejected, match="more than 1 triples"):
+        graph2.addN([(s, p, Literal(1), graph2), (s, p, Literal(2), graph2)])
+
+
+def test_bounded_store_limit_can_be_switched_off() -> None:
+    from rdflib import Literal, URIRef  # noqa: PLC0415
+
+    graph, store = _bounded(1)
+    s, p = URIRef("http://e/s"), URIRef("http://e/p")
+    graph.add((s, p, Literal(1)))
+    store.limit = None
+    graph.add((s, p, Literal(2)))
+    assert len(graph) == 2
 
 
 def test_context_and_network_messages(tmp_path: Path) -> None:
@@ -73,18 +107,112 @@ def test_network_message_names_the_first_blocked_call(tmp_path: Path, monkeypatc
     def parse(self: object, *args: object, **kwargs: object) -> None:
         socket.getaddrinfo("example.invalid", 80)
 
-    monkeypatch.setattr(loader._BoundedGraph, "parse", parse)  # noqa: SLF001
+    monkeypatch.setattr(loader.Graph, "parse", parse)
     assert reject(tmp_path, "a.ttl", TTL) == (
         "SEC013",
         "a.ttl tried to use the network (resolve 'example.invalid'); the network is disabled",
     )
 
 
-def test_non_network_failures_propagate_unchanged(tmp_path: Path) -> None:
+def test_parser_failures_are_wrapped_in_one_documented_type(tmp_path: Path) -> None:
     (tmp_path / "bad.ttl").write_text("not turtle", encoding="utf-8")
-    with pytest.raises(Exception) as info:  # noqa: PT011 -- the concrete rdflib type is not part of the contract
+    with pytest.raises(loader.ParseFailure) as info:
         load_graph(resolve_inputs(["bad.ttl"], tmp_path)[0], Policy(), tmp_path)
-    assert not isinstance(info.value, InputRejected)
+    failure = info.value
+    assert isinstance(failure, loader.LoadError)
+    assert isinstance(failure, ValueError)
+    assert not isinstance(failure, InputRejected)
+    assert failure.rule_id == "INPUT001"
+    assert failure.cause_type == type(failure.__cause__).__name__
+    assert failure.detail == str(failure.__cause__)
+    assert str(failure) == f"{failure.cause_type}: {failure.detail}"
+
+
+@pytest.mark.parametrize(
+    ("raised", "expected"),
+    [
+        (RecursionError("maximum recursion depth exceeded"), "input is nested too deeply"),
+        (MemoryError(), "input needs more memory"),
+        (KeyError("k"), "'k'"),
+        (IndexError("list index out of range"), "list index out of range"),
+    ],
+)
+def test_any_internal_parser_exception_becomes_a_parse_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raised: Exception, expected: str
+) -> None:
+    def parse(self: object, *args: object, **kwargs: object) -> None:
+        raise raised
+
+    monkeypatch.setattr(loader.Graph, "parse", parse)
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    with pytest.raises(loader.ParseFailure) as info:
+        load_graph(resolve_inputs(["a.ttl"], tmp_path)[0], Policy(), tmp_path)
+    assert info.value.cause_type == type(raised).__name__
+    assert info.value.detail.startswith(expected)
+    assert info.value.__cause__ is raised
+
+
+def test_recursion_limit_is_untouched_by_a_cyclic_jsonld_context(tmp_path: Path) -> None:
+    import sys  # noqa: PLC0415
+
+    before = sys.getrecursionlimit()
+    (tmp_path / "c.jsonld").write_text('{"a":"b:x","b":"a:y"}', encoding="utf-8")
+    try:
+        load_graph(resolve_inputs(["c.jsonld"], tmp_path)[0], Policy(), tmp_path)
+    except loader.ParseFailure as exc:
+        assert exc.cause_type == "RecursionError"
+    assert sys.getrecursionlimit() == before
+
+
+def test_loaded_graph_is_a_plain_graph_with_the_bound_lifted(tmp_path: Path) -> None:
+    from rdflib import Literal, URIRef  # noqa: PLC0415
+
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    graph = load_graph(resolve_inputs(["a.ttl"], tmp_path)[0], Policy(max_triples=3), tmp_path)
+    assert type(graph) is Graph
+    graph.add((URIRef("http://e/x"), URIRef("http://e/p"), Literal("more")))
+    assert len(graph) == 4
+    clone = Graph()
+    for triple in graph:
+        clone.add(triple)
+    assert len(clone) == 4
+
+
+@pytest.mark.parametrize("suffix", [".n3", ".nq"])
+def test_n3_and_nquads_emit_no_deprecation_warning(tmp_path: Path, suffix: str) -> None:
+    import warnings  # noqa: PLC0415
+
+    (tmp_path / f"a{suffix}").write_text("<http://e/a> <http://e/p> <http://e/o> .\n", encoding="utf-8")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        graph = load_graph(resolve_inputs([f"a{suffix}"], tmp_path)[0], Policy(), tmp_path)
+    assert len(graph) == 1
+
+
+def test_unrelated_deprecation_warnings_are_not_silenced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import warnings  # noqa: PLC0415
+
+    def parse(self: object, *args: object, **kwargs: object) -> None:
+        warnings.warn("something else is deprecated", DeprecationWarning, stacklevel=1)
+
+    monkeypatch.setattr(loader.Graph, "parse", parse)
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    with warnings.catch_warnings(), pytest.warns(DeprecationWarning, match="something else"):
+        load_graph(resolve_inputs(["a.ttl"], tmp_path)[0], Policy(), tmp_path)
+
+
+def test_n3_input_cannot_bypass_max_triples_and_the_limit_is_exact(tmp_path: Path) -> None:
+    lines = [f"<http://e/s{i}> <http://e/p> [ <http://e/q> ( 1 2 ) ] ." for i in range(6)]
+    (tmp_path / "f.n3").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    item = resolve_inputs(["f.n3"], tmp_path)[0]
+    total = len(load_graph(item, Policy(), tmp_path))
+    assert len(load_graph(item, Policy(max_triples=total), tmp_path)) == total
+    with pytest.raises(InputRejected) as info:
+        load_graph(item, Policy(max_triples=total - 1), tmp_path)
+    assert (info.value.rule_id, info.value.message) == (
+        "SEC002",
+        f"graph has more than {total - 1} triples (max_triples)",
+    )
 
 
 def test_guard_messages_and_attempt_log() -> None:
@@ -246,3 +374,51 @@ def test_file_that_grows_after_the_size_check_is_refused(tmp_path: Path, monkeyp
         "SEC001",
         "a.ttl grew beyond the limit of 10 bytes (max_input_bytes)",
     )
+
+
+def test_term_expansion_bound_is_exact_and_restores_the_original(monkeypatch: pytest.MonkeyPatch) -> None:
+    from rdflib.plugins.shared.jsonld.context import Context  # noqa: PLC0415
+
+    def countdown(self: Context, source: object, expr: int, prev: object = None) -> int:
+        return expr if expr <= 0 else self._rec_expand(source, expr - 1, expr)  # type: ignore[arg-type,return-value]
+
+    monkeypatch.setattr(Context, "_rec_expand", countdown)
+    context = Context()
+    with loader.term_expansion_bounded(limit=5):
+        assert Context._rec_expand is not countdown  # noqa: SLF001
+        assert context._rec_expand({}, 4) == 0  # type: ignore[arg-type]  # noqa: SLF001 -- five nested calls: allowed
+        with pytest.raises(RecursionError, match="more than 5 levels"):
+            context._rec_expand({}, 5)  # type: ignore[arg-type]  # noqa: SLF001 -- six calls: refused
+        assert context._rec_expand({}, 4) == 0  # type: ignore[arg-type]  # noqa: SLF001 -- depth was unwound
+    assert Context._rec_expand is countdown  # noqa: SLF001
+
+
+def test_term_expansion_default_limit_and_restoration_after_an_error() -> None:
+    from rdflib.plugins.shared.jsonld.context import Context  # noqa: PLC0415
+
+    original = Context._rec_expand  # noqa: SLF001
+    assert loader.MAX_TERM_EXPANSION_DEPTH == 64
+    with pytest.raises(KeyError), loader.term_expansion_bounded():
+        raise KeyError("boom")
+    assert Context._rec_expand is original  # noqa: SLF001
+
+
+def test_cyclic_jsonld_context_fails_fast(tmp_path: Path) -> None:
+    import time  # noqa: PLC0415
+
+    long_value = "http://e/" * 2000
+    doc = f'{{"@context": {{"a": "b:{long_value}", "b": "a:y"}}, "a": "x"}}'
+    (tmp_path / "c.jsonld").write_text(doc, encoding="utf-8")
+    started = time.monotonic()
+    with pytest.raises(loader.ParseFailure) as info:
+        load_graph(resolve_inputs(["c.jsonld"], tmp_path)[0], Policy(), tmp_path)
+    assert info.value.cause_type == "RecursionError"
+    assert "nested too deeply" in info.value.detail
+    assert time.monotonic() - started < 2
+
+
+def test_ordinary_prefixed_jsonld_terms_still_expand(tmp_path: Path) -> None:
+    doc = '{"@context": {"e": "http://e/", "p": "e:p"}, "@id": "e:a", "p": "x"}'
+    (tmp_path / "ok.jsonld").write_text(doc, encoding="utf-8")
+    graph = load_graph(resolve_inputs(["ok.jsonld"], tmp_path)[0], Policy(), tmp_path)
+    assert len(graph) == 1
