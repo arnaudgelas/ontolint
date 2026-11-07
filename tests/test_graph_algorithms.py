@@ -6,7 +6,7 @@ from collections import defaultdict, deque
 from pathlib import Path
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
@@ -14,6 +14,8 @@ from rdflib.namespace import OWL, RDF, RDFS
 from ontolint.ontolint import FIXES, SEVERITY, Linter, main
 
 TOOL_FAILURE_EXIT = 2
+PROPERTY_TEST_SETTINGS = settings(max_examples=150, deadline=None, print_blob=True)
+EXTERNAL_NODE = URIRef("https://external.example/node")
 
 
 @st.composite
@@ -44,6 +46,7 @@ def _reachable(edges: set[tuple[URIRef, URIRef]], source: URIRef, target: URIRef
     return False
 
 
+@PROPERTY_TEST_SETTINGS
 @given(directed_graphs())
 def test_components_matches_mutual_reachability(
     graph: tuple[list[URIRef], set[tuple[URIRef, URIRef]]],
@@ -61,6 +64,7 @@ def test_components_matches_mutual_reachability(
             assert same_component == (_reachable(edges, left, right) and _reachable(edges, right, left))
 
 
+@PROPERTY_TEST_SETTINGS
 @given(directed_graphs())
 def test_linter_reports_exactly_the_cyclic_subclass_components(
     graph: tuple[list[URIRef], set[tuple[URIRef, URIRef]]],
@@ -75,13 +79,41 @@ def test_linter_reports_exactly_the_cyclic_subclass_components(
 
     findings = Linter(ontology).run()
     reported_focuses = {URIRef(finding.focus) for finding in findings if finding.rule == "CLS003"}
+    components = {
+        frozenset(node for node in nodes if _reachable(edges, root, node) and _reachable(edges, node, root))
+        for root in nodes
+    }
     expected_focuses = {
         min(component, key=str)
-        for component in Linter.components(nodes, edges)
+        for component in components
         if len(component) > 1 or any((node, node) in edges for node in component)
     }
 
     assert reported_focuses == expected_focuses
+
+
+@PROPERTY_TEST_SETTINGS
+@given(directed_graphs())
+def test_directed_edges_only_returns_allowed_rdf_edges(
+    graph: tuple[list[URIRef], set[tuple[URIRef, URIRef]]],
+) -> None:
+    """Non-local resources must not leak into hierarchy graph analysis."""
+    nodes, edges = graph
+    rdf_graph = Graph()
+    for source, target in edges:
+        rdf_graph.add((source, RDFS.subClassOf, target))
+    rdf_graph.add((EXTERNAL_NODE, RDFS.subClassOf, nodes[0] if nodes else EXTERNAL_NODE))
+
+    assert Linter.directed_edges(rdf_graph, RDFS.subClassOf, set(nodes)) == edges
+
+
+def test_reachable_distinguishes_direct_paths_ignored_edges_and_missing_targets() -> None:
+    left, middle, right = (URIRef(f"https://example.test/{name}") for name in ("left", "middle", "right"))
+    adjacency = {left: {middle}, middle: {right}}
+
+    assert Linter.reachable(adjacency, left, right)
+    assert not Linter.reachable(adjacency, left, right, ignore=(middle, right))
+    assert not Linter.reachable(adjacency, right, left)
 
 
 @pytest.mark.parametrize(

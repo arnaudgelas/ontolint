@@ -286,8 +286,10 @@ class Linter:
                 self.add("IRI002", u, "Ontology IRI contains a serialization file extension.")
             if u in self.terms:
                 names[self.local_name(u).casefold()].add(u)
-        for name, iris in names.items():
-            if len(iris) > 1 and len({str(x).rsplit(name, 1)[0] for x in iris}) > 1:
+        for _name, iris in names.items():
+            # The set cannot contain two distinct IRIs with the same complete
+            # namespace/local-name split, so cardinality alone is sufficient.
+            if len(iris) > 1:
                 self.add(
                     "IRI003",
                     sorted(map(str, iris))[0],
