@@ -4,6 +4,21 @@
 
 # ontolint
 
+<p align="center">
+  <a href="https://www.python.org/"><img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white"></a>
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
+  <a href="docs/rules.md"><img alt="Rules implemented: 186 of 329" src="https://img.shields.io/badge/rules-186%2F329_implemented-brightgreen"></a>
+  <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
+  <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
+</p>
+<p align="center">
+  <a href="https://docs.astral.sh/ruff/"><img alt="Code style and lint: Ruff" src="https://img.shields.io/badge/lint%20%26%20format-ruff-D7FF64?logo=ruff&logoColor=black"></a>
+  <img alt="Types: pyright strict and mypy" src="https://img.shields.io/badge/types-pyright%20strict%20%2B%20mypy-2a6db2">
+  <img alt="Coverage gate: at least 95 percent" src="https://img.shields.io/badge/coverage%20gate-%E2%89%A595%25-brightgreen">
+  <a href="docs/mutation-policy.md"><img alt="Mutation gate: at least 85 percent" src="https://img.shields.io/badge/mutation%20gate-%E2%89%A585%25-brightgreen"></a>
+  <a href="https://docs.astral.sh/uv/"><img alt="Managed with uv" src="https://img.shields.io/badge/managed%20with-uv-DE5FE9"></a>
+</p>
+
 `ontolint` is an offline ontology-quality linter for RDF graphs. It provides
 graph-local checks for RDF/OWL, SKOS, lexical quality, class hierarchies, and
 optional SHACL validation. It is a practical review aid—not a substitute for
@@ -11,10 +26,12 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-The prototype defines 63 diagnostics:
+186 of the 329 catalogue rules are implemented; the rest are planned. The
+[rule reference](docs/rules.md) documents each one with an example.
 
-- 59 Python graph checks for metadata, identifiers, labels, class hierarchies,
-  OWL usage, SKOS, SHACL-shape quality, and governance.
+- 182 Python graph checks for metadata, identifiers, IRIs, labels and lexical
+  quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
+  shape quality, governance and ontology metrics.
 - `INPUT001` for RDF parsing failures.
 - `SHACL001` for optional pySHACL validation results.
 - `TOOL001` for configuration and execution failures.
@@ -314,7 +331,7 @@ Those mappings are traceability aids, not claims of identical behavior.
 ## Roadmap
 
 [`data/rule_catalogue.csv`](data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 329 entries: 63 executable diagnostics and 266 proposed
+catalogue. It records 329 entries: 186 executable diagnostics and 143 proposed
 candidates. The additional entry beyond the original 328-rule roadmap is
 `TOOL001`, an operational diagnostic for the linter itself.
 

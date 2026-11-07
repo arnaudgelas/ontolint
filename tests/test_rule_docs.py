@@ -29,3 +29,12 @@ def test_every_proposed_rule_has_an_intent_and_no_other_does() -> None:
     proposed = {row.rule_id for row in load_catalogue() if row.status.value != "implemented"}
     assert set(INTENTS) == proposed
     assert all(text.strip() for text in INTENTS.values())
+
+
+def test_readme_rule_counts_match_the_catalogue() -> None:
+    rows = load_catalogue()
+    done = sum(1 for row in rows if row.status.value == "implemented")
+    readme = (DOC.parent.parent / "README.md").read_text(encoding="utf-8")
+    assert f"rules-{done}%2F{len(rows)}_implemented" in readme
+    assert f"{done} of the {len(rows)} catalogue rules are implemented" in readme
+    assert f"{done} executable diagnostics and {len(rows) - done} proposed" in readme
