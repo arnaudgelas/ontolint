@@ -92,7 +92,7 @@ def _mixed_naming(ctx: RuleContext) -> None:
 
 def _label_text(ctx: RuleContext) -> None:
     by_predicate = ctx.context.subjects_by_predicate
-    for predicate in dict.fromkeys(LABEL_PREDICATES):
+    for predicate in dict.fromkeys((*LABEL_PREDICATES, *ctx.labels)):
         for term in sorted(by_predicate.get(predicate, frozenset()) & ctx.terms, key=str):
             for label in sorted((o for o in ctx.g.objects(term, predicate) if isinstance(o, Literal)), key=str):
                 value = str(label)

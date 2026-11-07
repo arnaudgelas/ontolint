@@ -15,6 +15,8 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rdflib.term import Node
 
+from .ownership import Ownership
+
 KINDS = (
     OWL.Class,
     RDFS.Class,
@@ -29,6 +31,10 @@ KINDS = (
 )
 CLASS_TYPES = (OWL.Class, RDFS.Class)
 PROPERTY_TYPES = (OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty, RDF.Property)
+
+
+def _everything(_value: object) -> bool:
+    return True
 
 
 @dataclass(frozen=True)
@@ -47,12 +53,22 @@ class GraphContext:
     properties_by_domain: Mapping[Node, frozenset[URIRef]]
     subjects_by_predicate: Mapping[Node, frozenset[Node]]
     predicates: frozenset[Node]
+    ownership: Ownership = Ownership()
 
     @classmethod
     def build(
-        cls, graph: Graph, is_local: Callable[[object], bool], *, restrict_to_local: bool = False
+        cls,
+        graph: Graph,
+        is_local: Callable[[object], bool] | None = None,
+        *,
+        restrict_to_local: bool = False,
+        base: str | None = None,
     ) -> GraphContext:
-        """Index asserted triples once and apply local namespace scope to terms."""
+        """Index asserted triples once and keep only the terms the file owns.
+
+        Ownership (see :mod:`ontolint.ownership`) comes from ``base`` when given, else from the
+        ontology IRIs of the graph.  An explicit ``is_local`` predicate overrides it.
+        """
         subjects_by_type: dict[Node, set[Node]] = defaultdict(set)
         types_by_subject: dict[Node, set[Node]] = defaultdict(set)
         domains_by_property: dict[Node, set[Node]] = defaultdict(set)
@@ -82,11 +98,14 @@ class GraphContext:
         properties = set().union(*(declared(type_) for type_ in PROPERTY_TYPES))
         concepts = declared(SKOS.Concept)
         terms = set().union(*(declared(type_) for type_ in KINDS))
-        if restrict_to_local:
-            terms = {term for term in terms if is_local(term)}
-            classes = {term for term in classes if is_local(term)}
-            properties = {term for term in properties if is_local(term)}
-            concepts = {term for term in concepts if is_local(term)}
+        ownership = Ownership.for_terms(base, ontologies, terms)
+        owns: Callable[[object], bool] = ownership.owns
+        if is_local is not None:
+            owns = is_local if restrict_to_local else _everything
+        terms = {term for term in terms if owns(term)}
+        classes = {term for term in classes if owns(term)}
+        properties = {term for term in properties if owns(term)}
+        concepts = {term for term in concepts if owns(term)}
 
         def frozen_mapping[T: Node, V: Node](mapping: Mapping[T, set[V]]) -> Mapping[T, frozenset[V]]:
             return MappingProxyType({key: frozenset(value) for key, value in mapping.items()})
@@ -104,4 +123,5 @@ class GraphContext:
             properties_by_domain=frozen_mapping(properties_by_domain),
             subjects_by_predicate=frozen_mapping(subjects_by_predicate),
             predicates=frozenset(predicates),
+            ownership=ownership,
         )

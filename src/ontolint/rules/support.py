@@ -10,7 +10,21 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import DC, DCTERMS, RDF, RDFS, SKOS
 from rdflib.term import Identifier, Node
 
-DESCRIPTIONS = (RDFS.comment, SKOS.definition, DCTERMS.description, DC.description)
+from ontolint.ownership import base_matches
+
+OBO = "http://purl.obolibrary.org/obo/"
+PROV = "http://www.w3.org/ns/prov#"
+# Definition-like annotations: OBO "definition" (IAO_0000115) and "elucidation" (IAO_0000600), PROV-O
+# ``prov:definition``.  ``skos:scopeNote`` is deliberately not a definition.
+DESCRIPTIONS = (
+    RDFS.comment,
+    SKOS.definition,
+    DCTERMS.description,
+    DC.description,
+    URIRef(OBO + "IAO_0000115"),
+    URIRef(OBO + "IAO_0000600"),
+    URIRef(PROV + "definition"),
+)
 LABELS = (RDFS.label, SKOS.prefLabel)
 META_LICENSE = (DCTERMS.license, URIRef("http://creativecommons.org/ns#license"))
 META_CREATOR = (DCTERMS.creator, DC.creator, URIRef("http://www.w3.org/ns/prov#wasAttributedTo"))
@@ -19,15 +33,8 @@ MINIMUM_SINGLE_CHILD_CHAIN_LENGTH = 3
 
 
 def is_local(base: str | None, node: object) -> bool:
-    """Return whether ``node`` is an IRI inside the configured base namespace."""
-    if not isinstance(node, URIRef):
-        return False
-    if not base:
-        return True
-    iri = str(node)
-    return (
-        iri.startswith(base) if base.endswith(("#", "/")) else (iri == base or iri.startswith((base + "#", base + "/")))
-    )
+    """Return whether ``node`` is an IRI inside the configured base namespace (plain prefix match)."""
+    return base_matches(base, node)
 
 
 def local_name(iri: URIRef) -> str:

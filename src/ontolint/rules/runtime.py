@@ -9,7 +9,12 @@ from ontolint.models import Finding
 from ontolint.policy import Policy
 
 from .specs import FIXES, SEVERITY
-from .support import is_local
+from .support import DESCRIPTIONS, LABELS
+
+
+def _with_extras(defaults: tuple[URIRef, ...], extras: tuple[str, ...]) -> tuple[URIRef, ...]:
+    """Return the default predicates followed by the configured extra ones, without duplicates."""
+    return tuple(dict.fromkeys((*defaults, *(URIRef(extra) for extra in extras))))
 
 
 class RuleContext:
@@ -22,6 +27,8 @@ class RuleContext:
         self.context = context
         self.findings: list[Finding] = []
         self.seen: set[tuple[str, str, str]] = set()
+        self.descriptions: tuple[URIRef, ...] = _with_extras(DESCRIPTIONS, policy.extra_definition_predicates)
+        self.labels: tuple[URIRef, ...] = _with_extras(LABELS, policy.extra_label_predicates)
 
     @property
     def ontologies(self) -> frozenset[URIRef]:
@@ -44,8 +51,8 @@ class RuleContext:
         return self.context.terms
 
     def local(self, node: object) -> bool:
-        """Return whether ``node`` belongs to the policy's base namespace (all IRIs if unset)."""
-        return is_local(self.policy.base, node)
+        """Return whether ``node`` is owned by the linted ontology (see :mod:`ontolint.ownership`)."""
+        return self.context.ownership.owns(node)
 
     def add(self, code: str, focus: object, message: str, *, confidence: str = "heuristic") -> None:
         """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs."""

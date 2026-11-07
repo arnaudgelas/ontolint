@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, fields
 from typing import Any
 
 from .models import Severity
 
+_ABSOLUTE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
 DEFAULT_DEPTH_LIMIT = 7
 DEFAULT_INHERITANCE_LIMIT = 3
 DEFAULT_SOUP_LIMIT = 15
@@ -71,6 +73,8 @@ class Policy:
     metric_min_definition_words: float = 4.0
     max_input_bytes: int = DEFAULT_MAX_INPUT_BYTES
     max_triples: int = DEFAULT_MAX_TRIPLES
+    extra_definition_predicates: tuple[str, ...] = ()
+    extra_label_predicates: tuple[str, ...] = ()
     ignored_rules: frozenset[str] = frozenset()
     severity_overrides: tuple[tuple[str, str], ...] = ()
 
@@ -108,6 +112,8 @@ class Policy:
             raise ValueError("policy thresholds must be integers")
         metrics = _metric_values(data)
         limits = _loader_limits(data)
+        extra_definitions = _iri_list(data, "extra_definition_predicates")
+        extra_labels = _iri_list(data, "extra_label_predicates")
         return cls(
             **metrics,
             **limits,
@@ -116,9 +122,22 @@ class Policy:
             depth_limit=numeric_values["depth_limit"],
             inheritance_limit=numeric_values["inheritance_limit"],
             soup_limit=numeric_values["soup_limit"],
+            extra_definition_predicates=extra_definitions,
+            extra_label_predicates=extra_labels,
             ignored_rules=frozenset(ignored_rules),
             severity_overrides=tuple(sorted(overrides.items())),
         )
+
+
+def _iri_list(data: Mapping[str, Any], name: str) -> tuple[str, ...]:
+    """Validate a list of absolute predicate IRIs (no whitespace, with a scheme); keep order, drop duplicates."""
+    value = data.get(name, [])
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f"{name} must be a list of IRI strings")
+    for item in value:
+        if not _ABSOLUTE_IRI.fullmatch(item):
+            raise ValueError(f"{name} must contain absolute IRIs without whitespace: {item!r}")
+    return tuple(dict.fromkeys(value))
 
 
 def _real(name: str, value: Any) -> float:

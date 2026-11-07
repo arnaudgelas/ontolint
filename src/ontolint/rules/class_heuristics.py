@@ -18,7 +18,7 @@ from rdflib.namespace import OWL, RDFS
 from ontolint.context import CLASS_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import LABELS, directed_edges, local_name
+from .support import directed_edges, local_name
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -99,7 +99,7 @@ def _tokens(text: str) -> tuple[str, ...]:
 def _label_keys(ctx: RuleContext, cls: URIRef) -> set[LabelKey]:
     """Return ``(language, normalized text)`` for every non-blank plain label of ``cls``."""
     keys: set[LabelKey] = set()
-    for predicate in LABELS:
+    for predicate in ctx.labels:
         for o in ctx.g.objects(cls, predicate):
             if isinstance(o, Literal) and str(o).strip():
                 keys.add(((o.language or "").lower(), " ".join(str(o).casefold().split())))

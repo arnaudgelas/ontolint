@@ -105,6 +105,12 @@ class RunPlan:
 def _lint_file(item: InputFile, graph: Graph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule."""
     ctx = engine.build_context(graph, plan.shapes, plan.policy)
+    if ctx.context.ownership.base_selected_nothing:
+        print(
+            f"TOOL002: warning: --base {plan.policy.base!r} selects none of the terms declared in {item.display}; "
+            "term-level rules have nothing to check (is the base a prefix of the term IRIs?)",
+            file=sys.stderr,
+        )
     robot = (
         engine.RobotRequest(item.path, args.owl_profile, args.robot_image, args.robot_timeout)
         if args.owl_profile

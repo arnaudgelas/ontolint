@@ -5,7 +5,6 @@ from __future__ import annotations
 import shutil
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from functools import partial
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -29,7 +28,6 @@ from .reporting import SEVERITY_ORDER
 from .rules.builtin import RULE_MODULES, module_name, module_runners, module_specs
 from .rules.registry import RuleRegistry, default_registry
 from .rules.runtime import RuleContext
-from .rules.support import is_local
 
 type RuleFamily = Callable[[RuleContext], None]
 
@@ -54,7 +52,7 @@ class RobotRequest:
 
 def build_context(graph: Graph, shapes_graph: Graph | None, policy: Policy) -> RuleContext:
     """Index ``graph`` once and bundle it with ``policy`` for rule execution."""
-    graph_context = GraphContext.build(graph, partial(is_local, policy.base), restrict_to_local=policy.base is not None)
+    graph_context = GraphContext.build(graph, base=policy.base)
     return RuleContext(graph, shapes_graph, policy, graph_context)
 
 

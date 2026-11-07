@@ -54,7 +54,9 @@ class Linter:
         self.terms = self.context.terms
 
     def local(self, node: object) -> bool:
-        return support.is_local(self.base, node)
+        if self.base:
+            return support.is_local(self.base, node)
+        return self.rule_context.local(node)
 
     def add(self, code: str, focus: object, message: str, *, confidence: str = "heuristic") -> None:
         self.rule_context.add(code, focus, message, confidence=confidence)

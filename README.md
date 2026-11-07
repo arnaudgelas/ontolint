@@ -319,8 +319,14 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 
 ## Scope and limitations
 
-- Use `--base` to restrict checks to a local namespace. Without it, every
-  explicitly declared term is treated as local.
+- Term-level rules only judge terms the file owns.  With `--base` the base decides (a base such as
+  `http://purl.obolibrary.org/obo/RO_` is a plain prefix; a warning is printed when it selects no declared
+  term).  Without it the owned namespaces are derived from the `owl:Ontology` IRI(s) (the IRI, the IRI
+  without `#`/`/`/`.owl`, and for OBO ontologies the `.../obo/<NAME>_` ID space); RDF/RDFS/OWL/XSD terms
+  are never owned, and if no declared term matches, every declared term is treated as owned.
+- Definitions are read from `rdfs:comment`, `skos:definition`, `dcterms:description`, `dc:description`,
+  `obo:IAO_0000115`, `obo:IAO_0000600` and `prov:definition`; labels from `rdfs:label` and `skos:prefLabel`.
+  Add more with the policy lists `extra_definition_predicates` and `extra_label_predicates` (absolute IRIs).
 - Class-hierarchy analysis uses asserted `rdfs:subClassOf` statements; it does
   not calculate entailments or inspect an import closure.
 - `CLS002` can be noisy for TBox-only ontologies and is often disabled in that

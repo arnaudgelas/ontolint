@@ -18,7 +18,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import DESCRIPTIONS, LABELS, local_name
+from .support import local_name
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -161,10 +161,10 @@ def _literals(ctx: RuleContext, term: URIRef, predicates: tuple[URIRef, ...]) ->
 
 def _gather(ctx: RuleContext, term: URIRef) -> TermText:
     return TermText(
-        labels=_literals(ctx, term, LABELS),
+        labels=_literals(ctx, term, ctx.labels),
         primary=_literals(ctx, term, PRIMARY_LABELS),
         alternatives=_literals(ctx, term, ALTERNATIVE_LABELS),
-        definitions=_literals(ctx, term, DESCRIPTIONS),
+        definitions=_literals(ctx, term, ctx.descriptions),
         skos_definitions=_literals(ctx, term, (SKOS.definition,)),
     )
 
@@ -192,7 +192,7 @@ def _label_style(ctx: RuleContext, term: URIRef, text: TermText) -> None:
 
 
 def _label_types(ctx: RuleContext, term: URIRef) -> None:
-    for predicate in (*LABELS, *DESCRIPTIONS):
+    for predicate in (*ctx.labels, *ctx.descriptions):
         for value in ctx.g.objects(term, predicate):
             if not isinstance(value, Literal):
                 ctx.add("LEX013", term, f"{predicate} value is not a literal.", confidence="certain")

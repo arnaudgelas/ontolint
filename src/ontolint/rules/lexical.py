@@ -11,7 +11,7 @@ from rdflib.namespace import OWL, RDFS
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import DESCRIPTIONS, LABELS, MINIMUM_STYLE_SAMPLE_SIZE, local_name
+from .support import MINIMUM_STYLE_SAMPLE_SIZE, local_name
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -136,10 +136,10 @@ def _term_labels(ctx: RuleContext) -> LabelIndex:
     g = ctx.g
     label_index: LabelIndex = defaultdict(set)
     for term in sorted(ctx.terms, key=str):
-        labels = {o for p in LABELS for o in g.objects(term, p) if isinstance(o, Literal)}
+        labels = {o for p in ctx.labels for o in g.objects(term, p) if isinstance(o, Literal)}
         if not labels and (term, OWL.deprecated, Literal(True)) not in g:
             ctx.add("LEX001", term, "Term has no label.", confidence="certain")
-        if not any((term, p, None) in g for p in DESCRIPTIONS):
+        if not any((term, p, None) in g for p in ctx.descriptions):
             ctx.add("LEX002", term, "Term has no description or definition.", confidence="certain")
         _language_checks(ctx, term, labels, label_index)
     return label_index

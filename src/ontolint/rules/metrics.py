@@ -22,8 +22,6 @@ from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import DESCRIPTIONS, LABELS
-
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
@@ -194,9 +192,9 @@ def _coverage_rule(ctx: RuleContext, code: str, terms: frozenset[URIRef], predic
 
 def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: frozenset[URIRef]) -> None:
     policy = ctx.policy
-    _coverage_rule(ctx, "METRIC001", classes, LABELS)
-    _coverage_rule(ctx, "METRIC002", classes, DESCRIPTIONS)
-    _coverage_rule(ctx, "METRIC003", properties, DESCRIPTIONS)
+    _coverage_rule(ctx, "METRIC001", classes, ctx.labels)
+    _coverage_rule(ctx, "METRIC002", classes, ctx.descriptions)
+    _coverage_rule(ctx, "METRIC003", properties, ctx.descriptions)
     if len(classes) >= policy.metric_min_sample:
         ratio = len(properties) / len(classes)
         if ratio < policy.metric_min_property_class_ratio:
@@ -274,7 +272,7 @@ def _language_rule(ctx: RuleContext, terms: frozenset[URIRef]) -> None:
     policy = ctx.policy
     labelled: set[object] = set()
     tagged: set[object] = set()
-    for predicate in LABELS:
+    for predicate in ctx.labels:
         for subject, label in ctx.g.subject_objects(predicate):
             if subject in terms and isinstance(label, Literal):
                 labelled.add(subject)
@@ -294,7 +292,7 @@ def _language_rule(ctx: RuleContext, terms: frozenset[URIRef]) -> None:
 def _definition_rule(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
     policy = ctx.policy
     words: dict[object, int] = {}
-    for predicate in DESCRIPTIONS:
+    for predicate in ctx.descriptions:
         for subject, text in ctx.g.subject_objects(predicate):
             if subject in classes and isinstance(text, Literal):
                 words[subject] = max(words.get(subject, 0), len(WORD.findall(str(text))))

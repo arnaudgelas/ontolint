@@ -8,7 +8,7 @@ from rdflib.namespace import DCTERMS, OWL
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import DESCRIPTIONS, META_CREATOR, META_LICENSE
+from .support import META_CREATOR, META_LICENSE
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -98,5 +98,5 @@ def run(ctx: RuleContext) -> None:
             ctx.add("ONT004", ont, "No versionIRI/versionInfo.")
         if not any((ont, p, None) in g for p in META_CREATOR) or (ont, DCTERMS.created, None) not in g:
             ctx.add("ONT005", ont, "Missing creator or dcterms:created provenance.")
-        if not any((ont, p, None) in g for p in DESCRIPTIONS):
+        if not any((ont, p, None) in g for p in ctx.descriptions):
             ctx.add("ONT006", ont, "Missing ontology description.")
