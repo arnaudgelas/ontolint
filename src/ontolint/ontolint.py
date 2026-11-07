@@ -1,7 +1,7 @@
 """Ontology-quality linter. RDFLib does parsing; pySHACL is an optional validation backend.
 
 Graph-local anti-pattern checks are not claims of OWL inconsistency.  No remote
-URLs or owl:imports are fetched automatically. Python >=3.10.
+URLs or owl:imports are fetched automatically. Python >=3.13.
 """
 
 from __future__ import annotations
@@ -13,9 +13,9 @@ import re
 import subprocess
 import sys
 import tempfile
-from collections import Counter, defaultdict, deque
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass, replace
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 from urllib.parse import urlsplit
@@ -23,6 +23,11 @@ from urllib.parse import urlsplit
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, XSD
 from rdflib.term import Identifier, Node
+
+from .graph import reachable as graph_reachable
+from .graph import strongly_connected_components
+from .models import Finding
+from .policy import Policy
 
 # Codes and default severities are policy, not formal entailment judgments.
 SEVERITY = {
@@ -179,19 +184,6 @@ MINIMUM_STYLE_SAMPLE_SIZE = 4
 MINIMUM_SINGLE_CHILD_CHAIN_LENGTH = 3
 
 
-@dataclass(frozen=True)
-class Finding:
-    rule: str
-    severity: str
-    focus: str
-    message: str
-    suggestion: str
-    confidence: str = "heuristic"
-
-    def to_dict(self):
-        return asdict(self)
-
-
 class Linter:
     def __init__(  # noqa: PLR0913 -- policy thresholds are independently configurable.
         self,
@@ -280,7 +272,7 @@ class Linter:
         for u in all_ids:
             s = str(u)
             pieces = urlsplit(s)
-            if " " in s or "\t" in s or "\n" in s or not pieces.scheme:
+            if any(character.isspace() for character in s) or not pieces.scheme:
                 self.add("IRI001", u, "IRI contains whitespace or is not absolute.", confidence="certain")
             if u in self.ontologies and re.search(r"\.(owl|ttl|n3|rdf|rdfxml)$", pieces.path, flags=re.I):
                 self.add("IRI002", u, "Ontology IRI contains a serialization file extension.")
@@ -329,7 +321,17 @@ class Linter:
                 )
         # Conventional capitalization is only a review hint, not a semantic rule.
         for term in self.classes | self.properties:
-            label: Literal | None = next((x for x in self.g.objects(term, RDFS.label) if isinstance(x, Literal)), None)
+
+            def label_sort_key(label: Literal) -> tuple[str, str, str]:
+                language = label.language if label.language is not None else ""
+                datatype = str(label.datatype) if label.datatype is not None else ""
+                return language, datatype, str(label)
+
+            style_labels = sorted(
+                (label for label in self.g.objects(term, RDFS.label) if isinstance(label, Literal)),
+                key=label_sort_key,
+            )
+            label = style_labels[0] if style_labels else None
             if label and str(label) and str(label)[0].isalpha():
                 if term in self.classes and str(label)[0].islower():
                     self.add("LEX009", term, "Class label begins with lower case (style review).")
@@ -357,38 +359,8 @@ class Linter:
     def components(  # noqa: C901 -- Tarjan's algorithm is intentionally single-pass.
         nodes: Iterable[URIRef], edges: Iterable[tuple[URIRef, URIRef]]
     ) -> list[set[URIRef]]:
-        """Tarjan strongly-connected components, no third-party dependency."""
-        adj = defaultdict(set)
-        for s, o in edges:
-            adj[s].add(o)
-        visited, low, stack, onstack, i, out = {}, {}, [], set(), 0, []
-
-        def dfs(node: URIRef) -> None:
-            nonlocal i
-            visited[node] = low[node] = i
-            i += 1
-            stack.append(node)
-            onstack.add(node)
-            for nxt in adj[node]:
-                if nxt not in visited:
-                    dfs(nxt)
-                    low[node] = min(low[node], low[nxt])
-                elif nxt in onstack:
-                    low[node] = min(low[node], visited[nxt])
-            if low[node] == visited[node]:
-                comp = set()
-                while stack:
-                    nxt = stack.pop()
-                    onstack.remove(nxt)
-                    comp.add(nxt)
-                    if nxt == node:
-                        break
-                out.append(comp)
-
-        for n in nodes:
-            if n not in visited:
-                dfs(n)
-        return out
+        """Compatibility wrapper around the iterative, stack-safe implementation."""
+        return strongly_connected_components(nodes, edges)
 
     @staticmethod
     def reachable(
@@ -398,18 +370,7 @@ class Linter:
         *,
         ignore: tuple[URIRef, URIRef] | None = None,
     ) -> bool:
-        seen, q = {source}, deque([source])
-        while q:
-            node = q.popleft()
-            for nxt in adj.get(node, ()):
-                if (node, nxt) == ignore:
-                    continue
-                if nxt == target:
-                    return True
-                if nxt not in seen:
-                    seen.add(nxt)
-                    q.append(nxt)
-        return False
+        return graph_reachable(adj, source, target, ignore=ignore)
 
     def classes_checks(self):  # noqa: C901, PLR0912 -- cohesive class-policy pass.
         classes = self.classes
@@ -551,7 +512,7 @@ class Linter:
                     if (
                         str(datatype).startswith(str(XSD))
                         and o.datatype != datatype
-                        and not (datatype == XSD.string and o.datatype is None)
+                        and not (datatype == XSD.string and o.datatype in (None, RDF.langString))
                     ):
                         self.add("DATA001", s, f"{p} has range {datatype} but value has datatype {o.datatype}.")
         for p in self.properties:
@@ -667,7 +628,7 @@ class Linter:
         deprecated = set(self.g.subjects(OWL.deprecated, Literal(True)))
         for term in deprecated:
             for s, p in self.g.subject_predicates(term):
-                if p not in (RDFS.label, RDFS.comment, OWL.deprecated, DCTERMS.description, OWL.deprecated):
+                if p not in (RDFS.label, RDFS.comment, OWL.deprecated, DCTERMS.description):
                     self.add("GOV001", s, f"Deprecated term {term} appears as object of {p}.")
             for s, _o in self.g.subject_objects(term):
                 self.add("GOV001", s, f"Deprecated property {term} used in assertion.")
@@ -826,6 +787,7 @@ def main(  # noqa: C901, PLR0915 -- CLI parsing and execution are intentionally 
     stage = "configuration"
     try:
         config = json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {}
+        policy = Policy.from_mapping(config)
         stage = "RDF input parsing"
         g.parse(args.ontology)
         sg = Graph().parse(args.shapes) if args.shapes else None
@@ -833,23 +795,21 @@ def main(  # noqa: C901, PLR0915 -- CLI parsing and execution are intentionally 
         lint = Linter(
             g,
             sg,
-            base=args.base or config.get("base"),
-            languages=tuple(args.language or config.get("languages", [])),
-            depth_limit=args.depth_limit if args.depth_limit is not None else config.get("depth_limit", 7),
+            base=args.base if args.base is not None else policy.base,
+            languages=tuple(args.language) if args.language else policy.languages,
+            depth_limit=args.depth_limit if args.depth_limit is not None else policy.depth_limit,
             inheritance_limit=args.inheritance_limit
             if args.inheritance_limit is not None
-            else config.get("inheritance_limit", 3),
-            soup_limit=args.soup_limit if args.soup_limit is not None else config.get("soup_limit", 15),
+            else policy.inheritance_limit,
+            soup_limit=args.soup_limit if args.soup_limit is not None else policy.soup_limit,
         )
         issues = lint.run()
         if sg is not None:
             issues += _shacl_issues(g, sg)
         if args.owl_profile:
             issues += _robot_profile_issues(Path(args.ontology), args.owl_profile, args.robot_image, args.robot_timeout)
-        ignored = set(config.get("ignored_rules", []))
-        changes = config.get("severity_overrides", {})
-        if any(level not in ("error", "warning", "info") for level in changes.values()):
-            raise ValueError("severity_overrides must be error, warning or info")
+        ignored = policy.ignored_rules
+        changes = policy.severity_mapping
         issues = [replace(f, severity=changes.get(f.rule, f.severity)) for f in issues if f.rule not in ignored]
         if args.write_baseline:
             Path(args.write_baseline).write_text(

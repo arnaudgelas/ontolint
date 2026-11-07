@@ -1,12 +1,13 @@
 [project]
 name = "ontolint"
 version = "0.1.0"
-description = "Add your description here"
+description = "Offline ontology-quality linter for RDF, OWL, SKOS, and SHACL graphs"
 readme = "README.md"
 authors = [
     { name = "Arnaud Gelas", email = "arnaudgelas+ontolint@gmail.com" }
 ]
 requires-python = ">=3.13"
+keywords = ["linter", "ontology", "owl", "rdf", "shacl", "skos"]
 dependencies = [
     "pyshacl>=0.40.2",
     "rdflib>=7.6.0",
