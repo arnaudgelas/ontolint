@@ -655,8 +655,10 @@ def _run_loader(case: Case, work: Workdir) -> str:
     return _load(path, work.root, loader_policy(case.opt))[1]
 
 
-_SHAPES_ERRORS = frozenset({"ReportableRuntimeError", "ShapeLoadError", "ConstraintLoadError", "ValidationFailure"})
-"""pySHACL's own refusals of malformed shapes: a reported FAILED execution, not a crash."""
+_SHAPES_ERRORS = frozenset(
+    {"ReportableRuntimeError", "ShapeLoadError", "ConstraintLoadError", "ValidationFailure", "ShapesRejected"}
+)
+"""pySHACL's own refusals of malformed shapes (and ontolint's pre-check): a reported FAILED execution, not a crash."""
 
 _LINT_KWARGS: dict[str, dict[str, Any]] = {
     "ont": {},

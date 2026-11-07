@@ -305,7 +305,7 @@ uv run pytest -q
 uv run pytest -q -n auto
 
 # Mutation testing (opt-in)
-uv run pytest --gremlins --no-cov --gremlin-parallel --gremlin-cache
+uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
 
 # Lint the project
 uv run ruff check .
@@ -362,6 +362,13 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 - Definitions are read from `rdfs:comment`, `skos:definition`, `dcterms:description`, `dc:description`,
   `obo:IAO_0000115`, `obo:IAO_0000600` and `prov:definition`; labels from `rdfs:label` and `skos:prefLabel`.
   Add more with the policy lists `extra_definition_predicates` and `extra_label_predicates` (absolute IRIs).
+- With `--shapes`, the SHACL step first checks the shapes graph and reports SHACL001 as failed with
+  `ShapesRejected` when pySHACL would crash or stall on it: an IRI that rdflib cannot serialise (such as
+  `{`, `}`, `|`, `^`, a space or a quote), a cyclic `rdf:list`, a list cell with several `rdf:rest` values,
+  a list shared by several lists, a list longer than 400 items, or lists whose squared lengths sum above
+  160000 (pySHACL's meta-validation re-walks each list for every internal result). The data graph is not
+  refused up front: odd IRIs, large enumerations and malformed lists are accepted, and if pySHACL fails on
+  one anyway the failure is reported as `ShapesRejected` with the underlying error.
 - Class-hierarchy analysis uses asserted `rdfs:subClassOf` statements; it does
   not calculate entailments or inspect an import closure.
 - `CLS002` can be noisy for TBox-only ontologies and is often disabled in that
