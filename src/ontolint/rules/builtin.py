@@ -38,6 +38,7 @@ from . import (
     owl,
     owl_axioms,
     owl_expressions,
+    safe_loader,
     shacl_authoring,
     shacl_quality,
     shapes,
@@ -85,7 +86,7 @@ RULE_MODULES: tuple[ModuleType, ...] = (
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).
-EXTERNAL_SPECS: tuple[RuleSpec, ...] = external.SPECS
+EXTERNAL_SPECS: tuple[RuleSpec, ...] = external.SPECS + safe_loader.SPECS
 
 
 def module_name(module: ModuleType) -> str:

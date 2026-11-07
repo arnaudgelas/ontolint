@@ -23,7 +23,7 @@ All examples assume these prefixes:
 ```
 
 
-**186 of 329 catalogue rules are implemented; 143 are TODO.**
+**193 of 329 catalogue rules are implemented; 136 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ All examples assume these prefixes:
 | [ONT](#ont) | 6 | 0 |
 | [OPS](#ops) | 0 | 18 |
 | [OWL](#owl) | 45 | 0 |
-| [SEC](#sec) | 0 | 14 |
+| [SEC](#sec) | 7 | 7 |
 | [SEM](#sem) | 1 | 15 |
 | [SHACL](#shacl) | 1 | 0 |
 | [SHQ](#shq) | 27 | 0 |
@@ -3371,23 +3371,93 @@ Reported: `owl:AllDifferent has no member list.`
 
 ## SEC
 
+#### SEC001: Input file exceeds the size limit
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Split the ontology, or raise --max-input-bytes (or max_input_bytes in the policy) if the size is expected.
+
+*Flagged:* `one byte over the limit` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `exactly at the limit` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC002: Input exceeds the triple limit
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Lint a smaller module, or raise --max-triples (or max_triples in the policy) if the size is expected.
+
+*Flagged:* `four triples with a limit of three` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `four triples with a limit of four` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC006: Remote JSON-LD context refused
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Inline the @context in the document; ontolint never downloads contexts.
+
+*Flagged:* `remote @context` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `inline @context` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC009: Unsafe input path
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Pass a regular file inside the working directory, not a device, a '..' escape or a link leaving it.
+
+*Flagged:* `symlink leaving the directory` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `symlink inside the directory` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC010: RDF/XML unsafe DTD or entity refused
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Remove SYSTEM/PUBLIC identifiers and nested entities; plain internal entities (Protege style) are accepted.
+
+*Flagged:* `external entity` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `no DOCTYPE` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC011: Compressed input refused
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Decompress the file yourself and pass the plain RDF serialization.
+
+*Flagged:* `gzip input` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `plain input` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC013: Network access attempted while disabled
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Make the input self-contained; ontolint runs with the network disabled and never fetches resources.
+
+*Flagged:* `parser dials out` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `ordinary parse` (built programmatically; see `tests/rule_cases/`)
+
 ### SEC: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
 | --- | --- | --- | --- | --- |
-| SEC001 | TODO | Input file larger than the configured size limit. | safe loader or network policy | malicious-input fixture |
-| SEC002 | TODO | Graph with more triples than the configured limit. | safe loader or network policy | malicious-input fixture |
 | SEC003 | TODO | Parsing that exceeds a time budget. | safe loader or network policy | malicious-input fixture |
 | SEC004 | TODO | Deeply nested blank nodes or lists. | safe loader or network policy | malicious-input fixture |
 | SEC005 | TODO | Literal values that are unreasonably large. | safe loader or network policy | malicious-input fixture |
-| SEC006 | TODO | Remote JSON-LD context refused. | safe loader or network policy | malicious-input fixture |
 | SEC007 | TODO | owl:imports not followed by default and reported as skipped. | safe loader or network policy | malicious-input fixture |
 | SEC008 | TODO | IRIs with unsafe schemes such as file: or javascript:. | safe loader or network policy | malicious-input fixture |
-| SEC009 | TODO | Input path that escapes the allowed directory through traversal or symlinks. | safe loader or network policy | malicious-input fixture |
-| SEC010 | TODO | RDF/XML input that declares external entities or a DTD. | safe loader or network policy | malicious-input fixture |
-| SEC011 | TODO | Compressed input that expands beyond a safe ratio. | safe loader or network policy | malicious-input fixture |
 | SEC012 | TODO | Control or bidirectional characters in literals and IRIs. | safe loader or network policy | malicious-input fixture |
-| SEC013 | TODO | Attempted network access while the network is disabled. | safe loader or network policy | malicious-input fixture |
 | SEC014 | TODO | Credentials embedded in an IRI (user information). | safe loader or network policy | malicious-input fixture |
 
 ## SEM

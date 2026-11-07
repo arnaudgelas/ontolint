@@ -22,6 +22,8 @@ class InputFile:
     path: Path
     display: str
     uri: str
+    escapes_root: bool = False
+    """True for a relative argument that climbs out of the working directory (``../x.ttl``)."""
 
 
 def _relative(path: PurePath, root: PurePath) -> PurePath | None:
@@ -79,7 +81,8 @@ def resolve_inputs(raw: list[str], cwd: Path) -> list[InputFile]:
         path = Path(os.path.normpath(cwd / text))
         if path.is_dir():
             raise IsADirectoryError(f"{text} is a directory; pass explicit files (shell globbing is not performed)")
-        item = InputFile(path, display_path(path, cwd), artifact_uri(path, cwd))
+        escapes = not Path(text).is_absolute() and _relative(path, cwd) is None
+        item = InputFile(path, display_path(path, cwd), artifact_uri(path, cwd), escapes)
         key = _identity(path)
         if key not in unique or item.display < unique[key].display:
             unique[key] = item

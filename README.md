@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://www.python.org/"><img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="docs/rules.md"><img alt="Rules implemented: 186 of 329" src="https://img.shields.io/badge/rules-186%2F329_implemented-brightgreen"></a>
+  <a href="docs/rules.md"><img alt="Rules implemented: 193 of 329" src="https://img.shields.io/badge/rules-193%2F329_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -32,7 +32,7 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-186 of the 329 catalogue rules are implemented; the rest are planned. The
+193 of the 329 catalogue rules are implemented; the rest are planned. The
 [rule reference](docs/rules.md) documents each one with an example.
 
 - 182 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -42,6 +42,8 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 - `SHACL001` for optional pySHACL validation results.
 - `TOOL001` for configuration and execution failures.
 - `SEM001` for opt-in ROBOT OWL-profile validation failures.
+- `SEC001`, `SEC002`, `SEC006`, `SEC009`, `SEC010`, `SEC011` and `SEC013` for
+  unsafe inputs, rejected by the loader before linting (see below).
 
 Each finding includes a rule identifier, severity, focus, message, suggested
 remediation, and confidence level. Rules are policy-oriented: a finding is not
@@ -334,10 +336,26 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 The `data/` directory contains crosswalks to the OOPS! and OntoSniff catalogues.
 Those mappings are traceability aids, not claims of identical behavior.
 
+## Input safety
+
+Ontologies are untrusted input, so the loader is deliberately strict:
+
+- Parsing runs with the network disabled. Any socket or DNS attempt is blocked
+  and reported (`SEC013`); a JSON-LD file with an external `@context` is
+  refused (`SEC006`). `owl:imports` is never fetched.
+- Inputs larger than `--max-input-bytes` (default 64 MiB) or holding more than
+  `--max-triples` triples (default 5,000,000) are rejected (`SEC001`, `SEC002`).
+  Both can also be set in the `--config` policy file.
+- RDF/XML with external entities or nested entity expansion is refused
+  (`SEC010`), compressed files are refused (`SEC011`), and relative paths that
+  escape the working directory or symlinks that leave it are refused (`SEC009`).
+- Rejected inputs are reported as `SECxxx: ...` on stderr with exit code `2`,
+  like a parse failure.
+
 ## Roadmap
 
 [`data/rule_catalogue.csv`](data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 329 entries: 186 executable diagnostics and 143 proposed
+catalogue. It records 329 entries: 193 executable diagnostics and 136 proposed
 candidates. The additional entry beyond the original 328-rule roadmap is
 `TOOL001`, an operational diagnostic for the linter itself.
 

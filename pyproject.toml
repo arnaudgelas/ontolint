@@ -88,6 +88,7 @@ paths = [
     "src/ontolint/engine.py",
     "src/ontolint/linter.py",
     "src/ontolint/cli.py",
+    "src/ontolint/loader.py",
     "src/ontolint/reporting.py",
     "src/ontolint/adapters",
     "src/ontolint/rules",

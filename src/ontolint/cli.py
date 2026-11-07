@@ -12,6 +12,7 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from rdflib import Graph
 from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
+from .loader import InputRejected, load_graph
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
 from .policy import Policy
@@ -49,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--depth-limit", type=int)
     ap.add_argument("--inheritance-limit", type=int)
     ap.add_argument("--soup-limit", type=int)
+    ap.add_argument("--max-input-bytes", type=int, help="Refuse input files larger than this (default 64 MiB)")
+    ap.add_argument("--max-triples", type=int, help="Refuse inputs with more triples than this (default 5000000)")
     ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
     ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
     ap.add_argument("--robot-timeout", type=int, default=120)
@@ -81,6 +85,8 @@ def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -
         depth_limit=args.depth_limit if args.depth_limit is not None else config.depth_limit,
         inheritance_limit=args.inheritance_limit if args.inheritance_limit is not None else config.inheritance_limit,
         soup_limit=args.soup_limit if args.soup_limit is not None else config.soup_limit,
+        max_input_bytes=args.max_input_bytes if args.max_input_bytes is not None else config.max_input_bytes,
+        max_triples=args.max_triples if args.max_triples is not None else config.max_triples,
         ignored_rules=ignored,
     )
 
@@ -145,13 +151,23 @@ def _apply_baselines(files: list[FileReport], args: argparse.Namespace) -> list[
     return files
 
 
+_LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
+
+
 def _parse_inputs(inputs: list[InputFile]) -> tuple[list[Graph], list[str]]:
-    """Parse every input; return the graphs and one error message per failure."""
+    """Parse every input safely (no network, bounded size); return the graphs and one message per failure.
+
+    The limits come from the policy of the current run (:data:`_LOADER_POLICY`, set by :func:`_lint`).
+    """
+    policy = _LOADER_POLICY.get() or Policy()
     graphs: list[Graph] = []
     errors: list[str] = []
     for item in inputs:
         try:
-            graphs.append(Graph().parse(item.path))
+            graphs.append(load_graph(item, policy))
+        except InputRejected as exc:
+            where = f" for {item.display}" if len(inputs) > 1 and item.display not in exc.message else ""
+            errors.append(f"{exc.rule_id}: {exc.message}{where}")
         except Exception as exc:  # noqa: BLE001 -- any parser failure is a reportable input error.
             where = f" for {item.display}" if len(inputs) > 1 else ""
             errors.append(f"INPUT001: RDF input parsing failed{where}: {type(exc).__name__}: {exc}")
@@ -199,12 +215,20 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
     stage[0] = "RDF input parsing"
+    limits = _policy(args, config, config.ignored_rules)
     inputs = resolve_inputs(args.ontology, Path.cwd())
+    _LOADER_POLICY.set(limits)
     graphs, errors = _parse_inputs(inputs)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2
-    shapes = Graph().parse(args.shapes) if args.shapes else None
+    shapes: Graph | None = None
+    if args.shapes:
+        try:
+            shapes = load_graph(resolve_inputs([args.shapes], Path.cwd())[0], limits)
+        except InputRejected as exc:
+            print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
+            return 2
     stage[0] = "lint execution"
     plan = _plan(args, config, shapes, registry)
     files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]

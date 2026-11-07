@@ -13,6 +13,15 @@ DEFAULT_DEPTH_LIMIT = 7
 DEFAULT_INHERITANCE_LIMIT = 3
 DEFAULT_SOUP_LIMIT = 15
 
+# Safe-loader limits (SEC001, SEC002): generous for real ontologies, small enough to stop decompression-bomb
+# style inputs in CI.  Both must be positive integers.
+DEFAULT_MAX_INPUT_BYTES = 64 * 1024 * 1024
+DEFAULT_MAX_TRIPLES = 5_000_000
+LOADER_LIMIT_DEFAULTS: dict[str, int] = {
+    "max_input_bytes": DEFAULT_MAX_INPUT_BYTES,
+    "max_triples": DEFAULT_MAX_TRIPLES,
+}
+
 # Ontology-metric thresholds (METRIC001-METRIC013).  Ratios live in [0, 1]; counts are integers.
 # ``metric_min_sample`` is the smallest population a metric needs before it can fire, so tiny
 # ontologies never trigger a ratio rule.
@@ -60,6 +69,8 @@ class Policy:
     metric_min_property_class_ratio: float = 0.1
     metric_max_property_class_ratio: float = 5.0
     metric_min_definition_words: float = 4.0
+    max_input_bytes: int = DEFAULT_MAX_INPUT_BYTES
+    max_triples: int = DEFAULT_MAX_TRIPLES
     ignored_rules: frozenset[str] = frozenset()
     severity_overrides: tuple[tuple[str, str], ...] = ()
 
@@ -96,8 +107,10 @@ class Policy:
         if any(not isinstance(value, int) or isinstance(value, bool) for value in numeric_values.values()):
             raise ValueError("policy thresholds must be integers")
         metrics = _metric_values(data)
+        limits = _loader_limits(data)
         return cls(
             **metrics,
+            **limits,
             base=base,
             languages=tuple(language.lower() for language in languages),
             depth_limit=numeric_values["depth_limit"],
@@ -137,6 +150,19 @@ def _metric_values(data: Mapping[str, Any]) -> dict[str, Any]:
         if quantity < 0:
             raise ValueError(f"{name} must be non-negative")
         values[name] = quantity
+    return values
+
+
+def _loader_limits(data: Mapping[str, Any]) -> dict[str, int]:
+    """Validate the safe-loader limits: positive integers."""
+    values: dict[str, int] = {}
+    for name, default in LOADER_LIMIT_DEFAULTS.items():
+        value = data.get(name, default)
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError(f"{name} must be an integer")
+        if value < 1:
+            raise ValueError(f"{name} must be at least 1")
+        values[name] = value
     return values
 
 
