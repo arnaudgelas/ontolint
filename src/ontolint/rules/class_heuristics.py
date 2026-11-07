@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from rdflib import Literal, URIRef
 from rdflib.namespace import OWL, RDFS
+from rdflib.term import Node
 
 from ontolint.context import CLASS_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -124,8 +125,9 @@ def run(ctx: RuleContext) -> None:
         _sibling_labels(ctx, parent, kids, keys)
         _unlabelled_parent(ctx, parent, kids, keys)
         _sibling_naming(ctx, parent, kids)
+    metaclasses = _metaclasses(ctx)
     for cls in sorted(ctx.classes, key=str):
-        _punned(ctx, cls)
+        _punned(ctx, cls, metaclasses)
         _name_shape(ctx, cls)
 
 
@@ -166,9 +168,21 @@ def _ends_with_head(name: tuple[str, ...], head: str) -> bool:
     return len(name) >= MINIMUM_NAME_TOKENS and name[-1] == head
 
 
-def _punned(ctx: RuleContext, cls: URIRef) -> None:
+def _metaclasses(ctx: RuleContext) -> set[URIRef]:
+    """Return classes that are (transitively) subclasses of ``rdfs:Class`` (e.g. ``schema:DataType``)."""
+    found: set[URIRef] = set()
+    todo: list[Node] = [RDFS.Class]
+    while todo:
+        for child in ctx.g.subjects(RDFS.subClassOf, todo.pop()):
+            if isinstance(child, URIRef) and child not in found:
+                found.add(child)
+                todo.append(child)
+    return found
+
+
+def _punned(ctx: RuleContext, cls: URIRef, metaclasses: set[URIRef]) -> None:
     other = ctx.context.types_by_subject.get(cls, frozenset()).difference(CLASS_TYPES)
-    if OWL.NamedIndividual in other or other & ctx.classes:
+    if OWL.NamedIndividual in other or other & (ctx.classes - metaclasses):
         ctx.add("CLS017", cls, "Class is also typed as an individual (punning).")
 
 

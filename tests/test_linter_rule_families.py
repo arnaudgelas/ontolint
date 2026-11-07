@@ -63,7 +63,6 @@ def test_metadata_lexical_and_hierarchy_threshold_rules() -> None:  # noqa: PLR0
         "LEX006",
         "LEX007",
         "LEX008",
-        "LEX009",
         "CLS005",
         "CLS006",
         "CLS008",

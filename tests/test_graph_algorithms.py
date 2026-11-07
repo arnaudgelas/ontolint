@@ -276,4 +276,4 @@ def test_linter_handles_chain_far_beyond_recursion_limit() -> None:
 
     findings = Linter(graph).run()
 
-    assert {f.focus for f in findings if f.rule == "CLS005"} == {str(n) for n in nodes[: size - 7]}
+    assert {f.focus for f in findings if f.rule == "CLS005"} == {str(nodes[0])}  # one finding per deep branch

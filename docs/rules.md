@@ -267,7 +267,7 @@ ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:creat
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
-- **Fix:** Inspect whether the disconnected class is intentional (e.g., a top-level class).
+- **Fix:** Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type.
 
 *Flagged:* isolated class
 
@@ -290,18 +290,18 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
 - **Category:** heuristic
 - **Fix:** Check whether this class is intentionally uninstantiated, abstract, or imported.
 
-*Flagged:* no instance, no subclass
+*Flagged:* leaf next to a populated class
 
 ```turtle
-ex:A a owl:Class .
+ex:A a owl:Class . ex:B a owl:Class . ex:i a ex:B .
 ```
 
 Reported: `Class has no directly typed instance or subclass in this graph.`
 
-*Clean:* typed instance
+*Clean:* pure vocabulary without individuals
 
 ```turtle
-ex:A a owl:Class . ex:i a ex:A .
+ex:A a owl:Class .
 ```
 
 #### CLS003: Asserted subclass cycle
@@ -1470,7 +1470,7 @@ ex:A a owl:Class .
 
 *Flagged:* `v1 segment` (built programmatically; see `tests/rule_cases/`)
 
-Reported: `Term IRI path embeds a version or date segment.`
+Reported: `1 term IRIs in this namespace embed a version or date segment (e.g. https://a.test/v1/A).`
 
 *Clean:* `plain` (built programmatically; see `tests/rule_cases/`)
 
@@ -1502,10 +1502,10 @@ ex:Person a owl:Class . ex:T0001234 a owl:Class .
 
 Reported: `Namespace mixes 1 opaque local names (e.g. T0001234) and 1 readable ones (e.g. Person).`
 
-*Clean:* all readable
+*Clean:* one outlier among eleven terms (below 10%)
 
 ```turtle
-ex:Person a owl:Class . ex:hasPart a owl:ObjectProperty .
+ex:Nameaax a owl:Class . ex:Nameabx a owl:Class . ex:Nameacx a owl:Class . ex:Nameadx a owl:Class . ex:Nameaex a owl:Class . ex:Nameafx a owl:Class . ex:Nameagx a owl:Class . ex:Nameahx a owl:Class . ex:Nameaix a owl:Class . ex:Nameajx a owl:Class . ex:T1000 a owl:Class .
 ```
 
 #### IRI016: Ontology IRI has a query string or fragment
@@ -1615,7 +1615,7 @@ ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .
 
 #### LEX004: Duplicate label across terms
 
-- **Severity:** warning
+- **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
 - **Fix:** Differentiate labels or formally document and link genuinely equivalent concepts.
@@ -1623,15 +1623,15 @@ ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .
 *Flagged:* same label on two terms
 
 ```turtle
-ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .
+ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "Same" .
 ```
 
-Reported: `Duplicate label 'same'@und for https://example.test/onto#A, https://example.test/onto#B`
+Reported: `Duplicate label 'Same'@und for https://example.test/onto#A, https://example.test/onto#B`
 
-*Clean:* different labels
+*Clean:* case-only difference
 
 ```turtle
-ex:A a owl:Class ; rdfs:label "One" . ex:B a owl:Class ; rdfs:label "Two" .
+ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .
 ```
 
 #### LEX005: Blank or whitespace-padded label
@@ -1729,18 +1729,35 @@ Linter options: `languages=('fr',)`.
 - **Category:** heuristic
 - **Fix:** Review capitalization and wording relative to the namespace policy.
 
-*Flagged:* lower-case class label
+*Flagged:* one upper-case class among ten lower-case
 
 ```turtle
-ex:A a owl:Class ; rdfs:label "thing" .
+ex:c0 a owl:Class ; rdfs:label "term 0" .
+ex:c1 a owl:Class ; rdfs:label "term 1" .
+ex:c2 a owl:Class ; rdfs:label "term 2" .
+ex:c3 a owl:Class ; rdfs:label "term 3" .
+ex:c4 a owl:Class ; rdfs:label "term 4" .
+ex:c5 a owl:Class ; rdfs:label "term 5" .
+ex:c6 a owl:Class ; rdfs:label "term 6" .
+ex:c7 a owl:Class ; rdfs:label "term 7" .
+ex:c8 a owl:Class ; rdfs:label "term 8" .
+ex:codd a owl:Class ; rdfs:label "Thing" .
 ```
 
-Reported: `Class label begins with lower case (style review).`
+Reported: `Class label begins with upper case, but 9 of 10 class labels begin with lower case (style review).`
 
-*Clean:* capitalised class
+*Clean:* nine labels are too few
 
 ```turtle
-ex:A a owl:Class ; rdfs:label "Thing" .
+ex:c0 a owl:Class ; rdfs:label "term 0" .
+ex:c1 a owl:Class ; rdfs:label "term 1" .
+ex:c2 a owl:Class ; rdfs:label "term 2" .
+ex:c3 a owl:Class ; rdfs:label "term 3" .
+ex:c4 a owl:Class ; rdfs:label "term 4" .
+ex:c5 a owl:Class ; rdfs:label "term 5" .
+ex:c6 a owl:Class ; rdfs:label "term 6" .
+ex:c7 a owl:Class ; rdfs:label "term 7" .
+ex:codd a owl:Class ; rdfs:label "Thing" .
 ```
 
 #### LEX010: Label is a verbatim identifier
@@ -2648,19 +2665,19 @@ ex:C9 a owl:Class ; rdfs:comment "A long enough definition that states what dist
 - **Category:** heuristic
 - **Fix:** Check whether anonymous resources could be named, or are restrictions that should be reviewed.
 
-*Flagged:* ten anonymous subjects
+*Flagged:* ten free blank subjects
 
 ```turtle
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
-[] a owl:Restriction .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
 ```
 
 Reported: `10 of 10 subjects are blank nodes (1.00 > 0.60).`

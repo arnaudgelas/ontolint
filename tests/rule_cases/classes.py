@@ -26,11 +26,19 @@ CASES = {
         [
             ttl("linked classes", SUB),
             ttl("explicit owl:Thing parent", "ex:A a owl:Class ; rdfs:subClassOf owl:Thing ."),
+            ttl("used as a domain", "ex:A a owl:Class . ex:p a owl:ObjectProperty ; rdfs:domain ex:A ."),
+            ttl("used as a range", "ex:A a owl:Class . ex:p a owl:ObjectProperty ; rdfs:range ex:A ."),
+            ttl(
+                "used as a restriction filler",
+                "ex:A a owl:Class . [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A ] .",
+            ),
+            ttl("has an instance", "ex:A a owl:Class . ex:i a ex:A ."),
         ],
     ),
     "CLS002": rule_cases(
-        [ttl("no instance, no subclass", "ex:A a owl:Class .")],
+        [ttl("leaf next to a populated class", "ex:A a owl:Class . ex:B a owl:Class . ex:i a ex:B .")],
         [
+            ttl("pure vocabulary without individuals", "ex:A a owl:Class ."),
             ttl("typed instance", "ex:A a owl:Class . ex:i a ex:A ."),
             ttl("has a subclass and a leaf instance", SUB + " ex:i a ex:A ."),
         ],

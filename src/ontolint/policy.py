@@ -11,8 +11,8 @@ from typing import Any
 from .models import Severity
 
 _ABSOLUTE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
-DEFAULT_DEPTH_LIMIT = 7
-DEFAULT_INHERITANCE_LIMIT = 3
+DEFAULT_DEPTH_LIMIT = 10
+DEFAULT_INHERITANCE_LIMIT = 5
 DEFAULT_SOUP_LIMIT = 15
 
 # Safe-loader limits (SEC001, SEC002): generous for real ontologies, small enough to stop decompression-bomb

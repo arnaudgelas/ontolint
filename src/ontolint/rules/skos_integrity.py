@@ -18,6 +18,8 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .owl import namespace_of, owned_checker
+
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
@@ -285,9 +287,16 @@ def _relation_values(ctx: RuleContext) -> None:
         for s, o in g.subject_objects(p):
             if isinstance(o, Literal) and ctx.local(s):
                 ctx.add("SKOS016", s, f"skos:{p.rsplit('#', 1)[-1]} has a literal value.", confidence="certain")
+    owned = owned_checker(ctx)
     for p in _LINK_TARGETS:
         for s, o in sorted(g.subject_objects(p), key=lambda t: (str(t[0]), str(t[1]))):
-            if isinstance(o, URIRef) and ctx.local(s) and ctx.local(o) and (o, None, None) not in g:
+            if (
+                isinstance(o, URIRef)
+                and ctx.local(s)
+                and owned(o)
+                and (p not in _MAPPING or namespace_of(o) == namespace_of(s))
+                and (o, None, None) not in g
+            ):
                 ctx.add("SKOS017", s, f"skos:{p.rsplit('#', 1)[-1]} target {o} is not described in the graph.")
 
 

@@ -7,17 +7,92 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from rdflib import Literal, URIRef
+from rdflib import BNode, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, XSD
 from rdflib.term import Node
 
 from ontolint.context import PROPERTY_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.ownership import OwnershipMode
 
 from .support import list_items
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from rdflib import Graph
+
     from .runtime import RuleContext
+
+SCHEMA_HTTP = "http://schema.org/"
+SCHEMA_HTTPS = "https://schema.org/"
+DCAM = "http://purl.org/dc/dcam/"
+# Vocabularies that declare a property's domain/range without rdfs:domain/rdfs:range semantics.
+DOMAIN_SUBSTITUTES = (
+    URIRef(SCHEMA_HTTP + "domainIncludes"),
+    URIRef(SCHEMA_HTTPS + "domainIncludes"),
+    URIRef(DCAM + "domainIncludes"),
+)
+RANGE_SUBSTITUTES = (
+    URIRef(SCHEMA_HTTP + "rangeIncludes"),
+    URIRef(SCHEMA_HTTPS + "rangeIncludes"),
+    URIRef(DCAM + "rangeIncludes"),
+)
+# Blank nodes are followed upwards (restriction -> class, list node -> list owner) at most this far.
+OWNER_DEPTH = 8
+_DATATYPE_EXPRESSIONS = (OWL.onDatatype, OWL.datatypeComplementOf)
+
+
+def is_deprecated(g: Graph, term: Node) -> bool:
+    """Return whether ``term`` carries ``owl:deprecated true``."""
+    return any(
+        isinstance(o, Literal) and str(o).strip().lower() in ("true", "1") for o in g.objects(term, OWL.deprecated)
+    )
+
+
+def owning_term(g: Graph, node: Node) -> Node:
+    """Return the named term a blank node (restriction, expression, list cell) belongs to, else ``node``.
+
+    Walks upwards through incoming triples, preferring the first IRI subject found in sorted order, so
+    the answer is deterministic; ``rdf:rest``/``rdf:first`` hops climb to the list head.
+    """
+    if not isinstance(node, BNode):
+        return node
+    seen: set[Node] = set()
+    frontier: list[Node] = [node]
+    for _ in range(OWNER_DEPTH):
+        parents = sorted(
+            {s for n in frontier for s in g.subjects(None, n) if s not in seen and s != n},
+            key=str,
+        )
+        if not parents:
+            return node
+        named = [s for s in parents if isinstance(s, URIRef)]
+        if named:
+            return named[0]
+        seen.update(frontier)
+        frontier = parents
+    return node
+
+
+def namespace_of(iri: object) -> str:
+    """Return the IRI up to and including the last ``#`` or ``/``."""
+    text = str(iri)
+    cut = max(text.rfind("#"), text.rfind("/"))
+    return text[: cut + 1] if cut >= 0 else text
+
+
+def owned_checker(ctx: RuleContext) -> Callable[[object], bool]:
+    """Return a predicate telling whether an IRI is a term the linted ontology itself defines or could define.
+
+    Without an explicit base or derivable ontology namespace every non-built-in IRI counts as owned, which
+    would make foreign targets (``foaf:Person``) look local; the predicate then also requires the IRI to sit
+    in a namespace that holds a declared term of the file.
+    """
+    if ctx.context.ownership.mode is not OwnershipMode.ALL:
+        return ctx.local
+    namespaces = {namespace_of(t) for t in ctx.terms}
+    return lambda node: ctx.local(node) and namespace_of(node) in namespaces
 
 
 CHARACTERISTIC_TYPES = (
@@ -243,10 +318,19 @@ def _domains_and_ranges(ctx: RuleContext) -> None:
                 f"Multiple asserted ranges ({len(ranges)}) mean intersection, not union.",
                 confidence="certain",
             )
-        if not domains:
+        if is_deprecated(ctx.g, p) or _annotation_only(ctx.g, p):
+            continue
+        if not domains and not any((p, q, None) in ctx.g for q in DOMAIN_SUBSTITUTES):
             ctx.add("OWL005", p, "Property has no asserted rdfs:domain.")
-        if not ranges:
+        if not ranges and not any((p, q, None) in ctx.g for q in RANGE_SUBSTITUTES):
             ctx.add("OWL006", p, "Property has no asserted rdfs:range.")
+
+
+def _annotation_only(g: Graph, p: Node) -> bool:
+    """Annotation properties conventionally carry no domain or range."""
+    return (p, RDF.type, OWL.AnnotationProperty) in g and not any(
+        (p, RDF.type, t) in g for t in (OWL.ObjectProperty, OWL.DatatypeProperty)
+    )
 
 
 def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> None:
@@ -272,10 +356,23 @@ def _property_chains(ctx: RuleContext) -> None:
 
 
 def _universal_restrictions(ctx: RuleContext) -> None:
-    for restriction in ctx.g.subjects(OWL.allValuesFrom, None):
+    g = ctx.g
+    for restriction, filler in sorted(g.subject_objects(OWL.allValuesFrom), key=lambda t: (str(t[0]), str(t[1]))):
         # allValuesFrom alone is fully valid OWL. Review only.
-        if (restriction, OWL.someValuesFrom, None) not in ctx.g:
-            ctx.add("OWL011", restriction, "Universal restriction does not imply any property value.")
+        if (restriction, OWL.someValuesFrom, None) in g:
+            continue
+        on_property = g.value(restriction, OWL.onProperty)
+        if _is_datatype(g, filler) or (on_property is not None and (on_property, RDF.type, OWL.DatatypeProperty) in g):
+            continue  # "all values are xsd:gDay" is the idiomatic way to type a datatype property.
+        owner = owning_term(g, restriction)
+        via = f" on {on_property}" if owner != restriction and on_property is not None else ""
+        ctx.add("OWL011", owner, f"Universal restriction{via} does not imply any property value.")
+
+
+def _is_datatype(g: Graph, filler: Node) -> bool:
+    if isinstance(filler, URIRef) and str(filler).startswith(str(XSD)):
+        return True
+    return (filler, RDF.type, RDFS.Datatype) in g or any((filler, p, None) in g for p in _DATATYPE_EXPRESSIONS)
 
 
 def _object_property_assertions(ctx: RuleContext, object_props: set[Node]) -> None:

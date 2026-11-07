@@ -26,6 +26,51 @@ READABLE_NAME = re.compile(r"^(?=.*[a-z]{3})[A-Za-z][A-Za-z_-]*$")
 MARKUP = re.compile(r"</?[A-Za-z][^<>]*>|&(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);")
 LABEL_PREDICATES = (*LABELS, SKOS.altLabel, RDFS.label)
 EXAMPLE_LIMIT = 3
+# IRI015 needs a real mix: the minority kind must be at least this share of the named terms.
+MINORITY_PERCENT = 10
+# ``Gnathostomata <vertebrates>``: a trailing ``<word>`` after a space is a disambiguator, not markup.
+DISAMBIGUATOR = re.compile(r"\s<([^<>/=&]+)>\s*$")
+HTML_TAGS = frozenset(
+    [
+        "a",
+        "abbr",
+        "b",
+        "big",
+        "blockquote",
+        "br",
+        "code",
+        "div",
+        "em",
+        "font",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "hr",
+        "i",
+        "img",
+        "li",
+        "ol",
+        "p",
+        "pre",
+        "s",
+        "small",
+        "span",
+        "strike",
+        "strong",
+        "sub",
+        "sup",
+        "table",
+        "td",
+        "th",
+        "tr",
+        "tt",
+        "u",
+        "ul",
+    ]
+)
 
 
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
@@ -80,6 +125,9 @@ def _mixed_naming(ctx: RuleContext) -> None:
         elif READABLE_NAME.match(name):
             readable[_namespace(str(term))].append(name)
     for namespace in sorted(opaque.keys() & readable.keys()):
+        minority = min(len(opaque[namespace]), len(readable[namespace]))
+        if minority * 100 < MINORITY_PERCENT * (len(opaque[namespace]) + len(readable[namespace])):
+            continue
         first_opaque = sorted(opaque[namespace])[:EXAMPLE_LIMIT]
         first_readable = sorted(readable[namespace])[:EXAMPLE_LIMIT]
         ctx.add(
@@ -90,13 +138,20 @@ def _mixed_naming(ctx: RuleContext) -> None:
         )
 
 
+def _without_disambiguator(value: str) -> str:
+    match = DISAMBIGUATOR.search(value)
+    if match and match.group(1).strip().casefold() not in HTML_TAGS:
+        return value[: match.start()]
+    return value
+
+
 def _label_text(ctx: RuleContext) -> None:
     by_predicate = ctx.context.subjects_by_predicate
     for predicate in dict.fromkeys((*LABEL_PREDICATES, *ctx.labels)):
         for term in sorted(by_predicate.get(predicate, frozenset()) & ctx.terms, key=str):
             for label in sorted((o for o in ctx.g.objects(term, predicate) if isinstance(o, Literal)), key=str):
                 value = str(label)
-                if MARKUP.search(value):
+                if MARKUP.search(_without_disambiguator(value)):
                     ctx.add("LEX018", term, f"Label {value!r} contains markup or a character entity.")
                 if unicodedata.normalize("NFC", value) != value:
                     ctx.add("LEX021", term, f"Label {value!r} is not Unicode NFC-normalized.")

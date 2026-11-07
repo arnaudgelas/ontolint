@@ -11,13 +11,21 @@ from rdflib.namespace import OWL, RDFS
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .iri_lexical_extras import OPAQUE_NAME
 from .support import MINIMUM_STYLE_SAMPLE_SIZE, local_name
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
 
-type LabelIndex = defaultdict[tuple[str, str], set[URIRef]]
+type LabelIndex = defaultdict[tuple[str, str, str], set[URIRef]]
+
+# LEX009 judges capitalization against the convention the ontology itself follows: it only reports
+# deviations from a clear majority (at least ``MAJORITY_PERCENT`` percent of at least
+# ``MINIMUM_CAPITALIZATION_SAMPLE`` labels of one term kind).
+MINIMUM_CAPITALIZATION_SAMPLE = 10
+MAJORITY_PERCENT = 80
+LABEL_LIKE = ("label", "name", "title")
 
 
 SPECS: tuple[RuleSpec, ...] = (
@@ -58,7 +66,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "LEX004",
         "LEX",
         "Duplicate label across terms",
-        Severity.WARNING,
+        Severity.INFO,
         "Differentiate labels or formally document and link genuinely equivalent concepts.",
         "heuristic",
         RuleBackend.RDFLIB,
@@ -138,11 +146,23 @@ def _term_labels(ctx: RuleContext) -> LabelIndex:
     for term in sorted(ctx.terms, key=str):
         labels = {o for p in ctx.labels for o in g.objects(term, p) if isinstance(o, Literal)}
         if not labels and (term, OWL.deprecated, Literal(True)) not in g:
-            ctx.add("LEX001", term, "Term has no label.", confidence="certain")
+            ctx.add("LEX001", term, "Term has no label.", confidence=_missing_label_confidence(ctx, term))
         if not any((term, p, None) in g for p in ctx.descriptions):
             ctx.add("LEX002", term, "Term has no description or definition.", confidence="certain")
         _language_checks(ctx, term, labels, label_index)
     return label_index
+
+
+def _missing_label_confidence(ctx: RuleContext, term: URIRef) -> str:
+    """Return ``certain`` unless the term has a literal under a label-like predicate we do not recognise."""
+    for predicate, value in ctx.g.predicate_objects(term):
+        if (
+            isinstance(value, Literal)
+            and predicate not in ctx.labels
+            and any(word in str(predicate).rsplit("/", 1)[-1].rsplit("#", 1)[-1].casefold() for word in LABEL_LIKE)
+        ):
+            return "heuristic"
+    return "certain"
 
 
 def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label_index: LabelIndex) -> None:
@@ -152,7 +172,10 @@ def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label
         by_language[language].append(o)
         if not str(o).strip() or str(o) != str(o).strip():
             ctx.add("LEX005", term, f"Blank or padded label: {str(o)!r}.", confidence="certain")
-        label_index[(str(o).casefold().strip(), language)].add(term)
+        text = str(o).strip()
+        if _indexable_label(ctx, term, text):
+            for kind in _kinds(ctx, term):
+                label_index[(text, language, kind)].add(term)
     for lang, literals in by_language.items():
         if len(literals) > 1:
             ctx.add("LEX003", term, f"{len(literals)} labels for language {lang}.")
@@ -163,9 +186,21 @@ def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label
             ctx.add("LEX008", term, f"Missing preferred label in language {lang}.")
 
 
+def _kinds(ctx: RuleContext, term: URIRef) -> tuple[str, ...]:
+    kinds = tuple(kind for kind, group in (("class", ctx.classes), ("property", ctx.properties)) if term in group)
+    return kinds or ("other",)
+
+
+def _indexable_label(ctx: RuleContext, term: URIRef, text: str) -> bool:
+    """Deprecated terms and labels starting with ``obsolete`` legitimately repeat other labels."""
+    return (
+        bool(text) and not text.casefold().startswith("obsolete") and (term, OWL.deprecated, Literal(True)) not in ctx.g
+    )
+
+
 def _duplicate_labels(ctx: RuleContext, label_index: LabelIndex) -> None:
-    for (duplicate_label, lang), terms in label_index.items():
-        if duplicate_label and len(terms) > 1:
+    for (duplicate_label, lang, _kind), terms in sorted(label_index.items()):
+        if len(terms) > 1:
             ctx.add(
                 "LEX004",
                 sorted(terms, key=str)[0],
@@ -179,27 +214,47 @@ def _label_sort_key(label: Literal) -> tuple[str, str, str]:
     return language, datatype, str(label)
 
 
+def _first_label(ctx: RuleContext, term: URIRef) -> str:
+    labels = sorted(
+        (label for label in ctx.g.objects(term, RDFS.label) if isinstance(label, Literal)),
+        key=_label_sort_key,
+    )
+    return str(labels[0]) if labels else ""
+
+
 def _capitalization(ctx: RuleContext) -> None:
-    # Conventional capitalization is only a review hint, not a semantic rule.
-    for term in ctx.classes | ctx.properties:
-        style_labels = sorted(
-            (label for label in ctx.g.objects(term, RDFS.label) if isinstance(label, Literal)),
-            key=_label_sort_key,
-        )
-        label = style_labels[0] if style_labels else None
-        if label and str(label) and str(label)[0].isalpha():
-            if term in ctx.classes and str(label)[0].islower():
-                ctx.add("LEX009", term, "Class label begins with lower case (style review).")
-            if term in ctx.properties and str(label)[0].isupper():
-                ctx.add("LEX009", term, "Property label begins with upper case (style review).")
+    # Conventions differ per ontology (OBO labels are lower case, FOAF's are sentence case), so only
+    # labels deviating from a clear majority of the ontology's own labels are reported.
+    for kind, terms in (("Class", ctx.classes), ("Property", ctx.properties)):
+        initials: dict[URIRef, str] = {}
+        for term in sorted(terms, key=str):
+            label = _first_label(ctx, term)
+            if label and label[0].isalpha():
+                initials[term] = "upper" if label[0].isupper() else "lower"
+        total = len(initials)
+        if total < MINIMUM_CAPITALIZATION_SAMPLE:
+            continue
+        counts = Counter(initials.values())
+        dominant, count = counts.most_common(1)[0]
+        if count * 100 < total * MAJORITY_PERCENT:
+            continue
+        for term, case in initials.items():
+            if case != dominant:
+                ctx.add(
+                    "LEX009",
+                    term,
+                    f"{kind} label begins with {case} case, but {count} of {total} {kind.lower()} labels "
+                    f"begin with {dominant} case (style review).",
+                )
 
 
 def _naming_styles(ctx: RuleContext) -> None:
     # Naming is a configurable, non-blocking quality indicator.
+    names = [n for n in (local_name(x) for x in ctx.terms) if not OPAQUE_NAME.match(n)]
     styles = Counter(
         "underscore" if "_" in n else "hyphen" if "-" in n else "camel" if re.search(r"[a-z][A-Z]", n) else "other"
-        for n in (local_name(x) for x in ctx.terms)
+        for n in names
     )
     meaningful = [style for style in styles if style != "other"]
-    if len(meaningful) > 1 and len(ctx.terms) >= MINIMUM_STYLE_SAMPLE_SIZE:
+    if len(meaningful) > 1 and len(names) >= MINIMUM_STYLE_SAMPLE_SIZE:
         ctx.add("LEX007", "(vocabulary)", f"Mixed identifier styles: {dict(sorted(styles.items()))}.")

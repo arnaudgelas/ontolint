@@ -17,7 +17,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from rdflib import BNode, Literal, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -325,6 +325,41 @@ def _reference_rule(ctx: RuleContext, classes: frozenset[URIRef], properties: fr
         )
 
 
+_STRUCTURAL_TYPES = frozenset(
+    {
+        OWL.Axiom,
+        OWL.Annotation,
+        OWL.Restriction,
+        OWL.Class,
+        RDFS.Datatype,
+        OWL.DataRange,
+        OWL.NegativePropertyAssertion,
+        OWL.AllDisjointClasses,
+        OWL.AllDisjointProperties,
+        OWL.AllDifferent,
+    }
+)
+_STRUCTURAL_PREDICATES = (
+    RDF.first,
+    OWL.onProperty,
+    OWL.annotatedSource,
+    OWL.intersectionOf,
+    OWL.unionOf,
+    OWL.complementOf,
+    OWL.oneOf,
+    OWL.onDatatype,
+)
+
+
+def _is_structural_blank(g: Graph, node: object) -> bool:
+    """Return whether a blank node only encodes an axiom, restriction, class expression or list cell."""
+    if not isinstance(node, BNode):
+        return False
+    return any(t in _STRUCTURAL_TYPES for t in g.objects(node, RDF.type)) or any(
+        (node, p, None) in g for p in _STRUCTURAL_PREDICATES
+    )
+
+
 def _graph_rules(ctx: RuleContext) -> None:
     imports = {o for o in ctx.g.objects(None, OWL.imports) if isinstance(o, URIRef)}
     if len(imports) > ctx.policy.metric_max_imports:
@@ -334,7 +369,8 @@ def _graph_rules(ctx: RuleContext) -> None:
             f"{len(imports)} distinct owl:imports (threshold {ctx.policy.metric_max_imports}).",
             confidence="certain",
         )
-    subjects = set(ctx.g.subjects())
+    # Axioms, restrictions, class expressions and RDF-list cells are structure, not free blank nodes.
+    subjects = {s for s in ctx.g.subjects() if not _is_structural_blank(ctx.g, s)}
     if len(subjects) >= ctx.policy.metric_min_sample:
         blanks = sum(1 for s in subjects if isinstance(s, BNode))
         ratio = _ratio(blanks, len(subjects))

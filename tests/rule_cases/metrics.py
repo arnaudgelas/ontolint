@@ -161,10 +161,11 @@ CASES = {
         ],
     ),
     "METRIC013": rule_cases(
-        [ttl("ten anonymous subjects", _each(10, lambda i: "[] a owl:Restriction ."))],
+        [ttl("ten free blank subjects", _each(10, lambda i: "[] a ex:Thing ."))],
         [
             ttl("named subjects", _each(10, lambda i: f"ex:s{i} a owl:Class .")),
-            ttl("below the minimum sample", _each(9, lambda i: "[] a owl:Restriction .")),
+            ttl("below the minimum sample", _each(9, lambda i: "[] a ex:Thing .")),
+            ttl("restriction nodes are structure", _each(10, lambda i: "[] a owl:Restriction .")),
         ],
     ),
 }

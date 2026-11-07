@@ -11,6 +11,13 @@ def _styles(n: int) -> str:
     return " ".join(f"{term} a owl:Class ." for term in _STYLE_TERMS[:n])
 
 
+def _labelled(count: int, odd: str, *, prefix: str = "c", kind: str = "owl:Class") -> str:
+    """``count`` terms: all labelled in lower case except one labelled ``odd``."""
+    lines = [f'ex:{prefix}{i} a {kind} ; rdfs:label "term {i}" .' for i in range(count - 1)]
+    lines.append(f'ex:{prefix}odd a {kind} ; rdfs:label "{odd}" .')
+    return "\n".join(lines)
+
+
 CASES = {
     "LEX001": rule_cases(
         [ttl("no label", "ex:A a owl:Class .")],
@@ -31,10 +38,25 @@ CASES = {
         [
             ttl(
                 "same label on two terms",
-                'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .',
+                'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "Same" .',
             )
         ],
         [
+            ttl(
+                "case-only difference", 'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .'
+            ),
+            ttl(
+                "class and property share a label",
+                'ex:A a owl:Class ; rdfs:label "agent" . ex:p a owl:ObjectProperty ; rdfs:label "agent" .',
+            ),
+            ttl(
+                "deprecated term",
+                'ex:A a owl:Class ; rdfs:label "S" . ex:B a owl:Class ; owl:deprecated true ; rdfs:label "S" .',
+            ),
+            ttl(
+                "obsolete label",
+                'ex:A a owl:Class ; rdfs:label "obsolete S" . ex:B a owl:Class ; rdfs:label "obsolete S" .',
+            ),
             ttl("different labels", 'ex:A a owl:Class ; rdfs:label "One" . ex:B a owl:Class ; rdfs:label "Two" .'),
             ttl(
                 "same text, other language",
@@ -64,6 +86,10 @@ CASES = {
                 "four terms, one style",
                 "ex:a_b a owl:Class . ex:c_d a owl:Class . ex:e_f a owl:Class . ex:g_h a owl:Class .",
             ),
+            ttl(
+                "opaque numeric identifiers do not count as underscore style",
+                "ex:X_0000001 a owl:Class . ex:X_0000002 a owl:Class . ex:eF a owl:Class . ex:gH a owl:Class .",
+            ),
         ],
     ),
     "LEX008": rule_cases(
@@ -75,13 +101,25 @@ CASES = {
     ),
     "LEX009": rule_cases(
         [
-            ttl("lower-case class label", 'ex:A a owl:Class ; rdfs:label "thing" .'),
-            ttl("upper-case property label", 'ex:p a owl:ObjectProperty ; rdfs:label "Relates" .'),
+            Case("one upper-case class among ten lower-case", _labelled(10, "Thing"), boundary=True),
+            Case(
+                "one upper-case property among ten lower-case",
+                _labelled(10, "Relates", prefix="p", kind="owl:ObjectProperty"),
+                boundary=True,
+            ),
         ],
         [
-            ttl("capitalised class", 'ex:A a owl:Class ; rdfs:label "Thing" .'),
-            ttl("lower-case property", 'ex:p a owl:ObjectProperty ; rdfs:label "relates" .'),
+            Case("nine labels are too few", _labelled(9, "Thing"), boundary=True),
+            ttl("lower-case class alone", 'ex:A a owl:Class ; rdfs:label "thing" .'),
             ttl("non-alphabetic first character", 'ex:A a owl:Class ; rdfs:label "3d thing" .'),
+            Case(
+                "balanced conventions",
+                "\n".join(
+                    _labelled(10, "Thing").splitlines()[:5]
+                    + [f'ex:u{i} a owl:Class ; rdfs:label "Up {i}" .' for i in range(6)]
+                ),
+                boundary=True,
+            ),
         ],
     ),
 }

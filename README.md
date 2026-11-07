@@ -238,8 +238,8 @@ ignored rules, and severity overrides.
 {
   "base": "https://example.org/ont#",
   "languages": ["en"],
-  "depth_limit": 7,
-  "inheritance_limit": 3,
+  "depth_limit": 10,
+  "inheritance_limit": 5,
   "soup_limit": 15,
   "ignored_rules": ["CLS002"],
   "severity_overrides": {"ONT003": "error", "OWL005": "info"}

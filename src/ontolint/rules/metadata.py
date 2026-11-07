@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from rdflib import URIRef
 from rdflib.namespace import DCTERMS, OWL
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -12,6 +13,14 @@ from .support import META_CREATOR, META_LICENSE
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
+
+# Creator-like provenance: the shared creator predicates plus contributors and PAV authorship.
+CREATOR_PREDICATES = (
+    *META_CREATOR,
+    DCTERMS.contributor,
+    URIRef("http://purl.org/dc/elements/1.1/contributor"),
+    URIRef("http://purl.org/pav/createdBy"),
+)
 
 
 SPECS: tuple[RuleSpec, ...] = (
@@ -96,7 +105,7 @@ def run(ctx: RuleContext) -> None:
             ctx.add("ONT003", ont, "Ontology has no license annotation.", confidence="certain")
         if not any((ont, p, None) in g for p in (OWL.versionIRI, OWL.versionInfo)):
             ctx.add("ONT004", ont, "No versionIRI/versionInfo.")
-        if not any((ont, p, None) in g for p in META_CREATOR) or (ont, DCTERMS.created, None) not in g:
+        if not any((ont, p, None) in g for p in CREATOR_PREDICATES) or (ont, DCTERMS.created, None) not in g:
             ctx.add("ONT005", ont, "Missing creator or dcterms:created provenance.")
         if not any((ont, p, None) in g for p in ctx.descriptions):
             ctx.add("ONT006", ont, "Missing ontology description.")

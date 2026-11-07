@@ -11,7 +11,7 @@ from . import engine
 from .graph import reachable as graph_reachable
 from .graph import strongly_connected_components
 from .models import Finding, RunResult
-from .policy import Policy
+from .policy import DEFAULT_DEPTH_LIMIT, DEFAULT_INHERITANCE_LIMIT, DEFAULT_SOUP_LIMIT, Policy
 from .rules import support
 
 
@@ -25,9 +25,9 @@ class Linter:
         *,
         base: str | None = None,
         languages: tuple[str, ...] = (),
-        depth_limit: int = 7,
-        inheritance_limit: int = 3,
-        soup_limit: int = 15,
+        depth_limit: int = DEFAULT_DEPTH_LIMIT,
+        inheritance_limit: int = DEFAULT_INHERITANCE_LIMIT,
+        soup_limit: int = DEFAULT_SOUP_LIMIT,
     ):
         self.g = graph
         self.shapes = shapes

@@ -76,6 +76,10 @@ CASES = {
             ttl("plain class", "ex:A a owl:Class ."),
             ttl("class and concept", "ex:A a owl:Class, skos:Concept ."),
             ttl("rdfs class and owl class", "ex:A a rdfs:Class, owl:Class ."),
+            ttl(
+                "metaclass pattern (schema:DataType style)",
+                "ex:DataType a owl:Class ; rdfs:subClassOf rdfs:Class . ex:Text a owl:Class, ex:DataType .",
+            ),
         ],
     ),
     "CLS022": rule_cases(

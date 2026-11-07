@@ -15,6 +15,7 @@ from rdflib import URIRef
 
 from ontolint.context import KINDS
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.ownership import OBO_NAMESPACE
 
 from .support import local_name
 
@@ -122,15 +123,22 @@ SPECS: tuple[RuleSpec, ...] = (
 
 def run(ctx: RuleContext) -> None:
     """Run every IRI-quality rule over declared terms and ontologies."""
+    versioned: dict[str, list[str]] = {}
     for term in sorted(ctx.terms, key=str):
-        _term_checks(ctx, term)
+        _term_checks(ctx, term, versioned)
+    for namespace, iris in sorted(versioned.items()):
+        ctx.add(
+            "IRI013",
+            namespace,
+            f"{len(iris)} term IRIs in this namespace embed a version or date segment (e.g. {iris[0]}).",
+        )
     _namespace_mix(ctx)
     for ontology in sorted(ctx.ontologies, key=str):
         _ontology_checks(ctx, ontology)
     _ontology_namespace(ctx)
 
 
-def _term_checks(ctx: RuleContext, term: URIRef) -> None:
+def _term_checks(ctx: RuleContext, term: URIRef, versioned: dict[str, list[str]]) -> None:
     iri = str(term)
     pieces = urlsplit(iri)
     name = local_name(term)
@@ -145,14 +153,17 @@ def _term_checks(ctx: RuleContext, term: URIRef) -> None:
     if (pieces.hostname or "").lower() in PRIVATE_HOSTS:
         ctx.add("IRI012", term, "Term IRI uses a loopback host.", confidence="certain")
     if any(VERSION_SEGMENT.match(segment) for segment in pieces.path.split("/")):
-        ctx.add("IRI013", term, "Term IRI path embeds a version or date segment.")
+        versioned.setdefault(iri[: len(iri) - len(name)], []).append(iri)
     if name and (name[0] in "_-" or name[-1] in "_-" or REPEATED_SEPARATOR.search(name)):
         ctx.add("IRI014", term, "Local name has a leading, trailing or repeated separator.")
 
 
 def _namespace_mix(ctx: RuleContext) -> None:
+    obo_ontology = any(str(ontology).startswith(OBO_NAMESPACE) for ontology in ctx.ontologies)
     named = [str(term) for term in ctx.terms if local_name(term)]
-    hashed = sorted(iri for iri in named if "#" in iri)
+    # ``http://purl.obolibrary.org/obo/<name>#term`` (slim/subset annotations) next to ``obo/NAME_0000001`` is
+    # standard OBO PURL practice.
+    hashed = sorted(iri for iri in named if "#" in iri and not (obo_ontology and iri.startswith(OBO_NAMESPACE)))
     slashed = sorted(iri for iri in named if "#" not in iri)
     if hashed and slashed:
         ctx.add(
@@ -176,7 +187,7 @@ def _ontology_checks(ctx: RuleContext, ontology: URIRef) -> None:
 def _ontology_namespace(ctx: RuleContext) -> None:
     ontologies = sorted(ctx.ontologies, key=str)
     terms = [term for term in ctx.terms if local_name(term)]
-    if len(ontologies) != 1 or not terms:
+    if len(ontologies) != 1 or not terms or str(ontologies[0]).startswith(OBO_NAMESPACE):
         return
     root = str(ontologies[0]).rstrip("#/")
     if urlsplit(root).scheme and not any(str(term).startswith(root) for term in terms):

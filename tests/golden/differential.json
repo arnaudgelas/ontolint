@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)",
+    "file": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)"
+    "stdout": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,62 +118,62 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
+   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)",
+    "file": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)"
+    "stdout": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:c864c622ff08bc6abf3ff733e8e90ad3ead941c68396baff67abae7e07bd4417 (47680 chars)",
+   "legacy_json_view": "sha256:53e51ca27cbe3a1062d0eef84a8dd598c00a87708d385ae9263c66ddb00f993e (40576 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d5dde55fc2cf6adbf2f9223e6098d427f6f314d609f1bb82a9d3a3f2a82a7ead (156813 chars)",
+    "file": "sha256:79543e35b7f3f9ebcf3158a41e926e46cfb38d762014bc7cf2976f779cc38e30 (149045 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d5dde55fc2cf6adbf2f9223e6098d427f6f314d609f1bb82a9d3a3f2a82a7ead (156813 chars)"
+    "stdout": "sha256:79543e35b7f3f9ebcf3158a41e926e46cfb38d762014bc7cf2976f779cc38e30 (149045 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:a317d6d999a96bfc7fb43294b802ea3f73f46be8c786a12165265b328bfc4861 (33279 chars)",
+    "file": "sha256:25d522d5c3ca3b4bc20f072fcf0c8878b637a70c0555cdce2e7e67c8bbe3c2d7 (28109 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a317d6d999a96bfc7fb43294b802ea3f73f46be8c786a12165265b328bfc4861 (33279 chars)"
+    "stdout": "sha256:25d522d5c3ca3b4bc20f072fcf0c8878b637a70c0555cdce2e7e67c8bbe3c2d7 (28109 chars)"
    }
   },
   "json_clean": {
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:eb2f347827329448a614eb38c8df954ad472b795b4cd88d4381295b917a20b45 (103893 chars)",
+    "file": "sha256:fc0b403e33db80a8cde24a764dc1c233b1a061baffa7aead44a113f8fdb6c748 (103978 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:eb2f347827329448a614eb38c8df954ad472b795b4cd88d4381295b917a20b45 (103893 chars)"
+    "stdout": "sha256:fc0b403e33db80a8cde24a764dc1c233b1a061baffa7aead44a113f8fdb6c748 (103978 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:919133612656ecfe88679c884463d3a71001ef14c2ecb2ffe2e179942b6edecc (207786 chars)"
+    "stdout": "sha256:7b3c6aa9196029524ef8d9f927e03c1974e07be76feafe0a56be5b796005b142 (207956 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,136 +184,136 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:b2d55aebf8654767b2ed1716e19c12f1d897d5aed5bffdd10df15ed75c2eec7e (104665 chars)",
+    "file": "sha256:d5e3cd1e2ac1157c7bde1c3d7df955466a134f664bbdeb0436a2618406df8f35 (104750 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:b2d55aebf8654767b2ed1716e19c12f1d897d5aed5bffdd10df15ed75c2eec7e (104665 chars)"
+    "stdout": "sha256:d5e3cd1e2ac1157c7bde1c3d7df955466a134f664bbdeb0436a2618406df8f35 (104750 chars)"
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:7b5ec9eb89e571938c8cbf6c5838f78781e87bd76e72308a30e3dc72985da59e (71179 chars)",
+   "legacy_json_view": "sha256:571d67bf1dd7dfcf1b7ba5915b83e0e2d2da9bd14bca3d8ae8107dc3169e001e (61824 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:802eaf56a1c5db02a8343a7f82f6b8def98e4b0102837d1d89f3d485c171ca1d (183206 chars)",
+    "file": "sha256:2b0e5dfe885f1fa6c20c55a45b280dfbd819b5bca2559c9c7e6039c58367fb05 (172882 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:802eaf56a1c5db02a8343a7f82f6b8def98e4b0102837d1d89f3d485c171ca1d (183206 chars)"
+    "stdout": "sha256:2b0e5dfe885f1fa6c20c55a45b280dfbd819b5bca2559c9c7e6039c58367fb05 (172882 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:6df17ea5c0d8b1d0ddfb406e0124739ee54d3ab9804974fb7ab5df7eb355c5f6 (287142 chars)"
+    "stdout": "sha256:b5de8dedbfda19f35b0aae3c7720aae626d727231e8dc62d0583c1b66dc7c66a (276903 chars)"
    },
    "write_baseline": {
-    "count": 237,
+    "count": 206,
     "exit": 1
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
+   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)",
+    "file": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)"
+    "stdout": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:eca53b691bab236bc56e42808c909ccc734cbc19375d69bd3c64456812145fd7 (266986 chars)"
+    "stdout": "sha256:3cc7388a4af1e0de2ca1e3e0fc8d0416a02111ad7baccd38b023847c0f97394e (257088 chars)"
    },
    "write_baseline": {
-    "count": 166,
+    "count": 136,
     "exit": 1
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:b0c18b0feaf3b43d7be26ec90bb0310a8ac78b7fd165793dc16a1730dc7ed65a (53830 chars)",
+   "legacy_json_view": "sha256:c5feebfee3cad5351dfaeed121b2ebbd23f8240429255d4ba18b2ce50a8f0a2b (44783 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:3ff69dc18467df5f3307de815c89c9f2c6898e06f3ec0b21cdfa8f2379a0e35f (163401 chars)",
+    "file": "sha256:447e32935bad0bf79bb2d1ad6c84b220dec85f4c13437a6e22ae2f1a0319dddf (153418 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:3ff69dc18467df5f3307de815c89c9f2c6898e06f3ec0b21cdfa8f2379a0e35f (163401 chars)"
+    "stdout": "sha256:447e32935bad0bf79bb2d1ad6c84b220dec85f4c13437a6e22ae2f1a0319dddf (153418 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
+   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:b92672d001155050cf6555aa18f0a180338f11185ac2c6f2b9fd6d24ad5de3f9 (163047 chars)",
+    "file": "sha256:d898f7d735d45c66104a28cafe61978c14f7628ec327538e80c81f6592213cd5 (153064 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:b92672d001155050cf6555aa18f0a180338f11185ac2c6f2b9fd6d24ad5de3f9 (163047 chars)"
+    "stdout": "sha256:d898f7d735d45c66104a28cafe61978c14f7628ec327538e80c81f6592213cd5 (153064 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
+   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:c6c94b7505a61196055b8b44b045b2e39e685ac8417e8f544c1a0f48f3a8fb62 (163093 chars)",
+    "file": "sha256:9b0d5450b61a8feeccfeecaee6da9c768246f00c218a284859464ee7568f81b1 (153110 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:c6c94b7505a61196055b8b44b045b2e39e685ac8417e8f544c1a0f48f3a8fb62 (163093 chars)"
+    "stdout": "sha256:9b0d5450b61a8feeccfeecaee6da9c768246f00c218a284859464ee7568f81b1 (153110 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:a6099a4c2b41c9c55742052775e77c50c06a19f3e3501ee8c546efe068f1e9ca (56620 chars)",
+   "legacy_json_view": "sha256:ddb19d0294752287cf3a76221987b786fe916a937c0cbf259223f8978b50b2f7 (47574 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:92e4df58677ea83bc4c6da25e56bcfd86ba7f5b383f07fdf75685a081dc1f747 (165610 chars)",
+    "file": "sha256:cc40069c38a6e06acd28298724c3c410db345a6e881ce3c1d3bc8635c4d1ac24 (155629 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:92e4df58677ea83bc4c6da25e56bcfd86ba7f5b383f07fdf75685a081dc1f747 (165610 chars)"
+    "stdout": "sha256:cc40069c38a6e06acd28298724c3c410db345a6e881ce3c1d3bc8635c4d1ac24 (155629 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:cad63f81f68b0f137f6bc6ac7c98e5840370aaecad89dbe4ec61f11ec53e6c47 (268584 chars)"
+    "stdout": "sha256:407d7a35362af3d2658ee08f14660d59b88edf674c5d925d603a4dcc91887c34 (258688 chars)"
    },
    "write_baseline": {
-    "count": 176,
+    "count": 146,
     "exit": 1
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:0b860cd092e8e0abb7f4303994d2536b9ce19d72c834c0ff3ab79bfc66891fab (61125 chars)",
+   "legacy_json_view": "sha256:9a2b8d9b9e44107859c02f1968e21d78559cf45afbcf432fe3f6bb93ea7a82ac (50909 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:c5c01c1a1c4252080e8781e096b5bf8e9d5d654efc33c430586a08ac32cb9f22 (171585 chars)",
+    "file": "sha256:5ad1e007e880d4a55a3259b4fcc6ecd473a7b6c88cf3a71903dc3b393a2b3e0f (160298 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:c5c01c1a1c4252080e8781e096b5bf8e9d5d654efc33c430586a08ac32cb9f22 (171585 chars)"
+    "stdout": "sha256:5ad1e007e880d4a55a3259b4fcc6ecd473a7b6c88cf3a71903dc3b393a2b3e0f (160298 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:8fdd99db58be54d129abd86ba8d2acd6f9172d59ea462562439b78b918c29388 (96815 chars)"
+    "stdout": "sha256:4f292d1d99ba893560078a5f6632638475e077a5e8b90e486942e31b1026c40a (96812 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:8fdd99db58be54d129abd86ba8d2acd6f9172d59ea462562439b78b918c29388 (96815 chars)"
+    "stdout": "sha256:4f292d1d99ba893560078a5f6632638475e077a5e8b90e486942e31b1026c40a (96812 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:3b1588af0d75d47ef66cd8a5f5c8e743a569aab73a891ce408f78cd9ea374868 (31662 chars)"
+    "stdout": "sha256:1db555f5b8f2bedfa6cca5fe0edae5dce70148f43131f471ac322a3706ce0a0b (31662 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:3b1588af0d75d47ef66cd8a5f5c8e743a569aab73a891ce408f78cd9ea374868 (31662 chars)"
+    "stdout": "sha256:1db555f5b8f2bedfa6cca5fe0edae5dce70148f43131f471ac322a3706ce0a0b (31662 chars)"
    }
   },
   "missing_config": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
+   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:896891e202832bc6f54fe1c480d2a85b3f9774910522c72825b6a06cdf000f61 (185881 chars)",
+    "file": "sha256:95b98f10196af4bbb17904dfac0a6a6f5aacf24d1622fa9bb1217af720c345dd (175898 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:896891e202832bc6f54fe1c480d2a85b3f9774910522c72825b6a06cdf000f61 (185881 chars)"
+    "stdout": "sha256:95b98f10196af4bbb17904dfac0a6a6f5aacf24d1622fa9bb1217af720c345dd (175898 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,40 +411,40 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:e514f4cd002f3a6c1c2f62cc8b44f355596f351bd0c569d926f0faf2fd1aa4f1 (296105 chars)",
+    "file": "sha256:e62c2f081218eec212095a4ffd58a71595ce5d43f73a2ede18bfe48f8a34f646 (279924 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e514f4cd002f3a6c1c2f62cc8b44f355596f351bd0c569d926f0faf2fd1aa4f1 (296105 chars)"
+    "stdout": "sha256:e62c2f081218eec212095a4ffd58a71595ce5d43f73a2ede18bfe48f8a34f646 (279924 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:823216fb75acde37c2589dea9774dc9ddbe7be7adfe35b815fe320b6c32b0f7b (32113 chars)",
+    "file": "sha256:ff2171c00a46556235fa87f276c403590ca09a29bc87c0b7adbb179a6f034532 (26943 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:823216fb75acde37c2589dea9774dc9ddbe7be7adfe35b815fe320b6c32b0f7b (32113 chars)"
+    "stdout": "sha256:ff2171c00a46556235fa87f276c403590ca09a29bc87c0b7adbb179a6f034532 (26943 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)",
+    "file": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)"
+    "stdout": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)"
    }
   },
   "profile_minimal_json": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:70536df11f65b947f882635da45bbb3b2a9fd69446580cca3f4572c4afc50f2f (278782 chars)",
+    "file": "sha256:09be27435bfda74ec0d174406a4c040d84abf2808f386d0fc3b51d99977d4a6b (262601 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:70536df11f65b947f882635da45bbb3b2a9fd69446580cca3f4572c4afc50f2f (278782 chars)"
+    "stdout": "sha256:09be27435bfda74ec0d174406a4c040d84abf2808f386d0fc3b51d99977d4a6b (262601 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:f41e41c405c57ab8edd6844bea35a33e01545f4d4daaafa7064c9794db1152ef (267425 chars)",
+    "file": "sha256:00ab21788d5018fadb567e7a5e329fbe2edc924a3f9e25f7adf41fd17c91da2b (251244 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f41e41c405c57ab8edd6844bea35a33e01545f4d4daaafa7064c9794db1152ef (267425 chars)"
+    "stdout": "sha256:00ab21788d5018fadb567e7a5e329fbe2edc924a3f9e25f7adf41fd17c91da2b (251244 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:13ab25122a9228482f9e1a5f51df2da06b0f8a5c876249f8c5c0d52c57b53bcd (48437 chars)",
+    "file": "sha256:75e10b38cde13ceebf1d4107173821a42cf448cffc264f5127f498bdc7362438 (43267 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:13ab25122a9228482f9e1a5f51df2da06b0f8a5c876249f8c5c0d52c57b53bcd (48437 chars)"
+    "stdout": "sha256:75e10b38cde13ceebf1d4107173821a42cf448cffc264f5127f498bdc7362438 (43267 chars)"
    }
   },
   "text_clean": {
@@ -583,14 +583,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)",
+    "file": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)"
+    "stdout": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)"
    }
   }
  },
@@ -827,24 +827,6 @@
     "suggestion": "Use one language-specific primary label per term and language."
    },
    {
-    "confidence": "heuristic",
-    "fingerprint": "75972face6df7ab78baaea9b2a86b35fedcd4ac7ede17498c99d9fd35311011d",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Duplicate label 'dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "2c82e7f72e9c6b3a974b8cb74a4b0aadf92e4d88971a8f93bd685e5352a8177a",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Duplicate label 'same name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
     "confidence": "certain",
     "fingerprint": "f331d669c55d5ac794143b30c94afa159b1ba9e8aad57e5c4103ae38b24ab56b",
     "focus": "https://example.test/onto#padded",
@@ -1044,39 +1026,12 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7fc6469fa6286ae75fea43fc2682adb4f3f48f86cf168d748069b5ffa4bbf826",
-    "focus": "https://example.test/onto#Child",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "969594b103e3fbe0dd55c8996b65e65d83c7fbaff9b37df3ed4eba5b847ce268",
-    "focus": "https://example.test/onto#Disj1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4109db467fcfa8b2f1b97b622231926d37119e45a7b7e0e7033f4379e5e4117c",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "144a0255502d0a54a963a319eefd65d8747bdcf468650f6c58bbae79602f071d",
     "focus": "https://example.test/onto#Duplicate-Two",
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -1085,43 +1040,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "0c45bf27fc3dfb433559bc05d4189f217de0bb3d3c0d20e52726b45036976065",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "3bbdc9dbcdd5f24662b65560eb633af5166c1e24f2a8c173de3188f95225d7d0",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "e05800756034463c3024a189fd2d6c72d2cf3b3748823d5dfd969cdb27ae2bd6",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "7b3265136337e7e17aac0c9e4830b79fb9843bf29b87debe8ca43634cdc173b4",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -1130,16 +1049,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "344c1101796c78aadd2ea9d9d8a8e43c888bf81205850f1d97367ad060027978",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -1148,7 +1058,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -1157,7 +1067,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -1166,160 +1076,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "f0d3edc57e78f0aa27c3773843cd7a94a3711e804e944dcb395b27ea8c046832",
-    "focus": "https://example.test/onto#Chain4",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "c5cdb20ab41c8eaa9e5ab36f774d432f65f3b84b40ef53755ff9b8efd8e0830a",
-    "focus": "https://example.test/onto#Child",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "9595db19b331911eb4f19f8727ed000204e5e89d5fbb1a3ce63c5e6ecf784a22",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "51b727318baa8222302e6a5a754d1bd0eee656d156bbe66c892cb924453111a9",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "53cb6808052b8c2621e2c62eed9399a8a301d7e2ea31c321e280e5256ccf7fc3",
-    "focus": "https://example.test/onto#Duplicate_One",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "ae0b07767063e880925b41915da6bd83ba4e427c5ce3ad1d3f35b987cfda7524",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "50184f54715763b774343e0c95a4af6185c2fa0151f273c12a3d7d288cf6d55a",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6a3bfea13a729685531abb993108274cf3db02545fc30a80860d87a9554b1471",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6dc91eee27d8f7887a40932fd715515fe5934cfb6a1c8804834091817d6da24d",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dec056a0d70c2ea53004c4a75bc040f45358544fec9afcfddfc38302b846d2b3",
-    "focus": "https://example.test/onto#Multi",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "11ebd989bcee39bf0d0b07fb448823bb31fe241b4b7d7b6157969bd246ff4229",
-    "focus": "https://example.test/onto#Orphan",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "09f5ba05e8cc49c4bf764b9436442ffc923f5d9013cd313770bb2ed47c621882",
-    "focus": "https://example.test/onto#R1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "05b9895dcaa479da16b440b37a4cd177b34ae9f22a10d60cd31ce14688f9ff4d",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d64bb35385fde5a02fd0f0f094c6fa10ab2a4753ccf94ce19430d3b35e0288a3",
-    "focus": "https://example.test/onto#UsesDep",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "bee8f83243063a9fece53890f0982f799c5af1916487b1db573e080add2beabd",
-    "focus": "https://example.test/onto#camelCase",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d0a98532e45f63e5ab9a2e4e67518e9a8d3e078261334e9a5802756b856e7c38",
-    "focus": "https://example.test/onto#mixedLang",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d8f3be3ebfcef683249707f3b7b1918a9cd5c5137baa3fa15e3cbb115849f081",
-    "focus": "https://example.test/onto#padded",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "certain",
@@ -1329,15 +1086,6 @@
     "rule": "CLS004",
     "severity": "info",
     "suggestion": "Remove a redundant asserted subclass axiom if it adds no documentation value."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4b106d8df232edcbedec629c76fa9280a2f5edae6bc5a56b7edc743fbcaf9d19",
-    "focus": "https://example.test/onto#Multi",
-    "message": "4 direct superclasses (threshold 3).",
-    "rule": "CLS006",
-    "severity": "info",
-    "suggestion": "Review the intended meaning of multiple direct superclasses."
    },
    {
     "confidence": "heuristic",
@@ -1836,45 +1584,45 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "75aa465f789d1fe7568c97bd0de5a5b8914d524501dc771e297b56929658afb7",
+    "fingerprint": "efb78b921e05ffa64624254da07e89b2d4e3f923795f498cb4764c68897ac6bd",
     "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "dfa41152cb0a8709c719e298799a20d7e3e00eb08eb308ac53e78d01716a666c",
+    "fingerprint": "cd17f205afbe702ae1aff73214352f037d34029e46e4a45089a751234845453a",
     "focus": "https://example.test/onto#Eq2",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "133493a1698c725b2d008d1bb8ccf8c6e293b88d47dfdef5e901282b572fa4fa",
+    "fingerprint": "ef103e58b5c596cd9cb574ea4d98b81b4d2927c661e3b30b4432c0e8ec64cb7e",
     "focus": "https://example.test/onto#Orphan",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "ccc9bbf53b03ece1496fe8955e66c10999abeafaa59758593c94cdbc1de36bdd",
+    "fingerprint": "df82a46ea950d48653b703582bf2c2683c98b91c944643085e6f2ae6191eae48",
     "focus": "https://example.test/onto#mixedLang",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7381bc6a150172d63963f17147f9a9f31013dacb27d5b498068eadefaf8a1ef7",
+    "fingerprint": "fcd3db2b789b2b6dffec8ed337f974249481f546dee346cb46b49aec30677653",
     "focus": "https://example.test/onto#noDomain",
-    "message": "Property label begins with upper case (style review).",
+    "message": "Property label begins with upper case, but 13 of 14 property labels begin with lower case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
@@ -2034,15 +1782,6 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "5d0d9f094f688cf6231bc470c0a202ec29da991b606b2bbfcd6512f7ae15c789",
-    "focus": "https://example.test/onto#depProp",
-    "message": "Property has no asserted rdfs:domain.",
-    "rule": "OWL005",
-    "severity": "info",
-    "suggestion": "Consider declaring domain or explaining why a global domain is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "a4c1b7addbc630ff756f38cf0b18c4045bdea3f4ece6b827040beb261764e9fd",
     "focus": "https://example.test/onto#noDomain",
     "message": "Property has no asserted rdfs:domain.",
@@ -2072,15 +1811,6 @@
     "confidence": "heuristic",
     "fingerprint": "e5f421c399bf4b3eb038dd003abd7d27b20cb2af7504106a9d8e0e815855d18f",
     "focus": "https://example.test/onto#dataSym",
-    "message": "Property has no asserted rdfs:range.",
-    "rule": "OWL006",
-    "severity": "info",
-    "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "b34389ce86351ed0a06770aed89da933bc3b9f9a76442291731ed6f06d504147",
-    "focus": "https://example.test/onto#depProp",
     "message": "Property has no asserted rdfs:range.",
     "rule": "OWL006",
     "severity": "info",
@@ -2332,24 +2062,6 @@
     "suggestion": "Use one language-specific primary label per term and language."
    },
    {
-    "confidence": "heuristic",
-    "fingerprint": "75972face6df7ab78baaea9b2a86b35fedcd4ac7ede17498c99d9fd35311011d",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Duplicate label 'dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "2c82e7f72e9c6b3a974b8cb74a4b0aadf92e4d88971a8f93bd685e5352a8177a",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Duplicate label 'same name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
     "confidence": "certain",
     "fingerprint": "f331d669c55d5ac794143b30c94afa159b1ba9e8aad57e5c4103ae38b24ab56b",
     "focus": "https://example.test/onto#padded",
@@ -2549,39 +2261,12 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7fc6469fa6286ae75fea43fc2682adb4f3f48f86cf168d748069b5ffa4bbf826",
-    "focus": "https://example.test/onto#Child",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "969594b103e3fbe0dd55c8996b65e65d83c7fbaff9b37df3ed4eba5b847ce268",
-    "focus": "https://example.test/onto#Disj1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4109db467fcfa8b2f1b97b622231926d37119e45a7b7e0e7033f4379e5e4117c",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "144a0255502d0a54a963a319eefd65d8747bdcf468650f6c58bbae79602f071d",
     "focus": "https://example.test/onto#Duplicate-Two",
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -2590,43 +2275,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "0c45bf27fc3dfb433559bc05d4189f217de0bb3d3c0d20e52726b45036976065",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "3bbdc9dbcdd5f24662b65560eb633af5166c1e24f2a8c173de3188f95225d7d0",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "e05800756034463c3024a189fd2d6c72d2cf3b3748823d5dfd969cdb27ae2bd6",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "7b3265136337e7e17aac0c9e4830b79fb9843bf29b87debe8ca43634cdc173b4",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -2635,16 +2284,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "344c1101796c78aadd2ea9d9d8a8e43c888bf81205850f1d97367ad060027978",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -2653,7 +2293,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -2662,7 +2302,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -2671,160 +2311,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "f0d3edc57e78f0aa27c3773843cd7a94a3711e804e944dcb395b27ea8c046832",
-    "focus": "https://example.test/onto#Chain4",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "c5cdb20ab41c8eaa9e5ab36f774d432f65f3b84b40ef53755ff9b8efd8e0830a",
-    "focus": "https://example.test/onto#Child",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "9595db19b331911eb4f19f8727ed000204e5e89d5fbb1a3ce63c5e6ecf784a22",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "51b727318baa8222302e6a5a754d1bd0eee656d156bbe66c892cb924453111a9",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "53cb6808052b8c2621e2c62eed9399a8a301d7e2ea31c321e280e5256ccf7fc3",
-    "focus": "https://example.test/onto#Duplicate_One",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "ae0b07767063e880925b41915da6bd83ba4e427c5ce3ad1d3f35b987cfda7524",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "50184f54715763b774343e0c95a4af6185c2fa0151f273c12a3d7d288cf6d55a",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6a3bfea13a729685531abb993108274cf3db02545fc30a80860d87a9554b1471",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6dc91eee27d8f7887a40932fd715515fe5934cfb6a1c8804834091817d6da24d",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dec056a0d70c2ea53004c4a75bc040f45358544fec9afcfddfc38302b846d2b3",
-    "focus": "https://example.test/onto#Multi",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "11ebd989bcee39bf0d0b07fb448823bb31fe241b4b7d7b6157969bd246ff4229",
-    "focus": "https://example.test/onto#Orphan",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "09f5ba05e8cc49c4bf764b9436442ffc923f5d9013cd313770bb2ed47c621882",
-    "focus": "https://example.test/onto#R1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "05b9895dcaa479da16b440b37a4cd177b34ae9f22a10d60cd31ce14688f9ff4d",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d64bb35385fde5a02fd0f0f094c6fa10ab2a4753ccf94ce19430d3b35e0288a3",
-    "focus": "https://example.test/onto#UsesDep",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "bee8f83243063a9fece53890f0982f799c5af1916487b1db573e080add2beabd",
-    "focus": "https://example.test/onto#camelCase",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d0a98532e45f63e5ab9a2e4e67518e9a8d3e078261334e9a5802756b856e7c38",
-    "focus": "https://example.test/onto#mixedLang",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d8f3be3ebfcef683249707f3b7b1918a9cd5c5137baa3fa15e3cbb115849f081",
-    "focus": "https://example.test/onto#padded",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "certain",
@@ -2834,15 +2321,6 @@
     "rule": "CLS004",
     "severity": "info",
     "suggestion": "Remove a redundant asserted subclass axiom if it adds no documentation value."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4b106d8df232edcbedec629c76fa9280a2f5edae6bc5a56b7edc743fbcaf9d19",
-    "focus": "https://example.test/onto#Multi",
-    "message": "4 direct superclasses (threshold 3).",
-    "rule": "CLS006",
-    "severity": "info",
-    "suggestion": "Review the intended meaning of multiple direct superclasses."
    },
    {
     "confidence": "heuristic",
@@ -3341,45 +2819,45 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "75aa465f789d1fe7568c97bd0de5a5b8914d524501dc771e297b56929658afb7",
+    "fingerprint": "efb78b921e05ffa64624254da07e89b2d4e3f923795f498cb4764c68897ac6bd",
     "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "dfa41152cb0a8709c719e298799a20d7e3e00eb08eb308ac53e78d01716a666c",
+    "fingerprint": "cd17f205afbe702ae1aff73214352f037d34029e46e4a45089a751234845453a",
     "focus": "https://example.test/onto#Eq2",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "133493a1698c725b2d008d1bb8ccf8c6e293b88d47dfdef5e901282b572fa4fa",
+    "fingerprint": "ef103e58b5c596cd9cb574ea4d98b81b4d2927c661e3b30b4432c0e8ec64cb7e",
     "focus": "https://example.test/onto#Orphan",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "ccc9bbf53b03ece1496fe8955e66c10999abeafaa59758593c94cdbc1de36bdd",
+    "fingerprint": "df82a46ea950d48653b703582bf2c2683c98b91c944643085e6f2ae6191eae48",
     "focus": "https://example.test/onto#mixedLang",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7381bc6a150172d63963f17147f9a9f31013dacb27d5b498068eadefaf8a1ef7",
+    "fingerprint": "fcd3db2b789b2b6dffec8ed337f974249481f546dee346cb46b49aec30677653",
     "focus": "https://example.test/onto#noDomain",
-    "message": "Property label begins with upper case (style review).",
+    "message": "Property label begins with upper case, but 13 of 14 property labels begin with lower case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
@@ -3539,15 +3017,6 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "5d0d9f094f688cf6231bc470c0a202ec29da991b606b2bbfcd6512f7ae15c789",
-    "focus": "https://example.test/onto#depProp",
-    "message": "Property has no asserted rdfs:domain.",
-    "rule": "OWL005",
-    "severity": "info",
-    "suggestion": "Consider declaring domain or explaining why a global domain is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "a4c1b7addbc630ff756f38cf0b18c4045bdea3f4ece6b827040beb261764e9fd",
     "focus": "https://example.test/onto#noDomain",
     "message": "Property has no asserted rdfs:domain.",
@@ -3577,15 +3046,6 @@
     "confidence": "heuristic",
     "fingerprint": "e5f421c399bf4b3eb038dd003abd7d27b20cb2af7504106a9d8e0e815855d18f",
     "focus": "https://example.test/onto#dataSym",
-    "message": "Property has no asserted rdfs:range.",
-    "rule": "OWL006",
-    "severity": "info",
-    "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "b34389ce86351ed0a06770aed89da933bc3b9f9a76442291731ed6f06d504147",
-    "focus": "https://example.test/onto#depProp",
     "message": "Property has no asserted rdfs:range.",
     "rule": "OWL006",
     "severity": "info",
@@ -3837,24 +3297,6 @@
     "suggestion": "Use one language-specific primary label per term and language."
    },
    {
-    "confidence": "heuristic",
-    "fingerprint": "75972face6df7ab78baaea9b2a86b35fedcd4ac7ede17498c99d9fd35311011d",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Duplicate label 'dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "2c82e7f72e9c6b3a974b8cb74a4b0aadf92e4d88971a8f93bd685e5352a8177a",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Duplicate label 'same name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
     "confidence": "certain",
     "fingerprint": "f331d669c55d5ac794143b30c94afa159b1ba9e8aad57e5c4103ae38b24ab56b",
     "focus": "https://example.test/onto#padded",
@@ -4045,39 +3487,12 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7fc6469fa6286ae75fea43fc2682adb4f3f48f86cf168d748069b5ffa4bbf826",
-    "focus": "https://example.test/onto#Child",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "969594b103e3fbe0dd55c8996b65e65d83c7fbaff9b37df3ed4eba5b847ce268",
-    "focus": "https://example.test/onto#Disj1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4109db467fcfa8b2f1b97b622231926d37119e45a7b7e0e7033f4379e5e4117c",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "144a0255502d0a54a963a319eefd65d8747bdcf468650f6c58bbae79602f071d",
     "focus": "https://example.test/onto#Duplicate-Two",
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -4086,43 +3501,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "0c45bf27fc3dfb433559bc05d4189f217de0bb3d3c0d20e52726b45036976065",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "3bbdc9dbcdd5f24662b65560eb633af5166c1e24f2a8c173de3188f95225d7d0",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "e05800756034463c3024a189fd2d6c72d2cf3b3748823d5dfd969cdb27ae2bd6",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "7b3265136337e7e17aac0c9e4830b79fb9843bf29b87debe8ca43634cdc173b4",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -4131,16 +3510,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "344c1101796c78aadd2ea9d9d8a8e43c888bf81205850f1d97367ad060027978",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -4149,7 +3519,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -4158,7 +3528,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -4167,160 +3537,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "f0d3edc57e78f0aa27c3773843cd7a94a3711e804e944dcb395b27ea8c046832",
-    "focus": "https://example.test/onto#Chain4",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "c5cdb20ab41c8eaa9e5ab36f774d432f65f3b84b40ef53755ff9b8efd8e0830a",
-    "focus": "https://example.test/onto#Child",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "9595db19b331911eb4f19f8727ed000204e5e89d5fbb1a3ce63c5e6ecf784a22",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "51b727318baa8222302e6a5a754d1bd0eee656d156bbe66c892cb924453111a9",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "53cb6808052b8c2621e2c62eed9399a8a301d7e2ea31c321e280e5256ccf7fc3",
-    "focus": "https://example.test/onto#Duplicate_One",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "ae0b07767063e880925b41915da6bd83ba4e427c5ce3ad1d3f35b987cfda7524",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "50184f54715763b774343e0c95a4af6185c2fa0151f273c12a3d7d288cf6d55a",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6a3bfea13a729685531abb993108274cf3db02545fc30a80860d87a9554b1471",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6dc91eee27d8f7887a40932fd715515fe5934cfb6a1c8804834091817d6da24d",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dec056a0d70c2ea53004c4a75bc040f45358544fec9afcfddfc38302b846d2b3",
-    "focus": "https://example.test/onto#Multi",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "11ebd989bcee39bf0d0b07fb448823bb31fe241b4b7d7b6157969bd246ff4229",
-    "focus": "https://example.test/onto#Orphan",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "09f5ba05e8cc49c4bf764b9436442ffc923f5d9013cd313770bb2ed47c621882",
-    "focus": "https://example.test/onto#R1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "05b9895dcaa479da16b440b37a4cd177b34ae9f22a10d60cd31ce14688f9ff4d",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d64bb35385fde5a02fd0f0f094c6fa10ab2a4753ccf94ce19430d3b35e0288a3",
-    "focus": "https://example.test/onto#UsesDep",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "bee8f83243063a9fece53890f0982f799c5af1916487b1db573e080add2beabd",
-    "focus": "https://example.test/onto#camelCase",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d0a98532e45f63e5ab9a2e4e67518e9a8d3e078261334e9a5802756b856e7c38",
-    "focus": "https://example.test/onto#mixedLang",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d8f3be3ebfcef683249707f3b7b1918a9cd5c5137baa3fa15e3cbb115849f081",
-    "focus": "https://example.test/onto#padded",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "certain",
@@ -4330,15 +3547,6 @@
     "rule": "CLS004",
     "severity": "info",
     "suggestion": "Remove a redundant asserted subclass axiom if it adds no documentation value."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4b106d8df232edcbedec629c76fa9280a2f5edae6bc5a56b7edc743fbcaf9d19",
-    "focus": "https://example.test/onto#Multi",
-    "message": "4 direct superclasses (threshold 3).",
-    "rule": "CLS006",
-    "severity": "info",
-    "suggestion": "Review the intended meaning of multiple direct superclasses."
    },
    {
     "confidence": "heuristic",
@@ -4837,45 +4045,45 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "75aa465f789d1fe7568c97bd0de5a5b8914d524501dc771e297b56929658afb7",
+    "fingerprint": "efb78b921e05ffa64624254da07e89b2d4e3f923795f498cb4764c68897ac6bd",
     "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "dfa41152cb0a8709c719e298799a20d7e3e00eb08eb308ac53e78d01716a666c",
+    "fingerprint": "cd17f205afbe702ae1aff73214352f037d34029e46e4a45089a751234845453a",
     "focus": "https://example.test/onto#Eq2",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "133493a1698c725b2d008d1bb8ccf8c6e293b88d47dfdef5e901282b572fa4fa",
+    "fingerprint": "ef103e58b5c596cd9cb574ea4d98b81b4d2927c661e3b30b4432c0e8ec64cb7e",
     "focus": "https://example.test/onto#Orphan",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "ccc9bbf53b03ece1496fe8955e66c10999abeafaa59758593c94cdbc1de36bdd",
+    "fingerprint": "df82a46ea950d48653b703582bf2c2683c98b91c944643085e6f2ae6191eae48",
     "focus": "https://example.test/onto#mixedLang",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7381bc6a150172d63963f17147f9a9f31013dacb27d5b498068eadefaf8a1ef7",
+    "fingerprint": "fcd3db2b789b2b6dffec8ed337f974249481f546dee346cb46b49aec30677653",
     "focus": "https://example.test/onto#noDomain",
-    "message": "Property label begins with upper case (style review).",
+    "message": "Property label begins with upper case, but 13 of 14 property labels begin with lower case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
@@ -5035,15 +4243,6 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "5d0d9f094f688cf6231bc470c0a202ec29da991b606b2bbfcd6512f7ae15c789",
-    "focus": "https://example.test/onto#depProp",
-    "message": "Property has no asserted rdfs:domain.",
-    "rule": "OWL005",
-    "severity": "info",
-    "suggestion": "Consider declaring domain or explaining why a global domain is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "a4c1b7addbc630ff756f38cf0b18c4045bdea3f4ece6b827040beb261764e9fd",
     "focus": "https://example.test/onto#noDomain",
     "message": "Property has no asserted rdfs:domain.",
@@ -5073,15 +4272,6 @@
     "confidence": "heuristic",
     "fingerprint": "e5f421c399bf4b3eb038dd003abd7d27b20cb2af7504106a9d8e0e815855d18f",
     "focus": "https://example.test/onto#dataSym",
-    "message": "Property has no asserted rdfs:range.",
-    "rule": "OWL006",
-    "severity": "info",
-    "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "b34389ce86351ed0a06770aed89da933bc3b9f9a76442291731ed6f06d504147",
-    "focus": "https://example.test/onto#depProp",
     "message": "Property has no asserted rdfs:range.",
     "rule": "OWL006",
     "severity": "info",
@@ -5333,24 +4523,6 @@
     "suggestion": "Use one language-specific primary label per term and language."
    },
    {
-    "confidence": "heuristic",
-    "fingerprint": "75972face6df7ab78baaea9b2a86b35fedcd4ac7ede17498c99d9fd35311011d",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Duplicate label 'dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "2c82e7f72e9c6b3a974b8cb74a4b0aadf92e4d88971a8f93bd685e5352a8177a",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Duplicate label 'same name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
     "confidence": "certain",
     "fingerprint": "f331d669c55d5ac794143b30c94afa159b1ba9e8aad57e5c4103ae38b24ab56b",
     "focus": "https://example.test/onto#padded",
@@ -5586,39 +4758,12 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7fc6469fa6286ae75fea43fc2682adb4f3f48f86cf168d748069b5ffa4bbf826",
-    "focus": "https://example.test/onto#Child",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "969594b103e3fbe0dd55c8996b65e65d83c7fbaff9b37df3ed4eba5b847ce268",
-    "focus": "https://example.test/onto#Disj1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4109db467fcfa8b2f1b97b622231926d37119e45a7b7e0e7033f4379e5e4117c",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "144a0255502d0a54a963a319eefd65d8747bdcf468650f6c58bbae79602f071d",
     "focus": "https://example.test/onto#Duplicate-Two",
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -5627,43 +4772,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "0c45bf27fc3dfb433559bc05d4189f217de0bb3d3c0d20e52726b45036976065",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "3bbdc9dbcdd5f24662b65560eb633af5166c1e24f2a8c173de3188f95225d7d0",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "e05800756034463c3024a189fd2d6c72d2cf3b3748823d5dfd969cdb27ae2bd6",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "7b3265136337e7e17aac0c9e4830b79fb9843bf29b87debe8ca43634cdc173b4",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -5672,16 +4781,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "344c1101796c78aadd2ea9d9d8a8e43c888bf81205850f1d97367ad060027978",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -5690,7 +4790,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -5699,7 +4799,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -5708,160 +4808,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "f0d3edc57e78f0aa27c3773843cd7a94a3711e804e944dcb395b27ea8c046832",
-    "focus": "https://example.test/onto#Chain4",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "c5cdb20ab41c8eaa9e5ab36f774d432f65f3b84b40ef53755ff9b8efd8e0830a",
-    "focus": "https://example.test/onto#Child",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "9595db19b331911eb4f19f8727ed000204e5e89d5fbb1a3ce63c5e6ecf784a22",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "51b727318baa8222302e6a5a754d1bd0eee656d156bbe66c892cb924453111a9",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "53cb6808052b8c2621e2c62eed9399a8a301d7e2ea31c321e280e5256ccf7fc3",
-    "focus": "https://example.test/onto#Duplicate_One",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "ae0b07767063e880925b41915da6bd83ba4e427c5ce3ad1d3f35b987cfda7524",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "50184f54715763b774343e0c95a4af6185c2fa0151f273c12a3d7d288cf6d55a",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6a3bfea13a729685531abb993108274cf3db02545fc30a80860d87a9554b1471",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6dc91eee27d8f7887a40932fd715515fe5934cfb6a1c8804834091817d6da24d",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dec056a0d70c2ea53004c4a75bc040f45358544fec9afcfddfc38302b846d2b3",
-    "focus": "https://example.test/onto#Multi",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "11ebd989bcee39bf0d0b07fb448823bb31fe241b4b7d7b6157969bd246ff4229",
-    "focus": "https://example.test/onto#Orphan",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "09f5ba05e8cc49c4bf764b9436442ffc923f5d9013cd313770bb2ed47c621882",
-    "focus": "https://example.test/onto#R1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "05b9895dcaa479da16b440b37a4cd177b34ae9f22a10d60cd31ce14688f9ff4d",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d64bb35385fde5a02fd0f0f094c6fa10ab2a4753ccf94ce19430d3b35e0288a3",
-    "focus": "https://example.test/onto#UsesDep",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "bee8f83243063a9fece53890f0982f799c5af1916487b1db573e080add2beabd",
-    "focus": "https://example.test/onto#camelCase",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d0a98532e45f63e5ab9a2e4e67518e9a8d3e078261334e9a5802756b856e7c38",
-    "focus": "https://example.test/onto#mixedLang",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d8f3be3ebfcef683249707f3b7b1918a9cd5c5137baa3fa15e3cbb115849f081",
-    "focus": "https://example.test/onto#padded",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "certain",
@@ -5871,15 +4818,6 @@
     "rule": "CLS004",
     "severity": "info",
     "suggestion": "Remove a redundant asserted subclass axiom if it adds no documentation value."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4b106d8df232edcbedec629c76fa9280a2f5edae6bc5a56b7edc743fbcaf9d19",
-    "focus": "https://example.test/onto#Multi",
-    "message": "4 direct superclasses (threshold 3).",
-    "rule": "CLS006",
-    "severity": "info",
-    "suggestion": "Review the intended meaning of multiple direct superclasses."
    },
    {
     "confidence": "heuristic",
@@ -6378,45 +5316,45 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "75aa465f789d1fe7568c97bd0de5a5b8914d524501dc771e297b56929658afb7",
+    "fingerprint": "efb78b921e05ffa64624254da07e89b2d4e3f923795f498cb4764c68897ac6bd",
     "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "dfa41152cb0a8709c719e298799a20d7e3e00eb08eb308ac53e78d01716a666c",
+    "fingerprint": "cd17f205afbe702ae1aff73214352f037d34029e46e4a45089a751234845453a",
     "focus": "https://example.test/onto#Eq2",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "133493a1698c725b2d008d1bb8ccf8c6e293b88d47dfdef5e901282b572fa4fa",
+    "fingerprint": "ef103e58b5c596cd9cb574ea4d98b81b4d2927c661e3b30b4432c0e8ec64cb7e",
     "focus": "https://example.test/onto#Orphan",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "ccc9bbf53b03ece1496fe8955e66c10999abeafaa59758593c94cdbc1de36bdd",
+    "fingerprint": "df82a46ea950d48653b703582bf2c2683c98b91c944643085e6f2ae6191eae48",
     "focus": "https://example.test/onto#mixedLang",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7381bc6a150172d63963f17147f9a9f31013dacb27d5b498068eadefaf8a1ef7",
+    "fingerprint": "fcd3db2b789b2b6dffec8ed337f974249481f546dee346cb46b49aec30677653",
     "focus": "https://example.test/onto#noDomain",
-    "message": "Property label begins with upper case (style review).",
+    "message": "Property label begins with upper case, but 13 of 14 property labels begin with lower case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
@@ -6576,15 +5514,6 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "5d0d9f094f688cf6231bc470c0a202ec29da991b606b2bbfcd6512f7ae15c789",
-    "focus": "https://example.test/onto#depProp",
-    "message": "Property has no asserted rdfs:domain.",
-    "rule": "OWL005",
-    "severity": "info",
-    "suggestion": "Consider declaring domain or explaining why a global domain is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "a4c1b7addbc630ff756f38cf0b18c4045bdea3f4ece6b827040beb261764e9fd",
     "focus": "https://example.test/onto#noDomain",
     "message": "Property has no asserted rdfs:domain.",
@@ -6614,15 +5543,6 @@
     "confidence": "heuristic",
     "fingerprint": "e5f421c399bf4b3eb038dd003abd7d27b20cb2af7504106a9d8e0e815855d18f",
     "focus": "https://example.test/onto#dataSym",
-    "message": "Property has no asserted rdfs:range.",
-    "rule": "OWL006",
-    "severity": "info",
-    "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "b34389ce86351ed0a06770aed89da933bc3b9f9a76442291731ed6f06d504147",
-    "focus": "https://example.test/onto#depProp",
     "message": "Property has no asserted rdfs:range.",
     "rule": "OWL006",
     "severity": "info",
@@ -6928,24 +5848,6 @@
     "suggestion": "Use one language-specific primary label per term and language."
    },
    {
-    "confidence": "heuristic",
-    "fingerprint": "75972face6df7ab78baaea9b2a86b35fedcd4ac7ede17498c99d9fd35311011d",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Duplicate label 'dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "2c82e7f72e9c6b3a974b8cb74a4b0aadf92e4d88971a8f93bd685e5352a8177a",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Duplicate label 'same name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
-    "rule": "LEX004",
-    "severity": "warning",
-    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
-   },
-   {
     "confidence": "certain",
     "fingerprint": "f331d669c55d5ac794143b30c94afa159b1ba9e8aad57e5c4103ae38b24ab56b",
     "focus": "https://example.test/onto#padded",
@@ -7136,39 +6038,12 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7fc6469fa6286ae75fea43fc2682adb4f3f48f86cf168d748069b5ffa4bbf826",
-    "focus": "https://example.test/onto#Child",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "969594b103e3fbe0dd55c8996b65e65d83c7fbaff9b37df3ed4eba5b847ce268",
-    "focus": "https://example.test/onto#Disj1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "4109db467fcfa8b2f1b97b622231926d37119e45a7b7e0e7033f4379e5e4117c",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "144a0255502d0a54a963a319eefd65d8747bdcf468650f6c58bbae79602f071d",
     "focus": "https://example.test/onto#Duplicate-Two",
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -7177,43 +6052,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "0c45bf27fc3dfb433559bc05d4189f217de0bb3d3c0d20e52726b45036976065",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "3bbdc9dbcdd5f24662b65560eb633af5166c1e24f2a8c173de3188f95225d7d0",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "e05800756034463c3024a189fd2d6c72d2cf3b3748823d5dfd969cdb27ae2bd6",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "7b3265136337e7e17aac0c9e4830b79fb9843bf29b87debe8ca43634cdc173b4",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -7222,16 +6061,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "344c1101796c78aadd2ea9d9d8a8e43c888bf81205850f1d97367ad060027978",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "No asserted local super-/subclass links.",
-    "rule": "CLS001",
-    "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -7240,7 +6070,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -7249,7 +6079,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -7258,160 +6088,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "f0d3edc57e78f0aa27c3773843cd7a94a3711e804e944dcb395b27ea8c046832",
-    "focus": "https://example.test/onto#Chain4",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "c5cdb20ab41c8eaa9e5ab36f774d432f65f3b84b40ef53755ff9b8efd8e0830a",
-    "focus": "https://example.test/onto#Child",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "9595db19b331911eb4f19f8727ed000204e5e89d5fbb1a3ce63c5e6ecf784a22",
-    "focus": "https://example.test/onto#Disj2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "51b727318baa8222302e6a5a754d1bd0eee656d156bbe66c892cb924453111a9",
-    "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "53cb6808052b8c2621e2c62eed9399a8a301d7e2ea31c321e280e5256ccf7fc3",
-    "focus": "https://example.test/onto#Duplicate_One",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "ae0b07767063e880925b41915da6bd83ba4e427c5ce3ad1d3f35b987cfda7524",
-    "focus": "https://example.test/onto#Eq1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "50184f54715763b774343e0c95a4af6185c2fa0151f273c12a3d7d288cf6d55a",
-    "focus": "https://example.test/onto#Eq2",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6a3bfea13a729685531abb993108274cf3db02545fc30a80860d87a9554b1471",
-    "focus": "https://example.test/onto#EqSelf",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "6dc91eee27d8f7887a40932fd715515fe5934cfb6a1c8804834091817d6da24d",
-    "focus": "https://example.test/onto#EqUndeclared",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dec056a0d70c2ea53004c4a75bc040f45358544fec9afcfddfc38302b846d2b3",
-    "focus": "https://example.test/onto#Multi",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "11ebd989bcee39bf0d0b07fb448823bb31fe241b4b7d7b6157969bd246ff4229",
-    "focus": "https://example.test/onto#Orphan",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "09f5ba05e8cc49c4bf764b9436442ffc923f5d9013cd313770bb2ed47c621882",
-    "focus": "https://example.test/onto#R1",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "05b9895dcaa479da16b440b37a4cd177b34ae9f22a10d60cd31ce14688f9ff4d",
-    "focus": "https://example.test/onto#Restricted",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d64bb35385fde5a02fd0f0f094c6fa10ab2a4753ccf94ce19430d3b35e0288a3",
-    "focus": "https://example.test/onto#UsesDep",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "bee8f83243063a9fece53890f0982f799c5af1916487b1db573e080add2beabd",
-    "focus": "https://example.test/onto#camelCase",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d0a98532e45f63e5ab9a2e4e67518e9a8d3e078261334e9a5802756b856e7c38",
-    "focus": "https://example.test/onto#mixedLang",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "d8f3be3ebfcef683249707f3b7b1918a9cd5c5137baa3fa15e3cbb115849f081",
-    "focus": "https://example.test/onto#padded",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "certain",
@@ -7421,33 +6098,6 @@
     "rule": "CLS004",
     "severity": "info",
     "suggestion": "Remove a redundant asserted subclass axiom if it adds no documentation value."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "0731efc10205d55b081b1e0811438d5d333967adef10780af6b1d975c0d58e6e",
-    "focus": "https://example.test/onto#Chain0",
-    "message": "Asserted subtree depth 5 exceeds 2.",
-    "rule": "CLS005",
-    "severity": "info",
-    "suggestion": "Review unusually deep asserted hierarchy and possible re-modeling."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "fba44a49de938469f838e65fee757cbbbb193c5c5973cb23c8382c3cdd576ced",
-    "focus": "https://example.test/onto#Chain1",
-    "message": "Asserted subtree depth 4 exceeds 2.",
-    "rule": "CLS005",
-    "severity": "info",
-    "suggestion": "Review unusually deep asserted hierarchy and possible re-modeling."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "3fb8811e1d346f0bb858718c96daeb9f6f2b25388d84896448665a0228961751",
-    "focus": "https://example.test/onto#Chain2",
-    "message": "Asserted subtree depth 3 exceeds 2.",
-    "rule": "CLS005",
-    "severity": "info",
-    "suggestion": "Review unusually deep asserted hierarchy and possible re-modeling."
    },
    {
     "confidence": "heuristic",
@@ -8873,45 +7523,45 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "75aa465f789d1fe7568c97bd0de5a5b8914d524501dc771e297b56929658afb7",
+    "fingerprint": "efb78b921e05ffa64624254da07e89b2d4e3f923795f498cb4764c68897ac6bd",
     "focus": "https://example.test/onto#Duplicate-Two",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "dfa41152cb0a8709c719e298799a20d7e3e00eb08eb308ac53e78d01716a666c",
+    "fingerprint": "cd17f205afbe702ae1aff73214352f037d34029e46e4a45089a751234845453a",
     "focus": "https://example.test/onto#Eq2",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "133493a1698c725b2d008d1bb8ccf8c6e293b88d47dfdef5e901282b572fa4fa",
+    "fingerprint": "ef103e58b5c596cd9cb574ea4d98b81b4d2927c661e3b30b4432c0e8ec64cb7e",
     "focus": "https://example.test/onto#Orphan",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "ccc9bbf53b03ece1496fe8955e66c10999abeafaa59758593c94cdbc1de36bdd",
+    "fingerprint": "df82a46ea950d48653b703582bf2c2683c98b91c944643085e6f2ae6191eae48",
     "focus": "https://example.test/onto#mixedLang",
-    "message": "Class label begins with lower case (style review).",
+    "message": "Class label begins with lower case, but 27 of 31 class labels begin with upper case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "7381bc6a150172d63963f17147f9a9f31013dacb27d5b498068eadefaf8a1ef7",
+    "fingerprint": "fcd3db2b789b2b6dffec8ed337f974249481f546dee346cb46b49aec30677653",
     "focus": "https://example.test/onto#noDomain",
-    "message": "Property label begins with upper case (style review).",
+    "message": "Property label begins with upper case, but 13 of 14 property labels begin with lower case (style review).",
     "rule": "LEX009",
     "severity": "info",
     "suggestion": "Review capitalization and wording relative to the namespace policy."
@@ -9197,15 +7847,6 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "5d0d9f094f688cf6231bc470c0a202ec29da991b606b2bbfcd6512f7ae15c789",
-    "focus": "https://example.test/onto#depProp",
-    "message": "Property has no asserted rdfs:domain.",
-    "rule": "OWL005",
-    "severity": "info",
-    "suggestion": "Consider declaring domain or explaining why a global domain is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "a4c1b7addbc630ff756f38cf0b18c4045bdea3f4ece6b827040beb261764e9fd",
     "focus": "https://example.test/onto#noDomain",
     "message": "Property has no asserted rdfs:domain.",
@@ -9235,15 +7876,6 @@
     "confidence": "heuristic",
     "fingerprint": "e5f421c399bf4b3eb038dd003abd7d27b20cb2af7504106a9d8e0e815855d18f",
     "focus": "https://example.test/onto#dataSym",
-    "message": "Property has no asserted rdfs:range.",
-    "rule": "OWL006",
-    "severity": "info",
-    "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "b34389ce86351ed0a06770aed89da933bc3b9f9a76442291731ed6f06d504147",
-    "focus": "https://example.test/onto#depProp",
     "message": "Property has no asserted rdfs:range.",
     "rule": "OWL006",
     "severity": "info",
@@ -9393,7 +8025,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -9402,7 +8034,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -9411,34 +8043,7 @@
     "message": "No asserted local super-/subclass links.",
     "rule": "CLS001",
     "severity": "info",
-    "suggestion": "Inspect whether the disconnected class is intentional (e.g., a top-level class)."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dc6ab34d8e57ea5b854524880ab1629d98c2c080eb9b823bb8ff9b63b174ee35",
-    "focus": "https://example.test/a/Same",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "dac0d4dfc82206b347068b27f2000e2c93aae44f33067d90014fb2089bd48514",
-    "focus": "https://example.test/b/Same",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
-   },
-   {
-    "confidence": "heuristic",
-    "fingerprint": "731c7a8600b6d2eb379200b68f4d154621fd911eda40d2715ef9def9f9c1b020",
-    "focus": "https://example.test/with space",
-    "message": "Class has no directly typed instance or subclass in this graph.",
-    "rule": "CLS002",
-    "severity": "info",
-    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
    },
    {
     "confidence": "heuristic",
@@ -9502,6 +8107,107 @@
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
+   }
+  ],
+  "populated": [
+   {
+    "confidence": "heuristic",
+    "fingerprint": "40ca4641b8bdffff5020b3841060d9814060078fe909c26228d51cca42674619",
+    "focus": "https://example.test/populated#Dog",
+    "message": "Shares label 'dog' with sibling https://example.test/populated#Hound under https://example.test/populated#Animal.",
+    "rule": "CLS010",
+    "severity": "warning",
+    "suggestion": "Give each sibling class a distinct label, or merge the classes if they mean the same thing."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "b96a2eedba035c8ffad8e18d64fd127276c777afa309f903f7cec9c102214a5b",
+    "focus": "https://example.test/populated#Hound",
+    "message": "Shares label 'dog' with sibling https://example.test/populated#Dog under https://example.test/populated#Animal.",
+    "rule": "CLS010",
+    "severity": "warning",
+    "suggestion": "Give each sibling class a distinct label, or merge the classes if they mean the same thing."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "6c49b41d605b7ad6385ada98efc51dfedcaace3abbfedd525546c8ba5525301e",
+    "focus": "https://example.test/populated#rex",
+    "message": "Term has no label.",
+    "rule": "LEX001",
+    "severity": "warning",
+    "suggestion": "Add rdfs:label or an accepted alternative to the declared local term."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "2123a54bf3771778ee1c917c8c8f684bbfa39b600f1587742fc7347873c671e5",
+    "focus": "https://example.test/populated#tom",
+    "message": "Term has no label.",
+    "rule": "LEX001",
+    "severity": "warning",
+    "suggestion": "Add rdfs:label or an accepted alternative to the declared local term."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "a7cdb64949dbabb0b2c874f2e59ae1890251df8799ccf6af87828585b6b336fd",
+    "focus": "https://example.test/populated#Fish",
+    "message": "Class has no directly typed instance or subclass in this graph.",
+    "rule": "CLS002",
+    "severity": "info",
+    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "6817bdf7b6955b2efd70d52adf04a11dc504cf3251b263a3e54d4bd43010bf14",
+    "focus": "https://example.test/populated#Hound",
+    "message": "Class has no directly typed instance or subclass in this graph.",
+    "rule": "CLS002",
+    "severity": "info",
+    "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "aae46691b5a8e06f6efe53b1674046f1f60b7bed4ce2d069d1603db4eaf19780",
+    "focus": "https://example.test/populated",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "03b0f2dbcf37978f9c3baa15e719613b83046c5859c839c480e7278403781a69",
+    "focus": "https://example.test/populated#rex",
+    "message": "Term has no description or definition.",
+    "rule": "LEX002",
+    "severity": "info",
+    "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "66e5bc80c4db3dcf53cd976e295402ae9fed1bf3ecf86d8ea5f72c1a5cd75c36",
+    "focus": "https://example.test/populated#tom",
+    "message": "Term has no description or definition.",
+    "rule": "LEX002",
+    "severity": "info",
+    "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "944a928d79d5e15043e18e2d266d16aa6a707c5ff631fa6593512150d62b82b1",
+    "focus": "https://example.test/populated#Dog",
+    "message": "Duplicate label 'Dog'@en for https://example.test/populated#Dog, https://example.test/populated#Hound",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "5a26a5988f6fb946a9d772fb1aac47d99e22707edfa39eb3fd85268b50880b62",
+    "focus": "https://example.test/populated",
+    "message": "No versionIRI/versionInfo.",
+    "rule": "ONT004",
+    "severity": "info",
+    "suggestion": "Add owl:versionIRI or owl:versionInfo according to your release policy."
    }
   ]
  }

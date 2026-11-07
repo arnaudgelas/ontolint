@@ -36,6 +36,12 @@ CASES = {
                 "relative ontology IRI is IRI001's concern",
                 lambda: _ontology_and_terms("onto.rdf", "https://b.test/ns#A"),
             ),
+            built(
+                "OBO PURL ontology with ID-style terms",
+                lambda: _ontology_and_terms(
+                    "http://purl.obolibrary.org/obo/x.owl", "http://purl.obolibrary.org/obo/X_1"
+                ),
+            ),
             built("no terms", lambda: _ontology_and_terms("https://a.test/onto")),
             built(
                 "two ontologies are ambiguous",
@@ -51,6 +57,14 @@ CASES = {
         [
             built("all hash", lambda: _terms("https://a.test/ns#A", "https://a.test/ns#B")),
             built("all slash", lambda: _terms("https://a.test/ns/A", "https://a.test/ns/B")),
+            built(
+                "OBO subset annotation properties next to OBO IDs",
+                lambda: _ontology_and_terms(
+                    "http://purl.obolibrary.org/obo/x.owl",
+                    "http://purl.obolibrary.org/obo/x#slim",
+                    "http://purl.obolibrary.org/obo/X_0000001",
+                ),
+            ),
             built("namespace-only IRIs are ignored", lambda: _terms("https://a.test/ns#A", "https://a.test/other/")),
         ],
     ),

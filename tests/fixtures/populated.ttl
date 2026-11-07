@@ -1,0 +1,18 @@
+@prefix ex: <https://example.test/populated#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://example.test/populated> a owl:Ontology ;
+    dcterms:license <https://example.test/license> ;
+    dcterms:creator "Me" ; dcterms:created "2024-01-01" ;
+    dcterms:description "Instances exist, so unused leaf classes are worth reporting." .
+
+ex:Animal a owl:Class ; rdfs:label "Animal"@en ; rdfs:comment "An animal."@en .
+ex:Dog a owl:Class ; rdfs:label "Dog"@en ; rdfs:comment "A dog."@en ; rdfs:subClassOf ex:Animal .
+ex:Cat a owl:Class ; rdfs:label "Cat"@en ; rdfs:comment "A cat."@en ; rdfs:subClassOf ex:Animal .
+ex:Hound a owl:Class ; rdfs:label "Dog"@en ; rdfs:comment "Also labelled Dog."@en ; rdfs:subClassOf ex:Animal .
+ex:Fish a owl:Class ; rdfs:label "Fish"@en ; rdfs:comment "A fish."@en ; rdfs:subClassOf ex:Animal .
+
+ex:rex a ex:Dog, owl:NamedIndividual .
+ex:tom a ex:Cat, owl:NamedIndividual .

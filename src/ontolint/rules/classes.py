@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Set
 from typing import TYPE_CHECKING
 
-from rdflib import URIRef
+from rdflib import Literal, URIRef
 from rdflib.namespace import OWL, RDFS
 
 from ontolint.graph import hierarchy_depths, strongly_connected_components, transitively_redundant_edges
@@ -28,7 +28,10 @@ SPECS: tuple[RuleSpec, ...] = (
         "CLS",
         "Disconnected class",
         Severity.INFO,
-        "Inspect whether the disconnected class is intentional (e.g., a top-level class).",
+        (
+            "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, "
+            "is not deprecated and is never used as a domain, range, restriction filler or type."
+        ),
         "heuristic",
         RuleBackend.RDFLIB,
         RuleScope.TERM,
@@ -154,14 +157,58 @@ def run(ctx: RuleContext) -> None:
     _equivalences(ctx)
 
 
+# CLS002 needs at least 1/POPULATED_CLASS_SHARE_DENOMINATOR of the owned classes to have individuals.
+POPULATED_CLASS_SHARE_DENOMINATOR = 4
+
+# Predicates whose object is a class *used* by the ontology (domain, range, restriction filler,
+# schema.org style domain/range hints).  Used by CLS001.
+USAGE_PREDICATES = (
+    RDFS.domain,
+    RDFS.range,
+    OWL.someValuesFrom,
+    OWL.allValuesFrom,
+    OWL.onClass,
+    URIRef("https://schema.org/domainIncludes"),
+    URIRef("https://schema.org/rangeIncludes"),
+    URIRef("http://schema.org/domainIncludes"),
+    URIRef("http://schema.org/rangeIncludes"),
+)
+
+
+def _used_classes(ctx: RuleContext) -> set[URIRef]:
+    """Return classes that are used or connected: domain/range/filler, typed individuals, links, deprecated."""
+    used = {o for p in USAGE_PREDICATES for o in ctx.g.objects(None, p) if isinstance(o, URIRef)}
+    used.update(c for c in ctx.classes if ctx.context.subjects_by_type.get(c))
+    # Any asserted hierarchy or equivalence link, even to a foreign or anonymous class, is a connection.
+    for predicate in (RDFS.subClassOf, OWL.equivalentClass):
+        for s, o in ctx.g.subject_objects(predicate):
+            used.update(n for n in (s, o) if isinstance(n, URIRef))
+    # Deprecated terms are expected to be detached.
+    used.update(s for s in ctx.g.subjects(OWL.deprecated, Literal(True)) if isinstance(s, URIRef))
+    return used
+
+
+def _has_individuals(ctx: RuleContext) -> bool:
+    """Return whether the graph is instance-oriented: at least a quarter of the owned classes have individuals.
+
+    "Individuals" are non-class resources typed with an owned class.  A vocabulary that only ships a
+    few enumeration members (``time:Monday``) is not populated, so empty leaves are the norm there.
+    """
+    by_type = ctx.context.subjects_by_type
+    populated = sum(1 for c in ctx.classes if any(s not in ctx.classes for s in by_type.get(c, ())))
+    return populated > 0 and populated * POPULATED_CLASS_SHARE_DENOMINATOR >= len(ctx.classes)
+
+
 def _per_class(ctx: RuleContext, supers: Adjacency, children: Adjacency) -> None:
     policy = ctx.policy
-    # Orphan = no asserted local class-to-class hierarchy, not no semantic links.
+    used = _used_classes(ctx)
+    individuals = _has_individuals(ctx)
+    # Orphan = no asserted local class-to-class hierarchy and no use anywhere, not no semantic links.
     for c in ctx.classes:
-        if not supers[c] and not children[c] and (c, RDFS.subClassOf, OWL.Thing) not in ctx.g:
+        if not supers[c] and not children[c] and c not in used and (c, RDFS.subClassOf, OWL.Thing) not in ctx.g:
             ctx.add("CLS001", c, "No asserted local super-/subclass links.")
         has_instance = bool(ctx.context.subjects_by_type.get(c))
-        if not has_instance and not children[c]:
+        if individuals and not has_instance and not children[c]:
             ctx.add("CLS002", c, "Class has no directly typed instance or subclass in this graph.")
         if len(supers[c]) > policy.inheritance_limit:
             ctx.add("CLS006", c, f"{len(supers[c])} direct superclasses (threshold {policy.inheritance_limit}).")
@@ -190,11 +237,14 @@ def _redundant_edges(ctx: RuleContext, edges: Edges, components: list[set[URIRef
 
 
 def _depth(ctx: RuleContext, components: Iterable[Set[URIRef]], edges: Edges) -> None:
+    """Report each deep branch once, at its topmost over-deep class (not at every ancestor)."""
     cyclic = {n for comp in components if len(comp) > 1 for n in comp}
+    limit = ctx.policy.depth_limit
     depths = hierarchy_depths(ctx.classes, edges)
-    for c in ctx.classes:
-        if c not in cyclic and depths[c] > ctx.policy.depth_limit:
-            ctx.add("CLS005", c, f"Asserted subtree depth {depths[c]} exceeds {ctx.policy.depth_limit}.")
+    deep = {c for c in ctx.classes if c not in cyclic and depths[c] > limit}
+    below = {child for child, parent in edges if parent in deep and child != parent}
+    for c in deep - below:
+        ctx.add("CLS005", c, f"Asserted subtree depth {depths[c]} exceeds {limit}.")
 
 
 def _chain_lengths(classes: Iterable[URIRef], children: Adjacency) -> dict[URIRef, int]:

@@ -26,6 +26,7 @@ CASES = {
         [
             ttl("extensionless ontology IRI", "<https://example.test/onto> a owl:Ontology ."),
             ttl("extension on a term is fine", "<https://example.test/term.owl> a owl:Class ."),
+            ttl("OBO PURL ontology IRI", "<http://purl.obolibrary.org/obo/envo.owl> a owl:Ontology ."),
         ],
     ),
     "IRI003": rule_cases(
@@ -33,8 +34,16 @@ CASES = {
             ttl(
                 "same local name, two namespaces",
                 "<https://a.test/Same> a owl:Class . <https://b.test/Same> a owl:Class .",
-            )
+            ),
+            ttl("case-only collision within one kind", "ex:Agent a owl:Class . ex:agent a owl:Class ."),
         ],
-        [ttl("distinct local names", "<https://a.test/One> a owl:Class . <https://b.test/Two> a owl:Class .")],
+        [
+            ttl("distinct local names", "<https://a.test/One> a owl:Class . <https://b.test/Two> a owl:Class ."),
+            ttl("class and property of the same name", "ex:Agent a owl:Class . ex:agent a owl:ObjectProperty ."),
+            ttl(
+                "deprecated terms",
+                "<https://a.test/Same> a owl:Class ; owl:deprecated true . <https://b.test/Same> a owl:Class .",
+            ),
+        ],
     ),
 }

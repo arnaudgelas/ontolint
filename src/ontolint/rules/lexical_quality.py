@@ -28,6 +28,9 @@ PRIMARY_LABELS = (RDFS.label, SKOS.prefLabel)
 CAMEL_CASE = re.compile(r"[a-z][A-Z]")
 TERMINAL_PUNCTUATION = (".", ":", ";", ",")
 ODD_WHITESPACE = re.compile(r"[\r\n\t]|\s{2,}")
+# LEX010 collapses to one ontology-level finding when most labels repeat the local name (schema.org style).
+AGGREGATE_PERCENT = 50
+MINIMUM_AGGREGATE_LABELLED_TERMS = 10
 
 
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
@@ -152,6 +155,7 @@ def run(ctx: RuleContext) -> None:
         _definitions(ctx, term, text)
         _language_policy(ctx, term, text)
     _cross_term(ctx, texts)
+    _verbatim_labels(ctx, texts)
 
 
 def _literals(ctx: RuleContext, term: URIRef, predicates: tuple[URIRef, ...]) -> list[Literal]:
@@ -178,17 +182,45 @@ def _language(literal: Literal) -> str:
 
 
 def _label_style(ctx: RuleContext, term: URIRef, text: TermText) -> None:
-    name = local_name(term)
     for label in text.labels:
         value = str(label).strip()
-        if value and value == name and " " not in value and (CAMEL_CASE.search(value) or "_" in value):
-            ctx.add("LEX010", term, f"Label {value!r} repeats the identifier.")
         if ODD_WHITESPACE.search(value):
             ctx.add("LEX011", term, "Label contains line breaks, tabs or repeated whitespace.", confidence="certain")
         if value.endswith(TERMINAL_PUNCTUATION):
             ctx.add("LEX012", term, f"Label {value!r} ends with punctuation.")
         if label.datatype is not None and label.datatype != XSD.string:
             ctx.add("LEX014", term, f"Label {value!r} has datatype {label.datatype}.", confidence="certain")
+
+
+def _verbatim_labels(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
+    """LEX010: per term, or once for the ontology when more than half of the labelled terms repeat their name."""
+    flagged: list[tuple[URIRef, str]] = []
+    labelled = equal = 0
+    for term, text in texts.items():
+        name = local_name(term)
+        values = [str(label).strip() for label in text.labels]
+        if not values:
+            continue
+        labelled += 1
+        equal += name in values
+        flagged.extend(
+            (term, value)
+            for value in values
+            if value and value == name and " " not in value and (CAMEL_CASE.search(value) or "_" in value)
+        )
+    if not flagged:
+        return
+    if labelled >= MINIMUM_AGGREGATE_LABELLED_TERMS and equal * 100 > labelled * AGGREGATE_PERCENT:
+        focus = sorted(map(str, ctx.ontologies))[0] if ctx.ontologies else "(vocabulary)"
+        ctx.add(
+            "LEX010",
+            focus,
+            f"{len({term for term, _ in flagged})} of {labelled} labelled terms use their identifier as the label "
+            f"(e.g. {flagged[0][1]!r}).",
+        )
+        return
+    for term, value in flagged:
+        ctx.add("LEX010", term, f"Label {value!r} repeats the identifier.")
 
 
 def _label_types(ctx: RuleContext, term: URIRef) -> None:

@@ -79,6 +79,7 @@ LINTER_CASES: dict[str, tuple[Callable[[], Graph], Callable[[], Graph] | None, d
     ),
     "kitchen_shapes": (lambda: _load("kitchen_sink.ttl"), lambda: _load("kitchen_shapes.ttl"), {"base": KITCHEN_BASE}),
     "clean": (lambda: _load("clean.ttl"), None, {}),
+    "populated": (lambda: _load("populated.ttl"), None, {}),
     "clean_shapes": (lambda: _load("clean.ttl"), lambda: _load("clean_shapes.ttl"), {"languages": ("en",)}),
     "empty": (Graph, None, {}),
     "odd_iris": (_odd_iris, None, {}),

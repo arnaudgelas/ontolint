@@ -152,7 +152,7 @@ def test_lexical_capitalization_selection_is_independent_of_graph_insertion_orde
             graph.add((EX.Class, RDFS.label, label))
         findings.append({finding.rule for finding in Linter(graph).run()})
 
-    assert findings == [{"CLS001", "CLS002", "LEX002", "LEX003", "ONT001"}] * 2
+    assert findings == [{"CLS001", "LEX002", "LEX003", "ONT001"}] * 2
 
 
 def test_lexical_capitalization_handles_plain_and_language_tagged_labels() -> None:
