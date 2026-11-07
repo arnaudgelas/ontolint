@@ -5,6 +5,12 @@
 # ontolint
 
 <p align="center">
+  <a href="https://github.com/arnaudgelas/ontolint/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/arnaudgelas/ontolint/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/actions/workflows/validation.yml"><img alt="Validation status (ROBOT image and mutation testing)" src="https://github.com/arnaudgelas/ontolint/actions/workflows/validation.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/arnaudgelas/ontolint"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/issues"><img alt="Open issues" src="https://img.shields.io/github/issues/arnaudgelas/ontolint"></a>
+</p>
+<p align="center">
   <a href="https://www.python.org/"><img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
   <a href="docs/rules.md"><img alt="Rules implemented: 186 of 329" src="https://img.shields.io/badge/rules-186%2F329_implemented-brightgreen"></a>
