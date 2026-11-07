@@ -1,0 +1,77 @@
+"""Identifier hygiene rules: IRI001-IRI003."""
+
+from __future__ import annotations
+
+import re
+from collections import defaultdict
+from typing import TYPE_CHECKING
+from urllib.parse import urlsplit
+
+from rdflib import URIRef
+
+from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+
+from .support import local_name
+
+if TYPE_CHECKING:
+    from .runtime import RuleContext
+
+
+SPECS: tuple[RuleSpec, ...] = (
+    RuleSpec(
+        "IRI001",
+        "IRI",
+        "Whitespace or non-absolute IRI",
+        Severity.WARNING,
+        "Use stable absolute IRIs; avoid whitespace in identifiers.",
+        "heuristic",
+        RuleBackend.RDFLIB,
+        RuleScope.TERM,
+        "identifiers",
+    ),
+    RuleSpec(
+        "IRI002",
+        "IRI",
+        "Ontology IRI contains a file extension",
+        Severity.WARNING,
+        "Consider an extension-independent ontology identifier (policy-dependent).",
+        "heuristic",
+        RuleBackend.RDFLIB,
+        RuleScope.ONTOLOGY,
+        "identifiers",
+    ),
+    RuleSpec(
+        "IRI003",
+        "IRI",
+        "Local-name collision across namespaces",
+        Severity.INFO,
+        "Check whether duplicate local identifiers across namespaces confuse users.",
+        "heuristic",
+        RuleBackend.RDFLIB,
+        RuleScope.VOCABULARY,
+        "identifiers",
+    ),
+)
+
+
+def run(ctx: RuleContext) -> None:
+    """Check IRIs of ontologies and declared terms for syntax, extensions, and collisions."""
+    names: defaultdict[str, set[URIRef]] = defaultdict(set)
+    for u in ctx.terms | ctx.ontologies:
+        s = str(u)
+        pieces = urlsplit(s)
+        if any(character.isspace() for character in s) or not pieces.scheme:
+            ctx.add("IRI001", u, "IRI contains whitespace or is not absolute.", confidence="certain")
+        if u in ctx.ontologies and re.search(r"\.(owl|ttl|n3|rdf|rdfxml)$", pieces.path, flags=re.I):
+            ctx.add("IRI002", u, "Ontology IRI contains a serialization file extension.")
+        if u in ctx.terms:
+            names[local_name(u).casefold()].add(u)
+    for iris in names.values():
+        # The set cannot contain two distinct IRIs with the same complete
+        # namespace/local-name split, so cardinality alone is sufficient.
+        if len(iris) > 1:
+            ctx.add(
+                "IRI003",
+                sorted(map(str, iris))[0],
+                "Local-name collision across IRIs: " + ", ".join(sorted(map(str, iris))[:5]),
+            )

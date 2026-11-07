@@ -11,7 +11,9 @@ from hypothesis import strategies as st
 from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
+from ontolint.graph import hierarchy_depths, reachable, strongly_connected_components, transitively_redundant_edges
 from ontolint.ontolint import FIXES, SEVERITY, Linter, main
+from ontolint.rules.classes import _chain_lengths
 
 TOOL_FAILURE_EXIT = 2
 PROPERTY_TEST_SETTINGS = settings(max_examples=150, deadline=None, print_blob=True)
@@ -159,3 +161,119 @@ def test_every_registered_rule_can_be_emitted(rule: str) -> None:
     assert linter.issues[0].rule == rule
     assert linter.issues[0].severity == SEVERITY[rule]
     assert linter.issues[0].suggestion == FIXES[rule]
+
+
+def _reference_depths(nodes: list[URIRef], edges: set[tuple[URIRef, URIRef]]) -> dict[URIRef, int]:
+    """Straight port of the legacy recursive CLS005 ``depth`` helper (small graphs only)."""
+    children: dict[URIRef, set[URIRef]] = defaultdict(set)
+    for child, parent in edges:
+        children[parent].add(child)
+    cyclic = {n for comp in Linter.components(nodes, edges) if len(comp) > 1 for n in comp}
+    memo: dict[URIRef, int] = {}
+    processing: set[URIRef] = set()
+
+    def depth(c: URIRef) -> int:
+        if c in memo:
+            return memo[c]
+        if c in processing or c in cyclic:
+            return 0
+        processing.add(c)
+        result = 1 + max((depth(x) for x in children[c] if x != c), default=0)
+        processing.remove(c)
+        memo[c] = result
+        return result
+
+    return {c: depth(c) for c in nodes}
+
+
+@settings(max_examples=500, deadline=None, print_blob=True)
+@given(directed_graphs())
+def test_hierarchy_depths_matches_recursive_reference(
+    graph: tuple[list[URIRef], set[tuple[URIRef, URIRef]]],
+) -> None:
+    """Iterative depths equal the legacy recursion for cycles, self-loops, diamonds and isolates."""
+    nodes, edges = graph
+
+    assert hierarchy_depths(nodes, edges) == _reference_depths(nodes, edges)
+
+
+def test_hierarchy_depths_documented_edge_cases() -> None:
+    a, b, c, d, e = (URIRef(f"https://example.test/{x}") for x in "abcde")
+    # Diamond a <- {b, c} <- d, but d <-> e is a cycle (depth 0), c has a self-loop (ignored).
+    edges = {(b, a), (c, a), (d, b), (d, c), (c, c), (e, d), (d, e)}
+    assert hierarchy_depths([a, b, c, d, e], edges) == {a: 2, b: 1, c: 1, d: 0, e: 0}
+    assert hierarchy_depths([], []) == {}
+    assert hierarchy_depths([a], [(a, a), (a, URIRef("https://external.example/x"))]) == {a: 1}
+
+
+def test_hierarchy_depths_handles_100k_deep_chain() -> None:
+    size = 100_000
+    nodes = list(range(size))
+    depths = hierarchy_depths(nodes, ((i + 1, i) for i in range(size - 1)))
+
+    assert depths[0] == size
+    assert depths[size - 1] == 1
+
+
+@st.composite
+def mostly_acyclic_graphs(draw: st.DrawFn) -> tuple[list[URIRef], set[tuple[URIRef, URIRef]]]:
+    """Return a larger graph biased towards DAGs (edges to higher indexes), with a few random back-edges."""
+    size = draw(st.integers(min_value=0, max_value=14))
+    nodes = [URIRef(f"https://example.test/node/{index}") for index in range(size)]
+    forward = [(nodes[i], nodes[j]) for i in range(size) for j in range(i + 1, size)]
+    edges = set(draw(st.sets(st.sampled_from(forward), max_size=len(forward)))) if forward else set()
+    if nodes and draw(st.booleans()):
+        edges.add((draw(st.sampled_from(nodes)), draw(st.sampled_from(nodes))))
+    return nodes, edges
+
+
+@settings(max_examples=500, deadline=None, print_blob=True)
+@given(st.one_of(directed_graphs(), mostly_acyclic_graphs()))
+def test_transitively_redundant_edges_matches_per_edge_search(
+    graph: tuple[list[URIRef], set[tuple[URIRef, URIRef]]],
+) -> None:
+    """The reachability-bitset algorithm flags exactly the edges the legacy per-edge BFS flagged."""
+    nodes, edges = graph
+    supers: dict[URIRef, set[URIRef]] = defaultdict(set)
+    for child, parent in edges:
+        supers[child].add(parent)
+    expected = {(c, p) for c, p in edges if reachable(supers, c, p, ignore=(c, p))}
+
+    assert transitively_redundant_edges(edges, strongly_connected_components(nodes, edges)) == expected
+
+
+def _legacy_chain_length(start: URIRef, children: dict[URIRef, set[URIRef]]) -> int:
+    length, node, seen = 0, start, set[URIRef]()
+    while len(children[node]) == 1 and node not in seen:
+        seen.add(node)
+        node = next(iter(children[node]))
+        length += 1
+    return length
+
+
+@settings(max_examples=500, deadline=None, print_blob=True)
+@given(st.one_of(directed_graphs(), mostly_acyclic_graphs()))
+def test_chain_lengths_match_legacy_walk(graph: tuple[list[URIRef], set[tuple[URIRef, URIRef]]]) -> None:
+    """Memoised CLS007 chain lengths equal the legacy walk from every class, cycles included."""
+    nodes, edges = graph
+    children: defaultdict[URIRef, set[URIRef]] = defaultdict(set)
+    for child, parent in edges:
+        children[parent].add(child)
+    expected = {n: _legacy_chain_length(n, children) for n in nodes}
+
+    assert _chain_lengths(nodes, children) == expected
+
+
+def test_linter_handles_chain_far_beyond_recursion_limit() -> None:
+    """CLS005/CLS007 use iterative algorithms, so a 5000-deep chain lints without RecursionError."""
+    size = 5_000
+    graph = Graph()
+    nodes = [URIRef(f"https://example.test/chain/{index}") for index in range(size)]
+    for index, node in enumerate(nodes):
+        graph.add((node, RDF.type, OWL.Class))
+        if index:
+            graph.add((node, RDFS.subClassOf, nodes[index - 1]))
+
+    findings = Linter(graph).run()
+
+    assert {f.focus for f in findings if f.rule == "CLS005"} == {str(n) for n in nodes[: size - 7]}

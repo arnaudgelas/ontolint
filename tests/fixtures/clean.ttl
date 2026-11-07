@@ -1,0 +1,16 @@
+@prefix ex: <https://example.test/clean#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.test/clean> a owl:Ontology ;
+    dcterms:license <https://example.test/license> ;
+    owl:versionInfo "1.0" ;
+    dcterms:creator "Me" ; dcterms:created "2024-01-01" ;
+    dcterms:description "Clean" .
+ex:Thing1 a owl:Class ; rdfs:label "Thing"@en ; rdfs:comment "A thing."@en .
+ex:SubThing a owl:Class ; rdfs:label "Sub thing"@en ; rdfs:comment "A sub."@en ; rdfs:subClassOf ex:Thing1 .
+ex:hasName a owl:DatatypeProperty ; rdfs:label "has name"@en ; rdfs:comment "Name."@en ;
+    rdfs:domain ex:Thing1 ; rdfs:range xsd:string .
+ex:t a ex:SubThing ; ex:hasName "n" .

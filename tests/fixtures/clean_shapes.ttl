@@ -1,0 +1,6 @@
+@prefix ex: <https://example.test/clean#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+ex:S a sh:NodeShape ; sh:targetClass ex:SubThing ;
+    sh:property ex:PS .
+ex:PS a sh:PropertyShape ; sh:path ex:hasName ; sh:datatype xsd:integer ; sh:minCount 1 .

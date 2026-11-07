@@ -1,0 +1,85 @@
+@prefix ex: <https://example.test/onto#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# Metadata: two ontologies, serialization extensions, a literal import target.
+<https://example.test/onto.owl> a owl:Ontology ;
+    owl:imports <https://example.test/imported>, "not-an-iri" .
+<https://example.test/second.ttl> a owl:Ontology ;
+    dcterms:license <https://example.test/license> ;
+    owl:versionInfo "1" ;
+    dcterms:creator "me" ; dcterms:created "2020-01-01" ;
+    dcterms:description "second" .
+
+# Hierarchy.
+ex:Root a owl:Class ; rdfs:label "Root"@en ; rdfs:comment "root" .
+ex:Chain0 a owl:Class ; rdfs:label "Chain 0" ; rdfs:subClassOf ex:Root .
+ex:Chain1 a owl:Class ; rdfs:label "Chain 1" ; rdfs:subClassOf ex:Chain0 .
+ex:Chain2 a owl:Class ; rdfs:label "Chain 2" ; rdfs:subClassOf ex:Chain1 .
+ex:Chain3 a owl:Class ; rdfs:label "Chain 3" ; rdfs:subClassOf ex:Chain2 .
+ex:Chain4 a owl:Class ; rdfs:label "Chain 4" ; rdfs:subClassOf ex:Chain3 .
+ex:Cyc1 a owl:Class ; rdfs:label "Cyc one" ; rdfs:subClassOf ex:Cyc2 .
+ex:Cyc2 a owl:Class ; rdfs:label "Cyc two" ; rdfs:subClassOf ex:Cyc1 .
+ex:SelfLoop a owl:Class ; rdfs:label "Self loop" ; rdfs:subClassOf ex:SelfLoop .
+ex:R1 a owl:Class ; rdfs:label "R1" ; rdfs:subClassOf ex:R2, ex:R3 .
+ex:R2 a owl:Class ; rdfs:label "R2" ; rdfs:subClassOf ex:R3 .
+ex:R3 a owl:Class ; rdfs:label "R3" .
+ex:Multi a owl:Class ; rdfs:label "Multi" ; rdfs:subClassOf ex:S1, ex:S2, ex:S3, ex:S4 .
+ex:S1 a owl:Class ; rdfs:label "S1" .
+ex:S2 a owl:Class ; rdfs:label "S2" .
+ex:S3 a owl:Class ; rdfs:label "S3" .
+ex:S4 a owl:Class ; rdfs:label "S4" .
+ex:Orphan a rdfs:Class ; rdfs:label "orphan lower" .
+ex:Eq1 a owl:Class ; rdfs:label "Same Name" ; owl:equivalentClass ex:Eq2 .
+ex:Eq2 a owl:Class ; rdfs:label "same name" .
+ex:EqSelf a owl:Class ; rdfs:label "Eq self" ; owl:equivalentClass ex:EqSelf .
+ex:EqUndeclared a owl:Class ; rdfs:label "Eq undeclared" ; owl:equivalentClass ex:NotDeclared .
+ex:Child a owl:Class ; rdfs:label "Child" ; rdfs:subClassOf ex:Undeclared .
+ex:Dep a owl:Class ; rdfs:label "Dep" ; owl:deprecated true .
+ex:UsesDep a owl:Class ; rdfs:label "Uses dep" ; rdfs:subClassOf ex:Dep .
+ex:Disj1 a owl:Class ; rdfs:label "Disj1" ; owl:disjointWith ex:Disj2 .
+ex:Disj2 a owl:Class ; rdfs:label "Disj2" .
+
+# Instances.
+ex:inst1 a ex:Root, ex:Disj1 ; ex:dataRanged "text" ; ex:disjUse "x" ; ex:objLit "lit" ;
+    ex:dataRes ex:Root ; ex:dataInt 5 ; ex:depProp "v" .
+
+# Properties.
+ex:bothProp a owl:ObjectProperty, owl:DatatypeProperty ; rdfs:label "both" ; rdfs:comment "both" .
+ex:multiDomain a owl:ObjectProperty ; rdfs:label "multi domain" ; rdfs:domain ex:Root, ex:S1 ; rdfs:range ex:Root, ex:S1 .
+ex:noDomain a owl:ObjectProperty ; rdfs:label "No domain" .
+ex:selfInv a owl:ObjectProperty ; rdfs:label "selfInv" ; owl:inverseOf ex:selfInv ; rdfs:domain ex:Root ; rdfs:range ex:Root .
+ex:symProp a owl:ObjectProperty, owl:SymmetricProperty ; rdfs:label "sym" ; owl:inverseOf ex:otherProp ; rdfs:domain ex:Root ; rdfs:range ex:Root .
+ex:otherProp a owl:ObjectProperty ; rdfs:label "other" ; rdfs:domain ex:Root ; rdfs:range ex:Root .
+ex:dataSym a owl:DatatypeProperty, owl:SymmetricProperty ; rdfs:label "data sym" ; owl:inverseOf ex:otherProp .
+ex:chained a owl:ObjectProperty ; rdfs:label "chained" ; owl:propertyChainAxiom ( ex:otherProp ) ; rdfs:domain ex:Root ; rdfs:range ex:Root .
+ex:objLit a owl:ObjectProperty ; rdfs:label "objLit" ; rdfs:domain ex:Root ; rdfs:range ex:Root .
+ex:dataRes a owl:DatatypeProperty ; rdfs:label "dataRes" ; rdfs:domain ex:Root .
+ex:dataInt a owl:DatatypeProperty ; rdfs:label "dataInt" ; rdfs:domain ex:Root ; rdfs:range xsd:string .
+ex:dataRanged a owl:DatatypeProperty ; rdfs:label "dataRanged" ; rdfs:domain ex:Root ; rdfs:range xsd:integer .
+ex:disjUse a owl:DatatypeProperty ; rdfs:label "disjUse" ; rdfs:domain ex:Disj2 ; rdfs:range xsd:string .
+ex:undeclaredProp rdfs:domain ex:Root ; rdfs:range ex:Root .
+ex:depProp a owl:DatatypeProperty ; rdfs:label "depProp" ; owl:deprecated true .
+ex:Restricted a owl:Class ; rdfs:label "Restricted" ;
+    rdfs:subClassOf ex:Restr .
+ex:Restr a owl:Restriction ; owl:onProperty ex:otherProp ; owl:allValuesFrom ex:Root .
+ex:inst2 ex:unlisted "u" .
+
+# Vocabulary / lexical.
+ex:padded a owl:Class ; rdfs:label " padded " ; rdfs:comment "c" .
+ex:mixedLang a owl:Class ; rdfs:label "plain", "english"@en, "second"@en ; rdfs:comment "c" .
+ex:Duplicate_One a owl:Class ; rdfs:label "Dup" ; rdfs:comment "c" .
+ex:Duplicate-Two a owl:Class ; rdfs:label "dup" ; rdfs:comment "c" .
+ex:camelCase a owl:Class ; rdfs:comment "no label" .
+
+# SKOS.
+ex:scheme a skos:ConceptScheme ; rdfs:label "scheme" .
+ex:c1 a skos:Concept ; skos:prefLabel "One"@en, "Uno"@en ; skos:altLabel "One"@en ;
+    skos:inScheme ex:scheme ; skos:broader ex:c2 ; skos:topConceptOf ex:scheme .
+ex:c2 a skos:Concept ; skos:prefLabel "Two"@en ; skos:broader ex:c1 ; skos:inScheme ex:scheme .
+ex:c3 a skos:Concept .
+ex:c4 skos:prefLabel "Free" ; skos:hiddenLabel "Free" .

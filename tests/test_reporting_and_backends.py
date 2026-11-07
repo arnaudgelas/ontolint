@@ -8,7 +8,6 @@ import sys
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, cast
 
 import pytest
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
@@ -36,7 +35,7 @@ def test_shacl_and_report_serializers_preserve_actionable_information() -> None:
 
     assert findings and findings[0].rule == "SHACL001"
     assert fingerprint(findings[0]) == fingerprint(findings[0])
-    sarif = cast(dict[str, Any], _sarif(findings))
+    sarif = _sarif(findings)
     assert sarif["runs"][0]["results"][0]["ruleId"] == "SHACL001"
 
 

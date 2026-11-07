@@ -1,0 +1,248 @@
+"""Command-line interface: argument parsing, orchestration, and report output.
+
+Exit codes: ``0`` clean, ``1`` findings reach ``--fail-on``, ``2`` tool failure.  A tool failure is
+bad input/configuration/selectors, or a requested rule that failed or is unsupported (for example
+``--owl-profile`` without Docker): the report is still written, but the run cannot pass.
+Rules skipped for an optional input that was not supplied, or by an ignore, never affect the code.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections.abc import Sequence
+from dataclasses import dataclass, replace
+from pathlib import Path
+
+from rdflib import Graph
+
+from . import engine
+from ._version import package_version
+from .catalogue import planned_rows
+from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
+from .paths import InputFile, resolve_inputs
+from .policy import Policy
+from .profiles import PROFILES, Profile
+from .reporting import FileReport, RunReport, fingerprint, render_report, run_exit_code
+from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
+from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
+from .selection import Selection, SelectorSyntaxError, resolve_selection, split_selectors, unknown_selector_help
+
+FORMATS = ["text", "json", "sarif"]
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Create the ``ontolint`` argument parser."""
+    ap = argparse.ArgumentParser(description="Ontology anti-pattern linter. No automatic network/import access.")
+    ap.add_argument(
+        "ontology",
+        nargs="*",
+        help="Ontology RDF file(s); each is linted independently. Expand globs in your shell; directories are rejected",
+    )
+    ap.add_argument("--shapes", help="Optional SHACL shapes graph (requires pyshacl)")
+    ap.add_argument("--base", help="Only lint declared terms in this namespace")
+    ap.add_argument("--config", help="Optional JSON policy with ignored_rules, severity_overrides and thresholds")
+    ap.add_argument("--baseline", help="JSON of fingerprints to exclude from displayed and gating findings")
+    ap.add_argument("--write-baseline", help="Write full set of fingerprints for future differential linting")
+    ap.add_argument("--language", action="append", default=[], help="Required label language; repeatable")
+    ap.add_argument("--depth-limit", type=int)
+    ap.add_argument("--inheritance-limit", type=int)
+    ap.add_argument("--soup-limit", type=int)
+    ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
+    ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
+    ap.add_argument("--robot-timeout", type=int, default=120)
+    ap.add_argument("--format", choices=FORMATS, default="text")
+    ap.add_argument("--output", help="Output file (default stdout)")
+    ap.add_argument("--fail-on", choices=["error", "warning", "info", "never"], default=None)
+    _add_selection_arguments(ap)
+    return ap
+
+
+def _add_selection_arguments(ap: argparse.ArgumentParser) -> None:
+    ap.add_argument("--profile", choices=sorted(PROFILES), help="Named rule profile; see the README for each profile")
+    ap.add_argument(
+        "--select", action="append", default=[], help="Rule IDs or families to run; comma-separated, repeatable"
+    )
+    ap.add_argument(
+        "--ignore", action="append", default=[], help="Rule IDs or families to skip; comma-separated, repeatable"
+    )
+    ap.add_argument("--list-rules", action="store_true", help="List implemented and proposed rules, then exit")
+    ap.add_argument("--explain", metavar="RULE", help="Explain one rule, then exit")
+    ap.add_argument("--version", action="store_true", help="Print the version, then exit")
+
+
+def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -> Policy:
+    """Merge CLI options over the policy file; explicit CLI options take precedence."""
+    return replace(
+        config,
+        base=args.base if args.base is not None else config.base,
+        languages=tuple(x.lower() for x in args.language) if args.language else config.languages,
+        depth_limit=args.depth_limit if args.depth_limit is not None else config.depth_limit,
+        inheritance_limit=args.inheritance_limit if args.inheritance_limit is not None else config.inheritance_limit,
+        soup_limit=args.soup_limit if args.soup_limit is not None else config.soup_limit,
+        ignored_rules=ignored,
+    )
+
+
+@dataclass(frozen=True)
+class RunPlan:
+    """Everything shared by every file of one invocation."""
+
+    policy: Policy
+    selection: Selection
+    overrides: dict[str, str]
+    shapes: Graph | None
+    registry: RuleRegistry
+
+
+def _lint_file(item: InputFile, graph: Graph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
+    """Lint one parsed file and record an execution outcome for every selected rule."""
+    ctx = engine.build_context(graph, plan.shapes, plan.policy)
+    robot = (
+        engine.RobotRequest(item.path, args.owl_profile, args.robot_image, args.robot_timeout)
+        if args.owl_profile
+        else None
+    )
+    executions: list[RuleExecution] = []
+    findings: tuple[Finding, ...] = ()
+    run_ids = [s.rule_id for s in plan.selection.run]
+    if run_ids:
+        result = engine.execute(ctx, run_ids, registry=plan.registry, robot=robot)
+        findings, executions = result.findings, list(result.executions)
+    executions += [
+        RuleExecution(s.rule_id, ExecutionStatus.SKIPPED, "ignored by --ignore or profile")
+        for s in plan.selection.ignored
+    ]
+    findings = tuple(replace(f, severity=plan.overrides.get(f.rule, f.severity)) for f in _legacy_order(findings, plan))
+    return FileReport(item.display, item.uri, findings, tuple(sorted(executions, key=lambda x: x.rule_id)))
+
+
+def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:
+    """Graph rules first (already sorted), then SHACL, then ROBOT: the order reports have always used."""
+    rank = {RuleBackend.RDFLIB: 0, RuleBackend.PYSHACL: 1, RuleBackend.ROBOT_DOCKER: 2}
+    backends = {s.rule_id: s.backend for s in plan.registry.all()}
+    return sorted(findings, key=lambda f: rank.get(backends.get(f.rule, RuleBackend.RDFLIB), 0))
+
+
+def _file_fingerprints(report: FileReport, multi: bool) -> set[str]:
+    return {fingerprint(f, report.path if multi else None) for f in report.findings}
+
+
+def _apply_baselines(files: list[FileReport], args: argparse.Namespace) -> list[FileReport]:
+    multi = len(files) > 1
+    if args.write_baseline:
+        everything = sorted(set().union(*(_file_fingerprints(r, multi) for r in files)))
+        Path(args.write_baseline).write_text(
+            json.dumps({"fingerprints": everything}, indent=2) + "\n", encoding="utf-8"
+        )
+    if args.baseline:
+        prior = set(json.loads(Path(args.baseline).read_text(encoding="utf-8")).get("fingerprints", []))
+        files = [
+            replace(r, findings=tuple(f for f in r.findings if fingerprint(f, r.path if multi else None) not in prior))
+            for r in files
+        ]
+    return files
+
+
+def _parse_inputs(inputs: list[InputFile]) -> tuple[list[Graph], list[str]]:
+    """Parse every input; return the graphs and one error message per failure."""
+    graphs: list[Graph] = []
+    errors: list[str] = []
+    for item in inputs:
+        try:
+            graphs.append(Graph().parse(item.path))
+        except Exception as exc:  # noqa: BLE001 -- any parser failure is a reportable input error.
+            where = f" for {item.display}" if len(inputs) > 1 else ""
+            errors.append(f"INPUT001: RDF input parsing failed{where}: {type(exc).__name__}: {exc}")
+    return graphs, errors
+
+
+def _info_command(args: argparse.Namespace) -> int | None:
+    """Handle --version, --list-rules and --explain; ``None`` means a normal lint run."""
+    registry = default_registry()
+    if args.version:
+        print(f"ontolint {package_version()}")
+    elif args.list_rules:
+        print(render_rule_list(rule_rows(registry), "json" if args.format != "text" else "text"))
+    elif args.explain:
+        try:
+            print(render_explanation(explain_rule(args.explain, registry), "json" if args.format != "text" else "text"))
+        except UnknownRuleError:
+            print(f"TOOL001: unknown rule {args.explain!r}; use --list-rules to see valid identifiers", file=sys.stderr)
+            return 2
+    else:
+        return None
+    return 0
+
+
+def _profile(args: argparse.Namespace) -> Profile | None:
+    return PROFILES[args.profile] if args.profile else None
+
+
+def _plan(args: argparse.Namespace, config: Policy, shapes: Graph | None, registry: RuleRegistry) -> RunPlan:
+    profile = _profile(args)
+    selection = resolve_selection(registry, profile, split_selectors(args.select), split_selectors(args.ignore))
+    overrides = {**dict(profile.severity_overrides if profile else ()), **config.severity_mapping}
+    return RunPlan(_policy(args, config, config.ignored_rules), selection, overrides, shapes, registry)
+
+
+def _emit(output: str, args: argparse.Namespace) -> None:
+    if args.output:
+        Path(args.output).write_text(output + "\n", encoding="utf-8")
+    else:
+        print(output)
+
+
+def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
+    """Run the whole lint; ``stage`` tracks progress for error messages. Returns a report or an exit code."""
+    registry = default_registry()
+    config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
+    stage[0] = "RDF input parsing"
+    inputs = resolve_inputs(args.ontology, Path.cwd())
+    graphs, errors = _parse_inputs(inputs)
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 2
+    shapes = Graph().parse(args.shapes) if args.shapes else None
+    stage[0] = "lint execution"
+    plan = _plan(args, config, shapes, registry)
+    files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]
+    return RunReport(tuple(_apply_baselines(files, args)), plan.selection.run + plan.selection.ignored, plan.overrides)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the linter CLI and return its process exit code (0 clean, 1 gated findings, 2 tool failure)."""
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    info = _info_command(args)
+    if info is not None:
+        return info
+    if not args.ontology:
+        parser.error("at least one ONTOLOGY path is required")
+    stage = ["configuration"]
+    try:
+        outcome = _lint(args, stage)
+    except (UnknownSelectorError, SelectorSyntaxError) as exc:
+        proposed = frozenset(row.rule_id for row in planned_rows())
+        message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
+        print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)
+        return 2
+    except Exception as exc:
+        # Parser/configuration errors are tool failures, not SHACL conformance results.
+        code = "INPUT001" if stage[0] == "RDF input parsing" else "TOOL001"
+        print(f"{code}: {stage[0]} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+    if isinstance(outcome, int):
+        return outcome
+    return _finish(outcome, args)
+
+
+def _finish(report: RunReport, args: argparse.Namespace) -> int:
+    profile = _profile(args)
+    fail_on = args.fail_on or (profile.fail_on if profile else "error")
+    code = run_exit_code(report, fail_on)
+    _emit(render_report(report, args.format, code), args)
+    for path, x in report.broken:
+        print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
+    return code

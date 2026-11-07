@@ -1,0 +1,14 @@
+@prefix ex: <https://example.test/onto#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:UnlabelledShape a sh:NodeShape ;
+    sh:targetClass ex:Disj1 ;
+    sh:property ex:PS1 ;
+    sh:property ex:PS2 .
+ex:PS2 sh:path ex:dataRanged ; sh:minCount 1 ; sh:name "a"@en, "b"@en .
+ex:PS1 a sh:PropertyShape ; sh:path ex:dataInt ; sh:datatype xsd:integer ; sh:maxCount 1 .
+ex:LabelledShape a sh:NodeShape, rdfs:Class ; rdfs:label "L" ; rdfs:comment "c" ;
+    sh:description "d"@en, "e"@en ; sh:message "m"@en, "n"@en .

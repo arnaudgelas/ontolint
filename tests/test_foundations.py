@@ -11,7 +11,7 @@ from rdflib.namespace import OWL, RDF, RDFS, XSD
 from ontolint import Linter
 from ontolint.context import GraphContext
 from ontolint.graph import strongly_connected_components
-from ontolint.models import ExecutionStatus, RuleExecution, RuleSpec, Severity
+from ontolint.models import ExecutionStatus, RuleBackend, RuleExecution, RuleScope, RuleSpec, Severity
 from ontolint.policy import Policy
 from ontolint.rules import RuleRegistry
 
@@ -20,8 +20,12 @@ EX = Namespace("https://example.test/")
 
 def test_rule_registry_is_deterministic_and_selects_by_rule_or_family() -> None:
     specifications = (
-        RuleSpec("OWL001", "OWL", "First", Severity.WARNING, "fix", "heuristic", "RDFLib"),
-        RuleSpec("LEX001", "LEX", "Second", Severity.INFO, "fix", "certain", "RDFLib"),
+        RuleSpec(
+            "OWL001", "OWL", "First", Severity.WARNING, "fix", "heuristic", RuleBackend.RDFLIB, RuleScope.TERM, "owl"
+        ),
+        RuleSpec(
+            "LEX001", "LEX", "Second", Severity.INFO, "fix", "certain", RuleBackend.RDFLIB, RuleScope.TERM, "lexical"
+        ),
     )
     registry = RuleRegistry(reversed(specifications))
 
@@ -69,7 +73,9 @@ def test_policy_validates_json_shapes_and_preserves_immutable_values() -> None:
 
 
 def test_rule_metadata_models_are_immutable() -> None:
-    spec = RuleSpec("LEX001", "LEX", "Label", Severity.WARNING, "fix", "heuristic", "RDFLib")
+    spec = RuleSpec(
+        "LEX001", "LEX", "Label", Severity.WARNING, "fix", "heuristic", RuleBackend.RDFLIB, RuleScope.TERM, "owl"
+    )
     execution = RuleExecution("LEX001", ExecutionStatus.EXECUTED)
 
     with pytest.raises(FrozenInstanceError):

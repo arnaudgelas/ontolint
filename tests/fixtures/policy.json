@@ -1,0 +1,2 @@
+{"ignored_rules": ["ONT004", "LEX002"], "severity_overrides": {"OWL005": "warning", "CLS001": "error"},
+ "languages": ["en", "FR"], "depth_limit": 3, "inheritance_limit": 2, "soup_limit": 2}
