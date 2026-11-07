@@ -62,7 +62,9 @@ def test_cases_do_not_crash_under_a_full_run(rule_id: str, case: Case) -> None:
     data = case.build() if case.build else graph(case.turtle)
     shapes = graph(case.shapes) if case.shapes is not None else None
     result = Linter(data, shapes, **case.options).execute()
-    assert not result.with_status(ExecutionStatus.FAILED)
+    # Shape-authoring rules inspect malformed shapes that pySHACL may reject (a recorded SHACL001 failure).
+    failed = {x.rule_id for x in result.with_status(ExecutionStatus.FAILED)}
+    assert failed <= {"SHACL001"}, failed
 
 
 # --- odd inputs ------------------------------------------------------------------------------

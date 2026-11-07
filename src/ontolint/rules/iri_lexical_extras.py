@@ -1,0 +1,102 @@
+"""Extra heuristics: IRI015 (opaque and readable local names in one namespace), LEX018 and LEX021.
+
+LEX018 flags labels that carry markup or character entities; LEX021 flags labels that are not in
+Unicode NFC.  All three inspect only the asserted graph and never leave the process.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from collections import defaultdict
+from typing import TYPE_CHECKING
+
+from rdflib import Literal, URIRef
+from rdflib.namespace import RDFS, SKOS
+
+from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+
+from .support import LABELS, local_name
+
+if TYPE_CHECKING:
+    from .runtime import RuleContext
+
+OPAQUE_NAME = re.compile(r"^(?:[A-Za-z]{1,8}[_:-]?)?\d{3,}$")
+READABLE_NAME = re.compile(r"^(?=.*[a-z]{3})[A-Za-z][A-Za-z_-]*$")
+MARKUP = re.compile(r"</?[A-Za-z][^<>]*>|&(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);")
+LABEL_PREDICATES = (*LABELS, SKOS.altLabel, RDFS.label)
+EXAMPLE_LIMIT = 3
+
+
+def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
+    family = rule_id[:3]
+    return RuleSpec(
+        rule_id, family, title, severity, suggestion, "heuristic", RuleBackend.RDFLIB, scope, "iri_lexical_extras"
+    )
+
+
+SPECS: tuple[RuleSpec, ...] = (
+    _spec(
+        "IRI015",
+        "Opaque and readable local names mixed in one namespace",
+        Severity.INFO,
+        "Use one naming scheme per namespace: either opaque numeric identifiers or readable names.",
+        RuleScope.VOCABULARY,
+    ),
+    _spec(
+        "LEX018",
+        "Label contains markup or character entities",
+        Severity.WARNING,
+        "Store labels as plain text; remove HTML/XML tags and character entities.",
+        RuleScope.TERM,
+    ),
+    _spec(
+        "LEX021",
+        "Label is not Unicode NFC-normalized",
+        Severity.INFO,
+        "Normalize labels to Unicode NFC so equal-looking labels compare equal.",
+        RuleScope.TERM,
+    ),
+)
+
+
+def run(ctx: RuleContext) -> None:
+    """Run IRI015, LEX018 and LEX021."""
+    _mixed_naming(ctx)
+    _label_text(ctx)
+
+
+def _namespace(iri: str) -> str:
+    return iri[: len(iri) - len(local_name(URIRef(iri)))]
+
+
+def _mixed_naming(ctx: RuleContext) -> None:
+    opaque: defaultdict[str, list[str]] = defaultdict(list)
+    readable: defaultdict[str, list[str]] = defaultdict(list)
+    for term in ctx.terms:
+        name = local_name(term)
+        if OPAQUE_NAME.match(name):
+            opaque[_namespace(str(term))].append(name)
+        elif READABLE_NAME.match(name):
+            readable[_namespace(str(term))].append(name)
+    for namespace in sorted(opaque.keys() & readable.keys()):
+        first_opaque = sorted(opaque[namespace])[:EXAMPLE_LIMIT]
+        first_readable = sorted(readable[namespace])[:EXAMPLE_LIMIT]
+        ctx.add(
+            "IRI015",
+            namespace,
+            f"Namespace mixes {len(opaque[namespace])} opaque local names (e.g. {', '.join(first_opaque)}) "
+            f"and {len(readable[namespace])} readable ones (e.g. {', '.join(first_readable)}).",
+        )
+
+
+def _label_text(ctx: RuleContext) -> None:
+    by_predicate = ctx.context.subjects_by_predicate
+    for predicate in dict.fromkeys(LABEL_PREDICATES):
+        for term in sorted(by_predicate.get(predicate, frozenset()) & ctx.terms, key=str):
+            for label in sorted((o for o in ctx.g.objects(term, predicate) if isinstance(o, Literal)), key=str):
+                value = str(label)
+                if MARKUP.search(value):
+                    ctx.add("LEX018", term, f"Label {value!r} contains markup or a character entity.")
+                if unicodedata.normalize("NFC", value) != value:
+                    ctx.add("LEX021", term, f"Label {value!r} is not Unicode NFC-normalized.")

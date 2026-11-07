@@ -1,7 +1,8 @@
 """IRI and namespace quality rules: IRI004-IRI006, IRI008-IRI014, IRI016 and IRI017.
 
-IRI007 (dereferenceability) needs the network and IRI015 (namespace hijacking) needs ownership
-evidence, so both stay proposed.  Every rule here inspects only the asserted IRIs.
+IRI007 (dereferenceability) needs the network, so it stays proposed.  IRI015 is implemented in
+``iri_lexical_extras`` as a mixed-naming check (namespace hijacking would need ownership evidence).
+Every rule here inspects only the asserted IRIs.
 """
 
 from __future__ import annotations

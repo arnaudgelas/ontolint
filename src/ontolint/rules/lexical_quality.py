@@ -1,7 +1,8 @@
 """Terminology and documentation quality rules: LEX010-LEX017, LEX019, LEX020, LEX022-LEX024.
 
-LEX018 (polysemy / merged ideas) needs NLP and domain judgement, and LEX021 (malformed language
-tags) cannot be observed because RDFLib rejects such tags at parse time, so both stay proposed.
+LEX018 and LEX021 are implemented in ``iri_lexical_extras`` as markup and NFC checks: polysemy needs
+NLP and domain judgement, and malformed language tags cannot be observed because RDFLib rejects
+them at parse time.
 """
 
 from __future__ import annotations

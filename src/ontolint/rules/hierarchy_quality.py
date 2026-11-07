@@ -2,7 +2,7 @@
 
 Every rule reads the *asserted* ``rdfs:subClassOf`` graph over declared classes: no entailment,
 no imports, no network.  Graph walks are iterative (hierarchies of 100k classes must not recurse).
-CLS010, CLS015, CLS017, CLS022-CLS024 stay proposed (see docs/adding-rules.md and the catalogue).
+CLS010, CLS015, CLS017 and CLS022-CLS024 live in ``class_heuristics``.
 """
 
 from __future__ import annotations
