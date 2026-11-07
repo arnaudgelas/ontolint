@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="ontolint logo" width="240">
+</p>
+
 # ontolint
 
 `ontolint` is an offline ontology-quality linter for RDF graphs. It provides
