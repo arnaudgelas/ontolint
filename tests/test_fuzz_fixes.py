@@ -341,3 +341,20 @@ def test_rule_context_rejects_a_confidence_outside_the_two_known_values() -> Non
     ):
         context.add("ONT001", "x", "other", confidence="deterministic")
     assert [f.confidence for f in context.findings] == ["certain", "heuristic"]
+
+
+def test_imports_note_names_blank_node_targets_independently_of_parser_labels() -> None:
+    """Sorting by raw blank-node labels made the SEC007 message depend on how the parser labelled the nodes."""
+
+    def build(first: str, second: str) -> Graph:
+        data = Graph()
+        data.add((_ex("o"), RDF.type, OWL.Ontology))
+        for label, target in ((first, "p"), (second, "q")):
+            node = BNode(label)
+            data.add((_ex("o"), OWL.imports, node))
+            data.add((node, RDFS.label, Literal(target)))
+        return data
+
+    messages = {_run(build(a, b), "SEC007")[0][2] for a, b in (("a", "b"), ("b", "a"), ("x9", "c1"), ("c1", "x9"))}
+    assert len(messages) == 1
+    assert re.fullmatch(r"2 owl:imports were not followed: _:[0-9a-f]{12}, _:[0-9a-f]{12}\.", messages.pop())

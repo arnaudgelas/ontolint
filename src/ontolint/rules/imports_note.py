@@ -11,9 +11,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from rdflib import BNode
 from rdflib.namespace import OWL
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+
+from .support import stable_blank_id
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -38,8 +41,14 @@ SPECS: tuple[RuleSpec, ...] = (
 
 
 def run(ctx: RuleContext) -> None:
-    """Emit one note listing the distinct ``owl:imports`` objects (sorted) when the graph has any."""
-    imports = sorted({str(target) for target in ctx.g.objects(None, OWL.imports)})
+    """Emit one note listing the distinct ``owl:imports`` objects (sorted) when the graph has any.
+
+    A blank-node target is named by its content-stable identity, so neither the sort order nor the message
+    depends on how the parser labelled it.
+    """
+    imports = sorted(
+        {stable_blank_id(ctx.g, t) if isinstance(t, BNode) else str(t) for t in ctx.g.objects(None, OWL.imports)}
+    )
     if not imports:
         return
     count = len(imports)
