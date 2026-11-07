@@ -1,0 +1,85 @@
+# Mutation testing policy
+
+Mutation testing measures whether the tests detect deliberate faults. This
+policy defines what is mutated, the minimum scores, how survivors are handled,
+and when the gate blocks. It is enforced by `.github/scripts/mutation_gate.py`
+in `.github/workflows/validation.yml`.
+
+## Tooling and command
+
+```bash
+uv run pytest --gremlins --no-cov --gremlin-parallel --gremlin-cache
+```
+
+CI adds `--gremlin-report=console,json,html --gremlin-max-pardons-pct=5
+--gremlin-audit-pardons`. Reports are written to `coverage/gremlins/`
+(`gremlins.json`, HTML) and uploaded as the `mutation-reports` artifact.
+
+pytest-gremlins 1.13.x has no minimum-score option. It does provide
+`--strict-pardons`, `--max-pardons` and `--gremlin-max-pardons-pct` for
+suppression limits. Score thresholds are therefore enforced by
+`mutation_gate.py`, which reads `gremlins.json` and applies the same formula as
+the library: `(zapped + timeout) / (total - pardoned)`. Survived and errored
+mutants count against the score.
+
+## Operators
+
+The operator set in `[tool.pytest-gremlins]` is the policy set. The gate fails
+if a report contains an operator outside this table.
+
+| Operator | Mutations | Minimum score |
+| --- | --- | --- |
+| comparison | `<`, `<=`, `>`, `>=`, `==`, `!=` swaps | 85% |
+| arithmetic | `+ - * / // % **` swaps | 85% |
+| boolean | `and`/`or`, `True`/`False`, `not x` removal | 90% |
+| boundary | constants shifted by +/-1 in comparisons | 80% |
+| return | return values replaced by `None`, empty or negated | 80% |
+| **Overall** | all of the above | **85%** |
+
+Boolean has the highest bar because it was the original gate and guards rule
+logic. Boundary and return mutants produce more equivalent mutants and have the
+lowest bar. Raise a threshold only after two consecutive scheduled runs exceed
+it by 5 points; lowering one requires the waiver process below.
+
+## Scope
+
+In scope: `src/ontolint/ontolint.py` (the `paths` setting). Out of scope: tests,
+`docker/`, `.github/`, and modules not listed in `paths`. Adding a source module
+to `paths` is a policy change: it enters in advisory mode until it meets the
+thresholds in a scheduled run, then becomes blocking. The code is being split
+into `src/ontolint/` subpackages; `paths` must be updated in the same change
+that moves logic, so that scope never silently shrinks.
+
+## Survivor triage and waivers
+
+Every survivor or errored mutant listed in the gate output must be resolved
+within the next two scheduled runs by one of:
+
+1. Kill it: add or strengthen a test (preferred).
+2. Remove dead code that makes the mutant equivalent.
+3. Pardon it with a gremlins pragma carrying a reason and justification
+   (an equivalent mutant, or an unobservable side effect). A reviewer other than
+   the author must approve the pragma in the PR.
+4. Waive a threshold temporarily: open an issue naming the operator, current
+   score, owner and expiry date (at most 30 days) and link it in the PR that
+   lowers the constant in `mutation_gate.py`.
+
+Pardons are limited to 5% of mutants (`--gremlin-max-pardons-pct=5`). Run
+`uv run pytest --gremlins --gremlin-audit-pardons` to list active pardons;
+review them quarterly.
+
+## Blocking versus advisory
+
+| Context | Mode |
+| --- | --- |
+| Pull requests | Not run (kept out of the fast path). |
+| Weekly schedule | Advisory by default; blocking when the repository variable `MUTATION_GATE_MODE` is `blocking`. |
+| Manual dispatch | Chosen by the `mutation_mode` input. |
+
+Advisory mode reports violations as warnings and still uploads artifacts.
+Blocking mode fails the job on any threshold violation, an out-of-policy
+operator, a missing report, or a non-zero pytest exit status. Set
+`MUTATION_GATE_MODE=blocking` once a baseline run meets every threshold; the
+first scheduled runs establish that baseline, which is why the default is
+advisory. A release must not be cut while the latest scheduled run is red in
+blocking mode.

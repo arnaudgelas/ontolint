@@ -2,38 +2,82 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "helpers:pinGitHubActionDigests",
     ":dependencyDashboard",
     ":semanticCommitTypeAll(chore)"
   ],
-  "labels": ["dependencies"],
+  "labels": [
+    "dependencies"
+  ],
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 5am on monday"]
+    "schedule": [
+      "before 5am on monday"
+    ]
   },
   "packageRules": [
     {
       "description": "Group development dependencies into a single weekly PR",
-      "matchDepTypes": ["dev"],
+      "matchDepTypes": [
+        "dev"
+      ],
       "groupName": "dev dependencies",
-      "schedule": ["before 5am on monday"]
+      "schedule": [
+        "before 5am on monday"
+      ]
     },
     {
       "description": "Automerge dev dependency patch and minor updates if CI passes",
-      "matchDepTypes": ["dev"],
-      "matchUpdateTypes": ["patch", "minor"],
+      "matchDepTypes": [
+        "dev"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
       "automerge": true
     },
     {
       "description": "Group GitHub Actions workflow updates",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "github-actions",
-      "schedule": ["before 5am on monday"]
+      "schedule": [
+        "before 5am on monday"
+      ]
     },
     {
       "description": "Group Docker base image updates",
-      "matchManagers": ["dockerfile"],
+      "matchManagers": [
+        "dockerfile"
+      ],
       "groupName": "docker dependencies",
-      "schedule": ["before 5am on monday"]
+      "schedule": [
+        "before 5am on monday"
+      ]
+    },
+    {
+      "description": "Keep the pinned uv version in workflows current",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "groupName": "uv"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "uv version pinned in GitHub workflows",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?:UV_VERSION|version): \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\"(?: # uv)?"
+      ],
+      "depNameTemplate": "astral-sh/uv",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^(?<version>.*)$"
     }
   ]
 }

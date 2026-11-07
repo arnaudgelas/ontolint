@@ -1,0 +1,143 @@
+name: Validation
+
+# Slow checks kept out of the PR fast path: ROBOT image validation and mutation
+# testing. Policy: docs/mutation-policy.md.
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      mutation_mode:
+        description: "Mutation gate mode"
+        type: choice
+        options: [advisory, blocking]
+        default: advisory
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - docker/**
+      - .github/workflows/validation.yml
+      - .github/scripts/mutation_gate.py
+      - docs/mutation-policy.md
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.13.7"
+  ROBOT_IMAGE: ontolint-robot:1.9.11
+
+jobs:
+  robot-image:
+    name: ROBOT Docker image build and smoke test
+    # On pull requests, run only when the `validation` label is present.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'validation')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Build ROBOT image
+        run: |
+          mkdir -p validation-logs
+          docker build --tag "$ROBOT_IMAGE" docker/robot 2>&1 | tee validation-logs/docker-build.log
+
+      - name: Smoke test ROBOT image
+        run: |
+          set -o pipefail
+          {
+            docker run --rm --network none --cap-drop ALL "$ROBOT_IMAGE" --version
+            cat > validation-logs/smoke.ttl <<'TTL'
+          @prefix owl: <http://www.w3.org/2002/07/owl#> .
+          <http://example.org/o> a owl:Ontology .
+          <http://example.org/A> a owl:Class .
+          TTL
+            uv run python -m ontolint.ontolint validation-logs/smoke.ttl \
+              --owl-profile DL --robot-image "$ROBOT_IMAGE"
+          } 2>&1 | tee validation-logs/docker-smoke.log
+
+      - name: Upload Docker validation logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docker-validation-logs
+          path: validation-logs/
+          retention-days: 14
+          if-no-files-found: warn
+
+  mutation:
+    name: Mutation testing
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # Scheduled runs use the repository variable MUTATION_GATE_MODE (default
+      # advisory); manual runs choose explicitly. See docs/mutation-policy.md.
+      MUTATION_GATE_MODE: ${{ inputs.mutation_mode || vars.MUTATION_GATE_MODE || 'advisory' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run mutation tests
+        # Same command as the README, plus JSON/HTML reports and pardon limits.
+        # pytest's own status is evaluated by the policy gate below.
+        run: |
+          set +e
+          uv run pytest --gremlins --no-cov --gremlin-parallel --gremlin-cache \
+            --gremlin-report=console,json,html --gremlin-max-pardons-pct=5 \
+            --gremlin-audit-pardons 2>&1 | tee mutation.log
+          echo "PYTEST_STATUS=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+
+      - name: Enforce mutation policy
+        run: |
+          uv run python .github/scripts/mutation_gate.py \
+            coverage/gremlins/gremlins.json --mode "$MUTATION_GATE_MODE"
+          if [ "$MUTATION_GATE_MODE" = blocking ] && [ "$PYTEST_STATUS" != 0 ]; then
+            echo "::error::pytest exited with status $PYTEST_STATUS"
+            exit 1
+          fi
+
+      - name: Upload mutation reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-reports
+          path: |
+            coverage/gremlins/
+            mutation.log
+          retention-days: 30
+          if-no-files-found: warn
