@@ -348,9 +348,9 @@ def _bfo_placement(ctx: RuleContext, deprecated: frozenset[URIRef]) -> None:
         for parent in ps:
             children[parent].add(child)
     bfo = {n for n in nodes if str(n).startswith(BFO_PREFIX)}
-    # A chain that ends at an undeclared, non-BFO term leaves the graph: it may reach BFO there.
-    unknown = {n for n in nodes if not parents.get(n) and n not in bfo and n not in ctx.classes and n != OWL.Thing}
-    settled = _closure(bfo, children) | _closure(unknown, children)
+    # Only a class with no asserted superclass can be reported, and such a class is settled only by being BFO
+    # itself (a chain leaving the graph at an undeclared term always gives it a superclass).
+    settled = _closure(bfo, children)
     for cls in sorted(ctx.classes, key=str):
         if cls not in settled and cls not in deprecated and not parents.get(cls, set()) - {OWL.Thing}:
             ctx.add("OBO008", cls, "Class has no asserted superclass and no path to a BFO class.")
