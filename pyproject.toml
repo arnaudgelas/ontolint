@@ -79,9 +79,25 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.pytest-gremlins]
-# Mutation testing is opt-in: run `uv run pytest --gremlins` locally or in CI.
+# Mutation testing is opt-in. It is run without pytest-cov because gremlins
+# performs its own coverage-guided selection before executing mutations.
 paths = ["src/ontolint/ontolint.py"]
+operators = ["comparison", "arithmetic", "boolean", "boundary", "return"]
 cache = true
+
+[tool.pytest.ini_options]
+# pytest-gremlins is loaded explicitly for mutation runs; auto-loading it delays
+# normal xdist worker teardown even when mutation testing is not enabled.
+addopts = "-p no:pytest_gremlins --cov=ontolint --cov-branch --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["ontolint"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
 
 [tool.pyright]
 pythonVersion = "3.13"
@@ -117,8 +133,10 @@ build-backend = "uv_build"
 dev = [
     "hypothesis>=6.0",
     "mypy>=2.4.1",
+    "pip-audit>=2.10.1",
     "pyright>=1.1.414",
     "pytest>=8.0",
+    "pytest-cov>=7.1.0",
     "pytest-gremlins>=1.13.2",
     "pytest-xdist>=3.8.0",
     "ruff>=0.17.4",

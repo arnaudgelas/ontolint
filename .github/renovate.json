@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "labels": ["dependencies"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Group development dependencies into a single weekly PR",
+      "matchDepTypes": ["dev"],
+      "groupName": "dev dependencies",
+      "schedule": ["before 5am on monday"]
+    },
+    {
+      "description": "Automerge dev dependency patch and minor updates if CI passes",
+      "matchDepTypes": ["dev"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    },
+    {
+      "description": "Group GitHub Actions workflow updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "schedule": ["before 5am on monday"]
+    },
+    {
+      "description": "Group Docker base image updates",
+      "matchManagers": ["dockerfile"],
+      "groupName": "docker dependencies",
+      "schedule": ["before 5am on monday"]
+    }
+  ]
+}

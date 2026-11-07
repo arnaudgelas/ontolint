@@ -6,5 +6,10 @@ dist/
 wheels/
 *.egg-info
 
+# Test and mutation artifacts
+.coverage
+.gremlins_cache/
+coverage/
+
 # Virtual environments
 .venv
