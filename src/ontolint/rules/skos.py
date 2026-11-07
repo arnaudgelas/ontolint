@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from rdflib import Literal
-from rdflib.namespace import SKOS
+from rdflib import Literal, URIRef
+from rdflib.namespace import OWL, SKOS
 from rdflib.term import Node
 
 from ontolint.graph import strongly_connected_components
@@ -106,23 +106,39 @@ def _concept_labels(ctx: RuleContext) -> None:
         for language, labels in by_lang.items():
             if len(labels) > 1:
                 ctx.add("SKOS001", c, f"{len(labels)} prefLabels in language {language}.", confidence="certain")
-        if not by_lang:
+        if not by_lang and _needs_label(ctx, c):
             ctx.add("SKOS004", c, "Concept has no skos:prefLabel.")
         if (c, SKOS.inScheme, None) not in g:
             ctx.add("SKOS005", c, "Concept is not explicitly in a scheme.")
 
 
+def _needs_label(ctx: RuleContext, concept: URIRef) -> bool:
+    """Return whether an unlabelled concept is a defect: retired concepts and rdfs:label users are exempt."""
+    g = ctx.g
+    if (concept, OWL.deprecated, Literal(True)) in g or (concept, SKOS.historyNote, None) in g:
+        return False
+    return not any(isinstance(o, Literal) for p in ctx.labels for o in g.objects(concept, p))
+
+
 def _label_overlaps(ctx: RuleContext) -> None:
     labelled_resources: set[Node] = set(ctx.concepts) | set(ctx.g.subjects(SKOS.prefLabel, None))
-    for resource in labelled_resources:
-        sets = [set(ctx.g.objects(resource, p)) for p in (SKOS.prefLabel, SKOS.altLabel, SKOS.hiddenLabel)]
-        if (sets[0] & sets[1]) or (sets[0] & sets[2]) or (sets[1] & sets[2]):
-            ctx.add(
-                "SKOS002",
-                resource,
-                "Same literal appears in multiple disjoint SKOS label properties.",
-                confidence="certain",
-            )
+    properties = (SKOS.prefLabel, SKOS.altLabel, SKOS.hiddenLabel)
+    for resource in sorted(labelled_resources, key=str):
+        holders: defaultdict[Node, list[str]] = defaultdict(list)
+        for p in properties:
+            for value in set(ctx.g.objects(resource, p)):
+                holders[value].append("skos:" + p.removeprefix(str(SKOS)))
+        for value, names in sorted(
+            holders.items(), key=lambda item: (str(item[0]), str(getattr(item[0], "language", "")))
+        ):
+            if len(names) > 1:
+                language = getattr(value, "language", None) or "no language"
+                ctx.add(
+                    "SKOS002",
+                    resource,
+                    f"Literal {str(value)[:60]!r} ({language}) appears in {' and '.join(names)}.",
+                    confidence="certain",
+                )
 
 
 def _broader_cycles(ctx: RuleContext) -> None:

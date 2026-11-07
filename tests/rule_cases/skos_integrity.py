@@ -7,6 +7,8 @@ from rdflib.namespace import RDF, SKOS
 from rule_harness import built, rule_cases, ttl
 
 A = "ex:a skos:inScheme ex:s ; skos:prefLabel"
+CS = "a skos:Concept ; skos:inScheme"
+AC = "ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel"
 SCHEME = "ex:s a skos:ConceptScheme ; skos:hasTopConcept ex:top . ex:top a skos:Concept ; skos:inScheme ex:s ."
 
 
@@ -137,40 +139,54 @@ CASES = {
         [
             ttl(
                 "duplicate notation",
-                'ex:a skos:inScheme ex:s ; skos:notation "1" . ex:b skos:inScheme ex:s ; skos:notation "1" .',
+                f'ex:a {CS} ex:s ; skos:notation "1" . ex:b {CS} ex:s ; skos:notation "1" .',
             )
         ],
         [
             ttl(
                 "distinct notation",
-                'ex:a skos:inScheme ex:s ; skos:notation "1" . ex:b skos:inScheme ex:s ; skos:notation "2" .',
+                f'ex:a {CS} ex:s ; skos:notation "1" . ex:b {CS} ex:s ; skos:notation "2" .',
             ),
             ttl(
                 "different schemes",
-                'ex:a skos:inScheme ex:s ; skos:notation "1" . ex:b skos:inScheme ex:t ; skos:notation "1" .',
+                f'ex:a {CS} ex:s ; skos:notation "1" . ex:b {CS} ex:t ; skos:notation "1" .',
             ),
             ttl("no scheme", 'ex:a skos:notation "1" . ex:b skos:notation "1" .'),
+            ttl(
+                "collection shares the notation",
+                f'ex:a {CS} ex:s ; skos:notation "1" . '
+                'ex:b a skos:Collection ; skos:inScheme ex:s ; skos:notation "1" .',
+            ),
         ],
     ),
     "SKOS021": rule_cases(
         [
             ttl(
                 "duplicate prefLabel",
-                A + ' "Cat"@en . ex:b skos:inScheme ex:s ; skos:prefLabel "cat"@EN .',
+                AC + f' "Cat"@en . ex:b {CS} ex:s ; skos:prefLabel "cat"@EN .',
             )
         ],
         [
             ttl(
                 "different languages",
-                A + ' "Cat"@en . ex:b skos:inScheme ex:s ; skos:prefLabel "Cat"@fr .',
+                AC + f' "Cat"@en . ex:b {CS} ex:s ; skos:prefLabel "Cat"@fr .',
             ),
             ttl(
                 "different schemes",
-                A + ' "Cat"@en . ex:b skos:inScheme ex:t ; skos:prefLabel "Cat"@en .',
+                AC + f' "Cat"@en . ex:b {CS} ex:t ; skos:prefLabel "Cat"@en .',
+            ),
+            ttl(
+                "collection shares the label",
+                AC + ' "Cat"@en . ex:b a skos:Collection ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en .',
+            ),
+            ttl(
+                "deprecated concept shares the label",
+                AC + ' "Cat"@en . ex:b a skos:Concept ; owl:deprecated true ; skos:inScheme ex:s ; '
+                'skos:prefLabel "Cat"@en .',
             ),
             ttl(
                 "empty labels",
-                'ex:a skos:inScheme ex:s ; skos:prefLabel ""@en . ex:b skos:inScheme ex:s ; skos:prefLabel ""@en .',
+                f'ex:a {CS} ex:s ; skos:prefLabel ""@en . ex:b {CS} ex:s ; skos:prefLabel ""@en .',
             ),
         ],
     ),

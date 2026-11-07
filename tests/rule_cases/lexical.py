@@ -28,11 +28,18 @@ CASES = {
     ),
     "LEX002": rule_cases(
         [ttl("no definition", "ex:A a owl:Class .")],
-        [ttl("skos:definition", 'ex:A a owl:Class ; skos:definition "An A." .')],
+        [
+            ttl("skos:definition", 'ex:A a owl:Class ; skos:definition "An A." .'),
+            ttl("skos:scopeNote", 'ex:A a owl:Class ; skos:scopeNote "Use for As." .'),
+            ttl("skos:note", 'ex:A a owl:Class ; skos:note "About A." .'),
+        ],
     ),
     "LEX003": rule_cases(
         [ttl("two labels in one language", 'ex:A a owl:Class ; rdfs:label "A"@en, "Aye"@en .')],
-        [ttl("one label per language", 'ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .')],
+        [
+            ttl("one label per language", 'ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .'),
+            ttl("prefLabel and rdfs:label", 'ex:A a owl:Class ; skos:prefLabel "A"@en ; rdfs:label "1 A"@en .'),
+        ],
     ),
     "LEX004": rule_cases(
         [
@@ -42,6 +49,14 @@ CASES = {
             )
         ],
         [
+            ttl(
+                "collection and concept share a label",
+                'ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:Collection ; skos:prefLabel "Same" .',
+            ),
+            ttl(
+                "scheme and concept share a label",
+                'ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:ConceptScheme ; skos:prefLabel "Same" .',
+            ),
             ttl(
                 "case-only difference", 'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .'
             ),

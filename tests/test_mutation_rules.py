@@ -130,8 +130,10 @@ def test_skos018_ignores_non_iri_parents() -> None:
 
 def test_skos021_message_names_the_language() -> None:
     data = graph(
-        'ex:A skos:inScheme ex:S ; skos:prefLabel "Same" . ex:B skos:inScheme ex:S ; skos:prefLabel "Same" .'
-        ' ex:C skos:inScheme ex:S ; skos:prefLabel "Other"@en . ex:D skos:inScheme ex:S ; skos:prefLabel "Other"@en .'
+        'ex:A a skos:Concept ; skos:inScheme ex:S ; skos:prefLabel "Same" . '
+        'ex:B a skos:Concept ; skos:inScheme ex:S ; skos:prefLabel "Same" . '
+        'ex:C a skos:Concept ; skos:inScheme ex:S ; skos:prefLabel "Other"@en . '
+        'ex:D a skos:Concept ; skos:inScheme ex:S ; skos:prefLabel "Other"@en .'
     )
     messages = sorted({f.message.split(" is shared")[0] for f in _run("SKOS021", data)})
     assert messages == ["skos:prefLabel 'other' (en)", "skos:prefLabel 'same' (no language)"]

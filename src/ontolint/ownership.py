@@ -8,7 +8,10 @@ place that decides this, deterministically and without network access:
 * otherwise the owned namespaces are derived from the ``owl:Ontology`` IRIs of the file
   (:func:`derive_prefixes`);
 * if that leaves no declared term owned, every declared non-built-in term is owned (the historic
-  behaviour), so a file whose ontology IRI differs from its term namespace never goes silent.
+  behaviour), so a file whose ontology IRI differs from its term namespace never goes silent;
+* if the derived namespaces own less than :data:`MINOR_OWNED_PERCENT` percent of the declared terms
+  while one other namespace holds more than :data:`DOMINANT_PERCENT` percent of them, that dominant
+  namespace is owned too (a vocabulary that embeds the SKOS core description next to its own concepts).
 
 Built-in vocabularies (RDF, RDFS, OWL, XSD) are never owned.
 """
@@ -16,6 +19,7 @@ Built-in vocabularies (RDF, RDFS, OWL, XSD) are never owned.
 from __future__ import annotations
 
 import re
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
@@ -26,6 +30,11 @@ from rdflib.namespace import OWL, RDF, RDFS, XSD
 BUILTIN_NAMESPACES = (str(RDF), str(RDFS), str(OWL), str(XSD))
 OBO_NAMESPACE = "http://purl.obolibrary.org/obo/"
 BOUNDARY_SUFFIXES = ("#", "/", "_")
+# Derived ownership is widened to a dominant namespace when the ontology headers own *less than*
+# ``MINOR_OWNED_PERCENT`` percent of the declared terms and one namespace holds *more than*
+# ``DOMINANT_PERCENT`` percent of them.
+MINOR_OWNED_PERCENT = 5
+DOMINANT_PERCENT = 50
 
 
 class OwnershipMode(Enum):
@@ -81,11 +90,27 @@ def derive_prefixes(ontologies: Iterable[URIRef]) -> tuple[tuple[str, ...], tupl
     return tuple(sorted(exact)), tuple(sorted(folded))
 
 
+def namespace_of_iri(iri: str) -> str | None:
+    """Return ``iri`` up to and including its last ``#`` or ``/`` (``None`` when it has neither)."""
+    cut = max(iri.rfind("#"), iri.rfind("/"))
+    return iri[: cut + 1] if cut >= 0 else None
+
+
 def _prefix_matches(iri: str, prefix: str) -> bool:
     """Prefix match that, for prefixes not ending in ``#``, ``/`` or ``_``, requires a name boundary."""
     if not iri.startswith(prefix):
         return False
     return prefix.endswith(BOUNDARY_SUFFIXES) or len(iri) == len(prefix) or iri[len(prefix)] in BOUNDARY_SUFFIXES
+
+
+def _dominant_namespace(terms: list[URIRef]) -> str | None:
+    """Return the namespace holding more than :data:`DOMINANT_PERCENT` percent of ``terms``, if any."""
+    counts = Counter(ns for term in terms if (ns := namespace_of_iri(str(term))) is not None)
+    if not counts:
+        return None
+    # Ties cannot exceed 50%, so the order among equal counts never matters.
+    namespace, count = counts.most_common(1)[0]
+    return namespace if count * 100 > DOMINANT_PERCENT * len(terms) else None
 
 
 @dataclass(frozen=True)
@@ -97,19 +122,26 @@ class Ownership:
     prefixes: tuple[str, ...] = ()
     folded_prefixes: tuple[str, ...] = ()
     base_selected_nothing: bool = False
+    dominant_namespace: str | None = None
 
     @classmethod
     def for_terms(cls, base: str | None, ontologies: Iterable[URIRef], declared: Iterable[URIRef]) -> Ownership:
         """Choose ownership for a file with the given ``ontologies`` and declared terms."""
-        declared_terms = [term for term in declared if not is_builtin(term)]
+        declared_terms = [term for term in dict.fromkeys(declared) if not is_builtin(term)]
         if base is not None:
             nothing = bool(base) and bool(declared_terms) and not any(base_matches(base, t) for t in declared_terms)
             return cls(OwnershipMode.BASE, base, base_selected_nothing=nothing)
         exact, folded = derive_prefixes(ontologies)
         derived = cls(OwnershipMode.DERIVED, None, exact, folded)
-        if any(derived.owns(term) for term in declared_terms):
-            return derived
-        return cls()
+        owned = sum(derived.owns(term) for term in declared_terms)
+        if not owned:
+            return cls()
+        dominant = _dominant_namespace(declared_terms)
+        if owned * 100 < MINOR_OWNED_PERCENT * len(declared_terms) and dominant is not None:
+            return cls(
+                OwnershipMode.DERIVED, None, tuple(sorted({*exact, dominant})), folded, dominant_namespace=dominant
+            )
+        return derived
 
     def owns(self, node: object) -> bool:
         """Return whether ``node`` is an IRI owned by the linted ontology."""

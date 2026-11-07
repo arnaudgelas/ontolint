@@ -41,7 +41,11 @@ CASES = {
             ttl("IRI label", "ex:A a owl:Class ; rdfs:label ex:B ."),
             ttl("blank-node definition", "ex:A a owl:Class ; skos:definition [] ."),
         ],
-        [ttl("literals", 'ex:A a owl:Class ; rdfs:label "A" ; rdfs:comment "An A." .')],
+        [
+            ttl("literals", 'ex:A a owl:Class ; rdfs:label "A" ; rdfs:comment "An A." .'),
+            ttl("rdf:value node", 'ex:A a owl:Class ; skos:definition [ rdf:value "An A." ] .'),
+            ttl("rdf:value IRI", 'ex:A a owl:Class ; skos:definition ex:d . ex:d rdf:value "An A." .'),
+        ],
     ),
     "LEX014": rule_cases(
         [

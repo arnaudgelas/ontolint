@@ -17,7 +17,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items
+from .support import list_items, owning_term
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -226,20 +226,34 @@ def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node
 # --- restrictions (OWL034-OWL040) ------------------------------------------------------------
 
 
+def _report(ctx: RuleContext, code: str, restriction: Node, message: str, *, confidence: str = "heuristic") -> None:
+    """Emit a restriction finding; the focus stays the stable blank-node identity, the message names the owner."""
+    owner = owning_term(ctx.g, restriction)
+    if isinstance(owner, URIRef):
+        properties = sorted({str(p) for p in ctx.g.objects(restriction, OWL.onProperty) if isinstance(p, URIRef)})
+        where = f"restriction on {', '.join(properties)}" if properties else "restriction"
+        message = f"{owner} ({where}): {message}"
+    ctx.add(code, restriction, message, confidence=confidence)
+
+
 def _restriction(ctx: RuleContext, restriction: Node) -> None:
     g = ctx.g
     on_property = list(g.objects(restriction, OWL.onProperty))
     on_properties = list(g.objects(restriction, OWL.onProperties))
     if not on_property and not on_properties:
-        ctx.add("OWL034", restriction, "Restriction has no owl:onProperty.", confidence="certain")
+        _report(ctx, "OWL034", restriction, "Restriction has no owl:onProperty.", confidence="certain")
     elif len(on_property) > 1:
-        ctx.add("OWL034", restriction, "Restriction has more than one owl:onProperty.", confidence="certain")
+        _report(ctx, "OWL034", restriction, "Restriction has more than one owl:onProperty.", confidence="certain")
     for value in on_property:
         if isinstance(value, Literal):
-            ctx.add("OWL034", restriction, f"owl:onProperty points to literal {value!r}.", confidence="certain")
+            _report(ctx, "OWL034", restriction, f"owl:onProperty points to literal {value!r}.", confidence="certain")
     if not any((restriction, constraint, None) in g for constraint in _CONSTRAINTS):
-        ctx.add(
-            "OWL035", restriction, "Restriction has no value, cardinality or self constraint.", confidence="certain"
+        _report(
+            ctx,
+            "OWL035",
+            restriction,
+            "Restriction has no value, cardinality or self constraint.",
+            confidence="certain",
         )
     _cardinalities(ctx, restriction)
     _existential_nothing(ctx, restriction)
@@ -252,7 +266,8 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
     for predicate in _CARDINALITIES:
         for value in g.objects(restriction, predicate):
             if _count(value) is None:
-                ctx.add(
+                _report(
+                    ctx,
                     "OWL036",
                     restriction,
                     f"{_short(predicate)} value {value!r} is not a non-negative integer.",
@@ -260,7 +275,8 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
                 )
     qualified = any((restriction, p, None) in g for p in _QUALIFIED)
     if qualified and (restriction, OWL.onClass, None) not in g and (restriction, OWL.onDataRange, None) not in g:
-        ctx.add(
+        _report(
+            ctx,
             "OWL036",
             restriction,
             "Qualified cardinality has neither owl:onClass nor owl:onDataRange.",
@@ -271,7 +287,8 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
         lower = max([*minimum, *exact], default=None)
         upper = min([*maximum, *exact], default=None)
         if lower is not None and upper is not None and lower > upper:
-            ctx.add(
+            _report(
+                ctx,
                 "OWL037",
                 restriction,
                 f"Lower cardinality bound {lower} exceeds upper bound {upper}.",
@@ -282,11 +299,14 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
 def _existential_nothing(ctx: RuleContext, restriction: Node) -> None:
     g = ctx.g
     if (restriction, OWL.someValuesFrom, OWL.Nothing) in g:
-        ctx.add("OWL038", restriction, "owl:someValuesFrom owl:Nothing can never be satisfied.", confidence="certain")
+        _report(
+            ctx, "OWL038", restriction, "owl:someValuesFrom owl:Nothing can never be satisfied.", confidence="certain"
+        )
     if (restriction, OWL.onClass, OWL.Nothing) in g:
         for predicate in (OWL.minQualifiedCardinality, OWL.qualifiedCardinality):
             if any(n > 0 for n in _counts(ctx, restriction, predicate)):
-                ctx.add(
+                _report(
+                    ctx,
                     "OWL038",
                     restriction,
                     f"{_short(predicate)} above 0 on owl:Nothing can never be satisfied.",
@@ -297,10 +317,14 @@ def _existential_nothing(ctx: RuleContext, restriction: Node) -> None:
 def _vacuous(ctx: RuleContext, restriction: Node) -> None:
     g = ctx.g
     if (restriction, OWL.allValuesFrom, OWL.Thing) in g:
-        ctx.add("OWL039", restriction, "owl:allValuesFrom owl:Thing holds for every individual.", confidence="certain")
+        _report(
+            ctx, "OWL039", restriction, "owl:allValuesFrom owl:Thing holds for every individual.", confidence="certain"
+        )
     for predicate in (OWL.minCardinality, OWL.minQualifiedCardinality):
         if 0 in _counts(ctx, restriction, predicate):
-            ctx.add("OWL039", restriction, f"{_short(predicate)} 0 holds for every individual.", confidence="certain")
+            _report(
+                ctx, "OWL039", restriction, f"{_short(predicate)} 0 holds for every individual.", confidence="certain"
+            )
 
 
 def _datatype_like(ctx: RuleContext, node: Node) -> bool:
@@ -337,8 +361,12 @@ def _property_kind(ctx: RuleContext, restriction: Node, on_property: list[Node])
             problems += [f"owl:onClass {_name(f)}" for f in g.objects(restriction, OWL.onClass)]
         kind = "object" if is_object else "datatype"
         for problem in problems:
-            ctx.add(
-                "OWL040", restriction, f"Restriction on {kind} property {prop} uses {problem}.", confidence="certain"
+            _report(
+                ctx,
+                "OWL040",
+                restriction,
+                f"Restriction on {kind} property {prop} uses {problem}.",
+                confidence="certain",
             )
 
 

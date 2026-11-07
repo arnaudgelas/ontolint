@@ -2,11 +2,11 @@
  "cli": {
   "fail_on_warning_kitchen": {
    "exit": 1,
-   "legacy_json_view": "sha256:0759ad1f276d9e3c690aef6b312ffed55b34fdf9d1c1ca5f6cb7932cd2d2e74e (37113 chars)"
+   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
   },
   "ignore_family_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:a2f996a75b065922cd58d70eddd03c916a73b7f9d02204e0191ef3666b5d4f04 (33226 chars)"
+   "legacy_json_view": "sha256:c0516b3f8db0d49312e6104880006b1ede3698775257bb35fee0a5b836c0cf2d (33237 chars)"
   },
   "json_clean": {
    "exit": 0,
@@ -18,39 +18,39 @@
   },
   "json_config": {
    "exit": 1,
-   "legacy_json_view": "sha256:e4966e9e53ec4a5e5c644a4817e30021b425587c36ba647e7eb30fc323fb1ee2 (50486 chars)"
+   "legacy_json_view": "sha256:77f2c1a9c617f60b0ecd079451262d1cae57c3ead92df1d099f4f2e5dbc7b415 (50497 chars)"
   },
   "json_default": {
    "exit": 1,
-   "legacy_json_view": "sha256:0759ad1f276d9e3c690aef6b312ffed55b34fdf9d1c1ca5f6cb7932cd2d2e74e (37113 chars)"
+   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
   },
   "json_robot_fail": {
    "exit": 1,
-   "legacy_json_view": "sha256:6ff47ca477c33136a89ff6cec292717bdb7400c5765489cd1dc3141e25cd3ebe (37433 chars)"
+   "legacy_json_view": "sha256:ccf24eb0ef2aa189aee68b32175d76190efbd71eed1cc9a1c77042191721a511 (37444 chars)"
   },
   "json_robot_ok": {
    "exit": 1,
-   "legacy_json_view": "sha256:0759ad1f276d9e3c690aef6b312ffed55b34fdf9d1c1ca5f6cb7932cd2d2e74e (37113 chars)"
+   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
   },
   "json_robot_unsupported": {
    "exit": 2,
-   "legacy_json_view": "sha256:0759ad1f276d9e3c690aef6b312ffed55b34fdf9d1c1ca5f6cb7932cd2d2e74e (37113 chars)"
+   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
   },
   "json_shapes": {
    "exit": 1,
-   "legacy_json_view": "sha256:77c07fd0dff7a98e02cfa0df80e6fdab4e267c6a5dc9ce1c56420dd10291c500 (40223 chars)"
+   "legacy_json_view": "sha256:4960ee43a6f509a2dab4268736940a3eb6592f0b69656d8ee17ce159ec333100 (40234 chars)"
   },
   "json_thresholds": {
    "exit": 1,
-   "legacy_json_view": "sha256:ebd9cb3ae502f85701d2608a081c883be6c6192822110c6f06f58e74bab60136 (43559 chars)"
+   "legacy_json_view": "sha256:2ccd44ff35e1528386ae863a506dd5d11192b845e2f62b8c68fe58627cbf99c4 (43570 chars)"
   },
   "multi_file_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:0759ad1f276d9e3c690aef6b312ffed55b34fdf9d1c1ca5f6cb7932cd2d2e74e (37113 chars)"
+   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
   },
   "profile_minimal_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:268efc69bf4fbdd69c5897a9fe645f0ea2631bae8be767699dd7657a9f5ca053 (5583 chars)"
+   "legacy_json_view": "sha256:52e51d2c84462b274a331d5d3e1eb774ec6a5501c6be7609a122a016d518a1b2 (5594 chars)"
   },
   "select_and_ignore_json": {
    "exit": 0,
@@ -198,18 +198,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -1235,18 +1235,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -2272,18 +2272,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -3300,18 +3300,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -4427,18 +4427,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."

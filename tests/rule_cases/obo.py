@@ -35,7 +35,8 @@ CASES = {
             _ttl("no prefix separator", "obo:xyz a owl:Class ."),
             _ttl("no number", "obo:XYZ_ a owl:Class ."),
             _ttl("hash local name", "<http://purl.obolibrary.org/obo/uberon#part_of> a owl:ObjectProperty ."),
-            _ttl("bad individual", "obo:thing a owl:NamedIndividual ."),
+            _ttl("letters without digits", "obo:FOO_abc a owl:Class ."),
+            _ttl("hash class", "<http://purl.obolibrary.org/obo/foo#bar> a owl:Class ."),
         ],
         [
             _ttl("canonical identifier", "obo:XYZ_0000001 a owl:Class ."),
@@ -44,6 +45,16 @@ CASES = {
             _ttl("sub-prefix", "obo:NCBITaxon_Union_0000001 a owl:Class ."),
             _ttl("foreign namespace is out of scope", "ex:Thing a owl:Class ."),
             _ttl("ontology IRI is not a term", "obo:xyz.owl a owl:Ontology ."),
+            _ttl("individuals are out of scope", "obo:thing a owl:NamedIndividual ."),
+            _ttl(
+                "annotation property with hash",
+                "<http://purl.obolibrary.org/obo/envo#envoAstro> a owl:AnnotationProperty .",
+            ),
+            _ttl("sub-ID space with letters", "obo:RO_HOM0000001 a owl:ObjectProperty ."),
+            _ttl(
+                "obsolete term with odd IRI",
+                "<http://purl.obolibrary.org/obo/pato#x> a owl:ObjectProperty ; owl:deprecated true .",
+            ),
         ],
     ),
     "OBO002": rule_cases(
@@ -68,6 +79,11 @@ CASES = {
                 ' <http://purl.org/dc/elements/1.1/description> "d" ; dcterms:license ex:L .',
             ),
             _ttl("no ontology header at all", "ex:A a owl:Class ."),
+            _ttl(
+                "dc title and description with dcterms license",
+                'ex:o a owl:Ontology ; <http://purl.org/dc/elements/1.1/title> "t" ;'
+                ' <http://purl.org/dc/elements/1.1/description> "d" ; dcterms:license ex:L .',
+            ),
         ],
     ),
     "OBO003": rule_cases(
@@ -76,6 +92,7 @@ CASES = {
             _ttl("blank definition", 'ex:A a owl:Class ; obo:IAO_0000115 "  " .'),
             _ttl("rdfs:comment is not a definition", 'ex:A a owl:Class ; rdfs:comment "A thing." .'),
             _ttl("object property without definition", "ex:p a owl:ObjectProperty ."),
+            _ttl("comment only class", 'ex:A a owl:Class ; rdfs:comment "x" .'),
             _ttl("false deprecated flag", 'ex:A a owl:Class ; owl:deprecated "false"^^xsd:boolean .'),
         ],
         [
@@ -83,6 +100,7 @@ CASES = {
             _ttl("defined property", 'ex:p a owl:DatatypeProperty ; obo:IAO_0000115 "A relation." .'),
             _ttl("obsolete class needs no definition", 'ex:A a owl:Class ; owl:deprecated "true"^^xsd:boolean .'),
             _ttl("annotation properties are out of scope", "ex:a a owl:AnnotationProperty ."),
+            _ttl("elucidation only", 'obo:BFO_0000001 a owl:Class ; obo:IAO_0000600 "An elucidation." .'),
         ],
     ),
     "OBO004": rule_cases(
@@ -104,6 +122,12 @@ CASES = {
             ),
             _ttl("one term with two labels", 'ex:A a owl:Class ; rdfs:label "a", "b" .'),
             _ttl("annotation property needs no label", "ex:a a owl:AnnotationProperty ."),
+            _ttl("obsolete unlabeled class", "ex:A a owl:Class ; owl:deprecated true ."),
+            _ttl(
+                "obsolete terms share a label",
+                'ex:A a owl:Class ; owl:deprecated true ; rdfs:label "obsolete x" .'
+                ' ex:B a owl:Class ; owl:deprecated true ; rdfs:label "obsolete x" .',
+            ),
         ],
     ),
     "OBO005": rule_cases(
@@ -136,6 +160,11 @@ CASES = {
             _ttl("datatype property is out of scope", 'ex:p a owl:DatatypeProperty ; rdfs:label "part of" .'),
             _ttl("different label", 'ex:p a owl:ObjectProperty ; rdfs:label "is component of" .'),
             _ttl(
+                "equivalent to the current RO term",
+                'ex:p a owl:ObjectProperty ; rdfs:label "regulates" ; owl:equivalentProperty obo:RO_0002211 .',
+            ),
+            _ttl("retired relation label", 'ex:p a owl:ObjectProperty ; rdfs:label "inheres in" .'),
+            _ttl(
                 "obsolete property",
                 'ex:p a owl:ObjectProperty ; rdfs:label "part of" ; owl:deprecated "true"^^xsd:boolean .',
             ),
@@ -151,6 +180,10 @@ CASES = {
             _ttl(
                 "axiom without provenance",
                 f"ex:A a owl:Class ; {DEF} . " + _axiom('rdfs:comment "x"'),
+            ),
+            _ttl(
+                "BFO-style axiom with only IAO_0010000",
+                f"ex:A a owl:Class ; {DEF} . " + _axiom('obo:IAO_0010000 "x"'),
             ),
             _ttl(
                 "xref on an axiom about another property",
@@ -171,6 +204,15 @@ CASES = {
                 "definition axiom with dcterms:source",
                 f"ex:A a owl:Class ; {DEF} . " + _axiom('dcterms:source "x"'),
             ),
+            _ttl(
+                "definition axiom with <http://purl.org/dc/elements/1.1/source>",
+                f"ex:A a owl:Class ; {DEF} . " + _axiom('<http://purl.org/dc/elements/1.1/source> "x"'),
+            ),
+            _ttl("term-level dcterms:source", f'ex:A a owl:Class ; {DEF} ; dcterms:source "x" .'),
+            _ttl(
+                "term-level <http://purl.org/dc/elements/1.1/source>",
+                f'ex:A a owl:Class ; {DEF} ; <http://purl.org/dc/elements/1.1/source> "x" .',
+            ),
             _ttl("term-level definition source", f'ex:A a owl:Class ; {DEF} ; obo:IAO_0000119 "x" .'),
             _ttl("no definition is OBO003's business", "ex:A a owl:Class ."),
             _ttl("obsolete term", f'ex:A a owl:Class ; {DEF} ; owl:deprecated "true"^^xsd:boolean .'),
@@ -183,7 +225,7 @@ CASES = {
             _ttl("lexical 1", 'ex:A a owl:Class ; owl:deprecated "1"^^xsd:boolean .'),
             _ttl("blank reason", 'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 " " .'),
             _ttl("obsolete property", "ex:p a owl:ObjectProperty ; owl:deprecated true ."),
-            _ttl("undeclared obsolete term", "ex:A owl:deprecated true ."),
+            _ttl("deprecated datatype property", "ex:p a owl:DatatypeProperty ; owl:deprecated true ."),
         ],
         [
             _ttl("with reason", "ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 obo:OMO_0000001 ."),
@@ -192,6 +234,12 @@ CASES = {
             _ttl("not obsolete", "ex:A a owl:Class ."),
             _ttl("deprecated false", 'ex:A a owl:Class ; owl:deprecated "false"^^xsd:boolean .'),
             _ttl("plain 1 is not a boolean", 'ex:A a owl:Class ; owl:deprecated "1" .'),
+            _ttl("deprecated individual", "ex:A a owl:NamedIndividual ; owl:deprecated true ."),
+            _ttl("deprecated annotation property", "ex:a a owl:AnnotationProperty ; owl:deprecated true ."),
+            _ttl("undeclared deprecated term", "ex:A owl:deprecated true ."),
+            _ttl(
+                "with term tracker item", "ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000233 <https://x.org/1> ."
+            ),
         ],
     ),
     "OBO008": rule_cases(
@@ -203,15 +251,15 @@ CASES = {
             _ttl("under owl:Thing only", "ex:A a owl:Class ; rdfs:subClassOf owl:Thing ."),
             _ttl("only restriction parents", "ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ] ."),
             _ttl(
-                "subclass cycle without BFO",
-                "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A .",
-            ),
-            _ttl(
                 "BFO-like IRI in another namespace",
                 "ex:A a owl:Class ; rdfs:subClassOf obo:BFX_0000001 . obo:BFX_0000001 a owl:Class .",
             ),
         ],
         [
+            _ttl(
+                "subclass cycle is covered by no root",
+                "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A .",
+            ),
             _ttl("direct BFO parent", "ex:A a owl:Class ; rdfs:subClassOf obo:BFO_0000002 ."),
             _ttl(
                 "transitive BFO parent",
@@ -242,6 +290,7 @@ CASES = {
         ],
         [
             _ttl("exact", 'ex:A oio:hasExactSynonym "alias" .'),
+            _ttl("alternative term", 'ex:A obo:IAO_0000118 "alias" .'),
             _ttl("broad", 'ex:A oio:hasBroadSynonym "alias" .'),
             _ttl("narrow", 'ex:A oio:hasNarrowSynonym "alias" .'),
             _ttl("related", 'ex:A oio:hasRelatedSynonym "alias" .'),
@@ -252,6 +301,7 @@ CASES = {
     "OBO010": rule_cases(
         [
             _ttl("whole ontology", "ex:o a owl:Ontology ; owl:imports obo:uberon.owl ."),
+            _ttl("whole chebi", "ex:o a owl:Ontology ; owl:imports obo:chebi.owl ."),
             _ttl(
                 "released whole ontology",
                 "ex:o a owl:Ontology ;"
@@ -270,6 +320,8 @@ CASES = {
             ),
             _ttl("non-OBO import", "ex:o a owl:Ontology ; owl:imports <https://example.org/other.owl> ."),
             _ttl("no imports", "ex:o a owl:Ontology ."),
+            _ttl("foundational bfo", "ex:o a owl:Ontology ; owl:imports obo:bfo.owl ."),
+            _ttl("foundational omo and ro", "ex:o a owl:Ontology ; owl:imports obo:omo.owl, obo:ro.owl ."),
             _ttl("literal import", 'ex:o a owl:Ontology ; owl:imports "http://purl.obolibrary.org/obo/uberon.owl" .'),
         ],
     ),
@@ -279,7 +331,12 @@ CASES = {
             _ttl("missing .owl", "obo:xyz a owl:Ontology ."),
             _ttl("upper-case id", "obo:XYZ.owl a owl:Ontology ."),
             _ttl("empty id", "<http://purl.obolibrary.org/obo/.owl> a owl:Ontology ."),
-            _ttl("version IRI without releases", _header("<http://purl.obolibrary.org/obo/xyz/2020-01-01/xyz.owl>")),
+            _ttl(
+                "version IRI naming another ontology",
+                "<http://purl.obolibrary.org/obo/foo.owl> a owl:Ontology ; owl:versionIRI"
+                " <http://purl.obolibrary.org/obo/bar/releases/2020-01-01/bar.owl> .",
+            ),
+            _ttl("example.org ontology", "<http://example.org/x.owl> a owl:Ontology ."),
             _ttl("version IRI with a bad date", _header(VERSION.format(id="xyz", date="2020-1-1", file="xyz.owl"))),
             _ttl(
                 "version IRI of another ontology",
@@ -293,6 +350,10 @@ CASES = {
         ],
         [
             _ttl("plain ontology", "obo:xyz.owl a owl:Ontology ."),
+            _ttl("version without releases", _header("<http://purl.obolibrary.org/obo/xyz/2019-08-26/xyz.owl>")),
+            _ttl("numeric release", _header("<http://purl.obolibrary.org/obo/xyz/257/xyz.owl>")),
+            _ttl("dotted release", _header("<http://purl.obolibrary.org/obo/xyz/1.2.3/xyz.owl>")),
+            _ttl("release of core file", _header("<http://purl.obolibrary.org/obo/xyz/releases/2026-09-04/core.owl>")),
             _ttl("id with digits and underscore", "obo:xyz_2.owl a owl:Ontology ."),
             _ttl("sub-ontology", "<http://purl.obolibrary.org/obo/xyz/imports/ro_import.owl> a owl:Ontology ."),
             _ttl("released version", _header(VERSION.format(id="xyz", date="2020-01-01", file="xyz.owl"))),
@@ -311,13 +372,15 @@ CASES = {
             _ttl("trailing whitespace", 'ex:A a owl:Class ; rdfs:label "cell " .'),
             _ttl("repeated whitespace", 'ex:A a owl:Class ; rdfs:label "cell  membrane" .'),
             _ttl("underscore", 'ex:A a owl:Class ; rdfs:label "cell_membrane" .'),
-            _ttl("initial capital", 'ex:A a owl:Class ; rdfs:label "Cell membrane" .'),
-            _ttl("initial capital with English tag", 'ex:A a owl:Class ; rdfs:label "Cell"@en-GB .'),
-            _ttl("property label", 'ex:p a owl:ObjectProperty ; rdfs:label "Part of" .'),
-            _ttl("capital after leading space", 'ex:A a owl:Class ; rdfs:label " Cell" .'),
+            _ttl("two spaces", 'ex:A a owl:Class ; rdfs:label "two  spaces" .'),
+            _ttl("underscore in a short label", 'ex:A a owl:Class ; rdfs:label "a_b" .'),
+            _ttl("property label", 'ex:p a owl:ObjectProperty ; rdfs:label "part_of" .'),
         ],
         [
             _ttl("lowercase", 'ex:A a owl:Class ; rdfs:label "cell membrane" .'),
+            _ttl("proper noun", 'ex:A a owl:Class ; rdfs:label "Kupffer cell" .'),
+            _ttl("capital with English tag", 'ex:A a owl:Class ; rdfs:label "Cell"@en-GB .'),
+            _ttl("obsolete label", 'ex:A a owl:Class ; owl:deprecated true ; rdfs:label "obsolete_x" .'),
             _ttl("acronym first", 'ex:A a owl:Class ; rdfs:label "DNA binding" .'),
             _ttl("single letter", 'ex:A a owl:Class ; rdfs:label "T cell" .'),
             _ttl("capital in another language", 'ex:A a owl:Class ; rdfs:label "Cellule"@fr .'),

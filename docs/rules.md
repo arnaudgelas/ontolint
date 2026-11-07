@@ -1628,10 +1628,10 @@ ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "Same" .
 
 Reported: `Duplicate label 'Same'@und for https://example.test/onto#A, https://example.test/onto#B`
 
-*Clean:* case-only difference
+*Clean:* collection and concept share a label
 
 ```turtle
-ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .
+ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:Collection ; skos:prefLabel "Same" .
 ```
 
 #### LEX005: Blank or whitespace-padded label
@@ -2704,7 +2704,7 @@ ex:s9 a owl:Class .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
-- **Fix:** Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN with a numeric local part.
+- **Fix:** Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN (optionally PREFIX_SUBSPACE_NNNNNNN).
 
 *Flagged:* letters in the number
 
@@ -2729,7 +2729,7 @@ obo:XYZ_0000001 a owl:Class .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
-- **Fix:** Add dcterms:title, dcterms:description and dcterms:license to the owl:Ontology header.
+- **Fix:** Add dc:title or dcterms:title, dc:description or dcterms:description, and dcterms:license to the header.
 
 *Flagged:* no title
 
@@ -2754,7 +2754,7 @@ ex:o a owl:Ontology ; dcterms:title "t" ; dcterms:description "d" ; dcterms:lice
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
-- **Fix:** Add an obo:IAO_0000115 (definition) annotation with a non-empty text.
+- **Fix:** Add an obo:IAO_0000115 (definition) or obo:IAO_0000600 (elucidation) annotation with a non-empty text.
 
 *Flagged:* class without definition
 
@@ -2829,7 +2829,7 @@ ex:p a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:subPropertyOf obo:BFO_00
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
-- **Fix:** Annotate the definition axiom with oboInOwl:hasDbXref, or add an obo:IAO_0000119 definition source.
+- **Fix:** Annotate the definition axiom with oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source.
 
 *Flagged:* definition without source
 
@@ -2839,7 +2839,7 @@ ex:p a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:subPropertyOf obo:BFO_00
 ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
 ```
 
-Reported: `Definition has no source (oboInOwl:hasDbXref or obo:IAO_0000119).`
+Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
 
 *Clean:* definition axiom with xref
 
@@ -2851,10 +2851,10 @@ ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSo
 
 #### OBO007: Obsolete term without a reason or replacement annotation
 
-- **Severity:** warning
+- **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
-- **Fix:** Add obo:IAO_0000231 (reason), obo:IAO_0100001 (replaced by) or oboInOwl:consider to the obsolete term.
+- **Fix:** Add obo:IAO_0000231 (reason), IAO_0000233 (tracker item), IAO_0100001 (replaced by) or oboInOwl:consider.
 
 *Flagged:* obsolete class bare
 
@@ -2879,7 +2879,7 @@ ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 obo:OMO_0000001 .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
-- **Fix:** Place the class under a BFO class through asserted rdfs:subClassOf or a named genus.
+- **Fix:** Give the root class an asserted rdfs:subClassOf to a BFO class, or a named BFO genus.
 
 *Flagged:* class with no parent
 
@@ -2889,14 +2889,14 @@ ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 obo:OMO_0000001 .
 ex:A a owl:Class .
 ```
 
-Reported: `Class has no asserted path to a BFO class.`
+Reported: `Class has no asserted superclass and no path to a BFO class.`
 
-*Clean:* direct BFO parent
+*Clean:* subclass cycle is covered by no root
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
-ex:A a owl:Class ; rdfs:subClassOf obo:BFO_0000002 .
+ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A .
 ```
 
 #### OBO009: Synonym annotation without scope
@@ -2929,7 +2929,7 @@ ex:A oio:hasExactSynonym "alias" .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** context-dependent
-- **Fix:** Import an ODK-style module (for example .../obo/<id>/imports/<term>_import.owl) instead of the full ontology.
+- **Fix:** Import an ODK-style module (.../obo/<id>/imports/<term>_import.owl); bfo, omo and ro may be imported whole.
 
 *Flagged:* whole ontology
 
@@ -2954,7 +2954,7 @@ ex:o a owl:Ontology ; owl:imports <http://purl.obolibrary.org/obo/uberon/imports
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
-- **Fix:** Use http://purl.obolibrary.org/obo/<id>.owl and .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.
+- **Fix:** Use .../obo/<id>.owl and a version IRI such as .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.
 
 *Flagged:* non-OBO ontology IRI
 
@@ -2979,7 +2979,7 @@ obo:xyz.owl a owl:Ontology .
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
-- **Fix:** Use lowercase labels (except proper nouns and acronyms) with single spaces and no underscores.
+- **Fix:** Use labels without leading, trailing or repeated whitespace and without underscores.
 
 *Flagged:* leading whitespace
 
@@ -5279,7 +5279,7 @@ ex:c a skos:Concept ; skos:prefLabel "a"@en, "a"@fr .
 ex:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "a"@en .
 ```
 
-Reported: `Same literal appears in multiple disjoint SKOS label properties.`
+Reported: `Literal 'a' (en) appears in skos:prefLabel and skos:altLabel.`
 
 *Clean:* distinct literals
 
@@ -5607,7 +5607,7 @@ ex:c skos:broader ex:p . ex:p a skos:Concept .
 - **Severity:** info
 - **Scope:** term
 - **Category:** deterministic
-- **Fix:** Remove the direct broader link that is already implied through an asserted intermediate concept.
+- **Fix:** Remove the direct broader link that is already implied through an asserted intermediate concept (vocabularies with a parallel classification keep such shortcuts on purpose: use --ignore SKOS018).
 
 *Flagged:* shortcut
 
@@ -5654,7 +5654,7 @@ ex:a skos:inScheme ex:s ; skos:broader ex:b . ex:b skos:inScheme ex:s .
 *Flagged:* duplicate notation
 
 ```turtle
-ex:a skos:inScheme ex:s ; skos:notation "1" . ex:b skos:inScheme ex:s ; skos:notation "1" .
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" .
 ```
 
 Reported: `skos:notation '1' is shared by 2 concepts of https://example.test/onto#s.`
@@ -5662,7 +5662,7 @@ Reported: `skos:notation '1' is shared by 2 concepts of https://example.test/ont
 *Clean:* distinct notation
 
 ```turtle
-ex:a skos:inScheme ex:s ; skos:notation "1" . ex:b skos:inScheme ex:s ; skos:notation "2" .
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:notation "2" .
 ```
 
 #### SKOS021: Same preferred label on several concepts of one scheme
@@ -5675,7 +5675,7 @@ ex:a skos:inScheme ex:s ; skos:notation "1" . ex:b skos:inScheme ex:s ; skos:not
 *Flagged:* duplicate prefLabel
 
 ```turtle
-ex:a skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b skos:inScheme ex:s ; skos:prefLabel "cat"@EN .
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "cat"@EN .
 ```
 
 Reported: `skos:prefLabel 'cat' (en) is shared by 2 concepts of https://example.test/onto#s.`
@@ -5683,7 +5683,7 @@ Reported: `skos:prefLabel 'cat' (en) is shared by 2 concepts of https://example.
 *Clean:* different languages
 
 ```turtle
-ex:a skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b skos:inScheme ex:s ; skos:prefLabel "Cat"@fr .
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@fr .
 ```
 
 ## TOOL

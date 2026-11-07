@@ -13,7 +13,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import RDF, SKOS, XSD
+from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -130,7 +130,8 @@ SPECS: tuple[RuleSpec, ...] = (
         "SKOS018",
         "Redundant skos:broader shortcut",
         Severity.INFO,
-        "Remove the direct broader link that is already implied through an asserted intermediate concept.",
+        "Remove the direct broader link that is already implied through an asserted intermediate concept "
+        "(vocabularies with a parallel classification keep such shortcuts on purpose: use --ignore SKOS018).",
         RuleScope.TERM,
     ),
     _spec(
@@ -346,10 +347,27 @@ def _redundant_broader(ctx: RuleContext) -> None:
                     )
 
 
+def _live_concepts(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> set[URIRef]:
+    """Scheme members that are typed ``skos:Concept`` (or a subclass) and not deprecated.
+
+    Collections (microthesauri) and schemes may carry ``skos:inScheme`` too, but they are not concepts and
+    legitimately share names and notations with concepts.
+    """
+    g = ctx.g
+    concept_types = {SKOS.Concept, *g.transitive_subjects(RDFS.subClassOf, SKOS.Concept)}
+    types = ctx.context.types_by_subject
+    return {
+        c for c in schemes if types.get(c, frozenset()) & concept_types and (c, OWL.deprecated, Literal(True)) not in g
+    }
+
+
 def _uniqueness(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
+    live = _live_concepts(ctx, schemes)
     notations: defaultdict[tuple[URIRef, str], set[URIRef]] = defaultdict(set)
     labels: defaultdict[tuple[URIRef, str, str], set[URIRef]] = defaultdict(set)
     for concept, its in schemes.items():
+        if concept not in live:
+            continue
         for scheme in its:
             for n in ctx.g.objects(concept, SKOS.notation):
                 if isinstance(n, Literal):

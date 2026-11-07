@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)",
+    "file": "sha256:f06b10dc840fb44bc4afcfe22dbbb1a23595d331cd5bdac2805ef4840135f60b (26878 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)"
+    "stdout": "sha256:f06b10dc840fb44bc4afcfe22dbbb1a23595d331cd5bdac2805ef4840135f60b (26878 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,62 +118,62 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
+   "legacy_json_view": "sha256:5bff6174fca56b0c0a577224abcd05f94ba87b6e51be7131c161ae6bda9d26f8 (44474 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)",
+    "file": "sha256:4e8a8e026867981d86f8a2ef60bc3a90638374daa5f36e4f2db93ea72349fd21 (153213 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)"
+    "stdout": "sha256:4e8a8e026867981d86f8a2ef60bc3a90638374daa5f36e4f2db93ea72349fd21 (153213 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:53e51ca27cbe3a1062d0eef84a8dd598c00a87708d385ae9263c66ddb00f993e (40576 chars)",
+   "legacy_json_view": "sha256:a70112d773cf5b8396d1300714a513678aed0426f9527cf780ef0cdacbe92947 (40587 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:79543e35b7f3f9ebcf3158a41e926e46cfb38d762014bc7cf2976f779cc38e30 (149045 chars)",
+    "file": "sha256:23bd54d2ce42505c5394f16dcbb164dee3a1bfaf647fb2437a5cccb653153743 (149155 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:79543e35b7f3f9ebcf3158a41e926e46cfb38d762014bc7cf2976f779cc38e30 (149045 chars)"
+    "stdout": "sha256:23bd54d2ce42505c5394f16dcbb164dee3a1bfaf647fb2437a5cccb653153743 (149155 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:25d522d5c3ca3b4bc20f072fcf0c8878b637a70c0555cdce2e7e67c8bbe3c2d7 (28109 chars)",
+    "file": "sha256:fccfac1bcc9e133d083f7175bc9c77233cf988a14fdae89e1699093c1d7391fe (28120 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:25d522d5c3ca3b4bc20f072fcf0c8878b637a70c0555cdce2e7e67c8bbe3c2d7 (28109 chars)"
+    "stdout": "sha256:fccfac1bcc9e133d083f7175bc9c77233cf988a14fdae89e1699093c1d7391fe (28120 chars)"
    }
   },
   "json_clean": {
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:fc0b403e33db80a8cde24a764dc1c233b1a061baffa7aead44a113f8fdb6c748 (103978 chars)",
+    "file": "sha256:38727e0635b31755732312cb834feaed7cfb94b56cf00c883e37a91ed16b3f81 (104077 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:fc0b403e33db80a8cde24a764dc1c233b1a061baffa7aead44a113f8fdb6c748 (103978 chars)"
+    "stdout": "sha256:38727e0635b31755732312cb834feaed7cfb94b56cf00c883e37a91ed16b3f81 (104077 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:7b3c6aa9196029524ef8d9f927e03c1974e07be76feafe0a56be5b796005b142 (207956 chars)"
+    "stdout": "sha256:1ceea749525694e23a891bec7f5cfbbafac210c1715ee009da975dd0c9ca49f1 (208154 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,32 +184,32 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d5e3cd1e2ac1157c7bde1c3d7df955466a134f664bbdeb0436a2618406df8f35 (104750 chars)",
+    "file": "sha256:0f91d32c2920559d0037dc4a1adc7c05bbab1d9ed5dbb88ef3e8c6a763667a9c (104849 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d5e3cd1e2ac1157c7bde1c3d7df955466a134f664bbdeb0436a2618406df8f35 (104750 chars)"
+    "stdout": "sha256:0f91d32c2920559d0037dc4a1adc7c05bbab1d9ed5dbb88ef3e8c6a763667a9c (104849 chars)"
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:571d67bf1dd7dfcf1b7ba5915b83e0e2d2da9bd14bca3d8ae8107dc3169e001e (61824 chars)",
+   "legacy_json_view": "sha256:634f1561d54ebc7590f0ae7603eb234892d857e3ad9244e18c9715a42a6c0c5c (61835 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:2b0e5dfe885f1fa6c20c55a45b280dfbd819b5bca2559c9c7e6039c58367fb05 (172882 chars)",
+    "file": "sha256:ed8642b63c7cf212e06cd784a1795108e652a36a4f12f88e442321e8ffe23cd3 (172992 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:2b0e5dfe885f1fa6c20c55a45b280dfbd819b5bca2559c9c7e6039c58367fb05 (172882 chars)"
+    "stdout": "sha256:ed8642b63c7cf212e06cd784a1795108e652a36a4f12f88e442321e8ffe23cd3 (172992 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:b5de8dedbfda19f35b0aae3c7720aae626d727231e8dc62d0583c1b66dc7c66a (276903 chars)"
+    "stdout": "sha256:33c29beed6044ca8d473667380a746223edd65cb25863e1a32f88d1fdfea0e21 (277112 chars)"
    },
    "write_baseline": {
     "count": 206,
@@ -217,21 +217,21 @@
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
+   "legacy_json_view": "sha256:5bff6174fca56b0c0a577224abcd05f94ba87b6e51be7131c161ae6bda9d26f8 (44474 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)",
+    "file": "sha256:4e8a8e026867981d86f8a2ef60bc3a90638374daa5f36e4f2db93ea72349fd21 (153213 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:5e2cb15f792273b250ead6ad00f4e363634fc7635c3c56bd83d79398104713a2 (153103 chars)"
+    "stdout": "sha256:4e8a8e026867981d86f8a2ef60bc3a90638374daa5f36e4f2db93ea72349fd21 (153213 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:3cc7388a4af1e0de2ca1e3e0fc8d0416a02111ad7baccd38b023847c0f97394e (257088 chars)"
+    "stdout": "sha256:879325f83dd5d2c8913ec4cf044d7de0a852abea9cd3f393377fa53e93047483 (257297 chars)"
    },
    "write_baseline": {
     "count": 136,
@@ -239,63 +239,63 @@
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:c5feebfee3cad5351dfaeed121b2ebbd23f8240429255d4ba18b2ce50a8f0a2b (44783 chars)",
+   "legacy_json_view": "sha256:eb67858b16c61363054671ef9331b409628b3771f03f1c0df90586196eb8f7bc (44794 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:447e32935bad0bf79bb2d1ad6c84b220dec85f4c13437a6e22ae2f1a0319dddf (153418 chars)",
+    "file": "sha256:78185301afa4ff7ad7c485a4004848fbbbe8b483b069c07c03ee82d25ab12ddd (153528 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:447e32935bad0bf79bb2d1ad6c84b220dec85f4c13437a6e22ae2f1a0319dddf (153418 chars)"
+    "stdout": "sha256:78185301afa4ff7ad7c485a4004848fbbbe8b483b069c07c03ee82d25ab12ddd (153528 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
+   "legacy_json_view": "sha256:5bff6174fca56b0c0a577224abcd05f94ba87b6e51be7131c161ae6bda9d26f8 (44474 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d898f7d735d45c66104a28cafe61978c14f7628ec327538e80c81f6592213cd5 (153064 chars)",
+    "file": "sha256:396cd7830af02ded8ad8f2eaea0744a09d96e25203f0f43d40a6893eb99665ad (153174 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d898f7d735d45c66104a28cafe61978c14f7628ec327538e80c81f6592213cd5 (153064 chars)"
+    "stdout": "sha256:396cd7830af02ded8ad8f2eaea0744a09d96e25203f0f43d40a6893eb99665ad (153174 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
+   "legacy_json_view": "sha256:5bff6174fca56b0c0a577224abcd05f94ba87b6e51be7131c161ae6bda9d26f8 (44474 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:9b0d5450b61a8feeccfeecaee6da9c768246f00c218a284859464ee7568f81b1 (153110 chars)",
+    "file": "sha256:e176027160447c2642dcd8254aa33810024314e76a00deedb70b222ef160813b (153220 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:9b0d5450b61a8feeccfeecaee6da9c768246f00c218a284859464ee7568f81b1 (153110 chars)"
+    "stdout": "sha256:e176027160447c2642dcd8254aa33810024314e76a00deedb70b222ef160813b (153220 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:ddb19d0294752287cf3a76221987b786fe916a937c0cbf259223f8978b50b2f7 (47574 chars)",
+   "legacy_json_view": "sha256:05464e84c7764c03b92a9461e9eae1acfe2b1c3580949cd30106d7be7390f54e (47585 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:cc40069c38a6e06acd28298724c3c410db345a6e881ce3c1d3bc8635c4d1ac24 (155629 chars)",
+    "file": "sha256:5809b45f0f01ce79af54c2d5cc952f00ebf07426fc6abcfea1d7417b481dfe40 (155739 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:cc40069c38a6e06acd28298724c3c410db345a6e881ce3c1d3bc8635c4d1ac24 (155629 chars)"
+    "stdout": "sha256:5809b45f0f01ce79af54c2d5cc952f00ebf07426fc6abcfea1d7417b481dfe40 (155739 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:407d7a35362af3d2658ee08f14660d59b88edf674c5d925d603a4dcc91887c34 (258688 chars)"
+    "stdout": "sha256:96b69d791177cbf2957a4a8fcf2f94322059696baf15397e01c1e9880e5158aa (258897 chars)"
    },
    "write_baseline": {
     "count": 146,
@@ -303,17 +303,17 @@
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:9a2b8d9b9e44107859c02f1968e21d78559cf45afbcf432fe3f6bb93ea7a82ac (50909 chars)",
+   "legacy_json_view": "sha256:1c0626664d827adc37e6518f91825b4e429169879e311d27b58b45295a98572d (50920 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:5ad1e007e880d4a55a3259b4fcc6ecd473a7b6c88cf3a71903dc3b393a2b3e0f (160298 chars)",
+    "file": "sha256:931e78bc20e34a37ccdfde854555307b05925bc05462b5fadc3103f07886e2c4 (160408 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:5ad1e007e880d4a55a3259b4fcc6ecd473a7b6c88cf3a71903dc3b393a2b3e0f (160298 chars)"
+    "stdout": "sha256:931e78bc20e34a37ccdfde854555307b05925bc05462b5fadc3103f07886e2c4 (160408 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:4f292d1d99ba893560078a5f6632638475e077a5e8b90e486942e31b1026c40a (96812 chars)"
+    "stdout": "sha256:90e1dec9a2f15612b5414750f821e4bf25b65a2cbb889647adfc6674f7dc9490 (96809 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:4f292d1d99ba893560078a5f6632638475e077a5e8b90e486942e31b1026c40a (96812 chars)"
+    "stdout": "sha256:90e1dec9a2f15612b5414750f821e4bf25b65a2cbb889647adfc6674f7dc9490 (96809 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:1db555f5b8f2bedfa6cca5fe0edae5dce70148f43131f471ac322a3706ce0a0b (31662 chars)"
+    "stdout": "sha256:933a3c9e7635eda59043878ea2e644f440e7600b1ade16b5e629f715aaeeccbb (31662 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:1db555f5b8f2bedfa6cca5fe0edae5dce70148f43131f471ac322a3706ce0a0b (31662 chars)"
+    "stdout": "sha256:933a3c9e7635eda59043878ea2e644f440e7600b1ade16b5e629f715aaeeccbb (31662 chars)"
    }
   },
   "missing_config": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:bc3acce1eb2b878712c1fc33b083b9749fa64503f33833d34ee2fe8d04f06e88 (44463 chars)",
+   "legacy_json_view": "sha256:5bff6174fca56b0c0a577224abcd05f94ba87b6e51be7131c161ae6bda9d26f8 (44474 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:95b98f10196af4bbb17904dfac0a6a6f5aacf24d1622fa9bb1217af720c345dd (175898 chars)",
+    "file": "sha256:0189f946baff29bbaeba55ad610bd9375500736e9630049641b029c2332a6a1b (176008 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:95b98f10196af4bbb17904dfac0a6a6f5aacf24d1622fa9bb1217af720c345dd (175898 chars)"
+    "stdout": "sha256:0189f946baff29bbaeba55ad610bd9375500736e9630049641b029c2332a6a1b (176008 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,54 +411,54 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:e62c2f081218eec212095a4ffd58a71595ce5d43f73a2ede18bfe48f8a34f646 (279924 chars)",
+    "file": "sha256:faa859733e2e8f95d1dd2a72a1e7ed5b4e8ab8840b5018553741b3f77bf8b951 (280133 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e62c2f081218eec212095a4ffd58a71595ce5d43f73a2ede18bfe48f8a34f646 (279924 chars)"
+    "stdout": "sha256:faa859733e2e8f95d1dd2a72a1e7ed5b4e8ab8840b5018553741b3f77bf8b951 (280133 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:ff2171c00a46556235fa87f276c403590ca09a29bc87c0b7adbb179a6f034532 (26943 chars)",
+    "file": "sha256:a505f27f5285745ce586d87829b21e1ec79776d078290b441e74b51970e17f2e (26954 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ff2171c00a46556235fa87f276c403590ca09a29bc87c0b7adbb179a6f034532 (26943 chars)"
+    "stdout": "sha256:a505f27f5285745ce586d87829b21e1ec79776d078290b441e74b51970e17f2e (26954 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)",
+    "file": "sha256:f06b10dc840fb44bc4afcfe22dbbb1a23595d331cd5bdac2805ef4840135f60b (26878 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)"
+    "stdout": "sha256:f06b10dc840fb44bc4afcfe22dbbb1a23595d331cd5bdac2805ef4840135f60b (26878 chars)"
    }
   },
   "profile_minimal_json": {
-   "legacy_json_view": "sha256:268efc69bf4fbdd69c5897a9fe645f0ea2631bae8be767699dd7657a9f5ca053 (5583 chars)",
+   "legacy_json_view": "sha256:52e51d2c84462b274a331d5d3e1eb774ec6a5501c6be7609a122a016d518a1b2 (5594 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:84f10443e327351470e011bc25299077e8c5a5076dfa52935d5f0a53e53b9877 (29808 chars)",
+    "file": "sha256:57e2d0ea8e4a70ea830439b1c784877c2e538ded9c24bfa1ae94c1413edc1a6e (29918 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:84f10443e327351470e011bc25299077e8c5a5076dfa52935d5f0a53e53b9877 (29808 chars)"
+    "stdout": "sha256:57e2d0ea8e4a70ea830439b1c784877c2e538ded9c24bfa1ae94c1413edc1a6e (29918 chars)"
    }
   },
   "profile_strict_text": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:09be27435bfda74ec0d174406a4c040d84abf2808f386d0fc3b51d99977d4a6b (262601 chars)",
+    "file": "sha256:9229f1009a34efb5279fc83ab49ee99c6d6d7d4194bc8ae5526386f47928d2ac (262810 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:09be27435bfda74ec0d174406a4c040d84abf2808f386d0fc3b51d99977d4a6b (262601 chars)"
+    "stdout": "sha256:9229f1009a34efb5279fc83ab49ee99c6d6d7d4194bc8ae5526386f47928d2ac (262810 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:00ab21788d5018fadb567e7a5e329fbe2edc924a3f9e25f7adf41fd17c91da2b (251244 chars)",
+    "file": "sha256:d201e36628c0d003dc46d2c1d6b100580ffb6285cb679f0c8c5f1cdc78f91c13 (251453 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:00ab21788d5018fadb567e7a5e329fbe2edc924a3f9e25f7adf41fd17c91da2b (251244 chars)"
+    "stdout": "sha256:d201e36628c0d003dc46d2c1d6b100580ffb6285cb679f0c8c5f1cdc78f91c13 (251453 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:75e10b38cde13ceebf1d4107173821a42cf448cffc264f5127f498bdc7362438 (43267 chars)",
+    "file": "sha256:285dccfb3685c7c0a05762e4e9f3cca51356298b246837c9bc84445567a2fa4a (43278 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:75e10b38cde13ceebf1d4107173821a42cf448cffc264f5127f498bdc7362438 (43267 chars)"
+    "stdout": "sha256:285dccfb3685c7c0a05762e4e9f3cca51356298b246837c9bc84445567a2fa4a (43278 chars)"
    }
   },
   "text_clean": {
@@ -583,14 +583,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)",
+    "file": "sha256:f06b10dc840fb44bc4afcfe22dbbb1a23595d331cd5bdac2805ef4840135f60b (26878 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f24f30f0aea35ae29df383d42d9c1710a1dd409cd5edc1228e8fd42882149acc (26867 chars)"
+    "stdout": "sha256:f06b10dc840fb44bc4afcfe22dbbb1a23595d331cd5bdac2805ef4840135f60b (26878 chars)"
    }
   }
  },
@@ -666,18 +666,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -1901,18 +1901,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -3136,18 +3136,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -4362,18 +4362,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
@@ -5687,18 +5687,18 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "6f32248bf3713b31e94ecb124311c6acb4773c4d4c1b3063e20317138e041df8",
+    "fingerprint": "e328df5dcda5f384c29b23b114d13bb1cd350bcc1d00a39028c4f1984c612d3a",
     "focus": "https://example.test/onto#c1",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'One' (en) appears in skos:prefLabel and skos:altLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
    },
    {
     "confidence": "certain",
-    "fingerprint": "7fbeae194ae6183701e4ce8d0d7dbdc36dfb17841cc614a80ed069a9534e6ace",
+    "fingerprint": "9bc1f3f59e8711c3a2cdc2366e6daf4c62f853322970f2dff3e3caa84a030cf7",
     "focus": "https://example.test/onto#c4",
-    "message": "Same literal appears in multiple disjoint SKOS label properties.",
+    "message": "Literal 'Free' (no language) appears in skos:prefLabel and skos:hiddenLabel.",
     "rule": "SKOS002",
     "severity": "error",
     "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."

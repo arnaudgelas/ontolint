@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 from typing import TYPE_CHECKING
 
 from rdflib import Literal, URIRef
-from rdflib.namespace import OWL, RDFS
+from rdflib.namespace import OWL, RDFS, SKOS
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
@@ -26,6 +26,10 @@ type LabelIndex = defaultdict[tuple[str, str, str], set[URIRef]]
 MINIMUM_CAPITALIZATION_SAMPLE = 10
 MAJORITY_PERCENT = 80
 LABEL_LIKE = ("label", "name", "title")
+# LEX002 also accepts SKOS documentation notes; other rules keep ``ctx.descriptions`` (definitions only).
+DOCUMENTATION_NOTES = (SKOS.scopeNote, SKOS.note)
+# Collections (microthesauri) and schemes are named like the concepts they group, so LEX004 skips them.
+GROUPING_TYPES = frozenset({SKOS.Collection, SKOS.ConceptScheme})
 
 
 SPECS: tuple[RuleSpec, ...] = (
@@ -147,7 +151,7 @@ def _term_labels(ctx: RuleContext) -> LabelIndex:
         labels = {o for p in ctx.labels for o in g.objects(term, p) if isinstance(o, Literal)}
         if not labels and (term, OWL.deprecated, Literal(True)) not in g:
             ctx.add("LEX001", term, "Term has no label.", confidence=_missing_label_confidence(ctx, term))
-        if not any((term, p, None) in g for p in ctx.descriptions):
+        if not any((term, p, None) in g for p in (*ctx.descriptions, *DOCUMENTATION_NOTES)):
             ctx.add("LEX002", term, "Term has no description or definition.", confidence="certain")
         _language_checks(ctx, term, labels, label_index)
     return label_index
@@ -176,14 +180,26 @@ def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label
         if _indexable_label(ctx, term, text):
             for kind in _kinds(ctx, term):
                 label_index[(text, language, kind)].add(term)
-    for lang, literals in by_language.items():
-        if len(literals) > 1:
-            ctx.add("LEX003", term, f"{len(literals)} labels for language {lang}.")
+    _multiple_labels(ctx, term, labels)
     if len(by_language) > 1 and "und" in by_language:
         ctx.add("LEX006", term, "Mixed plain and language-tagged preferred labels.")
     for lang in ctx.policy.languages:
         if lang not in by_language:
             ctx.add("LEX008", term, f"Missing preferred label in language {lang}.")
+
+
+def _multiple_labels(ctx: RuleContext, term: URIRef, labels: set[Literal]) -> None:
+    """LEX003 counts one label family: skos:prefLabel, or the other label properties when there is none.
+
+    A notation-prefixed rdfs:label next to a prefLabel is the same label, not a second one.
+    """
+    preferred = {o for o in ctx.g.objects(term, SKOS.prefLabel) if isinstance(o, Literal)}
+    family: defaultdict[str, int] = defaultdict(int)
+    for o in preferred or labels:
+        family[(o.language or "und").lower()] += 1
+    for lang, count in family.items():
+        if count > 1:
+            ctx.add("LEX003", term, f"{count} labels for language {lang}.")
 
 
 def _kinds(ctx: RuleContext, term: URIRef) -> tuple[str, ...]:
@@ -192,9 +208,12 @@ def _kinds(ctx: RuleContext, term: URIRef) -> tuple[str, ...]:
 
 
 def _indexable_label(ctx: RuleContext, term: URIRef, text: str) -> bool:
-    """Deprecated terms and labels starting with ``obsolete`` legitimately repeat other labels."""
+    """Deprecated terms, collections, schemes and labels starting with ``obsolete`` legitimately repeat labels."""
     return (
-        bool(text) and not text.casefold().startswith("obsolete") and (term, OWL.deprecated, Literal(True)) not in ctx.g
+        bool(text)
+        and not text.casefold().startswith("obsolete")
+        and (term, OWL.deprecated, Literal(True)) not in ctx.g
+        and not ctx.context.types_by_subject.get(term, frozenset()) & GROUPING_TYPES
     )
 
 

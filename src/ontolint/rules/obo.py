@@ -37,22 +37,29 @@ IAO_DEFINITION = URIRef(OBO_NS + "IAO_0000115")
 IAO_DEFINITION_SOURCE = URIRef(OBO_NS + "IAO_0000119")
 IAO_OBSOLESCENCE_REASON = URIRef(OBO_NS + "IAO_0000231")
 IAO_REPLACED_BY = URIRef(OBO_NS + "IAO_0100001")
+IAO_ELUCIDATION = URIRef(OBO_NS + "IAO_0000600")
+IAO_TERM_TRACKER = URIRef(OBO_NS + "IAO_0000233")
 OIO_DB_XREF = URIRef(OIO_NS + "hasDbXref")
 OIO_CONSIDER = URIRef(OIO_NS + "consider")
 OIO_SYNONYM = URIRef(OIO_NS + "hasSynonym")
 
-DEFINITION_PROVENANCE = (OIO_DB_XREF, IAO_DEFINITION_SOURCE, DCTERMS.source)
+DEFINITION_PROVENANCE = (OIO_DB_XREF, IAO_DEFINITION_SOURCE, DCTERMS.source, DC.source)
+TERM_PROVENANCE = (IAO_DEFINITION_SOURCE, DCTERMS.source, DC.source)
+DEFINITION_PREDICATES = (IAO_DEFINITION, IAO_ELUCIDATION)
+OBSOLESCENCE_REMEDIES = (IAO_OBSOLESCENCE_REASON, IAO_TERM_TRACKER, IAO_REPLACED_BY, OIO_CONSIDER)
 UNSCOPED_SYNONYMS = (OIO_SYNONYM, SKOS.altLabel)
 MAX_QUOTE = 60  # Characters of a label or synonym quoted in a message.
 
-ID_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z][A-Za-z0-9]*)*_[0-9]+")
+ID_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z][A-Za-z0-9]*)*_[A-Za-z]*[0-9]+")
 ONTOLOGY_PATTERN = re.compile(re.escape(OBO_NS) + r"([a-z][a-z0-9_]*)(?:\.owl|/\S+\.owl)")
-VERSION_PATTERN = re.compile(re.escape(OBO_NS) + r"([a-z][a-z0-9_]*)/releases/[0-9]{4}-[0-9]{2}-[0-9]{2}/\S+\.owl")
+VERSION_PATTERN = re.compile(
+    re.escape(OBO_NS) + r"([a-z][a-z0-9_]*)/(?:releases/)?(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+(?:\.[0-9]+)*)/\S+\.owl"
+)
+FOUNDATIONAL_IMPORTS = frozenset(OBO_NS + name for name in ("bfo.owl", "omo.owl", "ro.owl"))
 FULL_IMPORT_PATTERNS = (
     re.compile(re.escape(OBO_NS) + r"[^/#]+\.owl"),
     re.compile(re.escape(OBO_NS) + r"([^/#]+)/releases/[^/#]+/\1\.owl"),
 )
-INITIAL_CAPITAL = re.compile(r"[A-Z][a-z]")
 
 # Well-known relation labels mapped to the BFO/RO term that already provides them.
 RO_RELATIONS: dict[str, str] = {
@@ -63,8 +70,6 @@ RO_RELATIONS: dict[str, str] = {
     "participates in": "RO_0000056",
     "has participant": "RO_0000057",
     "has role": "RO_0000087",
-    "inheres in": "RO_0000052",
-    "bearer of": "RO_0000053",
     "located in": "RO_0001025",
     "derives from": "RO_0001000",
     "develops from": "RO_0002202",
@@ -88,21 +93,21 @@ SPECS: tuple[RuleSpec, ...] = (
         "OBO001",
         "OBO term IRI that does not follow the PREFIX_0000000 pattern",
         Severity.WARNING,
-        "Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN with a numeric local part.",
+        "Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN (optionally PREFIX_SUBSPACE_NNNNNNN).",
         RuleScope.TERM,
     ),
     _spec(
         "OBO002",
         "Ontology header missing OBO-required title, description or license",
         Severity.WARNING,
-        "Add dcterms:title, dcterms:description and dcterms:license to the owl:Ontology header.",
+        "Add dc:title or dcterms:title, dc:description or dcterms:description, and dcterms:license to the header.",
         RuleScope.ONTOLOGY,
     ),
     _spec(
         "OBO003",
         "Term without an IAO textual definition",
         Severity.WARNING,
-        "Add an obo:IAO_0000115 (definition) annotation with a non-empty text.",
+        "Add an obo:IAO_0000115 (definition) or obo:IAO_0000600 (elucidation) annotation with a non-empty text.",
         RuleScope.TERM,
     ),
     _spec(
@@ -123,21 +128,21 @@ SPECS: tuple[RuleSpec, ...] = (
         "OBO006",
         "Definition without provenance",
         Severity.INFO,
-        "Annotate the definition axiom with oboInOwl:hasDbXref, or add an obo:IAO_0000119 definition source.",
+        "Annotate the definition axiom with oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source.",
         RuleScope.TERM,
     ),
     _spec(
         "OBO007",
         "Obsolete term without a reason or replacement annotation",
-        Severity.WARNING,
-        "Add obo:IAO_0000231 (reason), obo:IAO_0100001 (replaced by) or oboInOwl:consider to the obsolete term.",
+        Severity.INFO,
+        "Add obo:IAO_0000231 (reason), IAO_0000233 (tracker item), IAO_0100001 (replaced by) or oboInOwl:consider.",
         RuleScope.TERM,
     ),
     _spec(
         "OBO008",
         "Class with no asserted path to a BFO class",
         Severity.WARNING,
-        "Place the class under a BFO class through asserted rdfs:subClassOf or a named genus.",
+        "Give the root class an asserted rdfs:subClassOf to a BFO class, or a named BFO genus.",
         RuleScope.TERM,
     ),
     _spec(
@@ -151,21 +156,21 @@ SPECS: tuple[RuleSpec, ...] = (
         "OBO010",
         "Whole OBO ontology imported instead of a module",
         Severity.INFO,
-        "Import an ODK-style module (for example .../obo/<id>/imports/<term>_import.owl) instead of the full ontology.",
+        "Import an ODK-style module (.../obo/<id>/imports/<term>_import.owl); bfo, omo and ro may be imported whole.",
         RuleScope.ONTOLOGY,
     ),
     _spec(
         "OBO011",
         "Ontology or version IRI that does not follow the OBO PURL pattern",
         Severity.WARNING,
-        "Use http://purl.obolibrary.org/obo/<id>.owl and .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.",
+        "Use .../obo/<id>.owl and a version IRI such as .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.",
         RuleScope.ONTOLOGY,
     ),
     _spec(
         "OBO012",
         "Label that breaks OBO naming conventions",
         Severity.INFO,
-        "Use lowercase labels (except proper nouns and acronyms) with single spaces and no underscores.",
+        "Use labels without leading, trailing or repeated whitespace and without underscores.",
         RuleScope.TERM,
     ),
 )
@@ -189,11 +194,6 @@ def _has_value(g: Graph, subject: Node, predicates: Iterable[Node]) -> bool:
     return any(not isinstance(o, Literal) or str(o).strip() for p in predicates for o in g.objects(subject, p))
 
 
-def _is_english(label: Literal) -> bool:
-    """Untagged labels and any ``en`` variant; capitalisation conventions are English ones."""
-    return not label.language or label.language.lower().split("-")[0] == "en"
-
-
 def _is_true(value: Node) -> bool:
     lexical = str(value).strip().lower()
     return isinstance(value, Literal) and (lexical == "true" or (value.datatype == XSD.boolean and lexical == "1"))
@@ -211,10 +211,10 @@ def _terms(ctx: RuleContext) -> list[URIRef]:
     return sorted(found, key=str)
 
 
-def _identifier_pattern(ctx: RuleContext) -> None:
-    for term in sorted(ctx.terms, key=str):
+def _identifier_pattern(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
+    for term in terms:
         iri = str(term)
-        if iri.startswith(OBO_NS) and not ID_PATTERN.fullmatch(iri[len(OBO_NS) :]):
+        if term not in deprecated and iri.startswith(OBO_NS) and not ID_PATTERN.fullmatch(iri[len(OBO_NS) :]):
             ctx.add(
                 "OBO001",
                 term,
@@ -237,13 +237,15 @@ def _required_metadata(ctx: RuleContext) -> None:
 
 def _definitions(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
     for term in terms:
-        if term not in deprecated and not _texts(ctx.g, term, IAO_DEFINITION):
+        if term not in deprecated and not any(_texts(ctx.g, term, p) for p in DEFINITION_PREDICATES):
             ctx.add("OBO003", term, "Term has no textual definition (obo:IAO_0000115).", confidence="certain")
 
 
-def _labels(ctx: RuleContext, terms: list[URIRef]) -> None:
+def _labels(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
     users: dict[tuple[str, str], set[URIRef]] = defaultdict(set)
     for term in terms:
+        if term in deprecated:
+            continue
         labels = _texts(ctx.g, term, RDFS.label)
         if not labels:
             ctx.add("OBO004", term, "Term has no rdfs:label.", confidence="certain")
@@ -290,15 +292,19 @@ def _definition_sources(ctx: RuleContext, terms: list[URIRef], deprecated: froze
                 (s, t) for s in g.objects(axiom, OWL.annotatedSource) for t in g.objects(axiom, OWL.annotatedTarget)
             )
     for term in terms:
-        if term in deprecated or _has_value(g, term, (IAO_DEFINITION_SOURCE,)):
+        if term in deprecated or _has_value(g, term, TERM_PROVENANCE):
             continue
         if any((term, d) not in sourced for d in _texts(g, term, IAO_DEFINITION)):
-            ctx.add("OBO006", term, "Definition has no source (oboInOwl:hasDbXref or obo:IAO_0000119).")
+            ctx.add(
+                "OBO006",
+                term,
+                "Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).",
+            )
 
 
-def _obsolescence(ctx: RuleContext, deprecated: frozenset[URIRef]) -> None:
-    for term in sorted(deprecated, key=str):
-        if ctx.local(term) and not _has_value(ctx.g, term, (IAO_OBSOLESCENCE_REASON, IAO_REPLACED_BY, OIO_CONSIDER)):
+def _obsolescence(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
+    for term in terms:
+        if term in deprecated and not _has_value(ctx.g, term, OBSOLESCENCE_REMEDIES):
             ctx.add(
                 "OBO007",
                 term,
@@ -346,8 +352,8 @@ def _bfo_placement(ctx: RuleContext, deprecated: frozenset[URIRef]) -> None:
     unknown = {n for n in nodes if not parents.get(n) and n not in bfo and n not in ctx.classes and n != OWL.Thing}
     settled = _closure(bfo, children) | _closure(unknown, children)
     for cls in sorted(ctx.classes, key=str):
-        if cls not in settled and cls not in deprecated:
-            ctx.add("OBO008", cls, "Class has no asserted path to a BFO class.")
+        if cls not in settled and cls not in deprecated and not parents.get(cls, set()) - {OWL.Thing}:
+            ctx.add("OBO008", cls, "Class has no asserted superclass and no path to a BFO class.")
 
 
 def _synonym_scope(ctx: RuleContext) -> None:
@@ -359,6 +365,8 @@ def _synonym_scope(ctx: RuleContext) -> None:
 
 def _module_imports(ctx: RuleContext) -> None:
     for ontology, target in sorted(ctx.g.subject_objects(OWL.imports), key=lambda pair: (str(pair[0]), str(pair[1]))):
+        if str(target) in FOUNDATIONAL_IMPORTS:
+            continue
         if isinstance(target, URIRef) and any(p.fullmatch(str(target)) for p in FULL_IMPORT_PATTERNS):
             ctx.add("OBO010", ontology, f"Import {target} is a whole ontology, not an import module.")
 
@@ -384,8 +392,10 @@ def _purl_pattern(ctx: RuleContext) -> None:
                 )
 
 
-def _label_conventions(ctx: RuleContext, terms: list[URIRef]) -> None:
+def _label_conventions(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
     for term in terms:
+        if term in deprecated:
+            continue
         for label in _texts(ctx.g, term, RDFS.label):
             text = str(label)
             shown = _quote(text)
@@ -393,23 +403,21 @@ def _label_conventions(ctx: RuleContext, terms: list[URIRef]) -> None:
                 ctx.add("OBO012", term, f"Label {shown} has leading, trailing or repeated whitespace.")
             if "_" in text:
                 ctx.add("OBO012", term, f"Label {shown} contains an underscore.")
-            if _is_english(label) and INITIAL_CAPITAL.match(text.strip()):
-                ctx.add("OBO012", term, f"Label {shown} starts with a capital letter.")
 
 
 def run(ctx: RuleContext) -> None:
     """Emit OBO001-OBO012."""
     terms = _terms(ctx)
     deprecated = _deprecated(ctx)
-    _identifier_pattern(ctx)
+    _identifier_pattern(ctx, terms, deprecated)
     _required_metadata(ctx)
     _definitions(ctx, terms, deprecated)
-    _labels(ctx, terms)
+    _labels(ctx, terms, deprecated)
     _ro_duplicates(ctx, deprecated)
     _definition_sources(ctx, terms, deprecated)
-    _obsolescence(ctx, deprecated)
+    _obsolescence(ctx, terms, deprecated)
     _bfo_placement(ctx, deprecated)
     _synonym_scope(ctx)
     _module_imports(ctx)
     _purl_pattern(ctx)
-    _label_conventions(ctx, terms)
+    _label_conventions(ctx, terms, deprecated)

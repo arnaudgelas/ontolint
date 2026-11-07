@@ -50,9 +50,11 @@ def test_obo_and_prov_definitions_satisfy_lex002(predicate: str) -> None:
 
 
 def test_scope_note_is_not_a_definition() -> None:
-    assert fired('ex:A a owl:Class ; rdfs:label "A" ; skos:scopeNote "note" .', "LEX002") == [
-        "https://example.test/onto#A"
-    ]
+    # A scope note is documentation for LEX002 (see test_precision_skos.py) but not a definition for the
+    # other rules: it is not in the shared DESCRIPTIONS.
+    assert fired('ex:A a owl:Class ; rdfs:label "A" ; skos:scopeNote "note" .', "LEX002") == []
+    assert fired('ex:A a owl:Class ; rdfs:label "A" ; skos:scopeNote "A" .', "LEX017") == []
+    assert fired('ex:A a owl:Class ; rdfs:label "A" ; skos:scopeNote "" .', "LEX019") == []
 
 
 def test_extra_definition_predicate_from_policy() -> None:

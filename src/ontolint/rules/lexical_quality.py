@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from rdflib import Literal, URIRef
-from rdflib.namespace import RDFS, SKOS, XSD
+from rdflib.namespace import RDF, RDFS, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -225,9 +225,12 @@ def _verbatim_labels(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
 
 def _label_types(ctx: RuleContext, term: URIRef) -> None:
     for predicate in (*ctx.labels, *ctx.descriptions):
+        # SKOS documentation-note pattern: a definition may be a node carrying its text in rdf:value.
+        node_allowed = predicate in ctx.descriptions and predicate not in ctx.labels
         for value in ctx.g.objects(term, predicate):
-            if not isinstance(value, Literal):
-                ctx.add("LEX013", term, f"{predicate} value is not a literal.", confidence="certain")
+            if isinstance(value, Literal) or (node_allowed and (value, RDF.value, None) in ctx.g):
+                continue
+            ctx.add("LEX013", term, f"{predicate} value is not a literal.", confidence="certain")
 
 
 def _alternatives(ctx: RuleContext, term: URIRef, text: TermText) -> None:

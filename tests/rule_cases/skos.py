@@ -27,7 +27,12 @@ CASES = {
     ),
     "SKOS004": rule_cases(
         [ttl("no prefLabel", "ex:c a skos:Concept .")],
-        [ttl("prefLabel present", 'ex:c a skos:Concept ; skos:prefLabel "c"@en .')],
+        [
+            ttl("prefLabel present", 'ex:c a skos:Concept ; skos:prefLabel "c"@en .'),
+            ttl("rdfs:label fallback", 'ex:c a skos:Concept ; rdfs:label "c" .'),
+            ttl("deprecated", "ex:c a skos:Concept ; owl:deprecated true ."),
+            ttl("history note", 'ex:c a skos:Concept ; skos:historyNote "Moved." .'),
+        ],
     ),
     "SKOS005": rule_cases(
         [ttl("not in a scheme", "ex:c a skos:Concept .")],

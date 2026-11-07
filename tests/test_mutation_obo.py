@@ -18,7 +18,7 @@ HEAD = """\
 OBO = "http://purl.obolibrary.org/obo/"
 EX = "https://example.test/onto#"
 DEFN = 'obo:IAO_0000115 "A thing."'
-PAIR, TRIPLE, RO_COUNT = 2, 3, 20
+PAIR, TRIPLE, RO_COUNT = 2, 3, 18
 
 
 def _run(rule: str, data: Graph, **options: Any) -> list[Finding]:
@@ -48,7 +48,7 @@ def test_obo001_message_focus_and_pattern_boundaries() -> None:
             "warning",
         )
     ]
-    for ok in ("X_1", "Xy1_00", "A_b_1", "NCBITaxon_Union_0000002"):
+    for ok in ("X_1", "Xy1_00", "A_b_1", "NCBITaxon_Union_0000002", "RO_HOM0000001", "X_ab1"):
         assert _messages("OBO001", f"obo:{ok} a owl:Class .") == []
     for bad in ("1_2", "X__1", "X_1_", "_1", "X_1a", "X-1", "X_b", "x"):
         assert len(_messages("OBO001", f"<{OBO}{bad}> a owl:Class .")) == 1, bad
@@ -60,6 +60,17 @@ def test_obo001_respects_the_base_namespace_and_obo_prefix() -> None:
     assert _focus("OBO001", turtle, base=OBO) == [OBO + "bad"]
     assert _focus("OBO001", turtle, base=EX) == []
     assert _messages("OBO001", "<http://purl.obolibrary.org/ob/bad> a owl:Class .") == []
+
+
+def test_obo001_scope_is_active_classes_and_properties_only() -> None:
+    odd = f"<{OBO}envo#envoAstro>"
+    assert _focus("OBO001", f"{odd} a owl:AnnotationProperty .") == []
+    assert _focus("OBO001", f"{odd} a owl:NamedIndividual .") == []
+    assert _focus("OBO001", f"{odd} a owl:ObjectProperty ; owl:deprecated true .") == []
+    assert _focus("OBO001", f'{odd} a owl:Class ; owl:deprecated "false" .') == [OBO + "envo#envoAstro"]
+    assert _focus("OBO001", f"{odd} a owl:DatatypeProperty .") == [OBO + "envo#envoAstro"]
+    assert _focus("OBO001", f"{odd} a owl:ObjectProperty .") == [OBO + "envo#envoAstro"]
+    assert _focus("OBO001", f"<{OBO}FOO_abc> a owl:Class .") == [OBO + "FOO_abc"]
 
 
 # --- OBO002 ----------------------------------------------------------------------------------
@@ -91,6 +102,12 @@ def test_obo002_accepts_alternative_predicates_and_rejects_blank_literals() -> N
     )
 
 
+def test_obo002_header_with_dc_title_and_description_and_dcterms_license_is_complete() -> None:
+    dc = "<http://purl.org/dc/elements/1.1/"
+    turtle = f'ex:o a owl:Ontology ; {dc}title> "t" ; {dc}description> "d" ; dcterms:license ex:L .'
+    assert _messages("OBO002", turtle) == []
+
+
 def test_obo002_checks_every_ontology() -> None:
     assert _focus("OBO002", "ex:a a owl:Ontology . ex:b a owl:Ontology .") == [EX + "a"] * TRIPLE + [EX + "b"] * TRIPLE
 
@@ -114,6 +131,26 @@ def test_obo003_applies_to_properties_not_annotation_properties_and_honours_base
     foreign = f"ex:p a owl:ObjectProperty . <{OBO}X_2> a owl:ObjectProperty ."
     assert _focus("OBO003", foreign, base=EX) == [EX + "p"]
     assert _focus("OBO003", f"<{OBO}X_1> a owl:Class . ex:A a owl:Class .", base=EX) == [EX + "A"]
+
+
+def test_obo003_elucidation_counts_as_definition() -> None:
+    assert _messages("OBO003", 'ex:A a owl:Class ; obo:IAO_0000600 "e" .') == []
+    assert _messages("OBO003", 'ex:A a owl:Class ; obo:IAO_0000600 " " .') != []
+    assert _messages("OBO003", 'ex:A a owl:Class ; rdfs:comment "c" .') != []
+    assert _focus("OBO003", "ex:p a owl:ObjectProperty .") == [EX + "p"]
+
+
+def test_obo004_skips_obsolete_terms() -> None:
+    assert _messages("OBO004", "ex:A a owl:Class ; owl:deprecated true .") == []
+    twice = 'ex:{n} a owl:Class ; owl:deprecated true ; rdfs:label "obsolete x" . '
+    assert _messages("OBO004", twice.format(n="A") + twice.format(n="B")) == []
+    active = 'ex:C a owl:Class ; rdfs:label "obsolete x" . '
+    assert _focus("OBO004", twice.format(n="A") + active) == []
+    assert _focus("OBO004", 'ex:A a owl:Class ; rdfs:label "x" . ex:B a owl:Class ; rdfs:label "x" .') == [
+        EX + "A",
+        EX + "B",
+    ]
+    assert _focus("OBO004", 'ex:A a owl:Class ; owl:deprecated "false" .') == [EX + "A"]
 
 
 def test_obo004_messages_for_missing_and_shared_labels() -> None:
@@ -163,6 +200,14 @@ def test_obo005_message_and_relation_table() -> None:
         ]
 
 
+def test_obo005_dropped_relations_and_current_equivalences() -> None:
+    assert "inheres in" not in RO_RELATIONS
+    assert "bearer of" not in RO_RELATIONS
+    assert _messages("OBO005", 'ex:p a owl:ObjectProperty ; rdfs:label "inheres in" .') == []
+    equivalent = 'ex:p a owl:ObjectProperty ; rdfs:label "regulates" ; owl:equivalentProperty obo:RO_0002211 .'
+    assert _messages("OBO005", equivalent) == []
+
+
 def test_obo005_link_directions_and_scope() -> None:
     base = 'ex:p a owl:ObjectProperty ; rdfs:label "has part" .'
     for link in (
@@ -191,10 +236,20 @@ def test_obo006_message_and_provenance_forms() -> None:
     term = f"ex:A a owl:Class ; {DEFN} . "
     found = _run("OBO006", graph(HEAD + term))
     assert [(f.focus, f.message, f.severity) for f in found] == [
-        (EX + "A", "Definition has no source (oboInOwl:hasDbXref or obo:IAO_0000119).", "info")
+        (
+            EX + "A",
+            "Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).",
+            "info",
+        )
     ]
-    for annotation in ('oio:hasDbXref "x"', 'obo:IAO_0000119 "x"', 'dcterms:source "x"'):
+    dc_source = '<http://purl.org/dc/elements/1.1/source> "x"'
+    for annotation in ('oio:hasDbXref "x"', 'obo:IAO_0000119 "x"', 'dcterms:source "x"', dc_source):
         assert _messages("OBO006", term + _axiom(annotation)) == [], annotation
+    for predicate in ("obo:IAO_0000119", "dcterms:source", "<http://purl.org/dc/elements/1.1/source>"):
+        assert _messages("OBO006", term + f'ex:A {predicate} "x" .') == [], predicate
+    assert _messages("OBO006", term + 'ex:A oio:hasDbXref "x" .') != []  # only axiom-level xrefs count
+    assert _messages("OBO006", term + _axiom('obo:IAO_0010000 "x"')) != []
+    assert _messages("OBO006", term + _axiom('rdfs:comment "x"')) != []
     assert _messages("OBO006", term + "ex:A obo:IAO_0000119 ex:Source .") == []
     assert _messages("OBO006", term + _axiom('oio:hasDbXref "x"', target="other")) != []
     assert (
@@ -216,49 +271,60 @@ def test_obo006_ignores_blank_definitions_and_properties_are_in_scope() -> None:
 # --- OBO007 ----------------------------------------------------------------------------------
 
 
-def test_obo007_message_and_all_three_remedies() -> None:
-    found = _run("OBO007", graph(HEAD + "ex:A owl:deprecated true ."))
-    assert [(f.focus, f.message) for f in found] == [
-        (EX + "A", "Obsolete term has no obsolescence reason, replacement or consider annotation.")
+def test_obo007_message_severity_and_all_remedies() -> None:
+    found = _run("OBO007", graph(HEAD + "ex:A a owl:Class ; owl:deprecated true ."))
+    assert [(f.focus, f.message, f.severity) for f in found] == [
+        (EX + "A", "Obsolete term has no obsolescence reason, replacement or consider annotation.", "info")
     ]
-    for remedy in ("obo:IAO_0000231 ex:R", "obo:IAO_0100001 ex:B", 'oio:consider "x"', 'obo:IAO_0000231 "x"'):
-        assert _messages("OBO007", f"ex:A owl:deprecated true ; {remedy} .") == [], remedy
-    assert _messages("OBO007", 'ex:A owl:deprecated true ; obo:IAO_0000231 "" .') != []
-    assert _focus("OBO007", "ex:A owl:deprecated true .", base=OBO) == []
-    assert _messages("OBO007", "<urn:x> owl:deprecated true ; ex:p 1 .", base=EX) == []
-    assert _messages("OBO007", "[] owl:deprecated true .") == []
-    assert _messages("OBO007", "ex:A owl:deprecated ex:B .") == []
-    assert _messages("OBO007", 'ex:A owl:deprecated " TRUE " .') != []
+    for remedy in (
+        "obo:IAO_0000231 ex:R",
+        "obo:IAO_0000233 ex:T",
+        "obo:IAO_0100001 ex:B",
+        'oio:consider "x"',
+        'obo:IAO_0000231 "x"',
+    ):
+        assert _messages("OBO007", f"ex:A a owl:Class ; owl:deprecated true ; {remedy} .") == [], remedy
+    assert _messages("OBO007", 'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 "" .') != []
+    assert _messages("OBO007", 'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000233 "" .') != []
+    assert _focus("OBO007", "ex:A a owl:Class ; owl:deprecated true .", base=OBO) == []
+    assert _messages("OBO007", "[] a owl:Class ; owl:deprecated true .") == []
+    assert _messages("OBO007", "ex:A a owl:Class ; owl:deprecated ex:B .") == []
+    assert _messages("OBO007", 'ex:A a owl:Class ; owl:deprecated " TRUE " .') != []
+
+
+def test_obo007_scope_is_classes_and_object_datatype_properties() -> None:
+    for kind in ("owl:Class", "owl:ObjectProperty", "owl:DatatypeProperty"):
+        assert _focus("OBO007", f"ex:A a {kind} ; owl:deprecated true .") == [EX + "A"], kind
+    for kind in ("owl:NamedIndividual", "owl:AnnotationProperty"):
+        assert _focus("OBO007", f"ex:A a {kind} ; owl:deprecated true .") == [], kind
+    assert _focus("OBO007", "ex:A owl:deprecated true .") == []
 
 
 # --- OBO008 ----------------------------------------------------------------------------------
 
 
-def test_obo008_message_and_resolution_rules() -> None:
+def test_obo008_reports_roots_only() -> None:
     found = _run("OBO008", graph(HEAD + "ex:A a owl:Class ."))
-    assert [(f.focus, f.message) for f in found] == [(EX + "A", "Class has no asserted path to a BFO class.")]
-    # Only the root is reported when the parent chain stops at a declared class.
+    assert [(f.focus, f.message) for f in found] == [
+        (EX + "A", "Class has no asserted superclass and no path to a BFO class.")
+    ]
     chain = "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ."
-    assert _focus("OBO008", chain) == [EX + "A", EX + "B"]
-    # A parent that is not declared is outside the graph: its ancestry is unknown.
+    assert _focus("OBO008", chain) == [EX + "B"]
     assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf ex:Unknown .") == []
     assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf owl:Thing .") == [EX + "A"]
-    # Everything below a class that reaches BFO is fine, however it is derived.
+    assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ] .") == [EX + "A"]
+    assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf obo:BFO_0000001 .") == []
     deep = "ex:A rdfs:subClassOf ex:B . ex:B rdfs:subClassOf ex:C . ex:C rdfs:subClassOf obo:BFO_0000002 ."
     assert _focus("OBO008", "ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . " + deep) == []
-    # A named member of an intersection counts as a parent only for the defined class.
     genus = "ex:A a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( ex:G [ a owl:Restriction ] ) ] ."
-    assert _focus("OBO008", genus + " ex:G a owl:Class .") == [EX + "A", EX + "G"]
+    assert _focus("OBO008", genus + " ex:G a owl:Class .") == [EX + "G"]
     assert _focus("OBO008", genus + " ex:G a owl:Class ; rdfs:subClassOf obo:BFO_0000001 .") == []
+    bfo = "ex:A a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( obo:BFO_0000004 [ a owl:Restriction ] ) ] ."
+    assert _focus("OBO008", bfo) == []
     assert _focus("OBO008", "ex:A a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( ex:G ) ] .") == []
     assert _focus("OBO008", "ex:A a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( ) ] .") == [EX + "A"]
-    # Equivalence is symmetric: a BFO class equivalent to the class places it.
     assert _focus("OBO008", "ex:A a owl:Class . obo:BFO_0000002 owl:equivalentClass ex:A .") == []
-    # A cycle that never reaches BFO is still reported once per class.
-    assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A .") == [
-        EX + "A",
-        EX + "B",
-    ]
+    assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A .") == []
 
 
 def test_obo008_honours_base_and_obsolescence() -> None:
@@ -267,15 +333,16 @@ def test_obo008_honours_base_and_obsolescence() -> None:
     assert _focus("OBO008", "ex:A a owl:Class ; owl:deprecated true .") == []
     assert _focus("OBO008", 'ex:A a owl:Class ; owl:deprecated "false" .') == [EX + "A"]
     assert _focus("OBO008", "obo:BFO_0000001 a owl:Class . obo:BFO_0000002 a owl:Class .") == []
-    # A local class under a foreign class is unknown when the foreign term is undeclared.
     assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf ex:B .", base=EX) == []
-    assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class .", base=EX) == [
-        EX + "A",
-        EX + "B",
-    ]
+    assert _focus("OBO008", "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class .", base=EX) == [EX + "B"]
 
 
 # --- OBO009 ----------------------------------------------------------------------------------
+
+
+def test_obo009_scoped_synonyms_are_fine() -> None:
+    assert _messages("OBO009", 'ex:A oio:hasExactSynonym "alias" .') == []
+    assert _messages("OBO009", 'ex:A obo:IAO_0000118 "alias" .') == []
 
 
 def test_obo009_messages_and_scope() -> None:
@@ -316,6 +383,10 @@ def test_obo010_patterns() -> None:
     ):
         assert _messages("OBO010", f"ex:o owl:imports <{ok}> .") == [], ok
     assert len(_messages("OBO010", f"ex:o owl:imports <{OBO}x.owl>, <{OBO}y.owl> .")) == PAIR
+    for name in ("bfo", "omo", "ro"):
+        assert _messages("OBO010", f"ex:o owl:imports <{OBO}{name}.owl> .") == [], name
+    assert len(_messages("OBO010", f"ex:o owl:imports <{OBO}chebi.owl> .")) == 1
+    assert len(_messages("OBO010", f"ex:o owl:imports <{OBO}bfo2.owl>, <{OBO}ro.owl> .")) == 1
 
 
 # --- OBO011 ----------------------------------------------------------------------------------
@@ -356,16 +427,26 @@ def test_obo011_version_iri_messages_and_patterns() -> None:
     ]
     for bad_version in (
         f"{OBO}abc/releases/2020-01-01/abc.owl",  # a different ontology id
-        f"{OBO}xyz/releases/20200101/xyz.owl",
+        f"{OBO}xyz/releases/2020-1-01/xyz.owl",
+        f"{OBO}xyz/releases//xyz.owl",
+        f"{OBO}xyz/1../xyz.owl",
+        f"{OBO}xyz/v1/xyz.owl",
         f"{OBO}xyz/releases/2020-01-01/",
         f"{OBO}xyz/releases/2020-01-01/xyz.ttl",
-        f"{OBO}xyz/2020-01-01/xyz.owl",
         f"{OBO}Xyz/releases/2020-01-01/xyz.owl",
         f"{OBO}xyz/releases/2020-01-011/xyz.owl",
         f"{OBO}xyz/releases/x2020-01-01/xyz.owl",
         "http://example.org/v1",
     ):
         assert len(_focus("OBO011", ontology + f"<{bad_version}> .")) == 1, bad_version
+    for release in ("2019-08-26", "257", "1.2.3", "releases/2026-09-04", "releases/257"):
+        assert _focus("OBO011", ontology + f"<{OBO}xyz/{release}/xyz.owl> .") == [], release
+    assert _focus("OBO011", ontology + f"<{OBO}xyz/releases/2026-09-04/core.owl> .") == []
+    other = f"<{OBO}bar/releases/2020-01-01/bar.owl>"
+    assert len(_focus("OBO011", ontology + other + " .")) == 1
+    chebi = f"<{OBO}chebi.owl> a owl:Ontology ; owl:versionIRI <{OBO}chebi/257/chebi.owl> ."
+    assert _focus("OBO011", chebi) == []
+    assert len(_focus("OBO011", "<http://example.org/x.owl> a owl:Ontology .")) == 1
     ok_other_file = f"{OBO}xyz/releases/2020-01-01/extensions/xyz-plus.owl"
     assert _focus("OBO011", ontology + f"<{ok_other_file}> .") == []
     assert _messages("OBO011", ontology + '"not an iri" .') != []
@@ -385,28 +466,26 @@ def test_obo012_messages_and_triggers() -> None:
     assert labelled(" cell") == ["Label ' cell' has leading, trailing or repeated whitespace."]
     assert labelled("cell ") == ["Label 'cell ' has leading, trailing or repeated whitespace."]
     assert labelled("a  b") == ["Label 'a  b' has leading, trailing or repeated whitespace."]
+    assert labelled("two  spaces") == ["Label 'two  spaces' has leading, trailing or repeated whitespace."]
     assert labelled("a b c") == []
     assert labelled("a_b") == ["Label 'a_b' contains an underscore."]
-    assert labelled("Ab") == ["Label 'Ab' starts with a capital letter."]
-    assert labelled("A") == []
-    assert labelled("AB") == []
-    assert labelled("aB") == []
-    assert labelled("1b") == []
+    for capitalised in ("Ab", "A", "AB", "aB", "1b", "Kupffer cell"):
+        assert labelled(capitalised) == [], capitalised
     assert sorted(labelled(" Ab_c")) == [
         "Label ' Ab_c' contains an underscore.",
         "Label ' Ab_c' has leading, trailing or repeated whitespace.",
-        "Label ' Ab_c' starts with a capital letter.",
     ]
+    deprecated = 'ex:A a owl:Class ; owl:deprecated true ; rdfs:label "obsolete_x" .'
+    assert _messages("OBO012", deprecated) == []
+    assert len(_messages("OBO012", deprecated.replace("true", '"false"'))) == 1
 
 
 def test_obo012_language_and_scope() -> None:
     def tagged(label: str, tag: str) -> int:
         return len(_messages("OBO012", f'ex:A a owl:Class ; rdfs:label "{label}"@{tag} .'))
 
-    assert tagged("Cell", "en") == 1
-    assert tagged("Cell", "EN-us") == 1
+    assert tagged("Cell", "en") == 0
     assert tagged("Cell", "fr") == 0
-    assert tagged("Cell", "enx") == 0
     assert tagged("A_b", "fr") == 1  # whitespace and underscore rules are language independent
     assert tagged(" a", "fr") == 1
     assert _focus("OBO012", 'ex:p a owl:DatatypeProperty ; rdfs:label "A_b" .') == [EX + "p"]
