@@ -96,7 +96,7 @@ def owning_term(g: Graph, node: Node) -> Node:
     frontier: list[Node] = [node]
     for _ in range(OWNER_DEPTH):
         parents = sorted(
-            {s for n in frontier for s in g.subjects(None, n) if s not in seen and s != n},
+            {s for n in frontier for s in g.subjects(None, n) if s not in seen},
             key=str,
         )
         if not parents:

@@ -152,7 +152,7 @@ def run(ctx: RuleContext) -> None:
     components = strongly_connected_components(classes, edges)
     _cycles(ctx, components, edges)
     _redundant_edges(ctx, edges, components)
-    _depth(ctx, components, edges)
+    _depth(ctx, edges)
     _single_child_chains(ctx, children)
     _equivalences(ctx)
 
@@ -236,12 +236,11 @@ def _redundant_edges(ctx: RuleContext, edges: Edges, components: list[set[URIRef
             ctx.add("CLS004", c, f"Asserted subclass edge to {parent} is transitively redundant.", confidence="certain")
 
 
-def _depth(ctx: RuleContext, components: Iterable[Set[URIRef]], edges: Edges) -> None:
+def _depth(ctx: RuleContext, edges: Edges) -> None:
     """Report each deep branch once, at its topmost over-deep class (not at every ancestor)."""
-    cyclic = {n for comp in components if len(comp) > 1 for n in comp}
     limit = ctx.policy.depth_limit
     depths = hierarchy_depths(ctx.classes, edges)
-    deep = {c for c in ctx.classes if c not in cyclic and depths[c] > limit}
+    deep = {c for c in ctx.classes if depths[c] > limit}
     below = {child for child, parent in edges if parent in deep and child != parent}
     for c in deep - below:
         ctx.add("CLS005", c, f"Asserted subtree depth {depths[c]} exceeds {limit}.")
