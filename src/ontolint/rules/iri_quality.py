@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING
-from urllib.parse import urlsplit
 
 from rdflib import URIRef
 
@@ -17,7 +16,7 @@ from ontolint.context import KINDS
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.ownership import OBO_NAMESPACE
 
-from .support import local_name
+from .support import local_name, safe_urlsplit
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -140,7 +139,7 @@ def run(ctx: RuleContext) -> None:
 
 def _term_checks(ctx: RuleContext, term: URIRef, versioned: dict[str, list[str]]) -> None:
     iri = str(term)
-    pieces = urlsplit(iri)
+    pieces = safe_urlsplit(iri)
     name = local_name(term)
     if pieces.query or "?" in iri:
         ctx.add("IRI006", term, "Term IRI contains a query string.", confidence="certain")
@@ -171,13 +170,13 @@ def _namespace_mix(ctx: RuleContext) -> None:
             "(vocabulary)",
             f"{len(hashed)} hash-style and {len(slashed)} slash-style term IRIs, e.g. {hashed[0]} and {slashed[0]}.",
         )
-    schemes = {urlsplit(iri).scheme.lower() for iri in named}
+    schemes = {safe_urlsplit(iri).scheme.lower() for iri in named}
     if {"http", "https"} <= schemes:
         ctx.add("IRI008", "(vocabulary)", "Terms mix http and https IRIs.")
 
 
 def _ontology_checks(ctx: RuleContext, ontology: URIRef) -> None:
-    pieces = urlsplit(str(ontology))
+    pieces = safe_urlsplit(str(ontology))
     if pieces.query or pieces.fragment:
         ctx.add("IRI016", ontology, "Ontology IRI contains a query string or fragment.", confidence="certain")
     if ctx.context.types_by_subject.get(ontology, frozenset()) & set(KINDS):
@@ -190,5 +189,5 @@ def _ontology_namespace(ctx: RuleContext) -> None:
     if len(ontologies) != 1 or not terms or str(ontologies[0]).startswith(OBO_NAMESPACE):
         return
     root = str(ontologies[0]).rstrip("#/")
-    if urlsplit(root).scheme and not any(str(term).startswith(root) for term in terms):
+    if safe_urlsplit(root).scheme and not any(str(term).startswith(root) for term in terms):
         ctx.add("IRI004", ontologies[0], "No term IRI starts with the ontology IRI.")

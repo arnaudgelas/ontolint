@@ -15,7 +15,7 @@ from ontolint.context import PROPERTY_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.ownership import OwnershipMode
 
-from .support import list_items
+from .support import list_items, owning_term, stable_blank_id
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,8 +38,6 @@ RANGE_SUBSTITUTES = (
     URIRef(SCHEMA_HTTPS + "rangeIncludes"),
     URIRef(DCAM + "rangeIncludes"),
 )
-# Blank nodes are followed upwards (restriction -> class, list node -> list owner) at most this far.
-OWNER_DEPTH = 8
 _DATATYPE_EXPRESSIONS = (OWL.onDatatype, OWL.datatypeComplementOf)
 
 
@@ -48,31 +46,6 @@ def is_deprecated(g: Graph, term: Node) -> bool:
     return any(
         isinstance(o, Literal) and str(o).strip().lower() in ("true", "1") for o in g.objects(term, OWL.deprecated)
     )
-
-
-def owning_term(g: Graph, node: Node) -> Node:
-    """Return the named term a blank node (restriction, expression, list cell) belongs to, else ``node``.
-
-    Walks upwards through incoming triples, preferring the first IRI subject found in sorted order, so
-    the answer is deterministic; ``rdf:rest``/``rdf:first`` hops climb to the list head.
-    """
-    if not isinstance(node, BNode):
-        return node
-    seen: set[Node] = set()
-    frontier: list[Node] = [node]
-    for _ in range(OWNER_DEPTH):
-        parents = sorted(
-            {s for n in frontier for s in g.subjects(None, n) if s not in seen and s != n},
-            key=str,
-        )
-        if not parents:
-            return node
-        named = [s for s in parents if isinstance(s, URIRef)]
-        if named:
-            return named[0]
-        seen.update(frontier)
-        frontier = parents
-    return node
 
 
 def namespace_of(iri: object) -> str:
@@ -361,12 +334,22 @@ def _universal_restrictions(ctx: RuleContext) -> None:
         # allValuesFrom alone is fully valid OWL. Review only.
         if (restriction, OWL.someValuesFrom, None) in g:
             continue
-        on_property = g.value(restriction, OWL.onProperty)
-        if _is_datatype(g, filler) or (on_property is not None and (on_property, RDF.type, OWL.DatatypeProperty) in g):
+        # A malformed restriction may carry several owl:onProperty values: sort them by a label-free name so the
+        # message depends neither on triple order nor on the parser's blank-node labels.
+        on_properties = sorted(g.objects(restriction, OWL.onProperty), key=lambda p: _property_name(g, p))
+        if _is_datatype(g, filler) or any((p, RDF.type, OWL.DatatypeProperty) in g for p in on_properties):
             continue  # "all values are xsd:gDay" is the idiomatic way to type a datatype property.
         owner = owning_term(g, restriction)
-        via = f" on {on_property}" if owner != restriction and on_property is not None else ""
+        via = (
+            f" on {', '.join(_property_name(g, p) for p in on_properties)}"
+            if owner != restriction and on_properties
+            else ""
+        )
         ctx.add("OWL011", owner, f"Universal restriction{via} does not imply any property value.")
+
+
+def _property_name(g: Graph, node: Node) -> str:
+    return stable_blank_id(g, node) if isinstance(node, BNode) else str(node)
 
 
 def _is_datatype(g: Graph, filler: Node) -> bool:

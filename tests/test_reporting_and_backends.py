@@ -432,3 +432,11 @@ def test_cli_json_text_and_input_failures(tmp_path: Path, capsys: pytest.Capture
     bad.write_text("this is not turtle", encoding="utf-8")
     assert main([str(bad)]) == TOOL_FAILURE_EXIT
     assert capsys.readouterr().err.startswith("INPUT001:")
+
+
+def test_fingerprint_survives_a_lone_surrogate_deterministically() -> None:
+    finding = Finding("ONT001", "warning", "x", "bad \ud800 text", "fix")
+    payload = '["ONT001","x","bad \ud800 text"]'.encode("utf-8", errors="surrogatepass")
+
+    assert fingerprint(finding) == hashlib.sha256(payload).hexdigest()
+    assert fingerprint(finding, "a.ttl") != fingerprint(finding)

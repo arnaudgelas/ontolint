@@ -42,14 +42,14 @@ def is_builtin(node: object) -> bool:
 
 
 def base_matches(base: str | None, node: object) -> bool:
-    """Return whether ``node`` is an IRI inside ``base`` (every IRI when ``base`` is empty).
+    """Return whether ``node`` is a non-built-in IRI inside ``base`` (every such IRI when ``base`` is empty).
 
     A base ending in a letter or digit (``https://x.org/onto``) matches itself and ``base#...`` /
     ``base/...`` only, so it never swallows ``https://x.org/ontology``.  Any other base
     (``https://x.org/onto#``, ``https://x.org/onto/``, ``http://purl.obolibrary.org/obo/RO_``) is a
     plain prefix.
     """
-    if not isinstance(node, URIRef):
+    if not isinstance(node, URIRef) or is_builtin(node):
         return False
     if not base:
         return True

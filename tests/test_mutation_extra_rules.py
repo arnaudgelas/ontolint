@@ -10,6 +10,7 @@ from rule_harness import BASE
 
 from ontolint import Linter
 from ontolint.models import ExecutionStatus, Finding
+from ontolint.rules.support import stable_blank_id
 
 
 def _run(rule: str, data: Graph, **options: Any) -> list[Finding]:
@@ -39,4 +40,4 @@ def test_sec004_blank_subject_referring_to_a_list_head_is_not_its_owner() -> Non
     head = next(iter(data.objects(_ex("a"), _ex("p"))))
     data.remove((_ex("a"), _ex("p"), head))
     data.add((BNode("zzz"), _ex("p"), head))
-    assert [f.focus for f in _run("SEC004", data)] == [str(head)]
+    assert [f.focus for f in _run("SEC004", data)] == [stable_blank_id(data, head)]

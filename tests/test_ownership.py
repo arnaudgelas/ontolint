@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.namespace import OWL, RDF, RDFS
 
 from ontolint import Linter, main
 from ontolint.context import GraphContext
@@ -281,3 +282,26 @@ def test_obo_subontology_iri_owns_its_id_space() -> None:
     )
     assert names(context.classes) == {"RO_1"}
     assert context.ownership.mode is OwnershipMode.DERIVED
+
+
+def test_empty_base_owns_every_non_builtin_iri_but_never_a_builtin() -> None:
+    assert base_matches("", URIRef("https://example.test/x")) is True
+    assert base_matches("", OWL.Thing) is False
+    assert base_matches("", RDFS.label) is False
+    assert base_matches("", URIRef("http://www.w3.org/2001/XMLSchema#string")) is False
+    assert base_matches("", RDF.type) is False
+
+
+def test_a_base_inside_a_builtin_namespace_still_does_not_own_builtin_terms() -> None:
+    assert base_matches(str(OWL), OWL.Thing) is False
+    assert base_matches("http://www.w3.org/2002/07/", OWL.Thing) is False
+    assert base_matches("https://example.test/", URIRef("https://example.test/OWL")) is True
+
+
+def test_for_terms_with_an_empty_base_does_not_own_builtins() -> None:
+    ownership = Ownership.for_terms("", [], [OWL.Thing])
+    assert ownership.mode is OwnershipMode.BASE
+    assert ownership.owns(OWL.Thing) is False
+    assert ownership.owns(RDFS.label) is False
+    assert ownership.owns(URIRef("https://example.test/x")) is True
+    assert ownership.base_selected_nothing is False

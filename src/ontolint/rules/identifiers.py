@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from typing import TYPE_CHECKING
-from urllib.parse import urlsplit
 
 from rdflib import Literal, URIRef
 from rdflib.namespace import OWL
@@ -13,7 +12,7 @@ from rdflib.namespace import OWL
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.ownership import OBO_NAMESPACE
 
-from .support import local_name
+from .support import local_name, safe_urlsplit
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -66,7 +65,7 @@ def run(ctx: RuleContext) -> None:
     names: defaultdict[tuple[str, str], set[URIRef]] = defaultdict(set)
     for u in ctx.terms | ctx.ontologies:
         s = str(u)
-        pieces = urlsplit(s)
+        pieces = safe_urlsplit(s)
         if any(character.isspace() for character in s) or not pieces.scheme:
             ctx.add("IRI001", u, "IRI contains whitespace or is not absolute.", confidence="certain")
         if (

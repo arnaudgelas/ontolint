@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Set
 from typing import cast
+from urllib.parse import SplitResult, urlsplit
 
-from rdflib import Graph, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import DC, DCTERMS, RDF, RDFS, SKOS
 from rdflib.term import Identifier, Node
 
@@ -61,3 +63,74 @@ def list_items(g: Graph, head: Node, *, limit: int = 500) -> list[Node] | None:
         items.append(firsts[0])
         head = rests[0]
     return items if head == RDF.nil else None
+
+
+def safe_urlsplit(iri: str) -> SplitResult:
+    """Split ``iri`` like :func:`urllib.parse.urlsplit`, but return an empty split for an unparsable IRI.
+
+    ``urlsplit`` raises :class:`ValueError` for IRIs such as ``s://]`` (invalid bracketed host); rules must
+    treat those as "no scheme, host, path, query or fragment" rather than crash.
+    """
+    try:
+        return urlsplit(iri)
+    except ValueError:
+        return SplitResult("", "", "", "", "")
+
+
+# Blank nodes are followed upwards (restriction -> class, list node -> list owner) at most this far.
+OWNER_DEPTH = 8
+# ... and downwards at most this far when computing a blank node's content digest.
+DIGEST_DEPTH = 6
+STABLE_ID_LENGTH = 12
+
+
+def owning_term(g: Graph, node: Node) -> Node:
+    """Return the named term a blank node (restriction, expression, list cell) belongs to, else ``node``.
+
+    Walks upwards through incoming triples, preferring the first IRI subject found in sorted order, so
+    the answer is deterministic; ``rdf:rest``/``rdf:first`` hops climb to the list head.
+    """
+    if not isinstance(node, BNode):
+        return node
+    seen: set[Node] = set()
+    frontier: list[Node] = [node]
+    for _ in range(OWNER_DEPTH):
+        parents = sorted(
+            {s for n in frontier for s in g.subjects(None, n) if s not in seen and s != n},
+            key=str,
+        )
+        if not parents:
+            return node
+        named = [s for s in parents if isinstance(s, URIRef)]
+        if named:
+            return named[0]
+        seen.update(frontier)
+        frontier = parents
+    return node
+
+
+def _content_digest(g: Graph, node: Node, depth: int, path: frozenset[Node]) -> str:
+    """Label-free description of ``node``: IRIs and literals verbatim, blank nodes by their own content."""
+    if isinstance(node, Literal):
+        return "L" + node.n3()
+    if not isinstance(node, BNode):
+        return "I" + str(node)
+    if node in path or depth <= 0:
+        return "B"
+    inner = path | {node}
+    edges = sorted(f"{p}>{_content_digest(g, o, depth - 1, inner)}" for p, o in g.predicate_objects(node))
+    return "B(" + ";".join(edges) + ")"
+
+
+def stable_blank_id(g: Graph, node: Node) -> str:
+    """Return a ``_:``-prefixed identity of ``node`` that depends on content and place, never on its label.
+
+    The identity hashes the nearest named owner (see :func:`owning_term`), the predicates through which the
+    node is referenced and the blank node's own reachable content, so the same file always yields the
+    same identity however the parser labelled its blank nodes.
+    """
+    owner = owning_term(g, node)
+    owner_text = "" if owner == node else str(owner)
+    incoming = sorted({str(p) for _s, p in g.subject_predicates(node)})
+    payload = "\x00".join([owner_text, ",".join(incoming), _content_digest(g, node, DIGEST_DEPTH, frozenset())])
+    return "_:" + hashlib.sha256(payload.encode("utf-8", "surrogatepass")).hexdigest()[:STABLE_ID_LENGTH]

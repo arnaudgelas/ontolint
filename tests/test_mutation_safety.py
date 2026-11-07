@@ -12,6 +12,7 @@ from rule_harness import BASE, graph
 from ontolint import Linter
 from ontolint.models import ExecutionStatus, Finding
 from ontolint.rules import safety
+from ontolint.rules.support import stable_blank_id
 
 
 def _run(rule: str, data: Graph, **options: Any) -> list[Finding]:
@@ -41,7 +42,7 @@ def test_sec004_depth_without_owner_focuses_the_blank_root() -> None:
     root = next(iter(data.objects(_ex("a"), _ex("p"))))
     data.remove((_ex("a"), _ex("p"), root))
     (finding,) = _run("SEC004", data)
-    assert finding.focus == str(root)
+    assert finding.focus == stable_blank_id(data, root)
 
 
 def test_sec004_depth_counts_non_rest_predicates_and_ignores_rest() -> None:
@@ -89,7 +90,7 @@ def test_sec004_list_without_owner_and_cyclic_list() -> None:
     data = long_list(5001)
     head = next(iter(data.objects(_ex("a"), _ex("p"))))
     data.remove((_ex("a"), _ex("p"), head))
-    assert [f.focus for f in _run("SEC004", data)] == [str(head)]
+    assert [f.focus for f in _run("SEC004", data)] == [stable_blank_id(data, head)]
     cyclic = Graph()
     nodes = [BNode() for _ in range(5001)]
     for i, node in enumerate(nodes):

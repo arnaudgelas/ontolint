@@ -79,7 +79,7 @@ def fingerprint(f: Finding, path: str | None = None) -> str:
     """
     parts = [f.rule, f.focus, f.message] if path is None else [f.rule, f.focus, f.message, path]
     payload = json.dumps(parts, ensure_ascii=False, separators=(",", ":"))
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return hashlib.sha256(payload.encode("utf-8", errors="surrogatepass")).hexdigest()
 
 
 def effective_severity(spec: RuleSpec, overrides: Mapping[str, str]) -> str:
