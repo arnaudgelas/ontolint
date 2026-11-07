@@ -5,10 +5,11 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 
 import pytest
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from ontolint import Linter
+from ontolint.context import GraphContext
 from ontolint.graph import strongly_connected_components
 from ontolint.models import ExecutionStatus, RuleExecution, RuleSpec, Severity
 from ontolint.policy import Policy
@@ -93,6 +94,32 @@ def test_scc_ignores_edges_with_a_node_outside_the_requested_graph() -> None:
     components = strongly_connected_components((left, right), ((left, right), (right, external)))
 
     assert {frozenset(component) for component in components} == {frozenset({left}), frozenset({right})}
+
+
+def test_graph_context_is_asserted_scope_aware_and_immutable() -> None:
+    graph = Graph()
+    local_class, external_class, property_ = EX.Local, URIRef("https://external.example/Class"), EX.property
+    graph.add((local_class, RDF.type, OWL.Class))
+    graph.add((external_class, RDF.type, OWL.Class))
+    graph.add((EX.instance, RDF.type, local_class))
+    graph.add((property_, RDF.type, OWL.ObjectProperty))
+    graph.add((property_, RDFS.domain, local_class))
+    graph.add((property_, RDFS.range, external_class))
+    graph.add((EX.instance, property_, EX.target))
+    graph.add((BNode(), RDFS.domain, local_class))
+
+    context = GraphContext.build(graph, lambda value: str(value).startswith(str(EX)), restrict_to_local=True)
+    unrestricted = GraphContext.build(graph, lambda _value: False)
+
+    assert context.classes == frozenset({local_class})
+    assert unrestricted.classes == frozenset({local_class, external_class})
+    assert context.subjects_by_type[local_class] == frozenset({EX.instance})
+    assert context.properties_by_domain[local_class] == frozenset({property_})
+    assert context.ranges_by_property[property_] == frozenset({external_class})
+    with pytest.raises(TypeError):
+        context.subjects_by_type[local_class] = frozenset()  # type: ignore[index] -- mapping is intentionally read-only.
+    with pytest.raises(FrozenInstanceError):
+        context.classes = frozenset()  # type: ignore[misc] -- context facts cannot change during a lint run.
 
 
 def test_unicode_whitespace_and_language_string_rules_have_expected_semantics() -> None:

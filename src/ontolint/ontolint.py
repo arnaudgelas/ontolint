@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence, Set
 from dataclasses import replace
 from pathlib import Path
 from typing import cast
@@ -24,6 +24,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, XSD
 from rdflib.term import Identifier, Node
 
+from .context import PROPERTY_TYPES, GraphContext
 from .graph import reachable as graph_reachable
 from .graph import strongly_connected_components
 from .models import Finding
@@ -162,20 +163,6 @@ FIXES = {
     "SEM001": "Correct the reported OWL profile violations, or select the intended OWL profile.",
 }
 
-KINDS = (
-    OWL.Class,
-    RDFS.Class,
-    OWL.ObjectProperty,
-    OWL.DatatypeProperty,
-    OWL.AnnotationProperty,
-    RDF.Property,
-    SKOS.Concept,
-    SKOS.ConceptScheme,
-    SKOS.Collection,
-    OWL.NamedIndividual,
-)
-CLASSES = (OWL.Class, RDFS.Class)
-PROPERTIES = (OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty, RDF.Property)
 DESCRIPTIONS = (RDFS.comment, SKOS.definition, DCTERMS.description, DC.description)
 LABELS = (RDFS.label, SKOS.prefLabel)
 META_LICENSE = (DCTERMS.license, URIRef("http://creativecommons.org/ns#license"))
@@ -205,18 +192,12 @@ class Linter:
         self.soup_limit = soup_limit
         self.issues: list[Finding] = []
         self.seen: set[tuple[str, str, str]] = set()
-        self.ontologies = {s for s in graph.subjects(RDF.type, OWL.Ontology) if isinstance(s, URIRef)}
-        self.classes = {s for t in CLASSES for s in graph.subjects(RDF.type, t) if isinstance(s, URIRef)}
-        self.properties = {s for t in PROPERTIES for s in graph.subjects(RDF.type, t) if isinstance(s, URIRef)}
-        self.concepts = {s for s in graph.subjects(RDF.type, SKOS.Concept) if isinstance(s, URIRef)}
-        self.terms = {s for t in KINDS for s in graph.subjects(RDF.type, t) if isinstance(s, URIRef)}
-        # Explicitly declared terms are considered local unless a base is given.
-        # This deliberately does not fetch owl:imports or define external vocabulary terms.
-        if base:
-            self.terms = {s for s in self.terms if self.local(s)}
-            self.classes = {s for s in self.classes if self.local(s)}
-            self.properties = {s for s in self.properties if self.local(s)}
-            self.concepts = {s for s in self.concepts if self.local(s)}
+        self.context = GraphContext.build(graph, self.local, restrict_to_local=base is not None)
+        self.ontologies = self.context.ontologies
+        self.classes = self.context.classes
+        self.properties = self.context.properties
+        self.concepts = self.context.concepts
+        self.terms = self.context.terms
 
     def local(self, node: object) -> bool:
         if not isinstance(node, URIRef):
@@ -348,7 +329,7 @@ class Linter:
             self.add("LEX007", "(vocabulary)", f"Mixed identifier styles: {dict(styles)}.")
 
     @staticmethod
-    def directed_edges(g: Graph, predicate: Identifier, allowed: set[URIRef]) -> set[tuple[URIRef, URIRef]]:
+    def directed_edges(g: Graph, predicate: Identifier, allowed: Set[URIRef]) -> set[tuple[URIRef, URIRef]]:
         return {
             (cast("URIRef", s), cast("URIRef", o))
             for s, o in g.subject_objects(predicate)
@@ -383,12 +364,12 @@ class Linter:
         for c in classes:
             if not supers[c] and not children[c] and (c, RDFS.subClassOf, OWL.Thing) not in self.g:
                 self.add("CLS001", c, "No asserted local super-/subclass links.")
-            has_instance = any(True for _ in self.g.subjects(RDF.type, c))
+            has_instance = bool(self.context.subjects_by_type.get(c))
             if not has_instance and not children[c]:
                 self.add("CLS002", c, "Class has no directly typed instance or subclass in this graph.")
             if len(supers[c]) > self.inheritance_limit:
                 self.add("CLS006", c, f"{len(supers[c])} direct superclasses (threshold {self.inheritance_limit}).")
-            direct_properties = {p for p in self.g.subjects(RDFS.domain, c) if isinstance(p, URIRef)}
+            direct_properties = self.context.properties_by_domain.get(c, frozenset())
             if len(direct_properties) > self.soup_limit:
                 self.add("CLS008", c, f"{len(direct_properties)} properties with asserted domain {c}.")
         for component in self.components(classes, edges):
@@ -455,12 +436,13 @@ class Linter:
         return items if head == RDF.nil else None
 
     def owl_checks(self):  # noqa: C901, PLR0912 -- cohesive OWL-policy pass.
-        object_props = set(self.g.subjects(RDF.type, OWL.ObjectProperty))
-        data_props = set(self.g.subjects(RDF.type, OWL.DatatypeProperty))
+        object_props = set(self.context.subjects_by_type.get(OWL.ObjectProperty, frozenset()))
+        data_props = set(self.context.subjects_by_type.get(OWL.DatatypeProperty, frozenset()))
         for p in object_props & data_props:
             self.add("OWL003", p, "Property is typed as both object and datatype property.", confidence="certain")
         for p in self.properties:
-            domains, ranges = set(self.g.objects(p, RDFS.domain)), set(self.g.objects(p, RDFS.range))
+            domains = set(self.context.domains_by_property.get(p, frozenset()))
+            ranges = set(self.context.ranges_by_property.get(p, frozenset()))
             if len(domains) > 1:
                 self.add(
                     "OWL004",
@@ -503,7 +485,7 @@ class Linter:
                 if isinstance(o, Literal):
                     self.add("OWL013", s, f"Object property {p} points to literal {o!r}.", confidence="certain")
         for p in data_props:
-            expected = set(self.g.objects(p, RDFS.range))
+            expected = set(self.context.ranges_by_property.get(p, frozenset()))
             for s, o in self.g.subject_objects(p):
                 if not isinstance(o, Literal):
                     self.add("OWL014", s, f"Datatype property {p} points to resource {o}.", confidence="certain")
@@ -517,8 +499,8 @@ class Linter:
                         self.add("DATA001", s, f"{p} has range {datatype} but value has datatype {o.datatype}.")
         for p in self.properties:
             for domain in self.g.objects(p, RDFS.domain):
-                for s in self.g.subjects(p, None):
-                    for actual in self.g.objects(s, RDF.type):
+                for s in self.context.subjects_by_predicate.get(p, frozenset()):
+                    for actual in self.context.types_by_subject.get(s, frozenset()):
                         if (actual, OWL.disjointWith, domain) in self.g or (domain, OWL.disjointWith, actual) in self.g:
                             self.add(
                                 "DATA002",
@@ -526,18 +508,18 @@ class Linter:
                                 f"Usage of {p} infers {domain} but subject is explicitly typed {actual}, "
                                 "declared disjoint.",
                             )
-        for p in self.g.subjects(RDFS.domain, None):
-            if isinstance(p, URIRef) and self.local(p) and not any((p, RDF.type, t) in self.g for t in PROPERTIES):
+        for p in self.context.domains_by_property:
+            if isinstance(p, URIRef) and self.local(p) and not any((p, RDF.type, t) in self.g for t in PROPERTY_TYPES):
                 self.add("OWL002", p, "Predicate used with rdfs:domain but not declared property.")
-        for p in self.g.subjects(RDFS.range, None):
-            if isinstance(p, URIRef) and self.local(p) and not any((p, RDF.type, t) in self.g for t in PROPERTIES):
+        for p in self.context.ranges_by_property:
+            if isinstance(p, URIRef) and self.local(p) and not any((p, RDF.type, t) in self.g for t in PROPERTY_TYPES):
                 self.add("OWL002", p, "Predicate used with rdfs:range but not declared property.")
         for c in set(self.g.subjects(RDFS.subClassOf, None)) | set(self.g.objects(None, RDFS.subClassOf)):
             if isinstance(c, URIRef) and self.local(c) and c not in self.classes and c not in (OWL.Thing, OWL.Nothing):
                 self.add("OWL001", c, "URI used in subclass axiom but not explicitly declared a class.")
         # Treat undeclared predicates as suspicious only within explicit base namespaces.
         if self.base:
-            for p in set(self.g.predicates()):
+            for p in self.context.predicates:
                 if self.local(p) and p not in self.properties:
                     self.add("OWL015", p, "Local predicate is not explicitly declared as a property.")
 
@@ -617,7 +599,7 @@ class Linter:
         targeted |= {s for s in sg.subjects(RDF.type, RDFS.Class) if s in node_shapes}
         targeted |= {s for s in sg.subjects(RDF.type, OWL.Class) if s in node_shapes}
         for c in self.classes:
-            if any(True for _ in self.g.subjects(RDF.type, c)) and c not in targeted:
+            if self.context.subjects_by_type.get(c) and c not in targeted:
                 self.add(
                     "SHQ006",
                     c,
