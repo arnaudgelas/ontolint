@@ -7,7 +7,7 @@ wheels/
 *.egg-info
 
 # Test and mutation artifacts
-.coverage
+.coverage*
 .gremlins_cache/
 coverage/
 
