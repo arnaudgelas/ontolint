@@ -11,5 +11,18 @@ wheels/
 .gremlins_cache/
 coverage/
 
+# Tool caches
+.hypothesis/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Fuzzing output written to the repository root (see tests/fuzz/.gitignore)
+fuzz-out/
+fuzz-crashes/
+
 # Virtual environments
 .venv
+
+# Local working notes
+docs/remaining-work.md

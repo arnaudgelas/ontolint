@@ -1,0 +1,7 @@
+# Raw fuzzer output, crash reports (their tracebacks hold absolute local
+# paths) and scratch files stay local. The seed corpus (corpus/) and the
+# minimised, replayed inputs (regressions/, including known_bugs/) are tracked.
+crashes_found/
+out/
+.work/
+*.crash

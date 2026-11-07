@@ -1,0 +1,19 @@
+# Store text with LF endings in the repository and check it out with LF on every
+# platform, so formatting checks, golden files and byte-identical copies of the
+# rule catalogue behave the same everywhere.
+* text=auto eol=lf
+
+# Binary files: never normalise or diff as text.
+*.png binary
+*.bin binary
+
+# Fuzzing inputs must stay byte for byte as the fuzzer produced them. A changed
+# line ending, BOM or trailing newline could stop a regression from reproducing
+# the bug it guards. Seeds and replayed crashers are therefore not text at all.
+tests/fuzz/corpus/** -text
+tests/fuzz/regressions/** -text
+
+# Generated or machine-written files: collapse them in diffs and language stats.
+docs/rules.md linguist-generated=true
+tests/golden/*.json linguist-generated=true
+uv.lock linguist-generated=true -diff
