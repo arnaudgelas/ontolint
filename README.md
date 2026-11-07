@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="ontolint logo" width="240">
+  <img src="https://raw.githubusercontent.com/arnaudgelas/ontolint/main/logo.png" alt="ontolint logo" width="240">
 </p>
 
 # ontolint
@@ -12,8 +12,8 @@
 </p>
 <p align="center">
   <a href="https://www.python.org/"><img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white"></a>
-  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="docs/rules.md"><img alt="Rules implemented: 228 of 307" src="https://img.shields.io/badge/rules-228%2F307_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 228 of 307" src="https://img.shields.io/badge/rules-228%2F307_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -21,7 +21,7 @@
   <a href="https://docs.astral.sh/ruff/"><img alt="Code style and lint: Ruff" src="https://img.shields.io/badge/lint%20%26%20format-ruff-D7FF64?logo=ruff&logoColor=black"></a>
   <img alt="Types: pyright strict and mypy" src="https://img.shields.io/badge/types-pyright%20strict%20%2B%20mypy-2a6db2">
   <img alt="Coverage gate: at least 95 percent" src="https://img.shields.io/badge/coverage%20gate-%E2%89%A595%25-brightgreen">
-  <a href="docs/mutation-policy.md"><img alt="Mutation gate: at least 85 percent" src="https://img.shields.io/badge/mutation%20gate-%E2%89%A585%25-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md"><img alt="Mutation gate: at least 85 percent" src="https://img.shields.io/badge/mutation%20gate-%E2%89%A585%25-brightgreen"></a>
   <a href="https://docs.astral.sh/uv/"><img alt="Managed with uv" src="https://img.shields.io/badge/managed%20with-uv-DE5FE9"></a>
 </p>
 
@@ -33,7 +33,7 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 ## What it checks
 
 228 of the 307 catalogue rules are implemented; the rest are planned. The
-[rule reference](docs/rules.md) documents each one with an example.
+[rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
 - 217 Python graph checks for metadata, identifiers, IRIs, labels and lexical
   quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
@@ -330,11 +330,11 @@ commit SHAs and the uv version is pinned; Renovate keeps both current.
   overall thresholds. Reports are uploaded as artifacts.
 
 The operators, thresholds, scope, waiver process and blocking/advisory rules
-are defined in [docs/mutation-policy.md](docs/mutation-policy.md).
+are defined in [docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md).
 
 ## Rule reference
 
-[docs/rules.md](docs/rules.md) documents every rule with its severity, fix, a flagged
+[docs/rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents every rule with its severity, fix, a flagged
 example, a clean example and the reported message. Rules that are not
 implemented yet are listed as TODO. The file is generated; regenerate it with
 `uv run python tests/rule_docs_generator.py`.
@@ -412,12 +412,12 @@ Ontologies are untrusted input, so the loader is deliberately strict:
 
 ## Roadmap
 
-[`data/rule_catalogue.csv`](data/rule_catalogue.csv) is the machine-readable
+[`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
 catalogue. It records 307 entries: 228 executable diagnostics and 79 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an
-ontology; they moved to [docs/cli-features.md](docs/cli-features.md).
+ontology; they moved to [docs/cli-features.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/cli-features.md).
 
 The next major areas are comprehensive rule fixtures and false-positive cases,
 OWLAPI/ROBOT and reasoner adapters, safe import-closure support, richer SHACL
@@ -426,4 +426,4 @@ checks.
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/arnaudgelas/ontolint/blob/main/LICENSE).
