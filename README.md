@@ -311,3 +311,7 @@ The next major areas are comprehensive rule fixtures and false-positive cases,
 OWLAPI/ROBOT and reasoner adapters, safe import-closure support, richer SHACL
 authoring checks, ontology-diff regression testing, and opt-in publishing/FAIR
 checks.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
