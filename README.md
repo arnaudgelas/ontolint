@@ -7,13 +7,14 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-The prototype defines 62 diagnostics:
+The prototype defines 63 diagnostics:
 
 - 59 Python graph checks for metadata, identifiers, labels, class hierarchies,
   OWL usage, SKOS, SHACL-shape quality, and governance.
 - `INPUT001` for RDF parsing failures.
 - `SHACL001` for optional pySHACL validation results.
 - `TOOL001` for configuration and execution failures.
+- `SEM001` for opt-in ROBOT OWL-profile validation failures.
 
 Each finding includes a rule identifier, severity, focus, message, suggested
 remediation, and confidence level. Rules are policy-oriented: a finding is not
@@ -35,6 +36,18 @@ python -m pip install pytest hypothesis pytest-gremlins pytest-xdist
 ```
 
 ## Run the linter
+
+Use the library directly when integrating ontolint into Python applications:
+
+```python
+from rdflib import Graph
+from ontolint import Linter
+
+graph = Graph().parse("ontology.ttl")
+findings = Linter(graph, base="https://example.org/ont#").run()
+```
+
+The command-line interface is a thin wrapper around the same Python library:
 
 ```bash
 # Text report
@@ -68,6 +81,20 @@ uv run python -m ontolint.ontolint ontology.ttl --shapes shapes.ttl
 
 The integration uses `meta_shacl=True` and `advanced=True`. Newer SHACL draft
 features are not guaranteed to be supported.
+
+### OWL profile validation with ROBOT in Docker
+
+Build the minimal project image once. Its final stage contains only the ROBOT
+JAR and a non-root Java runtime:
+
+```bash
+docker build --tag ontolint-robot:1.9.11 docker/robot
+uv run python -m ontolint.ontolint ontology.ttl --owl-profile DL
+```
+
+The profile run mounts the ontology directory read-only, disables container
+networking, drops Linux capabilities, and applies CPU, memory, process, and
+timeout limits. Supply a digest-pinned image with `--robot-image` in CI.
 
 ## Policy and baselines
 
@@ -110,7 +137,7 @@ uv run pytest -q
 uv run pytest -q -n auto
 
 # Mutation testing (opt-in)
-uv run pytest --gremlins --gremlin-parallel --gremlin-cache
+uv run pytest -p pytest_gremlins.plugin --gremlins --gremlin-parallel --gremlin-cache
 
 # Lint the project
 uv run ruff check .
@@ -164,7 +191,7 @@ Those mappings are traceability aids, not claims of identical behavior.
 ## Roadmap
 
 [`data/rule_catalogue.csv`](data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 329 entries: 62 executable diagnostics and 267 proposed
+catalogue. It records 329 entries: 63 executable diagnostics and 266 proposed
 candidates. The additional entry beyond the original 328-rule roadmap is
 `TOOL001`, an operational diagnostic for the linter itself.
 
