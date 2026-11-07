@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any
 
 from .models import Severity
@@ -11,6 +12,29 @@ from .models import Severity
 DEFAULT_DEPTH_LIMIT = 7
 DEFAULT_INHERITANCE_LIMIT = 3
 DEFAULT_SOUP_LIMIT = 15
+
+# Ontology-metric thresholds (METRIC001-METRIC013).  Ratios live in [0, 1]; counts are integers.
+# ``metric_min_sample`` is the smallest population a metric needs before it can fire, so tiny
+# ontologies never trigger a ratio rule.
+DEFAULT_METRIC_MIN_SAMPLE = 10
+DEFAULT_METRIC_MAX_IMPORTS = 10
+METRIC_RATIO_DEFAULTS: dict[str, float] = {
+    "metric_max_unlabelled_ratio": 0.5,
+    "metric_max_undefined_ratio": 0.5,
+    "metric_max_undocumented_property_ratio": 0.5,
+    "metric_max_orphan_ratio": 0.3,
+    "metric_max_unsigned_property_ratio": 0.5,
+    "metric_min_language_coverage": 0.5,
+    "metric_max_foreign_reference_ratio": 0.5,
+    "metric_max_blank_node_ratio": 0.6,
+}
+# Non-ratio real-valued thresholds: they only need to be finite and non-negative.
+METRIC_QUANTITY_DEFAULTS: dict[str, float] = {
+    "metric_max_mean_fanout": 8.0,
+    "metric_min_property_class_ratio": 0.1,
+    "metric_max_property_class_ratio": 5.0,
+    "metric_min_definition_words": 4.0,
+}
 
 
 @dataclass(frozen=True)
@@ -22,6 +46,20 @@ class Policy:
     depth_limit: int = DEFAULT_DEPTH_LIMIT
     inheritance_limit: int = DEFAULT_INHERITANCE_LIMIT
     soup_limit: int = DEFAULT_SOUP_LIMIT
+    metric_min_sample: int = DEFAULT_METRIC_MIN_SAMPLE
+    metric_max_imports: int = DEFAULT_METRIC_MAX_IMPORTS
+    metric_max_unlabelled_ratio: float = 0.5
+    metric_max_undefined_ratio: float = 0.5
+    metric_max_undocumented_property_ratio: float = 0.5
+    metric_max_orphan_ratio: float = 0.3
+    metric_max_unsigned_property_ratio: float = 0.5
+    metric_min_language_coverage: float = 0.5
+    metric_max_foreign_reference_ratio: float = 0.5
+    metric_max_blank_node_ratio: float = 0.6
+    metric_max_mean_fanout: float = 8.0
+    metric_min_property_class_ratio: float = 0.1
+    metric_max_property_class_ratio: float = 5.0
+    metric_min_definition_words: float = 4.0
     ignored_rules: frozenset[str] = frozenset()
     severity_overrides: tuple[tuple[str, str], ...] = ()
 
@@ -57,7 +95,9 @@ class Policy:
             raise ValueError("severity_overrides must be error, warning or info")
         if any(not isinstance(value, int) or isinstance(value, bool) for value in numeric_values.values()):
             raise ValueError("policy thresholds must be integers")
+        metrics = _metric_values(data)
         return cls(
+            **metrics,
             base=base,
             languages=tuple(language.lower() for language in languages),
             depth_limit=numeric_values["depth_limit"],
@@ -66,3 +106,38 @@ class Policy:
             ignored_rules=frozenset(ignored_rules),
             severity_overrides=tuple(sorted(overrides.items())),
         )
+
+
+def _real(name: str, value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
+        raise ValueError(f"{name} must be a finite number")
+    return float(value)
+
+
+def _metric_values(data: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate the METRIC thresholds: positive sample size, non-negative counts, ratios within [0, 1]."""
+    values: dict[str, Any] = {}
+    for name, count_default in (
+        ("metric_min_sample", DEFAULT_METRIC_MIN_SAMPLE),
+        ("metric_max_imports", DEFAULT_METRIC_MAX_IMPORTS),
+    ):
+        value = data.get(name, count_default)
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError(f"{name} must be an integer")
+        if value < (1 if name == "metric_min_sample" else 0):
+            raise ValueError(f"{name} must be {'at least 1' if name == 'metric_min_sample' else 'non-negative'}")
+        values[name] = value
+    for name, ratio_default in METRIC_RATIO_DEFAULTS.items():
+        ratio = _real(name, data.get(name, ratio_default))
+        if not 0.0 <= ratio <= 1.0:
+            raise ValueError(f"{name} must be a ratio between 0 and 1")
+        values[name] = ratio
+    for name, quantity_default in METRIC_QUANTITY_DEFAULTS.items():
+        quantity = _real(name, data.get(name, quantity_default))
+        if quantity < 0:
+            raise ValueError(f"{name} must be non-negative")
+        values[name] = quantity
+    return values
+
+
+METRIC_FIELDS = tuple(f.name for f in fields(Policy) if f.name.startswith("metric_"))

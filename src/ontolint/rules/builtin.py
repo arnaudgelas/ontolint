@@ -32,7 +32,10 @@ from . import (
     lexical,
     lexical_quality,
     metadata,
+    metrics,
     owl,
+    owl_axioms,
+    owl_expressions,
     shacl_authoring,
     shapes,
     skos,
@@ -70,6 +73,9 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     lexical_quality,
     shacl_authoring,
     hierarchy_quality,
+    owl_axioms,
+    owl_expressions,
+    metrics,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).

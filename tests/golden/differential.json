@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:545ae002ec59b912cdf8327e46c02e496e317a87618a9da1688928e98452474b (29696 chars)",
+    "file": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:545ae002ec59b912cdf8327e46c02e496e317a87618a9da1688928e98452474b (29696 chars)"
+    "stdout": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,62 +118,62 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:44a05f74c121e0d468260f0222d6e6cf8254382326a56f4e3a93bd6df6da6f67 (49736 chars)",
+   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:0d2cf51c95a12cb76f49e0f985906dfc65d25cfae7d18f0216da6de4f462cef9 (116453 chars)",
+    "file": "sha256:eacf8843debfd13c3129cf0cdb7d09332a66461ce6a39ecf44637081bb9065a2 (140271 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:0d2cf51c95a12cb76f49e0f985906dfc65d25cfae7d18f0216da6de4f462cef9 (116453 chars)"
+    "stdout": "sha256:eacf8843debfd13c3129cf0cdb7d09332a66461ce6a39ecf44637081bb9065a2 (140271 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:fd4e900a86965f797f8dd794eefede78f0b2d2bdcd3ecf0c48dd798453689b63 (43906 chars)",
+   "legacy_json_view": "sha256:8046c98c7de3c5e1803235159a52b6a7493f13bd2d1b102370ece8544be12b6f (45643 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:9fe2a4b937eb41739604fa0fce73e5a3d50335b1533dd7e8603880e3631edd1a (110178 chars)",
+    "file": "sha256:844930b87fdba81f0a7bd02c2624cc91adb8af96a6c4b5eb3c3eacd424adbfff (133998 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:9fe2a4b937eb41739604fa0fce73e5a3d50335b1533dd7e8603880e3631edd1a (110178 chars)"
+    "stdout": "sha256:844930b87fdba81f0a7bd02c2624cc91adb8af96a6c4b5eb3c3eacd424adbfff (133998 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:a41a49062a7db47ce6a9c2cb21fc945309e3ecb59f460876b990012e23502a14 (30481 chars)",
+    "file": "sha256:92a69b188a514a8df0a84ef0c2b8742fd34508d72b0fd56bfd87ecc22f467fde (31566 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a41a49062a7db47ce6a9c2cb21fc945309e3ecb59f460876b990012e23502a14 (30481 chars)"
+    "stdout": "sha256:92a69b188a514a8df0a84ef0c2b8742fd34508d72b0fd56bfd87ecc22f467fde (31566 chars)"
    }
   },
   "json_clean": {
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:0e816f40c75cb9252b0fd40d947161217c7817f6a59213bdf2bbf13370ad9442 (61408 chars)",
+    "file": "sha256:e0d2fe52e95c268e4863371708b9f8454463c2a9e259d7dc6cc7704cea139e2f (83319 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:0e816f40c75cb9252b0fd40d947161217c7817f6a59213bdf2bbf13370ad9442 (61408 chars)"
+    "stdout": "sha256:e0d2fe52e95c268e4863371708b9f8454463c2a9e259d7dc6cc7704cea139e2f (83319 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:888870a3b9aceeffd1d68ed89c2c141cebacfb2d26943f6c5189d68fd7434a3d (122816 chars)"
+    "stdout": "sha256:149f7b215b1b5f3615f6d4f228f31237012c299b7ccbcc16112fea3b94b9cff9 (166638 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,136 +184,136 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:c279f4457c57c615df9c4fa5d8980baf0b2688fa70109499772d44a53b782bf2 (62444 chars)",
+    "file": "sha256:f0e61486ec60e6926f7fbafd3f68f7b83f257d52b607a7ce407c40dc76ae7ec3 (84355 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:c279f4457c57c615df9c4fa5d8980baf0b2688fa70109499772d44a53b782bf2 (62444 chars)"
+    "stdout": "sha256:f0e61486ec60e6926f7fbafd3f68f7b83f257d52b607a7ce407c40dc76ae7ec3 (84355 chars)"
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:7980484360baf237bdc35a6e7f9acca365c4f6afcfc90d811210059df0a09ee0 (67405 chars)",
+   "legacy_json_view": "sha256:c99ce0af6a6ac3b3c904f62384b7e7e8850f0370d6ad74c10c72474ef659fe58 (69142 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:3f5c2f571999c8ef96e625f9c0e396e9f137fa8033620ae561184a32e245b84b (136573 chars)",
+    "file": "sha256:f30653c2130d3f18b2210ef465449d31255033492e40f0534e1de055ac8e23fa (160391 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:3f5c2f571999c8ef96e625f9c0e396e9f137fa8033620ae561184a32e245b84b (136573 chars)"
+    "stdout": "sha256:f30653c2130d3f18b2210ef465449d31255033492e40f0534e1de055ac8e23fa (160391 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:959b00ab7678931ede1236cce08a59bc5b7972456a56e39252b4ba521e4f94ff (198024 chars)"
+    "stdout": "sha256:b423ab78e2031375fc78adc74769265682d1c7cdaccfa1898209a6c829850155 (243753 chars)"
    },
    "write_baseline": {
-    "count": 226,
+    "count": 231,
     "exit": 1
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:44a05f74c121e0d468260f0222d6e6cf8254382326a56f4e3a93bd6df6da6f67 (49736 chars)",
+   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:0d2cf51c95a12cb76f49e0f985906dfc65d25cfae7d18f0216da6de4f462cef9 (116453 chars)",
+    "file": "sha256:eacf8843debfd13c3129cf0cdb7d09332a66461ce6a39ecf44637081bb9065a2 (140271 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:0d2cf51c95a12cb76f49e0f985906dfc65d25cfae7d18f0216da6de4f462cef9 (116453 chars)"
+    "stdout": "sha256:eacf8843debfd13c3129cf0cdb7d09332a66461ce6a39ecf44637081bb9065a2 (140271 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:0338b17bd8692a737951d502f76890171311bbb06865014e01c21f5d6421ade0 (177868 chars)"
+    "stdout": "sha256:7c03669b1559300ab9778737c7c83c2c86f4fa654038cee78ad49500e5f66692 (223597 chars)"
    },
    "write_baseline": {
-    "count": 155,
+    "count": 160,
     "exit": 1
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:3a409dadd65a6ee239378e4e971e02ad8a56a654e02f95efe0d36699dc7fdbab (50056 chars)",
+   "legacy_json_view": "sha256:3732aecf0628c7f01ab77224102ef7b422aaec611dbd6bf94e399ae2e1a4af33 (51793 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:85b5d004337bfbdd8b9c09b8041b5d38852f5a962e361d07dc5e68a70763129f (116768 chars)",
+    "file": "sha256:d297523ec51716ccfe3746f60f9f01ed7104c4439d48e114e55f01ee8f07c84a (140586 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:85b5d004337bfbdd8b9c09b8041b5d38852f5a962e361d07dc5e68a70763129f (116768 chars)"
+    "stdout": "sha256:d297523ec51716ccfe3746f60f9f01ed7104c4439d48e114e55f01ee8f07c84a (140586 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:44a05f74c121e0d468260f0222d6e6cf8254382326a56f4e3a93bd6df6da6f67 (49736 chars)",
+   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:f1c2bc98815e014659ae6d4872cd9d3dcd67632b4d5f210a174117f9331ba325 (116414 chars)",
+    "file": "sha256:ab0180a194a956dc30af474aaaa5638c12c1ce6cdebf0e1849c08ad5d09a6f01 (140232 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f1c2bc98815e014659ae6d4872cd9d3dcd67632b4d5f210a174117f9331ba325 (116414 chars)"
+    "stdout": "sha256:ab0180a194a956dc30af474aaaa5638c12c1ce6cdebf0e1849c08ad5d09a6f01 (140232 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:44a05f74c121e0d468260f0222d6e6cf8254382326a56f4e3a93bd6df6da6f67 (49736 chars)",
+   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:6f597b14bf809cce7f16ac3d00797eb647f0e0925d64ad0dde5f0447e580e2d4 (116460 chars)",
+    "file": "sha256:538638714f828b4fa703ee46a17240ffd4c6d07c9e56b54fb401fdc42b9a33e3 (140278 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:6f597b14bf809cce7f16ac3d00797eb647f0e0925d64ad0dde5f0447e580e2d4 (116460 chars)"
+    "stdout": "sha256:538638714f828b4fa703ee46a17240ffd4c6d07c9e56b54fb401fdc42b9a33e3 (140278 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:71c4c4a7a190d300c2d4be3732c5e394e95981d8b7631aa33dd72a9c959007e0 (52846 chars)",
+   "legacy_json_view": "sha256:9dbd78429759ff04a73570de18d0b170637babc2a8d318c09127c89bb09eaf0c (54583 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d4c0a6b00ecec51f604171fdd60eeba4144c32f697984cae3f124b7ee3cca32c (119241 chars)",
+    "file": "sha256:4d01b3e3adfa45e68857f580c6c0d15089e000101ee99304684f3a29a167532e (143059 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d4c0a6b00ecec51f604171fdd60eeba4144c32f697984cae3f124b7ee3cca32c (119241 chars)"
+    "stdout": "sha256:4d01b3e3adfa45e68857f580c6c0d15089e000101ee99304684f3a29a167532e (143059 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:f10cd7b8c310ccee7f6074da5f18968b01cf882001fb660754d9994f60e2818d (179994 chars)"
+    "stdout": "sha256:220521bc00ab20d0cc7d580a8bd37fb6fcd144fc11e4f47f3b40ece4821df159 (225723 chars)"
    },
    "write_baseline": {
-    "count": 165,
+    "count": 170,
     "exit": 1
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:164ddd45ea5709078d1b7ecacd78d769e420182e872b63970a52a8c919fadcf5 (57351 chars)",
+   "legacy_json_view": "sha256:11da47f7152a25090471e8a39daaa6380494a193a25fff889b771b188918e10c (59088 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:26070f54a8e91ee1daafa57b58c83a76cd05d7a29c5053d844edd432d9033ab9 (124952 chars)",
+    "file": "sha256:68f69089c74db082cfd32fa9e8b4dd603f2cbaa7da971d20924260d3bb4f694f (148770 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:26070f54a8e91ee1daafa57b58c83a76cd05d7a29c5053d844edd432d9033ab9 (124952 chars)"
+    "stdout": "sha256:68f69089c74db082cfd32fa9e8b4dd603f2cbaa7da971d20924260d3bb4f694f (148770 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:cc790bc862e8ddfbe24fecc67cff2804b2a9673bcc2745290ead156e9785e9ec (105433 chars)"
+    "stdout": "sha256:4a15b5ac44052f758b8ab2e25a5b023610019cbbe42fb576224d0d15d7fc321d (104472 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:cc790bc862e8ddfbe24fecc67cff2804b2a9673bcc2745290ead156e9785e9ec (105433 chars)"
+    "stdout": "sha256:4a15b5ac44052f758b8ab2e25a5b023610019cbbe42fb576224d0d15d7fc321d (104472 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:c76ce7ed08e95145e1bd8bce6e402405bc9534c304e75b5111512897ee4b0896 (35429 chars)"
+    "stdout": "sha256:473dab04a7e3dd5aec24f474296a4de4090113b22d2fc9e5d0935184395c5fa5 (33578 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:c76ce7ed08e95145e1bd8bce6e402405bc9534c304e75b5111512897ee4b0896 (35429 chars)"
+    "stdout": "sha256:473dab04a7e3dd5aec24f474296a4de4090113b22d2fc9e5d0935184395c5fa5 (33578 chars)"
    }
   },
   "missing_config": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:44a05f74c121e0d468260f0222d6e6cf8254382326a56f4e3a93bd6df6da6f67 (49736 chars)",
+   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:55df60d37c85af8a926917006966f847b96a05e1a06cf58a778dac25f178f10a (130295 chars)",
+    "file": "sha256:7125288851718d9a180d9aa783d950a06ebc1547e4468cc0e59094b055f421cc (158624 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:55df60d37c85af8a926917006966f847b96a05e1a06cf58a778dac25f178f10a (130295 chars)"
+    "stdout": "sha256:7125288851718d9a180d9aa783d950a06ebc1547e4468cc0e59094b055f421cc (158624 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,40 +411,40 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:2c5a8162b28c02ac910a86e7dc413431671c050e6ce4c0782cdb424e05746ed9 (211113 chars)",
+    "file": "sha256:de18daee96ba7291933511c5c2e64081e82b2e7274b4870dcc977cafbab47693 (249793 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:2c5a8162b28c02ac910a86e7dc413431671c050e6ce4c0782cdb424e05746ed9 (211113 chars)"
+    "stdout": "sha256:de18daee96ba7291933511c5c2e64081e82b2e7274b4870dcc977cafbab47693 (249793 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:69142d874da494267feb288c8d57b7879afb437a1b75d981dfb29c84ac67d6e0 (29772 chars)",
+    "file": "sha256:d10376d7ae2811459300ee09b43fc59698df20eea1dd49f6608eba9c342d7eee (30856 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:69142d874da494267feb288c8d57b7879afb437a1b75d981dfb29c84ac67d6e0 (29772 chars)"
+    "stdout": "sha256:d10376d7ae2811459300ee09b43fc59698df20eea1dd49f6608eba9c342d7eee (30856 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:545ae002ec59b912cdf8327e46c02e496e317a87618a9da1688928e98452474b (29696 chars)",
+    "file": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:545ae002ec59b912cdf8327e46c02e496e317a87618a9da1688928e98452474b (29696 chars)"
+    "stdout": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)"
    }
   },
   "profile_minimal_json": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:ac8d9b7f43706500cfc4362a0d8179225a36096bb9e1b5fc51eafcb8e69b3281 (198566 chars)",
+    "file": "sha256:1d541e196d825d33cbc1249325d6f25014eec152fa7f3799b64e248a39f5c4d1 (237246 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ac8d9b7f43706500cfc4362a0d8179225a36096bb9e1b5fc51eafcb8e69b3281 (198566 chars)"
+    "stdout": "sha256:1d541e196d825d33cbc1249325d6f25014eec152fa7f3799b64e248a39f5c4d1 (237246 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:e80be15e5c5f2d7e52d4a3e4cbcec3ff403d70fe9a3c539a1ac139e3d552eb06 (192031 chars)",
+    "file": "sha256:7e35c49cebeb60b318c351805b8f19774d5decc2339a33503111bffceb5afa3f (230721 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e80be15e5c5f2d7e52d4a3e4cbcec3ff403d70fe9a3c539a1ac139e3d552eb06 (192031 chars)"
+    "stdout": "sha256:7e35c49cebeb60b318c351805b8f19774d5decc2339a33503111bffceb5afa3f (230721 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:6f0acf9fef79ba4fa2e09f1560d59f41395eeb9818de27c0408015970500a41d (46096 chars)",
+    "file": "sha256:1c8a3221acf503518111d0b0d3c9e67c6224bb812ed6535043e109d08e9ec133 (47180 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:6f0acf9fef79ba4fa2e09f1560d59f41395eeb9818de27c0408015970500a41d (46096 chars)"
+    "stdout": "sha256:1c8a3221acf503518111d0b0d3c9e67c6224bb812ed6535043e109d08e9ec133 (47180 chars)"
    }
   },
   "text_clean": {
@@ -583,14 +583,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:545ae002ec59b912cdf8327e46c02e496e317a87618a9da1688928e98452474b (29696 chars)",
+    "file": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:545ae002ec59b912cdf8327e46c02e496e317a87618a9da1688928e98452474b (29696 chars)"
+    "stdout": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)"
    }
   }
  },
@@ -846,6 +846,15 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "ab6ede137be9a77f1afe7c9bdc60c6e3eb27ea5430be5ff365b799cb26194574",
+    "focus": "https://example.test/onto.owl",
+    "message": "27 of 33 classes lack a definition (0.82 > 0.50).",
+    "rule": "METRIC002",
+    "severity": "warning",
+    "suggestion": "Add rdfs:comment, skos:definition or dcterms:description to the undefined classes."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "493414557207046931e8b84ab32f7fdc9b5a9bb9dc7917d454cbd20473dca190",
     "focus": "(ontology)",
     "message": "2 owl:Ontology declarations found.",
@@ -996,6 +1005,15 @@
     "rule": "OWL015",
     "severity": "warning",
     "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
+    "focus": "https://example.test/onto#otherProp",
+    "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
+    "rule": "OWL023",
+    "severity": "warning",
+    "suggestion": "Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other."
    },
    {
     "confidence": "heuristic",
@@ -1896,6 +1914,33 @@
     "rule": "LEX017",
     "severity": "info",
     "suggestion": "Write a definition that says more than the label."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "e57c03ac77836f1e06d756d015aba95b113ce66b3e15566ebdcf8a19140f7482",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 14 properties lack documentation (0.93 > 0.50).",
+    "rule": "METRIC003",
+    "severity": "info",
+    "suggestion": "Document properties with rdfs:comment, skos:definition or dcterms:description."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "01078a44fe4e233e583b61db07f839f5348ab343148d5ae03f0fe44f924682ef",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 33 classes are orphans: no asserted sub/superclass, instance, domain or range (0.39 > 0.30).",
+    "rule": "METRIC005",
+    "severity": "info",
+    "suggestion": "Connect orphan classes to the hierarchy, properties or instances, or remove them."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8997bad2592cde7b2783a7f226876f2ab43a3eb3431002844b5c5beeebd61711",
+    "focus": "https://example.test/onto.owl",
+    "message": "2 of 46 labelled terms have a language-tagged label (0.04 < 0.50).",
+    "rule": "METRIC009",
+    "severity": "info",
+    "suggestion": "Tag labels with their language (for example rdfs:label \"x\"@en)."
    },
    {
     "confidence": "heuristic",
@@ -2252,6 +2297,15 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "ab6ede137be9a77f1afe7c9bdc60c6e3eb27ea5430be5ff365b799cb26194574",
+    "focus": "https://example.test/onto.owl",
+    "message": "27 of 33 classes lack a definition (0.82 > 0.50).",
+    "rule": "METRIC002",
+    "severity": "warning",
+    "suggestion": "Add rdfs:comment, skos:definition or dcterms:description to the undefined classes."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "493414557207046931e8b84ab32f7fdc9b5a9bb9dc7917d454cbd20473dca190",
     "focus": "(ontology)",
     "message": "2 owl:Ontology declarations found.",
@@ -2402,6 +2456,15 @@
     "rule": "OWL015",
     "severity": "warning",
     "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
+    "focus": "https://example.test/onto#otherProp",
+    "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
+    "rule": "OWL023",
+    "severity": "warning",
+    "suggestion": "Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other."
    },
    {
     "confidence": "heuristic",
@@ -3302,6 +3365,33 @@
     "rule": "LEX017",
     "severity": "info",
     "suggestion": "Write a definition that says more than the label."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "e57c03ac77836f1e06d756d015aba95b113ce66b3e15566ebdcf8a19140f7482",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 14 properties lack documentation (0.93 > 0.50).",
+    "rule": "METRIC003",
+    "severity": "info",
+    "suggestion": "Document properties with rdfs:comment, skos:definition or dcterms:description."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "01078a44fe4e233e583b61db07f839f5348ab343148d5ae03f0fe44f924682ef",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 33 classes are orphans: no asserted sub/superclass, instance, domain or range (0.39 > 0.30).",
+    "rule": "METRIC005",
+    "severity": "info",
+    "suggestion": "Connect orphan classes to the hierarchy, properties or instances, or remove them."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8997bad2592cde7b2783a7f226876f2ab43a3eb3431002844b5c5beeebd61711",
+    "focus": "https://example.test/onto.owl",
+    "message": "2 of 46 labelled terms have a language-tagged label (0.04 < 0.50).",
+    "rule": "METRIC009",
+    "severity": "info",
+    "suggestion": "Tag labels with their language (for example rdfs:label \"x\"@en)."
    },
    {
     "confidence": "heuristic",
@@ -3658,6 +3748,15 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "ab6ede137be9a77f1afe7c9bdc60c6e3eb27ea5430be5ff365b799cb26194574",
+    "focus": "https://example.test/onto.owl",
+    "message": "27 of 33 classes lack a definition (0.82 > 0.50).",
+    "rule": "METRIC002",
+    "severity": "warning",
+    "suggestion": "Add rdfs:comment, skos:definition or dcterms:description to the undefined classes."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "493414557207046931e8b84ab32f7fdc9b5a9bb9dc7917d454cbd20473dca190",
     "focus": "(ontology)",
     "message": "2 owl:Ontology declarations found.",
@@ -3799,6 +3898,15 @@
     "rule": "OWL014",
     "severity": "warning",
     "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
+    "focus": "https://example.test/onto#otherProp",
+    "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
+    "rule": "OWL023",
+    "severity": "warning",
+    "suggestion": "Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other."
    },
    {
     "confidence": "heuristic",
@@ -4702,6 +4810,33 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "e57c03ac77836f1e06d756d015aba95b113ce66b3e15566ebdcf8a19140f7482",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 14 properties lack documentation (0.93 > 0.50).",
+    "rule": "METRIC003",
+    "severity": "info",
+    "suggestion": "Document properties with rdfs:comment, skos:definition or dcterms:description."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "01078a44fe4e233e583b61db07f839f5348ab343148d5ae03f0fe44f924682ef",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 33 classes are orphans: no asserted sub/superclass, instance, domain or range (0.39 > 0.30).",
+    "rule": "METRIC005",
+    "severity": "info",
+    "suggestion": "Connect orphan classes to the hierarchy, properties or instances, or remove them."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8997bad2592cde7b2783a7f226876f2ab43a3eb3431002844b5c5beeebd61711",
+    "focus": "https://example.test/onto.owl",
+    "message": "2 of 46 labelled terms have a language-tagged label (0.04 < 0.50).",
+    "rule": "METRIC009",
+    "severity": "info",
+    "suggestion": "Tag labels with their language (for example rdfs:label \"x\"@en)."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "bfb1075305fba0529f59d7c04c851b19d1c0598c07850afc4bfed6e4b842ac64",
     "focus": "https://example.test/onto.owl",
     "message": "No versionIRI/versionInfo.",
@@ -5055,6 +5190,15 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "ab6ede137be9a77f1afe7c9bdc60c6e3eb27ea5430be5ff365b799cb26194574",
+    "focus": "https://example.test/onto.owl",
+    "message": "27 of 33 classes lack a definition (0.82 > 0.50).",
+    "rule": "METRIC002",
+    "severity": "warning",
+    "suggestion": "Add rdfs:comment, skos:definition or dcterms:description to the undefined classes."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "493414557207046931e8b84ab32f7fdc9b5a9bb9dc7917d454cbd20473dca190",
     "focus": "(ontology)",
     "message": "2 owl:Ontology declarations found.",
@@ -5205,6 +5349,15 @@
     "rule": "OWL015",
     "severity": "warning",
     "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
+    "focus": "https://example.test/onto#otherProp",
+    "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
+    "rule": "OWL023",
+    "severity": "warning",
+    "suggestion": "Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other."
    },
    {
     "confidence": "heuristic",
@@ -6144,6 +6297,33 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "e57c03ac77836f1e06d756d015aba95b113ce66b3e15566ebdcf8a19140f7482",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 14 properties lack documentation (0.93 > 0.50).",
+    "rule": "METRIC003",
+    "severity": "info",
+    "suggestion": "Document properties with rdfs:comment, skos:definition or dcterms:description."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "01078a44fe4e233e583b61db07f839f5348ab343148d5ae03f0fe44f924682ef",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 33 classes are orphans: no asserted sub/superclass, instance, domain or range (0.39 > 0.30).",
+    "rule": "METRIC005",
+    "severity": "info",
+    "suggestion": "Connect orphan classes to the hierarchy, properties or instances, or remove them."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8997bad2592cde7b2783a7f226876f2ab43a3eb3431002844b5c5beeebd61711",
+    "focus": "https://example.test/onto.owl",
+    "message": "2 of 46 labelled terms have a language-tagged label (0.04 < 0.50).",
+    "rule": "METRIC009",
+    "severity": "info",
+    "suggestion": "Tag labels with their language (for example rdfs:label \"x\"@en)."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "bfb1075305fba0529f59d7c04c851b19d1c0598c07850afc4bfed6e4b842ac64",
     "focus": "https://example.test/onto.owl",
     "message": "No versionIRI/versionInfo.",
@@ -6551,6 +6731,15 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "ab6ede137be9a77f1afe7c9bdc60c6e3eb27ea5430be5ff365b799cb26194574",
+    "focus": "https://example.test/onto.owl",
+    "message": "27 of 33 classes lack a definition (0.82 > 0.50).",
+    "rule": "METRIC002",
+    "severity": "warning",
+    "suggestion": "Add rdfs:comment, skos:definition or dcterms:description to the undefined classes."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "493414557207046931e8b84ab32f7fdc9b5a9bb9dc7917d454cbd20473dca190",
     "focus": "(ontology)",
     "message": "2 owl:Ontology declarations found.",
@@ -6692,6 +6881,15 @@
     "rule": "OWL014",
     "severity": "warning",
     "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
+    "focus": "https://example.test/onto#otherProp",
+    "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
+    "rule": "OWL023",
+    "severity": "warning",
+    "suggestion": "Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other."
    },
    {
     "confidence": "heuristic",
@@ -8663,6 +8861,33 @@
     "rule": "LEX023",
     "severity": "info",
     "suggestion": "Add the definition in every configured language, or none."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "e57c03ac77836f1e06d756d015aba95b113ce66b3e15566ebdcf8a19140f7482",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 14 properties lack documentation (0.93 > 0.50).",
+    "rule": "METRIC003",
+    "severity": "info",
+    "suggestion": "Document properties with rdfs:comment, skos:definition or dcterms:description."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "01078a44fe4e233e583b61db07f839f5348ab343148d5ae03f0fe44f924682ef",
+    "focus": "https://example.test/onto.owl",
+    "message": "13 of 33 classes are orphans: no asserted sub/superclass, instance, domain or range (0.39 > 0.30).",
+    "rule": "METRIC005",
+    "severity": "info",
+    "suggestion": "Connect orphan classes to the hierarchy, properties or instances, or remove them."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8997bad2592cde7b2783a7f226876f2ab43a3eb3431002844b5c5beeebd61711",
+    "focus": "https://example.test/onto.owl",
+    "message": "2 of 46 labelled terms have a language-tagged label (0.04 < 0.50).",
+    "rule": "METRIC009",
+    "severity": "info",
+    "suggestion": "Tag labels with their language (for example rdfs:label \"x\"@en)."
    },
    {
     "confidence": "heuristic",
