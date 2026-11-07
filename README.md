@@ -263,6 +263,13 @@ commit SHAs and the uv version is pinned; Renovate keeps both current.
 The operators, thresholds, scope, waiver process and blocking/advisory rules
 are defined in [docs/mutation-policy.md](docs/mutation-policy.md).
 
+## Rule reference
+
+[docs/rules.md](docs/rules.md) documents every rule with its severity, fix, a flagged
+example, a clean example and the reported message. Rules that are not
+implemented yet are listed as TODO. The file is generated; regenerate it with
+`uv run python tests/rule_docs_generator.py`.
+
 ## Interpretation principles
 
 1. RDF syntax validity and OWL logical consistency are different properties.
