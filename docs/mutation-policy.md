@@ -8,8 +8,13 @@ in `.github/workflows/validation.yml`.
 ## Tooling and command
 
 ```bash
-uv run pytest --gremlins --no-cov --gremlin-parallel --gremlin-cache
+uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
 ```
+
+The command excludes the tests marked `slow` (the Hypothesis property tests and the
+fuzz tests). They exercise every rule, so gremlins would select them for almost every
+mutant and a run would take hours instead of minutes. They still run in the normal
+suite (`uv run pytest`) and in the scheduled fuzz job.
 
 Do not run any other pytest session in the same checkout while a mutation run is in
 progress. The run pre-scans coverage into the repository-root `.coverage` (statement
@@ -72,7 +77,7 @@ within the next two scheduled runs by one of:
    lowers the constant in `mutation_gate.py`.
 
 Pardons are limited to 5% of mutants (`--gremlin-max-pardons-pct=5`). Run
-`uv run pytest --gremlins --gremlin-audit-pardons` to list active pardons;
+`uv run pytest -m 'not slow' --gremlins --gremlin-audit-pardons` to list active pardons;
 review them quarterly.
 
 ## Blocking versus advisory

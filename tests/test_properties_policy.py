@@ -16,6 +16,8 @@ from hypothesis_strategies import budget, hostile_mappings, valid_policy_mapping
 from ontolint.models import Severity
 from ontolint.policy import METRIC_FIELDS, METRIC_QUANTITY_DEFAULTS, METRIC_RATIO_DEFAULTS, Policy
 
+pytestmark = pytest.mark.slow
+
 IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
 INT_FIELDS = ("depth_limit", "inheritance_limit", "soup_limit", "metric_min_sample", "metric_max_imports")
 

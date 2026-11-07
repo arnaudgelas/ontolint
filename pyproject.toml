@@ -118,7 +118,10 @@ cache = true
 # normal xdist worker teardown even when mutation testing is not enabled.
 addopts = "-p no:pytest_gremlins --cov=ontolint --cov-branch --cov-report=term-missing --cov-fail-under=95"
 testpaths = ["tests"]
-markers = ["benchmark: opt-in large-ontology resource-budget benchmarks (set ONTOLINT_BENCH=1)"]
+markers = [
+    "benchmark: opt-in large-ontology resource-budget benchmarks (set ONTOLINT_BENCH=1)",
+    "slow: property-based and fuzz tests; excluded from mutation runs (pytest -m 'not slow')",
+]
 
 [tool.coverage.run]
 branch = true

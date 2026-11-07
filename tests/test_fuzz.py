@@ -23,6 +23,8 @@ from fuzz import fuzzer
 
 from ontolint import cli
 
+pytestmark = pytest.mark.slow
+
 ORIGINAL_CONNECT = socket.socket.connect
 KNOWN_BAD_SEEDS: frozenset[str] = (
     frozenset()

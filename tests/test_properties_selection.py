@@ -12,6 +12,8 @@ from ontolint.profiles import OPT_IN_FAMILIES, PROFILES, Profile, is_opt_in
 from ontolint.rules.registry import UnknownSelectorError, default_registry
 from ontolint.selection import SelectorSyntaxError, default_rules, resolve_selection, split_selectors
 
+pytestmark = pytest.mark.slow
+
 REGISTRY = default_registry()
 SPECS = REGISTRY.all()
 OPT_IN_IDS = frozenset(s.rule_id for s in SPECS if is_opt_in(s.family))

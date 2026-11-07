@@ -10,6 +10,7 @@ import sys
 from collections import Counter
 from collections.abc import Iterable
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis_strategies import (
@@ -33,6 +34,8 @@ from ontolint.policy import Policy
 from ontolint.profiles import is_opt_in
 from ontolint.rules.registry import default_registry
 from ontolint.rules.specs import SEVERITY
+
+pytestmark = pytest.mark.slow
 
 SEVERITIES = {"error", "warning", "info"}
 CONFIDENCES = {"certain", "heuristic"}

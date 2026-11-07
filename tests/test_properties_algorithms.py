@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from itertools import product
 
+import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis_strategies import BASE, FOREIGN, budget
@@ -18,6 +19,8 @@ from ontolint.policy import Policy
 from ontolint.rules.hierarchy_quality import Hierarchy
 from ontolint.rules.safety import MAX_BLANK_NODE_DEPTH, _condensed_depths
 from ontolint.rules.support import list_items
+
+pytestmark = pytest.mark.slow
 
 NODES = [URIRef(f"{BASE}n{i}") for i in range(7)]
 CELLS = [BNode(f"QBNA{i}") for i in range(6)]

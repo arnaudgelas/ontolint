@@ -25,6 +25,8 @@ from ontolint.loader import InputRejected, LoadError, ParseFailure, load_graph
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
 
+pytestmark = pytest.mark.slow
+
 # What load_graph documents it may raise: InputRejected for refused input and ParseFailure for every parser error.
 EXTENSIONS = (".ttl", ".nt", ".rdf", ".owl", ".xml", ".jsonld", ".json", ".n3", ".trig", ".nq", ".trix", ".txt", "")
 SEEDS = (

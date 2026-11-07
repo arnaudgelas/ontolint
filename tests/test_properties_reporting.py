@@ -10,6 +10,7 @@ from argparse import Namespace
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis_strategies import RULE_IDS, budget, roundtrip_triple_lists
@@ -33,6 +34,8 @@ from ontolint.reporting import (
     to_sarif_report,
 )
 from ontolint.rules.registry import default_registry
+
+pytestmark = pytest.mark.slow
 
 REGISTRY = default_registry()
 KEEP_RATIO = 0.7
