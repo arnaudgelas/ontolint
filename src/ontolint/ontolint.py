@@ -85,6 +85,7 @@ SEVERITY = {
     "DATA002": "warning",
     "SHACL001": "error",
     "INPUT001": "error",
+    "TOOL001": "error",
 }
 
 FIXES = {
@@ -149,6 +150,7 @@ FIXES = {
     "DATA002": "Check a property assertion for datatype/object-property confusion.",
     "SHACL001": "Fix the supplied SHACL shapes or data, and inspect the SHACL report.",
     "INPUT001": "Fix RDF syntax or explicitly choose the input serialization format.",
+    "TOOL001": "Correct the configuration or execution error and run the linter again.",
 }
 
 KINDS = (
