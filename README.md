@@ -69,7 +69,101 @@ Supported report formats are `text`, `json`, and `sarif`.
 | --- | --- |
 | `0` | No finding meets the configured `--fail-on` threshold. |
 | `1` | At least one finding meets the threshold. |
-| `2` | The tool could not parse input or load configuration. |
+| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker). |
+
+Exit `2` outranks `1`: when a requested backend did not deliver a verdict the run cannot
+pass, even with `--fail-on never`. The report is still written so you can see why. Rules that
+are `skipped` (no shapes supplied, no OWL profile requested, ignored) never change the exit code.
+
+### Discovering rules
+
+```bash
+uv run python -m ontolint.ontolint --version
+uv run python -m ontolint.ontolint --list-rules                 # table
+uv run python -m ontolint.ontolint --list-rules --format json   # machine-readable
+uv run python -m ontolint.ontolint --explain SHQ001             # title, severity, fix, backend, scope, requirements
+```
+
+`--list-rules` shows the catalogue *status* of every rule: `implemented` (can be selected and
+run) or `proposed` (planned only; it has no severity or scope, cannot be selected and never
+runs). This is different from the per-run *execution status* below. `--explain` on an unknown
+identifier exits `2`.
+
+### Selecting rules and profiles
+
+`--select` and `--ignore` take rule identifiers (`ONT001`) or family prefixes (`ONT`),
+case-insensitively, comma-separated and/or repeated. Unknown selectors, empty entries
+(`ONT,`) and proposed-only rules are errors (exit `2`), so a typo never becomes an empty run.
+
+`--profile` picks a bundle of defaults:
+
+| Profile | Rules | Severity overrides | Default `--fail-on` |
+| --- | --- | --- | --- |
+| `minimal` | `ONT`, `IRI`, `DATA`, `SKOS`, `SHACL`, `SEM` (structural integrity) | none | `error` |
+| `recommended` | all (same as no profile) | none | `error` |
+| `ci` | all | none | `warning` |
+| `strict` | all | `ONT003` becomes `error` | `info` (any finding fails) |
+
+Precedence when options combine:
+
+1. The rule set is `--select` if given, else the profile's rules, else all rules. `--select`
+   *replaces* the profile's selection.
+2. Ignores always win over selection: `--ignore`, the profile's ignores and the policy file's
+   `ignored_rules` are unioned and removed. Policy `ignored_rules` remain exact identifiers.
+3. Severity overrides: profile first, then the policy file's `severity_overrides` (policy wins).
+4. `--fail-on`: the command line, else the profile's value, else `error`.
+
+Other policy values (base, languages, thresholds) behave as before: explicit CLI options beat
+the policy file.
+
+### Rule execution status
+
+JSON and SARIF always say what happened to every selected rule, so "no findings" can never be
+confused with "not checked": `executed`, `skipped` (not applicable or ignored, with the
+reason), `unsupported` (backend unavailable, e.g. no `pyshacl` or Docker) or `failed`
+(the rule or backend raised). Rules that were deselected by `--select`/profile are simply
+absent. Text output stays unchanged unless a rule was ignored, unsupported or failed, in which
+case a `Rule execution:` block is appended.
+
+* JSON keeps `summary` and `findings` and adds `schema_version` (currently `1`), a `path` on
+  each finding, `rules` (id, family, title, effective and default severity, category, backend,
+  scope, requirements, suggestion), `execution_summary` and per-file `files[].executions`.
+* SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
+  `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
+  `artifactLocation` on every result, and a run `invocation`. Skipped, unsupported and failed
+  rules are `toolExecutionNotifications` (levels `note`, `warning`, `error`);
+  `executionSuccessful` is `false` when any rule failed or is unsupported.
+* Findings carry no line/column yet. The report model has an optional location slot that SARIF
+  will turn into a `region` once rules can supply real positions.
+
+### Several files
+
+```bash
+uv run python -m ontolint.ontolint ontologies/*.ttl --format sarif --output findings.sarif
+```
+
+* Globbing is the shell's job (on Windows `cmd`/PowerShell pass the pattern through; use a
+  shell that expands it or list the files). Directories are rejected with an error rather than
+  walked.
+* Each file is linted independently with the same options and its own report; results are
+  aggregated. Files are ordered by report path regardless of argument order, and duplicates
+  (`./a.ttl`, a symlink, another spelling on a case-insensitive file system) collapse into one.
+  If any file cannot be parsed, every parse failure is reported and the run exits `2` before
+  linting. `--shapes` and `--owl-profile` apply to every file; ROBOT runs once per file.
+* Report paths (JSON `path`, SARIF `artifactLocation.uri`, fingerprints) are POSIX-style:
+  relative to the working directory when the file is beneath it (`onto/a.ttl`), otherwise
+  absolute (`file:///C:/x/a.ttl` in SARIF), with backslashes converted. Run from a stable
+  directory such as the repository root so baselines and SARIF paths are portable.
+* Fingerprints: a single-file run hashes `(rule, focus, message)` exactly as before, so existing
+  baselines keep working. A multi-file run also hashes the report path so identical findings in
+  two files stay distinct; a baseline written from one file therefore does not carry over to a
+  multi-file run. Write multi-file baselines from multi-file runs.
+
+### GitHub annotations
+
+`--format github` is not available yet. Workflow-command annotations need a file *and a line*,
+and findings carry no source locations. The escaping helpers (`%`, CR, LF and, for properties,
+`:` and `,`) already exist in `ontolint.github`; the formatter is gated on location support.
 
 ### Optional SHACL validation
 
@@ -94,7 +188,8 @@ uv run python -m ontolint.ontolint ontology.ttl --owl-profile DL
 
 The profile run mounts the ontology directory read-only, disables container
 networking, drops Linux capabilities, and applies CPU, memory, process, and
-timeout limits. Supply a digest-pinned image with `--robot-image` in CI.
+timeout limits. The image build verifies the ROBOT JAR against a pinned
+SHA-256. Supply a digest-pinned image with `--robot-image` in CI.
 
 ## Policy and baselines
 
@@ -124,7 +219,7 @@ uv run python -m ontolint.ontolint ontology.ttl \
   --baseline baseline.json --fail-on warning
 ```
 
-Baselines compare stable hashes of `(rule, focus, message)`. They are useful for
+Baselines compare stable hashes of `(rule, focus, message)` (plus the report path for multi-file runs). They are useful for
 incremental adoption, but are not semantic version comparisons.
 
 ## Development and quality checks
@@ -146,6 +241,23 @@ uv run ruff check .
 Hypothesis tests generate RDF class hierarchies and verify that the linter's
 cycle diagnostics agree with an independent reachability oracle. Mutation
 testing is configured to target `src/ontolint/ontolint.py`.
+
+### CI workflows
+
+`.github/workflows/ci.yml` runs the fast PR checks (Ruff, mypy, pyright,
+`pip-audit`, tests with coverage, package build). All actions are pinned to
+commit SHAs and the uv version is pinned; Renovate keeps both current.
+
+`.github/workflows/validation.yml` runs weekly and on manual dispatch:
+
+- ROBOT Docker image build and smoke test (also on pull requests that touch
+  `docker/` and carry the `validation` label). Logs are uploaded as artifacts.
+- Mutation testing with the command above plus JSON/HTML reports, followed by
+  `.github/scripts/mutation_gate.py`, which enforces the per-operator and
+  overall thresholds. Reports are uploaded as artifacts.
+
+The operators, thresholds, scope, waiver process and blocking/advisory rules
+are defined in [docs/mutation-policy.md](docs/mutation-policy.md).
 
 ## Interpretation principles
 
