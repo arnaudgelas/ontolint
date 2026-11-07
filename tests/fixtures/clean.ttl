@@ -3,12 +3,16 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <https://example.test/clean> a owl:Ontology ;
     dcterms:license <https://example.test/license> ;
     owl:versionInfo "1.0" ;
     dcterms:creator "Me" ; dcterms:created "2024-01-01" ;
-    dcterms:description "Clean" .
+    dcterms:description "Clean" ;
+    dcterms:publisher "Example publisher" ;
+    dcterms:dateAccepted "2024-01-02" ;
+    skos:changeNote "Initial release." .
 ex:Thing1 a owl:Class ; rdfs:label "Thing"@en ; rdfs:comment "A thing."@en .
 ex:SubThing a owl:Class ; rdfs:label "Sub thing"@en ; rdfs:comment "A sub."@en ; rdfs:subClassOf ex:Thing1 .
 ex:hasName a owl:DatatypeProperty ; rdfs:label "has name"@en ; rdfs:comment "Name."@en ;

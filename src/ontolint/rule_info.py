@@ -13,9 +13,11 @@ from typing import Any
 
 from .catalogue import CatalogueRow, load_catalogue
 from .models import CatalogueStatus, RuleSpec
+from .profiles import is_opt_in
 from .rules.registry import RuleRegistry
 
 DASH = "-"
+OPT_IN_MARK = " (opt-in)"
 
 
 class UnknownRuleError(KeyError):
@@ -23,7 +25,7 @@ class UnknownRuleError(KeyError):
 
 
 def _implemented(spec: RuleSpec, row: CatalogueRow | None) -> dict[str, Any]:
-    return {
+    detail: dict[str, Any] = {
         "id": spec.rule_id,
         "family": spec.family,
         "title": spec.title,
@@ -35,6 +37,9 @@ def _implemented(spec: RuleSpec, row: CatalogueRow | None) -> dict[str, Any]:
         "status": (row.status if row else CatalogueStatus.IMPLEMENTED).value,
         "selectable": True,
     }
+    if is_opt_in(spec.family):  # Only opt-in rules carry the key, so other rows are unchanged.
+        detail["opt_in"] = True
+    return detail
 
 
 def _proposed(row: CatalogueRow) -> dict[str, Any]:
@@ -74,6 +79,9 @@ def render_rule_list(rows: list[dict[str, Any]], output_format: str) -> str:
     header = ("ID", "FAMILY", "SEVERITY", "CATEGORY", "BACKEND", "SCOPE", "STATUS")
     keys = ("id", "family", "severity", "category", "backend", "scope", "status")
     body = [[str(row[key]) if row[key] is not None else DASH for key in keys] for row in rows]
+    for line, row in zip(body, rows, strict=True):
+        if row.get("opt_in"):
+            line[-1] += OPT_IN_MARK
     widths = [max(len(line[i]) for line in [header, *body]) for i in range(len(header))]
     lines = [
         "  ".join(cell.ljust(width) for cell, width in zip(line, widths, strict=True)).rstrip()
@@ -109,6 +117,10 @@ def render_explanation(detail: dict[str, Any], output_format: str) -> str:
         return json.dumps({"schema_version": 1, "rule": detail}, indent=2)
     lines = [f"{detail['id']}: {detail['title']}"]
     lines += [f"  {label:17}{DASH if detail[key] is None else detail[key]}" for label, key in _EXPLAIN_FIELDS]
+    if detail.get("opt_in"):
+        lines.append(
+            "  Opt-in rule: it runs only with --select (family or id) or a profile that enables it, e.g. --profile obo."
+        )
     if not detail["selectable"]:
         lines.append("  This rule is proposed only: it is not implemented, so it cannot be selected or executed.")
     return "\n".join(lines)

@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)",
+    "file": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)"
+    "stdout": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,62 +118,62 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
+   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:ddc0be3450f704eae8c8482fbdb942c59a25cdd7d83081c5a1104d8a67e1194f (149043 chars)",
+    "file": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ddc0be3450f704eae8c8482fbdb942c59a25cdd7d83081c5a1104d8a67e1194f (149043 chars)"
+    "stdout": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:8046c98c7de3c5e1803235159a52b6a7493f13bd2d1b102370ece8544be12b6f (45643 chars)",
+   "legacy_json_view": "sha256:c864c622ff08bc6abf3ff733e8e90ad3ead941c68396baff67abae7e07bd4417 (47680 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:27d41d27009d70959878c8f87a7c55431e66332213767aed01008263880b07e5 (142770 chars)",
+    "file": "sha256:d5dde55fc2cf6adbf2f9223e6098d427f6f314d609f1bb82a9d3a3f2a82a7ead (156813 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:27d41d27009d70959878c8f87a7c55431e66332213767aed01008263880b07e5 (142770 chars)"
+    "stdout": "sha256:d5dde55fc2cf6adbf2f9223e6098d427f6f314d609f1bb82a9d3a3f2a82a7ead (156813 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:a504ed43a61cfd489012576165d8557d4a7533a484ba855df0e8bc4ddc7a15bb (32022 chars)",
+    "file": "sha256:a317d6d999a96bfc7fb43294b802ea3f73f46be8c786a12165265b328bfc4861 (33279 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a504ed43a61cfd489012576165d8557d4a7533a484ba855df0e8bc4ddc7a15bb (32022 chars)"
+    "stdout": "sha256:a317d6d999a96bfc7fb43294b802ea3f73f46be8c786a12165265b328bfc4861 (33279 chars)"
    }
   },
   "json_clean": {
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:4f1f9ccf14424d6308ffe86ad7799e3ac526c8140ae08ba6988b311df2791188 (92091 chars)",
+    "file": "sha256:eb2f347827329448a614eb38c8df954ad472b795b4cd88d4381295b917a20b45 (103893 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:4f1f9ccf14424d6308ffe86ad7799e3ac526c8140ae08ba6988b311df2791188 (92091 chars)"
+    "stdout": "sha256:eb2f347827329448a614eb38c8df954ad472b795b4cd88d4381295b917a20b45 (103893 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:aa61f400b639529d9335d4b7c66f76956d2d2dbcbfc1e0d2503b4c48efcbfac9 (184182 chars)"
+    "stdout": "sha256:919133612656ecfe88679c884463d3a71001ef14c2ecb2ffe2e179942b6edecc (207786 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,136 +184,136 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:3cbfad9d3336cce4bc30561771d6221e307116516cfa7fdbfd7728ba5afce845 (92863 chars)",
+    "file": "sha256:b2d55aebf8654767b2ed1716e19c12f1d897d5aed5bffdd10df15ed75c2eec7e (104665 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:3cbfad9d3336cce4bc30561771d6221e307116516cfa7fdbfd7728ba5afce845 (92863 chars)"
+    "stdout": "sha256:b2d55aebf8654767b2ed1716e19c12f1d897d5aed5bffdd10df15ed75c2eec7e (104665 chars)"
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:c99ce0af6a6ac3b3c904f62384b7e7e8850f0370d6ad74c10c72474ef659fe58 (69142 chars)",
+   "legacy_json_view": "sha256:7b5ec9eb89e571938c8cbf6c5838f78781e87bd76e72308a30e3dc72985da59e (71179 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:a1c6f94b99d17322b1a2fd128d63eb00d52a4608c6732f705093bb0ae8e8636a (169163 chars)",
+    "file": "sha256:802eaf56a1c5db02a8343a7f82f6b8def98e4b0102837d1d89f3d485c171ca1d (183206 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a1c6f94b99d17322b1a2fd128d63eb00d52a4608c6732f705093bb0ae8e8636a (169163 chars)"
+    "stdout": "sha256:802eaf56a1c5db02a8343a7f82f6b8def98e4b0102837d1d89f3d485c171ca1d (183206 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:3fa1499418d34a4724d5123846694c3963ca18b0b06919384cc7b457607102f3 (261297 chars)"
+    "stdout": "sha256:6df17ea5c0d8b1d0ddfb406e0124739ee54d3ab9804974fb7ab5df7eb355c5f6 (287142 chars)"
    },
    "write_baseline": {
-    "count": 231,
+    "count": 237,
     "exit": 1
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
+   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:ddc0be3450f704eae8c8482fbdb942c59a25cdd7d83081c5a1104d8a67e1194f (149043 chars)",
+    "file": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ddc0be3450f704eae8c8482fbdb942c59a25cdd7d83081c5a1104d8a67e1194f (149043 chars)"
+    "stdout": "sha256:a7e6bbc315930db513410ed1335e95aefea46b5cbfd1a30dee30c435ae2e00a4 (163086 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:d1a9899f433f2d7a124aba75bb6342c632e34783ee51f87756cc909fb5959445 (241141 chars)"
+    "stdout": "sha256:eca53b691bab236bc56e42808c909ccc734cbc19375d69bd3c64456812145fd7 (266986 chars)"
    },
    "write_baseline": {
-    "count": 160,
+    "count": 166,
     "exit": 1
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:3732aecf0628c7f01ab77224102ef7b422aaec611dbd6bf94e399ae2e1a4af33 (51793 chars)",
+   "legacy_json_view": "sha256:b0c18b0feaf3b43d7be26ec90bb0310a8ac78b7fd165793dc16a1730dc7ed65a (53830 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:85bc0c99fff528b765b1d6a3503182fa22addf2f6d478bbb9af8dcddbd4716e1 (149358 chars)",
+    "file": "sha256:3ff69dc18467df5f3307de815c89c9f2c6898e06f3ec0b21cdfa8f2379a0e35f (163401 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:85bc0c99fff528b765b1d6a3503182fa22addf2f6d478bbb9af8dcddbd4716e1 (149358 chars)"
+    "stdout": "sha256:3ff69dc18467df5f3307de815c89c9f2c6898e06f3ec0b21cdfa8f2379a0e35f (163401 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
+   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:1b7299c7f7a9f140f8b42ad11fef9e5f06c59614ae7d08e58f5803438ad79584 (149004 chars)",
+    "file": "sha256:b92672d001155050cf6555aa18f0a180338f11185ac2c6f2b9fd6d24ad5de3f9 (163047 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:1b7299c7f7a9f140f8b42ad11fef9e5f06c59614ae7d08e58f5803438ad79584 (149004 chars)"
+    "stdout": "sha256:b92672d001155050cf6555aa18f0a180338f11185ac2c6f2b9fd6d24ad5de3f9 (163047 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
+   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:dd8e4c06b395948bf25fa2b40746478e8427a1531c7517abe4247e3a31a03931 (149050 chars)",
+    "file": "sha256:c6c94b7505a61196055b8b44b045b2e39e685ac8417e8f544c1a0f48f3a8fb62 (163093 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:dd8e4c06b395948bf25fa2b40746478e8427a1531c7517abe4247e3a31a03931 (149050 chars)"
+    "stdout": "sha256:c6c94b7505a61196055b8b44b045b2e39e685ac8417e8f544c1a0f48f3a8fb62 (163093 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:9dbd78429759ff04a73570de18d0b170637babc2a8d318c09127c89bb09eaf0c (54583 chars)",
+   "legacy_json_view": "sha256:a6099a4c2b41c9c55742052775e77c50c06a19f3e3501ee8c546efe068f1e9ca (56620 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:40e7c4f5371d7de170c9258c283e7679df28d73e69f0e4f678229f936402c5ed (151567 chars)",
+    "file": "sha256:92e4df58677ea83bc4c6da25e56bcfd86ba7f5b383f07fdf75685a081dc1f747 (165610 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:40e7c4f5371d7de170c9258c283e7679df28d73e69f0e4f678229f936402c5ed (151567 chars)"
+    "stdout": "sha256:92e4df58677ea83bc4c6da25e56bcfd86ba7f5b383f07fdf75685a081dc1f747 (165610 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:5c1ad4c2789d7029d0ac9080d862132ce529c7c2f7c7cbfd7b87e081858b048b (242739 chars)"
+    "stdout": "sha256:cad63f81f68b0f137f6bc6ac7c98e5840370aaecad89dbe4ec61f11ec53e6c47 (268584 chars)"
    },
    "write_baseline": {
-    "count": 170,
+    "count": 176,
     "exit": 1
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:11da47f7152a25090471e8a39daaa6380494a193a25fff889b771b188918e10c (59088 chars)",
+   "legacy_json_view": "sha256:0b860cd092e8e0abb7f4303994d2536b9ce19d72c834c0ff3ab79bfc66891fab (61125 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:e0f5793d8977eebf60b20b2a1abdc7557c58f37089b58ee62da804a6f6d5124e (157542 chars)",
+    "file": "sha256:c5c01c1a1c4252080e8781e096b5bf8e9d5d654efc33c430586a08ac32cb9f22 (171585 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e0f5793d8977eebf60b20b2a1abdc7557c58f37089b58ee62da804a6f6d5124e (157542 chars)"
+    "stdout": "sha256:c5c01c1a1c4252080e8781e096b5bf8e9d5d654efc33c430586a08ac32cb9f22 (171585 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:c9bc229791759a98a77abe7d4458b5b08bbf6d655b667fda7487c5b178540b10 (104195 chars)"
+    "stdout": "sha256:8fdd99db58be54d129abd86ba8d2acd6f9172d59ea462562439b78b918c29388 (96815 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:c9bc229791759a98a77abe7d4458b5b08bbf6d655b667fda7487c5b178540b10 (104195 chars)"
+    "stdout": "sha256:8fdd99db58be54d129abd86ba8d2acd6f9172d59ea462562439b78b918c29388 (96815 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:0b480901571c4c9d06bc89a474068f1e30a64a246a6673eff56a745b035301e0 (33650 chars)"
+    "stdout": "sha256:3b1588af0d75d47ef66cd8a5f5c8e743a569aab73a891ce408f78cd9ea374868 (31662 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:0b480901571c4c9d06bc89a474068f1e30a64a246a6673eff56a745b035301e0 (33650 chars)"
+    "stdout": "sha256:3b1588af0d75d47ef66cd8a5f5c8e743a569aab73a891ce408f78cd9ea374868 (31662 chars)"
    }
   },
   "missing_config": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:0ba58e86641378349797a1f4f862f1ec1385ea971e46a72b78f0ab8dc0008f29 (51473 chars)",
+   "legacy_json_view": "sha256:265328513761b9216f7a76def1687ac2308087d1a99b86d9bfa114efcae30169 (53510 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:619defef5f87073068c5c2cc569958970475d65678f0c1020ce88b64b444cf02 (169428 chars)",
+    "file": "sha256:896891e202832bc6f54fe1c480d2a85b3f9774910522c72825b6a06cdf000f61 (185881 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:619defef5f87073068c5c2cc569958970475d65678f0c1020ce88b64b444cf02 (169428 chars)"
+    "stdout": "sha256:896891e202832bc6f54fe1c480d2a85b3f9774910522c72825b6a06cdf000f61 (185881 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,40 +411,40 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:45b3cd24034419b71e46b8e22b7467e09284bd3ad4e093b929448005ea4019d4 (273285 chars)",
+    "file": "sha256:e514f4cd002f3a6c1c2f62cc8b44f355596f351bd0c569d926f0faf2fd1aa4f1 (296105 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:45b3cd24034419b71e46b8e22b7467e09284bd3ad4e093b929448005ea4019d4 (273285 chars)"
+    "stdout": "sha256:e514f4cd002f3a6c1c2f62cc8b44f355596f351bd0c569d926f0faf2fd1aa4f1 (296105 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:d10376d7ae2811459300ee09b43fc59698df20eea1dd49f6608eba9c342d7eee (30856 chars)",
+    "file": "sha256:823216fb75acde37c2589dea9774dc9ddbe7be7adfe35b815fe320b6c32b0f7b (32113 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d10376d7ae2811459300ee09b43fc59698df20eea1dd49f6608eba9c342d7eee (30856 chars)"
+    "stdout": "sha256:823216fb75acde37c2589dea9774dc9ddbe7be7adfe35b815fe320b6c32b0f7b (32113 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)",
+    "file": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)"
+    "stdout": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)"
    }
   },
   "profile_minimal_json": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:3dea3d4919f99f5ae2b98e2b2f9bbebeda214257b9402a3056749bf5c69b6334 (255962 chars)",
+    "file": "sha256:70536df11f65b947f882635da45bbb3b2a9fd69446580cca3f4572c4afc50f2f (278782 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:3dea3d4919f99f5ae2b98e2b2f9bbebeda214257b9402a3056749bf5c69b6334 (255962 chars)"
+    "stdout": "sha256:70536df11f65b947f882635da45bbb3b2a9fd69446580cca3f4572c4afc50f2f (278782 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:4eb75ed7ff16cf88cc4a33cbcdb8c30bf5997d2203818f07c4ce7e695eeb3578 (244605 chars)",
+    "file": "sha256:f41e41c405c57ab8edd6844bea35a33e01545f4d4daaafa7064c9794db1152ef (267425 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:4eb75ed7ff16cf88cc4a33cbcdb8c30bf5997d2203818f07c4ce7e695eeb3578 (244605 chars)"
+    "stdout": "sha256:f41e41c405c57ab8edd6844bea35a33e01545f4d4daaafa7064c9794db1152ef (267425 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:1c8a3221acf503518111d0b0d3c9e67c6224bb812ed6535043e109d08e9ec133 (47180 chars)",
+    "file": "sha256:13ab25122a9228482f9e1a5f51df2da06b0f8a5c876249f8c5c0d52c57b53bcd (48437 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:1c8a3221acf503518111d0b0d3c9e67c6224bb812ed6535043e109d08e9ec133 (47180 chars)"
+    "stdout": "sha256:13ab25122a9228482f9e1a5f51df2da06b0f8a5c876249f8c5c0d52c57b53bcd (48437 chars)"
    }
   },
   "text_clean": {
@@ -583,14 +583,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)",
+    "file": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ef32fb22b5e9cca7a9fe2b622fbb87dfbac19563909277e9ce27f129e80e2adc (30780 chars)"
+    "stdout": "sha256:181fc2d5717c042d402a709d906044604569ec453c502b502a19416bdae35bed (32037 chars)"
    }
   }
  },
@@ -753,6 +753,24 @@
     "rule": "GOV003",
     "severity": "warning",
     "suggestion": "Review references to local undeclared vocabulary terms."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "7c1b6ba38354b081e4b818f742ff877f4ee8909273414fb098606f2bd9dbdf9d",
+    "focus": "https://example.test/onto#Dep",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "59df3e20816d3deba60c72bbe6a37443fe93ee3cc4bb841cae05243204f9ea1c",
+    "focus": "https://example.test/onto#depProp",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
    },
    {
     "confidence": "heuristic",
@@ -1365,6 +1383,42 @@
     "rule": "GOV002",
     "severity": "info",
     "suggestion": "Pin or resolve imported ontology versions in an explicit import manifest."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "3e55220ac4c5f99b226794417997bf3831b7992c6383f5f1542797492c5cdf90",
+    "focus": "https://example.test/onto.owl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "da4ed52bd7d1e70062ee1a9c0c69dcfac183293f58d47e3a8a529238bd1776f6",
+    "focus": "https://example.test/second.ttl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "efeae69517352fea97cbbe927446f026d86ef2a4a51ea20787283d244b71ae95",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no change history.",
+    "rule": "GOV011",
+    "severity": "info",
+    "suggestion": "Record changes with skos:changeNote, vann:changes or owl:priorVersion."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "58829a268021596db1092a70bcc17a5760e7360c62fa94e7156404eff7f681cd",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no review or approval metadata.",
+    "rule": "GOV017",
+    "severity": "info",
+    "suggestion": "Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy."
    },
    {
     "confidence": "certain",
@@ -2207,6 +2261,24 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "7c1b6ba38354b081e4b818f742ff877f4ee8909273414fb098606f2bd9dbdf9d",
+    "focus": "https://example.test/onto#Dep",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "59df3e20816d3deba60c72bbe6a37443fe93ee3cc4bb841cae05243204f9ea1c",
+    "focus": "https://example.test/onto#depProp",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "3f9814e98b9a48a05866f5888cc5ba2704c39127c62841ef908c095d58125841",
     "focus": "https://example.test/onto.owl",
     "message": "Ontology IRI contains a serialization file extension.",
@@ -2816,6 +2888,42 @@
     "rule": "GOV002",
     "severity": "info",
     "suggestion": "Pin or resolve imported ontology versions in an explicit import manifest."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "3e55220ac4c5f99b226794417997bf3831b7992c6383f5f1542797492c5cdf90",
+    "focus": "https://example.test/onto.owl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "da4ed52bd7d1e70062ee1a9c0c69dcfac183293f58d47e3a8a529238bd1776f6",
+    "focus": "https://example.test/second.ttl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "efeae69517352fea97cbbe927446f026d86ef2a4a51ea20787283d244b71ae95",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no change history.",
+    "rule": "GOV011",
+    "severity": "info",
+    "suggestion": "Record changes with skos:changeNote, vann:changes or owl:priorVersion."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "58829a268021596db1092a70bcc17a5760e7360c62fa94e7156404eff7f681cd",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no review or approval metadata.",
+    "rule": "GOV017",
+    "severity": "info",
+    "suggestion": "Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy."
    },
    {
     "confidence": "certain",
@@ -3658,6 +3766,24 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "7c1b6ba38354b081e4b818f742ff877f4ee8909273414fb098606f2bd9dbdf9d",
+    "focus": "https://example.test/onto#Dep",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "59df3e20816d3deba60c72bbe6a37443fe93ee3cc4bb841cae05243204f9ea1c",
+    "focus": "https://example.test/onto#depProp",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "3f9814e98b9a48a05866f5888cc5ba2704c39127c62841ef908c095d58125841",
     "focus": "https://example.test/onto.owl",
     "message": "Ontology IRI contains a serialization file extension.",
@@ -4258,6 +4384,42 @@
     "rule": "GOV002",
     "severity": "info",
     "suggestion": "Pin or resolve imported ontology versions in an explicit import manifest."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "3e55220ac4c5f99b226794417997bf3831b7992c6383f5f1542797492c5cdf90",
+    "focus": "https://example.test/onto.owl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "da4ed52bd7d1e70062ee1a9c0c69dcfac183293f58d47e3a8a529238bd1776f6",
+    "focus": "https://example.test/second.ttl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "efeae69517352fea97cbbe927446f026d86ef2a4a51ea20787283d244b71ae95",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no change history.",
+    "rule": "GOV011",
+    "severity": "info",
+    "suggestion": "Record changes with skos:changeNote, vann:changes or owl:priorVersion."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "58829a268021596db1092a70bcc17a5760e7360c62fa94e7156404eff7f681cd",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no review or approval metadata.",
+    "rule": "GOV017",
+    "severity": "info",
+    "suggestion": "Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy."
    },
    {
     "confidence": "certain",
@@ -5100,6 +5262,24 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "7c1b6ba38354b081e4b818f742ff877f4ee8909273414fb098606f2bd9dbdf9d",
+    "focus": "https://example.test/onto#Dep",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "59df3e20816d3deba60c72bbe6a37443fe93ee3cc4bb841cae05243204f9ea1c",
+    "focus": "https://example.test/onto#depProp",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "3f9814e98b9a48a05866f5888cc5ba2704c39127c62841ef908c095d58125841",
     "focus": "https://example.test/onto.owl",
     "message": "Ontology IRI contains a serialization file extension.",
@@ -5745,6 +5925,42 @@
     "rule": "GOV002",
     "severity": "info",
     "suggestion": "Pin or resolve imported ontology versions in an explicit import manifest."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "3e55220ac4c5f99b226794417997bf3831b7992c6383f5f1542797492c5cdf90",
+    "focus": "https://example.test/onto.owl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "da4ed52bd7d1e70062ee1a9c0c69dcfac183293f58d47e3a8a529238bd1776f6",
+    "focus": "https://example.test/second.ttl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "efeae69517352fea97cbbe927446f026d86ef2a4a51ea20787283d244b71ae95",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no change history.",
+    "rule": "GOV011",
+    "severity": "info",
+    "suggestion": "Record changes with skos:changeNote, vann:changes or owl:priorVersion."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "58829a268021596db1092a70bcc17a5760e7360c62fa94e7156404eff7f681cd",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no review or approval metadata.",
+    "rule": "GOV017",
+    "severity": "info",
+    "suggestion": "Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy."
    },
    {
     "confidence": "certain",
@@ -6641,6 +6857,24 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "7c1b6ba38354b081e4b818f742ff877f4ee8909273414fb098606f2bd9dbdf9d",
+    "focus": "https://example.test/onto#Dep",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "59df3e20816d3deba60c72bbe6a37443fe93ee3cc4bb841cae05243204f9ea1c",
+    "focus": "https://example.test/onto#depProp",
+    "message": "Deprecated term has neither a replacement nor an obsolescence reason.",
+    "rule": "GOV008",
+    "severity": "warning",
+    "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "3f9814e98b9a48a05866f5888cc5ba2704c39127c62841ef908c095d58125841",
     "focus": "https://example.test/onto.owl",
     "message": "Ontology IRI contains a serialization file extension.",
@@ -7304,6 +7538,42 @@
     "rule": "GOV002",
     "severity": "info",
     "suggestion": "Pin or resolve imported ontology versions in an explicit import manifest."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "3e55220ac4c5f99b226794417997bf3831b7992c6383f5f1542797492c5cdf90",
+    "focus": "https://example.test/onto.owl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "da4ed52bd7d1e70062ee1a9c0c69dcfac183293f58d47e3a8a529238bd1776f6",
+    "focus": "https://example.test/second.ttl",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "efeae69517352fea97cbbe927446f026d86ef2a4a51ea20787283d244b71ae95",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no change history.",
+    "rule": "GOV011",
+    "severity": "info",
+    "suggestion": "Record changes with skos:changeNote, vann:changes or owl:priorVersion."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "58829a268021596db1092a70bcc17a5760e7360c62fa94e7156404eff7f681cd",
+    "focus": "https://example.test/second.ttl",
+    "message": "Versioned ontology records no review or approval metadata.",
+    "rule": "GOV017",
+    "severity": "info",
+    "suggestion": "Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy."
    },
    {
     "confidence": "certain",
@@ -9169,6 +9439,15 @@
     "rule": "CLS002",
     "severity": "info",
     "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "16f6b430bc247abecbb0acf0859889b88af1d6e964cae158041ff3bf4d252c58",
+    "focus": "relative-ontology.rdf",
+    "message": "Ontology names no contact, publisher or maintainer.",
+    "rule": "GOV004",
+    "severity": "info",
+    "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
    },
    {
     "confidence": "heuristic",

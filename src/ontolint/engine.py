@@ -24,8 +24,9 @@ from .models import (
     RunResult,
 )
 from .policy import Policy
+from .profiles import is_opt_in
 from .reporting import SEVERITY_ORDER
-from .rules.builtin import module_runners
+from .rules.builtin import RULE_MODULES, module_name, module_runners, module_specs
 from .rules.registry import RuleRegistry, default_registry
 from .rules.runtime import RuleContext
 from .rules.support import is_local
@@ -35,6 +36,10 @@ type RuleFamily = Callable[[RuleContext], None]
 # Execution order is part of the observable contract (first emission wins de-duplication).
 # Keys match ``RuleSpec.module``; the order comes from ``rules.builtin.RULE_MODULES``.
 FAMILY_RUNNERS: dict[str, RuleFamily] = module_runners()
+# Modules whose rules are all opt-in never run unless a selection names them.
+OPT_IN_MODULES: frozenset[str] = frozenset(
+    module_name(m) for m in RULE_MODULES if all(is_opt_in(spec.family) for spec in module_specs(m))
+)
 
 
 @dataclass(frozen=True)
@@ -60,8 +65,9 @@ def sort_findings(findings: list[Finding]) -> list[Finding]:
 
 def run_rules(ctx: RuleContext) -> list[Finding]:
     """Run every rule family against ``ctx`` and return its sorted, de-duplicated findings."""
-    for family in FAMILY_RUNNERS.values():
-        family(ctx)
+    for name, family in FAMILY_RUNNERS.items():
+        if name not in OPT_IN_MODULES:
+            family(ctx)
     return sort_findings(ctx.findings)
 
 

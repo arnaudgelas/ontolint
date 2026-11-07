@@ -2,8 +2,10 @@
 
 Precedence, from the broadest to the strongest word:
 
-1. The chosen set is ``--select`` when given, otherwise the profile's selection, otherwise every rule.
-   An explicit ``--select`` *replaces* the profile's selection (it does not add to it).
+1. The chosen set is ``--select`` when given, otherwise the profile's selection, otherwise every default
+   rule (every rule outside :data:`~ontolint.profiles.OPT_IN_FAMILIES`).  An explicit ``--select``
+   *replaces* the profile's selection (it does not add to it).  Opt-in families run only when named by
+   ``--select`` (family or rule id), by the profile's ``select``, or by the profile's ``opt_in``.
 2. Ignores always win: ``--ignore``, the profile's ``ignore`` and the policy file's ``ignored_rules``
    are unioned and removed from the chosen set, whatever selected the rule.
 3. Severity overrides apply to what remains: profile first, then the policy file (policy wins).
@@ -20,7 +22,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from .models import RuleBackend, RuleSpec
-from .profiles import Profile
+from .profiles import Profile, is_opt_in
 from .rules.registry import RuleRegistry, UnknownSelectorError
 
 
@@ -52,6 +54,21 @@ def _engine_rules(specs: Sequence[RuleSpec]) -> tuple[RuleSpec, ...]:
     return tuple(s for s in specs if s.backend is not RuleBackend.CLI)
 
 
+def default_rules(specs: Sequence[RuleSpec]) -> tuple[RuleSpec, ...]:
+    """The rules that run when nothing is selected: everything outside the opt-in families."""
+    return tuple(s for s in specs if not is_opt_in(s.family))
+
+
+def _chosen(registry: RuleRegistry, profile: Profile | None, select: Sequence[str]) -> tuple[RuleSpec, ...]:
+    tokens = tuple(select) or (profile.select if profile else ())
+    chosen = registry.select(tokens) if tokens else default_rules(registry.all())
+    opted = profile.opt_in if profile and not select else ()
+    if not opted:
+        return chosen
+    extra = registry.select(opted)
+    return tuple(sorted({*chosen, *extra}, key=lambda s: s.rule_id))
+
+
 def resolve_selection(
     registry: RuleRegistry,
     profile: Profile | None,
@@ -59,8 +76,7 @@ def resolve_selection(
     ignore: Sequence[str],
 ) -> Selection:
     """Compose profile, ``--select`` and ``--ignore`` (policy ignores are applied by the engine)."""
-    chosen_tokens = tuple(select) or (profile.select if profile else ())
-    chosen = _engine_rules(registry.select(chosen_tokens))
+    chosen = _engine_rules(_chosen(registry, profile, select))
     ignore_tokens = (*(profile.ignore if profile else ()), *ignore)
     ignored_ids = {s.rule_id for s in registry.select(ignore_tokens)} if ignore_tokens else set()
     return Selection(

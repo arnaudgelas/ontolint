@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from ontolint.models import RuleSpec
+from ontolint.profiles import is_opt_in
 
 from .builtin import RULE_SPECS
 
@@ -46,14 +47,16 @@ class RuleRegistry:
         return tuple(self._specs[rule_id] for rule_id in sorted(self._specs))
 
     def select(self, selectors: Iterable[str]) -> tuple[RuleSpec, ...]:
-        """Select rule identifiers or complete families (case-insensitive); no selectors selects everything.
+        """Select rule identifiers or complete families (case-insensitive).
+
+        With no selectors, every default rule is selected; opt-in families such as OBO are excluded.
 
         Raises :class:`UnknownSelectorError` for selectors that match nothing, so a typo can
         never silently turn into "nothing to check".
         """
         requested = {selector.strip().upper() for selector in selectors}
         if not requested:
-            return self.all()
+            return tuple(spec for spec in self.all() if not is_opt_in(spec.family))
         families = {spec.family.upper() for spec in self._specs.values()}
         unknown = requested - self._specs.keys() - families
         if unknown:

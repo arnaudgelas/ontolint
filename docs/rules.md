@@ -23,26 +23,25 @@ All examples assume these prefixes:
 ```
 
 
-**193 of 329 catalogue rules are implemented; 136 are TODO.**
+**228 of 307 catalogue rules are implemented; 79 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
-| [ALIGN](#align) | 0 | 16 |
+| [ALIGN](#align) | 9 | 7 |
 | [CLS](#cls) | 25 | 0 |
 | [COMP](#comp) | 0 | 18 |
 | [CQ](#cq) | 0 | 14 |
 | [DATA](#data) | 2 | 0 |
 | [FAIR](#fair) | 0 | 18 |
-| [GOV](#gov) | 3 | 17 |
+| [GOV](#gov) | 12 | 4 |
 | [INPUT](#input) | 1 | 0 |
 | [IRI](#iri) | 16 | 1 |
 | [LEX](#lex) | 24 | 0 |
 | [METRIC](#metric) | 13 | 0 |
-| [OBO](#obo) | 0 | 12 |
+| [OBO](#obo) | 12 | 0 |
 | [ONT](#ont) | 6 | 0 |
-| [OPS](#ops) | 0 | 18 |
 | [OWL](#owl) | 45 | 0 |
-| [SEC](#sec) | 7 | 7 |
+| [SEC](#sec) | 12 | 2 |
 | [SEM](#sem) | 1 | 15 |
 | [SHACL](#shacl) | 1 | 0 |
 | [SHQ](#shq) | 27 | 0 |
@@ -51,25 +50,214 @@ All examples assume these prefixes:
 
 ## ALIGN
 
+#### ALIGN002: Misspelt SKOS or OWL mapping predicate
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Use the exact SKOS or OWL mapping property IRI (for example skos:exactMatch); the asserted one is unknown.
+
+*Flagged:* wrong case
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactmatch a:A .
+```
+
+Reported: `http://www.w3.org/2004/02/skos/core#exactmatch is not a SKOS or OWL mapping property; did you mean skos:exactMatch?`
+
+*Clean:* correct property
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactMatch a:A .
+```
+
+#### ALIGN003: exactMatch chain conflicting with broadMatch or narrowMatch
+
+- **Severity:** error
+- **Scope:** term
+- **Category:** deterministic
+- **Fix:** skos:exactMatch is transitive and disjoint with broad/narrowMatch; drop one mapping of the chain.
+
+*Flagged:* chain with broad
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .
+```
+
+Reported: `http://a.test/X and http://c.test/Z are exactMatch-equivalent through a chain but also linked by broadMatch/narrowMatch.`
+
+*Clean:* direct conflict is SKOS012
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y ; skos:broadMatch b:Y .
+```
+
+#### ALIGN004: Contradictory hierarchical or associative mapping strengths
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** deterministic
+- **Fix:** Keep one mapping strength per pair: broadMatch, narrowMatch and relatedMatch exclude each other.
+
+*Flagged:* mutual broad
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:broadMatch b:Y . b:Y skos:broadMatch a:X .
+```
+
+Reported: `http://a.test/X and http://b.test/Y are each mapped as broader than the other.`
+
+*Clean:* consistent pair
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:broadMatch b:Y . b:Y skos:narrowMatch a:X .
+```
+
+#### ALIGN005: Term with several distinct exactMatch targets in one namespace
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Keep one exactMatch per target namespace, or relate the targets to each other if they are the same thing.
+
+*Flagged:* two targets
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactMatch a:One, a:Two .
+```
+
+Reported: `Term has 2 distinct skos:exactMatch targets in http://a.test/: http://a.test/One, http://a.test/Two.`
+
+*Clean:* one target per namespace
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactMatch a:One, b:One .
+```
+
+#### ALIGN007: Symmetric SKOS mapping asserted in one direction only
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Assert the inverse skos:exactMatch/closeMatch too, since both terms are described in this file.
+
+*Flagged:* one-way exactMatch
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:B a skos:Concept .
+```
+
+Reported: `skos:exactMatch to https://example.test/onto#B has no inverse assertion, although https://example.test/onto#B is described here.`
+
+*Clean:* both ways
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:B skos:exactMatch ex:A .
+```
+
+#### ALIGN009: Mapping between a class and a property
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Map classes to classes and properties to properties; the declared kinds are incompatible.
+
+*Flagged:* class to property
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:C a owl:Class . a:p a owl:ObjectProperty . ex:C skos:exactMatch a:p .
+```
+
+Reported: `skos:exactMatch maps class https://example.test/onto#C to property http://a.test/p.`
+
+*Clean:* class to class
+
+```turtle
+ex:C a owl:Class . ex:D a owl:Class . ex:C owl:equivalentClass ex:D .
+```
+
+#### ALIGN013: Duplicate mapping through several predicates
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Keep the most precise mapping predicate; the same pair is related by several equivalent assertions.
+
+*Flagged:* exact and equivalentClass
+
+```turtle
+ex:A owl:equivalentClass ex:B ; skos:exactMatch ex:B .
+```
+
+Reported: `https://example.test/onto#A and https://example.test/onto#B are related by several equivalence predicates: owl:equivalentClass, skos:exactMatch.`
+
+*Clean:* single predicate both ways
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:B skos:exactMatch ex:A .
+```
+
+#### ALIGN014: broadMatch or narrowMatch contradicting the asserted hierarchy
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** deterministic
+- **Fix:** Reverse the mapping or fix the hierarchy; the file places the broader term below the narrower one.
+
+*Flagged:* broadMatch against subclass
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:B rdfs:subClassOf ex:A .
+```
+
+Reported: `skos:broadMatch makes https://example.test/onto#B broader than https://example.test/onto#A, but the asserted hierarchy places https://example.test/onto#B below https://example.test/onto#A.`
+
+*Clean:* consistent
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:A rdfs:subClassOf ex:B .
+```
+
+#### ALIGN015: Declared mapping set without version, creator or licence
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** deterministic
+- **Fix:** Add a version, a creator and a licence to the sssom:MappingSet.
+
+*Flagged:* bare mapping set
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> .
+```
+
+Reported: `Mapping set has no a version, no a creator, no a licence.`
+
+*Clean:* complete
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:creator 'x' ; dcterms:license ex:L .
+```
+
 ### ALIGN: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
 | --- | --- | --- | --- | --- |
 | ALIGN001 | TODO | Mapping whose target term is unknown to the mapping registry or the aligned ontology. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN002 | TODO | Mapping asserted with a predicate that is not a recognised SKOS or OWL mapping property. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN003 | TODO | exactMatch chain that conflicts with a broadMatch or narrowMatch between the same terms. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN004 | TODO | Same pair of terms linked by contradictory mapping strengths (for example exact and broad). | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN005 | TODO | Source term with several exactMatch targets in one target ontology. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN006 | TODO | Mapping to a deprecated or obsolete target term. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN007 | TODO | Symmetric mapping (exactMatch, closeMatch) asserted in one direction only. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN008 | TODO | Mapping without provenance such as justification, author or date. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN009 | TODO | Mapping between incompatible term kinds, for example a class to a property. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN010 | TODO | Equivalence mapping that makes a class unsatisfiable once merged (reasoner). | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN011 | TODO | Mapped terms whose labels differ so much that the mapping looks wrong. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN012 | TODO | Mapping target outside the namespaces declared for the alignment. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN013 | TODO | Duplicate mapping stated through several predicates or in both directions. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN014 | TODO | broadMatch or narrowMatch that contradicts the asserted subclass hierarchy. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN015 | TODO | Mapping set without version, creator or licence metadata. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN016 | TODO | Share of mapped terms below the coverage expected for the alignment. | mapping registry or reasoner | mapping fixture and review expectation |
 
 ## CLS
@@ -811,24 +999,270 @@ Reported: `Local URI used in owl:equivalentClass but not declared a class.`
 ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 ```
 
+#### GOV004: Ontology without a contact or maintainer
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** heuristic
+- **Fix:** Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.
+
+*Flagged:* no contact
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator "A" ; dcterms:license ex:l .
+```
+
+Reported: `Ontology names no contact, publisher or maintainer.`
+
+*Clean:* publisher
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; dcterms:publisher "P" .
+```
+
+#### GOV008: Deprecated term without a replacement or reason
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms.
+
+*Flagged:* deprecated bare
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true .
+```
+
+Reported: `Deprecated term has neither a replacement nor an obsolescence reason.`
+
+*Clean:* replacement
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:A a owl:Class ; owl:deprecated true ; dcterms:isReplacedBy ex:B .
+```
+
+#### GOV009: Term without creator attribution
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Add dcterms:creator or dcterms:contributor to the terms that lack attribution.
+
+*Flagged:* 3 of 4 annotated
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:creator "A" .
+ex:T1 a owl:Class ; dcterms:creator "A" .
+ex:T2 a owl:Class ; dcterms:creator "A" .
+ex:T3 a owl:Class .
+```
+
+Reported: `Term has no creator or contributor attribution, though most local terms do.`
+
+*Clean:* 1 of 4 annotated
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:creator "A" .
+ex:T1 a owl:Class .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+#### GOV010: Term without creation or modification date
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Add dcterms:created or dcterms:modified to the terms that lack a date.
+
+*Flagged:* 3 of 4 annotated
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T1 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T2 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T3 a owl:Class .
+```
+
+Reported: `Term has no creation or modification date, though most local terms do.`
+
+*Clean:* 1 of 4 annotated
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T1 a owl:Class .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+#### GOV011: Versioned ontology without change history
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** heuristic
+- **Fix:** Record changes with skos:changeNote, vann:changes or owl:priorVersion.
+
+*Flagged:* version info, no history
+
+```turtle
+ex:o a owl:Ontology ; owl:versionInfo "1" .
+```
+
+Reported: `Versioned ontology records no change history.`
+
+*Clean:* unversioned
+
+```turtle
+ex:o a owl:Ontology .
+```
+
+#### GOV012: Term without a status
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Add a status such as vs:term_status to the terms that lack one.
+
+*Flagged:* 3 of 4 annotated
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; vs:term_status 'stable' .
+ex:T1 a owl:Class ; vs:term_status 'stable' .
+ex:T2 a owl:Class ; vs:term_status 'stable' .
+ex:T3 a owl:Class .
+```
+
+Reported: `Term has no status, though most local terms do.`
+
+*Clean:* 1 of 4 annotated
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; vs:term_status 'stable' .
+ex:T1 a owl:Class .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+#### GOV013: Obsolete term still used in axioms
+
+- **Severity:** warning
+- **Scope:** axiom
+- **Category:** heuristic
+- **Fix:** Replace references to owl:DeprecatedClass/owl:DeprecatedProperty terms or retire the referencing axiom.
+
+*Flagged:* subclass of obsolete class
+
+```turtle
+ex:Old a owl:DeprecatedClass . ex:A rdfs:subClassOf ex:Old .
+```
+
+Reported: `Obsolete term https://example.test/onto#Old appears as object of http://www.w3.org/2000/01/rdf-schema#subClassOf.`
+
+*Clean:* unused
+
+```turtle
+ex:Old a owl:DeprecatedClass .
+```
+
+#### GOV014: Term defined outside the base namespace
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Move the definition to the owning vocabulary or keep only an import stub for external terms.
+
+*Flagged:* foreign class with subclass axiom
+
+```turtle
+<https://other.test/Thing> a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+Reported: `Term is defined with axioms outside the base namespace https://example.test/onto#.`
+
+*Clean:* foreign stub without axioms
+
+```turtle
+<https://other.test/Thing> a owl:Class .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+#### GOV017: Versioned ontology without review or approval metadata
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** heuristic
+- **Fix:** Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy.
+
+*Flagged:* version info, no review
+
+```turtle
+ex:o a owl:Ontology ; owl:versionInfo "1" .
+```
+
+Reported: `Versioned ontology records no review or approval metadata.`
+
+*Clean:* unversioned
+
+```turtle
+ex:o a owl:Ontology .
+```
+
 ### GOV: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
 | --- | --- | --- | --- | --- |
-| GOV004 | TODO | Ontology without a contact or maintainer. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV005 | TODO | Ontology without a licence statement. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV006 | TODO | No issue tracker or contribution policy declared. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV007 | TODO | No release or versioning policy declared. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV008 | TODO | Deprecated term without a replacement and a reason, as the policy requires. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV009 | TODO | Term without creator or responsible-party attribution. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV010 | TODO | Term without creation or modification date. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV011 | TODO | No change history or changelog annotation. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV012 | TODO | Term without a status such as provisional or stable. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV013 | TODO | Obsolete term still used in axioms. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV014 | TODO | Terms defined outside the namespaces the policy allows. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV015 | TODO | Imported ontology without licence information. | policy or network backend | policy fixture or controlled HTTP fixture |
 | GOV016 | TODO | Terms missing the annotations the policy requires. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV017 | TODO | No review or approval metadata for released terms. | policy or network backend | policy fixture or controlled HTTP fixture |
 | GOV018 | TODO | Maintainer identifiers that cannot be resolved (network). | policy or network backend | policy fixture or controlled HTTP fixture |
 | GOV019 | TODO | Licences of imports that conflict under the policy's compatibility table. | policy or network backend | policy fixture or controlled HTTP fixture |
 | GOV020 | TODO | Policy file that is invalid or for a different policy-pack version. | policy or network backend | policy fixture or controlled HTTP fixture |
@@ -2248,22 +2682,305 @@ ex:s9 a owl:Class .
 
 ## OBO
 
-### OBO: TODO (to be implemented)
+#### OBO001: OBO term IRI that does not follow the PREFIX_0000000 pattern
 
-| Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
-| --- | --- | --- | --- | --- |
-| OBO001 | TODO | Identifier that does not follow the OBO pattern PREFIX_0000000. | OBO policy pack | OBO fixture |
-| OBO002 | TODO | Missing metadata the OBO Foundry requires, such as title, description, licence and contact. | OBO policy pack | OBO fixture |
-| OBO003 | TODO | Term without a textual definition (IAO:0000115) or definition source. | OBO policy pack | OBO fixture |
-| OBO004 | TODO | Term without a label, or a label that is not unique. | OBO policy pack | OBO fixture |
-| OBO005 | TODO | Ad hoc relation used where an RO relation exists. | OBO policy pack | OBO fixture |
-| OBO006 | TODO | Definition without cross-reference provenance. | OBO policy pack | OBO fixture |
-| OBO007 | TODO | Obsolete term without an obsolescence reason or replacement annotation. | OBO policy pack | OBO fixture |
-| OBO008 | TODO | Class that is not placed under an upper-level (BFO) parent. | OBO policy pack | OBO fixture |
-| OBO009 | TODO | Synonym without scope (exact, broad, narrow, related). | OBO policy pack | OBO fixture |
-| OBO010 | TODO | Import not provided as a module (for example MIREOT or ODK-style). | OBO policy pack | OBO fixture |
-| OBO011 | TODO | Ontology or version IRI that does not follow the OBO PURL pattern. | OBO policy pack | OBO fixture |
-| OBO012 | TODO | Label that breaks OBO conventions, such as capitalisation or abbreviations. | OBO policy pack | OBO fixture |
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN with a numeric local part.
+
+*Flagged:* letters in the number
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:XYZ_12a a owl:Class .
+```
+
+Reported: `OBO identifier 'XYZ_12a' does not follow the PREFIX_0000000 pattern.`
+
+*Clean:* canonical identifier
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:XYZ_0000001 a owl:Class .
+```
+
+#### OBO002: Ontology header missing OBO-required title, description or license
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Add dcterms:title, dcterms:description and dcterms:license to the owl:Ontology header.
+
+*Flagged:* no title
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; dcterms:description "d" ; dcterms:license ex:L .
+```
+
+Reported: `Ontology header has no title (dcterms:title).`
+
+*Clean:* complete header
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; dcterms:title "t" ; dcterms:description "d" ; dcterms:license ex:L .
+```
+
+#### OBO003: Term without an IAO textual definition
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Add an obo:IAO_0000115 (definition) annotation with a non-empty text.
+
+*Flagged:* class without definition
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
+```
+
+Reported: `Term has no textual definition (obo:IAO_0000115).`
+
+*Clean:* defined class
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
+```
+
+#### OBO004: Term without an rdfs:label, or with a label shared by another term
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Give every term exactly one rdfs:label and make labels unique within each language.
+
+*Flagged:* class without label
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
+```
+
+Reported: `Term has no rdfs:label.`
+
+*Clean:* unique labels
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "a" . ex:B a owl:Class ; rdfs:label "b" .
+```
+
+#### OBO005: Object property duplicating a well-known RO or BFO relation
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Reuse the RO/BFO relation, or assert rdfs:subPropertyOf or owl:equivalentProperty to it.
+
+*Flagged:* ad hoc part of
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:partOf a owl:ObjectProperty ; rdfs:label "part of" .
+```
+
+Reported: `Object property labelled 'part of' duplicates the existing relation http://purl.obolibrary.org/obo/BFO_0000050.`
+
+*Clean:* sub-property of the RO relation
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:subPropertyOf obo:BFO_0000050 .
+```
+
+#### OBO006: Definition without provenance
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Annotate the definition axiom with oboInOwl:hasDbXref, or add an obo:IAO_0000119 definition source.
+
+*Flagged:* definition without source
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
+```
+
+Reported: `Definition has no source (oboInOwl:hasDbXref or obo:IAO_0000119).`
+
+*Clean:* definition axiom with xref
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; oio:hasDbXref "PMID:1" .
+```
+
+#### OBO007: Obsolete term without a reason or replacement annotation
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Add obo:IAO_0000231 (reason), obo:IAO_0100001 (replaced by) or oboInOwl:consider to the obsolete term.
+
+*Flagged:* obsolete class bare
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "true"^^xsd:boolean .
+```
+
+Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
+
+*Clean:* with reason
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 obo:OMO_0000001 .
+```
+
+#### OBO008: Class with no asserted path to a BFO class
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Place the class under a BFO class through asserted rdfs:subClassOf or a named genus.
+
+*Flagged:* class with no parent
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
+```
+
+Reported: `Class has no asserted path to a BFO class.`
+
+*Clean:* direct BFO parent
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf obo:BFO_0000002 .
+```
+
+#### OBO009: Synonym annotation without scope
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Use oboInOwl:hasExactSynonym, hasBroadSynonym, hasNarrowSynonym or hasRelatedSynonym.
+
+*Flagged:* oboInOwl:hasSynonym
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A oio:hasSynonym "alias" .
+```
+
+Reported: `Synonym 'alias' (http://www.geneontology.org/formats/oboInOwl#hasSynonym) has no scope.`
+
+*Clean:* exact
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A oio:hasExactSynonym "alias" .
+```
+
+#### OBO010: Whole OBO ontology imported instead of a module
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Import an ODK-style module (for example .../obo/<id>/imports/<term>_import.owl) instead of the full ontology.
+
+*Flagged:* whole ontology
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports obo:uberon.owl .
+```
+
+Reported: `Import http://purl.obolibrary.org/obo/uberon.owl is a whole ontology, not an import module.`
+
+*Clean:* ODK module
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports <http://purl.obolibrary.org/obo/uberon/imports/ro_import.owl> .
+```
+
+#### OBO011: Ontology or version IRI that does not follow the OBO PURL pattern
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Use http://purl.obolibrary.org/obo/<id>.owl and .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.
+
+*Flagged:* non-OBO ontology IRI
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology .
+```
+
+Reported: `Ontology IRI https://example.test/onto#o does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
+
+*Clean:* plain ontology
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:xyz.owl a owl:Ontology .
+```
+
+#### OBO012: Label that breaks OBO naming conventions
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Fix:** Use lowercase labels (except proper nouns and acronyms) with single spaces and no underscores.
+
+*Flagged:* leading whitespace
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label " cell" .
+```
+
+Reported: `Label ' cell' has leading, trailing or repeated whitespace.`
+
+*Clean:* lowercase
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell membrane" .
+```
 
 ## ONT
 
@@ -2392,31 +3109,6 @@ Reported: `Missing ontology description.`
 ```turtle
 <https://example.test/onto> a owl:Ontology ; rdfs:comment "An ontology." .
 ```
-
-## OPS
-
-### OPS: TODO (to be implemented)
-
-| Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
-| --- | --- | --- | --- | --- |
-| OPS001 | TODO | Run summary with counts per severity and per rule. | CLI and report layer | CLI/configuration fixture |
-| OPS002 | TODO | Baseline file that suppresses known findings. | CLI and report layer | CLI/configuration fixture |
-| OPS003 | TODO | Baseline entries that no longer match any finding. | CLI and report layer | CLI/configuration fixture |
-| OPS004 | TODO | Exit-code policy that fails only on new findings. | CLI and report layer | CLI/configuration fixture |
-| OPS005 | TODO | SARIF output that is valid and carries complete rule metadata. | CLI and report layer | CLI/configuration fixture |
-| OPS006 | TODO | Report that records the tool and catalogue versions. | CLI and report layer | CLI/configuration fixture |
-| OPS007 | TODO | Check that output is deterministic across runs. | CLI and report layer | CLI/configuration fixture |
-| OPS008 | TODO | Configuration file validated against a schema, with unknown keys reported. | CLI and report layer | CLI/configuration fixture |
-| OPS009 | TODO | Ignores or severity overrides that name unknown rules. | CLI and report layer | CLI/configuration fixture |
-| OPS010 | TODO | Run that exceeds its time or resource budget. | CLI and report layer | CLI/configuration fixture |
-| OPS011 | TODO | Per-rule timing in the report. | CLI and report layer | CLI/configuration fixture |
-| OPS012 | TODO | Additional report formats such as JUnit, Markdown and HTML. | CLI and report layer | CLI/configuration fixture |
-| OPS013 | TODO | Aggregated report across several files with per-file totals. | CLI and report layer | CLI/configuration fixture |
-| OPS014 | TODO | Linting limited to files or lines changed in a git diff. | CLI and report layer | CLI/configuration fixture |
-| OPS015 | TODO | Inline suppression with a mandatory reason. | CLI and report layer | CLI/configuration fixture |
-| OPS016 | TODO | Suppression that expires after a date. | CLI and report layer | CLI/configuration fixture |
-| OPS017 | TODO | Result cache keyed by graph content. | CLI and report layer | CLI/configuration fixture |
-| OPS018 | TODO | Exit code 2 explained with the reasons that caused it. | CLI and report layer | CLI/configuration fixture |
 
 ## OWL
 
@@ -3393,6 +4085,32 @@ Reported: `owl:AllDifferent has no member list.`
 
 *Clean:* `four triples with a limit of four` (built programmatically; see `tests/rule_cases/`)
 
+#### SEC004: Deeply nested or very long blank-node structure
+
+- **Severity:** warning
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Flatten the structure or give intermediate nodes IRIs; recursive consumers can exhaust their stack on it.
+
+*Flagged:* `101 nested blank nodes` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Blank-node structure is nested 101 levels deep (limit 100).`
+
+*Clean:* `100 nested blank nodes` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC005: Unreasonably large literal value
+
+- **Severity:** warning
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Store large payloads outside the ontology and reference them by IRI.
+
+*Flagged:* `literal of 100001 characters` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 100000).`
+
+*Clean:* `literal of 100000 characters` (built programmatically; see `tests/rule_cases/`)
+
 #### SEC006: Remote JSON-LD context refused
 
 - **Severity:** error
@@ -3403,6 +4121,27 @@ Reported: `owl:AllDifferent has no member list.`
 *Flagged:* `remote @context` (built programmatically; see `tests/rule_cases/`)
 
 *Clean:* `inline @context` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC008: IRI with an unsafe scheme
+
+- **Severity:** warning
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Use http(s), urn or another resolvable-by-design scheme instead of file:, javascript:, data: or similar.
+
+*Flagged:* file IRI
+
+```turtle
+ex:a ex:p <file:///etc/passwd> .
+```
+
+Reported: `IRI uses the unsafe scheme file:.`
+
+*Clean:* https IRI
+
+```turtle
+ex:a ex:p <https://example.test/x> .
+```
 
 #### SEC009: Unsafe input path
 
@@ -3437,6 +4176,27 @@ Reported: `owl:AllDifferent has no member list.`
 
 *Clean:* `plain input` (built programmatically; see `tests/rule_cases/`)
 
+#### SEC012: Control or bidirectional-override characters
+
+- **Severity:** warning
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Remove control and bidirectional-override characters; they can disguise the text a reader sees.
+
+*Flagged:* bidi override in label
+
+```turtle
+ex:a rdfs:label "abc\u202Edef" .
+```
+
+Reported: `Literal on http://www.w3.org/2000/01/rdf-schema#label contains control or bidirectional-override characters (U+202E).`
+
+*Clean:* plain label
+
+```turtle
+ex:a rdfs:label "abc" .
+```
+
 #### SEC013: Network access attempted while disabled
 
 - **Severity:** error
@@ -3448,17 +4208,33 @@ Reported: `owl:AllDifferent has no member list.`
 
 *Clean:* `ordinary parse` (built programmatically; see `tests/rule_cases/`)
 
+#### SEC014: Credentials embedded in an IRI
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Remove the user:password@ part of the IRI and rotate the exposed credential.
+
+*Flagged:* user and password
+
+```turtle
+ex:a ex:p <https://alice:secret@example.test/x> .
+```
+
+Reported: `IRI embeds a password for user 'alice'.`
+
+*Clean:* user without password
+
+```turtle
+ex:a ex:p <https://alice@example.test/x> .
+```
+
 ### SEC: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
 | --- | --- | --- | --- | --- |
 | SEC003 | TODO | Parsing that exceeds a time budget. | safe loader or network policy | malicious-input fixture |
-| SEC004 | TODO | Deeply nested blank nodes or lists. | safe loader or network policy | malicious-input fixture |
-| SEC005 | TODO | Literal values that are unreasonably large. | safe loader or network policy | malicious-input fixture |
 | SEC007 | TODO | owl:imports not followed by default and reported as skipped. | safe loader or network policy | malicious-input fixture |
-| SEC008 | TODO | IRIs with unsafe schemes such as file: or javascript:. | safe loader or network policy | malicious-input fixture |
-| SEC012 | TODO | Control or bidirectional characters in literals and IRIs. | safe loader or network policy | malicious-input fixture |
-| SEC014 | TODO | Credentials embedded in an IRI (user information). | safe loader or network policy | malicious-input fixture |
 
 ## SEM
 

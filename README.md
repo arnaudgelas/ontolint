@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://www.python.org/"><img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="docs/rules.md"><img alt="Rules implemented: 193 of 329" src="https://img.shields.io/badge/rules-193%2F329_implemented-brightgreen"></a>
+  <a href="docs/rules.md"><img alt="Rules implemented: 228 of 307" src="https://img.shields.io/badge/rules-228%2F307_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -32,12 +32,13 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-193 of the 329 catalogue rules are implemented; the rest are planned. The
+228 of the 307 catalogue rules are implemented; the rest are planned. The
 [rule reference](docs/rules.md) documents each one with an example.
 
-- 182 Python graph checks for metadata, identifiers, IRIs, labels and lexical
+- 217 Python graph checks for metadata, identifiers, IRIs, labels and lexical
   quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
-  shape quality, governance and ontology metrics.
+  shape quality, governance, ontology metrics, mapping quality, input-safety
+  hygiene and, opt-in, OBO Foundry conventions.
 - `INPUT001` for RDF parsing failures.
 - `SHACL001` for optional pySHACL validation results.
 - `TOOL001` for configuration and execution failures.
@@ -132,6 +133,14 @@ case-insensitively, comma-separated and/or repeated. Unknown selectors, empty en
 | `recommended` | all (same as no profile) | none | `error` |
 | `ci` | all | none | `warning` |
 | `strict` | all | `ONT003` becomes `error` | `info` (any finding fails) |
+| `obo` | all, plus the opt-in `OBO` family | none | `warning` |
+
+**Opt-in rule families.** The `OBO` family encodes OBO Foundry conventions, so it
+never runs by default: it is excluded from running without a profile and from
+`recommended`, `ci`, `strict` and `minimal`. Enable it with `--profile obo`,
+`--select OBO` or `--select OBO003`. `--list-rules` and `--explain` mark these
+rules as opt-in. An explicit `--select` replaces a profile's selection, so
+`--profile obo --select LEX` runs only `LEX`.
 
 Precedence when options combine:
 
@@ -350,14 +359,17 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   (`SEC010`), compressed files are refused (`SEC011`), and relative paths that
   escape the working directory or symlinks that leave it are refused (`SEC009`).
 - Rejected inputs are reported as `SECxxx: ...` on stderr with exit code `2`,
-  like a parse failure.
+  like a parse failure. Post-parse hygiene checks (`SEC004`, `SEC005`,
+  `SEC008`, `SEC012`, `SEC014`) are ordinary findings.
 
 ## Roadmap
 
 [`data/rule_catalogue.csv`](data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 329 entries: 193 executable diagnostics and 136 proposed
-candidates. The additional entry beyond the original 328-rule roadmap is
-`TOOL001`, an operational diagnostic for the linter itself.
+catalogue. It records 307 entries: 228 executable diagnostics and 79 proposed
+candidates. The additional entry beyond the original roadmap is `TOOL001`, an
+operational diagnostic for the linter itself. The 18 `OPS` entries of the
+original roadmap describe command-line and report features, not checks on an
+ontology; they moved to [docs/cli-features.md](docs/cli-features.md).
 
 The next major areas are comprehensive rule fixtures and false-positive cases,
 OWLAPI/ROBOT and reasoner adapters, safe import-closure support, richer SHACL

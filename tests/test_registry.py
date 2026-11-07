@@ -28,6 +28,7 @@ from ontolint.models import (
 )
 from ontolint.ontolint import FIXES, SEVERITY
 from ontolint.policy import Policy
+from ontolint.profiles import is_opt_in
 from ontolint.reporting import render_executions, summarise_executions
 from ontolint.rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from ontolint.rules.specs import RULE_SPECS
@@ -35,7 +36,7 @@ from ontolint.rules.specs import RULE_SPECS
 ROOT = Path(__file__).parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
 BASE = "https://example.test/onto#"
-CATALOGUE_ROW_COUNT = 329
+CATALOGUE_ROW_COUNT = 307
 IMPLEMENTED_COUNT = len(implemented_rows())  # derived: rule groups flip catalogue rows independently
 EXECUTED, SKIPPED, UNSUPPORTED, FAILED = (
     ExecutionStatus.EXECUTED,
@@ -200,7 +201,8 @@ def test_unknown_selectors_are_rejected_not_ignored() -> None:
 def test_run_records_exactly_one_execution_per_rule_and_matches_linter_run() -> None:
     result = _kitchen(shapes=True).execute()
     expected = _kitchen(shapes=True).run()
-    assert [x.rule_id for x in result.executions] == sorted(SEVERITY)
+    default_ids = sorted(rule_id for rule_id in SEVERITY if not is_opt_in(default_registry().get(rule_id).family))
+    assert [x.rule_id for x in result.executions] == default_ids
     graph_findings = tuple(f for f in result.findings if f.rule != "SHACL001")
     assert graph_findings == tuple(expected)
     statuses = _statuses(result)

@@ -23,10 +23,12 @@ from typing import TYPE_CHECKING, Protocol, cast
 from ontolint.models import RuleBackend, RuleSpec
 
 from . import (
+    alignment,
     class_heuristics,
     classes,
     external,
     governance,
+    governance_metadata,
     hierarchy_quality,
     identifiers,
     iri_lexical_extras,
@@ -35,10 +37,12 @@ from . import (
     lexical_quality,
     metadata,
     metrics,
+    obo,
     owl,
     owl_axioms,
     owl_expressions,
     safe_loader,
+    safety,
     shacl_authoring,
     shacl_quality,
     shapes,
@@ -83,6 +87,10 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     class_heuristics,
     iri_lexical_extras,
     shacl_quality,
+    safety,
+    governance_metadata,
+    alignment,
+    obo,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).
