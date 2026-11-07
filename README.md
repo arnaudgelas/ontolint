@@ -137,7 +137,7 @@ uv run pytest -q
 uv run pytest -q -n auto
 
 # Mutation testing (opt-in)
-uv run pytest -p pytest_gremlins.plugin --gremlins --gremlin-parallel --gremlin-cache
+uv run pytest --gremlins --no-cov --gremlin-parallel --gremlin-cache
 
 # Lint the project
 uv run ruff check .
