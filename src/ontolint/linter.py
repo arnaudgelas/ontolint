@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Set
+from dataclasses import replace
 
 from rdflib import Graph, URIRef
 from rdflib.term import Identifier, Node
@@ -28,6 +29,7 @@ class Linter:
         depth_limit: int = DEFAULT_DEPTH_LIMIT,
         inheritance_limit: int = DEFAULT_INHERITANCE_LIMIT,
         soup_limit: int = DEFAULT_SOUP_LIMIT,
+        policy: Policy | None = None,
     ):
         self.g = graph
         self.shapes = shapes
@@ -36,14 +38,18 @@ class Linter:
         self.depth_limit = depth_limit
         self.inheritance_limit = inheritance_limit
         self.soup_limit = soup_limit
-        policy = Policy(
+        built = Policy(
             base=base,
             languages=self.languages,
             depth_limit=depth_limit,
             inheritance_limit=inheritance_limit,
             soup_limit=soup_limit,
         )
-        self.rule_context = engine.build_context(graph, shapes, policy)
+        if policy is not None:  # a full policy (extra thresholds, annotations ...); explicit base/languages win
+            built = replace(
+                policy, base=base if base is not None else policy.base, languages=self.languages or policy.languages
+            )
+        self.rule_context = engine.build_context(graph, shapes, built)
         self.context = self.rule_context.context
         self.issues: list[Finding] = self.rule_context.findings
         self.seen: set[tuple[str, str, str]] = self.rule_context.seen

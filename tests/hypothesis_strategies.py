@@ -575,6 +575,14 @@ def valid_policy_mappings(draw: st.DrawFn) -> dict[str, Any]:
         "extra_definition_predicates": st.lists(_PREDICATE_IRIS, max_size=3),
         "extra_label_predicates": st.lists(_PREDICATE_IRIS, max_size=3),
         "ignored_rules": st.lists(st.sampled_from(RULE_IDS + ("NOPE999",)), max_size=4),
+        "required_annotations": st.dictionaries(
+            st.sampled_from(("class", "property", "individual", "concept")),
+            st.lists(_PREDICATE_IRIS, max_size=3),
+            max_size=4,
+        ),
+        "alignment_namespaces": st.lists(_PREDICATE_IRIS, max_size=3),
+        "alignment_min_coverage": st.one_of(st.none(), _RATIOS),
+        "policy_version": st.just(1),
         "severity_overrides": st.dictionaries(
             st.sampled_from(RULE_IDS), st.sampled_from(("error", "warning", "info")), max_size=4
         ),

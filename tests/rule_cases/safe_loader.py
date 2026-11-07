@@ -1,4 +1,4 @@
-"""Cases for the safe-loader rules (SEC001, SEC002, SEC006, SEC009, SEC010, SEC011, SEC013).
+"""Cases for the safe-loader rules (SEC001, SEC002, SEC003, SEC006, SEC009, SEC010, SEC011, SEC013).
 
 Each probe writes the input to a temporary directory, runs the CLI there and returns the rule ids it
 printed to stderr.
@@ -52,6 +52,12 @@ def cli_codes(
     return run
 
 
+def _big_turtle() -> str:
+    """About 125k triples: seconds of parsing, far beyond a 50 ms budget on any machine."""
+    rows = [f'e:s{i} e:p "v{i}" ; e:q e:o{i % 50} ; e:r {i} ; e:t [ e:u "x" ] .' for i in range(25000)]
+    return "@prefix e: <http://e/> .\n" + "\n".join(rows) + "\n"
+
+
 def _outside_symlink() -> Collection[str]:
     with tempfile.TemporaryDirectory() as outside:
         target = Path(outside) / "secret.ttl"
@@ -91,6 +97,18 @@ CASES = {
     "SEC002": rule_cases(
         [probed("four triples with a limit of three", cli_codes("a.ttl", TTL, "--max-triples", "3"))],
         [probed("four triples with a limit of four", cli_codes("a.ttl", TTL, "--max-triples", "4"))],
+    ),
+    "SEC003": rule_cases(
+        [
+            probed(
+                "125k triples with a 50 ms budget",
+                cli_codes("a.ttl", _big_turtle(), "--max-parse-seconds", "0.05"),
+            )
+        ],
+        [
+            probed("small input with a generous budget", cli_codes("a.ttl", TTL, "--max-parse-seconds", "120")),
+            probed("no budget configured", cli_codes("a.ttl", TTL)),
+        ],
     ),
     "SEC006": rule_cases(
         [probed("remote @context", cli_codes("a.jsonld", JSONLD_REMOTE))],

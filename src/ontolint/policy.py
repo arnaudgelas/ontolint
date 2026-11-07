@@ -77,10 +77,16 @@ class Policy:
     extra_label_predicates: tuple[str, ...] = ()
     ignored_rules: frozenset[str] = frozenset()
     severity_overrides: tuple[tuple[str, str], ...] = ()
+    required_annotations: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    alignment_namespaces: tuple[str, ...] = ()
+    alignment_min_coverage: float | None = None
+    max_parse_seconds: float | None = None  # wall-clock budget for parsing one input (SEC003); None = no budget
+    unknown_keys: tuple[str, ...] = ()  # config keys the policy file carried but ontolint does not know (GOV020)
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
             _check_limit(name, getattr(self, name))
+        _check_parse_seconds(self.max_parse_seconds)
 
     @property
     def severity_mapping(self) -> dict[str, str]:
@@ -90,6 +96,7 @@ class Policy:
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> Policy:
         """Create policy from JSON-compatible data and reject malformed values."""
+        _check_version(data)
         base = data.get("base")
         languages = data.get("languages", [])
         ignored_rules = data.get("ignored_rules", [])
@@ -130,7 +137,62 @@ class Policy:
             extra_label_predicates=extra_labels,
             ignored_rules=frozenset(ignored_rules),
             severity_overrides=tuple(sorted(overrides.items())),
+            required_annotations=_required_annotations(data),
+            alignment_namespaces=_iri_list(data, "alignment_namespaces"),
+            alignment_min_coverage=_optional_ratio(data, "alignment_min_coverage"),
+            max_parse_seconds=_parse_seconds(data),
+            unknown_keys=tuple(sorted({str(key) for key in data} - _known_keys())),
         )
+
+
+POLICY_VERSION = 1
+ANNOTATION_KINDS = ("class", "property", "individual", "concept")
+
+
+class PolicyVersionError(ValueError):
+    """The policy file declares a ``policy_version`` this ontolint does not support (reported as GOV020)."""
+
+
+def _known_keys() -> frozenset[str]:
+    """Every accepted top-level policy key: the Policy fields (minus bookkeeping) and ``policy_version``."""
+    return frozenset(f.name for f in fields(Policy) if f.name != "unknown_keys") | {"policy_version"}
+
+
+def _check_version(data: Mapping[str, Any]) -> None:
+    """Accept an absent version (= current) or the current one; reject anything else."""
+    value = data.get("policy_version", POLICY_VERSION)
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise PolicyVersionError("policy_version must be an integer")
+    if value != POLICY_VERSION:
+        raise PolicyVersionError(
+            f"policy_version {value} is not supported (this ontolint reads policy version {POLICY_VERSION})"
+        )
+
+
+def _optional_ratio(data: Mapping[str, Any], name: str) -> float | None:
+    """Validate an optional ratio in [0, 1]; ``null`` or absent means off."""
+    value = data.get(name)
+    if value is None:
+        return None
+    ratio = _real(name, value)
+    if not 0.0 <= ratio <= 1.0:
+        raise ValueError(f"{name} must be a ratio between 0 and 1")
+    return ratio
+
+
+def _required_annotations(data: Mapping[str, Any]) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Validate ``required_annotations``: term kind -> absolute predicate IRIs; sorted by kind, empty kinds dropped."""
+    value = data.get("required_annotations", {})
+    if not isinstance(value, dict):
+        raise ValueError("required_annotations must map term kinds to lists of predicate IRIs")
+    result: list[tuple[str, tuple[str, ...]]] = []
+    for kind in sorted(value, key=str):
+        if kind not in ANNOTATION_KINDS:
+            raise ValueError(f"required_annotations kind must be one of {', '.join(ANNOTATION_KINDS)}: {kind!r}")
+        predicates = _iri_list(value, kind)
+        if predicates:
+            result.append((kind, predicates))
+    return tuple(result)
 
 
 def _iri_list(data: Mapping[str, Any], name: str) -> tuple[str, ...]:
@@ -197,6 +259,27 @@ def _loader_limits(data: Mapping[str, Any]) -> dict[str, int]:
         _check_limit(name, value)
         values[name] = value
     return values
+
+
+MAX_PARSE_SECONDS = 86_400.0
+"""Upper bound of ``max_parse_seconds`` (one day): anything longer is a typo, not a budget."""
+
+
+def _check_parse_seconds(value: Any) -> None:
+    """``None`` (no budget) or a finite number in ``(0, MAX_PARSE_SECONDS]``; booleans and strings are refused."""
+    if value is None:
+        return
+    seconds = _real("max_parse_seconds", value)
+    if seconds <= 0:
+        raise ValueError("max_parse_seconds must be positive")
+    if seconds > MAX_PARSE_SECONDS:
+        raise ValueError(f"max_parse_seconds must be at most {MAX_PARSE_SECONDS:g}")
+
+
+def _parse_seconds(data: Mapping[str, Any]) -> float | None:
+    value = data.get("max_parse_seconds")
+    _check_parse_seconds(value)
+    return None if value is None else float(value)
 
 
 METRIC_FIELDS = tuple(f.name for f in fields(Policy) if f.name.startswith("metric_"))

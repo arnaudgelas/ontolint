@@ -14,7 +14,7 @@
   <a href="https://pypi.org/project/ontolint/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/ontolint"></a>
   <a href="https://pypi.org/project/ontolint/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/ontolint"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 228 of 307" src="https://img.shields.io/badge/rules-228%2F307_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 239 of 294" src="https://img.shields.io/badge/rules-239%2F294_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -33,7 +33,7 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-228 of the 307 catalogue rules are implemented; the rest are planned. The
+239 of the 294 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
 - 217 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -173,13 +173,14 @@ case-insensitively, comma-separated and/or repeated. Unknown selectors, empty en
 | `minimal` | `ONT`, `IRI`, `DATA`, `SKOS`, `SHACL`, `SEM` (structural integrity) | none | `error` |
 | `recommended` | all (same as no profile) | none | `error` |
 | `ci` | all | none | `warning` |
-| `strict` | all | `ONT003` becomes `error` | `info` (any finding fails) |
+| `strict` | all except `SEC007` | `ONT003` becomes `error` | `info` (any finding fails) |
 | `obo` | all, plus the opt-in `OBO` family | none | `warning` |
+| `fair` | all, plus the opt-in `FAIR` family | none | `warning` |
 
-**Opt-in rule families.** The `OBO` family encodes OBO Foundry conventions, so it
-never runs by default: it is excluded from running without a profile and from
-`recommended`, `ci`, `strict` and `minimal`. Enable it with `--profile obo`,
-`--select OBO` or `--select OBO003`. `--list-rules` and `--explain` mark these
+**Opt-in rule families.** The `OBO` family (OBO Foundry conventions) and the `FAIR` family (offline publishing
+checks) never run by default: it is excluded from running without a profile and from
+`recommended`, `ci`, `strict` and `minimal`. Enable them with `--profile obo`,
+`--profile fair`, `--select OBO`, `--select FAIR` or a single id such as `--select OBO003`. `--list-rules` and `--explain` mark these
 rules as opt-in. An explicit `--select` replaces a profile's selection, so
 `--profile obo --select LEX` runs only `LEX`.
 
@@ -283,9 +284,23 @@ ignored rules, and severity overrides.
   "inheritance_limit": 5,
   "soup_limit": 15,
   "ignored_rules": ["CLS002"],
-  "severity_overrides": {"ONT003": "error", "OWL005": "info"}
+  "severity_overrides": {"ONT003": "error", "OWL005": "info"},
+  "required_annotations": {"class": ["http://www.w3.org/2004/02/skos/core#definition"]},
+  "alignment_namespaces": ["http://purl.obolibrary.org/obo/"],
+  "alignment_min_coverage": 0.5,
+  "max_parse_seconds": 60
 }
 ```
+
+The optional keys switch rules on only when set: `required_annotations` maps a term kind
+(`class`, `property`, `individual`, `concept`) to the predicates every owned term of that
+kind must carry (`GOV016`); `alignment_namespaces` lists the namespaces mapping targets
+must belong to (`ALIGN012`); `alignment_min_coverage` is the share of classes and
+properties that must have a mapping (`ALIGN016`). Unknown keys are reported by `GOV020`,
+and an unsupported `policy_version` rejects the file. `max_parse_seconds` (also
+`--max-parse-seconds`) limits the time spent parsing one input and reports `SEC003`
+when it is exceeded; it parses in a worker process, so leave it unset for the fastest
+in-process load.
 
 ```bash
 # Emit SARIF using a policy
@@ -419,11 +434,13 @@ Ontologies are untrusted input, so the loader is deliberately strict:
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 307 entries: 228 executable diagnostics and 79 proposed
+catalogue. It records 294 entries: 239 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an
 ontology; they moved to [docs/cli-features.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/cli-features.md).
+Thirteen further entries that cannot be specified soundly, or duplicate another rule, were
+removed; see [docs/dropped-rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/dropped-rules.md).
 
 The next major areas are comprehensive rule fixtures and false-positive cases,
 OWLAPI/ROBOT and reasoner adapters, safe import-closure support, richer SHACL

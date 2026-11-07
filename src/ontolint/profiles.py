@@ -12,9 +12,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 # Rule families that never run unless asked for: by ``--select`` (family or rule id) or by a profile's
-# ``opt_in``.  They encode conventions that only make sense for some ontologies (here: OBO Foundry
-# ontologies), so the default selection, ``recommended``, ``ci``, ``strict`` and ``minimal`` skip them.
-OPT_IN_FAMILIES: frozenset[str] = frozenset({"OBO"})
+# ``opt_in``.  They encode conventions that only make sense for some ontologies (OBO Foundry ontologies, or
+# ontologies that are being published), so the default selection, ``recommended``, ``ci``, ``strict`` and
+# ``minimal`` skip them.
+OPT_IN_FAMILIES: frozenset[str] = frozenset({"OBO", "FAIR"})
 
 
 def is_opt_in(family: str) -> bool:
@@ -59,8 +60,15 @@ PROFILES: dict[str, Profile] = {
             fail_on="warning",
         ),
         Profile(
+            "fair",
+            "Every default rule plus the opt-in offline FAIR publishing rules (FAIR); gate on warnings.",
+            opt_in=("FAIR",),
+            fail_on="warning",
+        ),
+        Profile(
             "strict",
-            "Every rule; a missing license is an error and any finding at all fails the run.",
+            "Every rule except the SEC007 imports note; a missing license is an error and any other finding fails.",
+            ignore=("SEC007",),
             severity_overrides=(("ONT003", "error"),),
             fail_on="info",
         ),

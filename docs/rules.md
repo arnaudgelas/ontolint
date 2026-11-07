@@ -23,17 +23,17 @@ All examples assume these prefixes:
 ```
 
 
-**228 of 307 catalogue rules are implemented; 79 are TODO.**
+**239 of 294 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
-| [ALIGN](#align) | 9 | 7 |
+| [ALIGN](#align) | 11 | 4 |
 | [CLS](#cls) | 25 | 0 |
-| [COMP](#comp) | 0 | 18 |
-| [CQ](#cq) | 0 | 14 |
+| [COMP](#comp) | 0 | 16 |
+| [CQ](#cq) | 0 | 13 |
 | [DATA](#data) | 2 | 0 |
-| [FAIR](#fair) | 0 | 18 |
-| [GOV](#gov) | 12 | 4 |
+| [FAIR](#fair) | 5 | 13 |
+| [GOV](#gov) | 14 | 1 |
 | [INPUT](#input) | 1 | 0 |
 | [IRI](#iri) | 16 | 1 |
 | [LEX](#lex) | 24 | 0 |
@@ -41,8 +41,8 @@ All examples assume these prefixes:
 | [OBO](#obo) | 12 | 0 |
 | [ONT](#ont) | 6 | 0 |
 | [OWL](#owl) | 45 | 0 |
-| [SEC](#sec) | 12 | 2 |
-| [SEM](#sem) | 1 | 15 |
+| [SEC](#sec) | 14 | 0 |
+| [SEM](#sem) | 1 | 7 |
 | [SHACL](#shacl) | 1 | 0 |
 | [SHQ](#shq) | 27 | 0 |
 | [SKOS](#skos) | 21 | 0 |
@@ -185,6 +185,29 @@ Reported: `skos:exactMatch maps class https://example.test/onto#C to property ht
 ex:C a owl:Class . ex:D a owl:Class . ex:C owl:equivalentClass ex:D .
 ```
 
+#### ALIGN012: Mapping target outside the declared alignment namespaces
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** deterministic
+- **Fix:** Map to a term inside one of alignment_namespaces, or add the target's namespace to the policy file.
+
+*Flagged:* exactMatch outside
+
+```turtle
+ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
+```
+
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=())`.
+
+Reported: `skos:exactMatch target https://elsewhere.test/A is outside the declared alignment namespaces.`
+
+*Clean:* silent without policy
+
+```turtle
+ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
+```
+
 #### ALIGN013: Duplicate mapping through several predicates
 
 - **Severity:** info
@@ -248,17 +271,56 @@ Reported: `Mapping set has no a version, no a creator, no a licence.`
 ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:creator 'x' ; dcterms:license ex:L .
 ```
 
+#### ALIGN016: Mapping coverage below the expected ratio
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Align more classes and properties (skos:exactMatch, owl:equivalentClass) or lower alignment_min_coverage.
+
+*Flagged:* 1 of 10 mapped
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+ex:C0 skos:exactMatch <https://ref.test/a#C0> .
+```
+
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=0.5, max_parse_seconds=None, unknown_keys=())`.
+
+Reported: `1 of 10 classes and properties have a mapping (0.10 < 0.50).`
+
+*Clean:* silent without policy
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+```
+
 ### ALIGN: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
 | --- | --- | --- | --- | --- |
 | ALIGN001 | TODO | Mapping whose target term is unknown to the mapping registry or the aligned ontology. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN006 | TODO | Mapping to a deprecated or obsolete target term. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN008 | TODO | Mapping without provenance such as justification, author or date. | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN010 | TODO | Equivalence mapping that makes a class unsatisfiable once merged (reasoner). | mapping registry or reasoner | mapping fixture and review expectation |
 | ALIGN011 | TODO | Mapped terms whose labels differ so much that the mapping looks wrong. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN012 | TODO | Mapping target outside the namespaces declared for the alignment. | mapping registry or reasoner | mapping fixture and review expectation |
-| ALIGN016 | TODO | Share of mapped terms below the coverage expected for the alignment. | mapping registry or reasoner | mapping fixture and review expectation |
 
 ## CLS
 
@@ -827,13 +889,11 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 | --- | --- | --- | --- | --- |
 | COMP001 | TODO | Term removed from the new version without having been deprecated first. | ontology diff and reasoner | before/after ontology fixture |
 | COMP002 | TODO | Existing term whose IRI changed between versions. | ontology diff and reasoner | before/after ontology fixture |
-| COMP003 | TODO | Term deprecated without a replacement pointer or reason. | ontology diff and reasoner | before/after ontology fixture |
 | COMP004 | TODO | Subclass or superclass axiom removed, weakening the hierarchy. | ontology diff and reasoner | before/after ontology fixture |
 | COMP005 | TODO | New axiom that makes previously valid data inconsistent (reasoner). | ontology diff and reasoner | before/after ontology fixture |
 | COMP006 | TODO | Domain or range narrowed so existing assertions would be reclassified. | ontology diff and reasoner | before/after ontology fixture |
 | COMP007 | TODO | Property characteristic changed, for example made functional or transitive. | ontology diff and reasoner | before/after ontology fixture |
 | COMP008 | TODO | Cardinality restriction tightened compared with the old version. | ontology diff and reasoner | before/after ontology fixture |
-| COMP009 | TODO | Label or definition changed enough to alter the meaning of a term. | ontology diff and reasoner | before/after ontology fixture |
 | COMP010 | TODO | Term changed kind, for example class to individual or object to datatype property. | ontology diff and reasoner | before/after ontology fixture |
 | COMP011 | TODO | Content changed but owl:versionIRI or owl:versionInfo was not updated. | ontology diff and reasoner | before/after ontology fixture |
 | COMP012 | TODO | Version identifier that does not increase relative to the old version. | ontology diff and reasoner | before/after ontology fixture |
@@ -860,7 +920,6 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 | CQ008 | TODO | Query that exceeds the time or result budget. | SPARQL query runner | positive and negative query fixtures |
 | CQ009 | TODO | Ontology terms that no competency question exercises. | SPARQL query runner | positive and negative query fixtures |
 | CQ010 | TODO | Duplicate or near-duplicate competency questions. | SPARQL query runner | positive and negative query fixtures |
-| CQ011 | TODO | Question that only succeeds with inferences that are not materialised. | SPARQL query runner | positive and negative query fixtures |
 | CQ012 | TODO | Question that passed in the baseline run but fails now. | SPARQL query runner | positive and negative query fixtures |
 | CQ013 | TODO | Question without an identifier, natural-language text or requirement link. | SPARQL query runner | positive and negative query fixtures |
 | CQ014 | TODO | Query with unbound variables or a cartesian-product pattern. | SPARQL query runner | positive and negative query fixtures |
@@ -911,6 +970,111 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .
 
 ## FAIR
 
+#### FAIR004: Ontology or version IRI on a mutable or local host instead of a persistent identifier
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Mint the IRI under a persistent-identifier service (w3id.org, purl.org, doi.org) or a domain you control.
+
+*Flagged:* raw github
+
+```turtle
+<https://raw.githubusercontent.com/org/repo/main/o.owl> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI https://raw.githubusercontent.com/org/repo/main/o.owl is on the mutable host raw.githubusercontent.com, not a persistent identifier.`
+
+*Clean:* w3id
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+#### FAIR006: Licence given as a text literal or as an IRI outside the well-known licence families
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Point dcterms:license at a licence IRI such as https://spdx.org/licenses/CC-BY-4.0 or a Creative Commons URL.
+
+*Flagged:* plain text
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license 'CC BY 4.0' .
+```
+
+Reported: `Licence 'CC BY 4.0' is a text literal, not a licence IRI.`
+
+*Clean:* cc by
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+```
+
+#### FAIR007: Version IRI equal to the ontology IRI, with a floating marker, or without a version token
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Give each release its own immutable owl:versionIRI containing a version or date, never latest or main.
+
+*Flagged:* same as ontology IRI
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto is the same as the ontology IRI, so it does not identify one release.`
+
+*Clean:* dated
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/2024-01-31/onto.owl> .
+```
+
+#### FAIR011: Creator or contributor identifier that is not a well-formed ORCID iD or ROR identifier
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Use the full ORCID iD (https://orcid.org/0000-0002-1825-0097) or ROR id; check the digits and checksum.
+
+*Flagged:* bad ORCID checksum
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0098> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-0098' fails the ISO 7064 mod 11-2 checksum.`
+
+*Clean:* valid ORCID
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0097> .
+```
+
+#### FAIR017: Deprecated ontology or version without a pointer to its successor
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** context-dependent
+- **Fix:** Add dcterms:isReplacedBy (or obo:IAO_0100001) to the deprecated ontology, naming its replacement.
+
+*Flagged:* deprecated ontology
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true .
+```
+
+Reported: `Deprecated ontology has no successor (dcterms:isReplacedBy or obo:IAO_0100001).`
+
+*Clean:* replaced by
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; dcterms:isReplacedBy <https://w3id.org/example/new> .
+```
+
 ### FAIR: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
@@ -918,20 +1082,15 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .
 | FAIR001 | TODO | Ontology IRI that does not resolve. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR002 | TODO | Sampled term IRIs that cannot be dereferenced. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR003 | TODO | Resolution that returns no RDF serialisation through content negotiation. | controlled network backend | mocked HTTP and metadata fixture |
-| FAIR004 | TODO | Identifier not persistent, for example not on a PURL or w3id service or with unstable redirects. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR005 | TODO | Ontology not registered in a public registry such as OBO Foundry, BioPortal or LOV. | controlled network backend | mocked HTTP and metadata fixture |
-| FAIR006 | TODO | Licence IRI that does not resolve or is not machine-readable. | controlled network backend | mocked HTTP and metadata fixture |
-| FAIR007 | TODO | owl:versionIRI that does not resolve. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR008 | TODO | owl:imports target that is unreachable. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR009 | TODO | Homepage, documentation or issue-tracker URL that is broken. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR010 | TODO | Metadata that cannot be retrieved through HTTP headers or the content of the response. | controlled network backend | mocked HTTP and metadata fixture |
-| FAIR011 | TODO | Creator or contributor identifiers (ORCID, ROR) that do not resolve. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR012 | TODO | Terms reused from external namespaces that no longer resolve. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR013 | TODO | Version IRI that serves content which has changed since release. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR014 | TODO | Release not published in the expected serialisations. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR015 | TODO | Release artefact without a checksum or signature. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR016 | TODO | No machine-readable dataset metadata such as VoID or DCAT. | controlled network backend | mocked HTTP and metadata fixture |
-| FAIR017 | TODO | Superseded version that does not point to its successor. | controlled network backend | mocked HTTP and metadata fixture |
 | FAIR018 | TODO | Share of sampled IRIs returning 4xx or 5xx above a threshold. | controlled network backend | mocked HTTP and metadata fixture |
 
 ## GOV
@@ -1237,6 +1396,29 @@ Reported: `Term is defined with axioms outside the base namespace https://exampl
 
 Linter options: `base='https://example.test/onto#'`.
 
+#### GOV016: Term missing the annotations the policy requires
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** deterministic
+- **Fix:** Add the missing annotations, or drop them from required_annotations in the policy file.
+
+*Flagged:* class without comment
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A" .
+```
+
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),), alignment_namespaces=(), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=())`.
+
+Reported: `Missing required annotations: rdfs:comment.`
+
+*Clean:* silent without policy
+
+```turtle
+ex:A a owl:Class .
+```
+
 #### GOV017: Versioned ontology without review or approval metadata
 
 - **Severity:** info
@@ -1258,14 +1440,34 @@ Reported: `Versioned ontology records no review or approval metadata.`
 ex:o a owl:Ontology .
 ```
 
+#### GOV020: Policy file invalid or for a different policy-pack version
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** deterministic
+- **Fix:** Remove or fix the unknown keys; the policy file only supports the documented keys and policy_version 1.
+
+*Flagged:* one unknown key
+
+```turtle
+ex:A a owl:Class .
+```
+
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=('bogus',))`.
+
+Reported: `Unknown policy key 'bogus' is ignored.`
+
+*Clean:* silent without policy
+
+```turtle
+ex:A a owl:Class .
+```
+
 ### GOV: TODO (to be implemented)
 
 | Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
 | --- | --- | --- | --- | --- |
-| GOV016 | TODO | Terms missing the annotations the policy requires. | policy or network backend | policy fixture or controlled HTTP fixture |
 | GOV018 | TODO | Maintainer identifiers that cannot be resolved (network). | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV019 | TODO | Licences of imports that conflict under the policy's compatibility table. | policy or network backend | policy fixture or controlled HTTP fixture |
-| GOV020 | TODO | Policy file that is invalid or for a different policy-pack version. | policy or network backend | policy fixture or controlled HTTP fixture |
 
 ## INPUT
 
@@ -4102,6 +4304,17 @@ Reported: `owl:AllDifferent has no member list.`
 
 *Clean:* `four triples with a limit of four` (built programmatically; see `tests/rule_cases/`)
 
+#### SEC003: Parsing exceeds the time budget
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Lint a smaller module, or raise --max-parse-seconds (or max_parse_seconds in the policy) if it is expected.
+
+*Flagged:* `125k triples with a 50 ms budget` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `small input with a generous budget` (built programmatically; see `tests/rule_cases/`)
+
 #### SEC004: Deeply nested or very long blank-node structure
 
 - **Severity:** warning
@@ -4138,6 +4351,27 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 *Flagged:* `remote @context` (built programmatically; see `tests/rule_cases/`)
 
 *Clean:* `inline @context` (built programmatically; see `tests/rule_cases/`)
+
+#### SEC007: owl:imports not followed
+
+- **Severity:** info
+- **Scope:** ontology
+- **Category:** deterministic
+- **Fix:** Lint the imported ontologies separately if they matter; ontolint never fetches imports. Use --ignore SEC007 to silence this note.
+
+*Flagged:* one IRI import
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/other> .
+```
+
+Reported: `1 owl:import was not followed: https://example.test/other.`
+
+*Clean:* no imports
+
+```turtle
+<https://example.test/onto> a owl:Ontology .
+```
 
 #### SEC008: IRI with an unsafe scheme
 
@@ -4246,13 +4480,6 @@ Reported: `IRI embeds a password for user 'alice'.`
 ex:a ex:p <https://alice@example.test/x> .
 ```
 
-### SEC: TODO (to be implemented)
-
-| Rule | Status | Intended behaviour (draft) | Waiting for | Test requirement |
-| --- | --- | --- | --- | --- |
-| SEC003 | TODO | Parsing that exceeds a time budget. | safe loader or network policy | malicious-input fixture |
-| SEC007 | TODO | owl:imports not followed by default and reported as skipped. | safe loader or network policy | malicious-input fixture |
-
 ## SEM
 
 #### SEM001: OWL profile violation reported by ROBOT
@@ -4276,15 +4503,7 @@ ex:a ex:p <https://alice@example.test/x> .
 | SEM005 | TODO | Inferred hierarchy that differs unexpectedly from the asserted one. | OWL reasoner | reasoner integration fixture |
 | SEM006 | TODO | Asserted subclass axiom that is already entailed by others. | OWL reasoner | reasoner integration fixture |
 | SEM007 | TODO | Classes inferred to be equivalent without being asserted so. | OWL reasoner | reasoner integration fixture |
-| SEM008 | TODO | Individual inferred to belong to disjoint classes. | OWL reasoner | reasoner integration fixture |
-| SEM009 | TODO | Domain or range that causes unintended inferred types. | OWL reasoner | reasoner integration fixture |
-| SEM010 | TODO | Property chain that produces unexpected inferences. | OWL reasoner | reasoner integration fixture |
-| SEM011 | TODO | Cardinality restriction violated by asserted data. | OWL reasoner | reasoner integration fixture |
-| SEM012 | TODO | Disjointness axiom violated by an individual. | OWL reasoner | reasoner integration fixture |
-| SEM013 | TODO | Datatype restriction that no value can satisfy. | OWL reasoner | reasoner integration fixture |
 | SEM014 | TODO | Ontology that cannot be classified within the reasoner's time budget. | OWL reasoner | reasoner integration fixture |
-| SEM015 | TODO | Axiom outside the requested OWL profile (EL, QL or RL). | OWL reasoner | reasoner integration fixture |
-| SEM016 | TODO | Inferred hierarchy much larger or deeper than the asserted one. | OWL reasoner | reasoner integration fixture |
 
 ## SHACL
 

@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import codecs
 import contextlib
+import json
+import multiprocessing
 import os
 import re
 import socket
@@ -35,9 +37,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from rdflib import Graph
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.plugins.shared.jsonld import context as jsonld_context
 from rdflib.plugins.stores.memory import Memory
+from rdflib.term import Node
 from rdflib.util import guess_format
 
 from .paths import InputFile
@@ -324,15 +327,15 @@ def check_path(item: InputFile, root: Path) -> None:
             raise InputRejected("SEC009", f"{item.display} is a symlink to {target.as_posix()} outside the working dir")
 
 
-def _network_problem(item: InputFile, attempts: NetworkAttempts) -> InputRejected | None:
+def _network_problem(display: str, attempts: NetworkAttempts) -> InputRejected | None:
     """Translate what the guard blocked into a SEC rejection (contexts first: they are the specific case)."""
     if attempts.contexts:
         return InputRejected(
-            "SEC006", f"{item.display} references an external JSON-LD context {attempts.contexts[0]!r}; refused"
+            "SEC006", f"{display} references an external JSON-LD context {attempts.contexts[0]!r}; refused"
         )
     if attempts.network:
         return InputRejected(
-            "SEC013", f"{item.display} tried to use the network ({attempts.network[0]}); the network is disabled"
+            "SEC013", f"{display} tried to use the network ({attempts.network[0]}); the network is disabled"
         )
     return None
 
@@ -346,18 +349,9 @@ def _describe(failure: Exception) -> str:
     return str(failure)
 
 
-def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Graph:
-    """Parse ``item`` safely; raises :class:`InputRejected` (refused) or :class:`ParseFailure` (parser error)."""
-    check_path(item, root if root is not None else Path.cwd())
-    data = _read_limited(item, policy.max_input_bytes)
-    kind = compression_of(data)
-    if kind is not None:
-        raise InputRejected("SEC011", f"{item.display} is {kind}-compressed; compressed input is refused")
-    fmt = guess_format(item.path.name) or "turtle"
-    problem = dtd_problem(data, policy.max_input_bytes) if fmt in RDF_XML_FORMATS else None
-    if problem is not None:
-        raise InputRejected("SEC010", f"{item.display} {problem}")
-    store = _BoundedStore(policy.max_triples)
+def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triples: int) -> Graph:
+    """Parse ``data`` under the network guard and the triple bound; shared by the in-process and worker paths."""
+    store = _BoundedStore(max_triples)
     graph = Graph(store=store)
     failure: Exception | None = None
     with network_disabled() as attempts, term_expansion_bounded():
@@ -369,10 +363,10 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
                 warnings.filterwarnings(
                     "ignore", message="Dataset.default_context is deprecated", category=DeprecationWarning
                 )
-                graph.parse(data=data, format=fmt, publicID=item.path.as_uri())
+                graph.parse(data=data, format=fmt, publicID=public_id)
         except Exception as exc:  # noqa: BLE001 -- classified below; nothing but a LoadError leaves this function.
             failure = exc
-    rejection = _network_problem(item, attempts)
+    rejection = _network_problem(display, attempts)
     if rejection is not None:
         raise rejection from failure
     if isinstance(failure, LoadError):
@@ -380,6 +374,161 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
     if failure is not None:
         raise ParseFailure(type(failure).__name__, _describe(failure)) from failure
     store.limit = None  # a plain graph: pySHACL and other consumers copy it and must not hit the bound
-    if len(graph) > policy.max_triples:  # pragma: no cover - the store bound fires first; defence in depth
-        raise InputRejected("SEC002", f"graph has more than {policy.max_triples} triples (max_triples)")
+    if len(graph) > max_triples:  # pragma: no cover - the store bound fires first; defence in depth
+        raise InputRejected("SEC002", f"graph has more than {max_triples} triples (max_triples)")
     return graph
+
+
+def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Graph:
+    """Parse ``item`` safely; raises :class:`InputRejected` (refused) or :class:`ParseFailure` (parser error).
+
+    With ``policy.max_parse_seconds`` set, the parse runs in a killable worker process (see :func:`_parse_in_worker`);
+    otherwise (the default) it runs in this process.
+    """
+    check_path(item, root if root is not None else Path.cwd())
+    data = _read_limited(item, policy.max_input_bytes)
+    kind = compression_of(data)
+    if kind is not None:
+        raise InputRejected("SEC011", f"{item.display} is {kind}-compressed; compressed input is refused")
+    fmt = guess_format(item.path.name) or "turtle"
+    problem = dtd_problem(data, policy.max_input_bytes) if fmt in RDF_XML_FORMATS else None
+    if problem is not None:
+        raise InputRejected("SEC010", f"{item.display} {problem}")
+    try:
+        public_id = item.path.as_uri()
+    except ValueError as exc:  # a relative path: reported like any other parser failure, as it always was
+        raise ParseFailure(type(exc).__name__, str(exc)) from exc
+    if policy.max_parse_seconds is None:
+        return _parse_bytes(data, fmt, public_id, item.display, policy.max_triples)
+    return _parse_in_worker(_ParseJob(data, fmt, public_id, item.display, policy.max_triples), policy.max_parse_seconds)
+
+
+# --- time budget: the parse runs in a worker process that can be killed -----------------------------------------
+#
+# A pure-Python parse cannot be interrupted safely in this process: a thread cannot be killed, and a signal timer
+# (SIGALRM) exists on POSIX main threads only and collides with any watchdog the embedding program already uses.
+# A worker started with the ``spawn`` method works the same on Linux, macOS and Windows, shares no state with the
+# parent (so the network guard and the patched parser modules are applied freshly in the worker) and can always be
+# terminated.  The worker only ever returns plain data (JSON text), never pickles, so a compromised parser cannot
+# make the parent execute anything while decoding the result.
+
+WORKER_START_TIMEOUT = 120.0
+"""Seconds to wait for the worker interpreter to start (imports); not part of the user's parse budget."""
+_WORKER_GRACE = 2.0
+
+_Term = list[Any]
+
+
+def _encode_term(term: Node) -> _Term:
+    if isinstance(term, Literal):
+        return ["l", str(term), term.language, None if term.datatype is None else str(term.datatype)]
+    return ["b" if isinstance(term, BNode) else "u", str(term)]
+
+
+def _decode_term(raw: _Term) -> Node:
+    kind = raw[0]
+    if kind == "u":
+        return URIRef(raw[1])
+    if kind == "b":
+        return BNode(raw[1])
+    return Literal(raw[1], lang=raw[2], datatype=None if raw[3] is None else URIRef(raw[3]), normalize=False)
+
+
+def _encode_graph(graph: Graph) -> bytes:
+    triples = [[_encode_term(t) for t in triple] for triple in graph]
+    namespaces = [[prefix, str(uri)] for prefix, uri in graph.namespaces()]
+    return json.dumps({"triples": triples, "namespaces": namespaces}, separators=(",", ":")).encode()
+
+
+def _decode_graph(payload: dict[str, Any]) -> Graph:
+    graph = Graph()
+    for prefix, uri in payload["namespaces"]:
+        graph.bind(prefix, URIRef(uri), override=True, replace=True)
+    graph.addN((_decode_term(s), _decode_term(p), _decode_term(o), graph) for s, p, o in payload["triples"])
+    return graph
+
+
+@dataclass(frozen=True)
+class _ParseJob:
+    """Everything the worker needs: the bytes (already checked by the parent), the format and the bounds."""
+
+    data: bytes
+    fmt: str
+    public_id: str
+    display: str
+    max_triples: int
+
+
+def _worker_main(connection: Any, job: _ParseJob) -> None:
+    """Entry point of the worker: announce readiness, parse, send one JSON document, exit."""
+    connection.send_bytes(b"ready")
+    try:
+        reply = _encode_graph(_parse_bytes(job.data, job.fmt, job.public_id, job.display, job.max_triples))
+    except InputRejected as exc:
+        reply = json.dumps({"rejected": [exc.rule_id, exc.message]}).encode()
+    except ParseFailure as exc:
+        reply = json.dumps({"parse_failure": [exc.cause_type, exc.detail]}).encode()
+    except BaseException as exc:  # noqa: BLE001 -- the parent must always receive an answer.
+        detail = _describe(exc) if isinstance(exc, Exception) else ""
+        reply = json.dumps({"parse_failure": [type(exc).__name__, detail]}).encode()
+    connection.send_bytes(reply)
+    connection.close()
+
+
+def _stop(process: Any) -> None:
+    """Terminate, then kill, the worker and reap it; safe to call on a worker that already exited."""
+    if process.is_alive():
+        process.terminate()
+        process.join(_WORKER_GRACE)
+    if process.is_alive():
+        process.kill()
+    process.join()
+    process.close()
+
+
+def _parse_in_worker(job: _ParseJob, seconds: float) -> Graph:
+    """Parse in a ``spawn`` worker and give it ``seconds`` of wall-clock time from the moment it is ready.
+
+    Interpreter start-up and the import of rdflib are excluded from the budget (they are the tool's cost, not the
+    input's); the worker is terminated, then killed, when the budget is exhausted: :class:`InputRejected` ``SEC003``.
+    """
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    process = context.Process(target=_worker_main, args=(sender, job), daemon=True)
+    process.start()
+    sender.close()  # the parent only reads: EOF on the pipe means the worker is gone
+    try:
+        if not _ready(receiver, WORKER_START_TIMEOUT):
+            raise ParseFailure("WorkerError", "the parse worker did not start")
+        if not receiver.poll(seconds):
+            raise InputRejected(
+                "SEC003",
+                f"{job.display} was not parsed within the time budget of {seconds:g} seconds (max_parse_seconds)",
+            )
+        try:
+            reply = json.loads(receiver.recv_bytes())
+        except (EOFError, OSError):
+            raise ParseFailure("WorkerError", _worker_death(process)) from None
+    finally:
+        receiver.close()
+        _stop(process)
+    if "rejected" in reply:
+        raise InputRejected(*reply["rejected"])
+    if "parse_failure" in reply:
+        raise ParseFailure(*reply["parse_failure"])
+    graph = _decode_graph(reply)
+    if len(graph) > job.max_triples:  # pragma: no cover - the worker enforces it; defence in depth
+        raise InputRejected("SEC002", f"graph has more than {job.max_triples} triples (max_triples)")
+    return graph
+
+
+def _ready(receiver: Any, timeout: float) -> bool:
+    try:
+        return bool(receiver.poll(timeout)) and receiver.recv_bytes() == b"ready"
+    except (EOFError, OSError):
+        return False
+
+
+def _worker_death(process: Any) -> str:
+    process.join(_WORKER_GRACE)
+    return f"the parse worker exited without a result (exit code {process.exitcode})"

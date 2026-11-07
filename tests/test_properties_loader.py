@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import multiprocessing
 import socket
 import sys
 import tempfile
@@ -10,12 +11,13 @@ import warnings
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
+from unittest import mock
 from urllib.parse import urlsplit
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
-from hypothesis_strategies import budget, roundtrip_triple_lists
+from hypothesis_strategies import PROFILE, budget, roundtrip_triple_lists
 from hypothesis_strategies import build_graph as build
 from rdflib import BNode, Graph, URIRef
 from rdflib.compare import isomorphic
@@ -245,3 +247,29 @@ def test_serialising_and_reloading_preserves_the_graph(triples: list, fmt: str) 
 
     assert len(reloaded) == len(graph)
     assert isomorphic(reloaded, graph)
+
+
+# --- time budget -------------------------------------------------------------------------------------
+
+
+def test_the_time_budget_is_off_by_default() -> None:
+    """INVARIANT: without max_parse_seconds the parse stays in this process (no worker is ever started)."""
+    assert Policy().max_parse_seconds is None
+    with mock.patch.object(multiprocessing, "get_context", side_effect=AssertionError("worker used")):
+        assert len(load_bytes(BASE_DOC, ".nt")) == 1
+
+
+@settings(PROFILE, max_examples=8, deadline=None)
+@given(roundtrip_triple_lists(), st.sampled_from(["nt", "turtle"]))
+def test_worker_and_in_process_parses_give_identical_graphs(triples: list, fmt: str) -> None:
+    """INVARIANT: a parse under a time budget returns exactly the triples of the in-process parse."""
+    triples = [t for t in triples if all(parsable_iri(term) for term in t)]
+    text = build(triples).serialize(format=fmt).encode("utf-8")
+    suffix = {"nt": ".nt", "turtle": ".ttl"}[fmt]
+
+    direct = load_bytes(text, suffix)
+    budgeted = load_bytes(text, suffix, Policy(max_parse_seconds=120))
+
+    assert len(budgeted) == len(direct)
+    assert isomorphic(budgeted, direct)
+    assert dict(budgeted.namespaces()) == dict(direct.namespaces())

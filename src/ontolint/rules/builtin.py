@@ -27,10 +27,12 @@ from . import (
     class_heuristics,
     classes,
     external,
+    fair_offline,
     governance,
     governance_metadata,
     hierarchy_quality,
     identifiers,
+    imports_note,
     iri_lexical_extras,
     iri_quality,
     lexical,
@@ -41,6 +43,7 @@ from . import (
     owl,
     owl_axioms,
     owl_expressions,
+    policy_rules,
     safe_loader,
     safety,
     shacl_authoring,
@@ -91,6 +94,9 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     governance_metadata,
     alignment,
     obo,
+    policy_rules,
+    imports_note,
+    fair_offline,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).

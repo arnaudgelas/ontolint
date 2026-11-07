@@ -26,7 +26,7 @@ profiles = st.builds(
     description=st.just("generated"),
     select=st.lists(selector_tokens(), max_size=3).map(lambda xs: tuple(x.upper() for x in xs)),
     ignore=st.lists(selector_tokens(), max_size=3).map(lambda xs: tuple(x.upper() for x in xs)),
-    opt_in=st.sampled_from(((), ("OBO",))),
+    opt_in=st.sampled_from(((), ("OBO",), ("FAIR",), ("FAIR", "OBO"))),
 )
 maybe_profile = st.one_of(st.none(), profiles, st.sampled_from(sorted(PROFILES.values(), key=lambda p: p.name)))
 
@@ -204,8 +204,11 @@ def test_selection_is_monotone_in_select(first: list[str], second: list[str]) ->
 
 @pytest.mark.parametrize("profile", sorted(PROFILES))
 def test_builtin_profiles_resolve_to_known_rules(profile: str) -> None:
-    """Every shipped profile resolves without error and only the obo profile runs opt-in rules."""
+    """Every shipped profile resolves without error; an opt-in profile runs exactly its own opt-in family."""
     run = ids(resolve_selection(REGISTRY, PROFILES[profile], [], []).run)
 
     assert run
-    assert bool(run & OPT_IN_IDS) == (profile == "obo")
+    enabled = {family for family in OPT_IN_FAMILIES if profile == family.lower()}
+    for family in OPT_IN_FAMILIES:
+        family_ids = {s.rule_id for s in SPECS if s.family == family}
+        assert (run & family_ids == family_ids) if family in enabled else not run & family_ids

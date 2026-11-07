@@ -205,7 +205,7 @@ def test_selecting_only_cli_rules_runs_nothing_and_reports_no_executions(run: Ru
 
 def test_profiles_are_valid_pure_data() -> None:
     registry = default_registry()
-    assert set(PROFILES) == {"minimal", "recommended", "ci", "strict", "obo"}
+    assert set(PROFILES) == {"minimal", "recommended", "ci", "strict", "obo", "fair"}
     for profile in PROFILES.values():
         assert profile.description and profile.fail_on in {"error", "warning", "info", "never"}
         registry.select(profile.select or ())  # strict: raises on a typo

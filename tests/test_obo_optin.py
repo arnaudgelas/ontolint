@@ -12,7 +12,7 @@ import pytest
 from ontolint import engine, main
 from ontolint.models import RuleSpec
 from ontolint.profiles import OPT_IN_FAMILIES, PROFILES, Profile, is_opt_in
-from ontolint.rules import obo, specs
+from ontolint.rules import fair_offline, obo, specs
 from ontolint.rules.builtin import RULE_SPECS
 from ontolint.rules.registry import RuleRegistry
 from ontolint.selection import default_rules, resolve_selection
@@ -20,7 +20,8 @@ from ontolint.selection import default_rules, resolve_selection
 FIXTURES = Path(__file__).parent / "fixtures"
 KITCHEN = str(FIXTURES / "kitchen_sink.ttl")
 OBO_IDS = {s.rule_id for s in obo.SPECS}
-ALL_SPECS: tuple[RuleSpec, ...] = tuple({s.rule_id: s for s in (*RULE_SPECS, *obo.SPECS)}.values())
+FAIR_IDS = {s.rule_id for s in fair_offline.SPECS}
+ALL_SPECS: tuple[RuleSpec, ...] = tuple({s.rule_id: s for s in (*RULE_SPECS, *obo.SPECS, *fair_offline.SPECS)}.values())
 Run = Callable[..., tuple[int, str, str]]
 
 
@@ -52,11 +53,11 @@ def _ids(rules: tuple[RuleSpec, ...]) -> set[str]:
 
 
 def _non_obo(registry: RuleRegistry) -> set[str]:
-    return {s.rule_id for s in registry.all() if s.family != "OBO" and s.backend.value != "cli"}
+    return {s.rule_id for s in registry.all() if not is_opt_in(s.family) and s.backend.value != "cli"}
 
 
 def test_opt_in_data() -> None:
-    assert {"OBO"} == OPT_IN_FAMILIES
+    assert {"OBO", "FAIR"} == OPT_IN_FAMILIES
     assert is_opt_in("OBO") and is_opt_in("obo")
     assert not is_opt_in("LEX") and not is_opt_in("")
     assert {s.family for s in obo.SPECS} == {"OBO"}
@@ -66,7 +67,7 @@ def test_opt_in_data() -> None:
 
 def test_default_rules_drop_opt_in_families(registry: RuleRegistry) -> None:
     defaults = default_rules(registry.all())
-    assert _ids(defaults) == {s.rule_id for s in registry.all()} - OBO_IDS
+    assert _ids(defaults) == {s.rule_id for s in registry.all()} - OBO_IDS - FAIR_IDS
     assert default_rules(()) == ()
 
 
@@ -75,7 +76,8 @@ def test_obo_is_not_part_of_the_default_profiles(registry: RuleRegistry, name: s
     selection = resolve_selection(registry, PROFILES[name] if name else None, (), ())
     assert not _ids(selection.run + selection.ignored) & OBO_IDS
     if name != "minimal":
-        assert _ids(selection.run) == _non_obo(registry)
+        # The strict profile gates on any finding, so it skips the informational SEC007 imports note.
+        assert _ids(selection.run) == _non_obo(registry) - ({"SEC007"} if name == "strict" else set())
 
 
 def test_explicit_family_and_rule_selectors_opt_in(registry: RuleRegistry) -> None:
@@ -118,7 +120,7 @@ def test_profiles_are_valid_pure_data(registry: RuleRegistry) -> None:
         assert isinstance(profile, Profile)
         registry.select(profile.opt_in)
         assert set(profile.opt_in) <= OPT_IN_FAMILIES
-    assert {n for n, p in PROFILES.items() if p.opt_in} == {"obo"}
+    assert {n for n, p in PROFILES.items() if p.opt_in} == {"obo", "fair"}
 
 
 def test_cli_default_run_never_executes_obo(run: Run) -> None:
@@ -168,3 +170,11 @@ def test_explain_marks_opt_in_rules(run: Run) -> None:
     _, out, _ = run("--explain", "OBO003", "--format", "json")
     assert json.loads(out)["rule"]["opt_in"] is True
     assert "opt_in" not in json.loads(run("--explain", "ONT001", "--format", "json")[1])["rule"]
+
+
+def test_strict_profile_skips_only_the_imports_note(registry: RuleRegistry) -> None:
+    assert PROFILES["strict"].ignore == ("SEC007",)
+    selection = resolve_selection(registry, PROFILES["strict"], (), ())
+    assert "SEC007" in _ids(selection.ignored)
+    assert "SEC007" not in _ids(selection.run)
+    assert "SEC007" in _ids(resolve_selection(registry, PROFILES["ci"], (), ()).run)

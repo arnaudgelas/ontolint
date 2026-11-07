@@ -339,7 +339,19 @@ def test_dtd_check_applies_to_rdfxml_formats_only(tmp_path: Path) -> None:
 
 
 def test_specs_are_cli_errors_with_distinct_titles() -> None:
-    assert [s.rule_id for s in SPECS] == ["SEC001", "SEC002", "SEC006", "SEC009", "SEC010", "SEC011", "SEC013"]
+    assert [s.rule_id for s in SPECS] == [
+        "SEC001",
+        "SEC002",
+        "SEC003",
+        "SEC006",
+        "SEC009",
+        "SEC010",
+        "SEC011",
+        "SEC013",
+    ]
+    sec003 = next(s for s in SPECS if s.rule_id == "SEC003")
+    assert sec003.title == "Parsing exceeds the time budget"
+    assert "--max-parse-seconds" in sec003.suggestion
     assert all(s.module == "" and s.backend.value == "cli" and s.severity.value == "error" for s in SPECS)
     assert len({s.title for s in SPECS}) == len(SPECS)
 

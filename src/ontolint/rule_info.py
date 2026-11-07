@@ -119,7 +119,8 @@ def render_explanation(detail: dict[str, Any], output_format: str) -> str:
     lines += [f"  {label:17}{DASH if detail[key] is None else detail[key]}" for label, key in _EXPLAIN_FIELDS]
     if detail.get("opt_in"):
         lines.append(
-            "  Opt-in rule: it runs only with --select (family or id) or a profile that enables it, e.g. --profile obo."
+            "  Opt-in rule: it runs only with --select (family or id) or a profile that enables it, "
+            "e.g. --profile obo or --profile fair."
         )
     if not detail["selectable"]:
         lines.append("  This rule is proposed only: it is not implemented, so it cannot be selected or executed.")

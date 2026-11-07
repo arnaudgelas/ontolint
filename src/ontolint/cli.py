@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from collections.abc import Sequence
 from contextvars import ContextVar
@@ -24,7 +25,7 @@ from .catalogue import planned_rows
 from .loader import InputRejected, ParseFailure, load_graph
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
-from .policy import Policy
+from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .profiles import PROFILES, Profile
 from .reporting import FileReport, RunReport, fingerprint, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
@@ -42,6 +43,17 @@ def _positive_int(text: str) -> int:
         raise argparse.ArgumentTypeError(f"must be a positive integer, got {text!r}") from None
     if value < 1:
         raise argparse.ArgumentTypeError(f"must be a positive integer (at least 1), got {value}")
+    return value
+
+
+def _positive_seconds(text: str) -> float:
+    """argparse type for ``--max-parse-seconds``: a finite number above 0 and at most one day."""
+    try:
+        value = float(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"must be a positive number of seconds, got {text!r}") from None
+    if not math.isfinite(value) or not 0 < value <= MAX_PARSE_SECONDS:
+        raise argparse.ArgumentTypeError(f"must be a number of seconds above 0 and at most {MAX_PARSE_SECONDS:g}")
     return value
 
 
@@ -67,6 +79,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ap.add_argument(
         "--max-triples", type=_positive_int, help="Refuse inputs with more triples than this (default 5000000)"
+    )
+    ap.add_argument(
+        "--max-parse-seconds",
+        type=_positive_seconds,
+        help="Abort parsing an input that takes longer than this wall-clock time (default: no limit); "
+        "runs the parse in a worker process",
     )
     ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
     ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
@@ -102,6 +120,7 @@ def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -
         soup_limit=args.soup_limit if args.soup_limit is not None else config.soup_limit,
         max_input_bytes=args.max_input_bytes if args.max_input_bytes is not None else config.max_input_bytes,
         max_triples=args.max_triples if args.max_triples is not None else config.max_triples,
+        max_parse_seconds=args.max_parse_seconds if args.max_parse_seconds is not None else config.max_parse_seconds,
         ignored_rules=ignored,
     )
 
@@ -281,6 +300,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         proposed = frozenset(row.rule_id for row in planned_rows())
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
         print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)
+        return 2
+    except PolicyVersionError as exc:
+        print(f"GOV020: policy file rejected: {exc}", file=sys.stderr)
         return 2
     except Exception as exc:
         # Parser/configuration errors are tool failures, not SHACL conformance results.
