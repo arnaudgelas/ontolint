@@ -209,6 +209,7 @@ def _chain_lengths(classes: Iterable[URIRef], children: Adjacency) -> dict[URIRe
         path: list[URIRef] = []
         index: dict[URIRef, int] = {}
         node = start
+        # gremlin: pardon[timeout] mutant never terminates on a single-child cycle; tests bound it with an alarm
         while node not in lengths and node not in index and len(children[node]) == 1:
             index[node] = len(path)
             path.append(node)

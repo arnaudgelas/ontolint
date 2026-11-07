@@ -298,7 +298,7 @@ def render_report(report: RunReport, output_format: str, exit_status: int | None
 def exit_code(findings: Sequence[Finding], fail_on: str) -> int:
     """Return 1 when any finding reaches the ``fail_on`` severity threshold, otherwise 0."""
     threshold = FAIL_THRESHOLDS[fail_on]
-    return int(threshold >= 0 and any(SEVERITY_ORDER.index(x.severity) <= threshold for x in findings))
+    return int(any(SEVERITY_ORDER.index(x.severity) <= threshold for x in findings))
 
 
 def run_exit_code(report: RunReport, fail_on: str) -> int:

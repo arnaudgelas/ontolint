@@ -129,12 +129,6 @@ def run(ctx: RuleContext) -> None:
     _ontology_namespace(ctx)
 
 
-def _namespace(iri: str) -> str:
-    """Return the IRI up to and including the last '#' or '/'."""
-    cut = max(iri.rfind("#"), iri.rfind("/"))
-    return iri[: cut + 1]
-
-
 def _term_checks(ctx: RuleContext, term: URIRef) -> None:
     iri = str(term)
     pieces = urlsplit(iri)

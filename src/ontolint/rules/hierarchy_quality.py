@@ -235,6 +235,7 @@ def _disjoint_pairs(ctx: RuleContext) -> set[tuple[URIRef, URIRef]]:
     pairs: set[tuple[URIRef, URIRef]] = set()
     for a, b in ctx.g.subject_objects(OWL.disjointWith):
         if isinstance(a, URIRef) and isinstance(b, URIRef) and a in ctx.classes and b in ctx.classes and a != b:
+            # gremlin: pardon[equivalent] a != b is guarded above, so str(a) == str(b) cannot occur
             pairs.add((a, b) if str(a) < str(b) else (b, a))
     for group in ctx.g.subjects(RDF.type, OWL.AllDisjointClasses):
         head = next(iter(ctx.g.objects(group, OWL.members)), None)
@@ -244,6 +245,7 @@ def _disjoint_pairs(ctx: RuleContext) -> set[tuple[URIRef, URIRef]]:
             (a, b)
             for i, a in enumerate(distinct)
             for b in distinct[i + 1 :]
+            # gremlin: pardon[equivalent] distinct is filtered by ctx.classes; the check only narrows the type
             if isinstance(a, URIRef) and isinstance(b, URIRef)
         )
     return pairs
@@ -336,6 +338,7 @@ def _same_label_as_parent(ctx: RuleContext, h: Hierarchy) -> None:
 def _equivalent_ancestors(ctx: RuleContext, h: Hierarchy) -> None:
     seen: set[frozenset[URIRef]] = set()
     for a, b in sorted(ctx.g.subject_objects(OWL.equivalentClass), key=str):
+        # gremlin: pardon[equivalent] ancestors hold only declared classes, so no extra CLS021
         if not (isinstance(a, URIRef) and isinstance(b, URIRef) and a != b and a in ctx.classes and b in ctx.classes):
             continue
         key = frozenset((a, b))
@@ -350,6 +353,7 @@ def _equivalent_ancestors(ctx: RuleContext, h: Hierarchy) -> None:
 def _multi_typed(ctx: RuleContext) -> dict[URIRef, frozenset[URIRef]]:
     result: dict[URIRef, frozenset[URIRef]] = {}
     for subject, types in ctx.context.types_by_subject.items():
+        # gremlin: pardon[equivalent] ctx.classes holds only URIRefs; the isinstance check only narrows the type
         declared = frozenset(t for t in types if isinstance(t, URIRef) and t in ctx.classes)
         if isinstance(subject, URIRef) and len(declared) > 1 and subject not in ctx.classes:
             result[subject] = declared

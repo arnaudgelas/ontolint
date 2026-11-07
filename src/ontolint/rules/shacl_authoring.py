@@ -180,7 +180,7 @@ SPECS: tuple[RuleSpec, ...] = (
 # --- helpers ---------------------------------------------------------------------------------
 
 
-def _natural(term: Node) -> int | None:
+def _natural(term: Node | None) -> int | None:
     """Return ``term`` as a non-negative integer, or ``None`` when it is not one."""
     if isinstance(term, Literal) and isinstance(term.value, int) and not isinstance(term.value, bool):
         return term.value if term.value >= 0 else None
@@ -230,7 +230,7 @@ def _ordered_pair(
     ctx: RuleContext, sg: Graph, shape: Node, bounds: tuple[URIRef, URIRef], report: tuple[str, str]
 ) -> None:
     lo, hi = _single(sg, shape, bounds[0]), _single(sg, shape, bounds[1])
-    lo_n, hi_n = (_natural(lo), _natural(hi)) if lo is not None and hi is not None else (None, None)
+    lo_n, hi_n = _natural(lo), _natural(hi)
     if lo_n is not None and hi_n is not None and lo_n > hi_n:
         ctx.add(report[0], shape, report[1].format(lo=lo_n, hi=hi_n), confidence="deterministic")
 

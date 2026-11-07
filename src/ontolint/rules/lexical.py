@@ -200,6 +200,6 @@ def _naming_styles(ctx: RuleContext) -> None:
         "underscore" if "_" in n else "hyphen" if "-" in n else "camel" if re.search(r"[a-z][A-Z]", n) else "other"
         for n in (local_name(x) for x in ctx.terms)
     )
-    meaningful = [(style, count) for style, count in styles.items() if style != "other" and count > 0]
+    meaningful = [style for style in styles if style != "other"]
     if len(meaningful) > 1 and len(ctx.terms) >= MINIMUM_STYLE_SAMPLE_SIZE:
         ctx.add("LEX007", "(vocabulary)", f"Mixed identifier styles: {dict(sorted(styles.items()))}.")

@@ -155,7 +155,7 @@ def run(ctx: RuleContext) -> None:
 
 def _literals(ctx: RuleContext, term: URIRef, predicates: tuple[URIRef, ...]) -> list[Literal]:
     found = {o for p in predicates for o in ctx.g.objects(term, p) if isinstance(o, Literal)}
-    return sorted(found, key=lambda x: (x.language or "", str(x.datatype or ""), str(x)))
+    return sorted(found, key=lambda x: (x.language or "", x.datatype is not None, str(x.datatype), str(x)))
 
 
 def _gather(ctx: RuleContext, term: URIRef) -> TermText:
