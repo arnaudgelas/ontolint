@@ -68,12 +68,20 @@ max-args = 5
 max-positional-args = 5
 max-returns = 6
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[tool.pytest-gremlins]
+# Mutation testing is opt-in: run `uv run pytest --gremlins` locally or in CI.
+paths = ["src/ontolint/ontolint.py"]
+cache = true
 
 [tool.pyright]
 pythonVersion = "3.13"
@@ -107,7 +115,11 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.0",
     "mypy>=2.4.1",
     "pyright>=1.1.414",
+    "pytest>=8.0",
+    "pytest-gremlins>=1.13.2",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.17.4",
 ]
