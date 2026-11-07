@@ -78,17 +78,28 @@ class RuleContext:
         return self._blank_ids[node]
 
     def _message_text(self, message: str) -> str:
-        """Replace parser-assigned blank-node labels inside ``message`` by their stable identity."""
+        """Replace parser-assigned blank-node labels inside ``message`` by their stable identity.
+
+        A label after the ``_:`` prefix is always replaced. A bare label is replaced only when it contains a
+        digit, as generated labels do, so a hand-written label such as ``a`` cannot rewrite an ordinary word
+        of the message.
+        """
         if self._blank_nodes is None:
             self._blank_nodes = {str(n): n for t in self.g for n in (t[0], t[2]) if isinstance(n, BNode)}
             labels = sorted(self._blank_nodes, key=lambda label: (-len(label), label))
+            bare = [label for label in labels if any(c.isdigit() for c in label)]
             if labels:
-                alternatives = "|".join(re.escape(label) for label in labels)
-                self._blank_pattern = re.compile(rf"(?<![\w/#:-])({alternatives})(?![\w/#:-]|\.\w)")
+                prefixed = "|".join(re.escape(label) for label in labels)
+                alone = "|".join(re.escape(label) for label in bare) or "(?!)"
+                self._blank_pattern = re.compile(
+                    rf"(?<![\w/#:-])(?:_:(?P<prefixed>{prefixed})|(?P<bare>{alone}))(?![\w/#:-]|\.\w)"
+                )
         if self._blank_pattern is None:
             return message
         nodes = self._blank_nodes
-        return self._blank_pattern.sub(lambda match: self._stable_id(nodes[match.group(1)]), message)
+        return self._blank_pattern.sub(
+            lambda match: self._stable_id(nodes[match.group("prefixed") or match.group("bare")]), message
+        )
 
     def _focus_text(self, focus: object) -> str:
         """Render a focus: blank nodes by stable content identity, the empty IRI as ``<>``."""

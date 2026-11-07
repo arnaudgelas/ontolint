@@ -305,7 +305,7 @@ def test_blank_label_in_a_message_is_replaced_by_the_stable_identity() -> None:
     message = _skos013_message("QBNX1")
     assert "QBNX1" not in message
     assert re.fullmatch(r"skos:prefLabel value '_:[0-9a-f]{12}' is not a string literal\.", message)
-    assert message == _skos013_message("other")
+    assert message == _skos013_message("other1")
 
 
 def test_short_blank_label_inside_an_iri_is_left_alone() -> None:
@@ -358,3 +358,30 @@ def test_imports_note_names_blank_node_targets_independently_of_parser_labels() 
     messages = {_run(build(a, b), "SEC007")[0][2] for a, b in (("a", "b"), ("b", "a"), ("x9", "c1"), ("c1", "x9"))}
     assert len(messages) == 1
     assert re.fullmatch(r"2 owl:imports were not followed: _:[0-9a-f]{12}, _:[0-9a-f]{12}\.", messages.pop())
+
+
+def test_blank_node_labels_after_the_blank_node_prefix_are_rewritten_too() -> None:
+    """OWL032 prints its operand as ``_:label``; the lookbehind that protects IRIs also hid that label."""
+
+    def build(label: str) -> Graph:
+        data = Graph()
+        union, cell, operand = BNode("u" + label), BNode("c" + label), BNode(label)
+        data.add((_ex("A"), RDF.type, OWL.Class))
+        data.add((_ex("A"), OWL.unionOf, cell))
+        data.add((cell, RDF.first, operand))
+        data.add((cell, RDF.rest, RDF.nil))
+        data.add((operand, RDFS.label, Literal("operand")))
+        data.add((union, RDFS.label, Literal("unused")))
+        return data
+
+    messages = {_run(build(label), "OWL032")[0][2] for label in ("a", "b", "n5c89cac6941f4c3d86e7c63febb714d2b1")}
+    assert len(messages) == 1
+    (message,) = messages
+    assert re.fullmatch(r"owl:unionOf has a single operand \(_:[0-9a-f]{12}\)\..*", message), message
+    assert "n5c89" not in message
+
+
+def test_a_bare_label_without_a_digit_cannot_rewrite_an_ordinary_word() -> None:
+    """Only labels after the ``_:`` prefix, or bare labels containing a digit, are replaced."""
+    message = _skos013_message("value")
+    assert message == "skos:prefLabel value 'value' is not a string literal."

@@ -4209,7 +4209,7 @@ ex:A owl:complementOf ex:B . ex:B owl:complementOf ex:A .
 ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf [ owl:complementOf ex:A ] .
 ```
 
-Reported: `Class is a subclass of its own complement _:b.`
+Reported: `Class is a subclass of its own complement _:4a41d5eb1f2f.`
 
 *Clean:* subclass of another complement
 
@@ -4230,7 +4230,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf [ owl:complementOf ex
 ex:C owl:intersectionOf ( ex:A [ owl:complementOf ex:A ] ) .
 ```
 
-Reported: `owl:intersectionOf contains complementary or disjoint operands _:b and https://example.test/onto#A; it is unsatisfiable.`
+Reported: `owl:intersectionOf contains complementary or disjoint operands _:c42fe1c44183 and https://example.test/onto#A; it is unsatisfiable.`
 
 *Clean:* union of disjoint classes is fine
 
