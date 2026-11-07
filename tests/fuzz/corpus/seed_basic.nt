@@ -1,0 +1,7 @@
+<http://e/a> <http://e/p> "x" .
+<http://e/a> <http://e/p> "y"@en-GB .
+<http://e/a> <http://e/q> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+_:b0 <http://e/p> <http://e/a> .
+<http://e/a> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:b0 .
+# comment
+<http://e/b> <http://e/p> "esc\"aped\n\u00e9" .

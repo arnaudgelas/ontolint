@@ -1,0 +1,2 @@
+{"@context": {"@vocab": "http://e/", "label": {"@id": "http://www.w3.org/2000/01/rdf-schema#label", "@language": "en"}, "p": {"@type": "@id"}},
+ "@graph": [{"@id": "http://e/a", "@type": "Class", "label": "A", "p": "http://e/b"}, {"@id": "http://e/b", "p": {"@list": ["http://e/a", "http://e/b"]}, "q": {"@set": [1, 2.5, true, null]}}]}

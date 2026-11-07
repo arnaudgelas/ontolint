@@ -1,0 +1,13 @@
+@prefix : <http://e/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+:O a owl:Ontology ; owl:versionIRI <http://e/1.0> .
+:X a owl:Class ; rdfs:subClassOf :X ; owl:equivalentClass :Y .
+:Y rdfs:subClassOf :X .
+:r a owl:ObjectProperty, owl:TransitiveProperty, owl:SymmetricProperty ; rdfs:subPropertyOf :r ; owl:propertyChainAxiom ( :r :r ) .
+:Z a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :r ; owl:allValuesFrom [ owl:complementOf :X ] ; owl:minCardinality 1 ; owl:maxCardinality "x" ] .
+[] a owl:AllDisjointClasses ; owl:members ( :X :Y :Z ) .
+[ a owl:Class ; owl:oneOf ( :a :b :a ) ] rdfs:label "cyc" .
+:a owl:sameAs :b . :b owl:sameAs :a .
+_:l rdf:first :a ; rdf:rest _:l .

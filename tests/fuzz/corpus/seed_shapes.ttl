@@ -1,0 +1,8 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix : <http://e/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+:S a sh:NodeShape ; sh:targetClass owl:Class ; sh:property [ sh:path <http://www.w3.org/2000/01/rdf-schema#label> ; sh:minCount 1 ; sh:datatype xsd:string ; sh:languageIn ( "en" "fr" ) ; sh:pattern "^[A-Z]" ] ;
+  sh:or ( [ sh:class :X ] [ sh:node :S ] ) ; sh:closed true ; sh:ignoredProperties ( ) .
+:T a sh:NodeShape ; sh:targetNode :a ; sh:node :T ; sh:property [ sh:path [ sh:inversePath :p ] ; sh:path ( :p :q ) ; sh:qualifiedValueShape :T ; sh:qualifiedMinCount 1 ] .
+:U sh:sparql [ sh:select "SELECT $this WHERE { $this ?p ?o }" ] .

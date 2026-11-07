@@ -1,0 +1,1 @@
+{"@context": [{"e": "http://e/"}, "http://127.0.0.1:9/a.jsonld", {"@import": "http://127.0.0.1:9/b.jsonld"}], "@id": "e:a", "e:p": [{"@value": "x", "@language": "en"}, {"@value": "1", "@type": "e:int"}]}

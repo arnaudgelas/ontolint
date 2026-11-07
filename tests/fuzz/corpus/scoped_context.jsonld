@@ -1,0 +1,2 @@
+{"@context": {"e": "http://e/", "T": {"@id": "e:T", "@context": {"p": {"@id": "e:p", "@container": "@language"}}}, "rev": {"@reverse": "e:r"}, "n": {"@id": "e:n", "@nest": "@nest"}, "@protected": true, "@version": 1.1},
+ "@id": "e:a", "@type": "T", "p": {"en": "x", "fr": ["y", "z"]}, "rev": {"@id": "e:b"}, "@included": [{"@id": "e:c", "e:p": {"@json": 1}}], "e:json": {"@type": "@json", "@value": {"a": [1, {"b": null}]}}}

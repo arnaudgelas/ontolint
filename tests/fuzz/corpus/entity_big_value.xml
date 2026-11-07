@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE rdf:RDF [ <!ENTITY big "0123456789012345678901234567890123456789012345678901234567890123456789"> ]>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:e="http://e/">
+  <rdf:Description rdf:about="http://e/a"><e:p>&big;&big;&big;&big;&big;&big;&big;&big;</e:p><e:q>&undefined;</e:q></rdf:Description>
+</rdf:RDF>

@@ -1,0 +1,1 @@
+{"base": null, "languages": ["‮"], "ignored_rules": ["", "*", "OWL"], "severity_overrides": {"X": "info"}, "max_triples": 1000000000000000000000000, "metric_max_orphan_ratio": 1e-300, "depth_limit": 99999999999999999999}

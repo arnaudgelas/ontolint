@@ -1,0 +1,8 @@
+@prefix : <http://e/> .
+@prefix log: <http://www.w3.org/2000/10/swap/log#> .
+:a :p :b .
+{ ?x :p ?y } => { ?y :q ?x } .
+{ :a :p :b } log:implies { :b :p :a } .
+:s :list ( 1 2 [ :k "v" ] ) ; :path :a!:p^:q .
+@forAll :x .
+:a = :b .
