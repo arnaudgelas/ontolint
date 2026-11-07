@@ -52,13 +52,47 @@ automatically a logical inconsistency.
 
 ## Requirements and installation
 
-Python 3.13 or later is required.
+Python 3.13 or later is required. ontolint installs a command named `ontolint`.
+
+Install it as a standalone tool, isolated from your other Python packages:
+
+```bash
+# uv (recommended)
+uv tool install git+https://github.com/arnaudgelas/ontolint
+
+# or pipx
+pipx install git+https://github.com/arnaudgelas/ontolint
+
+# or into the current environment
+python -m pip install git+https://github.com/arnaudgelas/ontolint
+```
+
+Run it once without installing it:
+
+```bash
+uvx --from git+https://github.com/arnaudgelas/ontolint ontolint ontology.ttl
+```
+
+From a clone of the repository, `uv tool install .` installs the checkout and
+`uv tool install --editable .` keeps it linked to your working copy. Check the
+installation with:
+
+```bash
+ontolint --version
+ontolint --help
+```
+
+`python -m ontolint` works as well. Docker is needed only for `--owl-profile`.
+
+### Development setup
 
 ```bash
 uv sync --group dev
 ```
 
-For a standard `pip` environment, install the package and its test tools:
+In a development checkout run the command through uv, for example
+`uv run ontolint ontology.ttl`. For a standard `pip` environment, install the
+package and its test tools:
 
 ```bash
 python -m pip install -e .
@@ -77,20 +111,21 @@ graph = Graph().parse("ontology.ttl")
 findings = Linter(graph, base="https://example.org/ont#").run()
 ```
 
-The command-line interface is a thin wrapper around the same Python library:
+The command-line interface is a thin wrapper around the same Python library
+(in a development checkout, prefix the commands with `uv run`):
 
 ```bash
 # Text report
-uv run python -m ontolint.ontolint ontology.ttl \
+ontolint ontology.ttl \
   --base 'https://example.org/ont#'
 
 # JSON report written to a file
-uv run python -m ontolint.ontolint ontology.ttl \
+ontolint ontology.ttl \
   --base 'https://example.org/ont#' \
   --format json --output report.json
 
 # Fail a CI job for warning- or error-level findings
-uv run python -m ontolint.ontolint ontology.ttl --fail-on warning
+ontolint ontology.ttl --fail-on warning
 ```
 
 Supported report formats are `text`, `json`, and `sarif`.
@@ -108,10 +143,10 @@ are `skipped` (no shapes supplied, no OWL profile requested, ignored) never chan
 ### Discovering rules
 
 ```bash
-uv run python -m ontolint.ontolint --version
-uv run python -m ontolint.ontolint --list-rules                 # table
-uv run python -m ontolint.ontolint --list-rules --format json   # machine-readable
-uv run python -m ontolint.ontolint --explain SHQ001             # title, severity, fix, backend, scope, requirements
+ontolint --version
+ontolint --list-rules                 # table
+ontolint --list-rules --format json   # machine-readable
+ontolint --explain SHQ001             # title, severity, fix, backend, scope, requirements
 ```
 
 `--list-rules` shows the catalogue *status* of every rule: `implemented` (can be selected and
@@ -177,7 +212,7 @@ case a `Rule execution:` block is appended.
 ### Several files
 
 ```bash
-uv run python -m ontolint.ontolint ontologies/*.ttl --format sarif --output findings.sarif
+ontolint ontologies/*.ttl --format sarif --output findings.sarif
 ```
 
 * Globbing is the shell's job (on Windows `cmd`/PowerShell pass the pattern through; use a
@@ -208,7 +243,7 @@ and findings carry no source locations. The escaping helpers (`%`, CR, LF and, f
 Pass a shapes graph with `--shapes` to enable pySHACL validation:
 
 ```bash
-uv run python -m ontolint.ontolint ontology.ttl --shapes shapes.ttl
+ontolint ontology.ttl --shapes shapes.ttl
 ```
 
 The integration uses `meta_shacl=True` and `advanced=True`. Newer SHACL draft
@@ -221,7 +256,7 @@ JAR and a non-root Java runtime:
 
 ```bash
 docker build --tag ontolint-robot:1.9.11 docker/robot
-uv run python -m ontolint.ontolint ontology.ttl --owl-profile DL
+ontolint ontology.ttl --owl-profile DL
 ```
 
 The profile run mounts the ontology directory read-only, disables container
@@ -248,12 +283,12 @@ ignored rules, and severity overrides.
 
 ```bash
 # Emit SARIF using a policy
-uv run python -m ontolint.ontolint ontology.ttl \
+ontolint ontology.ttl \
   --config policy.json --format sarif --output findings.sarif
 
 # Record accepted findings, then report only newly introduced ones
-uv run python -m ontolint.ontolint ontology.ttl --write-baseline baseline.json
-uv run python -m ontolint.ontolint ontology.ttl \
+ontolint ontology.ttl --write-baseline baseline.json
+ontolint ontology.ttl \
   --baseline baseline.json --fail-on warning
 ```
 
