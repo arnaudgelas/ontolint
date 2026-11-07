@@ -213,8 +213,7 @@ def dtd_problem(data: bytes, max_expanded: int) -> str | None:
     expanded = 0
     for match in _ENTITY.finditer(masked[:end]):
         quote = rest[match.end() - 1]
-        close = rest.find(quote, match.end())
-        value = rest[match.end() : close if close >= 0 else end]
+        value = rest[match.end() : end].split(quote, 1)[0]
         if _REFERENCE.search(value):
             return f"declares entity {match.group(1)!r} that references another entity"
         expanded += len(value) * rest[end:].count(f"&{match.group(1)};")

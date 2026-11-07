@@ -195,10 +195,8 @@ def _is_english(label: Literal) -> bool:
 
 
 def _is_true(value: Node) -> bool:
-    if not isinstance(value, Literal):
-        return False
     lexical = str(value).strip().lower()
-    return lexical == "true" or (value.datatype == XSD.boolean and lexical == "1")
+    return isinstance(value, Literal) and (lexical == "true" or (value.datatype == XSD.boolean and lexical == "1"))
 
 
 def _deprecated(ctx: RuleContext) -> frozenset[URIRef]:

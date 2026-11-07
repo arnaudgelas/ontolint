@@ -101,8 +101,8 @@ def _owners(ctx: RuleContext, targets: set[Node]) -> dict[Node, Node]:
     """Return, per target blank node, the lexically least IRI subject that refers to it."""
     owners: dict[Node, Node] = {}
     for s, _, o in ctx.g:
-        if isinstance(s, URIRef) and o in targets and (o not in owners or str(s) < str(owners[o])):
-            owners[o] = s
+        if isinstance(s, URIRef) and o in targets:
+            owners[o] = min(s, owners.get(o, s), key=str)
     return owners
 
 

@@ -136,10 +136,7 @@ SPECS: tuple[RuleSpec, ...] = (
 
 def _name(predicate: Node) -> str:
     text = str(predicate)
-    for base, prefix in _PREFIXES:
-        if text.startswith(base):
-            return prefix + text[len(base) :]
-    return text
+    return next((prefix + text[len(base) :] for base, prefix in _PREFIXES if text.startswith(base)), text)
 
 
 def _edges(g: Graph, predicates: Iterable[Node]) -> list[tuple[URIRef, Node, URIRef]]:
@@ -262,17 +259,16 @@ def _parents(g: Graph) -> dict[URIRef, set[URIRef]]:
     return parents
 
 
-def _reaches(parents: dict[URIRef, set[URIRef]], start: URIRef, goal: URIRef) -> bool:
-    seen = {start}
+def _ancestors(parents: dict[URIRef, set[URIRef]], start: URIRef) -> set[URIRef]:
+    """Every IRI reachable from ``start`` through one or more parent edges."""
+    seen: set[URIRef] = set()
     stack = [start]
     while stack:
         for parent in parents.get(stack.pop(), ()):
-            if parent == goal:
-                return True
             if parent not in seen:
                 seen.add(parent)
                 stack.append(parent)
-    return False
+    return seen
 
 
 def _hierarchy_contradictions(ctx: RuleContext) -> None:
@@ -281,7 +277,7 @@ def _hierarchy_contradictions(ctx: RuleContext) -> None:
         narrow, broad = (s, o) if p == SKOS.broadMatch else (o, s)
         if not (ctx.local(s) or ctx.local(o)):
             continue
-        if _reaches(parents, broad, narrow) and not _reaches(parents, narrow, broad):
+        if narrow in _ancestors(parents, broad) and broad not in _ancestors(parents, narrow):
             ctx.add(
                 "ALIGN014",
                 s,
