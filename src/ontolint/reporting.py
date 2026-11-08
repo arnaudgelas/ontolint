@@ -42,6 +42,14 @@ class Location:
 
 
 @dataclass(frozen=True)
+class Origin:
+    """The file a finding belongs to when it is not the linted file itself (an imported module)."""
+
+    path: str
+    uri: str
+
+
+@dataclass(frozen=True)
 class FileReport:
     """Findings and rule execution outcomes for one linted file."""
 
@@ -51,6 +59,18 @@ class FileReport:
     executions: tuple[RuleExecution, ...] = ()
     locations: Mapping[Finding, Location] = field(default_factory=dict[Finding, Location])
     location_problem: str | None = None  # why source regions could not be computed, if they could not
+    # With --follow-imports: findings about a term an imported module declares, mapped to that module.
+    origins: Mapping[Finding, Origin] = field(default_factory=dict[Finding, Origin])
+
+    def path_of(self, finding: Finding) -> str:
+        """The report path of the file ``finding`` belongs to: its module's, or this file's."""
+        origin = self.origins.get(finding)
+        return origin.path if origin is not None else self.path
+
+    def uri_of(self, finding: Finding) -> str:
+        """The artifact URI of the file ``finding`` belongs to: its module's, or this file's."""
+        origin = self.origins.get(finding)
+        return origin.uri if origin is not None else self.uri
 
 
 @dataclass(frozen=True)
@@ -129,7 +149,7 @@ def to_json(report: RunReport) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "summary": _severity_summary(report.findings),
-        "findings": [{**f.to_dict(), "path": r.path} for r in report.files for f in r.findings],
+        "findings": [{**f.to_dict(), "path": r.path_of(f)} for r in report.files for f in r.findings],
         "execution_summary": summarise_executions(_all_executions(report)),
         "rules": [rule_metadata(s, report.severity_overrides) for s in report.rules],
         "files": [
@@ -176,7 +196,7 @@ def _sarif_rule(spec: RuleSpec, overrides: Mapping[str, str]) -> dict[str, Any]:
 
 
 def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -> dict[str, Any]:
-    physical: dict[str, Any] = {"artifactLocation": {"uri": file.uri}}
+    physical: dict[str, Any] = {"artifactLocation": {"uri": file.uri_of(f)}}
     location = file.locations.get(f)
     if location is not None:
         region: dict[str, int] = {"startLine": location.line}
@@ -274,19 +294,26 @@ def render_sarif(report: RunReport, exit_status: int | None = None) -> str:
     return json.dumps(to_sarif_report(report, exit_status), indent=2)
 
 
-def _finding_lines(findings: Sequence[Finding]) -> list[str]:
-    return [f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}" for f in findings]
+def _finding_lines(findings: Sequence[Finding], origins: Mapping[Finding, Origin] | None = None) -> list[str]:
+    origins = origins or {}
+    return [
+        f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}"
+        + (f"\n    In: {origins[f].path}" if f in origins else "")
+        for f in findings
+    ]
 
 
 def render_text(report: RunReport) -> str:
     """Render findings as text; a single file keeps the historical layout, several get per-file sections."""
     if len(report.files) == 1:
-        findings = report.files[0].findings
-        return "\n".join([f"Ontology linter: {len(findings)} finding(s)", *_finding_lines(findings)])
+        only = report.files[0]
+        return "\n".join(
+            [f"Ontology linter: {len(only.findings)} finding(s)", *_finding_lines(only.findings, only.origins)]
+        )
     lines = [f"Ontology linter: {len(report.findings)} finding(s) in {len(report.files)} file(s)"]
     for r in report.files:
         lines.append(f"== {r.path}: {len(r.findings)} finding(s)")
-        lines.extend(_finding_lines(r.findings))
+        lines.extend(_finding_lines(r.findings, r.origins))
     return "\n".join(lines)
 
 

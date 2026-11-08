@@ -26,8 +26,8 @@ from urllib.parse import unquote, urlsplit
 from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF
 
-from .loader import InputRejected, LoadedGraph, dtd_problem, load_document
-from .paths import resolve_inputs
+from .loader import InputRejected, LoadedGraph, Module, dtd_problem, load_document
+from .paths import InputFile, resolve_inputs
 from .policy import Policy
 
 CATALOG_NAME = "catalog-v001.xml"
@@ -118,6 +118,10 @@ def _imports(graph: Graph) -> list[str]:
     return sorted({str(o) for o in graph.objects(None, OWL.imports) if isinstance(o, URIRef)})
 
 
+def _declared(graph: Graph) -> frozenset[str]:
+    return frozenset(str(s) for s in graph.subjects(RDF.type, None) if isinstance(s, URIRef))
+
+
 def _ontologies(graph: Graph) -> set[str]:
     return {str(s) for s in graph.subjects(RDF.type, OWL.Ontology) if isinstance(s, URIRef)}
 
@@ -126,7 +130,13 @@ def _inside(path: Path, root: Path) -> bool:
     return Path(os.path.realpath(path)).is_relative_to(Path(os.path.realpath(root)))
 
 
-def load_closure(root_document: LoadedGraph, root_path: Path, policy: Policy, catalog: Catalog | None) -> Closure:
+def load_closure(  # noqa: C901, PLR0912 -- one breadth-first walk with its checks in order.
+    root_document: LoadedGraph,
+    root_path: Path,
+    policy: Policy,
+    catalog: Catalog | None,
+    root_item: InputFile | None = None,
+) -> Closure:
     """Follow ``owl:imports`` from ``root_document`` breadth first, loading each local file once."""
     sandbox = catalog.root if catalog is not None else root_path.parent.resolve()
     resolver = catalog if catalog is not None else Catalog(sandbox, {})
@@ -141,6 +151,8 @@ def load_closure(root_document: LoadedGraph, root_path: Path, policy: Policy, ca
     unresolved: set[str] = set()
     files: list[str] = []
     imported: set[str] = set()
+    root = root_item or resolve_inputs([str(root_path)], Path.cwd())[0]
+    modules = [Module(root.display, root.uri, _declared(root_document.graph), root_document.source_index)]
     queue = deque((iri, 1) for iri in _imports(root_document.graph))
     while queue:
         iri, depth = queue.popleft()
@@ -168,6 +180,7 @@ def load_closure(root_document: LoadedGraph, root_path: Path, policy: Policy, ca
         item = resolve_inputs([str(path)], Path.cwd())[0]
         document = load_document(item, policy, sandbox)
         files.append(item.display)
+        modules.append(Module(item.display, item.uri, _declared(document.graph), document.source_index))
         imported |= _ontologies(document.graph)
         merged += document.graph
         if len(merged) > policy.max_triples:
@@ -177,7 +190,7 @@ def load_closure(root_document: LoadedGraph, root_path: Path, policy: Policy, ca
         queue.extend((child, depth + 1) for child in _imports(document.graph))
     imported -= _ontologies(root_document.graph)
     return Closure(
-        LoadedGraph(merged, root_document.source_index, frozenset(resolved), frozenset(imported)),
+        LoadedGraph(merged, root_document.source_index, frozenset(resolved), frozenset(imported), tuple(modules)),
         tuple(files),
         frozenset(resolved),
         frozenset(unresolved),

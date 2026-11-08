@@ -86,6 +86,17 @@ class ParseFailure(LoadError, ValueError):
 
 
 @dataclass(frozen=True)
+class Module:
+    """One file of an ``owl:imports`` closure: its report identity, the IRIs it declares, its source positions."""
+
+    display: str
+    uri: str
+    declared: frozenset[str]
+    """IRIs this file gives an ``rdf:type`` to: a finding about one of them belongs to this file."""
+    source_index: SourceIndex
+
+
+@dataclass(frozen=True)
 class LoadedGraph:
     """A parsed graph plus the source locations recoverable from its input syntax."""
 
@@ -94,6 +105,8 @@ class LoadedGraph:
     # With --follow-imports: the owl:imports loaded from local files, and the ontology IRIs those files declare.
     resolved_imports: frozenset[str] = frozenset()
     imported_ontologies: frozenset[str] = frozenset()
+    modules: tuple[Module, ...] = ()
+    """With --follow-imports: the root file first, then every imported file in load order."""
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.

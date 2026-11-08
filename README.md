@@ -268,9 +268,11 @@ followed (`SEC009`), passes the usual safe loader, and the closure is bounded by
 Cycles end and a module imported twice is loaded once. The headers of imported modules do not
 count as extra ontologies for `ONT002`.
 
-Not yet: findings and SARIF locations still name the root file even for terms declared in a
-module, and the per-ontology header rules (`ONT003`-`ONT006`, `GOV004`) run on every module's
-header.
+A finding belongs to the module that declares its focus (gives it an `rdf:type`), or else to the
+first module that mentions it: JSON gives that module's `path`, SARIF its `artifactLocation` and
+region, and text adds an `In:` line. Baseline fingerprints are unchanged, so a closure baseline
+keeps matching. Not yet: the per-ontology header rules (`ONT003`-`ONT006`, `GOV004`) run on every
+module's header, and graph-wide heuristics (`CLS002`, `METRIC*`) count the whole closure.
 
 ### GitHub annotations
 

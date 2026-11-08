@@ -24,12 +24,12 @@ from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
 from .imports import CATALOG_NAME, Catalog, load_closure, read_catalog
-from .loader import InputRejected, LoadedGraph, ParseFailure, load_graph, source_index
+from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .profiles import PROFILES, Profile
-from .reporting import FileReport, RunReport, fingerprint, render_report, run_exit_code
+from .reporting import FileReport, Location, Origin, RunReport, fingerprint, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
@@ -205,6 +205,10 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
     findings = tuple(replace(f, severity=plan.overrides.get(f.rule, f.severity)) for f in _legacy_order(findings, plan))
     # Only SARIF renders regions, and the index is computed on first use, so other formats skip it.
     sarif = args.format == "sarif"
+    if loaded.modules:
+        origins, locations, problem = _module_origins(loaded.modules, graph, findings, sarif)
+        executions_sorted = tuple(sorted(executions, key=lambda x: x.rule_id))
+        return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins)
     return FileReport(
         item.display,
         item.uri,
@@ -213,6 +217,29 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         loaded.source_index.for_findings(graph, findings) if sarif else {},
         loaded.source_index.problem if sarif else None,
     )
+
+
+def _module_origins(
+    modules: Sequence[Module], graph: Graph, findings: Sequence[Finding], sarif: bool
+) -> tuple[dict[Finding, Origin], dict[Finding, Location], str | None]:
+    """Attribute each finding of an import closure to the file it belongs to (``modules[0]`` is the root).
+
+    A finding belongs to the first file that declares its focus (gives it an ``rdf:type``), else to the
+    first file whose text mentions it, else to the root.  Its region, for SARIF, comes from that file.
+    """
+    located = [module.source_index.for_findings(graph, findings) for module in modules]
+    origins: dict[Finding, Origin] = {}
+    locations: dict[Finding, Location] = {}
+    for finding in findings:
+        owner = next((i for i, module in enumerate(modules) if finding.focus in module.declared), None)
+        if owner is None:
+            owner = next((i for i, found in enumerate(located) if finding in found), 0)
+        if owner:
+            origins[finding] = Origin(modules[owner].display, modules[owner].uri)
+        if sarif and finding in located[owner]:
+            locations[finding] = located[owner][finding]
+    problems = [f"{m.display}: {m.source_index.problem}" for m in modules if sarif and m.source_index.problem]
+    return origins, locations, "; ".join(problems) or None
 
 
 def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:
@@ -263,7 +290,7 @@ def _closure(item: InputFile, policy: Policy, options: ImportOptions) -> LoadedG
     catalog = options.catalog
     if catalog is None and (found := item.path.parent / CATALOG_NAME).is_file():
         catalog = read_catalog(found, policy.max_input_bytes)
-    return load_closure(LoadedGraph(graph, source_index(graph)), item.path, policy, catalog).loaded
+    return load_closure(LoadedGraph(graph, source_index(graph)), item.path, policy, catalog, item).loaded
 
 
 def _parse_inputs(inputs: list[InputFile], imports: ImportOptions | None = None) -> tuple[list[LoadedGraph], list[str]]:
