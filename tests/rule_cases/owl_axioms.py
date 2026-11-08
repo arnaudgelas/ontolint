@@ -174,6 +174,11 @@ CASES = {
             ttl("unrelated disjoint classes", "ex:A owl:disjointWith ex:B ."),
             ttl("siblings", "ex:A rdfs:subClassOf ex:P ; owl:disjointWith ex:B . ex:B rdfs:subClassOf ex:P ."),
             ttl("disjoint with owl:Nothing", "ex:A owl:disjointWith owl:Nothing ; rdfs:subClassOf owl:Nothing ."),
+            # The boundary with OWL043: an unsatisfiable class *expression* is OWL043's, not an axiom conflict.
+            ttl(
+                "intersection of disjoint classes (OWL043)",
+                "ex:A owl:disjointWith ex:B . ex:C owl:intersectionOf ( ex:A ex:B ) .",
+            ),
         ],
     ),
     "OWL026": rule_cases(

@@ -195,6 +195,11 @@ def _operator_lists(ctx: RuleContext) -> None:
 
 
 def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node]) -> None:
+    """OWL043: a union or intersection whose operands make the expression trivial or unsatisfiable.
+
+    Boundary with OWL025: disjoint classes that are also asserted subclasses or equivalents of each other
+    are an axiom conflict, reported there; this rule only judges the operand list of one expression.
+    """
     g = ctx.g
     members = set(items)
     union = predicate == OWL.unionOf

@@ -232,6 +232,9 @@ CASES = {
             ttl("intersection with Thing is fine", "ex:C owl:intersectionOf ( ex:A owl:Thing ) ."),
             ttl("union with Nothing is fine", "ex:C owl:unionOf ( ex:A owl:Nothing ) ."),
             ttl("complement of an unrelated class", "ex:C owl:intersectionOf ( ex:A [ owl:complementOf ex:B ] ) ."),
+            # The boundary with OWL025: disjoint classes linked by a subclass or equivalence *axiom* are OWL025's.
+            ttl("disjoint with its superclass (OWL025)", "ex:A owl:disjointWith ex:B ; rdfs:subClassOf ex:B ."),
+            ttl("disjoint with its equivalent (OWL025)", "ex:A owl:disjointWith ex:B ; owl:equivalentClass ex:B ."),
         ],
     ),
     "OWL044": rule_cases(

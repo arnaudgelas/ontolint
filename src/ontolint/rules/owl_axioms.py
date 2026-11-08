@@ -385,6 +385,11 @@ def _multiple_inverses(ctx: RuleContext) -> None:
 
 
 def _disjoint_conflicts(ctx: RuleContext, code: str, pair_predicate: Node, group_type: Node, kind: str) -> None:
+    """OWL024/OWL025: a disjointness *axiom* contradicted by a subsumption or equivalence axiom between the same pair.
+
+    Boundary with OWL043: an intersection of disjoint or complementary operands is an unsatisfiable class
+    *expression*, reported there; this rule only compares axioms between two named members.
+    """
     g = ctx.g
     pairs: set[tuple[Node, Node]] = set(g.subject_objects(pair_predicate))
     for group in g.subjects(RDF.type, group_type):
