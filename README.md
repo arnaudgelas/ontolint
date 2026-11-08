@@ -474,6 +474,8 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   `SEC007`, `SEC008`, `SEC012`, `SEC014`) are ordinary findings; `SEC007` is an
   info note naming the `owl:imports` that were not followed.
 
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
