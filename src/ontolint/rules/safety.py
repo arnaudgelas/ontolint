@@ -17,6 +17,8 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from .runtime import RuleContext
 
 
@@ -27,8 +29,21 @@ UNSAFE_SCHEMES = frozenset({"blob", "data", "file", "ftp", "gopher", "jar", "jav
 
 _SCHEME = re.compile(r"([A-Za-z][A-Za-z0-9+.\-]*):")
 _USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*://([^/?#@]*)@")
-_LITERAL_HAZARD = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]")
-_IRI_HAZARD = re.compile("[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]")
+
+
+def _char_class(codepoints: Iterable[int]) -> re.Pattern[str]:
+    """Compile a character class that lists every code point, so no range can silently match more."""
+    return re.compile("[" + "".join(re.escape(chr(cp)) for cp in sorted(codepoints)) + "]")
+
+
+_C0_CONTROLS = range(0x20)
+_C1_CONTROLS = range(0x7F, 0xA0)
+_BIDI_CONTROLS = (*range(0x202A, 0x202F), *range(0x2066, 0x206A))  # embeddings, overrides and isolates
+_TEXT_WHITESPACE = frozenset({0x09, 0x0A, 0x0D})  # tab, line feed and carriage return are ordinary in a literal
+_LITERAL_HAZARD = _char_class(
+    cp for cp in (*_C0_CONTROLS, *_C1_CONTROLS, *_BIDI_CONTROLS) if cp not in _TEXT_WHITESPACE
+)
+_IRI_HAZARD = _char_class((*_C0_CONTROLS, *_C1_CONTROLS, *_BIDI_CONTROLS))
 _URL_STRIPPED = str.maketrans("", "", "\t\r\n")
 
 SPECS: tuple[RuleSpec, ...] = (
