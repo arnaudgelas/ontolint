@@ -162,12 +162,15 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         for s in plan.selection.ignored
     ]
     findings = tuple(replace(f, severity=plan.overrides.get(f.rule, f.severity)) for f in _legacy_order(findings, plan))
+    # Only SARIF renders regions, and the index is computed on first use, so other formats skip it.
+    sarif = args.format == "sarif"
     return FileReport(
         item.display,
         item.uri,
         findings,
         tuple(sorted(executions, key=lambda x: x.rule_id)),
-        loaded.source_index.for_findings(graph, findings),
+        loaded.source_index.for_findings(graph, findings) if sarif else {},
+        loaded.source_index.problem if sarif else None,
     )
 
 

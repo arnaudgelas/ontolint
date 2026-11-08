@@ -7,13 +7,13 @@ JSON-LD ``@id`` values. Nodes with no unambiguous source construct simply have n
 
 from __future__ import annotations
 
+import bisect
 import contextlib
 import io
 import json
 import logging
 import re
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping, Sequence
 from urllib.parse import urljoin
 from xml.sax import handler, make_parser
 from xml.sax.xmlreader import AttributesNSImpl
@@ -30,6 +30,8 @@ _XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
 _JSON_FORMATS = frozenset({"json-ld", "application/ld+json"})
 _PREFIXED_NAME = re.compile(r"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:\\.|[^\s<>\"{}|^`\\])*)")
 _BNODE = re.compile(r"_:(?P<label>[A-Za-z][A-Za-z0-9_-]*)")
+# Turtle/N3 directives declare namespaces; the IRIs they mention are not statements about a node.
+_DIRECTIVE = re.compile(r"(?:@prefix|(?i:prefix))\s+[^\s:<>]*:\s*<[^>]*>\s*\.?|(?:@base|(?i:base))\s+<[^>]*>\s*\.?")
 _RDF_ABOUT = "http://www.w3.org/1999/02/22-rdf-syntax-ns#about"
 _RDF_ID = "http://www.w3.org/1999/02/22-rdf-syntax-ns#ID"
 _RDF_RESOURCE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#resource"
@@ -37,11 +39,41 @@ _XML_BASE = "http://www.w3.org/XML/1998/namespacebase"
 _LOG = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
 class SourceIndex:
-    """The first lexical occurrence of each parsed RDF node in a supported source document."""
+    """The first lexical occurrence of each parsed RDF node in a supported source document.
 
-    locations: Mapping[Node, Location]
+    The positions are computed on first access to :attr:`locations`, so a run that never renders
+    SARIF never pays for them.  A locator error costs only the positions: :attr:`locations` is then
+    empty and :attr:`problem` says why.
+    """
+
+    def __init__(
+        self,
+        locations: Mapping[Node, Location] | None = None,
+        *,
+        build: Callable[[], Mapping[Node, Location]] | None = None,
+    ) -> None:
+        self._locations = locations
+        self._build = build
+        self._problem: str | None = None
+
+    @property
+    def locations(self) -> Mapping[Node, Location]:
+        if self._locations is None:
+            try:
+                self._locations = self._build() if self._build is not None else {}
+            except Exception as exc:  # noqa: BLE001 -- a locator bug costs SARIF regions, never the run.
+                _LOG.debug("source locations unavailable", exc_info=True)
+                self._problem = f"{type(exc).__name__}: {exc}"
+                self._locations = {}
+            self._build = None
+        return self._locations
+
+    @property
+    def problem(self) -> str | None:
+        """Why the positions could not be computed, or ``None``; resolves :attr:`locations` first."""
+        _ = self.locations
+        return self._problem
 
     def for_findings(self, graph: Graph, findings: Sequence[Finding]) -> dict[Finding, Location]:
         """Return locations keyed by finding, including stable identities used for blank-node focuses."""
@@ -62,13 +94,9 @@ def build_source_index(data: bytes, fmt: str, public_id: str, graph: Graph) -> S
     Columns are one-based Unicode code points.  The SARIF renderer declares that unit explicitly.
     Parsing has already succeeded, so a token is retained only when it resolves to a node in ``graph``.
     Locations are auxiliary: the parse has already succeeded, so a locator error must never fail the
-    lint.  Any exception degrades to an index without locations and is logged at debug level.
+    lint (see :class:`SourceIndex`).  Nothing is computed until the positions are first read.
     """
-    try:
-        return SourceIndex(_locations(data, fmt, public_id, graph))
-    except Exception:  # noqa: BLE001 -- a locator bug costs SARIF regions, never the run.
-        _LOG.debug("source locations unavailable for %s", public_id, exc_info=True)
-        return SourceIndex({})
+    return SourceIndex(build=lambda: _locations(data, fmt, public_id, graph))
 
 
 def _locations(data: bytes, fmt: str, public_id: str, graph: Graph) -> dict[Node, Location]:
@@ -87,16 +115,31 @@ def _locations(data: bytes, fmt: str, public_id: str, graph: Graph) -> dict[Node
     return _scan(text, fmt, public_id, graph_nodes, prefixes)
 
 
+class _Lines:
+    """Turn character offsets into one-based line and column numbers, in logarithmic time."""
+
+    def __init__(self, text: str) -> None:
+        self.starts = [0, *(match.end() for match in re.finditer("\n", text))]
+
+    def location(self, index: int) -> Location:
+        line = bisect.bisect_right(self.starts, index)
+        return Location(line, index - self.starts[line - 1] + 1)
+
+
 def _scan(
     text: str, fmt: str, public_id: str, graph_nodes: set[Node], prefixes: Mapping[str, str]
 ) -> dict[Node, Location]:
     """Walk a supported RDF lexical stream, recording only terms that the parsed graph contains."""
     locations: dict[Node, Location] = {}
+    lines = _Lines(text)
     index = 0
     while index < len(text):
         skipped = _skip_ignored(text, index)
         if skipped is not None:
             index = skipped
+            continue
+        if fmt in {"turtle", "n3"} and (directive := _directive_end(text, index)) is not None:
+            index = directive
             continue
         char = text[index]
         if char == "<":
@@ -105,15 +148,15 @@ def _scan(
                 break
             node = _resolve_iri(public_id, text[index + 1 : end])
             if node is not None:
-                _record(locations, graph_nodes, node, text, index)
+                _record(locations, graph_nodes, node, lines, index)
             index = end + 1
         elif (match := _BNODE.match(text, index)) is not None:
-            _record(locations, graph_nodes, BNode(match["label"]), text, index)
+            _record(locations, graph_nodes, BNode(match["label"]), lines, index)
             index = match.end()
         elif fmt in {"turtle", "n3"} and (match := _PREFIXED_NAME.match(text, index)) is not None:
             namespace = prefixes.get(match["prefix"])
             if namespace is not None:
-                _record(locations, graph_nodes, URIRef(namespace + _unescape_local(match["local"])), text, index)
+                _record(locations, graph_nodes, URIRef(namespace + _unescape_local(match["local"])), lines, index)
             index = match.end()
         else:
             index += 1
@@ -133,11 +176,17 @@ def _skip_ignored(text: str, index: int) -> int | None:
     return None
 
 
-def _record(locations: dict[Node, Location], graph_nodes: set[Node], node: Node, text: str, index: int) -> None:
+def _directive_end(text: str, index: int) -> int | None:
+    """Return the index after a ``@prefix``/``PREFIX``/``@base``/``BASE`` directive starting here."""
+    if index and (text[index - 1].isalnum() or text[index - 1] in "_-:"):
+        return None
+    match = _DIRECTIVE.match(text, index)
+    return match.end() if match else None
+
+
+def _record(locations: dict[Node, Location], graph_nodes: set[Node], node: Node, lines: _Lines, index: int) -> None:
     if node in graph_nodes and node not in locations:
-        line = text.count("\n", 0, index) + 1
-        previous_newline = text.rfind("\n", 0, index)
-        locations[node] = Location(line, index - previous_newline)
+        locations[node] = lines.location(index)
 
 
 def _resolve_iri(public_id: str, value: str) -> URIRef | None:
@@ -199,7 +248,7 @@ class _RDFXMLLocator(handler.ContentHandler):
         if xml_base := values.get(_XML_BASE):
             self.base = urljoin(self.base, xml_base)
         for attr in (_RDF_ABOUT, _RDF_RESOURCE):
-            if value := values.get(attr):
+            if (value := values.get(attr)) is not None:  # "" is the base IRI, typically the ontology
                 self._record(URIRef(urljoin(self.base, value)))
         if value := values.get(_RDF_ID):
             self._record(URIRef(urljoin(self.base, f"#{value}")))
@@ -237,10 +286,11 @@ def _jsonld_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, L
         return {}
     locations: dict[Node, Location] = {}
     graph_nodes = {node for triple in graph for node in triple}
+    lines = _Lines(text)
     for value, offset in _json_id_values(text, document, public_id):
         node = _resolve_iri(public_id, value)
         if node is not None:
-            _record(locations, graph_nodes, node, text, offset)
+            _record(locations, graph_nodes, node, lines, offset)
     return locations
 
 
@@ -280,7 +330,8 @@ def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[s
             raise ValueError(f"expected {char!r} at offset {index}")
         return whitespace(index + 1)
 
-    def value(index: int, current: object, base: str, terms: Mapping[str, str]) -> int:
+    def value(index: int, current: object, base: str, terms: Mapping[str, str], context: bool = False) -> int:
+        """Walk one JSON value; inside a ``@context`` (``context``) an ``@id`` names a term, not a node."""
         index = whitespace(index)
         if isinstance(current, _Pairs):
             contexts = [child for key, child in current if key == "@context"]
@@ -293,8 +344,8 @@ def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[s
                 _key, index = decoder.raw_decode(text, index)
                 index = expect(whitespace(index), ":")
                 start = index
-                index = whitespace(value(index, child, base, terms))
-                if key == "@id" and isinstance(child, str):
+                index = whitespace(value(index, child, base, terms, context or key == "@context"))
+                if key == "@id" and isinstance(child, str) and not context:
                     found.append((_expand_jsonld_id(child, base, terms), start))
             return expect(index, "}")
         if isinstance(current, list):
@@ -302,7 +353,7 @@ def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[s
             for position, child in enumerate(current):
                 if position:
                     index = expect(index, ",")
-                index = whitespace(value(index, child, base, terms))
+                index = whitespace(value(index, child, base, terms, context))
             return expect(index, "]")
         _unused, index = decoder.raw_decode(text, index)
         return index

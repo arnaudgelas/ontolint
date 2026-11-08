@@ -2,8 +2,8 @@
 
 A run produces one :class:`FileReport` per input file.  JSON and SARIF always carry the
 per-rule execution status so a skipped, unsupported or failed rule can never be mistaken
-for a clean pass.  Source locations are not computed yet; :class:`Location` is the
-extension point (a report may map findings to locations and SARIF will emit regions).
+for a clean pass.  SARIF results carry a source region when the loader could locate the
+finding's focus (:mod:`ontolint.source_locations`); other formats do not use locations.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ NOTIFICATION_LEVELS = {
 
 @dataclass(frozen=True)
 class Location:
-    """A source position inside a file (not yet produced by any rule)."""
+    """A one-based source position (line, and column in Unicode code points) inside a file."""
 
     line: int
     column: int | None = None
@@ -50,6 +50,7 @@ class FileReport:
     findings: tuple[Finding, ...]
     executions: tuple[RuleExecution, ...] = ()
     locations: Mapping[Finding, Location] = field(default_factory=dict[Finding, Location])
+    location_problem: str | None = None  # why source regions could not be computed, if they could not
 
 
 @dataclass(frozen=True)
@@ -187,15 +188,26 @@ def _sarif_notification(file: FileReport, x: RuleExecution) -> dict[str, Any]:
     }
 
 
+def _sarif_location_notification(file: FileReport) -> dict[str, Any]:
+    return {
+        "level": "note",
+        "message": {"text": f"Source regions are unavailable for this file: {file.location_problem}"},
+        "locations": [{"physicalLocation": {"artifactLocation": {"uri": file.uri}}}],
+    }
+
+
 def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, Any]:
     """Execution outcome; non-executed rules are notifications, so they never read as a clean pass."""
     invocation: dict[str, Any] = {
         "executionSuccessful": not report.broken,
         "toolExecutionNotifications": [
-            _sarif_notification(r, x)
-            for r in report.files
-            for x in r.executions
-            if x.status != ExecutionStatus.EXECUTED
+            *(
+                _sarif_notification(r, x)
+                for r in report.files
+                for x in r.executions
+                if x.status != ExecutionStatus.EXECUTED
+            ),
+            *(_sarif_location_notification(r) for r in report.files if r.location_problem),
         ],
         "properties": {"executionSummary": summarise_executions(_all_executions(report))},
     }
