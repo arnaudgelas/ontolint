@@ -41,6 +41,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
 from ontolint import Linter, main
+from ontolint._version import package_version
 from ontolint.catalogue import planned_rows
 from ontolint.ontolint import SEVERITY
 from ontolint.rules.specs import RULE_SPECS
@@ -183,6 +184,8 @@ def _compact(text: str) -> str:
 def _normalise(text: str, tmp: Path) -> str:
     text = text.replace(str(FIXTURES.resolve()), "<fixtures>").replace(str(FIXTURES), "<fixtures>")
     text = text.replace(str(tmp.resolve()), "<tmp>").replace(str(tmp), "<tmp>")
+    # The SARIF driver records the package version; a release must not invalidate the golden.
+    text = text.replace(f'"version": "{package_version()}"', '"version": "<version>"')
     return _compact(re.sub(r"/private(?=<)", "", text))
 
 

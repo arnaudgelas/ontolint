@@ -411,14 +411,14 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:e325958ed19e54b88a213a3aa7355b68cbe9875b66ed839becaf141407a0d0eb (285135 chars)",
+    "file": "sha256:51c7f656a67031222b5024db36d8f83ad2ef7e7383e550ca2f8a8d07e5267319 (285139 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e325958ed19e54b88a213a3aa7355b68cbe9875b66ed839becaf141407a0d0eb (285135 chars)"
+    "stdout": "sha256:51c7f656a67031222b5024db36d8f83ad2ef7e7383e550ca2f8a8d07e5267319 (285139 chars)"
    }
   },
   "multi_file_text": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:a814613b00495537ccb3a6f3eb3aa73eab2edd5286b5b347f36b95191a4d9399 (267812 chars)",
+    "file": "sha256:028a79a39b1f73c1fedf8bf8aa7b64b591bffdd2c8b2d905cd5d3a1dfda5e4ad (267816 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a814613b00495537ccb3a6f3eb3aa73eab2edd5286b5b347f36b95191a4d9399 (267812 chars)"
+    "stdout": "sha256:028a79a39b1f73c1fedf8bf8aa7b64b591bffdd2c8b2d905cd5d3a1dfda5e4ad (267816 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:5f5e2b96d6a232bb7ac760806fa9e06e5e6fb3014526b6bec090e99dae102d39 (256455 chars)",
+    "file": "sha256:497265f42e0db5d7b0d2f0e26302df94247ab65f621860c1079c11124841f2be (256459 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:5f5e2b96d6a232bb7ac760806fa9e06e5e6fb3014526b6bec090e99dae102d39 (256455 chars)"
+    "stdout": "sha256:497265f42e0db5d7b0d2f0e26302df94247ab65f621860c1079c11124841f2be (256459 chars)"
    }
   },
   "select_and_ignore_json": {
