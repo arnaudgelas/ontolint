@@ -260,6 +260,33 @@ def _plan(args: argparse.Namespace, config: Policy, shapes: Graph | None, regist
     return RunPlan(_policy(args, config, config.ignored_rules), selection, overrides, shapes, registry)
 
 
+class UnknownPolicyRuleError(ValueError):
+    """The policy file names a rule that does not exist, so its ignore or override would do nothing."""
+
+
+def _check_policy_rules(config: Policy, registry: RuleRegistry) -> None:
+    """Reject unknown rule IDs in ``ignored_rules`` and ``severity_overrides``, as ``--ignore`` does (OPS009).
+
+    A typo there would otherwise be silent: the rule it meant to silence keeps running, and an
+    override changes nothing.  Proposed (catalogue-only) rules are rejected too, with a hint, because
+    they never run; IDs are matched exactly, like the engine does.
+    """
+    named = {
+        "ignored_rules": sorted(config.ignored_rules),
+        "severity_overrides": [r for r, _ in config.severity_overrides],
+    }
+    unknown = {key: [rule for rule in rules if rule not in registry] for key, rules in named.items()}
+    problems = [f"{key}: {', '.join(rules)}" for key, rules in unknown.items() if rules]
+    if not problems:
+        return
+    message = f"unknown rule identifier(s) in {'; '.join(problems)}"
+    proposed = frozenset(row.rule_id for row in planned_rows())
+    planned = sorted({rule for rules in unknown.values() for rule in rules} & proposed)
+    if planned:
+        message += f"; {', '.join(planned)} exist in the catalogue as proposed rules and are not implemented"
+    raise UnknownPolicyRuleError(message + "; use --list-rules to see valid identifiers")
+
+
 def _emit(output: str, args: argparse.Namespace) -> None:
     if args.output:
         Path(args.output).write_text(output + "\n", encoding="utf-8")
@@ -271,6 +298,7 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     """Run the whole lint; ``stage`` tracks progress for error messages. Returns a report or an exit code."""
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
+    _check_policy_rules(config, registry)
     stage[0] = "RDF input parsing"
     limits = _policy(args, config, config.ignored_rules)
     inputs = resolve_inputs(args.ontology, Path.cwd())
@@ -312,7 +340,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
         print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)
         return 2
-    except PolicyVersionError as exc:
+    except (PolicyVersionError, UnknownPolicyRuleError) as exc:
         print(f"GOV020: policy file rejected: {exc}", file=sys.stderr)
         return 2
     except Exception as exc:

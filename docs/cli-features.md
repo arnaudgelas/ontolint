@@ -12,11 +12,11 @@ Status values: **exists** (implemented and tested), **partial** (some of it exis
 | OPS002 | Baseline file that suppresses known findings | exists | `--write-baseline` and `--baseline`. |
 | OPS003 | Report baseline entries that no longer match any finding | TODO | Stale fingerprints stay in the file silently. |
 | OPS004 | Fail only on new findings | exists | Findings in the baseline do not gate the exit code. |
-| OPS005 | SARIF output with complete rule metadata | partial | `--format sarif` exists; it is not validated against the SARIF schema. |
+| OPS005 | SARIF output with complete rule metadata | exists | `--format sarif`; every report shape is validated against the vendored OASIS SARIF 2.1.0 schema in the tests. |
 | OPS006 | Record tool and catalogue versions in reports | partial | SARIF records the tool version; the catalogue version is not recorded. |
 | OPS007 | Deterministic output across runs | exists | Covered by the differential golden tests. |
 | OPS008 | Validate the configuration file and report unknown keys | exists | Known keys are validated; unknown keys are reported by `GOV020` and an unsupported `policy_version` is rejected (exit 2). |
-| OPS009 | Report ignores or severity overrides that name unknown rules | partial | Unknown `--select`/`--ignore` selectors are errors; `ignored_rules` in the policy file is not checked. |
+| OPS009 | Report ignores or severity overrides that name unknown rules | exists | Unknown `--select`/`--ignore` selectors are errors (`TOOL001`); unknown IDs in the policy file's `ignored_rules` or `severity_overrides` are rejected with `GOV020` (exit 2). |
 | OPS010 | Report a run that exceeds its time or resource budget | partial | `--max-parse-seconds` and the size limits reject an input (`SEC003`, `SEC001`, `SEC002`); the lint phase has no time budget. |
 | OPS011 | Per-rule timing in the report | TODO | |
 | OPS012 | Additional report formats (JUnit, Markdown, HTML) | TODO | `text`, `json` and `sarif` exist. |
