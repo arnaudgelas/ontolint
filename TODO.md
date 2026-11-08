@@ -20,7 +20,13 @@ green). Kept only so the next audit can confirm
 them, then delete these entries. Leftovers from each are in the open items below. The 0.4.1 and
 0.4.2 entries were confirmed and removed.
 
-- Unreleased, branch `feat/import-closure` (`0e5a2aa`, `a4e08f9`): modular stage 1.
+- Unreleased, branch `feat/module-provenance` (`872e79c`, `283dc4e`, `9e4c28f`, plus tests): modular
+  stages 2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
+  text `In:`); header rules judge the root ontology only and ownership derives from its IRI;
+  METRIC011 ignores local modules; a shapes file that imports the ontology supplies it as SHACL-only
+  background. On a real fixture suite every declared outcome matches (13 of 13, 11 of 11 planted
+  violations; valid and warnings-only fixtures pass).
+- 0.6.0 (`0e5a2aa`, `a4e08f9`): modular stage 1.
   `--follow-imports` and `--catalog` load the `owl:imports` closure from local files (catalog `uri`,
   `group` with `xml:base`, `rewriteURI`, `file:` IRIs), never the network; sandboxed (SEC009),
   bounded by `max_import_depth`, `max_imported_files` and `max_triples` (new SEC015); SEC007 lists
@@ -119,7 +125,7 @@ them, then delete these entries. Leftovers from each are in the open items below
   `adapters/shacl.py` and the `owl`, `owl_expressions`, `hierarchy_quality`, `metrics` and
   `class_heuristics` rules): 596 mutants, 97% killed on the first pass, the survivors then killed by
   new tests. `context.py`, also changed in 0.5.1, is outside the mutation scope; decide whether it
-  belongs in it. There are 19 `gremlin: pardon` markers for a reviewer to audit. Run the scheduled
+  belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. Run the scheduled
   validation workflow manually first, have a reviewer other than the change author audit every
   active pardon, then change the repository variable. *Done when:* a current hosted run meets all
   thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking` has
@@ -170,7 +176,7 @@ moves from `proposed` merely because it has an attractive title.
   deterministic result serialisation, and query execution limits. A format already used in
   practice, and a good first candidate: one SPARQL `SELECT ?answer` per `.rq` file, the question in
   a `# CQ:` comment and the expected set of answers in an `# expect: a | b` comment, evaluated
-  against the import closure (so this gate depends on stage 1 of the modular item) and compared as
+  against the import closure (`--follow-imports`, available since 0.6.0) and compared as
   sets. *Gate:* accepted format and at least one public corpus that justifies maintaining it.
 - [ ] **Reasoner-backed semantics (`SEM*`).** Define supported reasoners/profiles, Docker versus
   local dependency model, reproducibility, timeout/failure behavior, and CI image ownership.
@@ -187,58 +193,21 @@ moves from `proposed` merely because it has an attractive title.
   the present offline-first threat model. *Gate:* either a decision to reject it permanently, or an
   accepted opt-in isolated resolver design with allowlists, cache/privacy policy, and deterministic
   mocked tests. There is no default-network implementation.
-- [ ] **Modular ontologies: lint an import closure (recommended next bet).** A common layout is an
-  umbrella ontology with no terms of its own that `owl:imports` a dozen modules; the modules import
-  each other (diamonds, such as two modules both importing a shared "meta" module), share one term
-  namespace while each has its own ontology IRI, and an OASIS XML catalog (`catalog-v001.xml`, the
-  Protégé, ROBOT and ODK convention) maps every module IRI to a file. Alongside sit modules the
-  umbrella deliberately does not import (drafts), generated data modules (ABox), a shapes module
-  that imports the umbrella, and instance-data fixtures. Public examples of the layout: ODK-based
-  OBO ontology repositories (catalog plus import modules) and the W3C SSN/SOSA pair (SSN imports
-  SOSA). What ontolint does today with such a layout, all reproducible on a synthetic copy:
-  - on the umbrella it reports header findings and one SEC007 note, and every term rule judges
-    an empty graph: the run looks clean and checked nothing;
-  - module by module, every module repeats the same header findings (ONT003, ONT004, ONT005,
-    GOV004) that belong on the umbrella only, and IRI004 fires because the shared term namespace
-    does not start with the module IRI;
-  - merging the closure by hand (`robot merge --catalog ...`) does not fix it: ONT002 reports the
-    one-ontology-per-module declarations as a defect, SEC007 still lists the imports it just
-    resolved, and statistics-gated heuristics change meaning (CLS002 stays silent while no class
-    has individuals; once the data modules join, it fires on every TBox class meant to be
-    instantiated at run time);
-  - SHACL needs the ontology as background: shapes that check class membership of vocabulary
-    individuals report false violations on valid instance data linted alone, and none once the
-    data is merged with the closure (inference off, as the shapes expect).
-  Stages, each releasable on its own (stage 1 is done on `feat/import-closure`, see "Recently
-  done"):
-  1. **Offline resolution (done).** `--catalog FILE` (and auto-discovery of `catalog-v001.xml` next
-     to the input), resolving `owl:imports` to local files only: catalog entries, then relative
-     IRIs. Never the network. Sandbox every resolved path with the existing `SEC009` checks, and
-     bound the closure (`max_import_depth`, `max_imported_files`, plus the existing byte and triple
-     limits applied to the closure as a whole). Terminate cycles, load diamonds once. SEC007 then
-     lists only the imports that stayed unresolved.
-  2. **Provenance.** Keep which file asserted each triple and each term, so findings, SARIF
-     `artifactLocation` and regions, and baseline fingerprints point at the declaring module, not at
-     the umbrella. The source index becomes per file.
-  3. **Closure semantics.** Header rules run on the root ontology (the modules inherit its
-     metadata, or a policy says each module needs its own); ONT002 counts ontologies per file, not
-     per closure; ownership spans the closure's modules (shared namespace) and excludes imported
-     external vocabularies (SKOS, DC, BFO) loaded as background; graph-statistics heuristics
-     (CLS002's populated-class gate, `METRIC*` ratios) state whether data modules count, decided
-     on the synthetic corpus, not guessed; METRIC011 does not fire on an umbrella whose only role
-     is to import.
-  4. **SHACL over data plus closure.** `--shapes` with a closure validates the data graph merged
-     with the ontology closure (inference off), while term rules still judge only the ontology, and
-     a shapes file that `owl:imports` the ontology can supply that closure itself.
-  *Verification:* a synthetic corpus in `tests/fixtures/modular/` recreating the layout above
-  (umbrella, shared namespace, catalog, diamond and cycle, one unimported draft module, one data
-  module, a shapes module with `sh:declare` that imports the umbrella, valid, invalid and
-  warnings-only instance fixtures), golden outputs for umbrella, single module and closure runs,
-  sandbox-escape and limit tests on hostile catalogs.
-  *Validation:* the merged closure equals `robot merge --catalog` on the same files (triple count
-  and graph isomorphism); SHACL verdicts equal pySHACL run directly on data plus closure with
-  `allow_warnings=True`; one public ODK-based repository lints with no finding that the
-  maintainers' own CI would call a false positive.
+- [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built (see "Recently
+  done"): offline resolution, per-module provenance, closure semantics and SHACL with the ontology
+  as background. Left:
+  - *Validation on a public corpus:* one ODK-based OBO repository (catalog plus `imports/` modules)
+    linted with `--follow-imports`, with no finding its maintainers' CI would call a false positive.
+    So far checked on one private 12-module ontology and the synthetic corpus only.
+  - *Memory:* each module's source index keeps its graph alive, so a closure holds its triples
+    twice. Bounded by `max_triples`, but measure a large closure and drop the per-module graphs if
+    it matters.
+  - *A per-module header policy:* modules inherit the root's metadata; a project that wants each
+    module to carry its own license or version has to lint the modules one by one. Add a policy key
+    only if someone asks.
+  - *CQ (competency questions):* the decision gate above can now build on the closure.
+  *Done when:* the public-corpus check is recorded and the memory measurement is either fine or
+  fixed.
 
 ## Explicitly deferred
 
