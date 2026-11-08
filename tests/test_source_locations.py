@@ -316,3 +316,92 @@ def test_sarif_says_when_regions_are_unavailable(
     notes = [n["message"]["text"] for n in sarif["runs"][0]["invocations"][0]["toolExecutionNotifications"]]
     assert "Source regions are unavailable for this file: RuntimeError: locator bug" in notes
     assert all("region" not in r["locations"][0]["physicalLocation"] for r in sarif["runs"][0]["results"])
+
+
+# --- cases found by mutation testing of the scanner ------------------------------------------------
+
+
+def test_a_node_named_in_a_comment_or_literal_is_located_at_its_statement(tmp_path: Path) -> None:
+    text = (
+        "@prefix ex: <https://example.test/> .\n"
+        "# ex:A is declared below\n"
+        'ex:Note ex:says "ex:A again" .\n'
+        "ex:A a ex:K .\n"
+    )
+    locations = _document(tmp_path, "a.ttl", text).source_index.locations
+    assert locations[URIRef("https://example.test/A")] == Location(4, 1)
+
+
+def test_the_last_characters_of_a_comment_are_not_a_term(tmp_path: Path) -> None:
+    text = "@prefix : <https://example.test/> .\n# see :A\n<https://example.test/x> :p :A .\n"
+    locations = _document(tmp_path, "a.ttl", text).source_index.locations
+    assert locations[URIRef("https://example.test/A")] == Location(3, len("<https://example.test/x> :p ") + 1)
+
+
+def test_a_comment_at_the_very_end_of_the_file_ends_the_scan(tmp_path: Path) -> None:
+    locations = _document(
+        tmp_path, "a.ttl", "<https://example.test/A> a <https://example.test/K> . # end"
+    ).source_index.locations
+    assert locations[URIRef("https://example.test/K")] == Location(1, len("<https://example.test/A> a ") + 1)
+
+
+def test_an_iri_ending_in_a_hash_does_not_start_a_comment(tmp_path: Path) -> None:
+    locations = _document(
+        tmp_path, "a.ttl", "<https://example.test/o#> a <https://example.test/K> .\n"
+    ).source_index.locations
+    assert locations[URIRef("https://example.test/K")] == Location(1, len("<https://example.test/o#> a ") + 1)
+
+
+def test_rdfxml_keeps_the_first_reference_to_a_resource(tmp_path: Path) -> None:
+    text = """<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:e="https://example.test/">
+  <rdf:Description rdf:about="https://example.test/a"><e:p rdf:resource="https://example.test/b"/></rdf:Description>
+  <rdf:Description rdf:about="https://example.test/b"/>
+</rdf:RDF>
+"""
+    locations = _document(tmp_path, "a.rdf", text).source_index.locations
+    assert locations[URIRef("https://example.test/b")].line == THIRD_LINE
+
+
+def test_a_jsonld_term_without_an_iri_does_not_cost_the_regions(tmp_path: Path) -> None:
+    text = (
+        '{"@context": {"@vocab": "https://example.test/", "tags": {"@container": "@set"}},\n'
+        ' "@id": "https://example.test/a", "@type": "' + OWL_CLASS + '"}'
+    )
+    index = _document(tmp_path, "a.jsonld", text).source_index
+    assert index.locations[URIRef("https://example.test/a")] == Location(2, 9)
+    assert index.problem is None
+
+
+def test_a_locator_failure_is_logged_with_its_traceback(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    def broken(*_args: object) -> dict[object, object]:
+        raise RuntimeError("locator bug")
+
+    monkeypatch.setattr(source_locations, "_locations", broken)
+    with caplog.at_level("DEBUG", logger="ontolint.source_locations"):
+        assert dict(source_locations.build_source_index(b"", "nt", "file:///a.nt", Graph()).locations) == {}
+    assert [record.exc_info[0] if record.exc_info else None for record in caplog.records] == [RuntimeError]
+
+
+@pytest.mark.parametrize(
+    ("data", "fmt"),
+    [
+        (b"<a> <b> <c> .", "trig"),  # a format without a locator
+        (b"\xff\xfe<a> <b> <c> .", "nt"),  # not UTF-8
+        (b"<rdf:RDF", "xml"),  # malformed XML
+        (b"{", "json-ld"),  # malformed JSON
+    ],
+)
+def test_input_the_locator_cannot_read_gives_an_empty_index(data: bytes, fmt: str) -> None:
+    index = source_locations.build_source_index(data, fmt, "file:///a", Graph())
+    assert index.locations == {}
+    assert index.problem is None
+
+
+def test_a_jsonld_context_given_as_a_list_still_expands_compact_iris(tmp_path: Path) -> None:
+    text = '{"@context": [{"ex": "https://example.test/"}],\n "@id": "ex:a", "@type": "' + OWL_CLASS + '"}'
+    assert _document(tmp_path, "a.jsonld", text).source_index.locations[URIRef("https://example.test/a")] == Location(
+        2, 9
+    )
