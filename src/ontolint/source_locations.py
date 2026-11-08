@@ -15,7 +15,7 @@ import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
 from urllib.parse import urljoin
-from xml.sax import handler, make_parser
+from xml.sax import SAXException, handler, make_parser
 from xml.sax.xmlreader import AttributesNSImpl
 
 from rdflib import BNode, Graph, URIRef
@@ -192,12 +192,22 @@ def _record(locations: dict[Node, Location], graph_nodes: set[Node], node: Node,
         locations[node] = lines.location(index)
 
 
-def _resolve_iri(public_id: str, value: str) -> URIRef | None:
-    """Resolve a lexical IRI reference without making a successful RDF parse fail during indexing."""
+def _join(base: str, reference: str) -> str | None:
+    """Resolve ``reference`` against ``base``, or ``None`` when Python cannot split it.
+
+    RDF accepts IRIs such as ``s://]`` that :func:`urllib.parse.urljoin` rejects with ``ValueError``; such
+    an IRI must cost only its own region, never every region of the file.
+    """
     try:
-        return URIRef(urljoin(public_id, value))
+        return urljoin(base, reference)
     except ValueError:
         return None
+
+
+def _resolve_iri(public_id: str, value: str) -> URIRef | None:
+    """Resolve a lexical IRI reference without making a successful RDF parse fail during indexing."""
+    joined = _join(public_id, value)
+    return None if joined is None else URIRef(joined)
 
 
 def _iri_end(text: str, index: int) -> int | None:
@@ -251,13 +261,14 @@ class _RDFXMLLocator(handler.ContentHandler):
     ) -> None:
         values = {f"{key[0] or ''}{key[1]}": value for key, value in attrs.items()}
         self.bases.append(self.base)
-        if xml_base := values.get(_XML_BASE):
-            self.base = urljoin(self.base, xml_base)
-        for attr in (_RDF_ABOUT, _RDF_RESOURCE):
-            if (value := values.get(attr)) is not None:  # "" is the base IRI, typically the ontology
-                self._record(URIRef(urljoin(self.base, value)))
+        if (xml_base := values.get(_XML_BASE)) and (joined := _join(self.base, xml_base)) is not None:
+            self.base = joined
+        references = [values.get(attr) for attr in (_RDF_ABOUT, _RDF_RESOURCE)]  # "" is the base IRI
         if value := values.get(_RDF_ID):
-            self._record(URIRef(urljoin(self.base, f"#{value}")))
+            references.append(f"#{value}")
+        for reference in references:
+            if reference is not None and (node := _resolve_iri(self.base, reference)) is not None:
+                self._record(node)
 
     def endElementNS(self, name: tuple[str | None, str], qname: str | None) -> None:  # noqa: N802 -- SAX callback spelling.
         self.base = self.bases.pop()
@@ -278,7 +289,7 @@ def _xml_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, Loca
         collector = _RDFXMLLocator(public_id, {node for triple in graph for node in triple})
         parser.setContentHandler(collector)
         parser.parse(io.BytesIO(data))
-    except Exception:  # A successful RDFLib parse remains authoritative if the auxiliary locator disagrees.
+    except SAXException:  # A successful RDFLib parse remains authoritative if the auxiliary scan disagrees.
         return {}
     return collector.locations
 
@@ -352,7 +363,9 @@ def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[s
                 start = index
                 index = whitespace(value(index, child, base, terms, context or key == "@context"))
                 if key == "@id" and isinstance(child, str) and not context:
-                    found.append((_expand_jsonld_id(child, base, terms), start))
+                    expanded = _expand_jsonld_id(child, base, terms)
+                    if expanded is not None:
+                        found.append((expanded, start))
             return expect(index, "}")
         if isinstance(current, list):
             index = expect(index, "[")
@@ -375,18 +388,20 @@ def _json_context(raw: object, base: str, inherited: Mapping[str, str]) -> tuple
     for entry in entries:
         if not isinstance(entry, dict):
             continue
-        if isinstance(entry.get("@base"), str):
-            base = urljoin(base, entry["@base"])
+        if isinstance(entry.get("@base"), str) and (joined := _join(base, entry["@base"])) is not None:
+            base = joined
         for name, definition in entry.items():
             value = definition.get("@id") if isinstance(definition, dict) else definition
             if not name.startswith("@") and isinstance(value, str):
-                terms[name] = _expand_jsonld_id(value, base, terms)
+                expanded = _expand_jsonld_id(value, base, terms)
+                if expanded is not None:
+                    terms[name] = expanded
     return base, terms
 
 
-def _expand_jsonld_id(value: str, base: str, terms: Mapping[str, str]) -> str:
-    """Expand an explicit compact IRI without inventing a mapping for an unknown term."""
+def _expand_jsonld_id(value: str, base: str, terms: Mapping[str, str]) -> str | None:
+    """Expand an explicit compact IRI without inventing a mapping for an unknown term (``None``: unresolvable)."""
     prefix, separator, local = value.partition(":")
     if separator and prefix in terms:
         return terms[prefix] + local
-    return urljoin(base, value)
+    return _join(base, value)

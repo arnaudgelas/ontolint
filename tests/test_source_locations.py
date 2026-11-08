@@ -405,3 +405,29 @@ def test_a_jsonld_context_given_as_a_list_still_expands_compact_iris(tmp_path: P
     assert _document(tmp_path, "a.jsonld", text).source_index.locations[URIRef("https://example.test/a")] == Location(
         2, 9
     )
+
+
+# Turtle and JSON-LD accept "s://]", but urllib.parse.urljoin raises ValueError on it (found by the region
+# property test).
+UNSPLITTABLE = "s://]"
+
+
+@pytest.mark.parametrize(
+    ("name", "text"),
+    [
+        (
+            "a.ttl",
+            f"<{UNSPLITTABLE}> a <https://example.test/K> .\n<https://example.test/a> a <https://example.test/K> .\n",
+        ),
+        (
+            "a.jsonld",
+            '[{"@id": "' + UNSPLITTABLE + '", "@type": "https://example.test/K"},\n'
+            ' {"@id": "https://example.test/a", "@type": "https://example.test/K"}]',
+        ),
+    ],
+    ids=["turtle", "json-ld"],  # RDFLib itself refuses this IRI in RDF/XML, so the locator never sees it
+)
+def test_an_iri_python_cannot_split_costs_only_its_own_region(tmp_path: Path, name: str, text: str) -> None:
+    index = _document(tmp_path, name, text).source_index
+    assert index.problem is None
+    assert URIRef("https://example.test/a") in index.locations
