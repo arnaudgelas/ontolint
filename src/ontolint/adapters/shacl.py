@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass, field
 
-from rdflib import Graph, URIRef
+from rdflib import BNode, Graph, URIRef
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
 from ontolint.models import Finding
 from ontolint.rules.specs import FIXES
+from ontolint.rules.support import stable_blank_id
 
 MAX_LIST_LENGTH = 400
 """Longest rdf:list the SHACL backend is asked to validate (pySHACL meta-validation is quadratic in it)."""
@@ -19,6 +20,10 @@ MAX_LIST_COST = 160_000
 
 _BAD_IRI_CHARS = frozenset('<>" {}|\\^`')
 """The characters ``rdflib`` refuses to serialise in an IRI (``rdflib.term._is_valid_uri``)."""
+
+
+SEVERITIES: dict[Node, str] = {SH.Violation: "error", SH.Warning: "warning", SH.Info: "info"}
+"""Finding severity for each standard ``sh:resultSeverity``; any other (custom) severity is an error."""
 
 
 class ShapesRejected(ValueError):
@@ -102,6 +107,19 @@ def check_graph(graph: Graph, name: str, *, strict: bool = True) -> None:
     _check_lists(graph, name, strict=strict)
 
 
+def _name(graph: Graph, node: Node | None) -> str:
+    """Name a report node: a blank node by its content-stable identity in ``graph``, never its parser label.
+
+    Inline shapes (``sh:property [ ... ]``) and blank focus nodes get new labels on every parse; using the
+    label would change the message, and so the baseline fingerprint, from one run to the next.
+    """
+    if node is None:
+        return "(unknown)"
+    if isinstance(node, BNode):
+        return stable_blank_id(graph, node)
+    return str(node)
+
+
 def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
     """Validate ``g`` against ``sg`` with pySHACL (imported lazily; required only with shapes)."""
     try:
@@ -129,10 +147,14 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
         raise RuntimeError(f"pySHACL returned an unexpected report type: {type(report).__name__}")
     results: list[Finding] = []
     for result in report.subjects(RDF.type, SH.ValidationResult):
-        focus = str(next(report.objects(result, SH.focusNode), "(unknown)"))
-        message = "; ".join(map(str, report.objects(result, SH.resultMessage))) or "SHACL constraint violation"
-        src = str(next(report.objects(result, SH.sourceShape), "(unknown)"))
-        results.append(Finding("SHACL001", "error", focus, f"{message} [shape: {src}]", FIXES["SHACL001"], "certain"))
+        focus = _name(g, next(report.objects(result, SH.focusNode), None))
+        message = "; ".join(sorted(map(str, report.objects(result, SH.resultMessage)))) or "SHACL constraint violation"
+        src = _name(sg, next(report.objects(result, SH.sourceShape), None))
+        level = next(report.objects(result, SH.resultSeverity), SH.Violation)
+        severity = SEVERITIES.get(level, "error")
+        if level not in SEVERITIES:
+            message += f" (severity {level})"
+        results.append(Finding("SHACL001", severity, focus, f"{message} [shape: {src}]", FIXES["SHACL001"], "certain"))
     if not results:
         results.append(
             Finding(

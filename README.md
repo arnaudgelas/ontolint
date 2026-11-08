@@ -259,6 +259,12 @@ ontolint ontology.ttl --shapes shapes.ttl
 The integration uses `meta_shacl=True` and `advanced=True`. Newer SHACL draft
 features are not guaranteed to be supported.
 
+Each SHACL result becomes a `SHACL001` finding at the result's own severity:
+`sh:Violation` is `error`, `sh:Warning` is `warning` and `sh:Info` is `info`, so
+warnings-only data passes the default `--fail-on error`. A custom severity is
+reported as `error` and named in the message. Blank-node shapes and focus nodes
+are named by a content-stable identity, so baselines keep matching across runs.
+
 ### OWL profile validation with ROBOT in Docker
 
 Build the minimal project image once. Its final stage contains only the ROBOT
