@@ -35,7 +35,15 @@ def test_a_shapes_file_linted_as_an_ontology_gets_one_note(tmp_path: Path, capsy
     assert "--shapes" in err
 
 
-@pytest.mark.parametrize("text", [ONTOLOGY, ONTOLOGY_WITH_ONE_SHAPE], ids=["ontology", "ontology-with-a-shape"])
+# As many shapes as declared terms is not "mostly shapes": the note needs strictly more shapes.
+AS_MANY_SHAPES_AS_TERMS = PREFIXES + "ex:K a owl:Class . ex:S a sh:NodeShape ; sh:targetClass ex:K .\n"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [ONTOLOGY, ONTOLOGY_WITH_ONE_SHAPE, AS_MANY_SHAPES_AS_TERMS],
+    ids=["ontology", "ontology-with-a-shape", "as-many-shapes-as-terms"],
+)
 def test_an_ontology_gets_no_note(tmp_path: Path, capsys: pytest.CaptureFixture[str], text: str) -> None:
     assert "TOOL003" not in _stderr(tmp_path, capsys, text)
 
