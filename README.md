@@ -347,6 +347,12 @@ engine, linter, CLI, loader, reporting, adapters and rules (see
 [docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md)).
 To add rules, see [docs/adding-rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/adding-rules.md).
 
+### Releasing
+
+`uv run python scripts/bump_version.py {major|minor|patch|X.Y.Z}` updates the version files and
+`CHANGELOG.md`; it never commits, tags or pushes. See
+[docs/releasing.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/releasing.md).
+
 ### CI workflows
 
 `.github/workflows/ci.yml` runs the fast PR checks (Ruff, mypy, pyright,
