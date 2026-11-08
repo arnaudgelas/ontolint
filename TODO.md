@@ -20,6 +20,13 @@ green). Kept only so the next audit can confirm
 them, then delete these entries. Leftovers from each are in the open items below. The 0.4.1 and
 0.4.2 entries were confirmed and removed.
 
+- Unreleased, branch `feat/import-closure` (`0e5a2aa`, `a4e08f9`): modular stage 1.
+  `--follow-imports` and `--catalog` load the `owl:imports` closure from local files (catalog `uri`,
+  `group` with `xml:base`, `rewriteURI`, `file:` IRIs), never the network; sandboxed (SEC009),
+  bounded by `max_import_depth`, `max_imported_files` and `max_triples` (new SEC015); SEC007 lists
+  only unresolved imports and ONT002 ignores imported headers. Synthetic corpus in
+  `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
+  and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
 - 0.5.2 (`2cc3f12`): `TOOL003` note on stderr when a linted file has more SHACL shapes than
   declared terms; the README documents it and `TOOL002`.
 - 0.5.2 (`6fe3be3`, `7357c16`): region property tests over all four formats; they found that an
@@ -112,7 +119,7 @@ them, then delete these entries. Leftovers from each are in the open items below
   `adapters/shacl.py` and the `owl`, `owl_expressions`, `hierarchy_quality`, `metrics` and
   `class_heuristics` rules): 596 mutants, 97% killed on the first pass, the survivors then killed by
   new tests. `context.py`, also changed in 0.5.1, is outside the mutation scope; decide whether it
-  belongs in it. There are 15 `gremlin: pardon` markers for a reviewer to audit. Run the scheduled
+  belongs in it. There are 19 `gremlin: pardon` markers for a reviewer to audit. Run the scheduled
   validation workflow manually first, have a reviewer other than the change author audit every
   active pardon, then change the repository variable. *Done when:* a current hosted run meets all
   thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking` has
@@ -202,11 +209,12 @@ moves from `proposed` merely because it has an attractive title.
   - SHACL needs the ontology as background: shapes that check class membership of vocabulary
     individuals report false violations on valid instance data linted alone, and none once the
     data is merged with the closure (inference off, as the shapes expect).
-  Stages, each releasable on its own:
-  1. **Offline resolution.** `--catalog FILE` (and auto-discovery of `catalog-v001.xml` next to
-     the input), resolving `owl:imports` to local files only: catalog entries, then relative IRIs.
-     Never the network. Sandbox every resolved path with the existing `SEC009` checks, and bound
-     the closure (`max_import_depth`, `max_imported_files`, plus the existing byte and triple
+  Stages, each releasable on its own (stage 1 is done on `feat/import-closure`, see "Recently
+  done"):
+  1. **Offline resolution (done).** `--catalog FILE` (and auto-discovery of `catalog-v001.xml` next
+     to the input), resolving `owl:imports` to local files only: catalog entries, then relative
+     IRIs. Never the network. Sandbox every resolved path with the existing `SEC009` checks, and
+     bound the closure (`max_import_depth`, `max_imported_files`, plus the existing byte and triple
      limits applied to the closure as a whole). Terminate cycles, load diamonds once. SEC007 then
      lists only the imports that stayed unresolved.
   2. **Provenance.** Keep which file asserted each triple and each term, so findings, SARIF
@@ -248,10 +256,10 @@ moves from `proposed` merely because it has an attractive title.
 
 ## Documentation debt to close with the affected work
 
-- [ ] Until the modular stages ship, document the workaround in the README: merge the closure
-  first (`robot merge --catalog catalog-v001.xml --input root.ttl --output merged.ttl`) and lint
-  `merged.ttl`, ignoring ONT002 and SEC007; for SHACL, merge the instance data with that closure
-  before `--shapes`. Say plainly that linting the umbrella file alone checks nothing.
+- [ ] Until stage 4 of the modular item ships, document in the README how to validate instance
+  data against shapes that need the ontology: merge the data with the closure first (for example
+  with `robot merge --catalog`), then pass the merged file with `--shapes`. Stage 1's README section
+  already says that linting the umbrella alone checks nothing.
 - [ ] Correct stale source comments: `src/ontolint/github.py` says findings "carry no source
   locations" (false since 0.3.0) and the module has no caller outside its own test until a
   formatter exists. Either make it earn its place via the GitHub-integration ADR or delete it.
