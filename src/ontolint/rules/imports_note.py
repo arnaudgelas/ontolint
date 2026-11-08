@@ -1,8 +1,10 @@
-"""Run note about ``owl:imports`` that ontolint does not follow: SEC007.
+"""Run note about ``owl:imports`` that ontolint did not follow: SEC007.
 
-ontolint never fetches ``owl:imports`` (no network, deterministic output), so every rule judges the asserted
-graph of the one file it was given.  That is a limit of the result, not a defect of the ontology, hence the
-INFO severity: the finding is one summary line per file (focus ``(imports)``) naming the imports that were
+ontolint never fetches ``owl:imports`` from the network (deterministic output).  By default every rule
+judges the asserted graph of the one file it was given; with ``--follow-imports`` or ``--catalog`` the
+imports that resolve to local files are loaded too (:mod:`ontolint.imports`), and only the others are
+listed here.  An unfollowed import is a limit of the result, not a defect of the ontology, hence the INFO
+severity: the finding is one summary line per file (focus ``(imports)``) naming the imports that were
 skipped, so a reader knows what the other rules could not see.  It never fails a run by default and can be
 silenced with ``--ignore SEC007``.  Pinning of the imports is GOV002's concern, not this rule's.
 """
@@ -30,8 +32,8 @@ SPECS: tuple[RuleSpec, ...] = (
         "SEC",
         "owl:imports not followed",
         Severity.INFO,
-        "Lint the imported ontologies separately if they matter; ontolint never fetches imports. "
-        "Use --ignore SEC007 to silence this note.",
+        "Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or lint "
+        "them separately; ontolint never fetches imports from the network. Use --ignore SEC007 to silence this note.",
         "deterministic",
         RuleBackend.RDFLIB,
         RuleScope.ONTOLOGY,
@@ -46,8 +48,10 @@ def run(ctx: RuleContext) -> None:
     A blank-node target is named by its content-stable identity, so neither the sort order nor the message
     depends on how the parser labelled it.
     """
+    resolved = ctx.policy.resolved_imports  # loaded from local files by --follow-imports / --catalog
     imports = sorted(
         {stable_blank_id(ctx.g, t) if isinstance(t, BNode) else str(t) for t in ctx.g.objects(None, OWL.imports)}
+        - resolved
     )
     if not imports:
         return

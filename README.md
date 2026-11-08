@@ -14,7 +14,7 @@
   <a href="https://pypi.org/project/ontolint/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/ontolint"></a>
   <a href="https://pypi.org/project/ontolint/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/ontolint"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 239 of 294" src="https://img.shields.io/badge/rules-239%2F294_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 240 of 295" src="https://img.shields.io/badge/rules-240%2F295_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -33,7 +33,7 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-239 of the 294 catalogue rules are implemented; the rest are planned. The
+240 of the 295 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
 - 227 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -44,8 +44,8 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 - `SHACL001` for optional pySHACL validation results.
 - `TOOL001` for configuration and execution failures.
 - `SEM001` for opt-in ROBOT OWL-profile validation failures.
-- `SEC001`, `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011` and
-  `SEC013` for unsafe inputs, rejected by the loader before linting (see below).
+- `SEC001`, `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011`, `SEC013` and
+  `SEC015` for unsafe inputs, rejected by the loader before linting (see below).
 
 Each finding includes a rule identifier, severity, focus, message, suggested
 remediation, and confidence level. Rules are policy-oriented: a finding is not
@@ -248,6 +248,30 @@ ontolint ontologies/*.ttl --format sarif --output findings.sarif
   two files stay distinct; a baseline written from one file therefore does not carry over to a
   multi-file run. Write multi-file baselines from multi-file runs.
 
+### Modular ontologies: following `owl:imports`
+
+By default each file is linted alone, so an umbrella ontology that only `owl:imports` its modules
+checks almost nothing (`SEC007` lists the imports that were not followed). With
+`--follow-imports`, ontolint loads the import closure from local files and lints it as one graph:
+
+```bash
+ontolint ontology.ttl --follow-imports                  # uses catalog-v001.xml next to ontology.ttl
+ontolint ontology.ttl --catalog path/to/catalog-v001.xml  # an explicit catalog (implies --follow-imports)
+```
+
+Imports resolve through an OASIS XML catalog (the Protégé, ROBOT and ODK `catalog-v001.xml`:
+`uri` entries, also inside `group`, and `rewriteURI` prefixes) or as `file:` IRIs; the network is
+never used, and imports that do not resolve stay listed by `SEC007`. Every resolved file must lie
+inside the catalog's directory (or the input's directory without a catalog) after symlinks are
+followed (`SEC009`), passes the usual safe loader, and the closure is bounded by
+`max_import_depth` (16), `max_imported_files` (100) and `max_triples` as a whole (`SEC015`).
+Cycles end and a module imported twice is loaded once. The headers of imported modules do not
+count as extra ontologies for `ONT002`.
+
+Not yet: findings and SARIF locations still name the root file even for terms declared in a
+module, and the per-ontology header rules (`ONT003`-`ONT006`, `GOV004`) run on every module's
+header.
+
 ### GitHub annotations
 
 `--format github` is not available yet. The escaping helpers (`%`, CR, LF and, for properties,
@@ -421,7 +445,8 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 5. A subclass cycle is a review warning, not automatically an inconsistency.
 6. `owl:allValuesFrom` does not imply the existence of a value.
 7. A SKOS `broader` cycle is informational; it is not universally prohibited.
-8. The linter does not fetch URLs or resolve `owl:imports` automatically.
+8. The linter never fetches URLs; it resolves `owl:imports` only to local files, and only with
+   `--follow-imports` or `--catalog`.
 9. Semantic OWL axioms are never auto-fixed because intent cannot be inferred
    reliably.
 
@@ -472,7 +497,7 @@ Ontologies are untrusted input, so the loader is deliberately strict:
 
 - Parsing runs with the network disabled. Any socket or DNS attempt is blocked
   and reported (`SEC013`); a JSON-LD file with an external `@context` is
-  refused (`SEC006`). `owl:imports` is never fetched.
+  refused (`SEC006`). `owl:imports` is never fetched; `--follow-imports` loads only local files.
 - Inputs larger than `--max-input-bytes` (default 64 MiB) or holding more than
   `--max-triples` triples (default 5,000,000) are rejected (`SEC001`, `SEC002`).
   Both can also be set in the `--config` policy file. With
@@ -490,7 +515,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 294 entries: 239 executable diagnostics and 55 proposed
+catalogue. It records 295 entries: 240 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an

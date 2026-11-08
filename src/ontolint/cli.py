@@ -23,6 +23,7 @@ from rdflib.namespace import RDF, SH
 from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
+from .imports import CATALOG_NAME, Catalog, load_closure, read_catalog
 from .loader import InputRejected, LoadedGraph, ParseFailure, load_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
@@ -68,6 +69,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Ontology RDF file(s); each is linted independently. Expand globs in your shell; directories are rejected",
     )
     ap.add_argument("--shapes", help="Optional SHACL shapes graph (requires pyshacl)")
+    ap.add_argument(
+        "--follow-imports",
+        action="store_true",
+        help=f"Load the owl:imports closure from local files, through {CATALOG_NAME} next to each input if present",
+    )
+    ap.add_argument("--catalog", help="OASIS XML catalog mapping import IRIs to local files (implies --follow-imports)")
     ap.add_argument("--base", help="Only lint declared terms in this namespace")
     ap.add_argument("--config", help="Optional JSON policy with ignored_rules, severity_overrides and thresholds")
     ap.add_argument("--baseline", help="JSON of fingerprints to exclude from displayed and gating findings")
@@ -169,7 +176,10 @@ def _shapes_hint(item: InputFile, graph: Graph, ctx: RuleContext) -> None:
 def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule."""
     graph = loaded.graph
-    ctx = engine.build_context(graph, plan.shapes, plan.policy)
+    policy = replace(
+        plan.policy, resolved_imports=loaded.resolved_imports, imported_ontologies=loaded.imported_ontologies
+    )
+    ctx = engine.build_context(graph, plan.shapes, policy)
     _shapes_hint(item, graph, ctx)
     if ctx.context.ownership.base_selected_nothing:
         print(
@@ -240,16 +250,35 @@ def _apply_baselines(
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
 
 
-def _parse_inputs(inputs: list[InputFile]) -> tuple[list[LoadedGraph], list[str]]:
+@dataclass(frozen=True)
+class ImportOptions:
+    """How to follow ``owl:imports``: with one explicit catalog, or with the one found next to each input."""
+
+    catalog: Catalog | None = None
+
+
+def _closure(item: InputFile, policy: Policy, options: ImportOptions) -> LoadedGraph:
+    graph = load_graph(item, policy)
+    catalog = options.catalog
+    if catalog is None and (found := item.path.parent / CATALOG_NAME).is_file():
+        catalog = read_catalog(found, policy.max_input_bytes)
+    return load_closure(LoadedGraph(graph, source_index(graph)), item.path, policy, catalog).loaded
+
+
+def _parse_inputs(inputs: list[InputFile], imports: ImportOptions | None = None) -> tuple[list[LoadedGraph], list[str]]:
     """Parse every input safely (no network, bounded size); return the graphs and one message per failure.
 
     The limits come from the policy of the current run (:data:`_LOADER_POLICY`, set by :func:`_lint`).
+    With ``imports`` each input is loaded with its local ``owl:imports`` closure (:mod:`ontolint.imports`).
     """
     policy = _LOADER_POLICY.get() or Policy()
     graphs: list[LoadedGraph] = []
     errors: list[str] = []
     for item in inputs:
         try:
+            if imports is not None:
+                graphs.append(_closure(item, policy, imports))
+                continue
             graph = load_graph(item, policy)
             graphs.append(LoadedGraph(graph, source_index(graph)))
         except InputRejected as exc:
@@ -335,11 +364,20 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
     _check_policy_rules(config, registry)
-    stage[0] = "RDF input parsing"
     limits = _policy(args, config, config.ignored_rules)
+    imports = None
+    if args.catalog:  # read before parsing: a broken catalog is a configuration error, not an input error
+        try:
+            imports = ImportOptions(read_catalog(Path(args.catalog), limits.max_input_bytes))
+        except InputRejected as exc:
+            print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
+            return 2
+    elif args.follow_imports:
+        imports = ImportOptions()
+    stage[0] = "RDF input parsing"
     inputs = resolve_inputs(args.ontology, Path.cwd())
     _LOADER_POLICY.set(limits)
-    graphs, errors = _parse_inputs(inputs)
+    graphs, errors = _parse_inputs(inputs, imports)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2

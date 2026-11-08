@@ -281,6 +281,7 @@ rule_id,family,title,status,category,backend,test_requirement
 "SEC012","SEC","Control or bidirectional-override characters","implemented","deterministic","RDFLib graph","malicious-input fixture"
 "SEC013","SEC","Network access attempted while disabled","implemented","deterministic","CLI","malicious-input fixture"
 "SEC014","SEC","Credentials embedded in an IRI","implemented","deterministic","RDFLib graph","malicious-input fixture"
+"SEC015","SEC","Import closure exceeds its limits","implemented","deterministic","CLI","closure fixtures past max_import_depth, max_imported_files and max_triples"
 "OBO001","OBO","OBO term IRI that does not follow the PREFIX_0000000 pattern","implemented","context-dependent","RDFLib graph","OBO fixture"
 "OBO002","OBO","Ontology header missing OBO-required title, description or license","implemented","context-dependent","RDFLib graph","OBO fixture"
 "OBO003","OBO","Term without an IAO textual definition","implemented","context-dependent","RDFLib graph","OBO fixture"

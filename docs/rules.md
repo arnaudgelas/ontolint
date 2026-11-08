@@ -23,7 +23,7 @@ All examples assume these prefixes:
 ```
 
 
-**239 of 294 catalogue rules are implemented; 55 are TODO.**
+**240 of 295 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ All examples assume these prefixes:
 | [OBO](#obo) | 12 | 0 |
 | [ONT](#ont) | 6 | 0 |
 | [OWL](#owl) | 45 | 0 |
-| [SEC](#sec) | 14 | 0 |
+| [SEC](#sec) | 15 | 0 |
 | [SEM](#sem) | 1 | 7 |
 | [SHACL](#shacl) | 1 | 0 |
 | [SHQ](#shq) | 27 | 0 |
@@ -198,7 +198,7 @@ ex:C a owl:Class . ex:D a owl:Class . ex:C owl:equivalentClass ex:D .
 ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=())`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset())`.
 
 Reported: `skos:exactMatch target https://elsewhere.test/A is outside the declared alignment namespaces.`
 
@@ -294,7 +294,7 @@ ex:C9 a owl:Class .
 ex:C0 skos:exactMatch <https://ref.test/a#C0> .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=0.5, max_parse_seconds=None, unknown_keys=())`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=0.5, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset())`.
 
 Reported: `1 of 10 classes and properties have a mapping (0.10 < 0.50).`
 
@@ -1409,7 +1409,7 @@ Linter options: `base='https://example.test/onto#'`.
 ex:A a owl:Class ; rdfs:label "A" .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),), alignment_namespaces=(), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=())`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),), alignment_namespaces=(), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset())`.
 
 Reported: `Missing required annotations: rdfs:comment.`
 
@@ -1453,7 +1453,7 @@ ex:o a owl:Ontology .
 ex:A a owl:Class .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=('bogus',))`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, max_parse_seconds=None, unknown_keys=('bogus',), resolved_imports=frozenset(), imported_ontologies=frozenset())`.
 
 Reported: `Unknown policy key 'bogus' is ignored.`
 
@@ -4357,7 +4357,7 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** deterministic
-- **Fix:** Lint the imported ontologies separately if they matter; ontolint never fetches imports. Use --ignore SEC007 to silence this note.
+- **Fix:** Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or lint them separately; ontolint never fetches imports from the network. Use --ignore SEC007 to silence this note.
 
 *Flagged:* one IRI import
 
@@ -4479,6 +4479,17 @@ Reported: `IRI embeds a password for user 'alice'.`
 ```turtle
 ex:a ex:p <https://alice@example.test/x> .
 ```
+
+#### SEC015: Import closure exceeds its limits
+
+- **Severity:** error
+- **Scope:** input
+- **Category:** deterministic
+- **Fix:** Lint a smaller closure, or raise max_import_depth, max_imported_files or max_triples in the policy if the size is expected.
+
+*Flagged:* `closure above max_triples` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `closure within max_triples` (built programmatically; see `tests/rule_cases/`)
 
 ## SEM
 

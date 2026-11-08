@@ -91,6 +91,9 @@ class LoadedGraph:
 
     graph: Graph
     source_index: SourceIndex
+    # With --follow-imports: the owl:imports loaded from local files, and the ontology IRIs those files declare.
+    resolved_imports: frozenset[str] = frozenset()
+    imported_ontologies: frozenset[str] = frozenset()
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.

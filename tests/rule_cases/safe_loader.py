@@ -1,4 +1,4 @@
-"""Cases for the safe-loader rules (SEC001, SEC002, SEC003, SEC006, SEC009, SEC010, SEC011, SEC013).
+"""Cases for the safe-loader rules (SEC001, SEC002, SEC003, SEC006, SEC009, SEC010, SEC011, SEC013, SEC015).
 
 Each probe writes the input to a temporary directory, runs the CLI there and returns the rule ids it
 printed to stderr.
@@ -28,6 +28,27 @@ RDFXML = (
     '<?xml version="1.0"?>\n{doctype}<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"'
     ' xmlns:e="http://e/"><rdf:Description rdf:about="http://e/a"><e:p>x</e:p></rdf:Description></rdf:RDF>\n'
 )
+
+
+def _closure_codes(*options: str) -> Collection[str]:
+    """Probe: an umbrella (2 triples) importing a module (3 triples) through a file IRI, with ``--follow-imports``.
+
+    Each file is within ``--max-triples 4``; the closure of 5 triples is not.
+    """
+    err = io.StringIO()
+    with tempfile.TemporaryDirectory() as tmp, contextlib.chdir(tmp):
+        module = Path(tmp, "module.ttl").resolve()
+        module.write_text(
+            "<https://e.test/m> a <http://www.w3.org/2002/07/owl#Ontology> ."
+            " <https://e.test/a> a <https://e.test/K> . <https://e.test/b> a <https://e.test/K> ."
+        )
+        Path("umbrella.ttl").write_text(
+            "<https://e.test/u> a <http://www.w3.org/2002/07/owl#Ontology> ;"
+            f" <http://www.w3.org/2002/07/owl#imports> <{module.as_uri()}> ."
+        )
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            main(["umbrella.ttl", "--follow-imports", "--select", "ONT001", *options])
+    return {line.split(":", 1)[0] for line in err.getvalue().splitlines() if line[:3] in {"SEC", "INP"}}
 
 
 def cli_codes(
@@ -149,6 +170,10 @@ CASES = {
     "SEC011": rule_cases(
         [probed("gzip input", cli_codes("a.ttl.gz", gzip.compress(TTL.encode())))],
         [probed("plain input", cli_codes("a.ttl", TTL))],
+    ),
+    "SEC015": rule_cases(
+        [probed("closure above max_triples", lambda: _closure_codes("--max-triples", "4"))],
+        [probed("closure within max_triples", lambda: _closure_codes("--max-triples", "5"))],
     ),
     "SEC013": rule_cases(
         [

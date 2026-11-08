@@ -20,9 +20,14 @@ DEFAULT_SUBCLASS_LIMIT = 50  # CLS011: more direct subclasses than this is a fla
 # style inputs in CI.  Both must be positive integers.
 DEFAULT_MAX_INPUT_BYTES = 64 * 1024 * 1024
 DEFAULT_MAX_TRIPLES = 5_000_000
+DEFAULT_MAX_IMPORT_DEPTH = 16
+DEFAULT_MAX_IMPORTED_FILES = 100
 LOADER_LIMIT_DEFAULTS: dict[str, int] = {
     "max_input_bytes": DEFAULT_MAX_INPUT_BYTES,
     "max_triples": DEFAULT_MAX_TRIPLES,
+    # Bounds of an owl:imports closure (--follow-imports, --catalog); max_triples bounds its whole graph.
+    "max_import_depth": DEFAULT_MAX_IMPORT_DEPTH,
+    "max_imported_files": DEFAULT_MAX_IMPORTED_FILES,
 }
 
 # Ontology-metric thresholds (METRIC001-METRIC013).  Ratios live in [0, 1]; counts are integers.
@@ -75,6 +80,8 @@ class Policy:
     metric_min_definition_words: float = 4.0
     max_input_bytes: int = DEFAULT_MAX_INPUT_BYTES
     max_triples: int = DEFAULT_MAX_TRIPLES
+    max_import_depth: int = DEFAULT_MAX_IMPORT_DEPTH
+    max_imported_files: int = DEFAULT_MAX_IMPORTED_FILES
     extra_definition_predicates: tuple[str, ...] = ()
     extra_label_predicates: tuple[str, ...] = ()
     ignored_rules: frozenset[str] = frozenset()
@@ -84,6 +91,10 @@ class Policy:
     alignment_min_coverage: float | None = None
     max_parse_seconds: float | None = None  # wall-clock budget for parsing one input (SEC003); None = no budget
     unknown_keys: tuple[str, ...] = ()  # config keys the policy file carried but ontolint does not know (GOV020)
+    # Set by the loader for one file, never by a policy file: the owl:imports IRIs it resolved to local
+    # files, and the ontology IRIs declared by those imported files (see :mod:`ontolint.imports`).
+    resolved_imports: frozenset[str] = frozenset()
+    imported_ontologies: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -146,6 +157,8 @@ class Policy:
             alignment_min_coverage=_optional_ratio(data, "alignment_min_coverage"),
             max_parse_seconds=_parse_seconds(data),
             unknown_keys=tuple(sorted({str(key) for key in data} - _known_keys())),
+            resolved_imports=frozenset(),
+            imported_ontologies=frozenset(),
         )
 
 
@@ -157,9 +170,13 @@ class PolicyVersionError(ValueError):
     """The policy file declares a ``policy_version`` this ontolint does not support (reported as GOV020)."""
 
 
+_RUNTIME_FIELDS = frozenset({"unknown_keys", "resolved_imports", "imported_ontologies"})
+"""Policy fields filled in while linting, not accepted from a policy file."""
+
+
 def _known_keys() -> frozenset[str]:
     """Every accepted top-level policy key: the Policy fields (minus bookkeeping) and ``policy_version``."""
-    return frozenset(f.name for f in fields(Policy) if f.name != "unknown_keys") | {"policy_version"}
+    return frozenset(f.name for f in fields(Policy) if f.name not in _RUNTIME_FIELDS) | {"policy_version"}
 
 
 def _check_version(data: Mapping[str, Any]) -> None:

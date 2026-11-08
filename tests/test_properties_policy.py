@@ -63,7 +63,8 @@ def to_mapping(policy: Policy) -> dict[str, Any]:
     data["extra_label_predicates"] = list(policy.extra_label_predicates)
     data["required_annotations"] = {kind: list(predicates) for kind, predicates in policy.required_annotations}
     data["alignment_namespaces"] = list(policy.alignment_namespaces)
-    data.pop("unknown_keys")  # bookkeeping of from_mapping, not a configuration key
+    for runtime in ("unknown_keys", "resolved_imports", "imported_ontologies"):
+        data.pop(runtime)  # bookkeeping of from_mapping and of the loader, not configuration keys
     return data
 
 
@@ -147,4 +148,5 @@ def test_integer_thresholds_enforce_their_lower_bounds(name: str, value: int) ->
 
 def test_policy_has_no_field_the_round_trip_test_cannot_reach() -> None:
     """Every Policy field can be written in a mapping, so the round-trip property covers the whole dataclass."""
-    assert {f.name for f in fields(Policy)} - {"unknown_keys"} == set(to_mapping(Policy()))
+    runtime = {"unknown_keys", "resolved_imports", "imported_ontologies"}  # filled in while linting
+    assert {f.name for f in fields(Policy)} - runtime == set(to_mapping(Policy()))

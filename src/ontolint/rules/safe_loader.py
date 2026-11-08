@@ -1,6 +1,7 @@
 """Specifications for the safe-loader rules, emitted by the CLI front end while it reads input.
 
-``SEC001``..``SEC013`` here are raised by :mod:`ontolint.loader` (``module=""``): no graph exists yet when
+``SEC001``..``SEC013`` and ``SEC015`` here are raised by :mod:`ontolint.loader` and
+:mod:`ontolint.imports` (``module=""``): no graph exists yet when
 they apply, so there is no ``run(ctx)``.  The CLI prints them like ``INPUT001`` and exits with code 2.
 ``SEC003`` (parse time budget) is raised when ``--max-parse-seconds`` / ``max_parse_seconds`` is set: the parse then
 runs in a killable worker process.  ``SEC007`` (``owl:imports`` not followed) is a graph rule in
@@ -58,5 +59,11 @@ SPECS: tuple[RuleSpec, ...] = (
         "SEC013",
         "Network access attempted while disabled",
         "Make the input self-contained; ontolint runs with the network disabled and never fetches resources.",
+    ),
+    _spec(
+        "SEC015",
+        "Import closure exceeds its limits",
+        "Lint a smaller closure, or raise max_import_depth, max_imported_files or max_triples in the policy if the "
+        "size is expected.",
     ),
 )

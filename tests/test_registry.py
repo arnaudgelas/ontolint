@@ -36,7 +36,7 @@ from ontolint.rules.specs import RULE_SPECS
 ROOT = Path(__file__).parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
 BASE = "https://example.test/onto#"
-CATALOGUE_ROW_COUNT = 294
+CATALOGUE_ROW_COUNT = 295
 IMPLEMENTED_COUNT = len(implemented_rows())  # derived: rule groups flip catalogue rows independently
 EXECUTED, SKIPPED, UNSUPPORTED, FAILED = (
     ExecutionStatus.EXECUTED,

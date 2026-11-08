@@ -90,7 +90,7 @@ def test_parse_error_names_file_only_for_multiple_inputs(tmp_path: Path) -> None
 def test_lint_requires_one_graph_per_input(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     ttl = tmp_path / "a.ttl"
     ttl.write_text("@prefix ex: <http://e/> . ex:a ex:b ex:c .", encoding="utf-8")
-    monkeypatch.setattr(cli, "_parse_inputs", lambda inputs: ([], []))
+    monkeypatch.setattr(cli, "_parse_inputs", lambda inputs, imports=None: ([], []))
     args = cli.build_parser().parse_args([str(ttl)])
     with pytest.raises(ValueError, match="argument"):
         cli._lint(args, ["configuration"])  # noqa: SLF001

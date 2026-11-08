@@ -348,6 +348,7 @@ def test_specs_are_cli_errors_with_distinct_titles() -> None:
         "SEC010",
         "SEC011",
         "SEC013",
+        "SEC015",
     ]
     sec003 = next(s for s in SPECS if s.rule_id == "SEC003")
     assert sec003.title == "Parsing exceeds the time budget"

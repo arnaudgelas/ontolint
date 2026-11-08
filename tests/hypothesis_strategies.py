@@ -572,6 +572,8 @@ def valid_policy_mappings(draw: st.DrawFn) -> dict[str, Any]:
         "metric_min_definition_words": _QUANTITIES,
         "max_input_bytes": st.integers(1, 10**9),
         "max_triples": st.integers(1, 10**7),
+        "max_import_depth": st.integers(1, 64),
+        "max_imported_files": st.integers(1, 1000),
         "extra_definition_predicates": st.lists(_PREDICATE_IRIS, max_size=3),
         "extra_label_predicates": st.lists(_PREDICATE_IRIS, max_size=3),
         "ignored_rules": st.lists(st.sampled_from(RULE_IDS + ("NOPE999",)), max_size=4),

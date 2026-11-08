@@ -98,8 +98,10 @@ def run(ctx: RuleContext) -> None:
     g = ctx.g
     if not ctx.ontologies:
         ctx.add("ONT001", "(ontology)", "Missing owl:Ontology declaration.", confidence="certain")
-    if len(ctx.ontologies) > 1:
-        ctx.add("ONT002", "(ontology)", f"{len(ctx.ontologies)} owl:Ontology declarations found.")
+    # The headers of files loaded through owl:imports are expected, one per module, not a second ontology.
+    own = [ont for ont in ctx.ontologies if str(ont) not in ctx.policy.imported_ontologies]
+    if len(own) > 1:
+        ctx.add("ONT002", "(ontology)", f"{len(own)} owl:Ontology declarations found.")
     for ont in sorted(ctx.ontologies, key=str):
         if not any((ont, p, None) in g for p in META_LICENSE):
             ctx.add("ONT003", ont, "Ontology has no license annotation.", confidence="certain")

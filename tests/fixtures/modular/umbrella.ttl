@@ -1,0 +1,10 @@
+# Synthetic modular ontology: an umbrella with no terms of its own that imports its modules.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+
+<https://example.test/onto> a owl:Ontology ;
+    dct:title "Example modular ontology"@en ;
+    owl:imports <https://example.test/onto/meta> ,
+                <https://example.test/onto/core> ,
+                <https://example.test/onto/data> ,
+                <https://external.example/vocabulary> .

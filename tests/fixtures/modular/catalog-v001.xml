@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Synthetic catalog in the Protege/ROBOT/ODK style; the data module sits in a subdirectory. -->
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+  <uri name="https://example.test/onto" uri="umbrella.ttl"/>
+  <uri name="https://example.test/onto/meta" uri="meta.ttl"/>
+  <uri name="https://example.test/onto/core" uri="core.ttl"/>
+  <uri name="https://example.test/onto/draft" uri="draft.ttl"/>
+  <group xml:base="generated/">
+    <uri name="https://example.test/onto/data" uri="data.ttl"/>
+  </group>
+</catalog>
