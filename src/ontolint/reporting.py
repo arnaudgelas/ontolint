@@ -41,6 +41,7 @@ class Location:
     column: int | None = None
 
 
+# gremlin: pardon[equivalent] nothing mutates an origin; frozen only guards against it
 @dataclass(frozen=True)
 class Origin:
     """The file a finding belongs to when it is not the linted file itself (an imported module)."""

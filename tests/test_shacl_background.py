@@ -13,8 +13,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from rdflib import URIRef
+from rdflib.namespace import OWL, RDF, SH
 
+from ontolint import cli
 from ontolint.cli import main
+from ontolint.loader import load_graph
+from ontolint.paths import resolve_inputs
+from ontolint.policy import Policy
 
 CORPUS = Path(__file__).parent / "fixtures" / "modular"
 
@@ -70,3 +76,15 @@ def test_shapes_without_imports_add_no_background(corpus: Path, capsys: pytest.C
     code, findings, _err = _shacl(capsys, corpus / "examples" / "valid.ttl", shapes, "--follow-imports")
     assert code == 1
     assert len(findings) == 1
+
+
+def test_the_background_holds_the_ontology_but_not_the_shapes(corpus: Path) -> None:
+    item = resolve_inputs([str(corpus / "shapes.ttl")], corpus)[0]
+    shapes = load_graph(item, Policy())
+    background = cli._shapes_background(item, shapes, Policy(), cli.ImportOptions())  # noqa: SLF001
+    assert background is not None
+    core = "https://example.test/onto/core#"
+    assert (URIRef(core + "Authoritative"), RDF.type, URIRef(core + "Status")) in background
+    assert not set(background.subjects(RDF.type, SH.NodeShape))
+    shapes.remove((None, OWL.imports, None))
+    assert cli._shapes_background(item, shapes, Policy(), cli.ImportOptions()) is None  # noqa: SLF001

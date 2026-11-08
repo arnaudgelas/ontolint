@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 from jsonschema.validators import validator_for
 
+from ontolint import source_locations
 from ontolint.cli import main
 
 CORPUS = Path(__file__).parent / "fixtures" / "modular"
@@ -55,6 +56,8 @@ def test_sarif_uses_the_module_artifact_and_region(umbrella: Path, capsys: pytes
     physical = result["locations"][0]["physicalLocation"]
     assert physical["artifactLocation"]["uri"].endswith("modular/core.ttl")
     assert physical["region"] == {"startLine": UNDEFINED_LINE, "startColumn": 1}
+    notes = sarif["runs"][0]["invocations"][0]["toolExecutionNotifications"]
+    assert not [n for n in notes if n["message"]["text"].startswith("Source regions are unavailable")]
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     validator_for(schema)(schema).validate(sarif)
 
@@ -116,3 +119,19 @@ def test_a_vendored_vocabulary_in_the_closure_is_not_owned(umbrella: Path, capsy
     findings = _json(capsys, umbrella)
     assert not [f for f in findings if f["focus"].startswith("https://vendor.example/")]
     assert [f["focus"] for f in findings if f["rule"] == "LEX002"] == [UNDEFINED]  # project terms still judged
+
+
+def test_a_module_locator_failure_is_reported_in_sarif(
+    umbrella: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(*_args: object) -> dict[object, object]:
+        raise RuntimeError("locator bug")
+
+    monkeypatch.setattr(source_locations, "_locations", broken)
+    sarif = json.loads(_run(capsys, umbrella, "sarif"))
+    notes = [n["message"]["text"] for n in sarif["runs"][0]["invocations"][0]["toolExecutionNotifications"]]
+    (note,) = [n for n in notes if n.startswith("Source regions are unavailable")]
+    assert "umbrella.ttl: RuntimeError: locator bug" in note
+    assert "core.ttl: RuntimeError: locator bug" in note
+    report = json.loads(_run(capsys, umbrella, "json"))
+    assert report["findings"]  # the run itself is unaffected
