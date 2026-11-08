@@ -27,10 +27,11 @@ guarantees that proposed rules are never reported as executed.
 3. **Register it** with one line in `RULE_MODULES` in `src/ontolint/rules/builtin.py`.  Append at the end:
    order is observable (first emission wins de-duplication).  Registration derives the registry,
    the engine's execution order, `SEVERITY` and `FIXES`.  Rules that need an adapter or the CLI front
-   end instead of a graph `run` go in `rules/external.py` with `module=""`.
+   end instead of a graph `run` go in `rules/external.py` with `module=""`.  A family that must never run by default
+   (like `OBO` and `FAIR`) is added to `OPT_IN_FAMILIES` in `src/ontolint/profiles.py`, with a profile if useful.
 4. **Flip the catalogue rows** to `implemented` in `data/rule_catalogue.csv` and copy the file to
    `src/ontolint/data/rule_catalogue.csv`.  Keep `title`, `family` and `category` identical to the
-   spec.  Update the counts (`CATALOGUE_ROW_COUNT`/`IMPLEMENTED_COUNT` in `tests/test_registry.py`).
+   spec.  Update `CATALOGUE_ROW_COUNT` in `tests/test_registry.py` if rows were added or removed (`IMPLEMENTED_COUNT` is derived), and drop the ids from `tests/planned_rule_intents.py`.
    The `test_requirement` column is a contract: satisfy it with the tests below.
 5. **Add per-rule tests** in `tests/rule_cases/<family>.py` exporting `CASES` (see
    `tests/rule_harness.py`).  For **every** rule provide at least one positive and one negative case:

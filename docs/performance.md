@@ -46,11 +46,7 @@ measured on the commit `1f4698e` code (cProfile roughly doubles wall time).
 - Not justified: further indexes for class hierarchy facts (already indexed once in `context.py`).
 - CLS004 was an algorithmic problem, fixed without any index.
 
-## Enabling the `benchmark` marker (pyproject.toml change, not applied)
+## Running the benchmarks
 
-```toml
-[tool.pytest.ini_options]
-markers = ["benchmark: opt-in large-ontology resource-budget benchmarks (ONTOLINT_BENCH=1)"]
-# and add `--ignore=tests/benchmarks` to addopts if benchmarks should never be collected by default
-```
-Currently the benchmarks are gated only by `ONTOLINT_BENCH=1` through `skipif` (skipped otherwise).
+The `benchmark` marker is registered in `pyproject.toml`. The benchmarks are skipped
+unless `ONTOLINT_BENCH=1` is set (a `skipif` in `tests/benchmarks/test_linter_benchmarks.py`).

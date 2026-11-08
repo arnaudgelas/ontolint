@@ -36,16 +36,16 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 239 of the 294 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
-- 217 Python graph checks for metadata, identifiers, IRIs, labels and lexical
+- 227 Python graph checks for metadata, identifiers, IRIs, labels and lexical
   quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
   shape quality, governance, ontology metrics, mapping quality, input-safety
-  hygiene and, opt-in, OBO Foundry conventions.
+  hygiene and, opt-in, OBO Foundry and FAIR publishing conventions.
 - `INPUT001` for RDF parsing failures.
 - `SHACL001` for optional pySHACL validation results.
 - `TOOL001` for configuration and execution failures.
 - `SEM001` for opt-in ROBOT OWL-profile validation failures.
-- `SEC001`, `SEC002`, `SEC006`, `SEC009`, `SEC010`, `SEC011` and `SEC013` for
-  unsafe inputs, rejected by the loader before linting (see below).
+- `SEC001`, `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011` and
+  `SEC013` for unsafe inputs, rejected by the loader before linting (see below).
 
 Each finding includes a rule identifier, severity, focus, message, suggested
 remediation, and confidence level. Rules are policy-oriented: a finding is not
@@ -319,28 +319,47 @@ incremental adoption, but are not semantic version comparisons.
 ## Development and quality checks
 
 ```bash
-# Unit and property-based tests
+# Unit and property-based tests (coverage must stay at or above 95%)
 uv run pytest -q
 
 # Run tests in parallel
 uv run pytest -q -n auto
 
+# Skip the slow Hypothesis and fuzz tests
+uv run pytest -q -n auto -m 'not slow'
+
+# Type checks
+uv run pyright && uv run mypy && uv run mypy --platform win32
+
 # Mutation testing (opt-in)
 uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
 
-# Lint the project
-uv run ruff check .
+# Lint and format the project
+uv run ruff check . && uv run ruff format --check .
 ```
 
-Hypothesis tests generate RDF class hierarchies and verify that the linter's
-cycle diagnostics agree with an independent reachability oracle. Mutation
-testing is configured to target `src/ontolint/ontolint.py`.
+Hypothesis tests generate RDF graphs and check properties of the linter, such as
+deterministic output and agreement of cycle diagnostics with an independent
+reachability oracle. A mutation-based fuzzer (`tests/fuzz/`) feeds mutated
+files to the loader, the rules and the CLI. Both are marked `slow`; run the
+longer profile with `HYPOTHESIS_PROFILE=ci-deep`. Mutation testing targets the
+engine, linter, CLI, loader, reporting, adapters and rules (see
+[docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md)).
+To add rules, see [docs/adding-rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/adding-rules.md).
 
 ### CI workflows
 
 `.github/workflows/ci.yml` runs the fast PR checks (Ruff, mypy, pyright,
 `pip-audit`, tests with coverage, package build). All actions are pinned to
 commit SHAs and the uv version is pinned; Renovate keeps both current.
+
+`.github/workflows/fuzz.yml` runs the mutation fuzzer weekly with a longer
+budget per target and uploads any crashing input.
+
+`.github/workflows/release.yml` runs on a `vX.Y.Z` tag: it calls the CI
+workflow, checks that the tag matches the version in `pyproject.toml`, builds
+the distributions and publishes them to PyPI with Trusted Publishing from the
+`pypi` environment.
 
 `.github/workflows/validation.yml` runs weekly and on manual dispatch:
 
@@ -396,8 +415,6 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
   profile.
 - Shape coverage (`SHQ006`) checks direct instances and direct class targets
   only.
-- Strongly connected components are calculated recursively, which can reach
-  Python's recursion limit on unusually large graphs.
 - SARIF output does not yet include source line or column locations.
 
 ## Related tools and sources
@@ -423,13 +440,15 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   refused (`SEC006`). `owl:imports` is never fetched.
 - Inputs larger than `--max-input-bytes` (default 64 MiB) or holding more than
   `--max-triples` triples (default 5,000,000) are rejected (`SEC001`, `SEC002`).
-  Both can also be set in the `--config` policy file.
+  Both can also be set in the `--config` policy file. With
+  `--max-parse-seconds` a parse that runs too long is stopped (`SEC003`).
 - RDF/XML with external entities or nested entity expansion is refused
   (`SEC010`), compressed files are refused (`SEC011`), and relative paths that
   escape the working directory or symlinks that leave it are refused (`SEC009`).
 - Rejected inputs are reported as `SECxxx: ...` on stderr with exit code `2`,
   like a parse failure. Post-parse hygiene checks (`SEC004`, `SEC005`,
-  `SEC008`, `SEC012`, `SEC014`) are ordinary findings.
+  `SEC007`, `SEC008`, `SEC012`, `SEC014`) are ordinary findings; `SEC007` is an
+  info note naming the `owl:imports` that were not followed.
 
 ## Roadmap
 
@@ -442,9 +461,9 @@ ontology; they moved to [docs/cli-features.md](https://github.com/arnaudgelas/on
 Thirteen further entries that cannot be specified soundly, or duplicate another rule, were
 removed; see [docs/dropped-rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/dropped-rules.md).
 
-The next major areas are comprehensive rule fixtures and false-positive cases,
-OWLAPI/ROBOT and reasoner adapters, safe import-closure support, richer SHACL
-authoring checks, ontology-diff regression testing, and opt-in publishing/FAIR
+The next major areas are competency-question and ontology-diff rules (both need
+a second input), reasoner-based semantic checks through ROBOT, safe
+import-closure support, richer SHACL authoring checks, and network-based FAIR
 checks.
 
 ## License

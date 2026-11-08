@@ -11,6 +11,10 @@ in `.github/workflows/validation.yml`.
 uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
 ```
 
+On a large suite the coverage pre-scan can exceed its default 120 s limit, which
+disables coverage-guided test selection and makes many mutants time out. Add
+`--gremlin-coverage-timeout=900` when that warning appears.
+
 The command excludes the tests marked `slow` (the Hypothesis property tests and the
 fuzz tests). They exercise every rule, so gremlins would select them for almost every
 mutant and a run would take hours instead of minutes. They still run in the normal
@@ -55,12 +59,12 @@ it by 5 points; lowering one requires the waiver process below.
 
 ## Scope
 
-In scope: `src/ontolint/ontolint.py` (the `paths` setting). Out of scope: tests,
-`docker/`, `.github/`, and modules not listed in `paths`. Adding a source module
+In scope: the engine, linter, CLI, loader, reporting, `adapters/` and `rules/`
+(the `paths` setting in `pyproject.toml`). Out of scope: tests, `docker/`,
+`.github/`, and modules not listed in `paths`. Adding a source module
 to `paths` is a policy change: it enters in advisory mode until it meets the
-thresholds in a scheduled run, then becomes blocking. The code is being split
-into `src/ontolint/` subpackages; `paths` must be updated in the same change
-that moves logic, so that scope never silently shrinks.
+thresholds in a scheduled run, then becomes blocking. `paths` must be updated in the
+same change that moves logic, so that scope never silently shrinks.
 
 ## Survivor triage and waivers
 
