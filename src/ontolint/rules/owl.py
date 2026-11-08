@@ -40,6 +40,24 @@ RANGE_SUBSTITUTES = (
 )
 _DATATYPE_EXPRESSIONS = (OWL.onDatatype, OWL.datatypeComplementOf)
 
+# The XSD integer types and their inclusive value bounds (None = unbounded).  Turtle writes every plain
+# number as xsd:integer, so a value is checked against a narrower integer range by value, not by name.
+_INTEGER_BOUNDS: dict[Node, tuple[int | None, int | None]] = {
+    XSD.integer: (None, None),
+    XSD.nonNegativeInteger: (0, None),
+    XSD.positiveInteger: (1, None),
+    XSD.nonPositiveInteger: (None, 0),
+    XSD.negativeInteger: (None, -1),
+    XSD.long: (-(2**63), 2**63 - 1),
+    XSD.int: (-(2**31), 2**31 - 1),
+    XSD.short: (-(2**15), 2**15 - 1),
+    XSD.byte: (-(2**7), 2**7 - 1),
+    XSD.unsignedLong: (0, 2**64 - 1),
+    XSD.unsignedInt: (0, 2**32 - 1),
+    XSD.unsignedShort: (0, 2**16 - 1),
+    XSD.unsignedByte: (0, 2**8 - 1),
+}
+
 
 def is_deprecated(g: Graph, term: Node) -> bool:
     """Return whether ``term`` carries ``owl:deprecated true``."""
@@ -377,8 +395,29 @@ def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> No
                     str(datatype).startswith(str(XSD))
                     and o.datatype != datatype
                     and not (datatype == XSD.string and o.datatype in (None, RDF.langString))
+                    and not _in_value_space(o, datatype)
                 ):
                     ctx.add("DATA001", s, f"{p} has range {datatype} but value has datatype {o.datatype}.")
+
+
+def _in_value_space(value: Literal, datatype: Node) -> bool:
+    """Whether an integer-typed ``value`` lies in the value space of the integer or decimal ``datatype``.
+
+    OWL 2 types data by value: ``1`` (an ``xsd:integer`` in Turtle) is a valid ``xsd:positiveInteger``,
+    and every integer is an ``xsd:decimal``.  Any other pair of differing datatypes is left to DATA001.
+    """
+    if value.datatype not in _INTEGER_BOUNDS:
+        return False
+    try:
+        number = int(str(value).strip())
+    except ValueError:  # an ill-typed lexical form, such as "abc"^^xsd:integer
+        return False
+    if datatype == XSD.decimal:
+        return True
+    if datatype not in _INTEGER_BOUNDS:
+        return False
+    low, high = _INTEGER_BOUNDS[datatype]
+    return (low is None or number >= low) and (high is None or number <= high)
 
 
 def _domain_disjointness(ctx: RuleContext) -> None:

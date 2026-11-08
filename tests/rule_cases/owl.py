@@ -107,7 +107,24 @@ CASES = {
             ttl(
                 "string where xsd:integer is the range",
                 'ex:d a owl:DatatypeProperty ; rdfs:range xsd:integer . ex:i ex:d "x" .',
-            )
+            ),
+            *(
+                ttl(
+                    f"{value} is outside xsd:{range_}",
+                    f"ex:d a owl:DatatypeProperty ; rdfs:range xsd:{range_} . ex:i ex:d {value} .",
+                )
+                for range_, value in (
+                    ("positiveInteger", "0"),
+                    ("nonNegativeInteger", "-1"),
+                    ("negativeInteger", "0"),
+                    ("byte", "128"),
+                    ("byte", "-129"),
+                    ("unsignedByte", "256"),
+                    ("int", "2147483648"),
+                    ("integer", "1.5"),
+                    ("positiveInteger", '"abc"^^xsd:integer'),
+                )
+            ),
         ],
         [
             ttl(
@@ -116,6 +133,26 @@ CASES = {
             ),
             ttl(
                 "plain literal for xsd:string", 'ex:d a owl:DatatypeProperty ; rdfs:range xsd:string . ex:i ex:d "x" .'
+            ),
+            # A Turtle number is xsd:integer; it fits a narrower integer range by value (OWL 2 value spaces).
+            *(
+                ttl(
+                    f"{value} fits xsd:{range_}",
+                    f"ex:d a owl:DatatypeProperty ; rdfs:range xsd:{range_} . ex:i ex:d {value} .",
+                )
+                for range_, value in (
+                    ("positiveInteger", "1"),
+                    ("nonNegativeInteger", "0"),
+                    ("nonPositiveInteger", "0"),
+                    ("negativeInteger", "-1"),
+                    ("byte", "127"),
+                    ("byte", "-128"),
+                    ("unsignedByte", "255"),
+                    ("int", "2147483647"),
+                    ("long", "-9223372036854775808"),
+                    ("unsignedLong", "18446744073709551615"),
+                    ("decimal", "7"),
+                )
             ),
         ],
     ),
