@@ -400,9 +400,16 @@ def test_sarif_carries_rule_metadata_locations_and_invocation(run: Run) -> None:
     assert ont001["help"]["text"] and ont001["defaultConfiguration"]["level"] == "warning"
     assert set(ont001["properties"]) == {"category", "backend", "scope"}
     assert driver["version"] == package_version()
+    located = 0
     for result in sarif_run["results"]:
-        assert result["locations"] == [{"physicalLocation": {"artifactLocation": {"uri": "kitchen_sink.ttl"}}}]
+        physical = result["locations"][0]["physicalLocation"]
+        assert physical["artifactLocation"] == {"uri": "kitchen_sink.ttl"}
+        if region := physical.get("region"):
+            located += 1
+            assert region["startLine"] > 0 and region["startColumn"] > 0
         assert driver["rules"][result["ruleIndex"]]["id"] == result["ruleId"]
+    assert located > 0
+    assert sarif_run["columnKind"] == "unicodeCodePoints"
     (invocation,) = sarif_run["invocations"]
     assert invocation["executionSuccessful"] is True and invocation["exitCode"] == code
     skipped = {n["associatedRule"]["id"]: n for n in invocation["toolExecutionNotifications"]}

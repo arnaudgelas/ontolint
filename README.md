@@ -213,8 +213,9 @@ case a `Rule execution:` block is appended.
   `artifactLocation` on every result, and a run `invocation`. Skipped, unsupported and failed
   rules are `toolExecutionNotifications` (levels `note`, `warning`, `error`);
   `executionSuccessful` is `false` when any rule failed or is unsupported.
-* Findings carry no line/column yet. The report model has an optional location slot that SARIF
-  will turn into a `region` once rules can supply real positions.
+* SARIF findings for Turtle, N3, N-Triples and N-Quads inputs include the source line and column of
+  their focus term when it can be resolved. RDF/XML and JSON-LD findings retain their artifact URI
+  but omit a region rather than reporting an unreliable location.
 
 ### Several files
 
@@ -241,9 +242,8 @@ ontolint ontologies/*.ttl --format sarif --output findings.sarif
 
 ### GitHub annotations
 
-`--format github` is not available yet. Workflow-command annotations need a file *and a line*,
-and findings carry no source locations. The escaping helpers (`%`, CR, LF and, for properties,
-`:` and `,`) already exist in `ontolint.github`; the formatter is gated on location support.
+`--format github` is not available yet. The escaping helpers (`%`, CR, LF and, for properties,
+`:` and `,`) already exist in `ontolint.github`; a formatter has not yet been added.
 
 ### Optional SHACL validation
 
@@ -421,7 +421,8 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
   profile.
 - Shape coverage (`SHQ006`) checks direct instances and direct class targets
   only.
-- SARIF output does not yet include source line or column locations.
+- SARIF source regions are currently available for Turtle-family and N-Triples-family inputs;
+  RDF/XML and JSON-LD source mapping remain future work.
 
 ## Related tools and sources
 

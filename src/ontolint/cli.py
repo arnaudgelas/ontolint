@@ -22,7 +22,7 @@ from rdflib import Graph
 from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
-from .loader import InputRejected, ParseFailure, load_graph
+from .loader import InputRejected, LoadedGraph, ParseFailure, load_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
@@ -136,8 +136,9 @@ class RunPlan:
     registry: RuleRegistry
 
 
-def _lint_file(item: InputFile, graph: Graph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
+def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule."""
+    graph = loaded.graph
     ctx = engine.build_context(graph, plan.shapes, plan.policy)
     if ctx.context.ownership.base_selected_nothing:
         print(
@@ -161,7 +162,13 @@ def _lint_file(item: InputFile, graph: Graph, plan: RunPlan, args: argparse.Name
         for s in plan.selection.ignored
     ]
     findings = tuple(replace(f, severity=plan.overrides.get(f.rule, f.severity)) for f in _legacy_order(findings, plan))
-    return FileReport(item.display, item.uri, findings, tuple(sorted(executions, key=lambda x: x.rule_id)))
+    return FileReport(
+        item.display,
+        item.uri,
+        findings,
+        tuple(sorted(executions, key=lambda x: x.rule_id)),
+        loaded.source_index.for_findings(graph, findings),
+    )
 
 
 def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:
@@ -194,17 +201,18 @@ def _apply_baselines(files: list[FileReport], args: argparse.Namespace) -> list[
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
 
 
-def _parse_inputs(inputs: list[InputFile]) -> tuple[list[Graph], list[str]]:
+def _parse_inputs(inputs: list[InputFile]) -> tuple[list[LoadedGraph], list[str]]:
     """Parse every input safely (no network, bounded size); return the graphs and one message per failure.
 
     The limits come from the policy of the current run (:data:`_LOADER_POLICY`, set by :func:`_lint`).
     """
     policy = _LOADER_POLICY.get() or Policy()
-    graphs: list[Graph] = []
+    graphs: list[LoadedGraph] = []
     errors: list[str] = []
     for item in inputs:
         try:
-            graphs.append(load_graph(item, policy))
+            graph = load_graph(item, policy)
+            graphs.append(LoadedGraph(graph, source_index(graph)))
         except InputRejected as exc:
             where = f" for {item.display}" if len(inputs) > 1 and item.display not in exc.message else ""
             errors.append(f"{exc.rule_id}: {exc.message}{where}")

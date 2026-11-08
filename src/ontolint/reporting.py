@@ -207,22 +207,24 @@ def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, A
 def to_sarif_report(report: RunReport, exit_status: int | None = None) -> dict[str, Any]:
     """Return a SARIF 2.1.0 document: rule metadata, results with artifact locations and an invocation."""
     rule_index = {s.rule_id: i for i, s in enumerate(report.rules)}
+    run: dict[str, Any] = {
+        "tool": {
+            "driver": {
+                "name": "ontolint",
+                "version": package_version(),
+                "rules": [_sarif_rule(s, report.severity_overrides) for s in report.rules],
+            }
+        },
+        "invocations": [_sarif_invocation(report, exit_status)],
+        "results": [_sarif_result(f, r, rule_index) for r in report.files for f in r.findings],
+    }
+    if report.findings:
+        # SARIF requires the column unit when a run processes text artifacts and has results.
+        run["columnKind"] = "unicodeCodePoints"
     return {
         "version": "2.1.0",
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "runs": [
-            {
-                "tool": {
-                    "driver": {
-                        "name": "ontolint",
-                        "version": package_version(),
-                        "rules": [_sarif_rule(s, report.severity_overrides) for s in report.rules],
-                    }
-                },
-                "invocations": [_sarif_invocation(report, exit_status)],
-                "results": [_sarif_result(f, r, rule_index) for r in report.files for f in r.findings],
-            }
-        ],
+        "runs": [run],
     }
 
 
