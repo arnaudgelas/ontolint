@@ -125,9 +125,9 @@ def run(ctx: RuleContext) -> None:
         _sibling_labels(ctx, parent, kids, keys)
         _unlabelled_parent(ctx, parent, kids, keys)
         _sibling_naming(ctx, parent, kids)
-    metaclasses = _metaclasses(ctx)
+    plain_classes = ctx.classes - _metaclasses(ctx)  # computed once: per class it made CLS017 quadratic
     for cls in sorted(ctx.classes, key=str):
-        _punned(ctx, cls, metaclasses)
+        _punned(ctx, cls, plain_classes)
         _name_shape(ctx, cls)
 
 
@@ -180,9 +180,10 @@ def _metaclasses(ctx: RuleContext) -> set[URIRef]:
     return found
 
 
-def _punned(ctx: RuleContext, cls: URIRef, metaclasses: set[URIRef]) -> None:
+def _punned(ctx: RuleContext, cls: URIRef, plain_classes: frozenset[URIRef]) -> None:
+    """``plain_classes`` are the classes that are not metaclasses; typing ``cls`` by one is punning."""
     other = ctx.context.types_by_subject.get(cls, frozenset()).difference(CLASS_TYPES)
-    if OWL.NamedIndividual in other or other & (ctx.classes - metaclasses):
+    if OWL.NamedIndividual in other or other & plain_classes:
         ctx.add("CLS017", cls, "Class is also typed as an individual (punning).")
 
 
