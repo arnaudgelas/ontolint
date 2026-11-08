@@ -4238,20 +4238,20 @@ Reported: `owl:intersectionOf contains complementary or disjoint operands _:c42f
 ex:A owl:disjointWith ex:B . ex:C owl:unionOf ( ex:A ex:B ) .
 ```
 
-#### OWL044: Individuals asserted both identical and different
+#### OWL044: Individuals identical through owl:sameAs chains but asserted different
 
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
 - **Fix:** Remove the conflicting owl:sameAs or owl:differentFrom assertion; nothing differs from itself.
 
-*Flagged:* same and different
+*Flagged:* transitive same
 
 ```turtle
-ex:a owl:sameAs ex:b ; owl:differentFrom ex:b .
+ex:a owl:sameAs ex:b . ex:b owl:sameAs ex:c . ex:a owl:differentFrom ex:c .
 ```
 
-Reported: `Individual is asserted both different from and the same as https://example.test/onto#b.`
+Reported: `Individual is asserted different from https://example.test/onto#c, but a chain of owl:sameAs makes them the same.`
 
 *Clean:* same only
 

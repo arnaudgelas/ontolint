@@ -134,7 +134,7 @@ rule_id,family,title,status,category,backend,test_requirement
 "OWL041","OWL","Contradictory owl:complementOf cycle","implemented","deterministic","RDFLib graph","detector fixture and expected finding"
 "OWL042","OWL","Class subclass of or equivalent to its own complement","implemented","deterministic","RDFLib graph","detector fixture and expected finding"
 "OWL043","OWL","Contradictory or tautological operands in union or intersection","implemented","deterministic","RDFLib graph","detector fixture and expected finding"
-"OWL044","OWL","Individuals asserted both identical and different","implemented","deterministic","RDFLib graph","detector fixture and expected finding"
+"OWL044","OWL","Individuals identical through owl:sameAs chains but asserted different","implemented","deterministic","RDFLib graph","detector fixture and expected finding"
 "OWL045","OWL","Malformed owl:AllDifferent or owl:AllDisjointClasses","implemented","deterministic","RDFLib graph","detector fixture and expected finding"
 "SKOS007","SKOS","Resource typed as both skos:Concept and skos:ConceptScheme","implemented","deterministic","RDFLib graph","SKOS integrity fixture"
 "SKOS008","SKOS","skos:Collection typed as concept or concept scheme","implemented","deterministic","RDFLib graph","SKOS integrity fixture"

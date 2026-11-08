@@ -118,7 +118,7 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
     _spec(
         "OWL044",
-        "Individuals asserted both identical and different",
+        "Individuals identical through owl:sameAs chains but asserted different",
         Severity.ERROR,
         "Remove the conflicting owl:sameAs or owl:differentFrom assertion; nothing differs from itself.",
     ),
@@ -434,21 +434,25 @@ def _members(ctx: RuleContext, axiom: Node, predicates: Iterable[Node]) -> list[
 
 
 def _identity(ctx: RuleContext) -> None:
+    """OWL044: identity conflicts that need the ``owl:sameAs`` closure or an ``owl:AllDifferent`` axiom.
+
+    A direct conflict (``a owl:differentFrom a``, or ``owl:sameAs`` and ``owl:differentFrom`` asserted
+    between the same two individuals) is OWL026's; reporting it here too would flag one defect twice.
+    """
     g = ctx.g
     parent: dict[Node, Node] = {}
     for a, b in g.subject_objects(OWL.sameAs):
         if not isinstance(b, Literal):
             parent[_find(parent, a)] = _find(parent, b)
     for a, b in sorted(g.subject_objects(OWL.differentFrom), key=lambda pair: (str(pair[0]), str(pair[1]))):
-        if isinstance(b, Literal):
+        direct = a == b or (a, OWL.sameAs, b) in g or (b, OWL.sameAs, a) in g
+        if isinstance(b, Literal) or direct:
             continue
-        if a == b:
-            ctx.add("OWL044", a, "Individual is asserted different from itself.", confidence="certain")
-        elif _find(parent, a) == _find(parent, b):
+        if _find(parent, a) == _find(parent, b):
             ctx.add(
                 "OWL044",
                 a,
-                f"Individual is asserted both different from and the same as {_name(b)}.",
+                f"Individual is asserted different from {_name(b)}, but a chain of owl:sameAs makes them the same.",
                 confidence="certain",
             )
     _all_different_conflicts(ctx, parent)

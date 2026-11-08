@@ -236,10 +236,11 @@ CASES = {
     ),
     "OWL044": rule_cases(
         [
-            ttl("same and different", "ex:a owl:sameAs ex:b ; owl:differentFrom ex:b ."),
-            ttl("reversed same", "ex:b owl:sameAs ex:a . ex:a owl:differentFrom ex:b ."),
-            ttl("different from self", "ex:a owl:differentFrom ex:a ."),
             ttl("transitive same", "ex:a owl:sameAs ex:b . ex:b owl:sameAs ex:c . ex:a owl:differentFrom ex:c ."),
+            ttl(
+                "same through a shared individual",
+                "ex:a owl:sameAs ex:m . ex:b owl:sameAs ex:m . ex:a owl:differentFrom ex:b .",
+            ),
             ttl(
                 "AllDifferent with same members",
                 "ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:members ( ex:a ex:b ex:c ) .",
@@ -249,6 +250,10 @@ CASES = {
             ttl("same only", "ex:a owl:sameAs ex:b ."),
             ttl("different only", "ex:a owl:differentFrom ex:b ."),
             ttl("unrelated", "ex:a owl:sameAs ex:b . ex:c owl:differentFrom ex:a ."),
+            # Direct conflicts are OWL026's, so one defect is not reported twice.
+            ttl("direct same and different", "ex:a owl:sameAs ex:b ; owl:differentFrom ex:b ."),
+            ttl("direct reversed same", "ex:b owl:sameAs ex:a . ex:a owl:differentFrom ex:b ."),
+            ttl("different from self", "ex:a owl:differentFrom ex:a ."),
             ttl("literal object", 'ex:a owl:sameAs "x" ; owl:differentFrom "x" .'),
             ttl(
                 "AllDifferent distinct",
