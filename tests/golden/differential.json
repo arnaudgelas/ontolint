@@ -173,7 +173,7 @@
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:ce7c7d6ba95c99c5ee43a245e0f40a5966fbed9fcd7ba2098f90019095166627 (213496 chars)"
+    "stdout": "sha256:6f9982fe5920c2d921c3a7fec990b58588b1334a08654a4144102e295b0518e9 (213546 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -209,7 +209,7 @@
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:3a2b504da4583acf0198ea871b4415deb209845ce51d2a670ec9649241ed7d94 (282858 chars)"
+    "stdout": "sha256:942dd2c524bf4752159ff6e8d7429b4c49b0e5b986ef6482004feca67687358f (282908 chars)"
    },
    "write_baseline": {
     "count": 207,
@@ -231,7 +231,7 @@
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:e4262214633cb2a02343433014429a5ef6cc618add9cef21c1bdb8a38157a175 (263043 chars)"
+    "stdout": "sha256:dd64b61bf89aa9f674e6cea251b139921c27a12c721e436af466b75e20baf9d5 (263093 chars)"
    },
    "write_baseline": {
     "count": 137,
@@ -295,7 +295,7 @@
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:3a9f059e7aeb89f7ebd0efba7ebce8ae07d0bebf522856c6685f52b2878032a4 (264643 chars)"
+    "stdout": "sha256:44132703933c847dd0c5357e660748edabb8ddb301d7733c5c4c0e8226d5496d (264693 chars)"
    },
    "write_baseline": {
     "count": 147,

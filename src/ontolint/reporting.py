@@ -60,6 +60,8 @@ class RunReport:
     files: tuple[FileReport, ...]
     rules: tuple[RuleSpec, ...] = ()
     severity_overrides: Mapping[str, str] = field(default_factory=dict[str, str])
+    # Baseline fingerprints that matched no finding of this run; ``None`` when no baseline was read.
+    stale_baseline: tuple[str, ...] | None = None
 
     @property
     def findings(self) -> tuple[Finding, ...]:
@@ -139,7 +141,21 @@ def to_json(report: RunReport) -> dict[str, Any]:
             }
             for r in report.files
         ],
+        # Present only when a baseline was read, so runs without one keep their historical shape.
+        **(
+            {"baseline": {"stale_fingerprints": list(report.stale_baseline)}}
+            if report.stale_baseline is not None
+            else {}
+        ),
     }
+
+
+def stale_baseline_message(count: int) -> str:
+    """The note shown when ``count`` baseline fingerprints matched no finding of the run (OPS003)."""
+    return (
+        f"Baseline: {count} fingerprint(s) match no finding of this run (fixed, or not selected); "
+        "regenerate the baseline with --write-baseline to drop them."
+    )
 
 
 def render_json(report: RunReport) -> str:
@@ -208,6 +224,11 @@ def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, A
                 if x.status != ExecutionStatus.EXECUTED
             ),
             *(_sarif_location_notification(r) for r in report.files if r.location_problem),
+            *(
+                [{"level": "note", "message": {"text": stale_baseline_message(len(report.stale_baseline))}}]
+                if report.stale_baseline
+                else []
+            ),
         ],
         "properties": {"executionSummary": summarise_executions(_all_executions(report))},
     }
@@ -306,6 +327,8 @@ def render_report(report: RunReport, output_format: str, exit_status: int | None
             f"{r.path}: {render_executions(r.executions)}" if len(report.files) > 1 else render_executions(r.executions)
             for r in report.files
         )
+    if report.stale_baseline:
+        text += "\n" + stale_baseline_message(len(report.stale_baseline))
     return text
 
 

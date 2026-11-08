@@ -319,6 +319,12 @@ ontolint ontology.ttl \
 Baselines compare stable hashes of `(rule, focus, message)` (plus the report path for multi-file runs). They are useful for
 incremental adoption, but are not semantic version comparisons.
 
+A baseline entry that matches no finding of the run is *stale*: the finding was fixed, or its rule
+was not selected this time. Every format reports stale entries (a note in text and SARIF, the list
+`baseline.stale_fingerprints` in JSON), and `--fail-on-stale-baseline` makes them exit `1` so CI
+asks for the baseline to be regenerated. Run with the same rule selection that wrote the baseline,
+or entries for unselected rules will count as stale.
+
 ## Development and quality checks
 
 ```bash

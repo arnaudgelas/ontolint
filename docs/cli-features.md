@@ -10,7 +10,7 @@ Status values: **exists** (implemented and tested), **partial** (some of it exis
 | --- | --- | --- | --- |
 | OPS001 | Run summary with counts per severity and per rule | partial | JSON and SARIF carry per-severity and execution summaries; per-rule counts are not reported. |
 | OPS002 | Baseline file that suppresses known findings | exists | `--write-baseline` and `--baseline`. |
-| OPS003 | Report baseline entries that no longer match any finding | TODO | Stale fingerprints stay in the file silently. |
+| OPS003 | Report baseline entries that no longer match any finding | exists | Reported in text, JSON (`baseline.stale_fingerprints`) and SARIF; `--fail-on-stale-baseline` exits 1. Entries of rules not selected in the run count as stale. |
 | OPS004 | Fail only on new findings | exists | Findings in the baseline do not gate the exit code. |
 | OPS005 | SARIF output with complete rule metadata | exists | `--format sarif`; every report shape is validated against the vendored OASIS SARIF 2.1.0 schema in the tests. |
 | OPS006 | Record tool and catalogue versions in reports | partial | SARIF records the tool version; the catalogue version is not recorded. |

@@ -138,7 +138,7 @@ def test_baseline_removes_exactly_the_baselined_findings(items: list[Finding], r
     with tempfile.TemporaryDirectory() as folder:
         baseline = Path(folder) / "baseline.json"
         _apply_baselines(known, _baseline_args(write=baseline))
-        kept = _apply_baselines(reports, _baseline_args(baseline=baseline))
+        kept, _stale = _apply_baselines(reports, _baseline_args(baseline=baseline))
 
     prints = {fingerprint(f, r.path if multi else None) for r in known for f in r.findings}
     for before, after in zip(reports, kept, strict=True):

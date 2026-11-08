@@ -70,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--config", help="Optional JSON policy with ignored_rules, severity_overrides and thresholds")
     ap.add_argument("--baseline", help="JSON of fingerprints to exclude from displayed and gating findings")
     ap.add_argument("--write-baseline", help="Write full set of fingerprints for future differential linting")
+    ap.add_argument(
+        "--fail-on-stale-baseline",
+        action="store_true",
+        help="Exit 1 when a --baseline fingerprint matches no finding of the run (the baseline needs regenerating)",
+    )
     ap.add_argument("--language", action="append", default=[], help="Required label language; repeatable")
     ap.add_argument("--depth-limit", type=int)
     ap.add_argument("--inheritance-limit", type=int)
@@ -185,7 +190,10 @@ def _file_fingerprints(report: FileReport, multi: bool) -> set[str]:
     return {fingerprint(f, report.path if multi else None) for f in report.findings}
 
 
-def _apply_baselines(files: list[FileReport], args: argparse.Namespace) -> list[FileReport]:
+def _apply_baselines(
+    files: list[FileReport], args: argparse.Namespace
+) -> tuple[list[FileReport], tuple[str, ...] | None]:
+    """Write and/or apply the baseline; also return its fingerprints that matched no finding (OPS003)."""
     multi = len(files) > 1
     if args.write_baseline:
         everything = sorted(set().union(*(_file_fingerprints(r, multi) for r in files)))
@@ -194,11 +202,13 @@ def _apply_baselines(files: list[FileReport], args: argparse.Namespace) -> list[
         )
     if args.baseline:
         prior = set(json.loads(Path(args.baseline).read_text(encoding="utf-8")).get("fingerprints", []))
+        current = set().union(*(_file_fingerprints(r, multi) for r in files))
         files = [
             replace(r, findings=tuple(f for f in r.findings if fingerprint(f, r.path if multi else None) not in prior))
             for r in files
         ]
-    return files
+        return files, tuple(sorted(prior - current))
+    return files, None
 
 
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
@@ -320,7 +330,8 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     stage[0] = "lint execution"
     plan = _plan(args, config, shapes, registry)
     files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]
-    return RunReport(tuple(_apply_baselines(files, args)), plan.selection.run + plan.selection.ignored, plan.overrides)
+    files, stale = _apply_baselines(files, args)
+    return RunReport(tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -332,6 +343,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return info
     if not args.ontology:
         parser.error("at least one ONTOLOGY path is required")
+    if args.fail_on_stale_baseline and not args.baseline:
+        parser.error("--fail-on-stale-baseline requires --baseline")
     stage = ["configuration"]
     try:
         outcome = _lint(args, stage)
@@ -357,6 +370,8 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
     profile = _profile(args)
     fail_on = args.fail_on or (profile.fail_on if profile else "error")
     code = run_exit_code(report, fail_on)
+    if args.fail_on_stale_baseline and report.stale_baseline and code == 0:
+        code = 1
     _emit(render_report(report, args.format, code), args)
     for path, x in report.broken:
         print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
