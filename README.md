@@ -320,6 +320,9 @@ incremental adoption, but are not semantic version comparisons.
 ## Development and quality checks
 
 ```bash
+# The full validation gate, exactly as CI runs it (add --fix to apply Ruff fixes first)
+uv run python scripts/gate.py
+
 # Unit and property-based tests (coverage must stay at or above 95%)
 uv run pytest -q
 
@@ -356,8 +359,8 @@ To add rules, see [docs/adding-rules.md](https://github.com/arnaudgelas/ontolint
 
 ### CI workflows
 
-`.github/workflows/ci.yml` runs the fast PR checks (Ruff, mypy, pyright,
-`pip-audit`, tests with coverage, package build). All actions are pinned to
+`.github/workflows/ci.yml` runs `scripts/gate.py`: Ruff, Pyright, mypy (host and
+Win32), tests with coverage and warnings as errors, `pip-audit` and the package build. All actions are pinned to
 commit SHAs and the uv version is pinned; Renovate keeps both current.
 
 `.github/workflows/fuzz.yml` runs the mutation fuzzer weekly with a longer

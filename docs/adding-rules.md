@@ -54,7 +54,9 @@ guarantees that proposed rules are never reported as executed.
    malformed lists) are fed to every rule module automatically by `tests/test_rule_cases.py`; add
    family-specific hostile inputs to your case file if the rule has special structure.
 6. **Run the gate**:
-   `uv run ruff format && uv run ruff format --check && uv run ruff check --fix && uv run pyright && uv run mypy && uv run mypy --platform win32 && uv run pytest -n auto -W error`.
+   `uv run python scripts/gate.py --fix`. It applies Ruff formatting and autofixes, then runs exactly
+   the checks CI runs: format check, Ruff, Pyright, mypy (host and Win32), `pytest -n auto -W error`,
+   `pip-audit` and `uv build`. Without `--fix` it only checks, as CI does.
    If your rules change the kitchen-sink/golden output, review `tests/golden/differential.json` with
    the maintainer; do not regenerate it casually.
 

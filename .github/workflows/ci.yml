@@ -38,21 +38,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev
 
-      - name: Lint with Ruff
-        run: |
-          uv run ruff check .
-          uv run ruff format --check .
-
-      - name: Type check (mypy & pyright)
-        run: |
-          uv run mypy
-          uv run pyright
-
-      - name: Security audit
-        run: uv run pip-audit
-
-      - name: Run tests with coverage
-        run: uv run pytest -n auto
-
-      - name: Verify package build
-        run: uv build
+      # The whole gate lives in one script so CI and developers run the same checks.
+      - name: Run the validation gate
+        run: uv run python scripts/gate.py
