@@ -14,6 +14,7 @@ _ABSOLUTE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
 DEFAULT_DEPTH_LIMIT = 10
 DEFAULT_INHERITANCE_LIMIT = 5
 DEFAULT_SOUP_LIMIT = 15
+DEFAULT_SUBCLASS_LIMIT = 50  # CLS011: more direct subclasses than this is a flat, hard-to-browse fan-out
 
 # Safe-loader limits (SEC001, SEC002): generous for real ontologies, small enough to stop decompression-bomb
 # style inputs in CI.  Both must be positive integers.
@@ -57,6 +58,7 @@ class Policy:
     depth_limit: int = DEFAULT_DEPTH_LIMIT
     inheritance_limit: int = DEFAULT_INHERITANCE_LIMIT
     soup_limit: int = DEFAULT_SOUP_LIMIT
+    subclass_limit: int = DEFAULT_SUBCLASS_LIMIT
     metric_min_sample: int = DEFAULT_METRIC_MIN_SAMPLE
     metric_max_imports: int = DEFAULT_METRIC_MAX_IMPORTS
     metric_max_unlabelled_ratio: float = 0.5
@@ -105,6 +107,7 @@ class Policy:
             "depth_limit": data.get("depth_limit", DEFAULT_DEPTH_LIMIT),
             "inheritance_limit": data.get("inheritance_limit", DEFAULT_INHERITANCE_LIMIT),
             "soup_limit": data.get("soup_limit", DEFAULT_SOUP_LIMIT),
+            "subclass_limit": data.get("subclass_limit", DEFAULT_SUBCLASS_LIMIT),
         }
         if base is not None and not isinstance(base, str):
             raise ValueError("base must be a string or null")
@@ -133,6 +136,7 @@ class Policy:
             depth_limit=numeric_values["depth_limit"],
             inheritance_limit=numeric_values["inheritance_limit"],
             soup_limit=numeric_values["soup_limit"],
+            subclass_limit=numeric_values["subclass_limit"],
             extra_definition_predicates=extra_definitions,
             extra_label_predicates=extra_labels,
             ignored_rules=frozenset(ignored_rules),

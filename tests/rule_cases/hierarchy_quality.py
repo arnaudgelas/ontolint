@@ -8,6 +8,8 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 from rule_harness import BASE, Case, rule_cases, ttl
 
+from ontolint.policy import Policy
+
 C = "ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . "
 SCALE = 20_000
 
@@ -42,6 +44,12 @@ def _wide_case(n: int) -> Case:
     return _big(f"{n} direct subclasses", lambda: _wide(n))
 
 
+def _narrow_limit_case(n: int) -> Case:
+    """``n`` direct subclasses against a policy ``subclass_limit`` of 3 (the boundary moves with it)."""
+    kids = "ex:P a owl:Class . " + " ".join(f"ex:K{i} a owl:Class ; rdfs:subClassOf ex:P ." for i in range(n))
+    return Case(f"subclass_limit=3 with {n}", kids, options={"policy": Policy(subclass_limit=3)}, boundary=True)
+
+
 def _disjoint_chain() -> Graph:
     g = _chain(SCALE)
     g.add((_node(SCALE - 1), OWL.disjointWith, _node(SCALE - 2)))
@@ -63,8 +71,8 @@ def _typed_chain() -> Graph:
 
 CASES = {
     "CLS011": rule_cases(
-        [_wide_case(51)],
-        [_wide_case(50)],
+        [_wide_case(51), _narrow_limit_case(4)],
+        [_wide_case(50), _narrow_limit_case(3)],
     ),
     "CLS012": rule_cases(
         [ttl("instantiated parent, unused leaves", C + "ex:B rdfs:subClassOf ex:A . ex:i a ex:A .")],

@@ -286,6 +286,7 @@ ignored rules, and severity overrides.
   "depth_limit": 10,
   "inheritance_limit": 5,
   "soup_limit": 15,
+  "subclass_limit": 50,
   "ignored_rules": ["CLS002"],
   "severity_overrides": {"ONT003": "error", "OWL005": "info"},
   "required_annotations": {"class": ["http://www.w3.org/2004/02/skos/core#definition"]},
@@ -299,7 +300,9 @@ The optional keys switch rules on only when set: `required_annotations` maps a t
 (`class`, `property`, `individual`, `concept`) to the predicates every owned term of that
 kind must carry (`GOV016`); `alignment_namespaces` lists the namespaces mapping targets
 must belong to (`ALIGN012`); `alignment_min_coverage` is the share of classes and
-properties that must have a mapping (`ALIGN016`). Unknown keys are reported by `GOV020`,
+properties that must have a mapping (`ALIGN016`). `subclass_limit` (also `--subclass-limit`,
+default 50) is the most direct subclasses a class may have before `CLS011` reports it.
+Unknown keys are reported by `GOV020`,
 and an unsupported `policy_version` rejects the file. `max_parse_seconds` (also
 `--max-parse-seconds`) limits the time spent parsing one input and reports `SEC003`
 when it is exceeded; it parses in a worker process, so leave it unset for the fastest

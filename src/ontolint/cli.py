@@ -79,6 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--depth-limit", type=int)
     ap.add_argument("--inheritance-limit", type=int)
     ap.add_argument("--soup-limit", type=int)
+    ap.add_argument("--subclass-limit", type=int, help="CLS011: most direct subclasses a class may have (default 50)")
     ap.add_argument(
         "--max-input-bytes", type=_positive_int, help="Refuse input files larger than this (default 64 MiB)"
     )
@@ -123,6 +124,7 @@ def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -
         depth_limit=args.depth_limit if args.depth_limit is not None else config.depth_limit,
         inheritance_limit=args.inheritance_limit if args.inheritance_limit is not None else config.inheritance_limit,
         soup_limit=args.soup_limit if args.soup_limit is not None else config.soup_limit,
+        subclass_limit=args.subclass_limit if args.subclass_limit is not None else config.subclass_limit,
         max_input_bytes=args.max_input_bytes if args.max_input_bytes is not None else config.max_input_bytes,
         max_triples=args.max_triples if args.max_triples is not None else config.max_triples,
         max_parse_seconds=args.max_parse_seconds if args.max_parse_seconds is not None else config.max_parse_seconds,

@@ -24,8 +24,6 @@ from .support import directed_edges, list_items, local_name
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
-# A class with more direct subclasses than this is a flat, hard-to-browse fan-out (CLS011).
-EXCESSIVE_SUBCLASS_COUNT = 50
 # Upper bound on members read from one owl:AllDisjointClasses list.
 MAX_DISJOINT_MEMBERS = 500
 
@@ -186,10 +184,11 @@ def _has_instance(ctx: RuleContext, cls: URIRef) -> bool:
 
 
 def _wide_fan_out(ctx: RuleContext, h: Hierarchy) -> None:
+    limit = ctx.policy.subclass_limit
     for parent in sorted(h.children, key=str):
         kids = h.children[parent]
-        if len(kids) > EXCESSIVE_SUBCLASS_COUNT:
-            ctx.add("CLS011", parent, f"{len(kids)} direct subclasses (threshold {EXCESSIVE_SUBCLASS_COUNT}).")
+        if len(kids) > limit:
+            ctx.add("CLS011", parent, f"{len(kids)} direct subclasses (threshold {limit}).")
 
 
 def _unused_leaves(ctx: RuleContext, h: Hierarchy) -> None:
