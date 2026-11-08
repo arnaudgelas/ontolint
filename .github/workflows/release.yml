@@ -17,9 +17,44 @@ jobs:
     name: Lint, Audit & Test
     uses: ./.github/workflows/ci.yml
 
+  codeql:
+    name: Require a green CodeQL scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      checks: read
+    steps:
+      # CodeQL (default setup) scans pushes to main, so a tag on an unscanned commit never
+      # releases. A scan that is missing or did not succeed blocks the release; it is not a pass.
+      - name: Wait for CodeQL on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          query='[.check_runs[] | select(.name | startswith("Analyze ("))]'
+          for attempt in $(seq 1 50); do
+            runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "$query")
+            total=$(jq length <<<"$runs")
+            pending=$(jq '[.[] | select(.status != "completed")] | length' <<<"$runs")
+            failed=$(jq -r '.[] | select(.status == "completed" and .conclusion != "success") | .name' <<<"$runs")
+            if [ -n "$failed" ]; then
+              echo "::error::CodeQL did not succeed on $SHA: $failed"
+              exit 1
+            fi
+            if [ "$total" -gt 0 ] && [ "$pending" -eq 0 ]; then
+              jq -r '.[] | "\(.name): \(.conclusion)"' <<<"$runs"
+              exit 0
+            fi
+            echo "Waiting for CodeQL ($total runs, $pending pending), attempt $attempt"
+            sleep 30
+          done
+          echo "::error::no completed CodeQL scan on $SHA; release it from a commit pushed to main"
+          exit 1
+
   build:
     name: Build distributions
-    needs: test
+    needs: [test, codeql]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -70,3 +105,39 @@ jobs:
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
+  verify:
+    name: Install the published release
+    needs: pypi-publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Install from PyPI, not from the build artifact, and lint a real file, so a broken upload,
+      # bad metadata or a wheel without its packaged catalogue fails the release run.
+      - name: Install ontolint from PyPI
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          python3 -m venv "$RUNNER_TEMP/venv"
+          for attempt in $(seq 1 20); do
+            if "$RUNNER_TEMP/venv/bin/pip" install --no-cache-dir --quiet "ontolint==$version"; then
+              exit 0
+            fi
+            echo "ontolint $version is not installable yet, attempt $attempt"
+            sleep 30
+          done
+          echo "::error::ontolint $version could not be installed from PyPI"
+          exit 1
+
+      - name: Run the installed release
+        run: |
+          cd "$RUNNER_TEMP"
+          version="${GITHUB_REF_NAME#v}"
+          installed=$(venv/bin/ontolint --version)
+          if [ "$installed" != "ontolint $version" ]; then
+            echo "::error::installed '$installed', expected 'ontolint $version'"
+            exit 1
+          fi
+          printf '%s\n' '<https://example.test/C> a <http://www.w3.org/2002/07/owl#Class> .' > smoke.ttl
+          venv/bin/ontolint smoke.ttl --format json --fail-on never > report.json
+          python3 -c "import json; n = len(json.load(open('report.json'))['findings']); assert n > 0, 'no findings'; print(n, 'findings')"
+          venv/bin/ontolint --list-rules --format json | python3 -c "import json, sys; assert len(json.load(sys.stdin)['rules']) > 200"

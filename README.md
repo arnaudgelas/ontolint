@@ -367,9 +367,10 @@ commit SHAs and the uv version is pinned; Renovate keeps both current.
 budget per target and uploads any crashing input.
 
 `.github/workflows/release.yml` runs on a `vX.Y.Z` tag: it calls the CI
-workflow, checks that the tag matches the version in `pyproject.toml`, builds
-the distributions and publishes them to PyPI with Trusted Publishing from the
-`pypi` environment.
+workflow, requires a green CodeQL scan of the tagged commit, checks that the
+tag matches the version in `pyproject.toml`, builds the distributions,
+publishes them to PyPI with Trusted Publishing from the `pypi` environment,
+and finally installs the published version from PyPI and lints a file with it.
 
 `.github/workflows/validation.yml` runs weekly and on manual dispatch:
 

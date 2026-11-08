@@ -26,6 +26,17 @@ section by hand if a subject reads badly; the script will not touch earlier sect
 3. `git tag -a vX.Y.Z -m 'ontolint X.Y.Z'`
 4. `git push && git push origin vX.Y.Z`
 
-Pushing the tag starts `.github/workflows/release.yml`: it runs the CI workflow, checks that the tag
-equals the version in `pyproject.toml`, builds the distributions and publishes them to PyPI from the
-`pypi` environment. PyPI refuses to overwrite a version, so a failed publish needs a new version.
+Pushing the tag starts `.github/workflows/release.yml`:
+
+1. **Test** runs the CI workflow, that is the validation gate (`scripts/gate.py`).
+2. **CodeQL** waits for the CodeQL scans of the tagged commit and fails unless every one succeeded.
+   CodeQL scans pushes to `main`, so tag a commit that is on `main` and push both together
+   (step 4 above); a tag on an unscanned commit never releases.
+3. **Build** checks that the tag equals the version in `pyproject.toml` and builds the
+   distributions.
+4. **Publish** uploads them to PyPI from the `pypi` environment (Trusted Publishing).
+5. **Verify** installs that exact version from PyPI in a fresh virtual environment, retrying while
+   the index catches up, checks `ontolint --version`, lints a one-line file and lists the rules.
+
+PyPI refuses to overwrite a version, so a failed publish needs a new version. A failure in
+**Verify** means the release is on PyPI but broken: fix it and release the next patch version.
