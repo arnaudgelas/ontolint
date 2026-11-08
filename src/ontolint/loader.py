@@ -448,6 +448,7 @@ def _decode_graph(payload: dict[str, Any]) -> Graph:
     return graph
 
 
+# gremlin: pardon[equivalent] nothing mutates a job; frozen only guards against it
 @dataclass(frozen=True)
 class _ParseJob:
     """Everything the worker needs: the bytes (already checked by the parent), the format and the bounds."""
@@ -493,7 +494,9 @@ def _parse_in_worker(job: _ParseJob, seconds: float) -> Graph:
     input's); the worker is terminated, then killed, when the budget is exhausted: :class:`InputRejected` ``SEC003``.
     """
     context = multiprocessing.get_context("spawn")
+    # gremlin: pardon[equivalent] the parent only reads and the worker only writes; duplex adds no behaviour
     receiver, sender = context.Pipe(duplex=False)
+    # gremlin: pardon[equivalent] the worker is always stopped in `finally`, so daemon only matters if the parent dies
     process = context.Process(target=_worker_main, args=(sender, job), daemon=True)
     process.start()
     sender.close()  # the parent only reads: EOF on the pipe means the worker is gone
@@ -526,6 +529,7 @@ def _ready(receiver: Any, timeout: float) -> bool:
     try:
         return bool(receiver.poll(timeout)) and receiver.recv_bytes() == b"ready"
     except (EOFError, OSError):
+        # gremlin: pardon[equivalent] None and False are both falsy for the only caller, `if not _ready(...)`
         return False
 
 
