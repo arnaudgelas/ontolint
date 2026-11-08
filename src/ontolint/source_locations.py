@@ -10,6 +10,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import logging
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ _RDF_ABOUT = "http://www.w3.org/1999/02/22-rdf-syntax-ns#about"
 _RDF_ID = "http://www.w3.org/1999/02/22-rdf-syntax-ns#ID"
 _RDF_RESOURCE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#resource"
 _XML_BASE = "http://www.w3.org/XML/1998/namespacebase"
+_LOG = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -59,20 +61,30 @@ def build_source_index(data: bytes, fmt: str, public_id: str, graph: Graph) -> S
 
     Columns are one-based Unicode code points.  The SARIF renderer declares that unit explicitly.
     Parsing has already succeeded, so a token is retained only when it resolves to a node in ``graph``.
+    Locations are auxiliary: the parse has already succeeded, so a locator error must never fail the
+    lint.  Any exception degrades to an index without locations and is logged at debug level.
     """
-    if fmt in _XML_FORMATS:
-        return SourceIndex(_xml_locations(data, public_id, graph))
-    if fmt in _JSON_FORMATS:
-        return SourceIndex(_jsonld_locations(data, public_id, graph))
-    if fmt not in _TEXT_FORMATS:
+    try:
+        return SourceIndex(_locations(data, fmt, public_id, graph))
+    except Exception:  # noqa: BLE001 -- a locator bug costs SARIF regions, never the run.
+        _LOG.debug("source locations unavailable for %s", public_id, exc_info=True)
         return SourceIndex({})
+
+
+def _locations(data: bytes, fmt: str, public_id: str, graph: Graph) -> dict[Node, Location]:
+    if fmt in _XML_FORMATS:
+        return _xml_locations(data, public_id, graph)
+    if fmt in _JSON_FORMATS:
+        return _jsonld_locations(data, public_id, graph)
+    if fmt not in _TEXT_FORMATS:
+        return {}
     try:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError:
-        return SourceIndex({})
+        return {}
     graph_nodes = {node for triple in graph for node in triple}
     prefixes = {prefix or "": str(namespace) for prefix, namespace in graph.namespaces()}
-    return SourceIndex(_scan(text, fmt, public_id, graph_nodes, prefixes))
+    return _scan(text, fmt, public_id, graph_nodes, prefixes)
 
 
 def _scan(
@@ -220,7 +232,7 @@ def _jsonld_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, L
     """Map explicit JSON-LD ``@id`` strings, including local compact-IRI contexts, to graph nodes."""
     try:
         text = data.decode("utf-8-sig")
-        document = json.loads(text)
+        document = json.loads(text, object_pairs_hook=_Pairs)
     except (UnicodeDecodeError, json.JSONDecodeError):
         return {}
     locations: dict[Node, Location] = {}
@@ -232,47 +244,66 @@ def _jsonld_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, L
     return locations
 
 
-def _json_id_values(  # noqa: C901 -- mirrors JSON's recursive shape.
-    text: str, document: object, public_id: str
-) -> list[tuple[str, int]]:
-    """Return physical offsets of explicit ``@id`` values after simple local-context expansion."""
+class _Pairs(list[tuple[str, object]]):
+    """A decoded JSON object kept as its ordered key/value pairs, duplicate keys included.
+
+    The text walk below visits every member in source order; a ``dict`` would keep only the last of
+    duplicate keys and so pair the first occurrence's text with the last occurrence's value.
+    """
+
+
+def _plain(value: object) -> object:
+    """Convert :class:`_Pairs` back to ``dict`` (last duplicate wins, as ``json.loads`` does)."""
+    if isinstance(value, _Pairs):
+        return {key: _plain(child) for key, child in value}
+    if isinstance(value, list):
+        return [_plain(child) for child in value]
+    return value
+
+
+def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[str, int]]:  # noqa: C901 -- mirrors JSON nesting.
+    """Return physical offsets of explicit ``@id`` values after simple local-context expansion.
+
+    ``document`` must be ``text`` decoded with ``object_pairs_hook=_Pairs``, so that the walk and
+    the decoded tree agree member by member.  Any disagreement raises :class:`ValueError`.
+    """
     found: list[tuple[str, int]] = []
     decoder = json.JSONDecoder()
 
     def whitespace(index: int) -> int:
-        while index < len(text) and text[index].isspace():
+        while index < len(text) and text[index] in " \t\n\r":
             index += 1
         return index
 
+    def expect(index: int, char: str) -> int:
+        if text[index : index + 1] != char:
+            raise ValueError(f"expected {char!r} at offset {index}")
+        return whitespace(index + 1)
+
     def value(index: int, current: object, base: str, terms: Mapping[str, str]) -> int:
         index = whitespace(index)
-        if isinstance(current, dict):
-            base, terms = _json_context(current.get("@context"), base, terms)
-            index += 1
-            while text[index] != "}":
-                index = whitespace(index)
-                raw_key, index = decoder.raw_decode(text, index)
-                index = whitespace(index + 1)
-                child = current.get(raw_key)
+        if isinstance(current, _Pairs):
+            contexts = [child for key, child in current if key == "@context"]
+            if contexts:
+                base, terms = _json_context(_plain(contexts[-1]), base, terms)
+            index = expect(index, "{")
+            for position, (key, child) in enumerate(current):
+                if position:
+                    index = expect(index, ",")
+                _key, index = decoder.raw_decode(text, index)
+                index = expect(whitespace(index), ":")
                 start = index
-                index = value(index, child, base, terms)
-                raw_child, _end = decoder.raw_decode(text, start)
-                if raw_key == "@id" and isinstance(raw_child, str):
-                    found.append((_expand_jsonld_id(raw_child, base, terms), start))
-                index = whitespace(index)
-                if text[index] == ",":
-                    index += 1
-                else:
-                    break
-            return index + 1
+                index = whitespace(value(index, child, base, terms))
+                if key == "@id" and isinstance(child, str):
+                    found.append((_expand_jsonld_id(child, base, terms), start))
+            return expect(index, "}")
         if isinstance(current, list):
-            index += 1
-            for child in current:
-                index = value(index, child, base, terms)
-                index = whitespace(index)
-                if text[index] == ",":
-                    index += 1
-            return index + 1
+            index = expect(index, "[")
+            for position, child in enumerate(current):
+                if position:
+                    index = expect(index, ",")
+                index = whitespace(value(index, child, base, terms))
+            return expect(index, "]")
         _unused, index = decoder.raw_decode(text, index)
         return index
 

@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
-from rdflib import URIRef
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
+from rdflib import Graph, URIRef
 
+from ontolint import source_locations
+from ontolint.cli import main
 from ontolint.loader import load_document
 from ontolint.models import Finding
 from ontolint.paths import resolve_inputs
@@ -120,3 +126,91 @@ def test_source_locations_match_in_the_time_bounded_worker(tmp_path: Path) -> No
     direct = _document(tmp_path, "direct.ttl", source)
     worker = _document(tmp_path, "worker.ttl", source, Policy(max_parse_seconds=5))
     assert dict(direct.source_index.locations) == dict(worker.source_index.locations)
+
+
+OWL_CLASS = "http://www.w3.org/2002/07/owl#Class"
+
+# Valid JSON-LD that RDFLib parses but that 0.4.0's locator walked out of step with (exit 2).
+JSONLD_LOCATOR_REGRESSIONS = {
+    "space-before-colon": '{"@id" : "https://example.test/a", "@type" : "' + OWL_CLASS + '"}',
+    "spaced-empty-object": '{"@context": { }, "@id": "https://example.test/a", "@type": "' + OWL_CLASS + '"}',
+    "spaced-empty-array": '{"@id": "https://example.test/a", "@type": "'
+    + OWL_CLASS
+    + '", "https://example.test/p": [ ]}',
+    "duplicate-key-of-another-type": (
+        '{"@id": "https://example.test/a", "@type": "' + OWL_CLASS + '", '
+        '"https://example.test/p": "y", "https://example.test/p": {"@id": "https://example.test/b"}}'
+    ),
+}
+
+
+@pytest.mark.parametrize("text", JSONLD_LOCATOR_REGRESSIONS.values(), ids=JSONLD_LOCATOR_REGRESSIONS.keys())
+def test_jsonld_layout_never_breaks_the_locator(tmp_path: Path, text: str) -> None:
+    document = _document(tmp_path, "a.jsonld", text)
+    location = document.source_index.locations[URIRef("https://example.test/a")]
+    assert location.column is not None
+    assert text[location.column - 1 :].startswith('"https://example.test/a"')
+
+
+@pytest.mark.parametrize("text", JSONLD_LOCATOR_REGRESSIONS.values(), ids=JSONLD_LOCATOR_REGRESSIONS.keys())
+def test_jsonld_layout_never_fails_the_run(tmp_path: Path, text: str, capsys: pytest.CaptureFixture[str]) -> None:
+    path = tmp_path / "a.jsonld"
+    path.write_text(text, encoding="utf-8")
+    assert main([str(path), "--format", "sarif", "--fail-on", "never"]) == 0
+    assert "INPUT001" not in capsys.readouterr().err
+
+
+def test_a_locator_failure_costs_only_the_regions(monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(*_args: object) -> dict[object, object]:
+        raise RuntimeError("locator bug")
+
+    monkeypatch.setattr(source_locations, "_locations", broken)
+    index = source_locations.build_source_index(b"<a> <b> <c> .", "nt", "file:///a.nt", Graph())
+    assert dict(index.locations) == {}
+
+
+def test_the_json_walk_rejects_a_tree_that_does_not_match_its_text() -> None:
+    with pytest.raises(ValueError, match="expected"):
+        source_locations._json_id_values("[1]", source_locations._Pairs(), "file:///a.jsonld")
+
+
+_JSON_WHITESPACE = st.text(alphabet=" \t\n\r", max_size=3)
+
+
+@settings(max_examples=60, deadline=None)
+@given(st.lists(_JSON_WHITESPACE, min_size=24, max_size=24))
+def test_jsonld_whitespace_anywhere_keeps_the_location(
+    tmp_path_factory: pytest.TempPathFactory, gaps: list[str]
+) -> None:
+    tokens = [
+        "{",
+        '"@context"',
+        ":",
+        "{",
+        '"ex"',
+        ":",
+        '"https://example.test/"',
+        "}",
+        ",",
+        '"@id"',
+        ":",
+        '"ex:a"',
+        ",",
+        '"@type"',
+        ":",
+        json.dumps(OWL_CLASS),
+        ",",
+        '"ex:p"',
+        ":",
+        "[",
+        "{",
+        "}",
+        "]",
+        "}",
+    ]
+    text = "".join(gap + token for gap, token in zip(gaps, tokens, strict=True))
+    document = _document(tmp_path_factory.mktemp("ws"), "a.jsonld", text)
+    location = document.source_index.locations[URIRef("https://example.test/a")]
+    assert location.column is not None
+    line_start = sum(len(line) + 1 for line in text.split("\n")[: location.line - 1])
+    assert text[line_start + location.column - 1 :].startswith('"ex:a"')
