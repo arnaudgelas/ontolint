@@ -45,6 +45,7 @@ from rdflib.util import guess_format
 
 from .paths import InputFile
 from .policy import Policy
+from .source_locations import SourceIndex, build_source_index
 
 RDF_XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
 COMPRESSION_MAGIC: tuple[tuple[bytes, str], ...] = (
@@ -82,6 +83,14 @@ class ParseFailure(LoadError, ValueError):
         super().__init__(f"{cause_type}: {detail}")
         self.cause_type = cause_type
         self.detail = detail
+
+
+@dataclass(frozen=True)
+class LoadedGraph:
+    """A parsed graph plus the source locations recoverable from its input syntax."""
+
+    graph: Graph
+    source_index: SourceIndex
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.
@@ -385,6 +394,20 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
     With ``policy.max_parse_seconds`` set, the parse runs in a killable worker process (see :func:`_parse_in_worker`);
     otherwise (the default) it runs in this process.
     """
+    loaded = load_document(item, policy, root)
+    # Keep the established Graph-returning API while letting the CLI retain loader metadata.
+    setattr(loaded.graph, "_ontolint_source_index", loaded.source_index)  # noqa: B010 -- Graph has no metadata slot.
+    return loaded.graph
+
+
+def source_index(graph: Graph) -> SourceIndex:
+    """Return source metadata attached by :func:`load_graph`, or an empty index for an external graph."""
+    value = getattr(graph, "_ontolint_source_index", None)
+    return value if isinstance(value, SourceIndex) else SourceIndex({})
+
+
+def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> LoadedGraph:
+    """Parse ``item`` and retain source positions where its RDF syntax supports them."""
     check_path(item, root if root is not None else Path.cwd())
     data = _read_limited(item, policy.max_input_bytes)
     kind = compression_of(data)
@@ -398,9 +421,16 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
         public_id = item.path.as_uri()
     except ValueError as exc:  # a relative path: reported like any other parser failure, as it always was
         raise ParseFailure(type(exc).__name__, str(exc)) from exc
+    graph = _parse_document(data, fmt, public_id, item.display, policy)
+    return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph))
+
+
+def _parse_document(data: bytes, fmt: str, public_id: str, display: str, policy: Policy) -> Graph:
+    """Choose the in-process or time-bounded parsing path for one already-validated document."""
     if policy.max_parse_seconds is None:
-        return _parse_bytes(data, fmt, public_id, item.display, policy.max_triples)
-    return _parse_in_worker(_ParseJob(data, fmt, public_id, item.display, policy.max_triples), policy.max_parse_seconds)
+        return _parse_bytes(data, fmt, public_id, display, policy.max_triples)
+    job = _ParseJob(data, fmt, public_id, display, policy.max_triples)
+    return _parse_in_worker(job, policy.max_parse_seconds)
 
 
 # --- time budget: the parse runs in a worker process that can be killed -----------------------------------------
