@@ -213,9 +213,10 @@ case a `Rule execution:` block is appended.
   `artifactLocation` on every result, and a run `invocation`. Skipped, unsupported and failed
   rules are `toolExecutionNotifications` (levels `note`, `warning`, `error`);
   `executionSuccessful` is `false` when any rule failed or is unsupported.
-* SARIF findings for Turtle, N3, N-Triples and N-Quads inputs include the source line and column of
-  their focus term when it can be resolved. RDF/XML and JSON-LD findings retain their artifact URI
-  but omit a region rather than reporting an unreliable location.
+* SARIF findings for Turtle, N3, N-Triples, N-Quads and RDF/XML inputs include the source line and
+  column of their focus term when it can be resolved. JSON-LD findings include a region for an
+  explicit `@id`, including compact IRIs defined by a local context; generated JSON-LD nodes retain
+  their artifact URI but omit a region rather than reporting an unreliable location.
 
 ### Several files
 
@@ -421,8 +422,9 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
   profile.
 - Shape coverage (`SHQ006`) checks direct instances and direct class targets
   only.
-- SARIF source regions are currently available for Turtle-family and N-Triples-family inputs;
-  RDF/XML and JSON-LD source mapping remain future work.
+- SARIF source regions are available for Turtle-family, N-Triples-family and RDF/XML inputs, and
+  for JSON-LD resources with an explicit `@id` (including local compact IRI contexts). Generated
+  JSON-LD nodes remain future work.
 
 ## Related tools and sources
 
