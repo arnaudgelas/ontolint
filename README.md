@@ -358,7 +358,7 @@ deterministic output and agreement of cycle diagnostics with an independent
 reachability oracle. A mutation-based fuzzer (`tests/fuzz/`) feeds mutated
 files to the loader, the rules and the CLI. Both are marked `slow`; run the
 longer profile with `HYPOTHESIS_PROFILE=ci-deep`. Mutation testing targets the
-engine, linter, CLI, loader, reporting, adapters and rules (see
+engine, linter, CLI, loader, reporting, source locations, adapters and rules (see
 [docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md)).
 To add rules, see [docs/adding-rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/adding-rules.md).
 
