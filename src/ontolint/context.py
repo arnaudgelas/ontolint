@@ -37,6 +37,21 @@ def _everything(_value: object) -> bool:
     return True
 
 
+def _published_ontologies(graph: Graph, ontologies: set[URIRef], imported: frozenset[str]) -> set[URIRef]:
+    """The ``owl:Ontology`` nodes that stand for the linted ontology, dropping two kinds of extra header.
+
+    SHACL-SPARQL declares prefixes on an owl:Ontology node (``ex:Prefixes a owl:Ontology ; sh:declare
+    [...]``); next to a real ontology header such a node is a prefix declaration, not a second ontology.
+    In an import closure (--follow-imports) the published ontology is the root: the headers of the
+    imported modules are parts of it, so header rules and derived ownership judge the root only.
+    """
+    prefix_declarations = {node for node in ontologies if (node, SH.declare, None) in graph}
+    if ontologies - prefix_declarations:
+        ontologies = ontologies - prefix_declarations
+    root_only = {node for node in ontologies if str(node) not in imported}
+    return root_only or ontologies
+
+
 @dataclass(frozen=True)
 class GraphContext:
     """Cached graph facts used repeatedly by local lint rules."""
@@ -63,6 +78,7 @@ class GraphContext:
         *,
         restrict_to_local: bool = False,
         base: str | None = None,
+        imported_ontologies: frozenset[str] = frozenset(),
     ) -> GraphContext:
         """Index asserted triples once and keep only the terms the file owns.
 
@@ -93,12 +109,7 @@ class GraphContext:
         def declared(type_: Node) -> set[URIRef]:
             return {subject for subject in subjects_by_type[type_] if isinstance(subject, URIRef)}
 
-        ontologies = declared(OWL.Ontology)
-        # SHACL-SPARQL declares prefixes on an owl:Ontology node (`ex:Prefixes a owl:Ontology ; sh:declare
-        # [...]`).  Next to a real ontology header such a node is a prefix declaration, not a second ontology.
-        prefix_declarations = {node for node in ontologies if (node, SH.declare, None) in graph}
-        if ontologies - prefix_declarations:
-            ontologies -= prefix_declarations
+        ontologies = _published_ontologies(graph, declared(OWL.Ontology), imported_ontologies)
         classes = set().union(*(declared(type_) for type_ in CLASS_TYPES))
         properties = set().union(*(declared(type_) for type_ in PROPERTY_TYPES))
         concepts = declared(SKOS.Concept)

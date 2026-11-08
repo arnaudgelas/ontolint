@@ -40,16 +40,13 @@ def test_json_names_the_declaring_module(umbrella: Path, capsys: pytest.CaptureF
     assert Path(lex002["path"]).name == "core.ttl"
 
 
-def test_each_module_header_finding_points_at_its_own_module(
-    umbrella: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    paths = {f["focus"]: Path(f["path"]).name for f in _json(capsys, umbrella) if f["rule"] == "ONT003"}
-    assert paths == {
-        "https://example.test/onto": "umbrella.ttl",
-        "https://example.test/onto/meta": "meta.ttl",
-        "https://example.test/onto/core": "core.ttl",
-        "https://example.test/onto/data": "data.ttl",
-    }
+def test_header_rules_judge_only_the_root_ontology(umbrella: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    findings = _json(capsys, umbrella)
+    header_rules = {"ONT003", "ONT004", "ONT005", "ONT006", "GOV004"}
+    foci = {(f["rule"], f["focus"], Path(f["path"]).name) for f in findings if f["rule"] in header_rules}
+    assert foci
+    assert {focus for _rule, focus, _path in foci} == {"https://example.test/onto"}  # modules inherit it
+    assert {path for _rule, _focus, path in foci} == {"umbrella.ttl"}
 
 
 def test_sarif_uses_the_module_artifact_and_region(umbrella: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -83,3 +80,39 @@ def test_without_follow_imports_nothing_is_attributed(umbrella: Path, capsys: py
     main([str(umbrella), "--format", "json", "--fail-on", "never"])
     findings = json.loads(capsys.readouterr().out)["findings"]
     assert {Path(f["path"]).name for f in findings} == {"umbrella.ttl"}
+
+
+def _policy(umbrella: Path, **keys: object) -> str:
+    path = umbrella.parent / "policy.json"
+    path.write_text(json.dumps({"policy_version": 1, **keys}), encoding="utf-8")
+    return str(path)
+
+
+def test_metric011_counts_only_imports_that_are_not_local_modules(
+    umbrella: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config = _policy(umbrella, metric_max_imports=2)  # the umbrella has 4 imports; 3 resolve to modules
+    main([str(umbrella), "--config", config, "--format", "json", "--fail-on", "never"])
+    alone = json.loads(capsys.readouterr().out)["findings"]
+    assert [f["message"] for f in alone if f["rule"] == "METRIC011"] == ["4 distinct owl:imports (threshold 2)."]
+    closure = json.loads(_run(capsys, umbrella, "json", "--config", config))["findings"]
+    assert not [f for f in closure if f["rule"] == "METRIC011"]
+
+
+def test_a_vendored_vocabulary_in_the_closure_is_not_owned(umbrella: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    corpus = umbrella.parent
+    (corpus / "vendor.ttl").write_text(
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "<https://vendor.example/v> a owl:Ontology .\n"
+        "<https://vendor.example/v#Unlabelled> a owl:Class .\n",
+        encoding="utf-8",
+    )
+    catalog = (corpus / "catalog-v001.xml").read_text(encoding="utf-8")
+    entry = '<uri name="https://vendor.example/v" uri="vendor.ttl"/>'
+    (corpus / "catalog-v001.xml").write_text(catalog.replace("</catalog>", f"  {entry}\n</catalog>"), encoding="utf-8")
+    text = umbrella.read_text(encoding="utf-8")
+    vendored = text.replace("<https://external.example/vocabulary> .", "<https://vendor.example/v> .")
+    umbrella.write_text(vendored, encoding="utf-8")
+    findings = _json(capsys, umbrella)
+    assert not [f for f in findings if f["focus"].startswith("https://vendor.example/")]
+    assert [f["focus"] for f in findings if f["rule"] == "LEX002"] == [UNDEFINED]  # project terms still judged

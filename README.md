@@ -271,8 +271,15 @@ count as extra ontologies for `ONT002`.
 A finding belongs to the module that declares its focus (gives it an `rdf:type`), or else to the
 first module that mentions it: JSON gives that module's `path`, SARIF its `artifactLocation` and
 region, and text adds an `In:` line. Baseline fingerprints are unchanged, so a closure baseline
-keeps matching. Not yet: the per-ontology header rules (`ONT003`-`ONT006`, `GOV004`) run on every
-module's header, and graph-wide heuristics (`CLS002`, `METRIC*`) count the whole closure.
+keeps matching.
+
+The closure is linted as one published ontology, the root's: header rules (`ONT003`-`ONT006`,
+`GOV004` and the like) judge the root ontology only, as the modules inherit its metadata (lint a
+module on its own to check its header); owned terms are derived from the root IRI, so a vendored
+vocabulary with its own namespace is background, not judged; and `METRIC011` does not count imports
+that resolved to local modules. Graph-wide heuristics (`CLS002`, `METRIC*` ratios) count the whole
+closure, data modules included, on purpose: a class that no module instantiates is exactly what
+`CLS002` reports.
 
 ### GitHub annotations
 

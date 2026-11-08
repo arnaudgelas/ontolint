@@ -364,7 +364,9 @@ def _is_structural_blank(g: Graph, node: object) -> bool:
 
 
 def _graph_rules(ctx: RuleContext) -> None:
+    # Imports resolved to local modules (--follow-imports) are parts of the same artefact, not dependencies.
     imports = {o for o in ctx.g.objects(None, OWL.imports) if isinstance(o, URIRef)}
+    imports = {o for o in imports if str(o) not in ctx.policy.resolved_imports}
     if len(imports) > ctx.policy.metric_max_imports:
         ctx.add(
             "METRIC011",
