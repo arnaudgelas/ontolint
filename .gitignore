@@ -23,6 +23,3 @@ fuzz-crashes/
 
 # Virtual environments
 .venv
-
-# Local working notes
-docs/remaining-work.md
