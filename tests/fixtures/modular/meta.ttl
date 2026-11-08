@@ -10,3 +10,11 @@
 ex:status a owl:AnnotationProperty ;
     rdfs:label "status"@en ;
     skos:definition "How firmly the sources support a term."@en .
+
+ex:Status a owl:Class ;
+    rdfs:label "status value"@en ;
+    skos:definition "A value of ex:status."@en .
+
+ex:Authoritative a ex:Status ;
+    rdfs:label "authoritative"@en ;
+    skos:definition "Stated by the current contract."@en .

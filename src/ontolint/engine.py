@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 from pathlib import Path
 
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
 from .adapters.robot import robot_profile_issues
 from .adapters.shacl import shacl_issues
@@ -28,6 +28,7 @@ from .reporting import SEVERITY_ORDER
 from .rules.builtin import RULE_MODULES, module_name, module_runners, module_specs
 from .rules.registry import RuleRegistry, default_registry
 from .rules.runtime import RuleContext
+from .rules.support import stable_blank_id
 
 type RuleFamily = Callable[[RuleContext], None]
 
@@ -92,11 +93,25 @@ def _failure(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
+def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
+    """Validate ``ctx.g``, merged with the SHACL-only background when there is one.
+
+    The background (the ontology the shapes import) only supplies context, such as the classes of
+    vocabulary individuals: results about its own nodes are not findings of the linted file.
+    """
+    assert ctx.shapes is not None  # noqa: S101 -- _not_run rules out SHACL without shapes.
+    if ctx.shacl_background is None:
+        return shacl_issues(ctx.g, ctx.shapes)
+    data = ctx.g | ctx.shacl_background
+    own = {str(s) if isinstance(s, URIRef) else stable_blank_id(data, s) for s in set(ctx.g.subjects())}
+    return [finding for finding in shacl_issues(data, ctx.shapes) if finding.focus in own]
+
+
 def _run_adapter(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -> tuple[RuleExecution, list[Finding]]:
     """Run the SHACL or ROBOT adapter, converting any exception into a ``failed`` record."""
     try:
         if spec.backend is RuleBackend.PYSHACL and ctx.shapes is not None:
-            found = shacl_issues(ctx.g, ctx.shapes)
+            found = _shacl_with_background(ctx)
         elif robot is not None:
             found = robot_profile_issues(robot.ontology, robot.profile, robot.image, robot.timeout)
         else:  # pragma: no cover -- _not_run rules out adapters without their inputs.

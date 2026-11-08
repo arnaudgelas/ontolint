@@ -27,6 +27,9 @@ class RuleContext:
     def __init__(self, graph: Graph, shapes: Graph | None, policy: Policy, context: GraphContext) -> None:
         self.g = graph
         self.shapes = shapes
+        # SHACL-only background (stage 4 of the import closure): the ontology the shapes import, merged
+        # into the data graph for validation but never judged by the term rules.
+        self.shacl_background: Graph | None = None
         self.policy = policy
         self.context = context
         self.findings: list[Finding] = []

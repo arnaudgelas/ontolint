@@ -108,7 +108,7 @@ def test_run_adapter_dispatches_on_backend(
 ) -> None:
     monkeypatch.setattr(engine, "shacl_issues", lambda *_: [_finding(rule="SHACL")])
     monkeypatch.setattr(engine, "robot_profile_issues", lambda *_: [_finding(rule="ROBOT")])
-    ctx = types.SimpleNamespace(g=object(), shapes=object())
+    ctx = types.SimpleNamespace(g=object(), shapes=object(), shacl_background=None)
     robot = engine.RobotRequest(Path("a.ttl"), "EL")
     execution, found = engine._run_adapter(_spec(backend=backend), ctx, robot)  # type: ignore[arg-type]  # noqa: SLF001
     assert execution.status is ExecutionStatus.EXECUTED

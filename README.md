@@ -281,6 +281,16 @@ that resolved to local modules. Graph-wide heuristics (`CLS002`, `METRIC*` ratio
 closure, data modules included, on purpose: a class that no module instantiates is exactly what
 `CLS002` reports.
 
+SHACL shapes often check the class of a vocabulary individual, which only the ontology states, so
+instance data validated alone reports false violations (and can silently pass where a target class
+is reached through a subclass). With `--follow-imports`, a shapes file that `owl:imports` the
+ontology supplies it: SHACL validates the data merged with that closure (inference off), reports
+only results about the linted file's own nodes, and the term rules still judge the data file alone.
+
+```bash
+ontolint data.ttl --shapes shapes.ttl --follow-imports   # shapes.ttl imports the ontology
+```
+
 ### GitHub annotations
 
 `--format github` is not available yet. The escaping helpers (`%`, CR, LF and, for properties,

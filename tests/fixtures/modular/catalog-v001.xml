@@ -5,6 +5,7 @@
   <uri name="https://example.test/onto/meta" uri="meta.ttl"/>
   <uri name="https://example.test/onto/core" uri="core.ttl"/>
   <uri name="https://example.test/onto/draft" uri="draft.ttl"/>
+  <uri name="https://example.test/onto/shapes" uri="shapes.ttl"/>
   <group xml:base="generated/">
     <uri name="https://example.test/onto/data" uri="data.ttl"/>
   </group>

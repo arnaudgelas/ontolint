@@ -1,0 +1,10 @@
+# Shapes that check the class of a vocabulary individual, so they need the ontology: they import it.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ex: <https://example.test/onto/core#> .
+
+<https://example.test/onto/shapes> a owl:Ontology ; owl:imports <https://example.test/onto> .
+
+ex:DocumentShape a sh:NodeShape ;
+    sh:targetClass ex:Document ;
+    sh:property [ sh:path ex:status ; sh:minCount 1 ; sh:class ex:Status ] .

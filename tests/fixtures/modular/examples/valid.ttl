@@ -1,0 +1,3 @@
+# Valid instance data: its status value is typed ex:Status in the ontology, not here.
+@prefix ex: <https://example.test/onto/core#> .
+<https://example.test/data/d1> a ex:Document ; ex:status ex:Authoritative .

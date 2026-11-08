@@ -150,6 +150,7 @@ class RunPlan:
     overrides: dict[str, str]
     shapes: Graph | None
     registry: RuleRegistry
+    shacl_background: Graph | None = None
 
 
 _SHAPE_TYPES = (SH.NodeShape, SH.PropertyShape)
@@ -180,6 +181,7 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         plan.policy, resolved_imports=loaded.resolved_imports, imported_ontologies=loaded.imported_ontologies
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
+    ctx.shacl_background = plan.shacl_background
     _shapes_hint(item, graph, ctx)
     if ctx.context.ownership.base_selected_nothing:
         print(
@@ -287,10 +289,25 @@ class ImportOptions:
 
 def _closure(item: InputFile, policy: Policy, options: ImportOptions) -> LoadedGraph:
     graph = load_graph(item, policy)
+    return _closure_of(item, LoadedGraph(graph, source_index(graph)), policy, options)
+
+
+def _closure_of(item: InputFile, root: LoadedGraph, policy: Policy, options: ImportOptions) -> LoadedGraph:
     catalog = options.catalog
     if catalog is None and (found := item.path.parent / CATALOG_NAME).is_file():
         catalog = read_catalog(found, policy.max_input_bytes)
-    return load_closure(LoadedGraph(graph, source_index(graph)), item.path, policy, catalog, item).loaded
+    return load_closure(root, item.path, policy, catalog, item).loaded
+
+
+def _shapes_background(item: InputFile, shapes: Graph, policy: Policy, options: ImportOptions) -> Graph | None:
+    """The ontology a shapes file imports, without the shapes: SHACL validates the data against it too.
+
+    Shapes that check the class of a vocabulary individual need the ontology that types it; without it
+    valid data reports false violations.  ``None`` when the shapes import nothing that resolves.
+    """
+    closure = _closure_of(item, LoadedGraph(shapes, source_index(shapes)), policy, options)
+    background = closure.graph - shapes
+    return background if len(background) else None
 
 
 def _parse_inputs(inputs: list[InputFile], imports: ImportOptions | None = None) -> tuple[list[LoadedGraph], list[str]]:
@@ -410,9 +427,13 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         print("\n".join(errors), file=sys.stderr)
         return 2
     shapes: Graph | None = None
+    background: Graph | None = None
     if args.shapes:
         try:
-            shapes = load_graph(resolve_inputs([args.shapes], Path.cwd())[0], limits)
+            shapes_item = resolve_inputs([args.shapes], Path.cwd())[0]
+            shapes = load_graph(shapes_item, limits)
+            if imports is not None:
+                background = _shapes_background(shapes_item, shapes, limits, imports)
         except InputRejected as exc:
             print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
             return 2
@@ -420,7 +441,7 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
             print(_parse_error(exc, None), file=sys.stderr)
             return 2
     stage[0] = "lint execution"
-    plan = _plan(args, config, shapes, registry)
+    plan = replace(_plan(args, config, shapes, registry), shacl_background=background)
     files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]
     files, stale = _apply_baselines(files, args)
     return RunReport(tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale)

@@ -256,10 +256,6 @@ moves from `proposed` merely because it has an attractive title.
 
 ## Documentation debt to close with the affected work
 
-- [ ] Until stage 4 of the modular item ships, document in the README how to validate instance
-  data against shapes that need the ontology: merge the data with the closure first (for example
-  with `robot merge --catalog`), then pass the merged file with `--shapes`. Stage 1's README section
-  already says that linting the umbrella alone checks nothing.
 - [ ] Correct stale source comments: `src/ontolint/github.py` says findings "carry no source
   locations" (false since 0.3.0) and the module has no caller outside its own test until a
   formatter exists. Either make it earn its place via the GitHub-integration ADR or delete it.
