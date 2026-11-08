@@ -235,3 +235,36 @@ def test_an_imported_module_still_passes_the_safe_loader(corpus: Path, capsys: p
     code, _report_, err = _report(capsys, str(corpus / "umbrella.ttl"), "--follow-imports")
     assert code == TOOL_FAILURE
     assert err.startswith("INPUT001: RDF input parsing failed")
+
+
+def test_a_file_iri_naming_another_host_does_not_resolve(corpus: Path) -> None:
+    umbrella = corpus / "umbrella.ttl"
+    remote = "file://remote.example" + (corpus / "meta.ttl").as_uri().removeprefix("file://")
+    umbrella.write_text(umbrella.read_text(encoding="utf-8").replace(f"<{EXTERNAL}>", f"<{remote}>"), encoding="utf-8")
+    assert remote in _closure(umbrella, catalog=False).unresolved
+
+
+@pytest.mark.parametrize(
+    "entry",
+    [
+        '<uri uri="meta.ttl"/>',  # no name
+        '<uri name="https://example.test/onto/meta"/>',  # no target
+        '<rewriteURI uriStartString="https://example.test/onto/"/>',  # no prefix
+        '<rewriteURI rewritePrefix="./"/>',  # no start string
+        '<system systemId="https://example.test/onto/meta" uri="meta.ttl"/>',  # not a URI entry
+    ],
+)
+def test_incomplete_or_foreign_catalog_entries_are_ignored(corpus: Path, entry: str) -> None:
+    (corpus / "catalog-v001.xml").write_text(
+        f'<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">{entry}</catalog>', encoding="utf-8"
+    )
+    assert "https://example.test/onto/meta" in _closure(corpus / "umbrella.ttl").unresolved
+
+
+def test_the_import_depth_limit_is_inclusive(corpus: Path) -> None:
+    umbrella = corpus / "umbrella.ttl"
+    text = umbrella.read_text(encoding="utf-8")
+    start, end = text.index("owl:imports"), text.index(" .", text.index("vocabulary"))
+    umbrella.write_text(text[:start] + "owl:imports <https://example.test/onto/core>" + text[end:], encoding="utf-8")
+    closure = _closure(umbrella, Policy(max_import_depth=2))  # core is at depth 1, meta at depth 2
+    assert [Path(name).name for name in closure.files] == ["core.ttl", "meta.ttl"]

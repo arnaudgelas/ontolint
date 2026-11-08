@@ -38,6 +38,7 @@ class CatalogError(ValueError):
     """The catalog file is not a readable OASIS XML catalog; a configuration error (``TOOL001``)."""
 
 
+# gremlin: pardon[equivalent] nothing mutates a catalog; frozen only guards against it
 @dataclass(frozen=True)
 class Catalog:
     """IRI-to-file mappings from one OASIS XML catalog, and the directory every resolved file must stay in."""
@@ -99,6 +100,7 @@ def read_catalog(path: Path, max_bytes: int) -> Catalog:
     return Catalog(base, entries, tuple(sorted(rewrites, key=lambda pair: -len(pair[0]))))
 
 
+# gremlin: pardon[equivalent] nothing mutates a closure; frozen only guards against it
 @dataclass(frozen=True)
 class Closure:
     """A root document merged with every import that resolved to a local file."""
@@ -129,7 +131,8 @@ def load_closure(root_document: LoadedGraph, root_path: Path, policy: Policy, ca
     sandbox = catalog.root if catalog is not None else root_path.parent.resolve()
     resolver = catalog if catalog is not None else Catalog(sandbox, {})
     merged = Graph()
-    for prefix, namespace in root_document.graph.namespaces():
+    for prefix, namespace in root_document.graph.namespaces():  # pySHACL renders nodes with these prefixes
+        # gremlin: pardon[equivalent] the merged graph is new: only rdflib's own default prefixes could clash
         merged.bind(prefix, namespace, override=False)
     merged += root_document.graph
     seen_iris: set[str] = set()

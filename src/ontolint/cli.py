@@ -250,6 +250,7 @@ def _apply_baselines(
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
 
 
+# gremlin: pardon[equivalent] nothing mutates the options; frozen only guards against it
 @dataclass(frozen=True)
 class ImportOptions:
     """How to follow ``owl:imports``: with one explicit catalog, or with the one found next to each input."""
