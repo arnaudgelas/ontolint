@@ -18,6 +18,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from rdflib import Graph
+from rdflib.namespace import RDF, SH
 
 from . import engine
 from ._version import package_version
@@ -30,6 +31,7 @@ from .profiles import PROFILES, Profile
 from .reporting import FileReport, RunReport, fingerprint, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
+from .rules.runtime import RuleContext
 from .selection import Selection, SelectorSyntaxError, resolve_selection, split_selectors, unknown_selector_help
 
 FORMATS = ["text", "json", "sarif"]
@@ -143,10 +145,32 @@ class RunPlan:
     registry: RuleRegistry
 
 
+_SHAPE_TYPES = (SH.NodeShape, SH.PropertyShape)
+
+
+def _shape_count(graph: Graph) -> int:
+    """How many SHACL shapes ``graph`` holds: typed node or property shapes, or nodes with an ``sh:path``."""
+    typed = {s for type_ in _SHAPE_TYPES for s in graph.subjects(RDF.type, type_)}
+    return len(typed | set(graph.subjects(SH.path, None)))
+
+
+def _shapes_hint(item: InputFile, graph: Graph, ctx: RuleContext) -> None:
+    """Say once when the linted file is mostly SHACL shapes: ontology rules were not written for it."""
+    shapes = _shape_count(graph)
+    terms = len(ctx.context.classes | ctx.context.properties | ctx.context.concepts)
+    if shapes and shapes > terms:
+        print(
+            f"TOOL003: note: {item.display} looks like a SHACL shapes graph ({shapes} shapes, {terms} declared "
+            "terms); ontology rules may not fit it. To validate data against it, pass it with --shapes.",
+            file=sys.stderr,
+        )
+
+
 def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule."""
     graph = loaded.graph
     ctx = engine.build_context(graph, plan.shapes, plan.policy)
+    _shapes_hint(item, graph, ctx)
     if ctx.context.ownership.base_selected_nothing:
         print(
             f"TOOL002: warning: --base {plan.policy.base!r} selects none of the terms declared in {item.display}; "

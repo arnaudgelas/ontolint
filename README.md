@@ -146,6 +146,11 @@ Exit `2` outranks `1`: when a requested backend did not deliver a verdict the ru
 pass, even with `--fail-on never`. The report is still written so you can see why. Rules that
 are `skipped` (no shapes supplied, no OWL profile requested, ignored) never change the exit code.
 
+Two advisory messages go to stderr and never change the exit code or the report:
+`TOOL002` warns that `--base` selects none of the declared terms, and `TOOL003` notes that a
+linted file looks like a SHACL shapes graph (more shapes than declared terms), which should
+probably be passed with `--shapes` instead.
+
 ### Discovering rules
 
 ```bash
