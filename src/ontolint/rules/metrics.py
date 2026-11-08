@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import OWL, RDF, RDFS, XSD
+from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
@@ -341,6 +341,9 @@ _STRUCTURAL_TYPES = frozenset(
 )
 _STRUCTURAL_PREDICATES = (
     RDF.first,
+    # SHACL structures (inline property shapes, prefix declarations) are anonymous by design.
+    SH.path,
+    SH.prefix,
     OWL.onProperty,
     OWL.annotatedSource,
     OWL.intersectionOf,

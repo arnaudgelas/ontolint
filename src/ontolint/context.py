@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from rdflib import Graph, URIRef
-from rdflib.namespace import OWL, RDF, RDFS, SKOS
+from rdflib.namespace import OWL, RDF, RDFS, SH, SKOS
 from rdflib.term import Node
 
 from .ownership import Ownership
@@ -94,6 +94,11 @@ class GraphContext:
             return {subject for subject in subjects_by_type[type_] if isinstance(subject, URIRef)}
 
         ontologies = declared(OWL.Ontology)
+        # SHACL-SPARQL declares prefixes on an owl:Ontology node (`ex:Prefixes a owl:Ontology ; sh:declare
+        # [...]`).  Next to a real ontology header such a node is a prefix declaration, not a second ontology.
+        prefix_declarations = {node for node in ontologies if (node, SH.declare, None) in graph}
+        if ontologies - prefix_declarations:
+            ontologies -= prefix_declarations
         classes = set().union(*(declared(type_) for type_ in CLASS_TYPES))
         properties = set().union(*(declared(type_) for type_ in PROPERTY_TYPES))
         concepts = declared(SKOS.Concept)
