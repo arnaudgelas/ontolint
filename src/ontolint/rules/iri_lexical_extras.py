@@ -1,7 +1,20 @@
 """Extra heuristics: IRI015 (opaque and readable local names in one namespace), LEX018 and LEX021.
 
-LEX018 flags labels that carry markup or character entities; LEX021 flags labels that are not in
-Unicode NFC.  All three inspect only the asserted graph and never leave the process.
+All three inspect only the asserted graph and never leave the process.  Their specifications:
+
+* **IRI015.** Group the owned declared terms by namespace (the IRI minus its local name).  A local name
+  is *opaque* when it is an optional prefix of up to eight letters, an optional ``_``, ``:`` or ``-``,
+  then at least three digits (``T0001234``, ``BFO_0000001``); it is *readable* when it is letters,
+  ``_`` and ``-`` only, starting with a letter, with three lower-case letters in a row (``hasPart``).
+  Other names (``ab12``, empty) are not classified.  One finding per namespace that holds both kinds,
+  focused on the namespace, unless the smaller kind is under 10% of the classified names.
+* **LEX018.** A label of an owned term (``rdfs:label``, ``skos:prefLabel``, ``skos:altLabel`` and any
+  configured extra label predicate) containing an XML/HTML tag (``<b>``, ``</b>``) or a named, decimal or
+  hexadecimal character entity (``&amp;``, ``&#233;``).  A bare ``<``, ``>`` or ``&`` is plain text, and
+  a trailing ``<word>`` disambiguator that is not an HTML tag name is allowed.  Comments and definitions
+  are not labels and are not checked.
+* **LEX021.** A label, on the same predicates as LEX018, that differs from its Unicode NFC normal form
+  (for example a decomposed ``e`` plus combining acute accent).
 """
 
 from __future__ import annotations
