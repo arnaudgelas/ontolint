@@ -4,6 +4,38 @@ Every rule reads asserted triples only (no entailment).  The conditions come fro
 reference integrity axioms (disjointness of Concept/ConceptScheme/Collection, ``skos:related`` versus
 hierarchy, exactMatch versus broad/relatedMatch) and from common vocabulary-quality practice
 (labels, notations, scheme membership, mapping scope).
+
+"Integrity condition Sn" refers to the SKOS Reference (W3C Recommendation, 18 August 2009).  Types are
+the asserted ``rdf:type`` values (no subclass entailment), and blank nodes are never reported.
+Specifications of the error rules:
+
+* **SKOS007.** An owned IRI typed both ``skos:Concept`` and ``skos:ConceptScheme``.  Error, certain:
+  integrity condition S9 makes the two classes disjoint.
+* **SKOS008.** An owned IRI typed ``skos:Collection`` or ``skos:OrderedCollection`` (a subclass of
+  Collection, S29) and also ``skos:Concept`` or ``skos:ConceptScheme``.  A Collection that merely has
+  concept members is fine.  Error, certain: integrity condition S37.
+* **SKOS009.** Two distinct IRIs linked by ``skos:related`` (in either direction, S23) of which one is
+  an ancestor of the other: reachable through one or more asserted ``skos:broader`` or
+  ``skos:broaderTransitive`` edges, or inverted ``skos:narrower`` / ``skos:narrowerTransitive`` edges
+  (S22, S24-S26), so a grandparent counts as well as a parent.  Exclusions: siblings and cousins (a
+  shared ancestor is not a conflict); the mapping sub-properties ``broadMatch``, ``narrowMatch`` and
+  ``relatedMatch`` (S41) are not followed or matched (ALIGN004 judges mapping strengths); a concept
+  related to itself (SKOS010).  One finding per pair when either end is owned, focused on the
+  lexically smaller IRI.  Error, certain: integrity condition S27 makes ``skos:related`` disjoint with
+  ``skos:broaderTransitive``.
+* **SKOS012.** Two distinct IRIs linked by ``skos:exactMatch`` (either direction) and by
+  ``skos:broadMatch``, ``skos:narrowMatch`` or ``skos:relatedMatch`` (either direction).  narrowMatch
+  counts because it is the inverse of broadMatch (S43) and exactMatch is symmetric (S44).  Exclusions:
+  ``skos:closeMatch`` and ``skos:mappingRelation`` (compatible with exactMatch); conflicts that need
+  the transitivity of exactMatch (ALIGN003).  One finding per pair when either end is owned, focused on
+  the lexically smaller IRI.  Error, certain: integrity condition S46.
+* **SKOS016.** An owned IRI with a literal value for ``skos:semanticRelation``, ``broader``,
+  ``narrower``, ``related``, ``broaderTransitive``, ``narrowerTransitive``, ``mappingRelation``, one
+  of the five mapping properties, ``inScheme``, ``hasTopConcept`` or ``topConceptOf``.  Exclusions:
+  blank-node subjects; ``skos:member`` and ``skos:memberList``; user sub-properties.  One finding per
+  subject and property.  Error, certain: SKOS declares every one of them an ``owl:ObjectProperty``
+  with a class range (S18-S20, S38, and the scheme properties), so a literal value is no valid OWL 2
+  DL assertion and never what the author meant, although SKOS states no integrity condition for it.
 """
 
 from __future__ import annotations
@@ -23,8 +55,9 @@ from .owl import namespace_of, owned_checker
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
-_HIERARCHY = (SKOS.broader, SKOS.narrower, SKOS.broaderTransitive, SKOS.narrowerTransitive)
-_INVERSE_HIERARCHY = (SKOS.narrower, SKOS.narrowerTransitive)
+_UPWARD = (SKOS.broader, SKOS.broaderTransitive)
+_DOWNWARD = (SKOS.narrower, SKOS.narrowerTransitive)
+_COLLECTIONS = (SKOS.Collection, SKOS.OrderedCollection)
 _MAPPING = (SKOS.exactMatch, SKOS.closeMatch, SKOS.broadMatch, SKOS.narrowMatch, SKOS.relatedMatch)
 _LABELS = (SKOS.prefLabel, SKOS.altLabel, SKOS.hiddenLabel)
 _RELATIONS = (
@@ -33,6 +66,8 @@ _RELATIONS = (
     SKOS.related,
     SKOS.broaderTransitive,
     SKOS.narrowerTransitive,
+    SKOS.semanticRelation,
+    SKOS.mappingRelation,
     SKOS.inScheme,
     SKOS.hasTopConcept,
     SKOS.topConceptOf,
@@ -220,7 +255,7 @@ def _disjoint_types(ctx: RuleContext) -> None:
             ctx.add(
                 "SKOS007", node, "Resource is typed as both skos:Concept and skos:ConceptScheme.", confidence="certain"
             )
-    for node in _iris(g.subjects(RDF.type, SKOS.Collection)):
+    for node in _iris(c for t in _COLLECTIONS for c in g.subjects(RDF.type, t)):
         if ctx.local(node) and (node in concepts or node in scheme_nodes):
             ctx.add(
                 "SKOS008",
@@ -230,12 +265,44 @@ def _disjoint_types(ctx: RuleContext) -> None:
             )
 
 
+def _parents(g: Graph) -> dict[URIRef, set[URIRef]]:
+    """Asserted ``broader``/``broaderTransitive`` edges plus inverted ``narrower``/``narrowerTransitive``."""
+    parents: defaultdict[URIRef, set[URIRef]] = defaultdict(set)
+    for upward, predicates in ((True, _UPWARD), (False, _DOWNWARD)):
+        for p in predicates:
+            for s, o in g.subject_objects(p):
+                if isinstance(s, URIRef) and isinstance(o, URIRef) and s != o:
+                    child, parent = (s, o) if upward else (o, s)
+                    parents[child].add(parent)
+    return parents
+
+
+def _ancestors(parents: dict[URIRef, set[URIRef]], start: URIRef) -> set[URIRef]:
+    """Every concept reachable upwards from ``start`` (``skos:broaderTransitive`` closure), iteratively."""
+    seen: set[URIRef] = set()
+    stack = [start]
+    while stack:
+        for parent in parents.get(stack.pop(), ()):
+            if parent not in seen:
+                seen.add(parent)
+                stack.append(parent)
+    return seen
+
+
 def _related_conflicts(ctx: RuleContext) -> None:
     g = ctx.g
-    related = _pairs(g, (SKOS.related,))
-    hierarchy = _pairs(g, _HIERARCHY)
-    for pair in sorted(related & hierarchy, key=_ordered):
+    parents = _parents(g)
+    ancestors: dict[URIRef, set[URIRef]] = {}
+
+    def above(node: URIRef) -> set[URIRef]:
+        if node not in ancestors:
+            ancestors[node] = _ancestors(parents, node)
+        return ancestors[node]
+
+    for pair in sorted(_pairs(g, (SKOS.related,)), key=_ordered):
         first, second = _ordered(pair)
+        if second not in above(first) and first not in above(second):
+            continue
         if ctx.local(first) or ctx.local(second):
             ctx.add(
                 "SKOS009",

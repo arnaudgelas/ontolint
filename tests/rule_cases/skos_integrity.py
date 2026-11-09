@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SKOS
-from rule_harness import built, rule_cases, ttl
+from rule_harness import BASE, built, rule_cases, ttl
 
 A = "ex:a skos:inScheme ex:s ; skos:prefLabel"
 CS = "a skos:Concept ; skos:inScheme"
 AC = "ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel"
+OTHER = "@prefix o: <http://other.test/> .\n"
+EXT = "@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .\n"
 SCHEME = "ex:s a skos:ConceptScheme ; skos:hasTopConcept ex:top . ex:top a skos:Concept ; skos:inScheme ex:s ."
 
 
@@ -31,21 +33,48 @@ def _hostile_labels() -> Graph:
 CASES = {
     "SKOS007": rule_cases(
         [ttl("concept and scheme", "ex:x a skos:Concept, skos:ConceptScheme .")],
-        [ttl("only a concept", "ex:x a skos:Concept .")],
+        [
+            ttl("only a concept", "ex:x a skos:Concept ."),
+            ttl(
+                "scheme subclass is not entailed",
+                "ex:Sub rdfs:subClassOf skos:ConceptScheme . ex:x a skos:Concept, ex:Sub .",
+            ),
+            ttl("blank node", "[] a skos:Concept, skos:ConceptScheme ."),
+            ttl("not owned", OTHER + "o:x a skos:Concept, skos:ConceptScheme .", base=BASE),
+        ],
     ),
     "SKOS008": rule_cases(
         [
             ttl("collection and concept", "ex:x a skos:Collection, skos:Concept ."),
             ttl("collection and scheme", "ex:x a skos:Collection, skos:ConceptScheme ."),
+            ttl("ordered collection and concept", "ex:x a skos:OrderedCollection, skos:Concept ."),
         ],
-        [ttl("plain collection", "ex:x a skos:Collection ; skos:member ex:c . ex:c a skos:Concept .")],
+        [
+            ttl("plain collection", "ex:x a skos:Collection ; skos:member ex:c . ex:c a skos:Concept ."),
+            ttl("blank node", "[] a skos:Collection, skos:Concept ."),
+            ttl("not owned", OTHER + "o:x a skos:Collection, skos:Concept .", base=BASE),
+        ],
     ),
     "SKOS009": rule_cases(
         [
             ttl("related and broader", "ex:a skos:related ex:b ; skos:broader ex:b ."),
             ttl("related and inverse narrower", "ex:a skos:related ex:b . ex:b skos:narrower ex:a ."),
+            ttl(
+                "related to a grandparent", "ex:a skos:broader ex:b . ex:b skos:broader ex:c . ex:a skos:related ex:c ."
+            ),
+            ttl(
+                "related to a grandchild, mixed predicates",
+                "ex:c skos:related ex:a . ex:a skos:broaderTransitive ex:b . ex:c skos:narrower ex:b .",
+            ),
+            ttl("related and narrowerTransitive", "ex:a skos:related ex:b ; skos:narrowerTransitive ex:b ."),
         ],
-        [ttl("related only", "ex:a skos:related ex:b . ex:c skos:broader ex:b .")],
+        [
+            ttl("related only", "ex:a skos:related ex:b . ex:c skos:broader ex:b ."),
+            ttl("siblings", "ex:a skos:broader ex:p . ex:b skos:broader ex:p . ex:a skos:related ex:b ."),
+            ttl("broadMatch is not followed", "ex:a skos:related ex:b ; skos:broadMatch ex:b ."),
+            ttl("self related is SKOS010", "ex:a skos:related ex:a ; skos:broader ex:a ."),
+            ttl("not owned", OTHER + "o:a skos:related o:b ; skos:broader o:b .", base=BASE),
+        ],
     ),
     "SKOS010": rule_cases(
         [ttl("self related", "ex:a a skos:Concept ; skos:related ex:a .")],
@@ -70,8 +99,18 @@ CASES = {
         [
             ttl("exact and broad", "ex:a skos:exactMatch ex:b ; skos:broadMatch ex:b ."),
             ttl("exact and inverse related", "ex:a skos:exactMatch ex:b . ex:b skos:relatedMatch ex:a ."),
+            ttl("exact and narrow", "ex:a skos:exactMatch ex:b ; skos:narrowMatch ex:b ."),
+            ttl("inverse exact and broad", "ex:b skos:exactMatch ex:a . ex:a skos:broadMatch ex:b ."),
         ],
-        [ttl("exact and close", "ex:a skos:exactMatch ex:b ; skos:closeMatch ex:b .")],
+        [
+            ttl("exact and close", "ex:a skos:exactMatch ex:b ; skos:closeMatch ex:b ."),
+            ttl("exact and mappingRelation", "ex:a skos:exactMatch ex:b ; skos:mappingRelation ex:b ."),
+            ttl(
+                "chain conflict is ALIGN003",
+                "ex:a skos:exactMatch ex:b . ex:b skos:exactMatch ex:c . ex:a skos:broadMatch ex:c .",
+            ),
+            ttl("not owned", EXT + "a:x skos:exactMatch b:y ; skos:broadMatch b:y .", base=BASE),
+        ],
     ),
     "SKOS013": rule_cases(
         [
@@ -102,8 +141,17 @@ CASES = {
             ttl("literal broader", 'ex:c skos:broader "parent" .'),
             ttl("literal inScheme", 'ex:c skos:inScheme "scheme" .'),
             built("literal relations", _literal_relations),
+            ttl("literal exactMatch", 'ex:c skos:exactMatch "x" .'),
+            ttl("literal semanticRelation", 'ex:c skos:semanticRelation "x" .'),
+            ttl("literal mappingRelation", 'ex:c skos:mappingRelation "x" .'),
+            ttl("literal topConceptOf", 'ex:c skos:topConceptOf "scheme" .'),
         ],
-        [ttl("IRI values", "ex:c skos:broader ex:p ; skos:inScheme ex:s .")],
+        [
+            ttl("IRI values", "ex:c skos:broader ex:p ; skos:inScheme ex:s ."),
+            ttl("blank-node subject", '[] skos:broader "x" .'),
+            ttl("member is not checked", 'ex:k a skos:Collection ; skos:member "x" .'),
+            ttl("not owned", OTHER + 'o:c skos:broader "x" .', base=BASE),
+        ],
     ),
     "SKOS017": rule_cases(
         [ttl("dangling broader", "ex:c a skos:Concept ; skos:broader ex:missing .")],
