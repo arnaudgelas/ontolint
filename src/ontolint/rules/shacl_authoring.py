@@ -7,12 +7,60 @@ network).  Rules are skipped by the engine when no shapes graph is supplied; ``r
 then.  Each check is deliberately conservative: it flags constructs that are invalid or unsatisfiable
 according to the SHACL specification, or well-known authoring pitfalls, and stays silent when a value
 cannot be interpreted with certainty.
+
+A *shape* below is any subject in the shapes graph (``--shapes``) typed ``sh:NodeShape`` or
+``sh:PropertyShape``, any object of ``sh:property``, or any subject of a shape parameter (``sh:path``,
+``sh:minCount``, ``sh:pattern``, ``sh:minInclusive`` ...), so node and property shapes alike; the data
+graph is never read.  A *natural* is a literal whose RDFLib value is a Python ``int`` other than a
+boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``xsd:nonNegativeInteger``
+...) in any valid XSD lexical form (``"01"``, ``"+1"``, ``" 2 "``); an ill-typed literal
+(``"abc"^^xsd:integer``, ``"1.0"^^xsd:integer``), an ``xsd:decimal`` or ``xsd:double`` (``1.0``,
+``1e0``), a string, a boolean and an IRI are not naturals.  Specifications of the error rules:
+
+* **SHQ007.** A shape with exactly one ``sh:minCount`` and exactly one ``sh:maxCount``, both naturals,
+  where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``).  Excluded: equal
+  bounds, a missing bound, several values for either parameter, and a bound that is not a natural
+  (SHQ008 reports it).  Error, certain: no set of value nodes satisfies both, so every focus node
+  violates the shape.
+* **SHQ008.** Every value of ``sh:minCount`` or ``sh:maxCount`` on a shape that is not a natural,
+  each reported on its own: negative, decimal or double, ill-typed, string, boolean or IRI.  A
+  derived integer datatype is accepted although SHACL 2017 section 4.2 requires datatype
+  ``xsd:integer``.  Error: SHACL makes such a shape ill-formed (a SHACL processor may reject the
+  shapes graph or ignore the constraint); the check is deterministic, though its findings are
+  recorded with the default confidence ``heuristic``.
+* **SHQ011.** A literal value of ``sh:pattern`` that Python's ``re`` cannot compile with the shape's
+  ``sh:flags`` (all values concatenated).  SHACL regexes are XPath/XSD regexes, so the flags are
+  translated: ``i``, ``s`` and ``m`` map to the Python flags, ``x`` removes whitespace outside
+  character classes before compiling (Python's VERBOSE would also read ``#`` as a comment), and ``q``
+  (XPath 3.0: the pattern is a plain string; SPARQL 1.1 cites XPath 2.0, which lacks it) means every
+  pattern is valid.  One finding per invalid pattern, quoting Python's error.  Excluded: a pattern
+  with an XPath-only escape (``\\p{..}``, ``\\P``, ``\\i``, ``\\I``, ``\\c``, ``\\C``), which is never
+  judged, and a non-literal value.  Python accepts much that XSD rejects (lookaround, ``\\b``, ``\\A``,
+  ``(?:)``, ``a{``, possessive quantifiers, unknown flag letters), so the rule misses those; it can
+  also flag a valid XSD pattern Python rejects (a repetition count above 4294967295).  Error,
+  heuristic: an invalid pattern makes the shape ill-formed, but the judgement is Python's, not XSD's.
+* **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``.  Excluded as for SHQ007; a length
+  that is not a natural is ignored and no rule reports it.  Error, certain: no value node has a
+  string length in the range, so every value node (and every blank node) violates the shape.
+* **SHQ018.** A shape where some lower bound (``sh:minInclusive`` or ``sh:minExclusive``) and some
+  upper bound (``sh:maxInclusive`` or ``sh:maxExclusive``), both numbers, admit no value: the lower
+  is greater than the upper, or they are equal and either is exclusive.  A number is a non-NaN literal
+  of ``xsd:decimal``, ``xsd:float``, ``xsd:double`` or an integer type; every lower bound is paired with
+  every upper bound.  The pair is compared after XPath numeric promotion: two integers or decimals
+  exactly, and when either is ``xsd:float`` (``xsd:double``) both are cast to float (double), so
+  ``"0.1"^^xsd:double`` and ``0.1`` are equal; an ``xsd:float`` is read at single precision, and a
+  number beyond a type's range becomes ``INF`` or ``-INF``, which compare as infinities.  Excluded: NaN,
+  ill-typed literals, booleans, and non-numeric bounds such as dates or strings; an interval empty
+  only over the integers (``sh:minExclusive 1 ; sh:maxExclusive 2``), as the value nodes' datatype is
+  not considered.  Error: no value node can satisfy both bounds; deterministic, though the findings
+  are recorded with the default confidence ``heuristic``.
 """
 
 from __future__ import annotations
 
 import math
 import re
+import struct
 import warnings
 from collections import defaultdict
 from collections.abc import Callable
@@ -72,7 +120,12 @@ SHAPE_PREDICATES = (
     SH.qualifiedValueShape,
     *TARGET_PREDICATES,
 )
-REGEX_FLAGS = {"i": re.IGNORECASE, "s": re.DOTALL, "m": re.MULTILINE, "x": re.VERBOSE}
+# XPath ``x`` is not Python's VERBOSE (which also reads ``#`` as a comment): see ``_strip_whitespace``.
+REGEX_FLAGS = {"i": re.IGNORECASE, "s": re.DOTALL, "m": re.MULTILINE}
+XPATH_WHITESPACE = frozenset("\t\n\r ")
+# SHQ018 compares bounds after XPath numeric promotion: integer/decimal < xsd:float < xsd:double.
+EXACT, FLOAT, DOUBLE = 0, 1, 2
+NUMERIC_RANK: dict[URIRef | None, int] = {XSD.float: FLOAT, XSD.double: DOUBLE}
 # XPath-only regex escapes that Python cannot compile although they are valid SHACL patterns.
 MIN_LOGICAL_MEMBERS = 2
 XPATH_ONLY_ESCAPES = re.compile(r"\\[pPiIcC]")
@@ -195,6 +248,8 @@ def _number(term: Node) -> Decimal | float | int | None:
 
 
 def _is_nan(number: Decimal | float) -> bool:
+    if isinstance(number, int):
+        return False  # math.isnan overflows on an integer beyond the double range
     return number.is_nan() if isinstance(number, Decimal) else math.isnan(number)
 
 
@@ -256,14 +311,34 @@ def _cardinality_values(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 )
 
 
+def _strip_whitespace(text: str) -> str:
+    """Drop whitespace outside character classes, as the XPath ``x`` flag does (``#`` stays a literal)."""
+    out: list[str] = []
+    depth, escaped = 0, False
+    for ch in text:
+        if escaped:
+            escaped = False
+        elif ch == "\\":
+            escaped = True
+        elif ch == "[":
+            depth += 1
+        elif ch == "]" and depth:
+            depth -= 1
+        elif not depth and ch in XPATH_WHITESPACE:
+            continue
+        out.append(ch)
+    return "".join(out)
+
+
 def _regex(ctx: RuleContext, sg: Graph, shape: Node) -> None:
-    flags = 0
-    for flag in sg.objects(shape, SH.flags):
-        flags |= sum(REGEX_FLAGS.get(ch, 0) for ch in str(flag))
+    letters = "".join(str(flag) for flag in sg.objects(shape, SH.flags))
+    if "q" in letters:
+        return  # XPath 3 ``q``: the pattern is a plain string, so any pattern is valid
+    flags = sum(REGEX_FLAGS[ch] for ch in set(letters) if ch in REGEX_FLAGS)
     for pattern in sg.objects(shape, SH.pattern):
         if not isinstance(pattern, Literal):
             continue
-        text = str(pattern)
+        text = _strip_whitespace(str(pattern)) if "x" in letters else str(pattern)
         if XPATH_ONLY_ESCAPES.search(text):
             continue
         try:
@@ -287,24 +362,46 @@ def _datatype_and_class(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         ctx.add("SHQ013", shape, "Shape has both sh:datatype and sh:class; no value can satisfy both.")
 
 
-def _range_bounds(
-    sg: Graph, shape: Node, inclusive: URIRef, exclusive: URIRef
-) -> list[tuple[Decimal | float | int, bool]]:
-    out: list[tuple[Decimal | float | int, bool]] = []
+type Bound = tuple[Decimal | float | int, int, bool]  # value, XPath promotion rank, exclusive
+
+
+def _range_bounds(sg: Graph, shape: Node, inclusive: URIRef, exclusive: URIRef) -> list[Bound]:
+    out: list[Bound] = []
     for predicate, strict in ((inclusive, False), (exclusive, True)):
         for value in sg.objects(shape, predicate):
             number = _number(value)
             if number is not None and not _is_nan(number):
-                out.append((number, strict))
+                rank = NUMERIC_RANK.get(value.datatype, EXACT) if isinstance(value, Literal) else EXACT
+                out.append((number, rank, strict))
     return out
+
+
+def _promote(number: Decimal | float | int, rank: int) -> Decimal | float | int:
+    """Cast ``number`` to xsd:float or xsd:double as XPath numeric promotion does; exact otherwise."""
+    if rank == EXACT:
+        return number
+    try:
+        double = float(number)
+    except OverflowError:  # an integer beyond the double range
+        double = math.inf if number > 0 else -math.inf
+    if rank == DOUBLE or math.isinf(double):
+        return double
+    try:
+        return struct.unpack("f", struct.pack("f", double))[0]
+    except OverflowError:  # beyond the float range
+        return math.copysign(math.inf, double)
 
 
 def _numeric_range(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     lows = _range_bounds(sg, shape, SH.minInclusive, SH.minExclusive)
     highs = _range_bounds(sg, shape, SH.maxInclusive, SH.maxExclusive)
-    for low, low_strict in lows:
-        for high, high_strict in highs:
-            if low > high or (low == high and (low_strict or high_strict)):
+    for low, low_rank, low_strict in lows:
+        for high, high_rank, high_strict in highs:
+            rank = max(low_rank, high_rank)
+            # An xsd:float is first read at float precision, then promoted with its partner.
+            lo = _promote(_promote(low, low_rank), rank)
+            hi = _promote(_promote(high, high_rank), rank)
+            if lo > hi or (lo == hi and (low_strict or high_strict)):
                 ctx.add("SHQ018", shape, f"Numeric bounds {low} and {high} admit no value.")
 
 

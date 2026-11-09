@@ -27,21 +27,60 @@ def _list_case(predicate: str, members: str) -> str:
 
 CASES = {
     "SHQ007": rule_cases(
-        [_c("min above max", _prop("sh:minCount 3 ; sh:maxCount 2"))],
-        [GOOD, _c("min equals max", _prop("sh:minCount 2 ; sh:maxCount 2")), _c("only min", _prop("sh:minCount 5"))],
+        [
+            _c("min above max", _prop("sh:minCount 3 ; sh:maxCount 2")),
+            _c("max zero", _prop("sh:minCount 1 ; sh:maxCount 0")),
+            _c("leading-zero lexical form", _prop('sh:minCount "03"^^xsd:integer ; sh:maxCount 2')),
+            _c("derived integer types", _prop('sh:minCount "3"^^xsd:int ; sh:maxCount "2"^^xsd:nonNegativeInteger')),
+            _c("on a node shape", NODE + "sh:minCount 3 ; sh:maxCount 2 ."),
+        ],
+        [
+            GOOD,
+            _c("min equals max", _prop("sh:minCount 2 ; sh:maxCount 2")),
+            _c("only min", _prop("sh:minCount 5")),
+            _c("only max", _prop("sh:maxCount 0")),
+            _c("several min values are not compared", _prop("sh:minCount 3, 4 ; sh:maxCount 2")),
+            _c("decimal bound is left to SHQ008", _prop("sh:minCount 3.0 ; sh:maxCount 2")),
+            _c("ill-typed bound is left to SHQ008", _prop('sh:minCount "x3"^^xsd:integer ; sh:maxCount 2')),
+        ],
     ),
     "SHQ008": rule_cases(
         [
             _c("negative", _prop("sh:minCount -1")),
+            _c("negative max", _prop("sh:maxCount -2")),
+            _c("decimal", _prop("sh:minCount 1.0")),
+            _c("double", _prop("sh:maxCount 1e0")),
+            _c("string", _prop('sh:minCount "1"')),
+            _c("boolean", _prop("sh:minCount true")),
+            _c("IRI", _prop("sh:maxCount ex:one")),
+            _c("ill-typed integer", _prop('sh:minCount "one"^^xsd:integer')),
+            _c("ill-typed derived integer", _prop('sh:minCount "-1"^^xsd:nonNegativeInteger')),
+            _c("one bad value among good ones", _prop("sh:maxCount 1, -1")),
         ],
-        [GOOD, _c("zero", _prop("sh:minCount 0"))],
+        [
+            GOOD,
+            _c("zero", _prop("sh:minCount 0")),
+            _c("leading zero and plus sign", _prop('sh:minCount "01"^^xsd:integer ; sh:maxCount "+2"^^xsd:integer')),
+            _c("derived integer type accepted", _prop('sh:minCount "1"^^xsd:nonNegativeInteger')),
+            _c("lengths are not cardinalities", _prop("sh:minLength -1")),
+        ],
     ),
     "SHQ011": rule_cases(
-        [_c("unbalanced paren", _prop('sh:pattern "(abc"'))],
+        [
+            _c("unbalanced paren", _prop('sh:pattern "(abc"')),
+            _c("inverted repetition", _prop('sh:pattern "a{2,1}"')),
+            _c("unbalanced with flags", _prop('sh:pattern "[a-z" ; sh:flags "im"')),
+            _c("x flag keeps the error", _prop('sh:pattern "a b (" ; sh:flags "x"')),
+            _c("one bad pattern among good ones", _prop('sh:pattern "^a$", "(b"')),
+        ],
         [
             GOOD,
             _c("valid pattern", _prop('sh:pattern "^[a-z]+$" ; sh:flags "i"')),
             _c("xpath-only escape is not judged", _prop('sh:pattern "^\\\\p{L}+$"')),
+            _c("q flag makes the pattern a plain string", _prop('sh:pattern "(abc" ; sh:flags "q"')),
+            _c("x flag: # is a literal, not a comment", _prop('sh:pattern "(a # b)" ; sh:flags "x"')),
+            _c("character class subtraction", _prop('sh:pattern "[a-z-[aeiou]]+"')),
+            _c("non-literal pattern", _prop("sh:pattern ex:regex")),
         ],
     ),
     "SHQ013": rule_cases(
@@ -49,22 +88,53 @@ CASES = {
         [GOOD, _c("class only", _prop("sh:class ex:A"))],
     ),
     "SHQ017": rule_cases(
-        [_c("min length above max", _prop("sh:minLength 5 ; sh:maxLength 2"))],
+        [
+            _c("min length above max", _prop("sh:minLength 5 ; sh:maxLength 2")),
+            _c("max length zero", _prop("sh:minLength 1 ; sh:maxLength 0")),
+            _c("derived integer types", _prop('sh:minLength "3"^^xsd:int ; sh:maxLength "2"^^xsd:unsignedByte')),
+        ],
         [
             GOOD,
             _c("equal lengths", _prop("sh:minLength 2 ; sh:maxLength 2")),
+            _c("only max length", _prop("sh:maxLength 0")),
+            _c("several min lengths are not compared", _prop("sh:minLength 5, 6 ; sh:maxLength 2")),
+            _c("negative lengths are ignored", _prop("sh:minLength -1 ; sh:maxLength -3")),
+            _c("decimal length is ignored", _prop("sh:minLength 3.0 ; sh:maxLength 2")),
         ],
     ),
     "SHQ018": rule_cases(
         [
             _c("inclusive inverted", _prop("sh:minInclusive 10 ; sh:maxInclusive 1")),
             _c("equal but exclusive", _prop("sh:minExclusive 3 ; sh:maxInclusive 3")),
+            _c("equal, both exclusive", _prop("sh:minExclusive 3 ; sh:maxExclusive 3.0")),
             _c("decimal vs integer", _prop("sh:minInclusive 2.5 ; sh:maxExclusive 2")),
+            _c("double vs integer", _prop("sh:minInclusive 1e1 ; sh:maxInclusive 2")),
+            _c("one lower bound conflicts", _prop("sh:minInclusive 1, 5 ; sh:maxInclusive 3")),
+            _c(
+                "minus infinity, exclusive",
+                _prop('sh:minInclusive "-INF"^^xsd:double ; sh:maxExclusive "-INF"^^xsd:float'),
+            ),
+            _c("on a node shape", NODE + "sh:minInclusive 10 ; sh:maxInclusive 1 ."),
         ],
         [
             GOOD,
             _c("single point", _prop("sh:minInclusive 3 ; sh:maxInclusive 3")),
             _c("non-numeric bounds are not compared", _prop('sh:minInclusive "b" ; sh:maxInclusive "a"')),
+            _c(
+                "dates are not compared",
+                _prop('sh:minInclusive "2020-02-01"^^xsd:date ; sh:maxInclusive "2020-01-01"^^xsd:date'),
+            ),
+            _c("booleans are not compared", _prop("sh:minInclusive true ; sh:maxInclusive false")),
+            _c("ill-typed bound is ignored", _prop('sh:minInclusive "ten"^^xsd:integer ; sh:maxInclusive 1')),
+            _c("NaN bound is ignored", _prop('sh:minInclusive "NaN"^^xsd:double ; sh:maxInclusive 1')),
+            _c("decimal promoted to double", _prop('sh:minInclusive "0.1"^^xsd:double ; sh:maxInclusive 0.1')),
+            _c(
+                "integer promoted to double",
+                _prop('sh:minInclusive 9007199254740993 ; sh:maxInclusive "9007199254740992"^^xsd:double'),
+            ),
+            _c("decimal promoted to float", _prop('sh:minInclusive 0.1000000001 ; sh:maxInclusive "0.1"^^xsd:float')),
+            _c("infinite single point", _prop('sh:minInclusive "INF"^^xsd:double ; sh:maxInclusive "INF"^^xsd:double')),
+            _c("empty only over the integers", _prop("sh:minExclusive 1 ; sh:maxExclusive 2")),
         ],
     ),
     "SHQ019": rule_cases(
