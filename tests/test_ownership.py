@@ -95,7 +95,7 @@ class TestDerivedNamespaces:
             "rdfs:comment a owl:AnnotationProperty ."
         )
         assert names(context.classes) == {"A"}
-        assert context.ownership.mode is OwnershipMode.ALL
+        assert context.ownership.dominant_namespace == "http://prov.example/ns#"  # nothing owned: dominant ns
 
     def test_fallback_without_ontology_declaration(self) -> None:
         context = ctx("ex:A a owl:Class . <https://other.test/B> a owl:Class .")
@@ -151,7 +151,8 @@ class TestOwnershipUnits:
         assert derive_prefixes([URIRef(obo + "iao#x")])[1] == (obo + "iao_",)
         assert derive_prefixes([URIRef(obo + ".owl")])[1] == ()
         assert derive_prefixes([URIRef(obo)])[1] == ()
-        assert derive_prefixes([URIRef("http://other.test/obo/envo.owl")])[1] == ()
+        # Outside purl.obolibrary.org the generic ODK rule applies: <dir>/<NAME>_ of a file-named IRI.
+        assert derive_prefixes([URIRef("http://other.test/obo/envo.owl")])[1] == ("http://other.test/obo/envo_",)
 
     def test_is_builtin(self) -> None:
         assert is_builtin(URIRef("http://www.w3.org/2002/07/owl#Thing"))

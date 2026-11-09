@@ -358,6 +358,8 @@ def _universal_restrictions(ctx: RuleContext) -> None:
         if _is_datatype(g, filler) or any((p, RDF.type, OWL.DatatypeProperty) in g for p in on_properties):
             continue  # "all values are xsd:gDay" is the idiomatic way to type a datatype property.
         owner = owning_term(g, restriction)
+        if isinstance(owner, URIRef) and not ctx.local(owner):
+            continue  # an axiom of an imported or merged vocabulary (BFO, ...), not of the linted ontology
         via = (
             f" on {', '.join(_property_name(g, p) for p in on_properties)}"
             if owner != restriction and on_properties

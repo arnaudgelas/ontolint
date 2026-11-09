@@ -37,6 +37,9 @@ def test_metadata_lexical_and_hierarchy_threshold_rules() -> None:  # noqa: PLR0
     graph.add((EX.with_underscore, RDF.type, OWL.Class))
     graph.add((URIRef("https://other.example/Foo"), RDF.type, OWL.Class))
     graph.add((URIRef("https://another.example/Foo"), RDF.type, OWL.Class))
+    # IRI003 between two owned namespaces; the foreign Foo classes above are not owned (dominant namespace).
+    graph.add((EX["sub/Foo"], RDF.type, OWL.Class))
+    graph.add((EX["alt#Foo"], RDF.type, OWL.Class))
     graph.add((EX.property_one, RDF.type, OWL.ObjectProperty))
     graph.add((EX.property_one, RDFS.domain, classes[2]))
     graph.add((EX.property_two, RDF.type, OWL.ObjectProperty))

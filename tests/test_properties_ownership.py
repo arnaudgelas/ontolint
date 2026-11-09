@@ -24,6 +24,7 @@ from ontolint.ownership import (
     BUILTIN_NAMESPACES,
     Ownership,
     OwnershipMode,
+    _dominant_namespace,
     base_matches,
     derive_prefixes,
     is_builtin,
@@ -164,7 +165,8 @@ def test_matching_implies_prefix_and_empty_base_matches_every_iri(base: str | No
 def test_fallback_never_owns_fewer_terms_than_the_derived_heuristic(
     declared: list[URIRef], ontologies: list[URIRef]
 ) -> None:
-    """INVARIANT: without a base, ownership covers the derived prefixes; if they own nothing, every non-builtin term."""
+    """INVARIANT: without a base, ownership covers the derived prefixes; if they own nothing, the dominant namespace
+    of the declared terms, and only without one every non-builtin term."""
     exact, folded = derive_prefixes(ontologies)
     heuristic = Ownership(OwnershipMode.DERIVED, None, exact, folded)
 
@@ -177,6 +179,9 @@ def test_fallback_never_owns_fewer_terms_than_the_derived_heuristic(
     if derived_owned:
         assert ownership.mode is OwnershipMode.DERIVED
         assert owned == derived_owned
+    elif (dominant := _dominant_namespace(list(dict.fromkeys(non_builtin)))) is not None:  # distinct terms
+        assert ownership.dominant_namespace == dominant
+        assert {t for t in non_builtin if str(t).startswith(dominant)} <= owned
     else:
         assert ownership.mode is OwnershipMode.ALL
         assert owned == set(non_builtin)

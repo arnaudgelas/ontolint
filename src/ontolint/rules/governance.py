@@ -113,13 +113,20 @@ def _deprecated_usage(ctx: RuleContext) -> None:
                 continue
             if p in _LIST_PLUMBING:
                 for owner, owner_predicate in sorted(_list_owners(ctx, s), key=str):
-                    if owner_predicate not in ANNOTATION_REFERENCES:
-                        focus = owning_term(g, owner)
+                    focus = owning_term(g, owner)
+                    if owner_predicate not in ANNOTATION_REFERENCES and not _foreign(ctx, focus):
                         ctx.add("GOV001", focus, f"Deprecated term {term} appears in a list of {owner_predicate}.")
                 continue
-            ctx.add("GOV001", owning_term(g, s), f"Deprecated term {term} appears as object of {p}.")
+            if not _foreign(ctx, focus := owning_term(g, s)):
+                ctx.add("GOV001", focus, f"Deprecated term {term} appears as object of {p}.")
         for s, _o in g.subject_objects(term):
-            ctx.add("GOV001", s, f"Deprecated property {term} used in assertion.")
+            if not _foreign(ctx, s):
+                ctx.add("GOV001", s, f"Deprecated property {term} used in assertion.")
+
+
+def _foreign(ctx: RuleContext, node: object) -> bool:
+    """Whether ``node`` is an IRI of a vocabulary the linted ontology only imports or merges in."""
+    return isinstance(node, URIRef) and not ctx.local(node)
 
 
 def _equivalence_targets(ctx: RuleContext) -> None:

@@ -7,8 +7,10 @@ place that decides this, deterministically and without network access:
 * with an explicit ``base`` the base decides (:func:`base_matches`);
 * otherwise the owned namespaces are derived from the ``owl:Ontology`` IRIs of the file
   (:func:`derive_prefixes`);
-* if that leaves no declared term owned, every declared non-built-in term is owned (the historic
-  behaviour), so a file whose ontology IRI differs from its term namespace never goes silent;
+* if that leaves no declared term owned, the namespace holding more than :data:`DOMINANT_PERCENT`
+  percent of the declared terms is owned (a Protege placeholder IRI such as ``untitled-ontology-139``,
+  or terms minted outside the ontology IRI); only without such a namespace is every declared
+  non-built-in term owned (the historic behaviour), so a file never goes silent;
 * if the derived namespaces own less than :data:`MINOR_OWNED_PERCENT` percent of the declared terms
   while one other namespace holds more than :data:`DOMINANT_PERCENT` percent of them, that dominant
   namespace is owned too (a vocabulary that embeds the SKOS core description next to its own concepts).
@@ -35,6 +37,10 @@ BOUNDARY_SUFFIXES = ("#", "/", "_")
 # ``DOMINANT_PERCENT`` percent of them.
 MINOR_OWNED_PERCENT = 5
 DOMINANT_PERCENT = 50
+# File extensions an ontology IRI may carry (``…/automatce.ttl``), and ODK release suffixes
+# (``…/automatce/automatce-full.ttl``); both are stripped when deriving the owned namespaces.
+FILE_EXTENSIONS = (".owl", ".ttl", ".rdf", ".nt", ".n3", ".jsonld", ".json", ".ofn", ".omn", ".owx", ".obo")
+RELEASE_SUFFIXES = ("-full", "-base", "-simple", "-merged", "-non-classified", "-basic", "-edit")
 
 
 class OwnershipMode(Enum):
@@ -71,23 +77,49 @@ def base_matches(base: str | None, node: object) -> bool:
 def derive_prefixes(ontologies: Iterable[URIRef]) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Return ``(exact, casefolded)`` namespace prefixes derived from ontology IRIs.
 
-    Candidates per ontology IRI: the IRI itself, the IRI without a trailing ``#``/``/`` and without
-    ``.owl``, and for ``http://purl.obolibrary.org/obo/<name>.owl`` (or ``.../obo/<name>/<file>.owl``) the ID prefix
-    ``http://purl.obolibrary.org/obo/<NAME>_`` (matched case-insensitively).
+    Candidates per ontology IRI: the IRI itself; the IRI without a trailing ``#``/``/`` and without a
+    file extension (:data:`FILE_EXTENSIONS`); for ``http://purl.obolibrary.org/obo/<name>.owl`` (or
+    ``.../obo/<name>/<file>.owl``) the ID prefix ``http://purl.obolibrary.org/obo/<NAME>_``; and for any
+    other IRI whose last segment is a file name, the ODK-style ID prefix ``<dir>/<NAME>_`` with the
+    release suffix (:data:`RELEASE_SUFFIXES`) removed, so ``…/automatce/automatce-full.ttl`` owns
+    ``…/automatce/AUTOMATCE_0000003``.  ID prefixes are matched case-insensitively.
     """
     exact: set[str] = set()
     folded: set[str] = set()
     for ontology in ontologies:
         iri = str(ontology)
         exact.add(iri)
-        stripped = iri.rstrip("#/").removesuffix(".owl")
+        stripped = _strip_extension(iri.rstrip("#/"))
         if stripped:
             exact.add(stripped)
         if iri.startswith(OBO_NAMESPACE):
-            name = re.split(r"[/#]", iri[len(OBO_NAMESPACE) :])[0].removesuffix(".owl")
+            name = _strip_extension(re.split(r"[/#]", iri[len(OBO_NAMESPACE) :])[0])
             if name:
                 folded.add((OBO_NAMESPACE + name + "_").casefold())
+        elif (id_prefix := _file_id_prefix(iri)) is not None:
+            folded.add(id_prefix.casefold())
     return tuple(sorted(exact)), tuple(sorted(folded))
+
+
+def _strip_extension(iri: str) -> str:
+    """``iri`` without a trailing ontology file extension (``.owl``, ``.ttl``, ...)."""
+    for extension in FILE_EXTENSIONS:
+        if iri.endswith(extension):
+            return iri.removesuffix(extension)
+    return iri
+
+
+def _file_id_prefix(iri: str) -> str | None:
+    """``<dir>/<NAME>_`` for an IRI ending in a file name with an extension, as ODK names its releases."""
+    if "#" in iri:
+        return None
+    directory, _slash, last = iri.rpartition("/")
+    name = _strip_extension(last)
+    if not directory or name == last or not name:
+        return None
+    for suffix in RELEASE_SUFFIXES:
+        name = name.removesuffix(suffix)
+    return f"{directory}/{name}_" if name else None
 
 
 def namespace_of_iri(iri: str) -> str | None:
@@ -134,9 +166,13 @@ class Ownership:
         exact, folded = derive_prefixes(ontologies)
         derived = cls(OwnershipMode.DERIVED, None, exact, folded)
         owned = sum(derived.owns(term) for term in declared_terms)
-        if not owned:
-            return cls()
         dominant = _dominant_namespace(declared_terms)
+        if not owned:
+            if dominant is None:
+                return cls()
+            return cls(
+                OwnershipMode.DERIVED, None, tuple(sorted({*exact, dominant})), folded, dominant_namespace=dominant
+            )
         if owned * 100 < MINOR_OWNED_PERCENT * len(declared_terms) and dominant is not None:
             return cls(
                 OwnershipMode.DERIVED, None, tuple(sorted({*exact, dominant})), folded, dominant_namespace=dominant

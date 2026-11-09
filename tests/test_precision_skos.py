@@ -384,8 +384,14 @@ def test_dominant_namespace_with_large_owned_share_is_not_widened() -> None:
     assert own.dominant_namespace is None
 
 
-def test_nothing_owned_still_falls_back_to_all() -> None:
+def test_nothing_owned_falls_back_to_the_dominant_namespace() -> None:
     own = _ownership({BIG_NS: 60, OTHER_NS: 40})
+    assert own.mode is OwnershipMode.DERIVED
+    assert own.dominant_namespace == BIG_NS
+
+
+def test_nothing_owned_and_no_dominant_namespace_falls_back_to_all() -> None:
+    own = _ownership({BIG_NS: 50, OTHER_NS: 50})
     assert own.mode is OwnershipMode.ALL
     assert own.dominant_namespace is None
 
