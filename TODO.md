@@ -14,9 +14,8 @@ record.
 
 ## Recently done
 
-Released in 0.5.0 and 0.5.1 on 2026-11-08 (all five release jobs green both times; the 0.5.0
-install from PyPI retried once while the index caught up), and 0.5.2 the same day (all five jobs
-green). Kept only so the next audit can confirm
+Released in 0.5.0, 0.5.1 and 0.5.2 on 2026-11-08, and 0.6.0 the next day, the first release that
+waited for the maintainer's approval (all release jobs green each time). Kept only so the next audit can confirm
 them, then delete these entries. Leftovers from each are in the open items below. The 0.4.1 and
 0.4.2 entries were confirmed and removed.
 
@@ -26,7 +25,7 @@ them, then delete these entries. Leftovers from each are in the open items below
   METRIC011 ignores local modules; a shapes file that imports the ontology supplies it as SHACL-only
   background. On a real fixture suite every declared outcome matches (13 of 13, 11 of 11 planted
   violations; valid and warnings-only fixtures pass).
-- 0.6.0 (`0e5a2aa`, `a4e08f9`): modular stage 1.
+- 0.6.0 (`0e5a2aa`, `a4e08f9`): modular stage 1, released.
   `--follow-imports` and `--catalog` load the `owl:imports` closure from local files (catalog `uri`,
   `group` with `xml:base`, `rewriteURI`, `file:` IRIs), never the network; sandboxed (SEC009),
   bounded by `max_import_depth`, `max_imported_files` and `max_triples` (new SEC015); SEC007 lists
@@ -64,18 +63,15 @@ them, then delete these entries. Leftovers from each are in the open items below
 
 ## P0 — before 0.6.0
 
-- [ ] **Finish and prove the approval boundary before publishing to PyPI.** 0.5.0, 0.5.1 and 0.5.2
-  were published without it at the maintainer's request. In place since 2026-11-08 (repository
-  settings, set by the maintainer): the `pypi` environment accepts `v*.*.*` tags only and requires
-  the maintainer's review (self-review allowed); a `main` branch ruleset blocks deletion and
-  force-push and requires linear history. Still to do:
-  - activate the `tags` ruleset (it exists with deletion, update and force-push rules, but its
-    enforcement is *disabled*, so released tags can still be moved); its "linear history" rule
-    means nothing for tags and can go;
-  - narrow the `main` ruleset to the default branch: it also targets every branch (`~ALL`), which
-    forbids deleting merged branches and blocks Renovate, which force-pushes its own branches.
-  *Done when:* a release run demonstrably waits for approval before publishing, a force-push of a
-  `v*` tag is rejected, and a Renovate branch can be rebased.
+- [ ] **Prove the last two parts of the release boundary.** Set up by the maintainer on 2026-11-08:
+  the `pypi` environment accepts `v*.*.*` tags only and requires the maintainer's review; the
+  `tags` ruleset (all tags) blocks deletion, update and force-push; the `main` ruleset (default
+  branch only) blocks deletion and force-push and requires linear history. Proven: the 0.6.0
+  release run paused at "Publish to PyPI" until the maintainer approved it. Still unproven, and
+  best done deliberately by the maintainer: that a force-push of a `v*` tag is rejected (try it on
+  a throwaway tag, not a release), and that Renovate can still rebase its own branches. The
+  `tags` ruleset's "linear history" rule means nothing for tags and can go.
+  *Done when:* both are observed once.
 
 ## P1 — reporting, policy and supply-chain correctness
 
