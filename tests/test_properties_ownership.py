@@ -28,6 +28,8 @@ from ontolint.ownership import (
     base_matches,
     derive_prefixes,
     is_builtin,
+    is_well_known,
+    namespace_of_iri,
 )
 
 pytestmark = pytest.mark.slow
@@ -166,25 +168,31 @@ def test_fallback_never_owns_fewer_terms_than_the_derived_heuristic(
     declared: list[URIRef], ontologies: list[URIRef]
 ) -> None:
     """INVARIANT: without a base, ownership covers the derived prefixes; if they own nothing, the dominant namespace
-    of the declared terms, and only without one every non-builtin term."""
+    of the declared terms, and only without one every non-builtin term. Borrowed well-known terms take no part,
+    unless the file declares nothing else."""
     exact, folded = derive_prefixes(ontologies)
     heuristic = Ownership(OwnershipMode.DERIVED, None, exact, folded)
 
     ownership = Ownership.for_terms(None, ontologies, declared)
 
     non_builtin = [t for t in declared if not is_builtin(t)]
+    overall = _dominant_namespace(list(dict.fromkeys(non_builtin)))
+    borrowed = {
+        t for t in non_builtin if is_well_known(t) and not heuristic.owns(t) and namespace_of_iri(str(t)) != overall
+    }
+    deciding = [t for t in dict.fromkeys(non_builtin) if t not in borrowed] or list(dict.fromkeys(non_builtin))
     derived_owned = {t for t in non_builtin if heuristic.owns(t)}
     owned = {t for t in non_builtin if ownership.owns(t)}
     assert owned >= derived_owned
     if derived_owned:
         assert ownership.mode is OwnershipMode.DERIVED
         assert owned == derived_owned
-    elif (dominant := _dominant_namespace(list(dict.fromkeys(non_builtin)))) is not None:  # distinct terms
+    elif (dominant := _dominant_namespace(deciding)) is not None:  # distinct terms
         assert ownership.dominant_namespace == dominant
-        assert {t for t in non_builtin if str(t).startswith(dominant)} <= owned
+        assert {t for t in deciding if str(t).startswith(dominant)} <= owned
     else:
         assert ownership.mode is OwnershipMode.ALL
-        assert owned == set(non_builtin)
+        assert owned == (set(deciding) if len(deciding) < len(set(non_builtin)) else set(non_builtin))
     assert not ownership.base_selected_nothing
 
 

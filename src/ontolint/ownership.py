@@ -15,7 +15,12 @@ place that decides this, deterministically and without network access:
   while one other namespace holds more than :data:`DOMINANT_PERCENT` percent of them, that dominant
   namespace is owned too (a vocabulary that embeds the SKOS core description next to its own concepts).
 
-Built-in vocabularies (RDF, RDFS, OWL, XSD) are never owned.
+Built-in vocabularies (RDF, RDFS, OWL, XSD) are never owned.  Terms of well-known vocabularies
+(:data:`WELL_KNOWN_NAMESPACES`: Dublin Core, SKOS, DCAT, ...) that the ontology IRIs do not own are left
+out of the decision and are not owned, because OWL 2 DL makes a file declare the annotation properties it
+borrows (``skos:definition a owl:AnnotationProperty``).  A well-known namespace holding more than
+:data:`DOMINANT_PERCENT` percent of the declared terms is the vocabulary being linted and still decides,
+and a file declaring nothing but borrowed terms keeps the historic behaviour.
 """
 
 from __future__ import annotations
@@ -31,6 +36,27 @@ from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 BUILTIN_NAMESPACES = (str(RDF), str(RDFS), str(OWL), str(XSD))
 OBO_NAMESPACE = "http://purl.obolibrary.org/obo/"
+# Vocabularies whose terms ontologies borrow, mostly as annotation properties.  Prefixes, not
+# namespaces, for OBO: only the IAO, RO and BFO identifiers are borrowed everywhere.
+WELL_KNOWN_NAMESPACES = (
+    "http://purl.org/dc/terms/",
+    "http://purl.org/dc/elements/1.1/",
+    "http://www.w3.org/2004/02/skos/core#",
+    "http://www.w3.org/2008/05/skos-xl#",
+    "http://www.w3.org/ns/dcat#",
+    "http://xmlns.com/foaf/0.1/",
+    "http://www.w3.org/ns/prov#",
+    "http://schema.org/",
+    "https://schema.org/",
+    "http://purl.org/vocab/vann/",
+    "http://www.w3.org/2006/vcard/ns#",
+    "http://creativecommons.org/ns#",
+    "http://www.w3.org/ns/shacl#",
+    "http://www.geneontology.org/formats/oboInOwl#",
+    OBO_NAMESPACE + "IAO_",
+    OBO_NAMESPACE + "RO_",
+    OBO_NAMESPACE + "BFO_",
+)
 BOUNDARY_SUFFIXES = ("#", "/", "_")
 # Derived ownership is widened to a dominant namespace when the ontology headers own *less than*
 # ``MINOR_OWNED_PERCENT`` percent of the declared terms and one namespace holds *more than*
@@ -54,6 +80,11 @@ class OwnershipMode(Enum):
 def is_builtin(node: object) -> bool:
     """Return whether ``node`` is an RDF, RDFS, OWL or XSD vocabulary IRI."""
     return isinstance(node, URIRef) and str(node).startswith(BUILTIN_NAMESPACES)
+
+
+def is_well_known(node: object) -> bool:
+    """Return whether ``node`` is an IRI of a well-known vocabulary (:data:`WELL_KNOWN_NAMESPACES`)."""
+    return isinstance(node, URIRef) and str(node).startswith(WELL_KNOWN_NAMESPACES)
 
 
 def base_matches(base: str | None, node: object) -> bool:
@@ -155,6 +186,7 @@ class Ownership:
     folded_prefixes: tuple[str, ...] = ()
     base_selected_nothing: bool = False
     dominant_namespace: str | None = None
+    borrows_well_known: bool = False  # in ALL mode: well-known vocabulary terms are not owned
 
     @classmethod
     def for_terms(cls, base: str | None, ontologies: Iterable[URIRef], declared: Iterable[URIRef]) -> Ownership:
@@ -165,11 +197,21 @@ class Ownership:
             return cls(OwnershipMode.BASE, base, base_selected_nothing=nothing)
         exact, folded = derive_prefixes(ontologies)
         derived = cls(OwnershipMode.DERIVED, None, exact, folded)
+        # Borrowed well-known terms do not decide, unless the file declares nothing else; a well-known
+        # namespace that dominates the declarations is the vocabulary being linted (schema.org itself).
+        overall = _dominant_namespace(declared_terms)
+        own_kind = [
+            term
+            for term in declared_terms
+            if derived.owns(term) or not is_well_known(term) or namespace_of_iri(str(term)) == overall
+        ]
+        borrows = bool(own_kind) and len(own_kind) < len(declared_terms)
+        declared_terms = own_kind or declared_terms
         owned = sum(derived.owns(term) for term in declared_terms)
         dominant = _dominant_namespace(declared_terms)
         if not owned:
             if dominant is None:
-                return cls()
+                return cls(borrows_well_known=borrows)
             return cls(
                 OwnershipMode.DERIVED, None, tuple(sorted({*exact, dominant})), folded, dominant_namespace=dominant
             )
@@ -188,7 +230,7 @@ class Ownership:
         if is_builtin(node):
             return False
         if self.mode is OwnershipMode.ALL:
-            return True
+            return not (self.borrows_well_known and is_well_known(node))
         iri = str(node)
         return any(_prefix_matches(iri, p) for p in self.prefixes) or any(
             _prefix_matches(iri.casefold(), p) for p in self.folded_prefixes

@@ -6,9 +6,10 @@ Each fixture copies the shape of a real file (named in the test) with synthetic 
 from __future__ import annotations
 
 import pytest
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
 from ontolint import Linter
+from ontolint.ownership import derive_prefixes
 
 PREFIXES = "@prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
 FOREIGN = "https://vocab.test/co/"  # a merged or referenced vocabulary
@@ -38,6 +39,11 @@ def _merged_release(ontology_iri: str) -> str:
 )
 def test_an_odk_release_owns_its_id_prefix_and_not_what_it_merges(ontology_iri: str) -> None:
     assert not {f for f in _foci(_merged_release(ontology_iri), ["LEX001"]) if f.startswith(FOREIGN)}
+
+
+@pytest.mark.parametrize("ontology_iri", ["onto.ttl", "https://ex.test/pmd/onto", "https://ex.test/pmd/.ttl"])
+def test_an_id_prefix_needs_a_directory_and_a_file_name_with_an_extension(ontology_iri: str) -> None:
+    assert derive_prefixes([URIRef(ontology_iri)])[1] == ()
 
 
 def test_a_placeholder_ontology_iri_owns_the_dominant_term_namespace() -> None:
