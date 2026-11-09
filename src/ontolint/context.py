@@ -71,7 +71,7 @@ class GraphContext:
     ownership: Ownership = Ownership()
 
     @classmethod
-    def build(
+    def build(  # noqa: PLR0913 -- the graph, its locality override and three facts about the linted file.
         cls,
         graph: Graph,
         is_local: Callable[[object], bool] | None = None,
@@ -79,6 +79,7 @@ class GraphContext:
         restrict_to_local: bool = False,
         base: str | None = None,
         imported_ontologies: frozenset[str] = frozenset(),
+        root_terms: frozenset[str] = frozenset(),
     ) -> GraphContext:
         """Index asserted triples once and keep only the terms the file owns.
 
@@ -114,7 +115,10 @@ class GraphContext:
         properties = set().union(*(declared(type_) for type_ in PROPERTY_TYPES))
         concepts = declared(SKOS.Concept)
         terms = set().union(*(declared(type_) for type_ in KINDS))
-        ownership = Ownership.for_terms(base, ontologies, terms)
+        # In an import closure, the root file's own declarations decide ownership, so a large import never
+        # outweighs them; an umbrella that declares no term leaves the decision to the whole closure.
+        deciding = [t for t in terms if str(t) in root_terms] or terms
+        ownership = Ownership.for_terms(base, ontologies, deciding)
         owns: Callable[[object], bool] = ownership.owns
         if is_local is not None:
             owns = is_local if restrict_to_local else _everything

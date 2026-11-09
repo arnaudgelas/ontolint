@@ -260,19 +260,23 @@ ontolint ontology.ttl --follow-imports                  # uses catalog-v001.xml 
 ontolint ontology.ttl --catalog path/to/catalog-v001.xml  # an explicit catalog (implies --follow-imports)
 ```
 
-Imports resolve through an OASIS XML catalog (the Protégé, ROBOT and ODK `catalog-v001.xml`:
-`uri` entries, also inside `group`, and `rewriteURI` prefixes) or as `file:` IRIs; the network is
-never used, and imports that do not resolve stay listed by `SEC007`. The catalog next to each
-imported file is consulted before the root catalog, as Protégé does, and an import naming a file
-already in the closure by its ontology or version IRI needs no entry. A catalog entry whose file
-does not exist leaves the import unresolved, with a `TOOL004` note, rather than failing the run.
-Every resolved file must lie inside the import root after symlinks are followed (`SEC009`): by
-default the enclosing git repository of the catalog (or of the input without a catalog), so
-catalogs may point at sibling directories (`../modules/x.ttl`), or the directory given with
-`--import-root DIR`. Each file passes the usual safe loader, and the closure is bounded by
-`max_import_depth` (16), `max_imported_files` (100) and `max_triples` as a whole (`SEC015`).
-Cycles end and a module imported twice is loaded once. The headers of imported modules do not
-count as extra ontologies for `ONT002`.
+Imports resolve through an OASIS XML catalog (the Protégé, ROBOT and ODK `catalog-v001.xml`: `uri`
+entries, also inside `group`, and `rewriteURI` prefixes) or as `file:` IRIs; the network is never
+used, and imports that do not resolve stay listed by `SEC007`. The catalog next to each imported
+file is consulted before the root catalog, as Protégé does, and an import naming a file already in
+the closure by its ontology or version IRI needs no entry. A catalog entry whose file does not exist
+leaves the import unresolved, with a `TOOL004` note, rather than failing the run. Every resolved
+file must lie inside the import root after symlinks are followed (`SEC009`): by default the
+enclosing git repository of the catalog (or of the input without a catalog), so catalogs may point
+at sibling directories (`../modules/x.ttl`), or the directory given with `--import-root DIR`. For
+imports of published builds without a catalog (an upper ontology by its PURL, say), put local copies
+in a folder, for example with `robot mirror`, and pass `--import-dir DIR` (repeatable): its RDF
+files are matched by the ontology or version IRI they declare. Ownership is decided by the root
+file's own terms, so an import that declares more terms than the root never becomes the linted
+ontology. Each file passes the usual safe loader, and the closure is bounded by `max_import_depth`
+(16), `max_imported_files` (100) and `max_triples` as a whole (`SEC015`). Cycles end and a module
+imported twice is loaded once. The headers of imported modules do not count as extra ontologies for
+`ONT002`.
 
 A finding belongs to the module that declares its focus (gives it an `rdf:type`), or else to the
 first module that mentions it: JSON gives that module's `path`, SARIF its `artifactLocation` and

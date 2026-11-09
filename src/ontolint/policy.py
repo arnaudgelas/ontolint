@@ -98,6 +98,9 @@ class Policy:
     # The directories (as file: URIs ending in "/") the linted files were read from: a file: IRI under one
     # came from a relative reference resolved against the file, not from the ontology's own text.
     document_bases: tuple[str, ...] = ()
+    # With --follow-imports: the IRIs the root file itself declares; ownership is derived from them, so a
+    # large import can never outweigh the linted ontology's own terms.
+    root_terms: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -163,6 +166,7 @@ class Policy:
             resolved_imports=frozenset(),
             imported_ontologies=frozenset(),
             document_bases=(),
+            root_terms=frozenset(),
         )
 
 
@@ -174,7 +178,7 @@ class PolicyVersionError(ValueError):
     """The policy file declares a ``policy_version`` this ontolint does not support (reported as GOV020)."""
 
 
-_RUNTIME_FIELDS = frozenset({"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases"})
+_RUNTIME_FIELDS = frozenset({"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases", "root_terms"})
 """Policy fields filled in while linting, not accepted from a policy file."""
 
 

@@ -364,3 +364,72 @@ def test_an_import_naming_a_loaded_module_by_its_version_iri_needs_no_catalog_en
     closure = _closure(corpus / "umbrella.ttl")
     assert "https://example.test/onto/core/1.0" in closure.resolved
     assert closure.unresolved == {EXTERNAL}
+
+
+# --- --import-dir ---------------------------------------------------------------------------------------
+
+
+def _bfo_like(folder: Path) -> None:
+    """A folder of downloaded imports, as robot mirror leaves it: files named unlike their IRIs."""
+    folder.mkdir(parents=True)
+    (folder / "upper.owl").write_text(  # Turtle under .owl, as published files often are
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "<https://upper.test/classes-only.owl> a owl:Ontology ;\n"
+        "    owl:versionIRI <https://upper.test/2020/classes-only.owl> .\n"
+        "<https://upper.test/U1> a owl:Class .\n",
+        encoding="utf-8",
+    )
+    (folder / "notes.txt").write_text("not RDF", encoding="utf-8")
+    (folder / "broken.ttl").write_text("this is not turtle", encoding="utf-8")
+
+
+@pytest.mark.parametrize("iri", ["https://upper.test/classes-only.owl", "https://upper.test/2020/classes-only.owl"])
+def test_an_import_dir_resolves_by_ontology_or_version_iri(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], iri: str
+) -> None:
+    _bfo_like(tmp_path / "mirror")
+    ontology = tmp_path / "project" / "mfto.ttl"
+    ontology.parent.mkdir()
+    ontology.write_text(
+        f"@prefix owl: <http://www.w3.org/2002/07/owl#> .\n<https://p.test/o> a owl:Ontology ; owl:imports <{iri}> .\n",
+        encoding="utf-8",
+    )
+    code, report, err = _report(capsys, str(ontology), "--import-dir", str(tmp_path / "mirror"))
+    assert code == 0, err
+    assert not _findings(report, "SEC007")
+
+
+def test_an_import_dir_is_bounded(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    _bfo_like(tmp_path / "mirror")
+    config = tmp_path / "policy.json"
+    config.write_text(json.dumps({"policy_version": 1, "max_imported_files": 1}), encoding="utf-8")
+    ontology = tmp_path / "o.ttl"
+    ontology.write_text("<https://p.test/a> <https://p.test/b> <https://p.test/c> .\n", encoding="utf-8")
+    code, _report_, err = _report(
+        capsys, str(ontology), "--import-dir", str(tmp_path / "mirror"), "--config", str(config)
+    )
+    assert code == TOOL_FAILURE
+    assert err.startswith("SEC015: --import-dir ")
+
+
+def test_a_large_import_never_outweighs_the_root_file_own_terms(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # MFTO plus RO: the import declares more terms than the root, which must still be the one judged.
+    mirror = tmp_path / "mirror"
+    mirror.mkdir()
+    (mirror / "relations.ttl").write_text(
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n<https://rel.test/core.owl> a owl:Ontology .\n"
+        + "".join(f"<https://rel.test/R_{i}> a owl:ObjectProperty .\n" for i in range(30)),
+        encoding="utf-8",
+    )
+    root = tmp_path / "root.ttl"
+    root.write_text(
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "<https://p.test/untitled-ontology-1> a owl:Ontology ; owl:imports <https://rel.test/core.owl> .\n"
+        + "".join(f"<https://p.test/mfto#C{i}> a owl:Class .\n" for i in range(3)),
+        encoding="utf-8",
+    )
+    _code, report, err = _report(capsys, str(root), "--import-dir", str(mirror))
+    lex001 = {f["focus"] for f in _findings(report, "LEX001")}
+    assert lex001 == {f"https://p.test/mfto#C{i}" for i in range(3)}, err

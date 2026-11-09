@@ -23,7 +23,7 @@ from rdflib.namespace import RDF, SH
 from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
-from .imports import CATALOG_NAME, Catalog, load_closure, read_catalog
+from .imports import CATALOG_NAME, Catalog, index_directory, load_closure, read_catalog
 from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
@@ -75,6 +75,12 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Load the owl:imports closure from local files, through {CATALOG_NAME} next to each input if present",
     )
     ap.add_argument("--catalog", help="OASIS XML catalog mapping import IRIs to local files (implies --follow-imports)")
+    ap.add_argument(
+        "--import-dir",
+        action="append",
+        default=[],
+        help="Folder of local copies of imported ontologies, matched by their ontology or version IRI; repeatable",
+    )
     ap.add_argument(
         "--import-root",
         help="Directory imported files must stay in (default: the enclosing git repository of the catalog or input)",
@@ -187,6 +193,7 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         resolved_imports=loaded.resolved_imports,
         imported_ontologies=loaded.imported_ontologies,
         document_bases=tuple(sorted(bases)),
+        root_terms=loaded.modules[0].declared if loaded.modules else frozenset(),
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background
@@ -294,6 +301,19 @@ class ImportOptions:
 
     catalog: Catalog | None = None
     import_root: Path | None = None
+    import_dirs: tuple[Catalog, ...] = ()
+
+
+def _import_options(args: argparse.Namespace, policy: Policy) -> ImportOptions | None:
+    """How to follow owl:imports for this run, or ``None`` when no import option was given."""
+    if not (args.catalog or args.follow_imports or args.import_root or args.import_dir):
+        return None
+    catalog = read_catalog(Path(args.catalog), policy.max_input_bytes) if args.catalog else None
+    return ImportOptions(catalog, _import_root(args), _import_dirs(args, policy))
+
+
+def _import_dirs(args: argparse.Namespace, policy: Policy) -> tuple[Catalog, ...]:
+    return tuple(index_directory(Path(directory), policy) for directory in args.import_dir)
 
 
 def _import_root(args: argparse.Namespace) -> Path | None:
@@ -309,7 +329,9 @@ def _closure_of(item: InputFile, root: LoadedGraph, policy: Policy, options: Imp
     catalog = options.catalog
     if catalog is None and (found := item.path.parent / CATALOG_NAME).is_file():
         catalog = read_catalog(found, policy.max_input_bytes)
-    closure = load_closure(root, item.path, policy, catalog, item, import_root=options.import_root)
+    closure = load_closure(
+        root, item.path, policy, catalog, item, import_root=options.import_root, import_dirs=options.import_dirs
+    )
     for iri, path in sorted(closure.missing.items()):
         print(
             f"TOOL004: note: the catalog maps owl:imports {iri} to {path}, which does not exist; "
@@ -430,15 +452,11 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
     _check_policy_rules(config, registry)
     limits = _policy(args, config, config.ignored_rules)
-    imports = None
-    if args.catalog:  # read before parsing: a broken catalog is a configuration error, not an input error
-        try:
-            imports = ImportOptions(read_catalog(Path(args.catalog), limits.max_input_bytes), _import_root(args))
-        except InputRejected as exc:
-            print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
-            return 2
-    elif args.follow_imports or args.import_root:
-        imports = ImportOptions(import_root=_import_root(args))
+    try:  # read catalogs and import dirs before parsing: a broken one is a configuration error
+        imports = _import_options(args, limits)
+    except InputRejected as exc:
+        print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
+        return 2
     stage[0] = "RDF input parsing"
     inputs = resolve_inputs(args.ontology, Path.cwd())
     _LOADER_POLICY.set(limits)

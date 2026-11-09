@@ -53,7 +53,9 @@ class RobotRequest:
 
 def build_context(graph: Graph, shapes_graph: Graph | None, policy: Policy) -> RuleContext:
     """Index ``graph`` once and bundle it with ``policy`` for rule execution."""
-    graph_context = GraphContext.build(graph, base=policy.base, imported_ontologies=policy.imported_ontologies)
+    graph_context = GraphContext.build(
+        graph, base=policy.base, imported_ontologies=policy.imported_ontologies, root_terms=policy.root_terms
+    )
     return RuleContext(graph, shapes_graph, policy, graph_context)
 
 

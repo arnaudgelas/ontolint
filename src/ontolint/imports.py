@@ -28,7 +28,7 @@ from urllib.parse import unquote, urlsplit
 from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF
 
-from .loader import InputRejected, LoadedGraph, Module, dtd_problem, load_document
+from .loader import InputRejected, LoadedGraph, LoadError, Module, dtd_problem, load_document
 from .paths import InputFile, resolve_inputs
 from .policy import Policy
 
@@ -156,12 +156,41 @@ def default_import_root(start: Path) -> Path:
     return next((directory for directory in (start, *start.parents) if (directory / ".git").exists()), start)
 
 
-class _Resolver:
-    """Resolve imports through the catalog next to the importing file first, then the root catalog."""
+RDF_SUFFIXES = (".ttl", ".owl", ".rdf", ".nt", ".n3", ".jsonld", ".json", ".xml", ".nq", ".trig")
+"""File names an import directory is searched for."""
 
-    def __init__(self, root: Catalog, policy: Policy) -> None:
+
+def index_directory(directory: Path, policy: Policy) -> Catalog:
+    """Map the ontology and version IRIs declared by the RDF files under ``directory`` to those files.
+
+    This is ``--import-dir``: a folder of downloaded imports (``robot mirror``, a release you saved) needs
+    no catalog.  Each file is read once through the safe loader; at most ``max_imported_files`` files are
+    indexed (SEC015), and a file that does not parse is skipped, since it may not be RDF at all.
+    """
+    root = directory.resolve()
+    candidates = sorted(p for p in root.rglob("*") if p.suffix.lower() in RDF_SUFFIXES and p.is_file())
+    if len(candidates) > policy.max_imported_files:
+        raise InputRejected(
+            "SEC015", f"--import-dir {directory} holds more than {policy.max_imported_files} files (max_imported_files)"
+        )
+    entries: dict[str, Path] = {}
+    for path in candidates:
+        try:
+            graph = load_document(resolve_inputs([str(path)], Path.cwd())[0], policy, root).graph
+        except (LoadError, OSError):
+            continue
+        for iri in sorted(_identities(graph)):
+            entries.setdefault(iri, path)
+    return Catalog(root, entries)
+
+
+class _Resolver:
+    """Resolve imports through the catalog next to the importing file, the root catalog, then import dirs."""
+
+    def __init__(self, root: Catalog, policy: Policy, directories: tuple[Catalog, ...] = ()) -> None:
         self.root = root
         self.policy = policy
+        self.directories = directories
         self.local: dict[Path, Catalog | None] = {root.root: root}
 
     def resolve(self, iri: str, directory: Path) -> Path | None:
@@ -169,7 +198,8 @@ class _Resolver:
             found = directory / CATALOG_NAME
             self.local[directory] = read_catalog(found, self.policy.max_input_bytes) if found.is_file() else None
         here = self.local[directory]
-        return (here.resolve(iri) if here is not None else None) or self.root.resolve(iri)
+        resolved = (here.resolve(iri) if here is not None else None) or self.root.resolve(iri)
+        return resolved or next((d.entries[iri] for d in self.directories if iri in d.entries), None)
 
 
 @dataclass
@@ -177,7 +207,7 @@ class _Walk:
     """The state of one breadth-first walk over an import closure."""
 
     policy: Policy
-    sandbox: Path
+    sandbox: tuple[Path, ...]
     merged: Graph
     modules: list[Module]
     seen_iris: set[str]
@@ -199,6 +229,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
     root_item: InputFile | None = None,
     *,
     import_root: Path | None = None,
+    import_dirs: tuple[Catalog, ...] = (),
 ) -> Closure:
     """Follow ``owl:imports`` from ``root_document`` breadth first, loading each local file once.
 
@@ -207,8 +238,11 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
     file that does not exist leaves its import unresolved and is listed in :attr:`Closure.missing`.
     """
     start = catalog.root if catalog is not None else root_path.parent
-    sandbox = (import_root or default_import_root(start)).resolve()
-    resolver = _Resolver(catalog if catalog is not None else Catalog(root_path.parent.resolve(), {}), policy)
+    # An --import-dir is the user's explicit choice, so its files are allowed as well as the import root's.
+    sandbox = ((import_root or default_import_root(start)).resolve(), *(d.root for d in import_dirs))
+    resolver = _Resolver(
+        catalog if catalog is not None else Catalog(root_path.parent.resolve(), {}), policy, import_dirs
+    )
     merged = Graph()
     for prefix, namespace in root_document.graph.namespaces():  # pySHACL renders nodes with these prefixes
         # gremlin: pardon[equivalent] the merged graph is new: only rdflib's own default prefixes could clash
@@ -251,8 +285,8 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         if path is None:
             walk.unresolved.add(iri)
             continue
-        if not _inside(path, sandbox):
-            raise InputRejected("SEC009", f"owl:imports {iri} resolves to {path}, outside the import root {sandbox}")
+        if not any(_inside(path, root) for root in sandbox):
+            raise InputRejected("SEC009", f"owl:imports {iri} resolves to {path}, outside the import root {sandbox[0]}")
         if not path.is_file():
             walk.missing[iri] = path
             walk.unresolved.add(iri)
@@ -290,7 +324,7 @@ def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
         )
     walk.seen_files.add(os.path.realpath(path))
     item = resolve_inputs([str(path)], Path.cwd())[0]
-    document = load_document(item, policy, sandbox)
+    document = load_document(item, policy, next(root for root in sandbox if _inside(path, root)))
     walk.files.append(item.display)
     walk.modules.append(
         Module(item.display, item.uri, _declared(document.graph), document.source_index, _directory(path))

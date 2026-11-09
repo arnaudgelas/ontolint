@@ -32,8 +32,9 @@ SPECS: tuple[RuleSpec, ...] = (
         "SEC",
         "owl:imports not followed",
         Severity.INFO,
-        "Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or lint "
-        "them separately; ontolint never fetches imports from the network. Use --ignore SEC007 to silence this note.",
+        "Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or put local "
+        "copies in a folder (for example with robot mirror) and pass --import-dir; ontolint never fetches imports "
+        "from the network. Use --ignore SEC007 to silence this note.",
         "deterministic",
         RuleBackend.RDFLIB,
         RuleScope.ONTOLOGY,
