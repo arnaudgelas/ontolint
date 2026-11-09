@@ -1,6 +1,84 @@
 """OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002.
 
 OWL012 (self-equivalence) is emitted by :mod:`ontolint.rules.classes`.
+
+All rules read the asserted graph only: no import is followed and nothing is inferred (no
+``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means
+``ctx.local`` (:mod:`ontolint.ownership`); "declared" means typed by the named class in an asserted
+``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``,
+``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs
+typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its
+RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
+
+* **OWL001.** Every IRI that is the subject or the object of an ``rdfs:subClassOf`` triple, is owned,
+  is not in ``ctx.classes`` and is neither ``owl:Thing`` nor ``owl:Nothing``; one finding per IRI.
+  Blank nodes (restrictions, class expressions) and foreign IRIs are not reported; an IRI declared
+  only as something else (a property, an ``owl:Restriction``) is.  ``owl:equivalentClass`` and
+  ``owl:disjointWith`` are not inspected.  Warning, heuristic: SS 5.8.1 requires a class used in an
+  axiom to be declared, but tools infer the type and the IRI may be a typo; locality is a judgement.
+* **OWL002.** Every owned IRI that is the subject of an ``rdfs:domain`` or ``rdfs:range`` triple and is
+  not typed by one of the four property types above (a type such as ``owl:TransitiveProperty`` or
+  ``owl:FunctionalProperty`` alone does not count); one finding per IRI and per predicate.  Warning,
+  heuristic: SS 5.8.1 requires the declaration, but RDFS tools read the triple anyway.
+* **OWL003.** Every node, owned or not, IRI or blank, typed both ``owl:ObjectProperty`` and
+  ``owl:DatatypeProperty``.  Annotation-property punning is OWL030's.  Error, certain: SS 5.8.1 forbids
+  one IRI to be declared both an object and a data property, so the graph is not OWL 2 DL; the condition
+  is exact.
+* **OWL004.** Every property in ``ctx.properties`` with more than one distinct ``rdfs:domain`` object,
+  and separately every one with more than one distinct ``rdfs:range`` object (named or anonymous: a
+  single ``owl:unionOf`` counts as one).  Undeclared and foreign properties are not reported.  Warning,
+  certain: the count is exact and DS gives the axioms conjunctive meaning, but the intersection may be
+  intended, so the finding asks for review.
+* **OWL005 / OWL006.** Every property in ``ctx.properties`` with no ``rdfs:domain`` (``rdfs:range``)
+  triple and no ``schema:domainIncludes`` (``schema:rangeIncludes``, ``http`` or ``https``) or
+  ``dcam:domainIncludes`` (``dcam:rangeIncludes``) triple.  Excluded: a property with ``owl:deprecated``
+  ``true`` or ``1``, and one typed ``owl:AnnotationProperty`` but neither object nor datatype property.
+  A domain implied through ``owl:inverseOf`` or a superproperty is not considered.  Info, heuristic: a
+  missing domain or range is legal and often deliberate.
+* **OWL007.** Every subject of an ``owl:inverseOf`` triple whose object is the same node, declared or
+  not.  Warning, certain: ``InverseObjectProperties(p p)`` is valid and means p is symmetric (DS), so the
+  triple is exact but probably a mistake or an indirect ``owl:SymmetricProperty``.
+* **OWL008.** For every ``owl:inverseOf`` triple between two different nodes, each of the two that is
+  typed ``owl:SymmetricProperty`` (the axiom is symmetric, so the symmetric property may be on either
+  side); the message names the other one.  A self-inverse is OWL007's.  Warning, heuristic: valid OWL 2,
+  but it makes the two properties equivalent, which is rarely intended.
+* **OWL009.** Every subject of an ``owl:inverseOf`` triple where either side is typed
+  ``owl:DatatypeProperty``, and every node typed ``owl:DatatypeProperty`` and one of
+  ``owl:SymmetricProperty``, ``owl:TransitiveProperty``, ``owl:AsymmetricProperty`` or
+  ``owl:InverseFunctionalProperty``.  ``owl:FunctionalProperty`` is allowed on data properties;
+  ``owl:ReflexiveProperty`` and ``owl:IrreflexiveProperty`` are OWL016's.  Ownership is not checked.
+  Warning, certain: these axioms take object property expressions only (SS 9.2, DS Table 6), so the
+  graph is not OWL 2 DL.
+* **OWL010.** Every subject of an ``owl:propertyChainAxiom`` whose object is a well-formed RDF list of
+  exactly one member.  A malformed list and an empty list (``rdf:nil``) are not reported.  Ownership is
+  not checked.  Info, certain: SS 9.2.1 and MAP Table 16 require at least two chain members, so the
+  axiom is not OWL 2.
+* **OWL011.** Every node with an ``owl:allValuesFrom`` value that does not also carry
+  ``owl:someValuesFrom``, unless: the filler is a datatype (an XSD IRI, a node typed ``rdfs:Datatype``,
+  or one with ``owl:onDatatype`` / ``owl:datatypeComplementOf``); one ``owl:onProperty`` value is
+  typed ``owl:DatatypeProperty``; a *sibling* restriction on one of its ``owl:onProperty`` values
+  requires a value (``owl:someValuesFrom``, ``owl:hasValue``, ``owl:hasSelf``, or ``owl:minCardinality``,
+  ``owl:minQualifiedCardinality``, ``owl:cardinality`` or ``owl:qualifiedCardinality`` of at least 1); or
+  the owning term (the first IRI reached upwards through incoming triples, at most eight hops) is a
+  foreign IRI.  Siblings are the other ``rdfs:subClassOf`` / ``owl:equivalentClass`` objects of a class
+  holding the restriction that way, the other members of an ``owl:intersectionOf`` list holding it, and
+  the superclasses and equivalents of the classes defined by that intersection; inherited existentials
+  are not followed.  The focus is the owning term; for a restriction no IRI holds, the smallest IRI it
+  is ``rdfs:subClassOf`` / ``owl:equivalentClass`` of (a general class axiom), else the blank node
+  itself.  Info, heuristic: ``ObjectAllValuesFrom`` is satisfied vacuously by an individual with no
+  value (DS Table 4), which is legal but often not what the modeller meant.
+* **OWL012.** (in :mod:`ontolint.rules.classes`) Every class in ``ctx.classes`` that is the subject and
+  the object of one ``owl:equivalentClass`` triple.  Info, heuristic: a tautology, harmless but noise.
+* **OWL013.** Every subject of a triple whose predicate is typed ``owl:ObjectProperty`` (owned or not)
+  and whose object is a literal; one finding per subject, property and literal.  Warning, certain: an
+  object property assertion needs an individual (DS 2.2: literals are not in the object domain), so the
+  graph is not OWL 2 DL.
+* **OWL014.** Every subject of a triple whose predicate is typed ``owl:DatatypeProperty`` (owned or
+  not) and whose object is an IRI or a blank node.  Warning, certain: the converse of OWL013 (MAP 3.2.5
+  maps such a triple to no axiom).
+* **OWL015.** Only when an explicit ``base`` is configured: every owned predicate of the graph not in
+  ``ctx.properties`` (built-in and foreign predicates are not owned).  Warning, heuristic: SS 5.8.1
+  wants the declaration, and locality is the configured base's judgement.
 """
 
 from __future__ import annotations
@@ -329,8 +407,10 @@ def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> Non
     for p, q in g.subject_objects(OWL.inverseOf):
         if p == q:
             ctx.add("OWL007", p, "Property declared inverse of itself.", confidence="certain")
-        if p != q and (p, RDF.type, OWL.SymmetricProperty) in g:
-            ctx.add("OWL008", p, f"Symmetric property also declared inverse of {q}.")
+        # InverseObjectProperties is symmetric: "q owl:inverseOf p" gives the symmetric p an inverse too.
+        for symmetric, other in ((p, q), (q, p)):
+            if p != q and (symmetric, RDF.type, OWL.SymmetricProperty) in g:
+                ctx.add("OWL008", symmetric, f"Symmetric property also declared inverse of {other}.")
         if p in data_props or q in data_props:
             ctx.add("OWL009", p, "owl:inverseOf involves a datatype property.", confidence="certain")
     for t in CHARACTERISTIC_TYPES:
@@ -357,6 +437,9 @@ def _universal_restrictions(ctx: RuleContext) -> None:
         on_properties = sorted(g.objects(restriction, OWL.onProperty), key=lambda p: _property_name(g, p))
         if _is_datatype(g, filler) or any((p, RDF.type, OWL.DatatypeProperty) in g for p in on_properties):
             continue  # "all values are xsd:gDay" is the idiomatic way to type a datatype property.
+        if _existence_alongside(g, restriction, set(on_properties)):
+            continue  # a closure axiom: "some p B" and "only p B" on the same class
+
         owner = owning_term(g, restriction)
         if isinstance(owner, URIRef) and not ctx.local(owner):
             continue  # an axiom of an imported or merged vocabulary (BFO, ...), not of the linted ontology
@@ -371,6 +454,68 @@ def _universal_restrictions(ctx: RuleContext) -> None:
                 continue
             on = ""  # unchanged wording for a free-standing restriction
         ctx.add("OWL011", owner, f"Universal restriction{on} does not imply any property value.")
+
+
+_CLASS_AXIOMS = (RDFS.subClassOf, OWL.equivalentClass)
+_MIN_CARDINALITIES = (OWL.minCardinality, OWL.minQualifiedCardinality, OWL.cardinality, OWL.qualifiedCardinality)
+
+
+def _intersection_lists(g: Graph, node: Node) -> list[tuple[Node, list[Node]]]:
+    """The ``owl:intersectionOf`` expressions that list ``node`` as a member, with their members."""
+    found: list[tuple[Node, list[Node]]] = []
+    for cell in g.subjects(RDF.first, node):
+        head, seen = cell, {cell}
+        while (parent := next(g.subjects(RDF.rest, head), None)) is not None and parent not in seen:
+            seen.add(parent)
+            head = parent
+        for expression in g.subjects(OWL.intersectionOf, head):
+            members = list_items(g, head)
+            if members is not None:
+                found.append((expression, members))
+    return found
+
+
+def _conjuncts(g: Graph, restriction: Node) -> set[Node]:
+    """Class expressions that hold for the same instances as ``restriction``: its siblings in one class.
+
+    The siblings are the other superclasses and equivalents of a class that has ``restriction`` as a
+    superclass or equivalent, and the other members of an ``owl:intersectionOf`` that lists it (with the
+    superclasses and equivalents of the classes defined by that intersection).
+    """
+    holders = {h for p in _CLASS_AXIOMS for h in g.subjects(p, restriction)}
+    conjuncts: set[Node] = set()
+    for expression, members in _intersection_lists(g, restriction):
+        conjuncts.update(members)
+        holders.update(h for p in _CLASS_AXIOMS for h in g.subjects(p, expression))
+    for holder in holders:
+        conjuncts.update(o for p in _CLASS_AXIOMS for o in g.objects(holder, p))
+    for node in list(conjuncts):
+        for members in (list_items(g, head) for head in g.objects(node, OWL.intersectionOf)):
+            conjuncts.update(members or ())
+    conjuncts.discard(restriction)
+    return conjuncts
+
+
+def _existential(g: Graph, node: Node) -> bool:
+    """Whether the restriction ``node`` requires at least one value (some, hasValue, hasSelf, min >= 1)."""
+    if any((node, p, None) in g for p in (OWL.someValuesFrom, OWL.hasValue, OWL.hasSelf)):
+        return True
+    for p in _MIN_CARDINALITIES:
+        for value in g.objects(node, p):
+            try:
+                if isinstance(value, Literal) and int(str(value).strip()) >= 1:
+                    return True
+            except ValueError:
+                continue
+    return False
+
+
+def _existence_alongside(g: Graph, restriction: Node, on_properties: set[Node]) -> bool:
+    """Whether a sibling restriction of ``restriction`` on one of its properties requires a value."""
+    return bool(on_properties) and any(
+        _existential(g, sibling) and any(p in on_properties for p in g.objects(sibling, OWL.onProperty))
+        for sibling in _conjuncts(g, restriction)
+    )
 
 
 def _gci_class(g: Graph, restriction: Node) -> URIRef | None:
