@@ -516,6 +516,16 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 The `data/` directory contains crosswalks to the OOPS! and OntoSniff catalogues.
 Those mappings are traceability aids, not claims of identical behavior.
 
+## Input formats
+
+ontolint reads Turtle, N-Triples, N3, N-Quads, TriG, RDF/XML and JSON-LD. The parser is chosen
+from the file extension, unless the first bytes clearly say otherwise: Turtle saved as `.owl`,
+RDF/XML as `.ttl` or JSON-LD as `.rdf` are parsed as what they are, and the RDF/XML safety checks
+apply to the detected syntax. OWL Functional Syntax, Manchester Syntax and OWL/XML (common for
+ODK edit files and Protégé exports, often named `.owl`) are not RDF and cannot be read; they fail
+with an `INPUT001` that names the syntax and suggests `robot convert`. A parse failure in a file
+that contains an HTML page (a saved web page or server error) says where that page starts.
+
 ## Input safety
 
 Ontologies are untrusted input, so the loader is deliberately strict:

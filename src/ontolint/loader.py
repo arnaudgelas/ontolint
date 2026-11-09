@@ -43,6 +43,7 @@ from rdflib.plugins.stores.memory import Memory
 from rdflib.term import Node
 from rdflib.util import guess_format
 
+from . import syntax
 from .paths import InputFile
 from .policy import Policy
 from .source_locations import SourceIndex, build_source_index
@@ -429,7 +430,14 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
     kind = compression_of(data)
     if kind is not None:
         raise InputRejected("SEC011", f"{item.display} is {kind}-compressed; compressed input is refused")
-    fmt = guess_format(item.path.name) or "turtle"
+    fmt = syntax.choose(guess_format(item.path.name) or "turtle", data)
+    if fmt in syntax.NON_RDF_SYNTAXES:
+        raise ParseFailure(
+            "UnsupportedSyntax",
+            f"{item.display} is written in {syntax.NON_RDF_SYNTAXES[fmt]}, which ontolint cannot read; convert it "
+            f"to Turtle or RDF/XML first (for example `robot convert --input {item.path.name} --output "
+            f"{item.path.stem}.ttl`), or lint a Turtle or RDF/XML release of the ontology",
+        )
     problem = dtd_problem(data, policy.max_input_bytes) if fmt in RDF_XML_FORMATS else None
     if problem is not None:
         raise InputRejected("SEC010", f"{item.display} {problem}")
@@ -437,7 +445,14 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
         public_id = item.path.as_uri()
     except ValueError as exc:  # a relative path: reported like any other parser failure, as it always was
         raise ParseFailure(type(exc).__name__, str(exc)) from exc
-    graph = _parse_document(data, fmt, public_id, item.display, policy)
+    try:
+        graph = _parse_document(data, fmt, public_id, item.display, policy)
+    except ParseFailure as failure:
+        line = syntax.html_start(data)
+        if line is None:
+            raise
+        hint = f"; an HTML page starts at line {line} (a web page or server error saved in place of RDF?)"
+        raise ParseFailure(failure.cause_type, failure.detail + hint) from failure
     return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph))
 
 
