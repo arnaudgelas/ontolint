@@ -521,7 +521,8 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 - [OBO Foundry principles](https://obofoundry.org/principles/fp-000-summary.html)
 
 The `data/` directory contains crosswalks to the OOPS! and OntoSniff catalogues.
-Those mappings are traceability aids, not claims of identical behavior.
+Those mappings are traceability aids, not claims of identical behavior; their sources, what is
+reused from each and how to cite them are in [`data/README.md`](data/README.md).
 
 ## Input formats
 
