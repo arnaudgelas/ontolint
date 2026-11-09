@@ -12,8 +12,10 @@ uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cac
 ```
 
 On a large suite the coverage pre-scan can exceed its default 120 s limit, which
-disables coverage-guided test selection and makes many mutants time out. Add
-`--gremlin-coverage-timeout=900` when that warning appears.
+disables coverage-guided test selection: every mutant then runs the whole suite, and
+the scheduled run does not finish within the job's two-hour timeout. `pyproject.toml`
+therefore sets `coverage_timeout = 900`; raise it if the warning
+`coverage pre-scan exceeded` appears in `mutation.log`.
 
 The command excludes the tests marked `slow` (the Hypothesis property tests and the
 fuzz tests). They exercise every rule, so gremlins would select them for almost every

@@ -114,6 +114,10 @@ paths = [
 ]
 operators = ["comparison", "arithmetic", "boolean", "boundary", "return"]
 cache = true
+# The coverage pre-scan runs the whole non-slow suite and takes over the 120 s
+# default on CI runners; past it, test selection is disabled and every mutant
+# runs every test, which does not finish within the job timeout.
+coverage_timeout = 900
 
 [tool.pytest.ini_options]
 # pytest-gremlins is loaded explicitly for mutation runs; auto-loading it delays
