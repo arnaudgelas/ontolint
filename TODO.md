@@ -6,7 +6,7 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the next feature release (0.8.0). `P1` is the next milestone after P0. `P2` is worthwhile
+blocks the next feature release (0.9.0; 0.8.0 shipped while it was still open). `P1` is the next milestone after P0. `P2` is worthwhile
 only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
@@ -15,13 +15,13 @@ record.
 ## Recently done
 
 0.6.0 and 0.7.0 were released on 2026-11-09, both after the maintainer's approval in the release
-run; 0.8.0 is ready on a branch. Kept only so the
+run; 0.8.0 was tagged the same day (`7b08ff8`) and waits for that approval. Kept only so the
 next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- 0.8.0, unreleased, on branch `feat/real-world` (not yet merged), from linting fifteen public
-  ontologies:
+- 0.8.0 (`7b08ff8`, tag `v0.8.0`), merged to `main` and tagged; confirm the PyPI upload. From
+  linting fifteen public ontologies:
   - ownership judges only an ontology's own terms (`a6eef83`): file extensions and ODK release
     suffixes are stripped from the ontology IRI, the `<dir>/<NAME>_` ID prefix applies beyond OBO,
     and the dominant namespace is used before "own everything". automatce-full: 695 → 114
@@ -58,7 +58,7 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
   and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
 
-## P0 — before 0.8.0
+## P0 — before 0.9.0
 
 - [ ] **Turn Renovate on, and watch its first rebase.** The release boundary is in place and proven
   (2026-11-09): the 0.6.0 and 0.7.0 release runs waited at "Publish to PyPI" for the maintainer's
@@ -72,7 +72,7 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear history" rule means
   nothing for tags and can go. *Done when:* both are observed once.
 
-## 0.8.0 — real-world ontologies
+## Real-world ontologies — left open by 0.8.0
 
 Everything here comes from linting fifteen public ontologies on 2026-11-09 (sources in the corpus
 table at the end of this section). Each item names the files that show it; every fix gets a small
@@ -271,7 +271,7 @@ moves from `proposed` merely because it has an attractive title.
 - [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built (see "Recently
   done"): offline resolution, per-module provenance, closure semantics and SHACL with the ontology
   as background. Left:
-  - *Validation on a public corpus:* started on 2026-11-09, see "0.8.0 — real-world ontologies":
+  - *Validation on a public corpus:* started on 2026-11-09, see "Real-world ontologies — left open by 0.8.0":
     CCO, EMMO and automatce are blocked by the import root, ownership and Functional Syntax items
     there; the closure itself loaded correctly once the root was widened.
   - *Memory:* each module's source index keeps its graph alive, so a closure holds its triples
