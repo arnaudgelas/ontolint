@@ -547,16 +547,18 @@ in an `SPDX-License-Identifier:` comment.
 
 Ontologies are untrusted input, so the loader is deliberately strict:
 
-- Parsing runs with the network disabled. Any socket or DNS attempt is blocked
+- Parsing runs with the network disabled. Any socket, UDP or DNS attempt is blocked
   and reported (`SEC013`); a JSON-LD file with an external `@context` is
   refused (`SEC006`). `owl:imports` is never fetched; `--follow-imports` loads only local files.
-- Inputs larger than `--max-input-bytes` (default 64 MiB) or holding more than
-  `--max-triples` triples (default 5,000,000) are rejected (`SEC001`, `SEC002`).
+- Inputs and XML catalogs larger than `--max-input-bytes` (default 64 MiB), or inputs
+  holding more than `--max-triples` triples (default 5,000,000), are rejected (`SEC001`,
+  `SEC002`).
   Both can also be set in the `--config` policy file. With
   `--max-parse-seconds` a parse that runs too long is stopped (`SEC003`).
 - RDF/XML with external entities or nested entity expansion is refused
   (`SEC010`), compressed files are refused (`SEC011`), and relative paths that
-  escape the working directory or symlinks that leave it are refused (`SEC009`).
+  escape the working directory, or leave it through a symlink or a symlinked
+  directory, are refused (`SEC009`).
 - Rejected inputs are reported as `SECxxx: ...` on stderr with exit code `2`,
   like a parse failure. Post-parse hygiene checks (`SEC004`, `SEC005`,
   `SEC007`, `SEC008`, `SEC012`, `SEC014`) are ordinary findings; `SEC007` is an
