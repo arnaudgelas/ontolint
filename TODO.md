@@ -39,6 +39,29 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
     OWL036 (`-0`), SKOS001 (tag case, `xsd:string`), SKOS002, SKOS008, SKOS009 (transitive),
     SKOS016, SHQ011 (`x` and `q` flags), SHQ018 (a crash and numeric promotion), and in the safe
     loader SEC001 (catalog size), SEC009 (symlinked directories) and SEC013 (C resolvers, UDP).
+  - the first `validation.yml` run (42611542815, scheduled, 2026-11-09) failed in both jobs, both
+    fixed but not yet proven by a hosted run: the ROBOT container runs as the calling user
+    (`634e06f`, `7d2ad74`), as the image's `nonroot` user could not write `profile.txt` into the
+    0700 output directory on Linux (SEM001 "Permission denied"; Docker Desktop hides it); and
+    `coverage_timeout = 900` for gremlins (`e906c7c`), since the pre-scan exceeded the 120 s
+    default, test selection was disabled, and the run hit the two-hour job timeout at mutant 1446
+    of 1696.
+  - Turtle that starts with an anonymous blank node (`[] a ex:K .`, as RDFLib writes one) is no
+    longer sniffed as a JSON-LD array, which failed to parse (`9aebf0b`); found by the round-trip
+    property test, whose case is now an explicit `@example`;
+  - `--convert-with-robot` (`62e9c2c`) reads OWL Functional, Manchester and OWL/XML files, inputs
+    and imports, by converting each to Turtle with the ROBOT image, alone, read-only, offline, with
+    its imports stubbed through a generated catalog and the sniffed syntax named (without one, OWL
+    API falls back to its OBO parser and accepts almost anything). The automatce edit file and its
+    12 imports (10 components, 2 import modules) lint as a closure in 7 s: 109 findings in 8 of the
+    13 files, nothing unresolved, and the closure holds every triple of ROBOT's own `merge` (the 61
+    extra triples are the modules' headers, which `merge` drops). A Manchester file that relies on
+    an import's declarations fails with an `INPUT001` saying so. The Validation workflow runs the
+    conversion against the real image. `--owl-profile DL` on the edit file passes too (ROBOT reads
+    the `catalog-v001.xml` beside it);
+  - `--import-dir` with BFO, verified (2026-11-09): MFTO with BFO `classes-only.owl` (matched by
+    its version IRI) and RO `core.owl` in one folder resolves both, 37 findings, none on BFO or RO
+    terms; with RO alone, 38, the extra one SEC007 naming BFO.
 - 0.8.0 (`7b08ff8`, tag `v0.8.0`), released. From
   linting fifteen public ontologies:
   - ownership judges only an ontology's own terms (`a6eef83`): file extensions and ODK release
@@ -90,7 +113,9 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   Dashboard issue), so the Renovate GitHub app is probably not installed. The maintainer enabled
   the app on 2026-11-09; two hours later there was still no branch, pull request or dashboard
   issue, so check that the installation includes this repository ("Only select repositories")
-  and that it is enabled in the Mend developer portal. Then watch one
+  and that it is enabled in the Mend developer portal. Rechecked later on 2026-11-09: still only
+  `main`, no pull request and no dashboard issue; a token without app scope cannot list the
+  installations, so this check is the maintainer's. Then watch one
   rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear history" rule means
   nothing for tags and can go. *Done when:* both are observed once.
 
@@ -100,16 +125,6 @@ Everything here comes from linting fifteen public ontologies on 2026-11-09 (sour
 table at the end of this section). Each item names the files that show it; every fix gets a small
 synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
 What is done is under "Recently done"; what is left is optional or waits on a decision.
-
-- [ ] **Read OWL Functional and Manchester Syntax offline, optional.** These syntaxes and OWL/XML
-  now fail with a clear `UnsupportedSyntax` message naming the syntax and `robot convert`
-  (`ccebe3f`). Still open: converting them through the project's ROBOT Docker image, already used
-  by `--owl-profile`, so that ODK edit files lint directly. *Done when:* the automatce edit file and
-  its 10 components lint as a closure.
-
-- [ ] **`--import-dir` with BFO.** MFTO with RO in an import dir resolves its RO import (38
-  findings, all on MFTO's terms); the BFO PURL returned HTTP 504 on 2026-11-09, so the BFO half of
-  the "done when" is unverified. *Done when:* MFTO with a folder holding BFO and RO resolves both.
 
 - [ ] **ONT005 says which provenance is missing, at the next legacy-contract break.** Its message
   ("Missing creator or dcterms:created provenance.") is one of the 63 legacy rules whose findings
@@ -255,8 +270,10 @@ Validation corpus (public; licences per repository):
   new tests; and the modules changed for 0.6.0 and 0.7.0 (`imports.py`, `engine.py`, `cli.py`,
   `reporting.py`, `rules/metrics.py`, `rules/metadata.py`) had their own targeted runs, all
   survivors killed. `context.py`, changed in 0.5.1 and 0.7.0, is outside the mutation scope; decide
-  whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. Run the
-  scheduled validation workflow manually first, have a reviewer other than the change author audit
+  whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. The
+  first hosted run (42611542815) timed out before writing a report; its causes are fixed (see
+  "Recently done"), so push them and run the validation workflow manually again, then have a
+  reviewer other than the change author audit
   every active pardon, then change the repository variable. *Done when:* a current hosted run meets
   all thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking`
   has survived at least one scheduled run.
@@ -378,7 +395,8 @@ again.
   and, as of 2026-11-08, has run on no commit since, so releases gate on CodeQL only (the
   `codeql` job in `release.yml`), never on the AI scan.
 - **Pull request / remote / first GitHub run:** a remote exists and CI and release have run; only
-  the never-run `validation.yml` workflow remains, and it is covered by the mutation-baseline item.
+  `validation.yml` first ran on 2026-11-09 and failed; its rerun is covered by the
+  mutation-baseline item.
 - **"Which rule group next?":** the question is moot. All 55 proposed rules are blocked by a missing
   backend or input contract (COMP 16, CQ 13, FAIR 13, SEM 7, ALIGN 4, GOV 1, IRI 1), so none can be
   implemented without one of the decision gates above being accepted first. (An earlier version of
