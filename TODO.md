@@ -14,13 +14,13 @@ record.
 
 ## Recently done
 
-0.6.0 was released on 2026-11-09, the first release that waited for the maintainer's approval;
-0.7.0 was tagged the same day and its release run is waiting for that approval. Kept only so the
+0.6.0 and 0.7.0 were released on 2026-11-09, both after the maintainer's approval in the release
+run. Kept only so the
 next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- 0.7.0 (`872e79c`, `283dc4e`, `9e4c28f`, `8c15b1d`), awaiting release approval: modular stages
+- 0.7.0 (`872e79c`, `283dc4e`, `9e4c28f`, `8c15b1d`), released: modular stages
   2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
   text `In:`); header rules judge the root ontology only and ownership derives from its IRI;
   METRIC011 ignores local modules; a shapes file that imports the ontology supplies it as SHACL-only
@@ -48,7 +48,7 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
 
 ## 0.8.0 — real-world ontologies
 
-Everything here comes from linting thirteen public ontologies on 2026-11-09 (sources in the corpus
+Everything here comes from linting fifteen public ontologies on 2026-11-09 (sources in the corpus
 table at the end of this section). Each item names the files that show it; every fix gets a small
 synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
 
@@ -58,7 +58,8 @@ synthetic fixture copying the pattern, and the real repositories are only used f
   automatce `automatce.ttl` and `-full` (ODK releases): about 430 of 695 findings are on merged
   PMDco, OBO, DC and SKOS terms, and even `-base` has 142 of 294; CCO linted as a closure: 70
   findings on imported BFO; MFTO: 5 false OWL001 warnings ("declare local classes") on BFO classes;
-  ISAAC: 3,778 OWL001 findings, including DUL, schema.org and DBpedia IRIs. Three changes, in
+  ISAAC: 3,778 OWL001 findings, including DUL, schema.org and DBpedia IRIs; SDC's vendored CCO 1.x
+  modules: OWL001 on BFO classes. Three changes, in
   `ownership.derive_prefixes` and `Ownership.for_terms`:
   - strip `.ttl`, `.rdf`, `.json`, `.jsonld`, `.ofn` and `.omn` as well as `.owl` from the
     ontology IRI (fixes `https://w3id.org/pmd/automatce.ttl`);
@@ -80,9 +81,12 @@ synthetic fixture copying the pattern, and the real repositories are only used f
   repository (nearest ancestor with `.git`) and otherwise to the catalog's directory; SEC009 still
   refuses anything outside it. Also read the catalog next to each loaded module, as Protégé does:
   EMMO keeps a `catalog-v001.xml` in each directory (`disciplines/`, `disciplines/units/`,
-  `foundation/`, `perspectives/`, `reference/`). *Done when:* CCO's umbrella and modules, and EMMO,
-  lint with `--follow-imports` without a SEC009, and a catalog entry escaping the repository is
-  still refused.
+  `foundation/`, `perspectives/`, `reference/`). A catalog entry naming a file that does not exist
+  should leave that import unresolved, with a note, instead of failing the run: SDC's catalog still
+  maps CCO and BFO to `cco-merged/…` and `imports/ro-import.ttl`, which the repository no longer
+  has, and `--follow-imports` stops with `INPUT001: FileNotFoundError`. *Done when:* CCO's umbrella
+  and modules, EMMO and SDC lint with `--follow-imports` without a SEC009 or INPUT001, and a
+  catalog entry escaping the repository is still refused.
 
 - [ ] **Sniff the syntax instead of trusting the file extension.** The extension decides the
   parser, so a mismatch fails with an unhelpful `INPUT001: … SAXParseException`: MODL's `modl.owl`
@@ -91,7 +95,9 @@ synthetic fixture copying the pattern, and the real repositories are only used f
   and say which syntax was found. *Done when:* a Turtle-in-`.owl` fixture lints, and a file that is
   no RDF syntax still fails with INPUT001.
 
-- [ ] **Recognise OWL Functional and Manchester syntax instead of failing obscurely.** ODK edit
+- [ ] **Recognise OWL Functional, Manchester and OWL/XML syntax instead of failing obscurely.**
+  OWL/XML too: SDC's `SDC_v1.owl` starts `<Ontology xmlns="http://www.w3.org/2002/07/owl#"`, and
+  the RDF/XML parser reports `Repeat node-elements inside property elements`. ODK edit
   files are usually Functional Syntax with a `.owl` extension (automatce's `src/ontology/
   automatce-edit.owl` starts with `Prefix(` and `Import(<…/components/…>)`). ontolint picks the
   parser from the extension and reports `INPUT001: … SAXParseException: not well-formed (invalid
@@ -124,8 +130,15 @@ synthetic fixture copying the pattern, and the real repositories are only used f
     `http:semanticweb.org/hohfeldiansystem/` and all its terms).
   - ONT005's message ("Missing creator or dcterms:created") does not say which is missing (the
     rights ontology has a creator).
-  - OWL011 names only a blank node (`_:4c37b6c9b56d`) for restrictions in anonymous axioms (food
-    traceability, 36 times): name the property and the class that owns the axiom.
+  - Findings on anonymous class expressions name only a blank node: OWL011 (`_:4c37b6c9b56d`,
+    food traceability, 36 times) and OWL043 (`_:0c8c85ae1747`, the Software Description Ontology's
+    `rdfs:range [ owl:unionOf ( … ) ]`). Name the property and the class that own the expression.
+  - LEX002 does not know widely used definition predicates: CCO 1.x defines all 567 classes of
+    `ArtifactOntology.ttl` with `…/CommonCoreOntologies/definition`, so SDC's vendored CCO gets
+    over 2,000 false "no definition" findings; adding the predicate to
+    `extra_definition_predicates` takes `ArtifactOntology.ttl` from 576 findings to 100.
+    Recognise the common ones (IAO_0000115, CCO 1.x `definition`), or note once when one
+    undeclared predicate whose name contains "definition" sits on most terms, and suggest the key.
   - A parse failure inside HTML (ISAAC: 37 HTTP 500 error pages saved into the Turtle) could say
     "an HTML page starts at line 2194"; and RDFLib's own warnings and a full traceback leak onto
     stderr during parsing (ISAAC, and MOD's ill-typed dates), and should be captured.
@@ -185,6 +198,8 @@ Validation corpus (public; licences per repository):
 | kastle-lab/modular-ontology-design-library (MODL) | pattern library: index plus 31 pattern ontologies, Turtle in `.owl` | syntax sniffing; trailing `#` IRI; library consistency |
 | eclipse-tractusx/sldt-ontology-model | merged release of eight domain ontologies, one namespace each | modules by namespace; `xsd:anyType`; SPDX licence |
 | FAIR-IMPACT/MOD | metadata vocabulary, PROF profile, SHACL validator | metadata one hop away; ill-typed literals; profile-discovered shapes |
+| hbabaie1/Sustainable-Development-and-Climate-SDC-ontology | OWL/XML ontology on a vendored CCO 1.x copy, one flat catalog with stale entries | OWL/XML; stale catalog; definition predicates |
+| KnowledgeCaptureAndDiscovery/SoftwareDescriptionOntology | single curated file, versioned `release/1.9.0/` | control case: 8 findings, ownership right |
 
 ## P1 — reporting, policy and supply-chain correctness
 
