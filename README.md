@@ -149,7 +149,8 @@ are `skipped` (no shapes supplied, no OWL profile requested, ignored) never chan
 Two advisory messages go to stderr and never change the exit code or the report:
 `TOOL002` warns that `--base` selects none of the declared terms, and `TOOL003` notes that a
 linted file looks like a SHACL shapes graph (more shapes than declared terms), which should
-probably be passed with `--shapes` instead.
+probably be passed with `--shapes` instead. With `--follow-imports`, `TOOL004` notes a catalog
+entry that names a missing file.
 
 ### Discovering rules
 
@@ -261,9 +262,14 @@ ontolint ontology.ttl --catalog path/to/catalog-v001.xml  # an explicit catalog 
 
 Imports resolve through an OASIS XML catalog (the Protégé, ROBOT and ODK `catalog-v001.xml`:
 `uri` entries, also inside `group`, and `rewriteURI` prefixes) or as `file:` IRIs; the network is
-never used, and imports that do not resolve stay listed by `SEC007`. Every resolved file must lie
-inside the catalog's directory (or the input's directory without a catalog) after symlinks are
-followed (`SEC009`), passes the usual safe loader, and the closure is bounded by
+never used, and imports that do not resolve stay listed by `SEC007`. The catalog next to each
+imported file is consulted before the root catalog, as Protégé does, and an import naming a file
+already in the closure by its ontology or version IRI needs no entry. A catalog entry whose file
+does not exist leaves the import unresolved, with a `TOOL004` note, rather than failing the run.
+Every resolved file must lie inside the import root after symlinks are followed (`SEC009`): by
+default the enclosing git repository of the catalog (or of the input without a catalog), so
+catalogs may point at sibling directories (`../modules/x.ttl`), or the directory given with
+`--import-root DIR`. Each file passes the usual safe loader, and the closure is bounded by
 `max_import_depth` (16), `max_imported_files` (100) and `max_triples` as a whole (`SEC015`).
 Cycles end and a module imported twice is loaded once. The headers of imported modules do not
 count as extra ontologies for `ONT002`.

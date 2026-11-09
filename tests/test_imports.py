@@ -221,13 +221,15 @@ def test_a_catalog_that_is_not_a_catalog_is_a_configuration_error(
         read_catalog(catalog, 1000)
 
 
-def test_a_catalog_entry_naming_a_missing_file_is_an_input_error(
+def test_a_catalog_entry_naming_a_missing_file_leaves_the_import_unresolved(
     corpus: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    (corpus / "meta.ttl").unlink()
-    code, _report_, err = _report(capsys, str(corpus / "umbrella.ttl"), "--follow-imports")
-    assert code == TOOL_FAILURE
-    assert err.startswith("INPUT001: ")
+    (corpus / "meta.ttl").unlink()  # SDC: the catalog still names files the repository no longer has
+    code, report, err = _report(capsys, str(corpus / "umbrella.ttl"), "--follow-imports")
+    assert code == 0
+    assert "TOOL004: note: the catalog maps owl:imports https://example.test/onto/meta to " in err
+    (note,) = _findings(report, "SEC007")
+    assert "https://example.test/onto/meta" in note["message"]
 
 
 def test_an_imported_module_still_passes_the_safe_loader(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -268,3 +270,97 @@ def test_the_import_depth_limit_is_inclusive(corpus: Path) -> None:
     umbrella.write_text(text[:start] + "owl:imports <https://example.test/onto/core>" + text[end:], encoding="utf-8")
     closure = _closure(umbrella, Policy(max_import_depth=2))  # core is at depth 1, meta at depth 2
     assert [Path(name).name for name in closure.files] == ["core.ttl", "meta.ttl"]
+
+
+# --- import root and per-module catalogs ---------------------------------------------------------
+
+
+def _sibling_layout(root: Path) -> Path:
+    """CCO's layout: the umbrella and its catalog in merged/, the modules in a sibling modules/."""
+    (root / "merged").mkdir(parents=True)
+    (root / "modules").mkdir()
+    for name in ("meta.ttl", "core.ttl"):
+        (root / "modules" / name).write_bytes((CORPUS / name).read_bytes())
+    umbrella = root / "merged" / "umbrella.ttl"
+    umbrella.write_text(
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/onto/core> .\n",
+        encoding="utf-8",
+    )
+    (root / "merged" / "catalog-v001.xml").write_text(
+        '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+        '<uri name="https://example.test/onto/core" uri="../modules/core.ttl"/>'
+        '<uri name="https://example.test/onto/meta" uri="../modules/meta.ttl"/></catalog>',
+        encoding="utf-8",
+    )
+    return umbrella
+
+
+def test_a_catalog_may_point_at_sibling_directories_of_the_repository(tmp_path: Path) -> None:
+    (tmp_path / ".git").mkdir()
+    closure = _closure(_sibling_layout(tmp_path))
+    assert [Path(name).name for name in closure.files] == ["core.ttl", "meta.ttl"]
+
+
+def test_without_a_repository_siblings_need_an_explicit_import_root(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    umbrella = _sibling_layout(tmp_path)
+    code, _report_, err = _report(capsys, str(umbrella), "--follow-imports")
+    assert code == TOOL_FAILURE
+    assert "SEC009" in err
+    code, report, err = _report(capsys, str(umbrella), "--import-root", str(tmp_path))
+    assert code == 0, err
+    assert not _findings(report, "SEC007")
+
+
+def test_the_repository_still_bounds_the_closure(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    (repository / ".git").mkdir(parents=True)
+    umbrella = _sibling_layout(repository)
+    (tmp_path / "outside.ttl").write_bytes((CORPUS / "meta.ttl").read_bytes())
+    catalog = umbrella.parent / "catalog-v001.xml"
+    catalog.write_text(catalog.read_text(encoding="utf-8").replace("../modules/meta.ttl", "../../outside.ttl"))
+    with pytest.raises(InputRejected, match="outside the import root") as error:
+        _closure(umbrella)
+    assert error.value.rule_id == "SEC009"
+
+
+def test_the_catalog_next_to_a_module_resolves_that_module_imports(tmp_path: Path) -> None:
+    # EMMO keeps a catalog in each directory: core's own catalog is the only one that maps meta.
+    (tmp_path / ".git").mkdir()
+    umbrella = _sibling_layout(tmp_path)
+    (tmp_path / "merged" / "catalog-v001.xml").write_text(
+        '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+        '<uri name="https://example.test/onto/core" uri="../modules/core.ttl"/></catalog>',
+        encoding="utf-8",
+    )
+    (tmp_path / "modules" / "catalog-v001.xml").write_text(
+        '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+        '<uri name="https://example.test/onto/meta" uri="meta.ttl"/></catalog>',
+        encoding="utf-8",
+    )
+    closure = _closure(umbrella)
+    assert [Path(name).name for name in closure.files] == ["core.ttl", "meta.ttl"]
+    assert "https://example.test/onto/meta" in closure.resolved
+
+
+def test_an_import_naming_a_loaded_module_by_its_version_iri_needs_no_catalog_entry(corpus: Path) -> None:
+    core = corpus / "core.ttl"
+    core.write_text(
+        core.read_text(encoding="utf-8").replace(
+            "<https://example.test/onto/core> a owl:Ontology ;",
+            "<https://example.test/onto/core> a owl:Ontology ; owl:versionIRI <https://example.test/onto/core/1.0> ;",
+        ),
+        encoding="utf-8",
+    )
+    data = corpus / "generated" / "data.ttl"
+    data.write_text(
+        data.read_text(encoding="utf-8").replace(
+            "<https://example.test/onto/core>", "<https://example.test/onto/core/1.0>"
+        ),
+        encoding="utf-8",
+    )
+    closure = _closure(corpus / "umbrella.ttl")
+    assert "https://example.test/onto/core/1.0" in closure.resolved
+    assert closure.unresolved == {EXTERNAL}

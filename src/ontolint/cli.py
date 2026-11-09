@@ -75,6 +75,10 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Load the owl:imports closure from local files, through {CATALOG_NAME} next to each input if present",
     )
     ap.add_argument("--catalog", help="OASIS XML catalog mapping import IRIs to local files (implies --follow-imports)")
+    ap.add_argument(
+        "--import-root",
+        help="Directory imported files must stay in (default: the enclosing git repository of the catalog or input)",
+    )
     ap.add_argument("--base", help="Only lint declared terms in this namespace")
     ap.add_argument("--config", help="Optional JSON policy with ignored_rules, severity_overrides and thresholds")
     ap.add_argument("--baseline", help="JSON of fingerprints to exclude from displayed and gating findings")
@@ -285,6 +289,11 @@ class ImportOptions:
     """How to follow ``owl:imports``: with one explicit catalog, or with the one found next to each input."""
 
     catalog: Catalog | None = None
+    import_root: Path | None = None
+
+
+def _import_root(args: argparse.Namespace) -> Path | None:
+    return Path(args.import_root).resolve() if args.import_root else None
 
 
 def _closure(item: InputFile, policy: Policy, options: ImportOptions) -> LoadedGraph:
@@ -296,7 +305,14 @@ def _closure_of(item: InputFile, root: LoadedGraph, policy: Policy, options: Imp
     catalog = options.catalog
     if catalog is None and (found := item.path.parent / CATALOG_NAME).is_file():
         catalog = read_catalog(found, policy.max_input_bytes)
-    return load_closure(root, item.path, policy, catalog, item).loaded
+    closure = load_closure(root, item.path, policy, catalog, item, import_root=options.import_root)
+    for iri, path in sorted(closure.missing.items()):
+        print(
+            f"TOOL004: note: the catalog maps owl:imports {iri} to {path}, which does not exist; "
+            "the import is not followed (SEC007).",
+            file=sys.stderr,
+        )
+    return closure.loaded
 
 
 def _shapes_background(item: InputFile, shapes: Graph, policy: Policy, options: ImportOptions) -> Graph | None:
@@ -413,12 +429,12 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     imports = None
     if args.catalog:  # read before parsing: a broken catalog is a configuration error, not an input error
         try:
-            imports = ImportOptions(read_catalog(Path(args.catalog), limits.max_input_bytes))
+            imports = ImportOptions(read_catalog(Path(args.catalog), limits.max_input_bytes), _import_root(args))
         except InputRejected as exc:
             print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
             return 2
-    elif args.follow_imports:
-        imports = ImportOptions()
+    elif args.follow_imports or args.import_root:
+        imports = ImportOptions(import_root=_import_root(args))
     stage[0] = "RDF input parsing"
     inputs = resolve_inputs(args.ontology, Path.cwd())
     _LOADER_POLICY.set(limits)
