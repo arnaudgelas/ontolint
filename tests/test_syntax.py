@@ -27,11 +27,15 @@ MANCHESTER = b"Prefix: : <https://e.test/o#>\nOntology: <https://e.test/o>\nClas
         (b"# a comment\n\n<https://e.test/a> <https://e.test/p> <https://e.test/b> .\n", "turtle"),
         (b"PREFIX ex: <https://e.test/>\nex:a ex:p ex:b .\n", "turtle"),
         (b"[ a <https://e.test/K> ] .\n", "turtle"),  # a Turtle blank node, not a JSON array
+        (b"\n[] a <https://e.test/K> .\n\n", "turtle"),  # an anonymous blank node, as RDFLib writes one
+        (b"[ ] <https://e.test/p> <https://e.test/o> .\n", "turtle"),
         (RDFXML, "xml"),
         (b'<!DOCTYPE rdf:RDF [<!ENTITY ex "https://e.test/">]>\n' + RDFXML.split(b"\n", 1)[1], "xml"),
         (JSONLD, "json-ld"),
         (b'[ {"@id": "https://e.test/o"} ]', "json-ld"),
         (b"\xef\xbb\xbf" + JSONLD, "json-ld"),  # with a byte-order mark
+        (b"[]", "json-ld"),  # an empty JSON-LD document
+        (b"[ ]\n", "json-ld"),
         (OWLXML, "owl-xml"),
         (FUNCTIONAL, "owl-functional"),
         (MANCHESTER, "owl-manchester"),
@@ -57,7 +61,10 @@ def _lint(tmp_path: Path, name: str, data: bytes, capsys: pytest.CaptureFixture[
     return code, capsys.readouterr().err
 
 
-@pytest.mark.parametrize(("name", "data"), [("modl.owl", TURTLE), ("a.ttl", RDFXML), ("a.rdf", JSONLD)])
+@pytest.mark.parametrize(
+    ("name", "data"),
+    [("modl.owl", TURTLE), ("a.ttl", RDFXML), ("a.rdf", JSONLD), ("anon.ttl", b"[] a <https://e.test/K> .\n")],
+)
 def test_a_mismatched_extension_still_parses(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, data: bytes
 ) -> None:

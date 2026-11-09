@@ -15,7 +15,7 @@ from unittest import mock
 from urllib.parse import urlsplit
 
 import pytest
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 from hypothesis_strategies import PROFILE, budget, roundtrip_triple_lists
 from hypothesis_strategies import build_graph as build
@@ -232,6 +232,8 @@ FORMATS = {"turtle": ".ttl", "nt": ".nt", "xml": ".rdf", "json-ld": ".jsonld"}
 
 @budget(1)
 @given(roundtrip_triple_lists(), st.sampled_from(sorted(FORMATS)))
+# RDFLib writes this graph as ``[] a <…#Custom> .``, which the syntax sniffer once took for a JSON-LD array.
+@example([(BNode("b"), RDF.type, URIRef("https://other.example/ns#Custom"))], "turtle")
 def test_serialising_and_reloading_preserves_the_graph(triples: list, fmt: str) -> None:
     """INVARIANT: a graph serialised to turtle, n-triples, RDF/XML or JSON-LD reloads to an isomorphic graph."""
     # rdflib's serialisers mangle malformed rdf:first/rdf:rest structures (cycles, branching) and the JSON-LD one

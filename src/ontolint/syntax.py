@@ -61,7 +61,8 @@ def sniff(data: bytes) -> str | None:
         r"<(?:[A-Za-z_][\w.-]*:)?(?:RDF|Ontology)[\s>]", text
     ):
         return _xml_root(text)
-    if text.startswith("{") or re.match(r"\[\s*[{\]]", text):
+    # A JSON-LD array holds node objects (or nothing); ``[] a ex:K .`` is a Turtle anonymous blank node.
+    if text.startswith("{") or re.match(r"\[\s*(?:\{|\]\s*$)", text):
         return "json-ld"
     if _FUNCTIONAL.match(text):
         return "owl-functional"
