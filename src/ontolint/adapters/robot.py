@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from collections import Counter
 from pathlib import Path
@@ -68,7 +69,7 @@ def _subjects(ranked: list[tuple[str, int]]) -> str:
 
 def _host_user() -> list[str]:
     """``--user uid:gid`` of the calling process, or nothing where the OS has no POSIX ids (Windows)."""
-    if not hasattr(os, "getuid"):
+    if sys.platform == "win32":
         return []
     return ["--user", f"{os.getuid()}:{os.getgid()}"]
 

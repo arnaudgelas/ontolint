@@ -230,5 +230,5 @@ def test_robot_container_runs_as_the_calling_user(monkeypatch: pytest.MonkeyPatc
 
 
 def test_robot_container_user_is_omitted_without_posix_ids(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delattr(robot_adapter.os, "getuid", raising=False)
+    monkeypatch.setattr(robot_adapter.sys, "platform", "win32")
     assert robot_adapter._host_user() == []  # noqa: SLF001
