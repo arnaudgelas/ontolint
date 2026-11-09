@@ -6,7 +6,7 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the next feature release (0.6.0). `P1` is the next milestone after P0. `P2` is worthwhile
+blocks the next feature release (0.8.0). `P1` is the next milestone after P0. `P2` is worthwhile
 only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
@@ -14,13 +14,14 @@ record.
 
 ## Recently done
 
-Released in 0.5.0, 0.5.1 and 0.5.2 on 2026-11-08, and 0.6.0 the next day, the first release that
-waited for the maintainer's approval (all release jobs green each time). Kept only so the next
-audit can confirm them, then delete these entries. Leftovers from each are in the open items
-below. The 0.4.1 and 0.4.2 entries were confirmed and removed.
+0.6.0 was released on 2026-11-09, the first release that waited for the maintainer's approval;
+0.7.0 was tagged the same day and its release run is waiting for that approval. Kept only so the
+next audit can confirm them, then delete these entries. Leftovers from each are in the open items
+below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
+`CHANGELOG.md` keeps their record.
 
-- Unreleased, branch `feat/module-provenance` (`872e79c`, `283dc4e`, `9e4c28f`, plus tests): modular
-  stages 2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
+- 0.7.0 (`872e79c`, `283dc4e`, `9e4c28f`, `8c15b1d`), awaiting release approval: modular stages
+  2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
   text `In:`); header rules judge the root ontology only and ownership derives from its IRI;
   METRIC011 ignores local modules; a shapes file that imports the ontology supplies it as SHACL-only
   background. On a real fixture suite every declared outcome matches (13 of 13, 11 of 11 planted
@@ -32,36 +33,8 @@ below. The 0.4.1 and 0.4.2 entries were confirmed and removed.
   only unresolved imports and ONT002 ignores imported headers. Synthetic corpus in
   `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
   and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
-- 0.5.2 (`2cc3f12`): `TOOL003` note on stderr when a linted file has more SHACL shapes than
-  declared terms; the README documents it and `TOOL002`.
-- 0.5.2 (`6fe3be3`, `7357c16`): region property tests over all four formats; they found that an
-  IRI `urljoin` cannot split (`s://]`) cost every JSON-LD region and, in RDF/XML, hid all regions
-  without a note. It now costs only its own region.
-- 0.5.2 (`f13db49`): OWL025 and OWL043 state their boundary and each has the other's defect as a
-  negative case.
-- 0.5.2 (`ffc029b`): IRI015, LEX018 and LEX021 specified; their catalogue test notes corrected.
-- 0.5.1 (`4456103`, `4178a32`, `0a62b70`): found by linting a real modular ontology with shapes
-  and fixtures. SHACL001 keeps the result severity (warnings-only data passes `--fail-on error`)
-  and names blank shapes and focus nodes stably, so baselines match across runs; DATA001 checks
-  integer values against the range's value space (`1` fits `xsd:positiveInteger`); a SHACL
-  `sh:declare` prefix node is not a second ontology (no ONT002, IRI016 or METRIC013). Each fix was
-  confirmed on the original files as well as by tests that fail on 0.5.0.
-- 0.5.0 (`815f6d1`, `fa62f2f`): SARIF regions never point at a Turtle directive or a JSON-LD
-  `@context`, `rdf:about=""` gets a region, a locator failure is a SARIF note, only `--format sarif`
-  computes regions, and CLS017 and the line lookup are linear (40,000 classes: 5 s, was 30 s);
-  `tests/test_scaling.py` fails on a new quadratic step.
-- 0.5.0 (`3cec0b1`): every SARIF report shape is validated against the vendored OASIS schema,
-  whose SHA-256 a test pins.
-- 0.5.0 (`1bd3049`): unknown rule IDs in the policy file are rejected (OPS009).
-- 0.5.0 (`4e6b08f`): stale baseline entries are reported and `--fail-on-stale-baseline` fails on
-  them (OPS003).
-- 0.5.0 (`6079b29`): OWL026 owns direct sameAs/differentFrom conflicts, OWL044 only chained ones.
-- 0.5.0 (`b402783`): CLS011's limit is `subclass_limit` / `--subclass-limit` (default 50).
-- 0.5.0 (`59c97d5`): `SECURITY.md`.
-- 0.5.0 (`3258719`, `09e70b6`): `source_locations.py` is in mutation scope and a targeted run kills
-  every mutant (78 killed, 2 by timeout, 6 pardoned as equivalent).
 
-## P0 — before 0.6.0
+## P0 — before 0.8.0
 
 - [ ] **Prove the last two parts of the release boundary.** Set up by the maintainer on 2026-11-08:
   the `pypi` environment accepts `v*.*.*` tags only and requires the maintainer's review; the
@@ -104,7 +77,7 @@ below. The 0.4.1 and 0.4.2 entries were confirmed and removed.
 
 - [ ] **Close the remaining legal and provenance gaps.** Done in 0.5.0: `SECURITY.md` points
   reporters at GitHub private vulnerability reporting and states the supported versions. Checked:
-  every PyPI release (0.1.0 to 0.5.1) already carries a PEP 740 attestation naming this repository
+  every PyPI release (0.1.0 to 0.6.0) already carries a PEP 740 attestation naming this repository
   and `release.yml`, because Trusted Publishing creates one. Still open:
   - the copyright holder for the Apache-2.0 notice (`pyproject.toml` names the author; `LICENSE`
     names nobody) and the licence and attribution terms of the OOPS! and OntoSniff catalogues that
@@ -120,12 +93,14 @@ below. The 0.4.1 and 0.4.2 entries were confirmed and removed.
   since then had a targeted run for 0.5.2 (`cli.py`, `reporting.py`, `source_locations.py`,
   `adapters/shacl.py` and the `owl`, `owl_expressions`, `hierarchy_quality`, `metrics` and
   `class_heuristics` rules): 596 mutants, 97% killed on the first pass, the survivors then killed by
-  new tests. `context.py`, also changed in 0.5.1, is outside the mutation scope; decide whether it
-  belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. Run the scheduled
-  validation workflow manually first, have a reviewer other than the change author audit every
-  active pardon, then change the repository variable. *Done when:* a current hosted run meets all
-  thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking` has
-  survived at least one scheduled run.
+  new tests; and the modules changed for 0.6.0 and 0.7.0 (`imports.py`, `engine.py`, `cli.py`,
+  `reporting.py`, `rules/metrics.py`, `rules/metadata.py`) had their own targeted runs, all
+  survivors killed. `context.py`, changed in 0.5.1 and 0.7.0, is outside the mutation scope; decide
+  whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. Run the
+  scheduled validation workflow manually first, have a reviewer other than the change author audit
+  every active pardon, then change the repository variable. *Done when:* a current hosted run meets
+  all thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking`
+  has survived at least one scheduled run.
 
 ## P2 — platform reliability and useful integration
 
