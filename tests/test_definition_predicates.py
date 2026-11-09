@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from rdflib import Graph, URIRef
 
+from ontolint.cli import main
 from ontolint.engine import build_context, execute
 from ontolint.policy import Policy
 from ontolint.rules.support import DESCRIPTIONS, LABELS
@@ -31,10 +34,11 @@ def context(**mapping: object):  # noqa: ANN201
 
 
 def test_default_constants() -> None:
-    assert DESCRIPTIONS[-3:] == (
+    assert DESCRIPTIONS[-4:] == (
         URIRef("http://purl.obolibrary.org/obo/IAO_0000115"),
         URIRef("http://purl.obolibrary.org/obo/IAO_0000600"),
         URIRef("http://www.w3.org/ns/prov#definition"),
+        URIRef("http://www.ontologyrepository.com/CommonCoreOntologies/definition"),
     )
     assert URIRef("http://www.w3.org/2004/02/skos/core#scopeNote") not in DESCRIPTIONS
     assert URIRef("http://www.w3.org/2004/02/skos/core#altLabel") not in LABELS
@@ -139,3 +143,46 @@ def test_lex013_checks_extra_predicates_for_non_literals() -> None:
     assert fired(body, "LEX013") == []
     assert fired(body, "LEX013", extra_label_predicates=[EXTRA]) == ["https://example.test/onto#A"]
     assert fired(body, "LEX013", extra_definition_predicates=[EXTRA]) == ["https://example.test/onto#A"]
+
+
+def test_a_cco_1x_definition_counts() -> None:
+    # SDC's vendored CCO 1.x: every class carries cco:definition and no skos:definition.
+    body = (
+        "<https://example.test/onto> a owl:Ontology . ex:A a owl:Class ; rdfs:label 'A'@en ; "
+        "<http://www.ontologyrepository.com/CommonCoreOntologies/definition> 'An A is a thing.'@en ."
+    )
+    assert fired(body, "LEX002") == []
+
+
+def test_a_subproperty_of_a_definition_predicate_counts() -> None:
+    body = (
+        "<https://example.test/onto> a owl:Ontology . ex:def rdfs:subPropertyOf skos:definition . "
+        "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:def 'An A is a thing.'@en ."
+    )
+    assert fired(body, "LEX002") == []
+    assert fired(body.replace("ex:def rdfs:subPropertyOf skos:definition . ", ""), "LEX002") == [
+        "https://example.test/onto#A"
+    ]
+
+
+def _stderr(tmp_path: Path, capsys: pytest.CaptureFixture[str], body: str) -> str:
+    path = tmp_path / "o.ttl"
+    path.write_text(PREFIXES + body, encoding="utf-8")
+    main([str(path), "--select", "LEX002", "--fail-on", "never", "--output", str(tmp_path / "r.txt")])
+    return capsys.readouterr().err
+
+
+def test_an_unknown_definition_predicate_is_suggested(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    terms = "".join(f"ex:C{i} a owl:Class ; <https://v.test/termDefinition> 'Def {i}.'@en .\n" for i in range(12))
+    err = _stderr(tmp_path, capsys, "<https://example.test/onto> a owl:Ontology .\n" + terms)
+    assert "TOOL005: note: 12 of the 12 terms LEX002 reports" in err
+    assert "<https://v.test/termDefinition>" in err
+
+
+def test_no_suggestion_for_a_few_terms_or_an_unrelated_predicate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    few = "".join(f"ex:C{i} a owl:Class ; <https://v.test/termDefinition> 'Def {i}.'@en .\n" for i in range(3))
+    assert "TOOL005" not in _stderr(tmp_path, capsys, few)
+    other = "".join(f"ex:C{i} a owl:Class ; <https://v.test/note> 'Note {i}.'@en .\n" for i in range(12))
+    assert "TOOL005" not in _stderr(tmp_path, capsys, other)

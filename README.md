@@ -150,7 +150,10 @@ Two advisory messages go to stderr and never change the exit code or the report:
 `TOOL002` warns that `--base` selects none of the declared terms, and `TOOL003` notes that a
 linted file looks like a SHACL shapes graph (more shapes than declared terms), which should
 probably be passed with `--shapes` instead. With `--follow-imports`, `TOOL004` notes a catalog
-entry that names a missing file.
+entry that names a missing file. `TOOL005` notes when most terms without a definition (`LEX002`)
+carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
+the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate
+already counts.
 
 ### Discovering rules
 

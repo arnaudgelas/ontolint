@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from rdflib import BNode, Graph, URIRef
+from rdflib.namespace import RDFS
 
 from ontolint.context import GraphContext
 from ontolint.models import CONFIDENCES, Finding
@@ -19,6 +20,12 @@ EMPTY_FOCUS = "<>"
 def _with_extras(defaults: tuple[URIRef, ...], extras: tuple[str, ...]) -> tuple[URIRef, ...]:
     """Return the default predicates followed by the configured extra ones, without duplicates."""
     return tuple(dict.fromkeys((*defaults, *(URIRef(extra) for extra in extras))))
+
+
+def _subproperties(graph: Graph, predicates: tuple[URIRef, ...]) -> tuple[URIRef, ...]:
+    """Predicates the graph declares ``rdfs:subPropertyOf`` one of ``predicates``: local definition annotations."""
+    found = {s for p in predicates for s in graph.subjects(RDFS.subPropertyOf, p) if isinstance(s, URIRef)}
+    return tuple(sorted(found - set(predicates), key=str))
 
 
 class RuleContext:
@@ -37,7 +44,9 @@ class RuleContext:
         self._blank_ids: dict[BNode, str] = {}
         self._blank_nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._blank_pattern: re.Pattern[str] | None = None
-        self.descriptions: tuple[URIRef, ...] = _with_extras(DESCRIPTIONS, policy.extra_definition_predicates)
+        self.descriptions: tuple[URIRef, ...] = _with_extras(
+            (*DESCRIPTIONS, *_subproperties(graph, DESCRIPTIONS)), policy.extra_definition_predicates
+        )
         self.labels: tuple[URIRef, ...] = _with_extras(LABELS, policy.extra_label_predicates)
 
     @property

@@ -26,6 +26,8 @@ DESCRIPTIONS = (
     URIRef(OBO + "IAO_0000115"),
     URIRef(OBO + "IAO_0000600"),
     URIRef(PROV + "definition"),
+    # Common Core Ontologies 1.x define every term with their own annotation (CCO 2 uses skos:definition).
+    URIRef("http://www.ontologyrepository.com/CommonCoreOntologies/definition"),
 )
 LABELS = (RDFS.label, SKOS.prefLabel)
 META_LICENSE = (DCTERMS.license, URIRef("http://creativecommons.org/ns#license"))

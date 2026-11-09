@@ -17,7 +17,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from rdflib import Graph
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 
 from . import engine
@@ -33,6 +33,7 @@ from .reporting import FileReport, Location, Origin, RunReport, fingerprint, ren
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
+from .rules.support import local_name
 from .selection import Selection, SelectorSyntaxError, resolve_selection, split_selectors, unknown_selector_help
 
 FORMATS = ["text", "json", "sarif"]
@@ -184,6 +185,32 @@ def _shapes_hint(item: InputFile, graph: Graph, ctx: RuleContext) -> None:
         )
 
 
+DEFINITION_HINT_MINIMUM = 10
+"""LEX002 findings a file needs before ontolint looks for an unknown definition predicate (TOOL005)."""
+
+
+def _definition_hint(item: InputFile, graph: Graph, ctx: RuleContext, findings: Sequence[Finding]) -> None:
+    """Say once when most LEX002 terms carry an unrecognised predicate named like a definition."""
+    undefined = [URIRef(f.focus) for f in findings if f.rule == "LEX002" and f.focus.startswith(("http", "urn"))]
+    if len(undefined) < DEFINITION_HINT_MINIMUM:
+        return
+    counts: dict[URIRef, int] = {}
+    for term in undefined:
+        for predicate in {p for p, o in graph.predicate_objects(term) if isinstance(o, Literal)}:
+            if isinstance(predicate, URIRef) and "definition" in local_name(predicate).casefold():
+                counts[predicate] = counts.get(predicate, 0) + 1
+    known = set(ctx.descriptions)
+    candidates = sorted((n, str(p)) for p, n in counts.items() if p not in known and n * 2 >= len(undefined))
+    if candidates:
+        count, suggested = candidates[-1]
+        print(
+            f"TOOL005: note: {count} of the {len(undefined)} terms LEX002 reports in {item.display} carry "
+            f"<{suggested}>, which looks like a definition; add it to extra_definition_predicates in the policy "
+            "if it is one.",
+            file=sys.stderr,
+        )
+
+
 def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule."""
     graph = loaded.graph
@@ -220,6 +247,7 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         for s in plan.selection.ignored
     ]
     findings = tuple(replace(f, severity=plan.overrides.get(f.rule, f.severity)) for f in _legacy_order(findings, plan))
+    _definition_hint(item, graph, ctx, findings)
     # Only SARIF renders regions, and the index is computed on first use, so other formats skip it.
     sarif = args.format == "sarif"
     if loaded.modules:
