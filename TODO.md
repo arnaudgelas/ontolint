@@ -15,9 +15,9 @@ record.
 ## Recently done
 
 Released in 0.5.0, 0.5.1 and 0.5.2 on 2026-11-08, and 0.6.0 the next day, the first release that
-waited for the maintainer's approval (all release jobs green each time). Kept only so the next audit can confirm
-them, then delete these entries. Leftovers from each are in the open items below. The 0.4.1 and
-0.4.2 entries were confirmed and removed.
+waited for the maintainer's approval (all release jobs green each time). Kept only so the next
+audit can confirm them, then delete these entries. Leftovers from each are in the open items
+below. The 0.4.1 and 0.4.2 entries were confirmed and removed.
 
 - Unreleased, branch `feat/module-provenance` (`872e79c`, `283dc4e`, `9e4c28f`, plus tests): modular
   stages 2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
