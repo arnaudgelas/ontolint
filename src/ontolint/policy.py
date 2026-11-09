@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, fields
 from typing import Any
 
-from .models import Severity
+from .models import Severity, SourceFacts
 
 _ABSOLUTE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
 DEFAULT_DEPTH_LIMIT = 10
@@ -101,8 +101,8 @@ class Policy:
     # With --follow-imports: the IRIs the root file itself declares; ownership is derived from them, so a
     # large import can never outweigh the linted ontology's own terms.
     root_terms: frozenset[str] = frozenset()
-    # A licence the linted file names only in an "SPDX-License-Identifier:" comment, which RDF cannot see.
-    comment_license: str | None = None
+    # What the loader read from the linted file's text: an SPDX licence comment, its prefix declarations.
+    source: SourceFacts = SourceFacts()
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -169,7 +169,7 @@ class Policy:
             imported_ontologies=frozenset(),
             document_bases=(),
             root_terms=frozenset(),
-            comment_license=None,
+            source=SourceFacts(),
         )
 
 
@@ -182,7 +182,7 @@ class PolicyVersionError(ValueError):
 
 
 _RUNTIME_FIELDS = frozenset(
-    {"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases", "root_terms", "comment_license"}
+    {"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases", "root_terms", "source"}
 )
 """Policy fields filled in while linting, not accepted from a policy file."""
 

@@ -222,7 +222,7 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         imported_ontologies=loaded.imported_ontologies,
         document_bases=tuple(sorted(bases)),
         root_terms=loaded.modules[0].declared if loaded.modules else frozenset(),
-        comment_license=loaded.comment_license,
+        source=loaded.source,
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background

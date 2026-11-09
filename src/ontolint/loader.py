@@ -44,6 +44,7 @@ from rdflib.term import Node
 from rdflib.util import guess_format
 
 from . import syntax
+from .models import SourceFacts
 from .paths import InputFile
 from .policy import Policy
 from .source_locations import SourceIndex, build_source_index
@@ -114,8 +115,8 @@ class LoadedGraph:
     imported_ontologies: frozenset[str] = frozenset()
     modules: tuple[Module, ...] = ()
     """With --follow-imports: the root file first, then every imported file in load order."""
-    comment_license: str | None = None
-    """The licence named by an ``SPDX-License-Identifier:`` comment in the file, if any."""
+    source: SourceFacts = SourceFacts()
+    """What the file's text says that the graph does not keep (an SPDX licence comment, its prefixes)."""
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.
@@ -422,16 +423,14 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
     loaded = load_document(item, policy, root)
     # Keep the established Graph-returning API while letting the CLI retain loader metadata.
     setattr(loaded.graph, "_ontolint_source_index", loaded.source_index)  # noqa: B010 -- Graph has no metadata slot.
-    setattr(loaded.graph, "_ontolint_comment_license", loaded.comment_license)  # noqa: B010 -- likewise.
+    setattr(loaded.graph, "_ontolint_source_facts", loaded.source)  # noqa: B010 -- likewise.
     return loaded.graph
 
 
 def loaded_graph(graph: Graph) -> LoadedGraph:
     """The :class:`LoadedGraph` for a graph returned by :func:`load_graph` (its metadata travels with it)."""
-    license_comment = getattr(graph, "_ontolint_comment_license", None)
-    return LoadedGraph(
-        graph, source_index(graph), comment_license=license_comment if isinstance(license_comment, str) else None
-    )
+    facts = getattr(graph, "_ontolint_source_facts", None)
+    return LoadedGraph(graph, source_index(graph), source=facts if isinstance(facts, SourceFacts) else SourceFacts())
 
 
 def source_index(graph: Graph) -> SourceIndex:
@@ -470,9 +469,28 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
             raise
         hint = f"; an HTML page starts at line {line} (a web page or server error saved in place of RDF?)"
         raise ParseFailure(failure.cause_type, failure.detail + hint) from failure
+    return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph), source=source_facts(data, fmt, graph))
+
+
+_DEFAULT_BINDINGS = frozenset((prefix, str(namespace)) for prefix, namespace in Graph().namespaces())
+"""The prefixes RDFLib binds in every graph, whether or not a file declares them."""
+
+
+def source_facts(data: bytes, fmt: str, graph: Graph) -> SourceFacts:
+    """The SPDX licence comment and the prefix declarations of a parsed file."""
     spdx = re.search(rb"SPDX-License-Identifier:\s*([A-Za-z0-9.+-]+)", data[:SPDX_SCAN_BYTES])
     license_comment = spdx.group(1).decode("ascii") if spdx else None
-    return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph), comment_license=license_comment)
+    if syntax.family(fmt) == "json-ld":
+        return SourceFacts(license_comment, ())  # a @context's terms are shared vocabulary, not declarations
+    # A default binding counts only when the file spells its namespace out (a parse worker keeps no bindings).
+    declared = tuple(
+        sorted(
+            (prefix, str(namespace))
+            for prefix, namespace in graph.namespaces()
+            if (prefix, str(namespace)) not in _DEFAULT_BINDINGS or str(namespace).encode("utf-8") in data
+        )
+    )
+    return SourceFacts(license_comment, declared)
 
 
 def _parse_document(data: bytes, fmt: str, public_id: str, display: str, policy: Policy) -> Graph:

@@ -14,7 +14,7 @@
   <a href="https://pypi.org/project/ontolint/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/ontolint"></a>
   <a href="https://pypi.org/project/ontolint/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/ontolint"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 240 of 295" src="https://img.shields.io/badge/rules-240%2F295_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 244 of 299" src="https://img.shields.io/badge/rules-244%2F299_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -33,7 +33,7 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-240 of the 295 catalogue rules are implemented; the rest are planned. The
+244 of the 299 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
 - 227 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -533,6 +533,12 @@ ODK edit files and Protégé exports, often named `.owl`) are not RDF and cannot
 with an `INPUT001` that names the syntax and suggests `robot convert`. A parse failure in a file
 that contains an HTML page (a saved web page or server error) says where that page starts.
 
+A few rules read what the file's text says and RDF does not keep. `IRI019` reports a prefix the
+file declares (Turtle `@prefix`, RDF/XML `xmlns:`) for a namespace no IRI uses. A JSON-LD
+`@context` never counts, and neither do the `rdf:`, `rdfs:`, `owl:`, `xsd:` and `xml:`
+declarations that editors write into every file. `ONT003` mentions a licence the file names only
+in an `SPDX-License-Identifier:` comment.
+
 ## Input safety
 
 Ontologies are untrusted input, so the loader is deliberately strict:
@@ -557,7 +563,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 295 entries: 240 executable diagnostics and 55 proposed
+catalogue. It records 299 entries: 244 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an

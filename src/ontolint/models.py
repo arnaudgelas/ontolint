@@ -80,6 +80,17 @@ class Finding:
 
 
 @dataclass(frozen=True)
+class SourceFacts:
+    """What the loader read from a file's text that its RDF graph does not keep."""
+
+    comment_license: str | None = None
+    """The licence an ``SPDX-License-Identifier:`` comment names, if any."""
+    declared_prefixes: tuple[tuple[str, str], ...] | None = None
+    """The ``(prefix, namespace)`` pairs the file declares; ``None`` when unknown (a graph not read by ontolint),
+    ``()`` for a syntax whose prefixes are not the author's own (a JSON-LD ``@context``)."""
+
+
+@dataclass(frozen=True)
 class RuleSpec:
     """Static metadata and execution requirements for an individual rule."""
 

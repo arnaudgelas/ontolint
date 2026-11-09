@@ -111,7 +111,7 @@ def run(ctx: RuleContext) -> None:
             return any((node, p, None) in g for node in nodes for p in predicates)
 
         if not has(META_LICENSE):
-            spdx = ctx.policy.comment_license
+            spdx = ctx.policy.source.comment_license
             hint = f" The file names {spdx} only in an SPDX comment; state it with dcterms:license." if spdx else ""
             ctx.add("ONT003", ont, f"Ontology has no license annotation.{hint}", confidence="certain")
         if not has((OWL.versionIRI, OWL.versionInfo)):

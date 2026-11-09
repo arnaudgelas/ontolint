@@ -302,7 +302,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         frozenset(walk.resolved),
         frozenset(walk.imported),
         tuple(walk.modules),
-        root_document.comment_license,
+        root_document.source,
     )
     return Closure(
         loaded,

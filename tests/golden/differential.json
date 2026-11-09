@@ -121,59 +121,59 @@
    "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:05ca58a8d72d3d84067cc79a03a285fdc60b7753fdcbe0f89159a5dad0bd8b4b (156589 chars)",
+    "file": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:05ca58a8d72d3d84067cc79a03a285fdc60b7753fdcbe0f89159a5dad0bd8b4b (156589 chars)"
+    "stdout": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)"
    }
   },
   "ignore_family_json": {
    "legacy_json_view": "sha256:5842ae07c7a53eb55a111d3878dca7180d277846cabb1545c79d92b9778ce686 (41097 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:8424edccbf75ea1420d47c0fa7a440ee5ac867ab511c27a947d52ac97bce3d74 (152531 chars)",
+    "file": "sha256:af99c213ac511b1599ab1f24d05198212c4d6a66e9d0d7595dfb4e658d78c305 (154580 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:8424edccbf75ea1420d47c0fa7a440ee5ac867ab511c27a947d52ac97bce3d74 (152531 chars)"
+    "stdout": "sha256:af99c213ac511b1599ab1f24d05198212c4d6a66e9d0d7595dfb4e658d78c305 (154580 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:c18a514aa5d4f8794d84e5d7e6963b800a6e54da6732d9830c51223e06257588 (28503 chars)",
+    "file": "sha256:4f0419802efe80f98cf6b472f3ab22ef8e99cc66225f02b8d850d96d99a49e4b (28503 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:c18a514aa5d4f8794d84e5d7e6963b800a6e54da6732d9830c51223e06257588 (28503 chars)"
+    "stdout": "sha256:4f0419802efe80f98cf6b472f3ab22ef8e99cc66225f02b8d850d96d99a49e4b (28503 chars)"
    }
   },
   "json_clean": {
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:bd97ce2442c1ed90aeb930ab558eae61f3c366a3e094d7663a38231fe962f341 (106909 chars)",
+    "file": "sha256:8749e27a3d0492b25fa76b3e799d365b17e479efe3e0bc49db24d564aaa450d4 (108958 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:bd97ce2442c1ed90aeb930ab558eae61f3c366a3e094d7663a38231fe962f341 (106909 chars)"
+    "stdout": "sha256:8749e27a3d0492b25fa76b3e799d365b17e479efe3e0bc49db24d564aaa450d4 (108958 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:73a8c30f27a67e6b71b8c4b73341b87bf02c725676f50c7a838149d7392adff9 (213868 chars)"
+    "stdout": "sha256:fb633527202b7e938b3cc15da29d8761f4bc5848d3fdfa5602353fccf9451b0a (217966 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,32 +184,32 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:9ab5949f29d62d13e5cf54204bacfef38b20d650f5e4fbc7074466d626530f1a (107681 chars)",
+    "file": "sha256:a32142315f3214b142e7165ec129d1816d0ed1fd3afde5a57fbd17f1935f7e04 (109730 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:9ab5949f29d62d13e5cf54204bacfef38b20d650f5e4fbc7074466d626530f1a (107681 chars)"
+    "stdout": "sha256:a32142315f3214b142e7165ec129d1816d0ed1fd3afde5a57fbd17f1935f7e04 (109730 chars)"
    }
   },
   "json_config": {
    "legacy_json_view": "sha256:0c86d08c01a38760911eed3a9931ea6521c949222ea2c465cd1ef93662a80999 (62345 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:81f01212c8ac2bca6bf4329effba7cf7342c0d312714b546b4e4c2ca2372a933 (176368 chars)",
+    "file": "sha256:b6aa28e9ba310f4ca4a97ed9dd1e3c1dc70012b4b92f61e69d1f9e7ea3340984 (178417 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:81f01212c8ac2bca6bf4329effba7cf7342c0d312714b546b4e4c2ca2372a933 (176368 chars)"
+    "stdout": "sha256:b6aa28e9ba310f4ca4a97ed9dd1e3c1dc70012b4b92f61e69d1f9e7ea3340984 (178417 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:1c21c1e8421daa0b0a004dabbbf07f26d3fd7f78c3c781719a6332b70d7dd6f2 (283370 chars)"
+    "stdout": "sha256:0dfb3e0dad9d58852e6fa4cb27d449cedd61063109ef19019487a41e7015685a (287468 chars)"
    },
    "write_baseline": {
     "count": 207,
@@ -220,18 +220,18 @@
    "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:05ca58a8d72d3d84067cc79a03a285fdc60b7753fdcbe0f89159a5dad0bd8b4b (156589 chars)",
+    "file": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:05ca58a8d72d3d84067cc79a03a285fdc60b7753fdcbe0f89159a5dad0bd8b4b (156589 chars)"
+    "stdout": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:81d715604828ee8c79291d62e8c275b036c7b5cf29f1e5ae2a2662d3633ee858 (263555 chars)"
+    "stdout": "sha256:4930999446e8363cf0315ae8c93491ec28e8da5f963bed7fdee553b79735f27c (267653 chars)"
    },
    "write_baseline": {
     "count": 137,
@@ -242,60 +242,60 @@
    "legacy_json_view": "sha256:3a12e846aed3fe7f9433e15572fff08c76b11a8fa5d45d5c091271efc7001e8a (45304 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:532fd11778a7a5fcb1ae46bbb41f487f8e01af94c692f025414ed5d8f2b63105 (156904 chars)",
+    "file": "sha256:d37fa65bc4b6961701a72581209588e5105ea8be53fb6d770f89b6d93faffd88 (158953 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:532fd11778a7a5fcb1ae46bbb41f487f8e01af94c692f025414ed5d8f2b63105 (156904 chars)"
+    "stdout": "sha256:d37fa65bc4b6961701a72581209588e5105ea8be53fb6d770f89b6d93faffd88 (158953 chars)"
    }
   },
   "json_robot_ok": {
    "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:212d35a2871c1118489fde6663f2ef349388b20eddb28cdcc32be5325232167b (156550 chars)",
+    "file": "sha256:084a0fd1edc09f69868a048cc9abddd347039cc72271024cd30576fe5ce2735f (158599 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:212d35a2871c1118489fde6663f2ef349388b20eddb28cdcc32be5325232167b (156550 chars)"
+    "stdout": "sha256:084a0fd1edc09f69868a048cc9abddd347039cc72271024cd30576fe5ce2735f (158599 chars)"
    }
   },
   "json_robot_unsupported": {
    "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:2c22b0fa1365b388a91f0558373473fca3560d809cb93c69a88f5630e812e39e (156596 chars)",
+    "file": "sha256:f206f08d6a858394e1830c44eabb90cee383c2f092f1704a448e7c0e75d42909 (158645 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:2c22b0fa1365b388a91f0558373473fca3560d809cb93c69a88f5630e812e39e (156596 chars)"
+    "stdout": "sha256:f206f08d6a858394e1830c44eabb90cee383c2f092f1704a448e7c0e75d42909 (158645 chars)"
    }
   },
   "json_shapes": {
    "legacy_json_view": "sha256:2de03bfd3456289ee63417138a9cb37f4a60867d396971db1703509794e6348a (48095 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:9fd5ac84c7f688da0b9cb1307cc58378b8fca4cf7480fc4c18e2f98eca1667e4 (159115 chars)",
+    "file": "sha256:5bcb312476831cb5e222358597b950e9a7386564c6af66fd398ca89ddb23e02c (161164 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:9fd5ac84c7f688da0b9cb1307cc58378b8fca4cf7480fc4c18e2f98eca1667e4 (159115 chars)"
+    "stdout": "sha256:5bcb312476831cb5e222358597b950e9a7386564c6af66fd398ca89ddb23e02c (161164 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:c538b3b1ac189503130ce4469383f65155692ff65e9aea266b20c4582e393478 (265155 chars)"
+    "stdout": "sha256:5fb05c8a59b6fe40465d4355ae6a9fad13169d8901e6575716481ad2abce7df2 (269253 chars)"
    },
    "write_baseline": {
     "count": 147,
@@ -306,14 +306,14 @@
    "legacy_json_view": "sha256:cbd117e732415df050e19cdcc6cfe88a46f78b477f0f8344293fb488f9b5cdac (51430 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:4dd37040be74b27d28833b5db39f6f7c6d2fd80225fca82cdca74f935a0f25ca (163784 chars)",
+    "file": "sha256:ee0dec4033d78f947df79a97d7e5663349b2c8553324271f7002c3a99f96f447 (165833 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:4dd37040be74b27d28833b5db39f6f7c6d2fd80225fca82cdca74f935a0f25ca (163784 chars)"
+    "stdout": "sha256:ee0dec4033d78f947df79a97d7e5663349b2c8553324271f7002c3a99f96f447 (165833 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:ec0f48585ce9d747f5fe6fda125e90335490277fb439bfbc84008571e9584070 (93236 chars)"
+    "stdout": "sha256:fc2adc1f6efe1f0ecba6aeca377a7a5471914f9922f0d466133e41286a720149 (94484 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:ec0f48585ce9d747f5fe6fda125e90335490277fb439bfbc84008571e9584070 (93236 chars)"
+    "stdout": "sha256:fc2adc1f6efe1f0ecba6aeca377a7a5471914f9922f0d466133e41286a720149 (94484 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:fb7bb89755552b00fc8f129c0448fb3e294b3e292eb1caa2035cf71ad3651428 (30247 chars)"
+    "stdout": "sha256:c16cd4907253b5c592272a2f9616f670e32ad538a26ef8aca42dda9b34e31358 (30655 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:fb7bb89755552b00fc8f129c0448fb3e294b3e292eb1caa2035cf71ad3651428 (30247 chars)"
+    "stdout": "sha256:c16cd4907253b5c592272a2f9616f670e32ad538a26ef8aca42dda9b34e31358 (30655 chars)"
    }
   },
   "missing_config": {
@@ -385,14 +385,14 @@
    "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:89ea43e7cf04dfeb85f3ec36efa932ed0398d84407474c3ceb084b7dd7d8c333 (179908 chars)",
+    "file": "sha256:7c7884c397f0a7ba6fbdd72741ccab7d188430dfeac74c6ad17a20efe2657e4b (182375 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:89ea43e7cf04dfeb85f3ec36efa932ed0398d84407474c3ceb084b7dd7d8c333 (179908 chars)"
+    "stdout": "sha256:7c7884c397f0a7ba6fbdd72741ccab7d188430dfeac74c6ad17a20efe2657e4b (182375 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,14 +411,14 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:ce17828cb85eacfae824ea6648977d41db4458fccc33833db3e8b7d29fda0b9f (301344 chars)",
+    "file": "sha256:dd8d70423bf3c5350a2b91832c02bd0fe10ec759cae19452cf1f06040c31c9b7 (304680 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ce17828cb85eacfae824ea6648977d41db4458fccc33833db3e8b7d29fda0b9f (301344 chars)"
+    "stdout": "sha256:dd8d70423bf3c5350a2b91832c02bd0fe10ec759cae19452cf1f06040c31c9b7 (304680 chars)"
    }
   },
   "multi_file_text": {
@@ -451,53 +451,53 @@
    "legacy_json_view": "sha256:52e51d2c84462b274a331d5d3e1eb774ec6a5501c6be7609a122a016d518a1b2 (5594 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:57e2d0ea8e4a70ea830439b1c784877c2e538ded9c24bfa1ae94c1413edc1a6e (29918 chars)",
+    "file": "sha256:f0db2ad05e3b40b56ac534f87062c7cd385fa615a467e2d11b7d0da72a75da12 (31967 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:57e2d0ea8e4a70ea830439b1c784877c2e538ded9c24bfa1ae94c1413edc1a6e (29918 chars)"
+    "stdout": "sha256:f0db2ad05e3b40b56ac534f87062c7cd385fa615a467e2d11b7d0da72a75da12 (31967 chars)"
    }
   },
   "profile_strict_text": {
    "to_file": {
     "exit": 0,
-    "file": "Ontology linter: 0 finding(s)\nRule execution: 182 executed, 30 skipped, 0 unsupported, 0 failed\n[SKIPPED    ] SEC007: ignored by --ignore or profile\n[SKIPPED    ] SEM001: OWL profile validation was not requested\n[SKIPPED    ] SHACL001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ002: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ003: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ004: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ005: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ006: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ007: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ008: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ009: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ010: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ011: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ012: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ013: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ014: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ015: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ016: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ017: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ018: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ019: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ020: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ021: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ022: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ023: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ024: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ025: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ026: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ027: no SHACL shapes graph was supplied\n",
+    "file": "Ontology linter: 0 finding(s)\nRule execution: 186 executed, 30 skipped, 0 unsupported, 0 failed\n[SKIPPED    ] SEC007: ignored by --ignore or profile\n[SKIPPED    ] SEM001: OWL profile validation was not requested\n[SKIPPED    ] SHACL001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ002: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ003: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ004: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ005: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ006: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ007: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ008: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ009: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ010: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ011: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ012: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ013: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ014: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ015: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ016: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ017: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ018: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ019: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ020: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ021: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ022: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ023: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ024: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ025: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ026: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ027: no SHACL shapes graph was supplied\n",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "Ontology linter: 0 finding(s)\nRule execution: 182 executed, 30 skipped, 0 unsupported, 0 failed\n[SKIPPED    ] SEC007: ignored by --ignore or profile\n[SKIPPED    ] SEM001: OWL profile validation was not requested\n[SKIPPED    ] SHACL001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ002: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ003: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ004: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ005: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ006: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ007: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ008: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ009: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ010: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ011: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ012: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ013: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ014: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ015: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ016: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ017: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ018: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ019: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ020: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ021: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ022: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ023: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ024: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ025: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ026: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ027: no SHACL shapes graph was supplied\n"
+    "stdout": "Ontology linter: 0 finding(s)\nRule execution: 186 executed, 30 skipped, 0 unsupported, 0 failed\n[SKIPPED    ] SEC007: ignored by --ignore or profile\n[SKIPPED    ] SEM001: OWL profile validation was not requested\n[SKIPPED    ] SHACL001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ001: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ002: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ003: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ004: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ005: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ006: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ007: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ008: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ009: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ010: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ011: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ012: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ013: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ014: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ015: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ016: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ017: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ018: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ019: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ020: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ021: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ022: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ023: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ024: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ025: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ026: no SHACL shapes graph was supplied\n[SKIPPED    ] SHQ027: no SHACL shapes graph was supplied\n"
    }
   },
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:c53acbd3a5f62306c9c633f642cb718268c1c6c4419f1e027e3909354fcb9190 (284021 chars)",
+    "file": "sha256:d2f7a8f41e23fdcceac452c9093bfba22fcf7fc201714aa888b94eea8f061805 (287357 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:c53acbd3a5f62306c9c633f642cb718268c1c6c4419f1e027e3909354fcb9190 (284021 chars)"
+    "stdout": "sha256:d2f7a8f41e23fdcceac452c9093bfba22fcf7fc201714aa888b94eea8f061805 (287357 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:12fd49b84c9a853adb0c3ae6d43d27f1b11e70995325eaa7136603d2117d4343 (272781 chars)",
+    "file": "sha256:b7e41adb51eeeb6de777519c3b5386a35bd8950b886223378152dfa1de7ae0d7 (276117 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:12fd49b84c9a853adb0c3ae6d43d27f1b11e70995325eaa7136603d2117d4343 (272781 chars)"
+    "stdout": "sha256:b7e41adb51eeeb6de777519c3b5386a35bd8950b886223378152dfa1de7ae0d7 (276117 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -531,14 +531,14 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 7,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/second.ttl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#c3\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#camelCase\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator or dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:ecbcd0928e8993da049cc049787bf780c9f5b0ea87b96ddc3ef4fb5600e01303 (14537 chars)",
+    "file": "sha256:2c2a92fb281daccaebeac5d68bf54daafd56e220ac8a86715d39f1b7c9044d73 (15528 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:ecbcd0928e8993da049cc049787bf780c9f5b0ea87b96ddc3ef4fb5600e01303 (14537 chars)"
+    "stdout": "sha256:2c2a92fb281daccaebeac5d68bf54daafd56e220ac8a86715d39f1b7c9044d73 (15528 chars)"
    }
   },
   "select_unknown": {

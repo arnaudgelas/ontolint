@@ -6,6 +6,8 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF
 from rule_harness import built, rule_cases, ttl
 
+from ontolint.policy import Policy
+
 
 def _terms(*iris: str, kind: URIRef = OWL.Class) -> Graph:
     g = Graph()
@@ -149,6 +151,55 @@ CASES = {
         [
             ttl("ontology only", "<https://example.test/onto> a owl:Ontology ."),
             ttl("class under ontology", "<https://example.test/onto> a owl:Ontology . ex:A a owl:Class ."),
+        ],
+    ),
+    "IRI018": rule_cases(
+        [
+            ttl(
+                "Protege untitled ontology (MFTO)",
+                "<http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-139> a owl:Ontology .",
+            ),
+            ttl(
+                "Protege default base, renamed",
+                "<http://www.semanticweb.org/someone/ontologies/2018/8/moral> a owl:Ontology .",
+            ),
+        ],
+        [
+            ttl("a permanent IRI", "<https://w3id.org/moral> a owl:Ontology ."),
+            ttl("untitled is only a word", "<https://example.test/untitled-ontology> a owl:Ontology ."),
+            ttl(
+                "an imported module's header",
+                "<https://example.test/onto> a owl:Ontology ; owl:imports "
+                "<http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-1> .\n"
+                "<http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-1> a owl:Ontology .",
+                policy=Policy(
+                    imported_ontologies=frozenset(
+                        {"http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-1"}
+                    )
+                ),
+            ),
+        ],
+    ),
+    "IRI019": rule_cases(
+        [
+            ttl(
+                "a CCO prefix nothing uses (rights ontology)",
+                "@prefix AllCoreOntology: "
+                "<http://www.ontologyrepository.com/CommonCoreOntologies/Mid/AllCoreOntology#> .\n"
+                "ex:A a owl:Class .",
+            ),
+        ],
+        [
+            ttl("every prefix used", "ex:A a owl:Class ."),
+            ttl(
+                "a prefix used only as a datatype",
+                "@prefix dt: <https://dt.test/> . ex:A a owl:Class ; ex:v 'x'^^dt:custom .",
+            ),
+            ttl(
+                "the prefix names the ontology",
+                "@prefix o: <https://example.test/o#> . <https://example.test/o> a owl:Ontology . ex:A a owl:Class .",
+            ),
+            ttl("RDFLib's own default prefixes", "ex:A a owl:Class ."),
         ],
     ),
 }
