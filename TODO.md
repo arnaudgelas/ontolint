@@ -15,11 +15,35 @@ record.
 ## Recently done
 
 0.6.0 and 0.7.0 were released on 2026-11-09, both after the maintainer's approval in the release
-run. Kept only so the
+run; 0.8.0 is ready on a branch. Kept only so the
 next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
+- 0.8.0, unreleased, on branch `feat/real-world` (not yet merged), from linting fifteen public
+  ontologies:
+  - ownership judges only an ontology's own terms (`a6eef83`): file extensions and ODK release
+    suffixes are stripped from the ontology IRI, the `<dir>/<NAME>_` ID prefix applies beyond OBO,
+    and the dominant namespace is used before "own everything". automatce-full: 695 → 114
+    findings, none foreign; CCO's closure has no finding on BFO;
+  - the import root is the enclosing repository, and each module's own catalog is read (`eb77492`);
+    a catalog entry naming a missing file leaves the import unresolved with a TOOL004 note. CCO,
+    EMMO and SDC lint with `--follow-imports` without SEC009 or INPUT001;
+  - the input syntax is sniffed (`ccebe3f`): Turtle in `.owl` (MODL) lints; OWL Functional,
+    Manchester and OWL/XML fail with a clear message; a parse failure says where an embedded
+    HTML page starts (ISAAC: line 2194);
+  - relative `owl:imports` are one GOV002 note, shown relative to the file and kept out of SEC008
+    (`0efba7a`); IDS: 84 → 5 findings, and no local path in the output;
+  - `--import-dir DIR` maps imports to local copies by ontology or version IRI, and catalogs match
+    version IRIs (`be8ea61`);
+  - rule defects (`191c9cd`, `ddbcdf5`, `6ed9131`): METRIC005 external superclasses, IRI001
+    `http:` without a host, OWL011/OWL043 named foci, LEX002 knows CCO 1.x definitions and
+    subproperties of definition predicates (SDC's `ArtifactOntology.ttl`: 576 → 21 findings) and
+    TOOL005 suggests unknown ones, header metadata via `owl:ontologyIRI` (MOD), the SPDX licence
+    hint (Tractus-X), RDFLib's stderr silenced;
+  - new rules (`7395d9f`): DATA003 ill-typed literals and `rdfs:Literal`-typed values, DATA004
+    datatypes outside the OWL 2 map (`xsd:anyType`, `xsd:date`), IRI018 Protégé placeholder IRIs,
+    IRI019 declared prefixes no IRI uses. Catalogue: 299 rows, 244 implemented.
 - 0.7.0 (`872e79c`, `283dc4e`, `9e4c28f`, `8c15b1d`), released: modular stages
   2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
   text `In:`); header rules judge the root ontology only and ownership derives from its IRI;
@@ -53,119 +77,34 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
 Everything here comes from linting fifteen public ontologies on 2026-11-09 (sources in the corpus
 table at the end of this section). Each item names the files that show it; every fix gets a small
 synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
+What is done is under "Recently done"; what is left is optional or waits on a decision.
 
-- [ ] **Ownership: stop judging vocabularies an ontology only references or merges in.** When the
-  ontology IRI owns none of the declared terms, ownership falls back to "every IRI is owned", so
-  imported, merged or merely referenced terms are linted as the ontology's own. Measured:
-  automatce `automatce.ttl` and `-full` (ODK releases): about 430 of 695 findings are on merged
-  PMDco, OBO, DC and SKOS terms, and even `-base` has 142 of 294; CCO linted as a closure: 70
-  findings on imported BFO; MFTO: 5 false OWL001 warnings ("declare local classes") on BFO classes;
-  ISAAC: 3,778 OWL001 findings, including DUL, schema.org and DBpedia IRIs; SDC's vendored CCO 1.x
-  modules: OWL001 on BFO classes. Three changes, in
-  `ownership.derive_prefixes` and `Ownership.for_terms`:
-  - strip `.ttl`, `.rdf`, `.json`, `.jsonld`, `.ofn` and `.omn` as well as `.owl` from the
-    ontology IRI (fixes `https://w3id.org/pmd/automatce.ttl`);
-  - generalise the OBO `<dir>/<NAME>_` ID-prefix rule beyond `purl.obolibrary.org`, after removing
-    the ODK release suffixes `-full`, `-base`, `-simple`, `-merged`, `-non-classified` (fixes
-    `…/automatce/automatce-full.ttl` owning `AUTOMATCE_…`);
-  - when derived ownership finds nothing, use the dominant namespace of the declared terms before
-    "own everything" (MFTO: 20 of 20 terms; CCO: over 1,900 of about 2,000; ISAAC: FRED's
-    `domain.owl#`).
-  Default output changes for such files, so it is a minor release. *Done when:* fixtures for each
-  pattern own exactly the project's terms, the goldens are reviewed, and re-running the four files
-  above leaves no finding on a foreign namespace.
+- [ ] **Read OWL Functional and Manchester Syntax offline, optional.** These syntaxes and OWL/XML
+  now fail with a clear `UnsupportedSyntax` message naming the syntax and `robot convert`
+  (`ccebe3f`). Still open: converting them through the project's ROBOT Docker image, already used
+  by `--owl-profile`, so that ODK edit files lint directly. *Done when:* the automatce edit file and
+  its 10 components lint as a closure.
 
-- [ ] **Import root: allow the standard Protégé layout.** CCO's catalogs point at sibling
-  directories (`src/cco-merged/catalog-v001.xml` maps to `../cco-modules/*.ttl` and
-  `../cco-imports/bfo-core.ttl`), and today both the umbrella and a single module stop with `SEC009
-  … outside the import root`. With a wider root (simulated) the closure loads: 12 files, 14,014
-  triples, 0.2 s, nothing unresolved. Add `--import-root DIR`, defaulting to the enclosing
-  repository (nearest ancestor with `.git`) and otherwise to the catalog's directory; SEC009 still
-  refuses anything outside it. Also read the catalog next to each loaded module, as Protégé does:
-  EMMO keeps a `catalog-v001.xml` in each directory (`disciplines/`, `disciplines/units/`,
-  `foundation/`, `perspectives/`, `reference/`). A catalog entry naming a file that does not exist
-  should leave that import unresolved, with a note, instead of failing the run: SDC's catalog still
-  maps CCO and BFO to `cco-merged/…` and `imports/ro-import.ttl`, which the repository no longer
-  has, and `--follow-imports` stops with `INPUT001: FileNotFoundError`. *Done when:* CCO's umbrella
-  and modules, EMMO and SDC lint with `--follow-imports` without a SEC009 or INPUT001, and a
-  catalog entry escaping the repository is still refused.
+- [ ] **`--import-dir` with BFO.** MFTO with RO in an import dir resolves its RO import (38
+  findings, all on MFTO's terms); the BFO PURL returned HTTP 504 on 2026-11-09, so the BFO half of
+  the "done when" is unverified. *Done when:* MFTO with a folder holding BFO and RO resolves both.
 
-- [ ] **Sniff the syntax instead of trusting the file extension.** The extension decides the
-  parser, so a mismatch fails with an unhelpful `INPUT001: … SAXParseException`: MODL's `modl.owl`
-  and its 31 pattern files are Turtle under `.owl` (renamed to `.ttl`, `modl.owl` lints fine). Sniff
-  Turtle, N-Triples, RDF/XML and JSON-LD from the first bytes when the extension's parser fails,
-  and say which syntax was found. *Done when:* a Turtle-in-`.owl` fixture lints, and a file that is
-  no RDF syntax still fails with INPUT001.
+- [ ] **ONT005 says which provenance is missing, at the next legacy-contract break.** Its message
+  ("Missing creator or dcterms:created provenance.") is one of the 63 legacy rules whose findings
+  `test_legacy_rules_unchanged_linter` keeps byte-identical, because baseline fingerprints include
+  the message. Change it ("Missing a creator and dcterms:created provenance.", or only the missing
+  one) together with any other legacy message change, with an upgrade note.
 
-- [ ] **Recognise OWL Functional, Manchester and OWL/XML syntax instead of failing obscurely.**
-  OWL/XML too: SDC's `SDC_v1.owl` starts `<Ontology xmlns="http://www.w3.org/2002/07/owl#"`, and
-  the RDF/XML parser reports `Repeat node-elements inside property elements`. ODK edit
-  files are usually Functional Syntax with a `.owl` extension (automatce's `src/ontology/
-  automatce-edit.owl` starts with `Prefix(` and `Import(<…/components/…>)`). ontolint picks the
-  parser from the extension and reports `INPUT001: … SAXParseException: not well-formed (invalid
-  token)`; RDFLib cannot read either syntax. Sniff the content, and for these syntaxes fail with a
-  clear message (convert with `robot convert`, or lint the `-base.ttl` release). Optionally convert
-  offline through the project's ROBOT Docker image, already used by `--owl-profile`. *Done when:*
-  a Functional and a Manchester fixture get the clear message, and, if conversion is added, the
-  automatce edit file and its 10 components lint as a closure.
-
-- [ ] **Relative `owl:imports` (IDS Information Model).** `Ontology.ttl` imports its 86 class files
-  as `<model/…/X.ttl>`. With `--follow-imports` they resolve, but in both modes they also give 80
-  SEC008 "unsafe scheme `file:`" findings whose text holds the reader's local path, so output
-  differs per checkout and baselines break across machines. Report relative imports once, as a note
-  that they depend on where the file is read, show them relative to the file, and keep them out of
-  SEC008. Six of the imports are listed twice; say so. *Done when:* a relative-import fixture gives
-  identical output from two different directories.
-
-- [ ] **Imports of a published build, without a catalog.** MFTO imports BFO and RO by PURL and EMMO
-  domain-mappings imports one EMMO build by URL; neither ships a catalog, and ontolint stays
-  offline. Add `--import-dir DIR`: map imports to the files in a folder by the `owl:Ontology` or
-  `owl:versionIRI` they declare. Match imports on version IRIs in catalogs too (common in OBO; CCO
-  and automatce declare them). When SEC007 lists imports and no catalog was found, say so and point
-  at `robot mirror` or a one-off download plus a catalog. *Done when:* MFTO with a folder holding
-  BFO and RO resolves its two imports.
-
-- [ ] **Rule defects found on these files.** Each is a bug fix, so it can also ship in a patch:
-  - METRIC005 counts a class whose only superclass is external (MFTO: 14 of 18 classes under BFO)
-    as an orphan, because its hierarchy keeps local classes only; CLS001 gets it right.
-  - IRI001 misses `http:` IRIs with no `//` authority (the rights ontology's
-    `http:semanticweb.org/hohfeldiansystem/` and all its terms).
-  - ONT005's message ("Missing creator or dcterms:created") does not say which is missing (the
-    rights ontology has a creator).
-  - Findings on anonymous class expressions name only a blank node: OWL011 (`_:4c37b6c9b56d`,
-    food traceability, 36 times) and OWL043 (`_:0c8c85ae1747`, the Software Description Ontology's
-    `rdfs:range [ owl:unionOf ( … ) ]`). Name the property and the class that own the expression.
-  - LEX002 does not know widely used definition predicates: CCO 1.x defines all 567 classes of
-    `ArtifactOntology.ttl` with `…/CommonCoreOntologies/definition`, so SDC's vendored CCO gets
-    over 2,000 false "no definition" findings; adding the predicate to
-    `extra_definition_predicates` takes `ArtifactOntology.ttl` from 576 findings to 100.
-    Recognise the common ones (IAO_0000115, CCO 1.x `definition`), or note once when one
-    undeclared predicate whose name contains "definition" sits on most terms, and suggest the key.
-  - A parse failure inside HTML (ISAAC: 37 HTTP 500 error pages saved into the Turtle) could say
-    "an HTML page starts at line 2194"; and RDFLib's own warnings and a full traceback leak onto
-    stderr during parsing (ISAAC, and MOD's ill-typed dates), and should be captured.
-  - IRI016 misses an ontology IRI ending in `#` (MODL: `…/modular_ontology_design_library#`):
-    Python's URL splitter reports an empty fragment, so the rule sees none.
-  - Header rules miss metadata described one hop away: MOD puts all of its metadata on
-    `<https://w3id.org/mod#>`, which names the ontology `<https://w3id.org/mod>` through
-    `owl:ontologyIRI`, so ONT003-ONT006 and GOV004 report a bare header. Follow `owl:ontologyIRI`
-    back to the describing node, or at least say where the metadata is.
-  - ONT003 could mention a licence that appears only as an `SPDX-License-Identifier` comment
-    (Tractus-X `ontology.ttl`: CC-BY-4.0 in the file header, no `dcterms:license`).
-
-- [ ] **New checks suggested by these files.** Each needs a rule ID, so they ship in a minor
-  release:
-  - a placeholder ontology IRI (Protégé's `…/untitled-ontology-139`, MFTO);
-  - prefixes declared for a vocabulary that is neither used nor imported (the rights ontology
-    declares CCO's `AllCoreOntology:` and `ROImport:`);
-  - literals typed `rdfs:Literal` (food traceability, 45): believed ill-typed in OWL 2, but check
-    the specification before adding a rule;
-  - ill-typed literals: no rule reports an invalid lexical form (MOD: `'2024-06-2'^^xsd:date` and
-    three `'2004'^^xsd:date` that should be `xsd:gYear`); RDFLib only prints a traceback;
-  - ranges that are not OWL 2 datatypes (Tractus-X: `rdfs:range xsd:anyType` five times); today
-    only ROBOT's `--owl-profile DL` catches them;
-  - decide whether LEX002 should judge individuals by default: 345 of CCO's 346 terms without a
-    definition are `owl:NamedIndividual` units.
+- Decided, recorded here so the next audit does not reopen them:
+  - IRI016 on an ontology IRI ending in `#` (MODL) is not a defect: the rule's cases deliberately
+    accept the empty fragment, and hash-terminated ontology IRIs are common.
+  - LEX002 keeps judging individuals. The legacy golden asserts it (`populated`: two individuals),
+    so changing the default would break the legacy contract. ROBOT's `missing_definition` checks
+    only classes and properties, which is the precedent to cite if the default changes at 1.0; until
+    then, CCO-style unit individuals can be baselined.
+  - A literal typed `rdfs:Literal` is ill-typed in OWL 2 DL: the Structural Specification
+    (Sections 4 and 5.7) gives `rdfs:Literal` no lexical space while requiring every literal's
+    lexical form to be in its datatype's. Reported by DATA003.
 
 - [ ] **Modules without imports: group findings by annotation or namespace, optional.** Two
   layouts keep modules inside one file. MOMo marks them by annotation (the food-traceability schema
@@ -237,11 +176,19 @@ Validation corpus (public; licences per repository):
   every PyPI release (0.1.0 to 0.6.0) already carries a PEP 740 attestation naming this repository
   and `release.yml`, because Trusted Publishing creates one. Still open:
   - the copyright holder for the Apache-2.0 notice (`pyproject.toml` names the author; `LICENSE`
-    names nobody) and the licence and attribution terms of the OOPS! and OntoSniff catalogues that
-    `data/*_crosswalk.csv` reference. Both are the maintainer's decisions, not code;
+    names nobody, and there is no `NOTICE` file). The maintainer's decision, not code;
+  - the crosswalk question is answered (2026-11-09, `data/README.md`): neither catalogue states a
+    licence for its text (OOPS!'s software is Apache-2.0, OntoInk's code MIT); the crosswalks
+    reuse only identifiers and, for OntoSniff, one-to-three-word smell names; the OOPS! titles are
+    ontolint's own paraphrases, and no description is copied. `data/README.md` now gives the sources,
+    what is reused and the citations each project asks for. Also checked then: tests hold
+    third-party IRIs only, no copied definitions; no dependency is copyleft beyond file-level
+    MPL-2.0 (certifi, pathspec, hypothesis); the ROBOT jar is downloaded at image build with a
+    pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
+    origin is not recorded;
   - verifying the attestation in the release `verify` job, for example with `pypi-attestations
     verify pypi`. Not added yet, because it could not be tried locally first.
-  *Done when:* both legal questions have a written answer in the repository, and a release run
+  *Done when:* the copyright-holder question has a written answer in the repository, and a release run
   fails if the published files' attestations do not verify.
 
 - [ ] **Approve a current mutation baseline before making it blocking.** Existing mutation-policy
