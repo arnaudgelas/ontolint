@@ -1,4 +1,26 @@
-"""SKOS concept-scheme rules: SKOS001-SKOS006."""
+"""SKOS concept-scheme rules: SKOS001-SKOS006.
+
+All rules read asserted triples only.  "Integrity condition Sn" refers to the SKOS Reference (W3C
+Recommendation, 18 August 2009).  Specifications of the error rules:
+
+* **SKOS001.** Scope: the owned resources explicitly typed ``skos:Concept`` (``ctx.concepts``; no
+  subclass typing).  Condition: two or more distinct literal values of ``skos:prefLabel`` share a
+  language tag.  Tags compare case-insensitively (``@en`` and ``@EN`` are one tag, as in RDF 1.1), and
+  untagged labels (plain or ``xsd:string``) form one group reported as ``und``; an explicit ``@und`` tag
+  joins that group.  Literals are compared as RDF 1.1 terms: ``"a"`` equals ``"a"^^xsd:string``, and
+  ``"a"@en`` equals ``"a"@EN``, so a repeated label is not counted twice.  Other datatypes count as
+  untagged labels (SKOS013 reports them).  Exclusions: non-literal values; resources that are not owned
+  concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked).  One finding per concept
+  and language.  Severity error, confidence certain: the triples violate integrity condition S14.
+* **SKOS002.** Scope: the owned concepts plus every resource that is the subject of
+  ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` and is either an owned IRI or a blank
+  node.  Condition: the same literal is a value of two or three of those properties of one resource.
+  Literals compare as RDF 1.1 terms: lexical form and language tag (case-insensitively) must both match,
+  ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Exclusions: same text with a
+  different language tag; non-owned IRIs; sub-properties of the label properties (not entailed).  One
+  finding per resource and literal.  Severity error, confidence certain: the triples violate integrity
+  condition S13 (the three label properties are pairwise disjoint).
+"""
 
 from __future__ import annotations
 
@@ -6,7 +28,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from rdflib import Literal, URIRef
-from rdflib.namespace import OWL, SKOS
+from rdflib.namespace import OWL, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.graph import strongly_connected_components
@@ -99,17 +121,31 @@ def run(ctx: RuleContext) -> None:
 def _concept_labels(ctx: RuleContext) -> None:
     g = ctx.g
     for c in ctx.concepts:
-        by_lang: defaultdict[str, list[Literal]] = defaultdict(list)
+        # Language tags compare case-insensitively (RDF 1.1, BCP 47); an untagged label is in "und".
+        by_lang: defaultdict[str, set[Literal]] = defaultdict(set)
+        spellings: defaultdict[str, set[str]] = defaultdict(set)
         for label in g.objects(c, SKOS.prefLabel):
             if isinstance(label, Literal):
-                by_lang[label.language or "und"].append(label)
+                tag = label.language or "und"
+                by_lang[tag.lower()].add(_plain(label))
+                spellings[tag.lower()].add(tag)
         for language, labels in by_lang.items():
             if len(labels) > 1:
-                ctx.add("SKOS001", c, f"{len(labels)} prefLabels in language {language}.", confidence="certain")
+                # A tag written one way is reported as written; mixed spellings are reported in lower case.
+                tags = spellings[language]
+                shown = next(iter(tags)) if len(tags) == 1 else language
+                ctx.add("SKOS001", c, f"{len(labels)} prefLabels in language {shown}.", confidence="certain")
         if not by_lang and _needs_label(ctx, c):
             ctx.add("SKOS004", c, "Concept has no skos:prefLabel.")
         if (c, SKOS.inScheme, None) not in g:
             ctx.add("SKOS005", c, "Concept is not explicitly in a scheme.")
+
+
+def _plain[T: Node](node: T) -> T | Literal:
+    """``node`` with an ``xsd:string`` datatype dropped: in RDF 1.1 ``"a"`` and ``"a"^^xsd:string`` are one literal."""
+    if isinstance(node, Literal) and node.datatype == XSD.string:
+        return Literal(str(node))
+    return node
 
 
 def _needs_label(ctx: RuleContext, concept: URIRef) -> bool:
@@ -121,12 +157,14 @@ def _needs_label(ctx: RuleContext, concept: URIRef) -> bool:
 
 
 def _label_overlaps(ctx: RuleContext) -> None:
-    labelled_resources: set[Node] = set(ctx.concepts) | set(ctx.g.subjects(SKOS.prefLabel, None))
     properties = (SKOS.prefLabel, SKOS.altLabel, SKOS.hiddenLabel)
+    labelled_resources: set[Node] = set(ctx.concepts)
+    for p in properties:
+        labelled_resources.update(s for s in ctx.g.subjects(p, None) if not isinstance(s, URIRef) or ctx.local(s))
     for resource in sorted(labelled_resources, key=str):
         holders: defaultdict[Node, list[str]] = defaultdict(list)
         for p in properties:
-            for value in set(ctx.g.objects(resource, p)):
+            for value in {_plain(o) for o in ctx.g.objects(resource, p)}:
                 holders[value].append("skos:" + p.removeprefix(str(SKOS)))
         for value, names in sorted(
             holders.items(), key=lambda item: (str(item[0]), str(getattr(item[0], "language", "")))
