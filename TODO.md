@@ -48,8 +48,8 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
 
 ## 0.8.0 — real-world ontologies
 
-Everything here comes from linting ten public ontologies on 2026-11-09 (sources in the corpus table
-at the end of this section). Each item names the files that show it; every fix gets a small
+Everything here comes from linting thirteen public ontologies on 2026-11-09 (sources in the corpus
+table at the end of this section). Each item names the files that show it; every fix gets a small
 synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
 
 - [ ] **Ownership: stop judging vocabularies an ontology only references or merges in.** When the
@@ -83,6 +83,13 @@ synthetic fixture copying the pattern, and the real repositories are only used f
   `foundation/`, `perspectives/`, `reference/`). *Done when:* CCO's umbrella and modules, and EMMO,
   lint with `--follow-imports` without a SEC009, and a catalog entry escaping the repository is
   still refused.
+
+- [ ] **Sniff the syntax instead of trusting the file extension.** The extension decides the
+  parser, so a mismatch fails with an unhelpful `INPUT001: … SAXParseException`: MODL's `modl.owl`
+  and its 31 pattern files are Turtle under `.owl` (renamed to `.ttl`, `modl.owl` lints fine). Sniff
+  Turtle, N-Triples, RDF/XML and JSON-LD from the first bytes when the extension's parser fails,
+  and say which syntax was found. *Done when:* a Turtle-in-`.owl` fixture lints, and a file that is
+  no RDF syntax still fails with INPUT001.
 
 - [ ] **Recognise OWL Functional and Manchester syntax instead of failing obscurely.** ODK edit
   files are usually Functional Syntax with a `.owl` extension (automatce's `src/ontology/
@@ -121,7 +128,15 @@ synthetic fixture copying the pattern, and the real repositories are only used f
     traceability, 36 times): name the property and the class that owns the axiom.
   - A parse failure inside HTML (ISAAC: 37 HTTP 500 error pages saved into the Turtle) could say
     "an HTML page starts at line 2194"; and RDFLib's own warnings and a full traceback leak onto
-    stderr during parsing (ISAAC), and should be captured.
+    stderr during parsing (ISAAC, and MOD's ill-typed dates), and should be captured.
+  - IRI016 misses an ontology IRI ending in `#` (MODL: `…/modular_ontology_design_library#`):
+    Python's URL splitter reports an empty fragment, so the rule sees none.
+  - Header rules miss metadata described one hop away: MOD puts all of its metadata on
+    `<https://w3id.org/mod#>`, which names the ontology `<https://w3id.org/mod>` through
+    `owl:ontologyIRI`, so ONT003-ONT006 and GOV004 report a bare header. Follow `owl:ontologyIRI`
+    back to the describing node, or at least say where the metadata is.
+  - ONT003 could mention a licence that appears only as an `SPDX-License-Identifier` comment
+    (Tractus-X `ontology.ttl`: CC-BY-4.0 in the file header, no `dcterms:license`).
 
 - [ ] **New checks suggested by these files.** Each needs a rule ID, so they ship in a minor
   release:
@@ -130,13 +145,30 @@ synthetic fixture copying the pattern, and the real repositories are only used f
     declares CCO's `AllCoreOntology:` and `ROImport:`);
   - literals typed `rdfs:Literal` (food traceability, 45): believed ill-typed in OWL 2, but check
     the specification before adding a rule;
+  - ill-typed literals: no rule reports an invalid lexical form (MOD: `'2024-06-2'^^xsd:date` and
+    three `'2004'^^xsd:date` that should be `xsd:gYear`); RDFLib only prints a traceback;
+  - ranges that are not OWL 2 datatypes (Tractus-X: `rdfs:range xsd:anyType` five times); today
+    only ROBOT's `--owl-profile DL` catches them;
   - decide whether LEX002 should judge individuals by default: 345 of CCO's 346 terms without a
     definition are `owl:NamedIndividual` units.
 
-- [ ] **Modules declared by annotation (MOMo/OPLa), optional.** The food-traceability schema marks
-  its 13 modules with `opla:isNativeTo "Container"` on 37 of 78 terms, inside one file. A
-  `--module-annotation opla:isNativeTo` option could group findings by module, reusing the stage 2
-  provenance (`In: module Container`). Only if someone asks.
+- [ ] **Modules without imports: group findings by annotation or namespace, optional.** Two
+  layouts keep modules inside one file. MOMo marks them by annotation (the food-traceability schema
+  uses `opla:isNativeTo "Container"` on 37 of 78 terms; MODL's pattern files use
+  `opla-core:isNativeTo`). Merged releases keep one namespace per source module (Tractus-X
+  `ontology.ttl` merges eight domain ontologies, `…/ontology/behaviour#`, `…/bill-of-material#`,
+  …). An option such as `--module-annotation opla:isNativeTo` or `--module-by namespace` could group
+  findings by module, reusing the stage 2 provenance (`In: module Container`), and present
+  cross-module collisions (Tractus-X: 13 IRI003 local-name and 6 LEX004 label collisions between
+  domains) as such. Only if someone asks.
+
+- [ ] **Profiles and pattern libraries, decide whether they are in scope.** Two more multi-file
+  shapes, both linked by metadata rather than `owl:imports`: a W3C PROF profile names its SHACL
+  validator (MOD's `profile.ttl`: `prof:hasArtifact …/dcat-profile/validator` with
+  `prof:hasRole role:validator`), so `--shapes` could be discovered from it; and a pattern library
+  indexes its pattern ontologies (MODL's `modl.owl` describes 31 patterns as individuals under
+  `…/purl/purl/…#`, while the pattern files declare `…/purl/domain/…` ontology IRIs, so the index
+  cannot refer to them by IRI, a consistency check could say so). Decide before building either.
 
 Validation corpus (public; licences per repository):
 
@@ -150,6 +182,9 @@ Validation corpus (public; licences per repository):
 | emmo-repo/domain-mappings | one import of a published build | `--import-dir` |
 | StenDoipanni/ISAAC | headerless FRED knowledge graph with embedded HTML errors | ownership; parse diagnostics |
 | Data-Semantics-Laboratory/Modular-Ontology-Modeling-for-Food-Supply-Chains | MOMo modules by OPLa annotation | module annotations |
+| kastle-lab/modular-ontology-design-library (MODL) | pattern library: index plus 31 pattern ontologies, Turtle in `.owl` | syntax sniffing; trailing `#` IRI; library consistency |
+| eclipse-tractusx/sldt-ontology-model | merged release of eight domain ontologies, one namespace each | modules by namespace; `xsd:anyType`; SPDX licence |
+| FAIR-IMPACT/MOD | metadata vocabulary, PROF profile, SHACL validator | metadata one hop away; ill-typed literals; profile-discovered shapes |
 
 ## P1 — reporting, policy and supply-chain correctness
 
