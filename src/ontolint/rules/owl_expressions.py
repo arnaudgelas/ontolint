@@ -132,7 +132,8 @@ SPECS: tuple[RuleSpec, ...] = (
 
 _MAX_LIST = 1_000_000
 _MIN_DISTINCT_MEMBERS = 2
-_COUNT = re.compile(r"\+?[0-9]+")
+# The xsd:nonNegativeInteger lexical space: an optional "+", or "-" before a zero, then digits.
+_COUNT = re.compile(r"\+?[0-9]+|-0+")
 
 _UNQUALIFIED = (OWL.minCardinality, OWL.maxCardinality, OWL.cardinality)
 _QUALIFIED = (OWL.minQualifiedCardinality, OWL.maxQualifiedCardinality, OWL.qualifiedCardinality)
@@ -150,7 +151,7 @@ def _short(predicate: Node) -> str:
 
 
 def _count(value: Node) -> int | None:
-    """Return a cardinality value if its lexical form is a non-negative integer."""
+    """Return a cardinality value if its lexical form is a non-negative integer (``-0`` is zero)."""
     if isinstance(value, Literal) and _COUNT.fullmatch(str(value).strip()):
         return int(str(value).strip())
     return None

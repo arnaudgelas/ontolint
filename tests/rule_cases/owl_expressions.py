@@ -83,6 +83,9 @@ CASES = {
                 f'{R} owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass ex:A .',
             ),
             ttl("qualified with data range", f"{R} owl:maxQualifiedCardinality 1 ; owl:onDataRange xsd:string ."),
+            # xsd:nonNegativeInteger allows a sign: "+" always, "-" only before a zero.
+            ttl("negative zero", f'{R} owl:maxCardinality "-0" .'),
+            ttl("explicit plus sign", f'{R} owl:minCardinality "+2" .'),
         ],
     ),
     "OWL037": rule_cases(
@@ -123,6 +126,7 @@ CASES = {
             ttl("allValuesFrom Thing", f"{R} owl:allValuesFrom owl:Thing ."),
             ttl("min cardinality 0", f"{R} owl:minCardinality 0 ."),
             ttl("qualified min 0", f"{R} owl:onClass ex:A ; owl:minQualifiedCardinality 0 ."),
+            ttl("min cardinality written -0", f'{R} owl:minCardinality "-0" .'),
         ],
         [
             ttl("allValuesFrom a class", f"{R} owl:allValuesFrom ex:A ."),
