@@ -16,6 +16,8 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .support import relative_reference
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -250,6 +252,8 @@ def _terms(ctx: RuleContext) -> None:
 
 
 def _check_iri(ctx: RuleContext, iri: str) -> None:
+    if relative_reference(iri, ctx.policy.document_bases) is not None:
+        return  # a relative reference resolved against the file (GOV002 reports relative imports)
     scheme = _SCHEME.match(iri.lstrip("\x00 \t\r\n\x0b\x0c").translate(_URL_STRIPPED))
     if scheme and scheme.group(1).lower() in UNSAFE_SCHEMES:
         ctx.add("SEC008", iri, f"IRI uses the unsafe scheme {scheme.group(1).lower()}:.", confidence="certain")

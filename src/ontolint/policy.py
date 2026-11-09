@@ -95,6 +95,9 @@ class Policy:
     # files, and the ontology IRIs declared by those imported files (see :mod:`ontolint.imports`).
     resolved_imports: frozenset[str] = frozenset()
     imported_ontologies: frozenset[str] = frozenset()
+    # The directories (as file: URIs ending in "/") the linted files were read from: a file: IRI under one
+    # came from a relative reference resolved against the file, not from the ontology's own text.
+    document_bases: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -159,6 +162,7 @@ class Policy:
             unknown_keys=tuple(sorted({str(key) for key in data} - _known_keys())),
             resolved_imports=frozenset(),
             imported_ontologies=frozenset(),
+            document_bases=(),
         )
 
 
@@ -170,7 +174,7 @@ class PolicyVersionError(ValueError):
     """The policy file declares a ``policy_version`` this ontolint does not support (reported as GOV020)."""
 
 
-_RUNTIME_FIELDS = frozenset({"unknown_keys", "resolved_imports", "imported_ontologies"})
+_RUNTIME_FIELDS = frozenset({"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases"})
 """Policy fields filled in while linting, not accepted from a policy file."""
 
 

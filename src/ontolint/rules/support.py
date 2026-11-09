@@ -134,3 +134,22 @@ def stable_blank_id(g: Graph, node: Node) -> str:
     incoming = sorted({str(p) for _s, p in g.subject_predicates(node)})
     payload = "\x00".join([owner_text, ",".join(incoming), _content_digest(g, node, DIGEST_DEPTH, frozenset())])
     return "_:" + hashlib.sha256(payload.encode("utf-8", "surrogatepass")).hexdigest()[:STABLE_ID_LENGTH]
+
+
+def relative_reference(iri: str, bases: tuple[str, ...]) -> str | None:
+    """``iri`` as the relative reference it was written as, when it resolved under one of ``bases``.
+
+    A relative IRI (``<model/X.ttl>``) parsed from a local file becomes ``file:///…/model/X.ttl``: an
+    artefact of where the file was read, which must neither be reported as an unsafe ``file:`` IRI nor
+    printed with the reader's local path.
+    """
+    for base in bases:
+        if iri.startswith(base):
+            return iri[len(base) :]
+    return None
+
+
+def display_iri(iri: str, bases: tuple[str, ...]) -> str:
+    """``iri`` for a message: relative to the linted file when it came from a relative reference."""
+    relative = relative_reference(iri, bases)
+    return iri if relative is None else relative

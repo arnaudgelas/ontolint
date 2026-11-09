@@ -18,7 +18,7 @@ from rdflib.namespace import OWL
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import stable_blank_id
+from .support import display_iri, stable_blank_id
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -50,8 +50,11 @@ def run(ctx: RuleContext) -> None:
     """
     resolved = ctx.policy.resolved_imports  # loaded from local files by --follow-imports / --catalog
     imports = sorted(
-        {stable_blank_id(ctx.g, t) if isinstance(t, BNode) else str(t) for t in ctx.g.objects(None, OWL.imports)}
-        - resolved
+        {
+            stable_blank_id(ctx.g, t) if isinstance(t, BNode) else display_iri(str(t), ctx.policy.document_bases)
+            for t in ctx.g.objects(None, OWL.imports)
+            if str(t) not in resolved
+        }
     )
     if not imports:
         return

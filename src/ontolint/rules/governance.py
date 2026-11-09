@@ -11,7 +11,7 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
 from .owl import is_deprecated, owned_checker, owning_term
-from .support import OBO
+from .support import OBO, relative_reference
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -138,7 +138,27 @@ def _equivalence_targets(ctx: RuleContext) -> None:
 
 
 def _imports(ctx: RuleContext) -> None:
+    bases = ctx.policy.document_bases
     for ont in ctx.ontologies:
+        relative: list[str] = []
         for imported in set(ctx.g.objects(ont, OWL.imports)):
             if not isinstance(imported, URIRef):
                 ctx.add("GOV002", ont, f"Non-IRI import target: {imported}.")
+            elif (reference := relative_reference(str(imported), bases)) is not None:
+                relative.append(reference)
+        if relative:
+            shown = ", ".join(sorted(relative)[:RELATIVE_IMPORTS_SHOWN])
+            more = (
+                f" and {len(relative) - RELATIVE_IMPORTS_SHOWN} more" if len(relative) > RELATIVE_IMPORTS_SHOWN else ""
+            )
+            ctx.add(
+                "GOV002",
+                ont,
+                f"{len(relative)} owl:imports use relative references ({shown}{more}), which resolve differently "
+                "depending on where the file is read; import absolute IRIs and map them with a catalog.",
+                confidence="certain",
+            )
+
+
+RELATIVE_IMPORTS_SHOWN = 5
+"""How many relative import references the GOV002 note names before summarising the rest."""

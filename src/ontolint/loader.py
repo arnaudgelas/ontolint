@@ -95,6 +95,8 @@ class Module:
     declared: frozenset[str]
     """IRIs this file gives an ``rdf:type`` to: a finding about one of them belongs to this file."""
     source_index: SourceIndex
+    directory: str = ""
+    """The file's directory as a ``file:`` URI ending in ``/``: relative references resolve under it."""
 
 
 @dataclass(frozen=True)

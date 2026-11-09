@@ -181,8 +181,12 @@ def _shapes_hint(item: InputFile, graph: Graph, ctx: RuleContext) -> None:
 def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule."""
     graph = loaded.graph
+    bases = {module.directory for module in loaded.modules} | {item.path.resolve().parent.as_uri().rstrip("/") + "/"}
     policy = replace(
-        plan.policy, resolved_imports=loaded.resolved_imports, imported_ontologies=loaded.imported_ontologies
+        plan.policy,
+        resolved_imports=loaded.resolved_imports,
+        imported_ontologies=loaded.imported_ontologies,
+        document_bases=tuple(sorted(bases)),
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background

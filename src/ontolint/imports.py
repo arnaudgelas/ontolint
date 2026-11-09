@@ -137,6 +137,11 @@ def _identities(graph: Graph) -> set[str]:
     return ontologies | versions
 
 
+def _directory(path: Path) -> str:
+    """``path``'s directory as a ``file:`` URI ending in ``/``."""
+    return path.resolve().parent.as_uri().rstrip("/") + "/"
+
+
 def _inside(path: Path, root: Path) -> bool:
     return Path(os.path.realpath(path)).is_relative_to(Path(os.path.realpath(root)))
 
@@ -214,7 +219,15 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         policy,
         sandbox,
         merged,
-        [Module(root.display, root.uri, _declared(root_document.graph), root_document.source_index)],
+        [
+            Module(
+                root.display,
+                root.uri,
+                _declared(root_document.graph),
+                root_document.source_index,
+                _directory(root_path),
+            )
+        ],
         set(),
         {os.path.realpath(root_path)},
         set(),
@@ -279,7 +292,9 @@ def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
     item = resolve_inputs([str(path)], Path.cwd())[0]
     document = load_document(item, policy, sandbox)
     walk.files.append(item.display)
-    walk.modules.append(Module(item.display, item.uri, _declared(document.graph), document.source_index))
+    walk.modules.append(
+        Module(item.display, item.uri, _declared(document.graph), document.source_index, _directory(path))
+    )
     walk.imported |= _ontologies(document.graph)
     walk.known |= _identities(document.graph)
     walk.merged += document.graph
