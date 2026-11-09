@@ -36,15 +36,17 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
 
 ## P0 — before 0.8.0
 
-- [ ] **Prove the last two parts of the release boundary.** Set up by the maintainer on 2026-11-08:
-  the `pypi` environment accepts `v*.*.*` tags only and requires the maintainer's review; the
-  `tags` ruleset (all tags) blocks deletion, update and force-push; the `main` ruleset (default
-  branch only) blocks deletion and force-push and requires linear history. Proven: the 0.6.0
-  release run paused at "Publish to PyPI" until the maintainer approved it. Still unproven, and
-  best done deliberately by the maintainer: that a force-push of a `v*` tag is rejected (try it on
-  a throwaway tag, not a release), and that Renovate can still rebase its own branches. The
-  `tags` ruleset's "linear history" rule means nothing for tags and can go.
-  *Done when:* both are observed once.
+- [ ] **Turn Renovate on, and watch its first rebase.** The release boundary is in place and proven
+  (2026-11-09): the 0.6.0 and 0.7.0 release runs waited at "Publish to PyPI" for the maintainer's
+  approval, and on a throwaway tag (`ruleset-probe-2026-11-09`, kept as a record; no `v` prefix, so
+  it starts no release) GitHub refused both a force-move ("Cannot update this protected ref") and a
+  deletion ("Cannot delete this tag"). The `main` ruleset targets the default branch only, so
+  Renovate's own branches are not restricted, and its automerge now squashes
+  (`"automergeStrategy": "squash"` in `.github/renovate.json`), which the linear-history rule
+  accepts. What is left: Renovate has never run here (no branch, pull request or Dependency
+  Dashboard issue), so the Renovate GitHub app is probably not installed. Install it, then watch one
+  rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear history" rule means
+  nothing for tags and can go. *Done when:* both are observed once.
 
 ## 0.8.0 — real-world ontologies
 

@@ -35,7 +35,8 @@
         "patch",
         "minor"
       ],
-      "automerge": true
+      "automerge": true,
+      "automergeStrategy": "squash"
     },
     {
       "description": "Group GitHub Actions workflow updates",
