@@ -490,8 +490,8 @@ def _conjuncts(g: Graph, restriction: Node) -> set[Node]:
     for holder in holders:
         conjuncts.update(o for p in _CLASS_AXIOMS for o in g.objects(holder, p))
     for node in list(conjuncts):
-        for members in (list_items(g, head) for head in g.objects(node, OWL.intersectionOf)):
-            conjuncts.update(members or ())
+        for listed in (list_items(g, head) for head in g.objects(node, OWL.intersectionOf)):
+            conjuncts.update(listed or ())
     conjuncts.discard(restriction)
     return conjuncts
 
