@@ -6,9 +6,9 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the next feature release (0.9.0; 0.8.0 shipped while it was still open). `P1` is the next
-milestone after P0. `P2` is worthwhile
-only after the preceding work is complete. “Decision gate” means no implementation starts until the
+blocks the next feature release (0.10.0; 0.8.0 shipped, and 0.9.0 was tagged, while it was still
+open). `P1` is the next milestone after P0. `P2` is worthwhile only after the preceding work is
+complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
 record.
@@ -16,12 +16,15 @@ record.
 ## Recently done
 
 0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
-release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). Kept only so the
+release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). 0.9.0 was tagged the same
+day (`f15e67e`) but not pushed: push `main` and the tag together, then approve the release run.
+Kept only so the
 next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- Unreleased, on `main` for 0.9.0:
+- 0.9.0 (`f15e67e`, tag `v0.9.0`), tagged locally, not pushed; confirm the release run and the
+  PyPI upload:
   - borrowed vocabulary terms are not the ontology's own (`deed446`): Dublin Core, SKOS, DCAT, IAO
     and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
     METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
@@ -100,7 +103,7 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
   and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
 
-## P0 — before 0.9.0
+## P0 — before 0.10.0
 
 - [ ] **Turn Renovate on, and watch its first rebase.** The release boundary is in place and proven
   (2026-11-09): the 0.6.0 and 0.7.0 release runs waited at "Publish to PyPI" for the maintainer's
