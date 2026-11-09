@@ -104,6 +104,14 @@ CASES = {
                 ),
             ),
             ttl("below the minimum sample", _classes(9)),
+            # MFTO: the classes hang directly under an upper ontology the file does not declare.
+            ttl(
+                "external superclasses",
+                _each(
+                    10,
+                    lambda i: f"ex:C{i} a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .",
+                ),
+            ),
         ],
     ),
     "METRIC006": rule_cases(

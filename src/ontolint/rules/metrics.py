@@ -232,7 +232,14 @@ def _hierarchy_rules(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
         used.add(prop)
     for ranges in ctx.context.ranges_by_property.values():
         used |= ranges
-    orphans = sum(1 for c in classes if c not in h.parents and c not in h.children and c not in used)
+    # A named superclass outside the ontology connects a class too: an ontology aligned to BFO or another
+    # upper ontology hangs most of its classes directly under external parents.
+    external_parent = {
+        c for c in classes if any(isinstance(o, URIRef) and o != OWL.Thing for o in ctx.g.objects(c, RDFS.subClassOf))
+    }
+    orphans = sum(
+        1 for c in classes if c not in h.parents and c not in h.children and c not in used and c not in external_parent
+    )
     ratio = _ratio(orphans, len(classes))
     if ratio > policy.metric_max_orphan_ratio:
         ctx.add(

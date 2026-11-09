@@ -18,6 +18,8 @@ CASES = {
         [
             built("whitespace in IRI", lambda: _class("https://example.test/with space")),
             built("relative IRI", lambda: _class("relative-term")),
+            # The Hohfeldian rights ontology: http:semanticweb.org/hohfeldiansystem/ (no "//").
+            built("http IRI without a host", lambda: _class("http:semanticweb.example/rights_0000001")),
         ],
         [ttl("absolute IRI", "ex:A a owl:Class .")],
     ),

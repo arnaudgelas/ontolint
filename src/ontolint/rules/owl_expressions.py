@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from rdflib import BNode, Literal, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDFS, XSD
 from rdflib.term import Node
 
@@ -194,6 +194,22 @@ def _operator_lists(ctx: RuleContext) -> None:
                 _operands(ctx, subject, predicate, items)
 
 
+def _where(g: Graph, expression: Node) -> str:
+    """`` in the rdfs:range of ex:p`` for an anonymous expression used by a named term, else ``""``."""
+    if not isinstance(expression, BNode):
+        return ""
+    uses = sorted((s, p) for s, p in g.subject_predicates(expression) if isinstance(s, URIRef))
+    return f" in the {_curie(uses[0][1])} of {_name(uses[0][0])}" if uses else ""
+
+
+def _curie(predicate: Node) -> str:
+    """``rdfs:range``, ``owl:equivalentClass``, ... for the predicates that use class expressions, else the IRI."""
+    for prefix, namespace in (("owl", OWL), ("rdfs", RDFS)):
+        if str(predicate).startswith(str(namespace)):
+            return prefix + ":" + str(predicate).removeprefix(str(namespace))
+    return str(predicate)
+
+
 def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node]) -> None:
     """OWL043: a union or intersection whose operands make the expression trivial or unsatisfiable.
 
@@ -203,7 +219,8 @@ def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node
     g = ctx.g
     members = set(items)
     union = predicate == OWL.unionOf
-    label = _short(predicate)
+    label = _short(predicate) + _where(g, subject)
+    subject = owning_term(g, subject)  # an anonymous expression is reported on the term that uses it
     pairs: set[tuple[str, str]] = set()
     for member in members:
         for other in g.objects(member, OWL.complementOf):

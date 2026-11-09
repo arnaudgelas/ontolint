@@ -360,12 +360,25 @@ def _universal_restrictions(ctx: RuleContext) -> None:
         owner = owning_term(g, restriction)
         if isinstance(owner, URIRef) and not ctx.local(owner):
             continue  # an axiom of an imported or merged vocabulary (BFO, ...), not of the linted ontology
-        via = (
-            f" on {', '.join(_property_name(g, p) for p in on_properties)}"
-            if owner != restriction and on_properties
-            else ""
-        )
-        ctx.add("OWL011", owner, f"Universal restriction{via} does not imply any property value.")
+        on = f" on {', '.join(_property_name(g, p) for p in on_properties)}" if on_properties else ""
+        if owner == restriction:
+            # A general class axiom ("[ owl:allValuesFrom ... ] rdfs:subClassOf ex:X"): no term uses it, so
+            # report it on the named class it is an axiom about, with the property, instead of a bare blank node.
+            target = _gci_class(g, restriction)
+            if target is not None:
+                message = f"Universal restriction{on} in a general class axiom about {target} does not imply any value."
+                ctx.add("OWL011", target, message)
+                continue
+            on = ""  # unchanged wording for a free-standing restriction
+        ctx.add("OWL011", owner, f"Universal restriction{on} does not imply any property value.")
+
+
+def _gci_class(g: Graph, restriction: Node) -> URIRef | None:
+    """The named class a general class axiom on ``restriction`` is about, if there is one."""
+    named = sorted(
+        o for p in (RDFS.subClassOf, OWL.equivalentClass) for o in g.objects(restriction, p) if isinstance(o, URIRef)
+    )
+    return named[0] if named else None
 
 
 def _property_name(g: Graph, node: Node) -> str:

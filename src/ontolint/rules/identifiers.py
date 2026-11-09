@@ -68,6 +68,14 @@ def run(ctx: RuleContext) -> None:
         pieces = safe_urlsplit(s)
         if any(character.isspace() for character in s) or not pieces.scheme:
             ctx.add("IRI001", u, "IRI contains whitespace or is not absolute.", confidence="certain")
+        elif pieces.scheme.lower() in {"http", "https"} and not pieces.netloc:
+            # "http:example.org/x" (one missing "//") parses as an absolute IRI but names no host.
+            ctx.add(
+                "IRI001",
+                u,
+                f"{pieces.scheme}: IRI has no '//' host, so it cannot be dereferenced.",
+                confidence="certain",
+            )
         if (
             u in ctx.ontologies
             and not s.startswith(OBO_NAMESPACE)
