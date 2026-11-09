@@ -46,6 +46,111 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   `tags` ruleset's "linear history" rule means nothing for tags and can go.
   *Done when:* both are observed once.
 
+## 0.8.0 — real-world ontologies
+
+Everything here comes from linting ten public ontologies on 2026-11-09 (sources in the corpus table
+at the end of this section). Each item names the files that show it; every fix gets a small
+synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
+
+- [ ] **Ownership: stop judging vocabularies an ontology only references or merges in.** When the
+  ontology IRI owns none of the declared terms, ownership falls back to "every IRI is owned", so
+  imported, merged or merely referenced terms are linted as the ontology's own. Measured:
+  automatce `automatce.ttl` and `-full` (ODK releases): about 430 of 695 findings are on merged
+  PMDco, OBO, DC and SKOS terms, and even `-base` has 142 of 294; CCO linted as a closure: 70
+  findings on imported BFO; MFTO: 5 false OWL001 warnings ("declare local classes") on BFO classes;
+  ISAAC: 3,778 OWL001 findings, including DUL, schema.org and DBpedia IRIs. Three changes, in
+  `ownership.derive_prefixes` and `Ownership.for_terms`:
+  - strip `.ttl`, `.rdf`, `.json`, `.jsonld`, `.ofn` and `.omn` as well as `.owl` from the
+    ontology IRI (fixes `https://w3id.org/pmd/automatce.ttl`);
+  - generalise the OBO `<dir>/<NAME>_` ID-prefix rule beyond `purl.obolibrary.org`, after removing
+    the ODK release suffixes `-full`, `-base`, `-simple`, `-merged`, `-non-classified` (fixes
+    `…/automatce/automatce-full.ttl` owning `AUTOMATCE_…`);
+  - when derived ownership finds nothing, use the dominant namespace of the declared terms before
+    "own everything" (MFTO: 20 of 20 terms; CCO: over 1,900 of about 2,000; ISAAC: FRED's
+    `domain.owl#`).
+  Default output changes for such files, so it is a minor release. *Done when:* fixtures for each
+  pattern own exactly the project's terms, the goldens are reviewed, and re-running the four files
+  above leaves no finding on a foreign namespace.
+
+- [ ] **Import root: allow the standard Protégé layout.** CCO's catalogs point at sibling
+  directories (`src/cco-merged/catalog-v001.xml` maps to `../cco-modules/*.ttl` and
+  `../cco-imports/bfo-core.ttl`), and today both the umbrella and a single module stop with `SEC009
+  … outside the import root`. With a wider root (simulated) the closure loads: 12 files, 14,014
+  triples, 0.2 s, nothing unresolved. Add `--import-root DIR`, defaulting to the enclosing
+  repository (nearest ancestor with `.git`) and otherwise to the catalog's directory; SEC009 still
+  refuses anything outside it. Also read the catalog next to each loaded module, as Protégé does:
+  EMMO keeps a `catalog-v001.xml` in each directory (`disciplines/`, `disciplines/units/`,
+  `foundation/`, `perspectives/`, `reference/`). *Done when:* CCO's umbrella and modules, and EMMO,
+  lint with `--follow-imports` without a SEC009, and a catalog entry escaping the repository is
+  still refused.
+
+- [ ] **Recognise OWL Functional and Manchester syntax instead of failing obscurely.** ODK edit
+  files are usually Functional Syntax with a `.owl` extension (automatce's `src/ontology/
+  automatce-edit.owl` starts with `Prefix(` and `Import(<…/components/…>)`). ontolint picks the
+  parser from the extension and reports `INPUT001: … SAXParseException: not well-formed (invalid
+  token)`; RDFLib cannot read either syntax. Sniff the content, and for these syntaxes fail with a
+  clear message (convert with `robot convert`, or lint the `-base.ttl` release). Optionally convert
+  offline through the project's ROBOT Docker image, already used by `--owl-profile`. *Done when:*
+  a Functional and a Manchester fixture get the clear message, and, if conversion is added, the
+  automatce edit file and its 10 components lint as a closure.
+
+- [ ] **Relative `owl:imports` (IDS Information Model).** `Ontology.ttl` imports its 86 class files
+  as `<model/…/X.ttl>`. With `--follow-imports` they resolve, but in both modes they also give 80
+  SEC008 "unsafe scheme `file:`" findings whose text holds the reader's local path, so output
+  differs per checkout and baselines break across machines. Report relative imports once, as a note
+  that they depend on where the file is read, show them relative to the file, and keep them out of
+  SEC008. Six of the imports are listed twice; say so. *Done when:* a relative-import fixture gives
+  identical output from two different directories.
+
+- [ ] **Imports of a published build, without a catalog.** MFTO imports BFO and RO by PURL and EMMO
+  domain-mappings imports one EMMO build by URL; neither ships a catalog, and ontolint stays
+  offline. Add `--import-dir DIR`: map imports to the files in a folder by the `owl:Ontology` or
+  `owl:versionIRI` they declare. Match imports on version IRIs in catalogs too (common in OBO; CCO
+  and automatce declare them). When SEC007 lists imports and no catalog was found, say so and point
+  at `robot mirror` or a one-off download plus a catalog. *Done when:* MFTO with a folder holding
+  BFO and RO resolves its two imports.
+
+- [ ] **Rule defects found on these files.** Each is a bug fix, so it can also ship in a patch:
+  - METRIC005 counts a class whose only superclass is external (MFTO: 14 of 18 classes under BFO)
+    as an orphan, because its hierarchy keeps local classes only; CLS001 gets it right.
+  - IRI001 misses `http:` IRIs with no `//` authority (the rights ontology's
+    `http:semanticweb.org/hohfeldiansystem/` and all its terms).
+  - ONT005's message ("Missing creator or dcterms:created") does not say which is missing (the
+    rights ontology has a creator).
+  - OWL011 names only a blank node (`_:4c37b6c9b56d`) for restrictions in anonymous axioms (food
+    traceability, 36 times): name the property and the class that owns the axiom.
+  - A parse failure inside HTML (ISAAC: 37 HTTP 500 error pages saved into the Turtle) could say
+    "an HTML page starts at line 2194"; and RDFLib's own warnings and a full traceback leak onto
+    stderr during parsing (ISAAC), and should be captured.
+
+- [ ] **New checks suggested by these files.** Each needs a rule ID, so they ship in a minor
+  release:
+  - a placeholder ontology IRI (Protégé's `…/untitled-ontology-139`, MFTO);
+  - prefixes declared for a vocabulary that is neither used nor imported (the rights ontology
+    declares CCO's `AllCoreOntology:` and `ROImport:`);
+  - literals typed `rdfs:Literal` (food traceability, 45): believed ill-typed in OWL 2, but check
+    the specification before adding a rule;
+  - decide whether LEX002 should judge individuals by default: 345 of CCO's 346 terms without a
+    definition are `owl:NamedIndividual` units.
+
+- [ ] **Modules declared by annotation (MOMo/OPLa), optional.** The food-traceability schema marks
+  its 13 modules with `opla:isNativeTo "Container"` on 37 of 78 terms, inside one file. A
+  `--module-annotation opla:isNativeTo` option could group findings by module, reusing the stage 2
+  provenance (`In: module Container`). Only if someone asks.
+
+Validation corpus (public; licences per repository):
+
+| Source | Layout | Shows |
+| --- | --- | --- |
+| CommonCoreOntology/CommonCoreOntologies | umbrella, 11 modules, BFO, two catalogs with `../` | import root; ownership in a closure |
+| emmo-repo/EMMO | a catalog per directory, versioned module IRIs | per-directory catalogs |
+| materialdigital/automatce | ODK: `-full`, `-base` and main releases; `src/ontology` edit file, components, imports, catalog | ownership of release artifacts; Functional Syntax |
+| International-Data-Spaces-Association/InformationModel | header file importing 86 files by relative IRI | relative imports, SEC008 paths |
+| neilotte/moralpsych (MFTO, rights ontology) | PURL imports without catalog; placeholder IRI; `http:` without `//` | `--import-dir`; rule defects |
+| emmo-repo/domain-mappings | one import of a published build | `--import-dir` |
+| StenDoipanni/ISAAC | headerless FRED knowledge graph with embedded HTML errors | ownership; parse diagnostics |
+| Data-Semantics-Laboratory/Modular-Ontology-Modeling-for-Food-Supply-Chains | MOMo modules by OPLa annotation | module annotations |
+
 ## P1 — reporting, policy and supply-chain correctness
 
 - [ ] **Source regions: confirm one real-world JSON-LD layout.** Everything else in this item is
@@ -167,9 +272,9 @@ moves from `proposed` merely because it has an attractive title.
 - [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built (see "Recently
   done"): offline resolution, per-module provenance, closure semantics and SHACL with the ontology
   as background. Left:
-  - *Validation on a public corpus:* one ODK-based OBO repository (catalog plus `imports/` modules)
-    linted with `--follow-imports`, with no finding its maintainers' CI would call a false positive.
-    So far checked on one private 12-module ontology and the synthetic corpus only.
+  - *Validation on a public corpus:* started on 2026-11-09, see "0.8.0 — real-world ontologies":
+    CCO, EMMO and automatce are blocked by the import root, ownership and Functional Syntax items
+    there; the closure itself loaded correctly once the root was widened.
   - *Memory:* each module's source index keeps its graph alive, so a closure holds its triples
     twice. Bounded by `max_triples`, but measure a large closure and drop the per-module graphs if
     it matters.
@@ -177,8 +282,8 @@ moves from `proposed` merely because it has an attractive title.
     module to carry its own license or version has to lint the modules one by one. Add a policy key
     only if someone asks.
   - *CQ (competency questions):* the decision gate above can now build on the closure.
-  *Done when:* the public-corpus check is recorded and the memory measurement is either fine or
-  fixed.
+  *Done when:* CCO, EMMO and the automatce source lint as closures with no finding their
+  maintainers would call a false positive, and the memory measurement is either fine or fixed.
 
 ## Explicitly deferred
 
