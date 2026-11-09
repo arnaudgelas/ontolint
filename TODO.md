@@ -21,6 +21,24 @@ next audit can confirm them, then delete these entries. Leftovers from each are 
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
+- Unreleased, branch `fix/borrowed-vocabularies` (for 0.9.0, not merged or pushed):
+  - borrowed vocabulary terms are not the ontology's own (`deed446`): Dublin Core, SKOS, DCAT, IAO
+    and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
+    METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
+    now; the corpus, twelve well-known vocabularies linted on their own and the CCO closure are
+    unchanged;
+  - SEM001 groups ROBOT's violations by kind and subject; the full report is the finding's new
+    `details` field in JSON and SARIF (`fd65893`);
+  - the release `verify` job checks PyPI holds exactly the built files and verifies each one's
+    PEP 740 attestation (`07099e5`), tried on the published 0.8.0 files and on tampered copies;
+  - specifications for every error-severity rule and the whole OWL family (OWL001-OWL045, the
+    SKOS errors, ALIGN003, the SHQ errors, SEC014 and the pipeline rules), in each module's
+    docstring with cases for each condition and exclusion and corrected catalogue rows
+    (`28a39cf` to `19291b4`). Defects fixed on the way: OWL008, OWL011 (the closure axiom it
+    recommends: 20 false positives gone on the corpus, nothing else changed), OWL022, OWL024,
+    OWL036 (`-0`), SKOS001 (tag case, `xsd:string`), SKOS002, SKOS008, SKOS009 (transitive),
+    SKOS016, SHQ011 (`x` and `q` flags), SHQ018 (a crash and numeric promotion), and in the safe
+    loader SEC001 (catalog size), SEC009 (symlinked directories) and SEC013 (C resolvers, UDP).
 - 0.8.0 (`7b08ff8`, tag `v0.8.0`), released. From
   linting fifteen public ontologies:
   - ownership judges only an ontology's own terms (`a6eef83`): file extensions and ODK release
@@ -69,7 +87,10 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   Renovate's own branches are not restricted, and its automerge now squashes
   (`"automergeStrategy": "squash"` in `.github/renovate.json`), which the linear-history rule
   accepts. What is left: Renovate has never run here (no branch, pull request or Dependency
-  Dashboard issue), so the Renovate GitHub app is probably not installed. Install it, then watch one
+  Dashboard issue), so the Renovate GitHub app is probably not installed. The maintainer enabled
+  the app on 2026-11-09; two hours later there was still no branch, pull request or dashboard
+  issue, so check that the installation includes this repository ("Only select repositories")
+  and that it is enabled in the Mend developer portal. Then watch one
   rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear history" rule means
   nothing for tags and can go. *Done when:* both are observed once.
 
@@ -95,22 +116,6 @@ What is done is under "Recently done"; what is left is optional or waits on a de
   `test_legacy_rules_unchanged_linter` keeps byte-identical, because baseline fingerprints include
   the message. Change it ("Missing a creator and dcterms:created provenance.", or only the missing
   one) together with any other legacy message change, with an upgrade note.
-
-- [ ] **Borrowed annotation properties declared for OWL 2 DL are linted as own terms.** OWL 2 DL
-  requires `skos:definition`, `dcterms:title` and the like to be declared as
-  `owl:AnnotationProperty`, and SEM001 (ROBOT `validate-profile`) reports them until they are.
-  Once declared, they count as declared terms in `Ownership.for_terms`. When the ontology IRI owns
-  none of the file's own terms (`…/ontology/meta` with terms under `…/ontology/core#`, IRI004) and
-  the own namespace holds no more than `DOMINANT_PERCENT` of the declared terms (5 of 12 in the
-  pattern seen), ownership falls back to "own everything". The borrowed properties then draw LEX001
-  and LEX002 (no label, no definition), METRIC003 (undocumented properties) and IRI005/IRI008
-  (mixed hash/slash and http/https). A small metadata module gained 15 such findings by fixing
-  SEM001. Likely fix: leave the namespaces of well-known vocabularies (Dublin Core, SKOS, DCAT,
-  FOAF, PROV, schema.org, OBO IAO/RO, …) out of the declared terms that ownership counts, as
-  `is_builtin` already does for RDF, RDFS, OWL and XSD; or ignore declarations that carry
-  nothing but `rdf:type`. *Done when:* a fixture with an IRI-mismatched header, five own terms and
-  seven declared borrowed annotation properties gives no LEX001, LEX002, METRIC003, IRI005 or
-  IRI008 finding on the borrowed ones, and the 0.8.0 corpus results do not change.
 
 - Decided, recorded here so the next audit does not reopen them:
   - IRI016 on an ontology IRI ending in `#` (MODL) is not a defect: the rule's cases deliberately
@@ -187,6 +192,39 @@ Validation corpus (public; licences per repository):
   fixtures; correct documentation or implementation when they disagree.
   *Done when:* each implemented rule has an approved, testable specification and its catalogue,
   user documentation, and fixtures state the same contract.
+  Done on the 0.9.0 branch: every error-severity rule and the whole OWL family (see "Recently
+  done"); the specifications await the maintainer's approval. Next: the METRIC family. Left open
+  by that review:
+  - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
+    `--fail-on` results): OWL009 warning → error, and OWL010 info → warning or error (both
+    describe graphs outside OWL 2 DL); OWL013/OWL014 → error; OWL032 info → warning; OWL045's
+    missing or malformed list → error like OWL031; OWL038 error or warning; confidence `certain`
+    for OWL023, OWL041, SHQ008 and SHQ018 (exact checks still on the default `heuristic`, which
+    changes `differential.json`); OWL004/OWL007 `heuristic`; category `deterministic` for SKOS001
+    and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
+  - *Defects that change an exit code, a focus or a message:* an unwritable `--output` raises a
+    traceback and exits 1 instead of TOOL001 and exit 2 (`cli.py` `main`, README "Exit codes");
+    SEM001 reports a failed image pull or a ROBOT crash as a profile violation (exit 1,
+    baselinable) instead of a failed rule (exit 2); SEM001's focus is the absolute file path, so
+    its fingerprint depends on the machine; SEC014's focus repeats the password it reports (RFC
+    3986 §3.2.1 says not to show it); OWL013 (legacy), OWL034, OWL036 and OWL040 print Python
+    reprs (`rdflib.term.Literal(...)`) instead of N3.
+  - *Policy that silently does nothing:* `--ignore`, `--select` and `severity_overrides` accept the
+    pipeline rules (SEC001-SEC015, INPUT001, TOOL001) and have no effect; reject them or say so.
+    A file in an `--import-dir` that the safe loader refuses is skipped without a note.
+  - *Coverage gaps, now stated as exclusions with negative cases* (each needs a new message):
+    OWL010 empty or malformed chain; OWL019 non-simplicity through sub-properties, inverses and
+    equivalents (needs a closure; no rule checks non-simple properties in cardinalities,
+    `owl:hasSelf` or disjointness); OWL032/OWL033 on `owl:disjointUnionOf`; OWL034 with both
+    `owl:onProperty` and `owl:onProperties`; OWL035/OWL036 with several constraints, `hasSelf`
+    other than true, or both `onClass` and `onDataRange`; OWL037 unqualified max 0 against a
+    qualified min; OWL040 `rdf:langString` and `owl:real`; SHQ008 derived integer datatypes
+    (SHACL requires `xsd:integer`); SHQ011 invalid flag letters and XSD-invalid patterns Python
+    accepts; no rule for a non-integer `sh:minLength`/`sh:maxLength`; ALIGN003 `relatedMatch` in
+    an exactMatch chain (S46); `skos:related` plus `skos:broadMatch` on one pair (S27 via S41).
+  - *Documentation:* `docs/rules.md` shows only each rule's first positive and negative case, so
+    the new cases and the specifications are visible only in the source. Render the module
+    specifications (or all cases) in the generator.
 
 - [ ] **Close the remaining legal and provenance gaps.** Done in 0.5.0: `SECURITY.md` points
   reporters at GitHub private vulnerability reporting and states the supported versions. Checked:
@@ -203,8 +241,8 @@ Validation corpus (public; licences per repository):
     MPL-2.0 (certifi, pathspec, hypothesis); the ROBOT jar is downloaded at image build with a
     pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
     origin is not recorded;
-  - verifying the attestation in the release `verify` job, for example with `pypi-attestations
-    verify pypi`. Not added yet, because it could not be tried locally first.
+  - verifying the attestation in the release `verify` job: done on the 0.9.0 branch (`07099e5`);
+    it is proven by the next release run.
   *Done when:* the copyright-holder question has a written answer in the repository, and a release run
   fails if the published files' attestations do not verify.
 
