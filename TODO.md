@@ -6,7 +6,8 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the next feature release (0.9.0; 0.8.0 shipped while it was still open). `P1` is the next milestone after P0. `P2` is worthwhile
+blocks the next feature release (0.9.0; 0.8.0 shipped while it was still open). `P1` is the next
+milestone after P0. `P2` is worthwhile
 only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
@@ -14,13 +15,13 @@ record.
 
 ## Recently done
 
-0.6.0 and 0.7.0 were released on 2026-11-09, both after the maintainer's approval in the release
-run; 0.8.0 was tagged the same day (`7b08ff8`) and waits for that approval. Kept only so the
+0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
+release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). Kept only so the
 next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- 0.8.0 (`7b08ff8`, tag `v0.8.0`), merged to `main` and tagged; confirm the PyPI upload. From
+- 0.8.0 (`7b08ff8`, tag `v0.8.0`), released. From
   linting fifteen public ontologies:
   - ownership judges only an ontology's own terms (`a6eef83`): file extensions and ODK release
     suffixes are stripped from the ontology IRI, the `<dir>/<NAME>_` ID prefix applies beyond OBO,
@@ -94,6 +95,22 @@ What is done is under "Recently done"; what is left is optional or waits on a de
   `test_legacy_rules_unchanged_linter` keeps byte-identical, because baseline fingerprints include
   the message. Change it ("Missing a creator and dcterms:created provenance.", or only the missing
   one) together with any other legacy message change, with an upgrade note.
+
+- [ ] **Borrowed annotation properties declared for OWL 2 DL are linted as own terms.** OWL 2 DL
+  requires `skos:definition`, `dcterms:title` and the like to be declared as
+  `owl:AnnotationProperty`, and SEM001 (ROBOT `validate-profile`) reports them until they are.
+  Once declared, they count as declared terms in `Ownership.for_terms`. When the ontology IRI owns
+  none of the file's own terms (`…/ontology/meta` with terms under `…/ontology/core#`, IRI004) and
+  the own namespace holds no more than `DOMINANT_PERCENT` of the declared terms (5 of 12 in the
+  pattern seen), ownership falls back to "own everything". The borrowed properties then draw LEX001
+  and LEX002 (no label, no definition), METRIC003 (undocumented properties) and IRI005/IRI008
+  (mixed hash/slash and http/https). A small metadata module gained 15 such findings by fixing
+  SEM001. Likely fix: leave the namespaces of well-known vocabularies (Dublin Core, SKOS, DCAT,
+  FOAF, PROV, schema.org, OBO IAO/RO, …) out of the declared terms that ownership counts, as
+  `is_builtin` already does for RDF, RDFS, OWL and XSD; or ignore declarations that carry
+  nothing but `rdf:type`. *Done when:* a fixture with an IRI-mismatched header, five own terms and
+  seven declared borrowed annotation properties gives no LEX001, LEX002, METRIC003, IRI005 or
+  IRI008 finding on the borrowed ones, and the 0.8.0 corpus results do not change.
 
 - Decided, recorded here so the next audit does not reopen them:
   - IRI016 on an ontology IRI ending in `#` (MODL) is not a defect: the rule's cases deliberately
