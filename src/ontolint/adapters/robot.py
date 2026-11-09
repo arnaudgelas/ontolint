@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import tempfile
@@ -65,11 +66,20 @@ def _subjects(ranked: list[tuple[str, int]]) -> str:
     return shown + (f", {len(ranked) - SHOWN_SUBJECTS} more" if len(ranked) > SHOWN_SUBJECTS else "")
 
 
+def _host_user() -> list[str]:
+    """``--user uid:gid`` of the calling process, or nothing where the OS has no POSIX ids (Windows)."""
+    if not hasattr(os, "getuid"):
+        return []
+    return ["--user", f"{os.getuid()}:{os.getgid()}"]
+
+
 def robot_profile_issues(ontology: Path, profile: str, image: str, timeout: int) -> list[Finding]:
     """Run ROBOT profile validation in an isolated Docker container.
 
     The ontology's parent directory is mounted read-only and the container has no
     network access. Use a digest-pinned ``image`` in CI for reproducibility.
+    On POSIX the container runs as the calling user, so ROBOT can write its report
+    into the private (mode 0700) output directory.
     """
     source = ontology.resolve()
     if not source.is_file():
@@ -93,6 +103,7 @@ def robot_profile_issues(ontology: Path, profile: str, image: str, timeout: int)
             "ALL",
             "--security-opt",
             "no-new-privileges",
+            *_host_user(),
             "-v",
             f"{source.parent}:/input:ro",
             "-v",

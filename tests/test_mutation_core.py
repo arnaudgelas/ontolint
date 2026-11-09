@@ -208,3 +208,27 @@ def test_robot_subprocess_is_not_checked(monkeypatch: pytest.MonkeyPatch, tmp_pa
     assert seen == {"capture_output": True, "text": True, "timeout": 5, "check": False}
     assert [f.rule for f in findings] == ["SEM001"]
     assert "bad profile" in findings[0].message
+
+
+def test_robot_container_runs_as_the_calling_user(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    # The output directory is a private 0700 temporary directory: the image's own user cannot write to it.
+    ttl = tmp_path / "a.ttl"
+    ttl.write_text("", encoding="utf-8")
+    commands: list[list[str]] = []
+
+    def fake_run(command: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(robot_adapter.os, "getuid", lambda: 1001, raising=False)
+    monkeypatch.setattr(robot_adapter.os, "getgid", lambda: 121, raising=False)
+    monkeypatch.setattr(robot_adapter.subprocess, "run", fake_run)
+    assert robot_adapter.robot_profile_issues(ttl, "EL", "img", 5) == []
+    command = commands[0]
+    assert command[command.index("--user") + 1] == "1001:121"
+    assert command.index("--user") < command.index("img")  # a Docker option, not a ROBOT argument
+
+
+def test_robot_container_user_is_omitted_without_posix_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delattr(robot_adapter.os, "getuid", raising=False)
+    assert robot_adapter._host_user() == []  # noqa: SLF001
