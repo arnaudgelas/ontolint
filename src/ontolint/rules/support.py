@@ -155,3 +155,15 @@ def display_iri(iri: str, bases: tuple[str, ...]) -> str:
     """``iri`` for a message: relative to the linted file when it came from a relative reference."""
     relative = relative_reference(iri, bases)
     return iri if relative is None else relative
+
+
+ONTOLOGY_IRI = URIRef("http://www.w3.org/2002/07/owl#ontologyIRI")
+
+
+def describing_nodes(g: Graph, ontology: Node) -> list[Node]:
+    """``ontology`` and every node that names it with ``owl:ontologyIRI`` and so carries its metadata.
+
+    A metadata vocabulary may describe an ontology on a separate node (MOD puts its title, licence and
+    creators on ``<https://w3id.org/mod#>``, which says ``owl:ontologyIRI <https://w3id.org/mod>``).
+    """
+    return [ontology, *sorted(g.subjects(ONTOLOGY_IRI, ontology), key=str)]

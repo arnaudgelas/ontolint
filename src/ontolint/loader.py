@@ -86,6 +86,10 @@ class ParseFailure(LoadError, ValueError):
         self.detail = detail
 
 
+SPDX_SCAN_BYTES = 8192
+"""How far into a file an ``SPDX-License-Identifier:`` comment is looked for (file headers only)."""
+
+
 @dataclass(frozen=True)
 class Module:
     """One file of an ``owl:imports`` closure: its report identity, the IRIs it declares, its source positions."""
@@ -110,6 +114,8 @@ class LoadedGraph:
     imported_ontologies: frozenset[str] = frozenset()
     modules: tuple[Module, ...] = ()
     """With --follow-imports: the root file first, then every imported file in load order."""
+    comment_license: str | None = None
+    """The licence named by an ``SPDX-License-Identifier:`` comment in the file, if any."""
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.
@@ -416,7 +422,16 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
     loaded = load_document(item, policy, root)
     # Keep the established Graph-returning API while letting the CLI retain loader metadata.
     setattr(loaded.graph, "_ontolint_source_index", loaded.source_index)  # noqa: B010 -- Graph has no metadata slot.
+    setattr(loaded.graph, "_ontolint_comment_license", loaded.comment_license)  # noqa: B010 -- likewise.
     return loaded.graph
+
+
+def loaded_graph(graph: Graph) -> LoadedGraph:
+    """The :class:`LoadedGraph` for a graph returned by :func:`load_graph` (its metadata travels with it)."""
+    license_comment = getattr(graph, "_ontolint_comment_license", None)
+    return LoadedGraph(
+        graph, source_index(graph), comment_license=license_comment if isinstance(license_comment, str) else None
+    )
 
 
 def source_index(graph: Graph) -> SourceIndex:
@@ -455,7 +470,9 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
             raise
         hint = f"; an HTML page starts at line {line} (a web page or server error saved in place of RDF?)"
         raise ParseFailure(failure.cause_type, failure.detail + hint) from failure
-    return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph))
+    spdx = re.search(rb"SPDX-License-Identifier:\s*([A-Za-z0-9.+-]+)", data[:SPDX_SCAN_BYTES])
+    license_comment = spdx.group(1).decode("ascii") if spdx else None
+    return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph), comment_license=license_comment)
 
 
 def _parse_document(data: bytes, fmt: str, public_id: str, display: str, policy: Policy) -> Graph:

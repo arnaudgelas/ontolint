@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -186,3 +187,47 @@ def test_no_suggestion_for_a_few_terms_or_an_unrelated_predicate(
     assert "TOOL005" not in _stderr(tmp_path, capsys, few)
     other = "".join(f"ex:C{i} a owl:Class ; <https://v.test/note> 'Note {i}.'@en .\n" for i in range(12))
     assert "TOOL005" not in _stderr(tmp_path, capsys, other)
+
+
+def test_header_metadata_on_a_node_naming_the_ontology_counts() -> None:
+    # MOD describes itself on <…/mod#>, which names the ontology <…/mod> with owl:ontologyIRI.
+    body = (
+        "@prefix dcterms: <http://purl.org/dc/terms/> .\n"
+        "<https://example.test/mod> a owl:Ontology .\n"
+        "<https://example.test/mod#> owl:ontologyIRI <https://example.test/mod> ;\n"
+        "    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ; owl:versionInfo '3.2' ;\n"
+        "    dcterms:creator 'Someone' ; dcterms:created '2024-01-01' ; rdfs:comment 'A vocabulary.' ;\n"
+        "    dcterms:publisher 'An organisation' .\n"
+    )
+    for rule in ("ONT003", "ONT004", "ONT005", "ONT006", "GOV004"):
+        assert fired(body, rule) == [], rule
+    assert fired(body.replace("owl:ontologyIRI", "rdfs:seeAlso"), "ONT003") == ["https://example.test/mod"]
+
+
+def _cli(tmp_path: Path, capsys: pytest.CaptureFixture[str], text: str, rule: str) -> tuple[list[str], str]:
+    path = tmp_path / "o.ttl"
+    path.write_text(text, encoding="utf-8")
+    out = tmp_path / "r.json"
+    main([str(path), "--select", rule, "--format", "json", "--fail-on", "never", "--output", str(out)])
+    messages = [f["message"] for f in json.loads(out.read_text(encoding="utf-8"))["findings"]]
+    return messages, capsys.readouterr().err
+
+
+def test_ont003_mentions_a_licence_named_only_in_an_spdx_comment(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Tractus-X: "# SPDX-License-Identifier: CC-BY-4.0" in the file header, no dcterms:license.
+    header = PREFIXES + "<https://example.test/onto> a owl:Ontology .\n"
+    messages, _err = _cli(tmp_path, capsys, "# SPDX-License-Identifier: CC-BY-4.0\n" + header, "ONT003")
+    assert messages == [
+        "Ontology has no license annotation. The file names CC-BY-4.0 only in an SPDX comment; "
+        "state it with dcterms:license."
+    ]
+    assert _cli(tmp_path, capsys, header, "ONT003")[0] == ["Ontology has no license annotation."]
+
+
+def test_rdflib_warnings_do_not_leak_onto_stderr(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # MOD: an ill-typed date made RDFLib print a traceback while parsing.
+    text = PREFIXES + "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\nex:a ex:issued '2024-06-2'^^xsd:date .\n"
+    _messages, err = _cli(tmp_path, capsys, text, "ONT001")
+    assert err == ""

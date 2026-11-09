@@ -101,6 +101,8 @@ class Policy:
     # With --follow-imports: the IRIs the root file itself declares; ownership is derived from them, so a
     # large import can never outweigh the linted ontology's own terms.
     root_terms: frozenset[str] = frozenset()
+    # A licence the linted file names only in an "SPDX-License-Identifier:" comment, which RDF cannot see.
+    comment_license: str | None = None
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -167,6 +169,7 @@ class Policy:
             imported_ontologies=frozenset(),
             document_bases=(),
             root_terms=frozenset(),
+            comment_license=None,
         )
 
 
@@ -178,7 +181,9 @@ class PolicyVersionError(ValueError):
     """The policy file declares a ``policy_version`` this ontolint does not support (reported as GOV020)."""
 
 
-_RUNTIME_FIELDS = frozenset({"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases", "root_terms"})
+_RUNTIME_FIELDS = frozenset(
+    {"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases", "root_terms", "comment_license"}
+)
 """Policy fields filled in while linting, not accepted from a policy file."""
 
 

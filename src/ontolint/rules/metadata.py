@@ -9,9 +9,13 @@ from rdflib.namespace import DCTERMS, OWL
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import META_CREATOR, META_LICENSE
+from .support import META_CREATOR, META_LICENSE, describing_nodes
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from rdflib.term import Node
+
     from .runtime import RuleContext
 
 # Creator-like provenance: the shared creator predicates plus contributors and PAV authorship.
@@ -101,11 +105,18 @@ def run(ctx: RuleContext) -> None:
     if len(ctx.ontologies) > 1:  # in an import closure, module headers are not counted (GraphContext.build)
         ctx.add("ONT002", "(ontology)", f"{len(ctx.ontologies)} owl:Ontology declarations found.")
     for ont in sorted(ctx.ontologies, key=str):
-        if not any((ont, p, None) in g for p in META_LICENSE):
-            ctx.add("ONT003", ont, "Ontology has no license annotation.", confidence="certain")
-        if not any((ont, p, None) in g for p in (OWL.versionIRI, OWL.versionInfo)):
+        nodes = describing_nodes(g, ont)  # the header, and any node naming it with owl:ontologyIRI
+
+        def has(predicates: Iterable[Node], nodes: list[Node] = nodes) -> bool:
+            return any((node, p, None) in g for node in nodes for p in predicates)
+
+        if not has(META_LICENSE):
+            spdx = ctx.policy.comment_license
+            hint = f" The file names {spdx} only in an SPDX comment; state it with dcterms:license." if spdx else ""
+            ctx.add("ONT003", ont, f"Ontology has no license annotation.{hint}", confidence="certain")
+        if not has((OWL.versionIRI, OWL.versionInfo)):
             ctx.add("ONT004", ont, "No versionIRI/versionInfo.")
-        if not any((ont, p, None) in g for p in CREATOR_PREDICATES) or (ont, DCTERMS.created, None) not in g:
+        if not has(CREATOR_PREDICATES) or not has((DCTERMS.created,)):
             ctx.add("ONT005", ont, "Missing creator or dcterms:created provenance.")
-        if not any((ont, p, None) in g for p in ctx.descriptions):
+        if not has(ctx.descriptions):
             ctx.add("ONT006", ont, "Missing ontology description.")

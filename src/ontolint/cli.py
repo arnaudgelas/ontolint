@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
 import sys
 from collections.abc import Sequence
@@ -24,7 +25,7 @@ from . import engine
 from ._version import package_version
 from .catalogue import planned_rows
 from .imports import CATALOG_NAME, Catalog, index_directory, load_closure, read_catalog
-from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, source_index
+from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, loaded_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
@@ -221,6 +222,7 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         imported_ontologies=loaded.imported_ontologies,
         document_bases=tuple(sorted(bases)),
         root_terms=loaded.modules[0].declared if loaded.modules else frozenset(),
+        comment_license=loaded.comment_license,
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background
@@ -350,7 +352,7 @@ def _import_root(args: argparse.Namespace) -> Path | None:
 
 def _closure(item: InputFile, policy: Policy, options: ImportOptions) -> LoadedGraph:
     graph = load_graph(item, policy)
-    return _closure_of(item, LoadedGraph(graph, source_index(graph)), policy, options)
+    return _closure_of(item, loaded_graph(graph), policy, options)
 
 
 def _closure_of(item: InputFile, root: LoadedGraph, policy: Policy, options: ImportOptions) -> LoadedGraph:
@@ -395,7 +397,7 @@ def _parse_inputs(inputs: list[InputFile], imports: ImportOptions | None = None)
                 graphs.append(_closure(item, policy, imports))
                 continue
             graph = load_graph(item, policy)
-            graphs.append(LoadedGraph(graph, source_index(graph)))
+            graphs.append(loaded_graph(graph))
         except InputRejected as exc:
             where = f" for {item.display}" if len(inputs) > 1 and item.display not in exc.message else ""
             errors.append(f"{exc.rule_id}: {exc.message}{where}")
@@ -517,6 +519,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the linter CLI and return its process exit code (0 clean, 1 gated findings, 2 tool failure)."""
     parser = build_parser()
     args = parser.parse_args(argv)
+    # RDFLib logs its own warnings (and tracebacks) while parsing; ontolint reports input problems itself.
+    logging.getLogger("rdflib").setLevel(logging.ERROR)
     info = _info_command(args)
     if info is not None:
         return info

@@ -20,7 +20,7 @@ from rdflib.term import Node
 from ontolint.context import KINDS
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import META_CREATOR
+from .support import META_CREATOR, describing_nodes
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -226,7 +226,7 @@ def _local_terms(ctx: RuleContext) -> list[URIRef]:
 
 def _contact(ctx: RuleContext) -> None:
     for ont in sorted(ctx.ontologies, key=str):
-        if not _has_any(ctx, ont, CONTACT_PREDICATES):
+        if not any(_has_any(ctx, node, CONTACT_PREDICATES) for node in describing_nodes(ctx.g, ont)):
             ctx.add("GOV004", ont, "Ontology names no contact, publisher or maintainer.")
 
 
