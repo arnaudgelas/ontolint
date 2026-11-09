@@ -141,3 +141,37 @@ jobs:
           venv/bin/ontolint smoke.ttl --format json --fail-on never > report.json
           python3 -c "import json; n = len(json.load(open('report.json'))['findings']); assert n > 0, 'no findings'; print(n, 'findings')"
           venv/bin/ontolint --list-rules --format json | python3 -c "import json, sys; assert len(json.load(sys.stdin)['rules']) > 200"
+
+      # Trusted Publishing attaches a PEP 740 attestation to every upload. Check that PyPI holds
+      # exactly the files this run built, and that each one's attestation names this repository and
+      # signs those very bytes, so a file swapped or added after the build fails the release run.
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+
+      - name: Download distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - name: Verify the PyPI attestations
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          built=$(for file in dist/*; do basename "$file"; done | sort)
+          published=$(curl -sSf "https://pypi.org/pypi/ontolint/$version/json" \
+            | python3 -c "import json, sys; print('\n'.join(sorted(u['filename'] for u in json.load(sys.stdin)['urls'])))")
+          if [ "$built" != "$published" ]; then
+            echo "::error::PyPI files for $version differ from the build: built [$built], published [$published]"
+            exit 1
+          fi
+          for file in dist/*; do
+            uv run --frozen --only-group release pypi-attestations verify pypi \
+              --repository "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$file"
+          done

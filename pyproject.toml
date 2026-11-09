@@ -176,3 +176,6 @@ dev = [
     "pytest-xdist>=3.8.0",
     "ruff>=0.17.4",
 ]
+release = [
+    "pypi-attestations>=0.0.31",
+]
