@@ -160,6 +160,9 @@ def network_disabled() -> Generator[NetworkAttempts]:
     def getaddrinfo(host: Any, *args: Any, **kwargs: Any) -> Any:
         raise _blocked(attempts, f"resolve {host!r}")
 
+    def sendto(self: socket.socket, data: Any, *args: Any) -> int:
+        raise _blocked(attempts, f"sendto {args[-1] if args else '?'!r}")
+
     def fetch_context(*args: Any, **kwargs: Any) -> Any:
         target = str(args[0]) if args else "?"
         attempts.contexts.append(target)
@@ -171,6 +174,11 @@ def network_disabled() -> Generator[NetworkAttempts]:
             (socket.socket, "connect_ex", connect_ex),
             (socket, "create_connection", create_connection),
             (socket, "getaddrinfo", getaddrinfo),
+            # The C resolvers below do not go through ``socket.getaddrinfo``; UDP needs no ``connect``.
+            (socket, "gethostbyname", getaddrinfo),
+            (socket, "gethostbyname_ex", getaddrinfo),
+            (socket, "gethostbyaddr", getaddrinfo),
+            (socket.socket, "sendto", sendto),
             (jsonld_context, "source_to_json", fetch_context),
         )
         for owner, name, replacement in patches:
@@ -352,14 +360,23 @@ def _read_limited(item: InputFile, limit: int) -> bytes:
 def check_path(item: InputFile, root: Path) -> None:
     """Refuse a relative argument that climbs out of ``root`` or a symlink whose target lies outside it.
 
-    Absolute paths are explicit user intent and are accepted; links that stay beneath ``root`` are fine.
+    A path that lies beneath ``root`` as written but reaches a file outside it through a symlinked directory
+    (``linked/x.ttl`` with ``linked -> /elsewhere``) is refused too.  Absolute paths outside ``root`` are explicit
+    user intent and are accepted; links that stay beneath ``root`` are fine.
     """
     if item.escapes_root:
         raise InputRejected("SEC009", f"{item.display} escapes the working directory through '..'")
+    real_root = Path(os.path.realpath(root))
+    target = Path(os.path.realpath(item.path))
+    if target.is_relative_to(real_root):
+        return
     if item.path.is_symlink():
-        target = Path(os.path.realpath(item.path))
-        if not target.is_relative_to(Path(os.path.realpath(root))):
-            raise InputRejected("SEC009", f"{item.display} is a symlink to {target.as_posix()} outside the working dir")
+        raise InputRejected("SEC009", f"{item.display} is a symlink to {target.as_posix()} outside the working dir")
+    if item.path.is_relative_to(root):
+        raise InputRejected(
+            "SEC009",
+            f"{item.display} goes through a symlinked directory to {target.as_posix()} outside the working dir",
+        )
 
 
 def _network_problem(display: str, attempts: NetworkAttempts) -> InputRejected | None:

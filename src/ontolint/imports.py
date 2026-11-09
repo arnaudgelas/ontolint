@@ -66,12 +66,21 @@ def _file_iri(iri: str) -> Path | None:
     return Path(os.path.normpath(unquote(parts.path)))
 
 
-def read_catalog(path: Path, max_bytes: int) -> Catalog:
-    """Read an OASIS XML catalog; relative targets resolve against its directory (and any ``xml:base``)."""
+def _catalog_bytes(path: Path, max_bytes: int) -> bytes:
+    """At most ``max_bytes`` of the catalog, like any input: a larger (or endless) catalog is refused (SEC001)."""
     try:
-        data = path.read_bytes()
+        with path.open("rb") as handle:
+            data = handle.read(max_bytes + 1)
     except OSError as exc:
         raise CatalogError(f"cannot read the catalog {path}: {exc}") from exc
+    if len(data) > max_bytes:
+        raise InputRejected("SEC001", f"catalog {path} is larger than the limit of {max_bytes} bytes (max_input_bytes)")
+    return data
+
+
+def read_catalog(path: Path, max_bytes: int) -> Catalog:
+    """Read an OASIS XML catalog; relative targets resolve against its directory (and any ``xml:base``)."""
+    data = _catalog_bytes(path, max_bytes)
     problem = dtd_problem(data, max_bytes)
     if problem is not None:
         raise InputRejected("SEC010", f"catalog {path} {problem}")
