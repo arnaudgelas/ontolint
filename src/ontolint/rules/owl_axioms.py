@@ -1,7 +1,77 @@
 """OWL axiom and property-characteristic rules: OWL016-OWL030.
 
 All rules are asserted-graph checks; nothing is entailed and no reasoner is involved.  Subproperty,
-subclass and equivalence relations are read as asserted, never closed transitively.
+subclass and equivalence relations are read as asserted, never closed transitively.  A property's kind
+is read from its explicit ``rdf:type owl:ObjectProperty`` / ``owl:DatatypeProperty`` only (a
+characteristic such as ``owl:TransitiveProperty`` does not make it an object property).  No rule is
+restricted to owned terms: every subject of the graph is checked, imported or not.  Every finding is
+``certain`` except OWL023's.  Their specifications:
+
+* **OWL016.** A node typed ``owl:DatatypeProperty`` and ``owl:ReflexiveProperty`` or
+  ``owl:IrreflexiveProperty``; one finding per characteristic.  The other object-only characteristics
+  (symmetric, asymmetric, transitive, inverse-functional) on a datatype property are OWL009's.
+  *Error:* (ir)reflexivity axioms take an object property expression, so the graph is not OWL 2 DL.
+* **OWL017.** A node typed both ``owl:SymmetricProperty`` and ``owl:AsymmetricProperty``.
+  *Error:* consistent, but the property can hold between no individuals (an unsatisfiable property).
+* **OWL018.** A node typed ``owl:ReflexiveProperty`` and ``owl:IrreflexiveProperty``, or
+  ``owl:ReflexiveProperty`` and ``owl:AsymmetricProperty`` (asymmetry implies irreflexivity); one
+  finding per pair.  Reflexive with symmetric, and irreflexive with asymmetric, are compatible.
+  *Error:* every individual must then relate to itself and must not, so the ontology is inconsistent.
+* **OWL019.** A node typed ``owl:FunctionalProperty``, ``owl:InverseFunctionalProperty``,
+  ``owl:IrreflexiveProperty`` or ``owl:AsymmetricProperty`` that is itself typed
+  ``owl:TransitiveProperty`` or is the subject of an ``owl:propertyChainAxiom`` whose well-formed list
+  has at least two operands; one finding per characteristic.  Non-simplicity is not inherited: a
+  property with a transitive or chain-defined sub-property, sub-property inverse or equivalent
+  (non-simple by OWL 2 Structural Specification section 11.1) is not reported, nor are non-simple
+  properties in cardinality, ``owl:hasSelf`` or property-disjointness axioms.  A one-operand chain is
+  OWL010's.  *Error:* violates the OWL 2 DL global restriction on simple properties.
+* **OWL020.** A strongly connected component of two or more IRIs in the asserted
+  ``rdfs:subPropertyOf`` graph; one finding per component, on its lexically first member, naming all of
+  them.  Self-loops, edges to or from blank nodes, and ``owl:equivalentProperty`` are ignored.
+  *Warning:* valid OWL; the cycle only entails that its members are equivalent, which is usually
+  unintended.
+* **OWL021.** A triple ``p rdfs:subPropertyOf q`` or ``p owl:equivalentProperty q`` where one side is
+  typed ``owl:ObjectProperty`` and not ``owl:DatatypeProperty`` and the other the reverse; reported on
+  ``p``.  An untyped side, or one typed both kinds (OWL003's), is not reported.
+  *Error:* sub- and equivalent-property axioms relate properties of one kind; not OWL 2 DL.
+* **OWL022.** An ``rdfs:range`` IRI that conflicts with the kind of a property typed one kind only.  For
+  an object property: a datatype, that is an ``xsd:`` IRI, ``rdfs:Literal``, ``rdf:langString``,
+  ``rdf:XMLLiteral``, ``rdf:HTML``, ``rdf:PlainLiteral``, ``owl:real``, ``owl:rational`` or any node typed
+  ``rdfs:Datatype``.  For a datatype property: ``owl:Thing`` or a node typed ``owl:Class``.  A range
+  typed both ``owl:Class`` and ``rdfs:Datatype`` (OWL030's) and a blank-node range are not reported.
+  *Error:* an object property's range is a class expression and a datatype property's a data range;
+  not OWL 2 DL.
+* **OWL023.** An IRI related by ``owl:inverseOf``, in either direction, to two or more other IRIs; one
+  finding per such property.  Self-inverse and blank-node inverses are ignored (OWL007 has the former).
+  *Warning, heuristic:* valid OWL; the inverses are entailed equivalent, which may be intended.
+* **OWL024.** Two properties declared disjoint, by ``owl:propertyDisjointWith`` or as members of one
+  ``owl:AllDisjointProperties`` list, that are also related by an asserted ``rdfs:subPropertyOf`` or
+  ``owl:equivalentProperty`` in either direction, or a property declared disjoint with itself
+  (including a member repeated in a group).  One finding per unordered pair, on its lexically first
+  member.  Pairs involving ``owl:bottomObjectProperty`` or ``owl:bottomDataProperty`` are skipped, as is
+  a group whose ``owl:members`` list is malformed or longer than 200 members.
+  *Error:* the sub-property (or both equivalents) can hold between nothing: an unsatisfiable property.
+* **OWL025.** The same as OWL024 for classes: ``owl:disjointWith`` and ``owl:AllDisjointClasses``
+  against ``rdfs:subClassOf`` and ``owl:equivalentClass``, skipping pairs with ``owl:Nothing``.  An
+  intersection of disjoint classes is a class expression, OWL043's; a repeated group member is also
+  OWL045's.  *Error:* the subclass (or both equivalents) is unsatisfiable.
+* **OWL026.** A triple ``a owl:differentFrom a``, or ``a owl:differentFrom b`` with ``a owl:sameAs b``
+  or ``b owl:sameAs a``; one finding per unordered pair.  ``owl:AllDifferent`` and ``owl:sameAs``
+  chains are OWL044's.  *Error:* the ontology is inconsistent.
+* **OWL027.** An ``owl:NegativePropertyAssertion`` whose ``owl:sourceIndividual``,
+  ``owl:assertionProperty`` and ``owl:targetIndividual`` or ``owl:targetValue`` form a triple that is
+  asserted; reported on the source.  Literals match as RDF terms after RDFLib's lexical normalisation
+  (``"01"^^xsd:integer`` matches ``"1"^^xsd:integer``; ``"1.0"^^xsd:decimal`` does not), and an
+  incomplete assertion is skipped.  *Error:* inconsistent.
+* **OWL028.** A triple ``a p a`` where ``p`` is typed ``owl:IrreflexiveProperty``; reported on ``a``.
+  *Error:* inconsistent.
+* **OWL029.** For ``p`` typed ``owl:AsymmetricProperty``: a triple ``a p a``, or both ``a p b`` and
+  ``b p a`` (reported once, on the lexically lesser node).  Literal objects are ignored.
+  *Error:* inconsistent.
+* **OWL030.** A node typed both ``owl:Class`` and ``rdfs:Datatype``, or ``owl:AnnotationProperty`` and
+  ``owl:ObjectProperty`` or ``owl:DatatypeProperty``.  Object with datatype property is OWL003's; class
+  with property or individual punning is legal and not reported.  *Error:* breaks the OWL 2 typing
+  constraints (Structural Specification section 5.8.1); not OWL 2 DL.
 """
 
 from __future__ import annotations
@@ -191,7 +261,14 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
 )
 
-LITERAL_RANGES = frozenset({RDFS.Literal, RDF.langString, RDF.XMLLiteral, RDF.HTML})
+# Datatypes outside the xsd: namespace: RDF's, and the OWL 2 datatype map's owl:real, owl:rational and
+# rdf:PlainLiteral.
+LITERAL_RANGES = frozenset(
+    {RDFS.Literal, RDF.langString, RDF.XMLLiteral, RDF.HTML, RDF.PlainLiteral, OWL.real, OWL.rational}
+)
+# Empty by definition: disjointness with them, or subsumption by them, is no conflict (OWL024/OWL025).
+BOTTOM_PROPERTIES = frozenset({OWL.bottomObjectProperty, OWL.bottomDataProperty})
+BOTTOM_CLASSES = frozenset({OWL.Nothing})
 SIMPLE_ONLY_CHARACTERISTICS = (
     ("functional", OWL.FunctionalProperty),
     ("inverse-functional", OWL.InverseFunctionalProperty),
@@ -399,10 +476,11 @@ def _disjoint_conflicts(ctx: RuleContext, code: str, pair_predicate: Node, group
                 pairs.update((a, b) for i, a in enumerate(members) for b in members[i + 1 :])
     sub_predicate = RDFS.subPropertyOf if kind == "property" else RDFS.subClassOf
     equiv_predicate = OWL.equivalentProperty if kind == "property" else OWL.equivalentClass
+    bottoms = BOTTOM_PROPERTIES if kind == "property" else BOTTOM_CLASSES
     seen: set[frozenset[Node]] = set()
     for a, b in sorted(pairs, key=lambda pair: (str(pair[0]), str(pair[1]))):
         key = frozenset((a, b))
-        if key in seen or OWL.Nothing in key:
+        if key in seen or key & bottoms:
             continue
         seen.add(key)
         if a == b:
