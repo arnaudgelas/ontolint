@@ -1,7 +1,113 @@
 """OWL class-expression, restriction and individual-assertion rules: OWL031-OWL045.
 
 Every rule is purely graph-local and sound without a reasoner: each reports a structural defect or a
-direct contradiction visible in the asserted triples (no entailment is materialised).
+direct contradiction visible in the asserted triples (no entailment is materialised, so nothing is
+inferred through ``rdfs:subClassOf`` chains, equivalences or imports that are not in the graph).
+Scope is the whole graph: ownership (``ctx.local``) is not consulted, so imported or borrowed axioms
+present in the graph are checked too.  "Restriction" below means a subject with an asserted
+``rdf:type owl:Restriction``; a restriction-shaped node without that type is not judged.  RDF lists
+are read with :func:`~.support.list_items`: a list is *malformed* when its head is neither
+``rdf:nil`` nor a node with exactly one ``rdf:first`` and one ``rdf:rest`` (this includes literal and
+plain-IRI heads), when it is cyclic, or when it exceeds a million cells; list cells may be IRIs.
+Every finding is certain except OWL041's, which is emitted with the default (heuristic) confidence.
+A blank-node focus is printed as its stable content-based identity.  The specifications:
+
+* **OWL031.** For every subject of ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or
+  ``owl:disjointUnionOf`` (named or anonymous, class or data range), one finding per triple whose
+  object is a malformed list or the empty list (``()``, ``rdf:nil``), focused on that subject.  Error:
+  OWL 2 requires at least two operands for unions, intersections and disjoint unions and at least one
+  for enumerations (Structural Specification sections 8, 7 and 9.1.4), so the triple does not map to
+  an OWL 2 DL expression or axiom.  A one-member list is OWL032's.
+* **OWL032.** An ``owl:unionOf`` or ``owl:intersectionOf`` whose well-formed list has exactly one
+  member, focused on the subject; the message names the operand.  ``owl:oneOf`` with one member is a
+  valid enumeration and is not reported; a one-member ``owl:disjointUnionOf`` is not judged.  Info:
+  the expression means its operand, so it is redundant rather than wrong (it is, however, outside the
+  OWL 2 DL grammar, which requires two operands).
+* **OWL033.** An ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:oneOf`` whose well-formed, non-empty
+  list holds the same RDF term twice (RDF term equality: ``"1"`` and ``"1"^^xsd:integer`` differ;
+  structurally equal blank-node expressions are not compared), one finding per list, focused on the
+  subject.  ``owl:disjointUnionOf`` is not judged.  Warning: the repeat is semantically harmless but
+  usually a copy-paste slip where another operand was meant.
+* **OWL034.** A restriction with neither ``owl:onProperty`` nor ``owl:onProperties``; with more than
+  one ``owl:onProperty`` value; or (one finding per value) whose ``owl:onProperty`` is a literal.
+  A blank-node property (an ``owl:inverseOf`` expression) is accepted, ``owl:onProperties`` alone
+  satisfies the rule and its list is not checked, and an IRI property is not checked against the
+  property declarations.  The focus is the restriction; when it belongs to a named term (see
+  :func:`~.support.owning_term`) the message starts with that term and the restricted IRIs, as for
+  every restriction rule up to OWL040.  Error: the RDF mapping (section 3.2) parses a restriction
+  only with exactly one property, so it is not an OWL 2 class expression.
+* **OWL035.** A restriction with none of ``owl:someValuesFrom``, ``owl:allValuesFrom``,
+  ``owl:hasValue``, ``owl:hasSelf`` or the six (qualified) cardinality predicates, whatever their
+  values (``owl:onClass`` or ``owl:onDataRange`` alone does not count); invalid values are OWL036's.
+  Error: the restriction does not map to any OWL 2 class expression.
+* **OWL036.** For each of ``owl:minCardinality``, ``owl:maxCardinality``, ``owl:cardinality`` and their
+  ``Qualified`` forms, one finding per value that is not a literal whose stripped lexical form is in
+  the xsd:nonNegativeInteger lexical space (digits with an optional ``+``, or ``-`` before zeros);
+  the literal's datatype is not checked.  Separately, one finding when a qualified cardinality is
+  present without ``owl:onClass`` and without ``owl:onDataRange``.  ``owl:onClass`` on an unqualified
+  cardinality is not judged.  Error: a negative, fractional or non-literal cardinality, or a
+  qualified cardinality with no filler, has no OWL 2 mapping.
+* **OWL037.** Within one restriction and separately for the unqualified and the qualified predicates,
+  the largest of the minimum and exact values exceeds the smallest of the maximum and exact values
+  (so two different exact values also conflict); only valid values (as in OWL036) are compared, and
+  bounds on different restrictions, or between unqualified and qualified forms, are not combined.
+  Error: no individual can satisfy the bounds, which is a contradiction in the asserted triples.
+* **OWL038.** A restriction with ``owl:someValuesFrom owl:Nothing``, or with ``owl:onClass
+  owl:Nothing`` and a valid ``owl:minQualifiedCardinality`` or ``owl:qualifiedCardinality`` above 0.
+  ``owl:allValuesFrom owl:Nothing``, a 0 or maximum bound, and an unqualified cardinality next to
+  ``owl:onClass owl:Nothing`` are not reported; a filler that is merely equivalent to ``owl:Nothing``
+  is not inferred.  Error: under the Direct Semantics the restriction denotes the empty set, so a
+  class that it describes or restricts is unsatisfiable.
+* **OWL039.** A restriction with ``owl:allValuesFrom owl:Thing``, or with a valid
+  ``owl:minCardinality`` or ``owl:minQualifiedCardinality`` of 0 (one finding each).  Exact or
+  maximum 0 and ``owl:someValuesFrom owl:Thing`` are not vacuous.  Info: the restriction is
+  equivalent to ``owl:Thing`` and adds nothing, which is redundant but not wrong.
+* **OWL040.** For every IRI ``owl:onProperty`` value with an asserted ``rdf:type`` of exactly one of
+  ``owl:ObjectProperty`` and ``owl:DatatypeProperty`` (undeclared, punned and blank-node properties
+  and ``owl:onProperties`` are not judged).  On an object property: a literal ``owl:hasValue``; a
+  ``owl:someValuesFrom``/``owl:allValuesFrom`` filler that is datatype-like (an IRI in the XSD
+  namespace, ``rdfs:Literal``, or a node typed ``rdfs:Datatype``); any ``owl:onDataRange``.  On a
+  datatype property: a non-literal ``owl:hasValue``; a filler that is class-like (``owl:Thing``,
+  ``owl:Nothing``, an owned declared class, or a node typed ``owl:Class`` or ``owl:Restriction``) and
+  not datatype-like; any ``owl:onClass``.  One finding per offending value; fillers of unknown kind
+  are not judged.  Error: OWL 2 DL keeps the object and data property vocabularies apart, so the
+  restriction has no OWL 2 DL mapping.
+* **OWL041.** Treat each ``owl:complementOf`` triple with a non-literal object as an undirected edge
+  (``A = not B`` iff ``B = not A``) and two-colour every connected component iteratively (no depth
+  bound); one finding per component that contains an odd cycle, a self-loop included, focused on the
+  first node, in a depth-first walk over sorted nodes, with an edge to a node of its own colour.
+  Even cycles (``A = not B``, ``B = not A``)
+  are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error: an
+  odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is
+  inconsistent under the Direct Semantics.
+* **OWL042.** For each ``E owl:complementOf C`` with a non-literal ``C``: ``C rdfs:subClassOf E``
+  ("subclass of its own complement"), and ``C owl:equivalentClass E`` asserted in either direction
+  ("equivalent"), focused on ``C``; ``E`` may be named or anonymous.  ``E rdfs:subClassOf C`` (it
+  makes ``C`` equal to ``owl:Thing``) and paths through intermediate classes are not reported.
+  Error: ``C`` is unsatisfiable (subclass case) or the ontology is inconsistent (equivalence case).
+* **OWL043.** For every ``owl:unionOf`` or ``owl:intersectionOf`` with a well-formed, non-empty list
+  (one-member lists included): one finding per pair of members where one is asserted
+  ``owl:complementOf`` the other, or, for an intersection only, ``owl:disjointWith`` the other (either
+  direction); and a finding for a union containing ``owl:Thing`` or an intersection containing
+  ``owl:Nothing``.  Disjointness from ``owl:AllDisjointClasses`` or ``owl:disjointUnionOf``, nested
+  operands and ``owl:oneOf`` are not considered.  The focus is the owning named term of the expression
+  and the message names where it is used (``in the rdfs:subClassOf of ex:C``).  Warning: the union is
+  equivalent to ``owl:Thing`` or the intersection is unsatisfiable; this is valid OWL but almost
+  always a modelling slip.  Disjoint classes linked by a subclass or equivalence axiom are OWL025's.
+* **OWL044.** Build the ``owl:sameAs`` equivalence classes (union-find over all non-literal objects,
+  so chains through blank nodes and through a shared individual count).  Report each ``a
+  owl:differentFrom b`` (``b`` not a literal) whose ends are in one class, focused on ``a``, except a
+  direct conflict (``a = b``, or ``owl:sameAs`` asserted between them in either direction), which is
+  OWL026's.  Also report, on the axiom, each pair of distinct members of an ``owl:AllDifferent`` list
+  (``owl:members`` or ``owl:distinctMembers``) that are in one class, including directly
+  ``owl:sameAs`` members; repeated members and malformed lists are OWL045's.  Error: ``owl:sameAs``
+  is an equivalence relation, so the ontology is inconsistent under the Direct Semantics.
+* **OWL045.** For each node typed ``owl:AllDifferent`` (member lists on ``owl:members`` or
+  ``owl:distinctMembers``) or ``owl:AllDisjointClasses`` (``owl:members`` only), focused on the
+  axiom: no member list; more than one; and per list, malformed, fewer than two members, or a
+  repeated member.  ``owl:AllDisjointProperties`` and untyped nodes are not judged.  Warning: an
+  OWL 2 parser cannot map the axiom (RDF mapping section 3.2) and drops it, so the intended
+  distinctness or disjointness silently disappears.
 """
 
 from __future__ import annotations
