@@ -533,9 +533,30 @@ ontolint reads Turtle, N-Triples, N3, N-Quads, TriG, RDF/XML and JSON-LD. The pa
 from the file extension, unless the first bytes clearly say otherwise: Turtle saved as `.owl`,
 RDF/XML as `.ttl` or JSON-LD as `.rdf` are parsed as what they are, and the RDF/XML safety checks
 apply to the detected syntax. OWL Functional Syntax, Manchester Syntax and OWL/XML (common for
-ODK edit files and Protégé exports, often named `.owl`) are not RDF and cannot be read; they fail
-with an `INPUT001` that names the syntax and suggests `robot convert`. A parse failure in a file
-that contains an HTML page (a saved web page or server error) says where that page starts.
+ODK edit files and Protégé exports, often named `.owl`) are not RDF. By default they fail with an
+`INPUT001` that names the syntax and the ways forward. A parse failure in a file that contains an
+HTML page (a saved web page or server error) says where that page starts.
+
+With `--convert-with-robot`, each such file, the input or any file of its import closure, is
+converted to Turtle with the ROBOT image of `--robot-image` (see "OWL profile validation with
+ROBOT in Docker"), so an ODK edit file and its components lint directly:
+
+```bash
+ontolint src/ontology/automatce-edit.owl --follow-imports --convert-with-robot
+```
+
+Each conversion runs in the same isolated container as profile validation, but only the file
+itself is mounted, read-only, and is converted on its own: every import it declares is answered by
+an empty stub, and ontolint then follows the imports itself, under the usual sandbox. Two
+consequences:
+
+- A Manchester Syntax file must declare every class and property it uses. One that relies on an
+  import's declarations fails with an `INPUT001` saying so; convert the closure yourself (`robot
+  merge`) and lint the result.
+- Findings on a converted file have no line or column (SARIF regions), because the lines of the
+  Turtle are not the file's.
+
+A conversion takes a few seconds per file, and the `--robot-timeout` limit applies to each one.
 
 A few rules read what the file's text says and RDF does not keep. `IRI019` reports a prefix the
 file declares (Turtle `@prefix`, RDF/XML `xmlns:`) for a namespace no IRI uses. A JSON-LD

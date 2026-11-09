@@ -17,6 +17,8 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - docker/**
+      - src/ontolint/adapters/robot.py
+      - tests/test_robot_convert.py
       - .github/workflows/validation.yml
       - .github/scripts/mutation_gate.py
       - docs/mutation-policy.md
@@ -75,6 +77,16 @@ jobs:
             uv run python -m ontolint.ontolint validation-logs/smoke.ttl \
               --owl-profile DL --robot-image "$ROBOT_IMAGE"
           } 2>&1 | tee validation-logs/docker-smoke.log
+
+      - name: Convert OWL syntaxes with the ROBOT image
+        # --convert-with-robot end to end; the test skips without an image, so a skip fails the step.
+        env:
+          ONTOLINT_ROBOT_IMAGE: ${{ env.ROBOT_IMAGE }}
+        run: |
+          set -o pipefail
+          uv run pytest tests/test_robot_convert.py --no-cov -k robot_image -rs 2>&1 \
+            | tee validation-logs/docker-convert.log
+          grep -q "1 passed" validation-logs/docker-convert.log
 
       - name: Upload Docker validation logs
         if: always()

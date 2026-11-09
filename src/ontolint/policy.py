@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, fields
+from pathlib import Path
 from typing import Any
 
 from .models import Severity, SourceFacts
@@ -52,6 +53,10 @@ METRIC_QUANTITY_DEFAULTS: dict[str, float] = {
     "metric_max_property_class_ratio": 5.0,
     "metric_min_definition_words": 4.0,
 }
+
+
+OwlConverter = Callable[[Path, bytes, str], bytes]
+"""Turns a file in a non-RDF OWL syntax (its path, bytes and sniffed syntax) into Turtle bytes."""
 
 
 @dataclass(frozen=True)
@@ -103,6 +108,9 @@ class Policy:
     root_terms: frozenset[str] = frozenset()
     # What the loader read from the linted file's text: an SPDX licence comment, its prefix declarations.
     source: SourceFacts = SourceFacts()
+    # Set by the CLI from --convert-with-robot, never by a policy file: how the loader reads OWL Functional,
+    # Manchester and OWL/XML files; None refuses them with a message naming the conversion.
+    owl_converter: OwlConverter | None = None
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -170,6 +178,7 @@ class Policy:
             document_bases=(),
             root_terms=frozenset(),
             source=SourceFacts(),
+            owl_converter=None,
         )
 
 
@@ -182,7 +191,15 @@ class PolicyVersionError(ValueError):
 
 
 _RUNTIME_FIELDS = frozenset(
-    {"unknown_keys", "resolved_imports", "imported_ontologies", "document_bases", "root_terms", "source"}
+    {
+        "unknown_keys",
+        "resolved_imports",
+        "imported_ontologies",
+        "document_bases",
+        "root_terms",
+        "source",
+        "owl_converter",
+    }
 )
 """Policy fields filled in while linting, not accepted from a policy file."""
 

@@ -16,6 +16,7 @@ import sys
 from collections.abc import Sequence
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
+from functools import partial
 from pathlib import Path
 
 from rdflib import Graph, Literal, URIRef
@@ -23,6 +24,7 @@ from rdflib.namespace import RDF, SH
 
 from . import engine
 from ._version import package_version
+from .adapters.robot import robot_convert
 from .catalogue import planned_rows
 from .imports import CATALOG_NAME, Catalog, index_directory, load_closure, read_catalog
 from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, loaded_graph, source_index
@@ -114,6 +116,12 @@ def build_parser() -> argparse.ArgumentParser:
         "runs the parse in a worker process",
     )
     ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
+    ap.add_argument(
+        "--convert-with-robot",
+        action="store_true",
+        help="Read OWL Functional, Manchester and OWL/XML inputs and imports by converting each to Turtle "
+        "with ROBOT in Docker (--robot-image, no network)",
+    )
     ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
     ap.add_argument("--robot-timeout", type=int, default=120)
     ap.add_argument("--format", choices=FORMATS, default="text")
@@ -150,6 +158,9 @@ def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -
         max_triples=args.max_triples if args.max_triples is not None else config.max_triples,
         max_parse_seconds=args.max_parse_seconds if args.max_parse_seconds is not None else config.max_parse_seconds,
         ignored_rules=ignored,
+        owl_converter=partial(robot_convert, image=args.robot_image, timeout=args.robot_timeout)
+        if args.convert_with_robot
+        else None,
     )
 
 

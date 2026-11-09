@@ -464,20 +464,15 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
     if kind is not None:
         raise InputRejected("SEC011", f"{item.display} is {kind}-compressed; compressed input is refused")
     fmt = syntax.choose(guess_format(item.path.name) or "turtle", data)
-    if fmt in syntax.NON_RDF_SYNTAXES:
-        raise ParseFailure(
-            "UnsupportedSyntax",
-            f"{item.display} is written in {syntax.NON_RDF_SYNTAXES[fmt]}, which ontolint cannot read; convert it "
-            f"to Turtle or RDF/XML first (for example `robot convert --input {item.path.name} --output "
-            f"{item.path.stem}.ttl`), or lint a Turtle or RDF/XML release of the ontology",
-        )
-    problem = dtd_problem(data, policy.max_input_bytes) if fmt in RDF_XML_FORMATS else None
+    problem = dtd_problem(data, policy.max_input_bytes) if fmt in RDF_XML_FORMATS or fmt == "owl-xml" else None
     if problem is not None:
         raise InputRejected("SEC010", f"{item.display} {problem}")
     try:
         public_id = item.path.as_uri()
     except ValueError as exc:  # a relative path: reported like any other parser failure, as it always was
         raise ParseFailure(type(exc).__name__, str(exc)) from exc
+    if fmt in syntax.NON_RDF_SYNTAXES:
+        return _load_converted(item, data, fmt, public_id, policy)
     try:
         graph = _parse_document(data, fmt, public_id, item.display, policy)
     except ParseFailure as failure:
@@ -487,6 +482,28 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
         hint = f"; an HTML page starts at line {line} (a web page or server error saved in place of RDF?)"
         raise ParseFailure(failure.cause_type, failure.detail + hint) from failure
     return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph), source=source_facts(data, fmt, graph))
+
+
+def _load_converted(item: InputFile, data: bytes, fmt: str, public_id: str, policy: Policy) -> LoadedGraph:
+    """Load a file in a non-RDF OWL syntax through ``policy.owl_converter``, or refuse it naming the way forward.
+
+    The converted Turtle is parsed under the same limits as any input.  It has no source index: its lines
+    are not the file's.
+    """
+    name = syntax.NON_RDF_SYNTAXES[fmt]
+    if policy.owl_converter is None:
+        raise ParseFailure(
+            "UnsupportedSyntax",
+            f"{item.display} is written in {name}, which ontolint cannot read; rerun with --convert-with-robot, "
+            f"convert it to Turtle or RDF/XML first (for example `robot convert --input {item.path.name} --output "
+            f"{item.path.stem}.ttl`), or lint a Turtle or RDF/XML release of the ontology",
+        )
+    try:
+        turtle = policy.owl_converter(item.path, data, fmt)
+    except Exception as exc:  # noqa: BLE001 -- any converter failure is this input's parse failure.
+        raise ParseFailure("ConversionFailed", f"{item.display} is written in {name}; {exc}") from exc
+    graph = _parse_document(turtle, "turtle", public_id, item.display, policy)
+    return LoadedGraph(graph, SourceIndex({}), source=source_facts(data, "turtle", graph))
 
 
 _DEFAULT_BINDINGS = frozenset((prefix, str(namespace)) for prefix, namespace in Graph().namespaces())

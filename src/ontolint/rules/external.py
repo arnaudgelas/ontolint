@@ -20,13 +20,16 @@ printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection nev
   ``certain``: the verdict is pySHACL's, on the user's own shapes.  Why error: a violated shape is a contract the
   user wrote; a shape that means less says so with ``sh:severity``.
 * **INPUT001.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or
-  unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML: the message
-  suggests ``robot convert``), or the parser raised (any exception, including recursion and memory exhaustion,
-  and a parse worker that did not start or died).  So is a file of an ``owl:imports`` closure.  The message is
-  ``INPUT001: RDF input parsing failed[ for <file>]: <ExceptionType>: <parser message>``, with a hint when the file
-  holds an HTML page; it quotes the parser's or the operating system's message (which may hold a fragment of
-  the input or the file's path), nothing else.  As for the SEC rules, every argument is attempted, then the run
-  stops with no report and exit ``2``.  Why error: nothing can be linted.
+  unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without
+  ``--convert-with-robot`` (``UnsupportedSyntax``; the message names the flag and suggests ``robot convert``) or
+  with it and ROBOT cannot convert it (``ConversionFailed``: no Docker, a timeout, ROBOT's first error line, and
+  for Manchester Syntax the reminder that every entity must be declared in the file), or the parser raised (any
+  exception, including recursion and memory exhaustion, and a parse worker that did not start or died).  So is
+  a file of an ``owl:imports`` closure.  The message is ``INPUT001: RDF input parsing failed[ for <file>]:
+  <ExceptionType>: <parser message>``, with a hint when the file holds an HTML page; it quotes the parser's or
+  the operating system's message (which may hold a fragment of the input or the file's path), nothing else.  As
+  for the SEC rules, every argument is attempted, then the run stops with no report and exit ``2``.  Why error:
+  nothing can be linted.
 * **TOOL001.** The linter could not do what was asked: an unknown ``--explain`` rule, an unknown ``--select`` or
   ``--ignore`` selector (the message suggests the closest valid identifiers), a selector syntax error, an
   unreadable or invalid policy file or catalog, or any other exception raised while configuring
