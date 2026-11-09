@@ -5,6 +5,19 @@ Every rule reads the mappings asserted in the linted graph (SKOS mapping propert
 declarations.  Nothing is entailed beyond the transitive closure of asserted ``skos:exactMatch`` and
 asserted hierarchy edges, both computed iteratively.  The remaining ALIGN rules need an external
 mapping registry, the aligned ontologies or a reasoner and stay proposed.
+
+Specification of the error rule:
+
+* **ALIGN003.** Group IRIs into the connected components of asserted ``skos:exactMatch`` triples
+  between distinct IRIs, ignoring direction (exactMatch is symmetric and transitive, S44 and S45 of
+  the SKOS Reference).  A finding for each ``skos:broadMatch`` triple, or inverted ``skos:narrowMatch``
+  triple, between two IRIs of one component that are not themselves linked by a direct exactMatch
+  (that pair is SKOS012), when either end is owned.  It is focused on the narrower term; a pair
+  asserted by both broadMatch and the inverse narrowMatch is reported once.  Exclusions: owl:sameAs and
+  owl:equivalentClass/equivalentProperty, skos:closeMatch (not transitive) and blank nodes do not join
+  components; ``skos:relatedMatch`` inside a component is not checked although S46 forbids it too.
+  Error, certain: with S45 the chain entails an exactMatch that integrity condition S46 makes
+  disjoint with the broadMatch.
 """
 
 from __future__ import annotations

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from rule_harness import rule_cases, ttl
+from rule_harness import BASE, rule_cases, ttl
 
 EXT = "@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .\n"
 
@@ -33,11 +33,33 @@ CASES = {
                 "chain with narrow",
                 EXT + "a:X skos:exactMatch b:Y . c:Z skos:exactMatch b:Y . c:Z skos:narrowMatch a:X .",
             ),
+            ttl(
+                "longer chain",
+                EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . c:Z skos:exactMatch ex:W . "
+                "ex:W skos:broadMatch a:X .",
+            ),
         ],
         [
             ttl("direct conflict is SKOS012", EXT + "a:X skos:exactMatch b:Y ; skos:broadMatch b:Y ."),
             ttl("unrelated terms", EXT + "a:X skos:exactMatch b:Y . c:Z skos:broadMatch a:X ."),
             ttl("chain without hierarchy", EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z ."),
+            ttl(
+                "owl:sameAs does not join",
+                EXT + "a:X owl:sameAs b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .",
+            ),
+            ttl(
+                "closeMatch does not join",
+                EXT + "a:X skos:closeMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .",
+            ),
+            ttl(
+                "relatedMatch is not checked",
+                EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:relatedMatch c:Z .",
+            ),
+            ttl(
+                "no end owned",
+                EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .",
+                base=BASE,
+            ),
         ],
     ),
     "ALIGN004": rule_cases(
