@@ -21,7 +21,7 @@ next audit can confirm them, then delete these entries. Leftovers from each are 
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- Unreleased, branch `fix/borrowed-vocabularies` (for 0.9.0, not merged or pushed):
+- Unreleased, on `main` for 0.9.0:
   - borrowed vocabulary terms are not the ontology's own (`deed446`): Dublin Core, SKOS, DCAT, IAO
     and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
     METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
@@ -192,7 +192,7 @@ Validation corpus (public; licences per repository):
   fixtures; correct documentation or implementation when they disagree.
   *Done when:* each implemented rule has an approved, testable specification and its catalogue,
   user documentation, and fixtures state the same contract.
-  Done on the 0.9.0 branch: every error-severity rule and the whole OWL family (see "Recently
+  Done for 0.9.0 (unreleased): every error-severity rule and the whole OWL family (see "Recently
   done"); the specifications await the maintainer's approval. Next: the METRIC family. Left open
   by that review:
   - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
@@ -241,7 +241,7 @@ Validation corpus (public; licences per repository):
     MPL-2.0 (certifi, pathspec, hypothesis); the ROBOT jar is downloaded at image build with a
     pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
     origin is not recorded;
-  - verifying the attestation in the release `verify` job: done on the 0.9.0 branch (`07099e5`);
+  - verifying the attestation in the release `verify` job: done for 0.9.0 (`07099e5`);
     it is proven by the next release run.
   *Done when:* the copyright-holder question has a written answer in the repository, and a release run
   fails if the published files' attestations do not verify.
