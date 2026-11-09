@@ -218,12 +218,15 @@ case a `Rule execution:` block is appended.
 
 * JSON keeps `summary` and `findings` and adds `schema_version` (currently `1`), a `path` on
   each finding, `rules` (id, family, title, effective and default severity, category, backend,
-  scope, requirements, suggestion), `execution_summary` and per-file `files[].executions`.
+  scope, requirements, suggestion), `execution_summary` and per-file `files[].executions`. A
+  finding whose message abbreviates a tool's output also carries the full output in `details`
+  (`SEM001`: ROBOT's profile report, whose violations the message groups by kind).
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
   `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
-  `artifactLocation` on every result, and a run `invocation`. Skipped, unsupported and failed
-  rules are `toolExecutionNotifications` (levels `note`, `warning`, `error`);
-  `executionSuccessful` is `false` when any rule failed or is unsupported.
+  `artifactLocation` on every result (and `properties.details` where JSON has `details`), and a
+  run `invocation`. Skipped, unsupported and failed rules are `toolExecutionNotifications`
+  (levels `note`, `warning`, `error`); `executionSuccessful` is `false` when any rule failed or is
+  unsupported.
 * SARIF findings for Turtle, N3, N-Triples, N-Quads and RDF/XML inputs include the source line and
   column of their focus term when it can be resolved. JSON-LD findings include a region for an
   explicit `@id`, including compact IRIs defined by a local context; generated JSON-LD nodes retain

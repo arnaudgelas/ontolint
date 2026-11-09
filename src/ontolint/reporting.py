@@ -212,6 +212,8 @@ def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -
     }
     if f.rule in rule_index:
         result["ruleIndex"] = rule_index[f.rule]
+    if f.details is not None:
+        result["properties"] = {"details": f.details}
     return result
 
 

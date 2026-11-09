@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 
 
@@ -73,10 +73,15 @@ class Finding:
     message: str
     suggestion: str
     confidence: str = "heuristic"
+    details: str | None = field(default=None, compare=False)
+    """Full tool output behind a summarised message (ROBOT's profile report); JSON and SARIF only."""
 
     def to_dict(self) -> dict[str, str]:
-        """Return a JSON-ready representation with stable field names."""
-        return asdict(self)
+        """Return a JSON-ready representation with stable field names (``details`` only when set)."""
+        data = asdict(self)
+        if data["details"] is None:
+            del data["details"]
+        return data
 
 
 @dataclass(frozen=True)
