@@ -2,6 +2,20 @@
 
 These rules inspect the already-parsed RDFLib graph only; parser, network and file-system policy
 belong to the loader.  Every traversal is iterative so hostile inputs cannot exhaust the stack.
+
+* **SEC014.** An IRI in subject, predicate or object position of the data graph (not the shapes graph,
+  not an ``xsd:anyURI`` literal) whose RFC 3986 authority carries a userinfo with a password: the IRI
+  starts with a scheme (any, case-insensitive: ``https``, ``HTTP``, ``ftp``, ``x+y.z-1``) and ``//``,
+  then a userinfo of characters other than ``/ ? # @`` up to the first ``@``, and the part after the
+  first ``:`` of that userinfo is not empty (``https://alice:secret@...``, ``https://:pw@...``,
+  ``https://u:p:q@...``).  Excluded: a user without a password (``https://alice@...``) or with an empty
+  one (``https://alice:@...``), so a bare token used as the user name is not caught; a percent-encoded
+  colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in the path, query or
+  fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a relative reference
+  resolved against the document (GOV002's concern).  One finding per distinct IRI, focused on the IRI.
+  The message names the user but never the password; the focus is the full IRI, so the report
+  repeats the secret.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the
+  syntactic test has no false positive; a published credential must be rotated.
 """
 
 from __future__ import annotations
