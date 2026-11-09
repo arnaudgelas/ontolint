@@ -398,18 +398,23 @@ def _duplicate_mappings(ctx: RuleContext) -> None:
 # --- ALIGN015 --------------------------------------------------------------------------------
 
 
+def _or(items: list[str]) -> str:
+    """``version``, ``version or creator``, ``version, creator or licence``."""
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} or {items[-1]}"
+
+
 def _mapping_set_metadata(ctx: RuleContext) -> None:
     g = ctx.g
     required = (
-        ("a version", (*_VERSION, *_SSSOM_VERSION)),
-        ("a creator", (*META_CREATOR, *_SSSOM_CREATOR)),
-        ("a licence", (*META_LICENSE, *_SSSOM_LICENSE)),
+        ("version", (*_VERSION, *_SSSOM_VERSION)),
+        ("creator", (*META_CREATOR, *_SSSOM_CREATOR)),
+        ("licence", (*META_LICENSE, *_SSSOM_LICENSE)),
     )
     for kind in _MAPPING_SET:
         for node in _ordered(s for s in ctx.context.subjects_by_type.get(kind, ()) if isinstance(s, URIRef)):
             missing = [label for label, predicates in required if not any((node, p, None) in g for p in predicates)]
             if missing and ctx.local(node):
-                ctx.add("ALIGN015", node, f"Mapping set has no {', no '.join(missing)}.")
+                ctx.add("ALIGN015", node, f"Mapping set has no {_or(missing)}.")
 
 
 def run(ctx: RuleContext) -> None:

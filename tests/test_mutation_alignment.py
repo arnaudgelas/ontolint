@@ -295,15 +295,18 @@ def test_align014_scope_cycles_and_deep_chain() -> None:
 def test_align015_lists_every_missing_item_in_order() -> None:
     found = _run("ALIGN015", "ex:M a <https://w3id.org/sssom/MappingSet> .")
     assert [(f.focus, f.message) for f in found] == [
-        ("https://example.test/onto#M", "Mapping set has no a version, no a creator, no a licence.")
+        ("https://example.test/onto#M", "Mapping set has no version, creator or licence.")
     ]
     assert _messages(
         "ALIGN015", "ex:M a <http://w3id.org/sssom/MappingSet> ; owl:versionIRI ex:v ; dcterms:license ex:L ."
-    ) == ["Mapping set has no a creator."]
+    ) == ["Mapping set has no creator."]
     assert _messages(
         "ALIGN015", "ex:M a <https://w3id.org/sssom/MappingSet> ; dcterms:hasVersion '1' ; dcterms:creator 'x' ."
-    ) == ["Mapping set has no a licence."]
+    ) == ["Mapping set has no licence."]
     assert _messages(
         "ALIGN015", "ex:M a <https://w3id.org/sssom/MappingSet> ; dcterms:creator 'x' ; dcterms:license ex:L ."
-    ) == ["Mapping set has no a version."]
+    ) == ["Mapping set has no version."]
+    assert _messages("ALIGN015", "ex:M a <https://w3id.org/sssom/MappingSet> ; dcterms:creator 'x' .") == [
+        "Mapping set has no version or licence."
+    ]
     assert _messages("ALIGN015", "[] a <https://w3id.org/sssom/MappingSet> .") == []

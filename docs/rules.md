@@ -263,7 +263,7 @@ ex:A skos:broadMatch ex:B . ex:A rdfs:subClassOf ex:B .
 ex:M a <https://w3id.org/sssom/MappingSet> .
 ```
 
-Reported: `Mapping set has no a version, no a creator, no a licence.`
+Reported: `Mapping set has no version, creator or licence.`
 
 *Clean:* complete
 
