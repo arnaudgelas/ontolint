@@ -397,3 +397,42 @@ def test_policy_constructor_validates_loader_limits_too() -> None:
         replace(Policy(), max_triples=0)
     with pytest.raises(ValueError, match="max_input_bytes must be an integer"):
         Policy(max_input_bytes=2.0)  # type: ignore[arg-type]
+
+
+# --- RDF datasets: named graphs are merged, never dropped ------------------------------------------------------
+
+DATASET_HEADER = (
+    "@prefix e: <http://e/> .\n@prefix owl: <http://www.w3.org/2002/07/owl#> .\n<http://e/o> a owl:Ontology .\n"
+)
+NQUADS = (
+    "<http://e/o> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> .\n"
+    "<http://e/A> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class>"
+    " <http://e/g1> .\n"
+)
+
+
+@pytest.mark.parametrize("seconds", [None, 30.0])  # in process, and in the time-bounded worker
+def test_trig_named_graphs_are_linted_with_the_default_graph(tmp_path: Path, seconds: float | None) -> None:
+    trig = DATASET_HEADER + "e:g1 { e:A a owl:Class . }\ne:g2 { e:A a owl:Class . e:B a owl:Class . }\n"
+    graph = load(tmp_path, "a.trig", trig, Policy(max_parse_seconds=seconds))
+    classes = {URIRef("http://e/A"), URIRef("http://e/B")}
+    assert {s for s in graph.subjects() if s in classes} == classes
+    assert len(graph) == 3  # the header, and e:A once although two graphs state it
+
+
+def test_nquads_named_graphs_are_linted_with_the_default_graph(tmp_path: Path) -> None:
+    graph = load(tmp_path, "a.nq", NQUADS)
+    assert (URIRef("http://e/A"), None, None) in graph
+    assert len(graph) == 2
+
+
+def test_the_triple_bound_counts_every_named_graph(tmp_path: Path) -> None:
+    trig = DATASET_HEADER + "e:g1 { e:A a owl:Class . }\ne:g2 { e:B a owl:Class . }\n"
+    assert rejected(tmp_path, "a.trig", trig, Policy(max_triples=2)).rule_id == "SEC002"
+    assert len(load(tmp_path, "b.trig", trig, Policy(max_triples=3))) == 3
+
+
+def test_a_dataset_with_named_graphs_is_linted_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / "a.trig").write_text(DATASET_HEADER + "e:g1 { e:A a owl:Class . }\n", encoding="utf-8")
+    main([str(tmp_path / "a.trig"), "--select", "LEX001", "--fail-on", "never"])
+    assert "LEX001 http://e/A: Term has no label." in capsys.readouterr().out

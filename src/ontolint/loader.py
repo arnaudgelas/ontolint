@@ -403,6 +403,10 @@ def _describe(failure: Exception) -> str:
     return str(failure)
 
 
+DATASET_FORMATS = frozenset({"trig", "nquads"})
+"""RDF dataset syntaxes: their named graphs are merged into the one graph that is linted."""
+
+
 def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triples: int) -> Graph:
     """Parse ``data`` under the network guard and the triple bound; shared by the in-process and worker paths."""
     store = _BoundedStore(max_triples)
@@ -427,6 +431,11 @@ def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triple
         raise failure
     if failure is not None:
         raise ParseFailure(type(failure).__name__, _describe(failure)) from failure
+    if fmt in DATASET_FORMATS:
+        # The parser put each named graph in its own context; ``graph`` sees only the default one. An ontology
+        # author means the whole file, so lint the union (adding a triple in another context adds no new one).
+        for triple, _contexts in list(store.triples((None, None, None), None)):
+            graph.add(triple)
     store.limit = None  # a plain graph: pySHACL and other consumers copy it and must not hit the bound
     if len(graph) > max_triples:  # pragma: no cover - the store bound fires first; defence in depth
         raise InputRejected("SEC002", f"graph has more than {max_triples} triples (max_triples)")

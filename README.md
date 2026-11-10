@@ -598,7 +598,9 @@ RDF/XML as `.ttl` or JSON-LD as `.rdf` are parsed as what they are, and the RDF/
 apply to the detected syntax. OWL Functional Syntax, Manchester Syntax and OWL/XML (common for
 ODK edit files and Protégé exports, often named `.owl`) are not RDF. By default they fail with an
 `INPUT001` that names the syntax and the ways forward. A parse failure in a file that contains an
-HTML page (a saved web page or server error) says where that page starts.
+HTML page (a saved web page or server error) says where that page starts. The named graphs of a
+TriG or N-Quads file are merged with its default graph and linted as one graph; a triple stated in
+several graphs counts once.
 
 With `--convert-with-robot`, each such file, the input or any file of its import closure, is
 converted to Turtle with the ROBOT image of `--robot-image` (see "OWL profile validation with
