@@ -15,16 +15,19 @@ record.
 
 ## Hotfix
 
-- [ ] **Release 0.10.2.** Tagged locally (`v0.10.2`), not pushed: push `main` with the release
-  commit as the head of the push, then the tag, and approve "Publish to PyPI". *Done when:* 0.10.2
-  is on PyPI and its release run is green end to end.
+Nothing open: 0.10.2 is released (see "Recently done").
 
 ## Recently done
 
-- 0.10.2 (tag `v0.10.2`, not yet pushed; see "Hotfix"): four ways a run could pass, or fail,
-  without the ontology deserving it, each found by triaging an external review, reproduced on
-  0.10.1 and fixed with that reproduction as its regression test (against the 0.10.1 code, 9 of
-  the new tests fail; all pass now):
+- 0.10.2 (`f7f3db4`, tag `v0.10.2`), released 2026-11-10: `main` was pushed with the release
+  commit as its head, then the tag. CodeQL (run 42785068415) and CI (42785069613) passed on
+  `f7f3db4`, and the release run 42785082184 passed every job: CodeQL gate, tests, build, publish
+  (both files on PyPI) and `verify`, whose install step needed one retry and whose attestation
+  step none (OK for the wheel and the sdist). Rechecked 2026-11-10 against GitHub and PyPI: `main`
+  and `v0.10.2` on the remote both resolve to `f7f3db4`, and PyPI's latest version is 0.10.2.
+  It fixes four ways a run could pass, or fail, without the ontology deserving it, each found by
+  triaging an external review, reproduced on 0.10.1 and fixed with that reproduction as its
+  regression test (against the 0.10.1 code, 9 of the new tests fail; all pass now):
   - SHACL with an ontology background keeps results on foci the linted file mentions as objects
     (`sh:targetObjectsOf`), not only as subjects;
   - shapes a shapes file imports are validated (a shape library joins the shapes graph, with a
