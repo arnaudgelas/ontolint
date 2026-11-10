@@ -6,8 +6,8 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the feature release after 0.10.0 (0.8.0 shipped, 0.9.0 was tagged but not published, and
-0.9.1 and 0.10.0 were tagged, while it was still open). `P1` is the next milestone after P0. `P2`
+blocks the feature release after 0.10.0 (0.8.0, 0.9.1 and 0.10.0 shipped, and 0.9.0 was tagged but
+not published, while it was still open). `P1` is the next milestone after P0. `P2`
 is worthwhile only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
@@ -15,21 +15,25 @@ record.
 
 ## Hotfix
 
-- [ ] **Publish the 0.9.0 code as 0.9.1.** The 0.9.0 release run (42694579076, 2026-11-10) failed
-  at the CodeQL gate ("no completed CodeQL scan on 98b82f6"): `main` was pushed with a TODO.md
-  commit on top of the tagged one, and CodeQL scans only the head of a push. Build, Publish and
-  Verify were skipped, PyPI still shows 0.8.0, and the `tags` ruleset refuses to move `v0.9.0`.
-  0.9.1 is the same code from a release commit that is the head of its push;
-  `docs/releasing.md` now states that rule. Tagged locally (`v0.9.1`), not pushed. Push it
-  alone first, as the head of `main`: `git push origin v0.9.1^{commit}:main && git push origin
-  v0.9.1`; wait for CodeQL on it and approve "Publish to PyPI"; only then push `v0.10.0` the
-  same way. *Done when:* 0.9.1 is on PyPI and its `verify` job, the first to check the PEP 740
-  attestations, passed.
+- [ ] **The release `verify` job read PyPI's JSON API once, without retrying.** The 0.10.0 run
+  (42774442860, 2026-11-10) published both files, installed 0.10.0 from PyPI (that step retries,
+  20 × 30 s) and then failed in "Verify the PyPI attestations": its `curl -sSf
+  https://pypi.org/pypi/ontolint/0.10.0/json` got a 404 because the JSON API had not caught up
+  yet, and `json.load` failed on the empty body. Checked by hand the same day: PyPI holds exactly
+  the two built files and `pypi-attestations verify pypi --repository
+  https://github.com/arnaudgelas/ontolint` prints OK for both, so 0.10.0 itself is sound. Fixed for
+  0.10.1: the file-list fetch and each attestation check retry like the install step, and the
+  job's timeout is 45 minutes. The step's script was run locally with stub `curl`, `uv` and
+  `sleep`: a lagging API passes after retrying, an extra file on PyPI or an attestation that never
+  verifies still fails, and the old script fails on the lag exactly as the 0.10.0 run did.
+  *Done when:* the 0.10.1 release run passes `verify` end to end.
 
 ## Recently done
 
-- 0.10.0 (tag `v0.10.0`, local, not pushed: see "Hotfix" for the push order); its changelog has
-  the upgrade note below. The gate passes (5663 tests, 99.4% coverage), and a
+- 0.10.0 (`d6c45c1`, tag `v0.10.0`), released 2026-11-10: run 42774442860 passed the CodeQL gate,
+  tests and build, and published both files; its `verify` job failed on PyPI's lagging JSON API
+  (see "Hotfix"), and the attestations were verified by hand instead. Its changelog has the upgrade
+  note below. The gate passed (5663 tests, 99.4% coverage), and a
   targeted mutation run of `modules.py`, `prof.py`, `library.py`, `rules/library.py` and
   `reporting.py` killed every mutant (one equivalent `frozen=True` pardoned):
   - **baseline break, on purpose:** `ONT005` names the provenance that is missing ("Missing
@@ -65,12 +69,15 @@ record.
 
 0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
 release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). 0.9.0 was tagged the same
-day (`98b82f6`) and pushed, but its release run failed before publishing; the same code ships as
-0.9.1 (see "Hotfix"). Kept only so the next audit can confirm them, then delete these entries.
+day (`98b82f6`) and pushed, but its release run failed at the CodeQL gate before publishing: `main`
+was pushed with a commit on top of the tagged one, and CodeQL scans only the head of a push
+(`docs/releasing.md` now says so). The same code shipped as 0.9.1 on 2026-11-10 (`18e1343`, run
+42769298672, all jobs green, both attestations verified by its `verify` job). Kept only so the next
+audit can confirm them, then delete these entries.
 Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- 0.9.0 (`98b82f6`, tag `v0.9.0`), tagged and pushed but not published; released as 0.9.1:
+- 0.9.0 (`98b82f6`, tag `v0.9.0`), tagged but never published; released as 0.9.1:
   - borrowed vocabulary terms are not the ontology's own (`f31e419`): Dublin Core, SKOS, DCAT, IAO
     and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
     METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
@@ -280,7 +287,9 @@ Validation corpus (public; licences per repository):
 - [ ] **Close the remaining legal and provenance gaps.** Done in 0.5.0: `SECURITY.md` points
   reporters at GitHub private vulnerability reporting and states the supported versions. Checked:
   every PyPI release (0.1.0 to 0.6.0) already carries a PEP 740 attestation naming this repository
-  and `release.yml`, because Trusted Publishing creates one. Still open:
+  and `release.yml`, because Trusted Publishing creates one. Done in 0.9.1: the release `verify`
+  job (`7e65c06`) checks that PyPI holds exactly the built files and verifies each one's
+  attestation; the 0.9.1 run printed OK for both files. Still open:
   - the copyright holder for the Apache-2.0 notice (`pyproject.toml` names the author; `LICENSE`
     names nobody, and there is no `NOTICE` file). The maintainer's decision, not code;
   - the crosswalk question is answered (2026-11-09, `data/README.md`): neither catalogue states a
@@ -292,10 +301,7 @@ Validation corpus (public; licences per repository):
     MPL-2.0 (certifi, pathspec, hypothesis); the ROBOT jar is downloaded at image build with a
     pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
     origin is not recorded;
-  - verifying the attestation in the release `verify` job: done for 0.9.0 (`7e65c06`);
-    not yet proven: the 0.9.0 run never reached `verify`, so the 0.9.1 run is the first.
-  *Done when:* the copyright-holder question has a written answer in the repository, and a release run
-  fails if the published files' attestations do not verify.
+  *Done when:* the copyright-holder question has a written answer in the repository.
 
 - [ ] **Approve a current mutation baseline before making it blocking.** Existing mutation-policy
   thresholds and pardon-review rules are useful only if a clean GitHub run establishes that the
