@@ -304,7 +304,8 @@ def test_a_profile_violation_is_one_error_finding_that_gates_exit_1(
     (finding,) = json.loads(out)["findings"]
     assert (code, err) == (GATED, "")
     assert (finding["rule"], finding["severity"], finding["confidence"]) == ("SEM001", "error", "certain")
-    assert finding["focus"] == str((tmp_path / "a.ttl").resolve())
+    assert finding["focus"] == "(ontology)"  # not the absolute path: a fingerprint must not depend on the machine
+    assert finding["details"] == DL_REPORT.strip()
     assert finding["message"] == (
         "ROBOT OWL DL profile validation failed: 1 violation: Use of undeclared annotation property: http://e/p (1)."
     )
@@ -322,16 +323,39 @@ def test_robot_exiting_0_is_no_finding(tmp_path: Path, run: Any, monkeypatch: py
     assert (code, json.loads(out)["findings"]) == (0, [])
 
 
-def test_robot_output_that_is_no_violation_list_is_still_a_sem001_finding(
+@pytest.mark.parametrize(
+    "case",
+    [
+        (125, None, "docker: Error response from daemon: pull access denied"),  # a missing image
+        (1, None, "Exception in thread main java.lang.OutOfMemoryError"),  # Java failing, no report
+        (1, "/output/profile.txt (Permission denied)", ""),  # the first hosted Validation run
+        (1, None, ""),  # nothing at all
+    ],
+)
+def test_robot_failing_without_a_violation_list_is_a_failed_rule_not_a_finding(
+    tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch, case: tuple[int, str | None, str]
+) -> None:
+    returncode, report, stderr = case
+    _fake_robot(monkeypatch, returncode, report, stderr=stderr)
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    code, out, err = run("a.ttl", "--select", "SEM001", "--owl-profile", "DL", "--format", "json")
+    document = json.loads(out)
+    assert (code, document["findings"]) == (TOOL_FAILURE, [])
+    (execution,) = [x for x in document["files"][0]["executions"] if x["rule"] == "SEM001"]
+    assert execution["status"] == "failed"
+    assert execution["detail"].startswith(f"ProfileCheckFailed: ROBOT exited {returncode} without a profile report: ")
+    assert (report or stderr or "ROBOT did not produce a report.") in execution["detail"]
+    assert "TOOL001: rule SEM001 failed for a.ttl" in err
+
+
+def test_robot_output_quoted_in_a_failure_is_cut_at_500_characters(
     tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # Current behaviour, stated by the specification: any non-zero exit of the container is a SEM001 finding.
-    _fake_robot(monkeypatch, 125, None, stderr="docker: Error response from daemon: pull access denied")
+    _fake_robot(monkeypatch, 1, None, stderr="x" * 600)
     (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
-    code, out, _err = run("a.ttl", "--select", "SEM001", "--owl-profile", "DL", "--format", "json")
-    (finding,) = json.loads(out)["findings"]
-    assert code == GATED
-    assert finding["message"].endswith("validation failed: docker: Error response from daemon: pull access denied")
+    _code, out, _err = run("a.ttl", "--select", "SEM001", "--owl-profile", "DL", "--format", "json")
+    (execution,) = [x for x in json.loads(out)["files"][0]["executions"] if x["rule"] == "SEM001"]
+    assert execution["detail"].endswith(": " + "x" * 500 + "…")
 
 
 def test_a_robot_timeout_is_a_failed_rule_and_exit_2(tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch) -> None:

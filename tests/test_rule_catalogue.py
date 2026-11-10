@@ -10,6 +10,11 @@ import pytest
 
 from ontolint.ontolint import SEVERITY, _robot_profile_issues
 
+ROBOT_REPORT = (
+    "OWL 2 DL Profile Report: Ontology and imports closure NOT in profile. The following violations are present:\n"
+    "Use of undeclared class: <http://e/C> [SubClassOf(<http://e/A> <http://e/C>)]"
+)
+
 CATALOGUE = Path(__file__).parents[1] / "data" / "rule_catalogue.csv"
 CATALOGUE_RULE_COUNT = 302
 
@@ -36,7 +41,7 @@ def test_robot_adapter_uses_an_isolated_container_and_translates_violations(
 
     def fake_run(command: list[str], **_kwargs: object) -> SimpleNamespace:
         output_mount = next(value for value in command if value.endswith(":/output"))
-        Path(output_mount.removesuffix(":/output"), "profile.txt").write_text("DL violation", encoding="utf-8")
+        Path(output_mount.removesuffix(":/output"), "profile.txt").write_text(ROBOT_REPORT, encoding="utf-8")
         assert "--network" in command and command[command.index("--network") + 1] == "none"
         assert "--cap-drop" in command and "ALL" in command
         assert "--security-opt" in command and "no-new-privileges" in command
@@ -50,4 +55,4 @@ def test_robot_adapter_uses_an_isolated_container_and_translates_violations(
     assert [(finding.rule, finding.severity, finding.confidence) for finding in findings] == [
         ("SEM001", "error", "certain")
     ]
-    assert "DL violation" in findings[0].message
+    assert "Use of undeclared class: http://e/C (1)" in findings[0].message

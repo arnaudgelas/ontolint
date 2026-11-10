@@ -26,7 +26,7 @@
   },
   "json_robot_fail": {
    "exit": 1,
-   "legacy_json_view": "sha256:5a080939cd5620e13b03ca00b430e7d721d3295fc15820dd8bf2e4de813b3b2f (37426 chars)"
+   "legacy_json_view": "sha256:5f1d1ff4b3ac18d46af544b4f2d1686131c7afc284038448c826aac05b72366b (37654 chars)"
   },
   "json_robot_ok": {
    "exit": 1,

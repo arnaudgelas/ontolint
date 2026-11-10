@@ -33,6 +33,11 @@ from ontolint.reporting import render_executions, summarise_executions
 from ontolint.rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from ontolint.rules.specs import RULE_SPECS
 
+ROBOT_REPORT = (
+    "OWL 2 DL Profile Report: Ontology and imports closure NOT in profile. The following violations are present:\n"
+    "Use of undeclared class: <http://e/C> [SubClassOf(<http://e/A> <http://e/C>)]"
+)
+
 ROOT = Path(__file__).parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
 BASE = "https://example.test/onto#"
@@ -243,7 +248,12 @@ def test_robot_is_skipped_unsupported_failed_or_executed_depending_on_availabili
     assert "FileNotFoundError" in missing.executions[0].detail
 
     def fake_run(command: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
-        return subprocess.CompletedProcess(command, 1, stdout="", stderr="bad profile")
+        return subprocess.CompletedProcess(
+            command,
+            1,
+            stdout="",
+            stderr=ROBOT_REPORT,
+        )
 
     monkeypatch.setattr("ontolint.adapters.robot.subprocess.run", fake_run)
     executed = linter.execute(["SEM001"], robot=request)

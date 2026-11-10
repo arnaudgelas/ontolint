@@ -17,6 +17,11 @@ from ontolint import main
 from ontolint.adapters.robot import robot_profile_issues
 from ontolint.adapters.shacl import shacl_issues
 
+ROBOT_REPORT = (
+    "OWL 2 DL Profile Report: Ontology and imports closure NOT in profile. The following violations are present:\n"
+    "Use of undeclared class: <http://e/C> [SubClassOf(<http://e/A> <http://e/C>)]"
+)
+
 FIXTURES = Path(__file__).parents[1] / "fixtures"
 
 
@@ -46,7 +51,10 @@ def _robot(returncode: int) -> Callable[[], Collection[str]]:
     def run() -> Collection[str]:
         def fake(command: list[str], **_kwargs: object) -> SimpleNamespace:
             output = next(v for v in command if v.endswith(":/output")).removesuffix(":/output")
-            Path(output, "profile.txt").write_text("violation", encoding="utf-8")
+            Path(output, "profile.txt").write_text(
+                ROBOT_REPORT,
+                encoding="utf-8",
+            )
             return SimpleNamespace(returncode=returncode, stderr="", stdout="")
 
         with tempfile.TemporaryDirectory() as tmp, mock.patch.object(subprocess, "run", fake):

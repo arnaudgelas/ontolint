@@ -30,6 +30,12 @@ creator and dcterms:created provenance." where it said "creator or"), and ``OWL0
 literal in N3 (``"lit"``) instead of its Python repr (``rdflib.term.Literal('lit')``).  Before
 ``legacy_rules.json`` was re-pinned, every legacy view of the previous release, unhashed, was shown
 to equal the new one after exactly those two substitutions; nothing else changed.
+
+Deliberate legacy update (0.10.2): SEM001 is a verdict only when ROBOT reports profile violations; any
+other non-zero exit fails the rule instead.  The fake ROBOT of the ``json_robot_*`` cases now writes a
+real violation list (it wrote "profile problem", which is exactly the ROBOT failure no longer reported as
+a finding), and SEM001's focus is ``(ontology)`` instead of the file's path.  Only ``json_robot_fail``
+changed: its exit code and every other finding were shown identical before it was re-pinned.
 """
 
 from __future__ import annotations
@@ -52,6 +58,11 @@ from ontolint._version import package_version
 from ontolint.catalogue import planned_rows
 from ontolint.ontolint import SEVERITY
 from ontolint.rules.specs import RULE_SPECS
+
+ROBOT_REPORT = (
+    "OWL 2 DL Profile Report: Ontology and imports closure NOT in profile. The following violations are present:\n"
+    "Use of undeclared class: <http://e/C> [SubClassOf(<http://e/A> <http://e/C>)]"
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GOLDEN = Path(__file__).parent / "golden" / "differential.json"
@@ -106,7 +117,7 @@ def _linter_snapshot(name: str) -> list[dict[str, str]]:
     return [{**f.to_dict(), "fingerprint": _fingerprint(f.rule, f.focus, f.message)} for f in findings]
 
 
-def _fake_robot(returncode: int, stderr: str = "profile problem") -> Callable[..., subprocess.CompletedProcess[str]]:
+def _fake_robot(returncode: int, stderr: str = ROBOT_REPORT) -> Callable[..., subprocess.CompletedProcess[str]]:
     def fake_run(command: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(command, returncode, stdout="", stderr=stderr)
 

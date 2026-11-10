@@ -51,6 +51,10 @@ class ConversionFailed(Exception):
     """ROBOT could not convert a file to Turtle."""
 
 
+class ProfileCheckFailed(Exception):
+    """ROBOT or Docker failed without reporting profile violations: the rule fails, it does not find anything."""
+
+
 def summarise_profile_report(details: str) -> str | None:
     """Group a ROBOT profile report by violation kind and subject, or ``None`` when it lists no violation.
 
@@ -148,19 +152,18 @@ def robot_profile_issues(ontology: Path, profile: str, image: str, timeout: int)
         details = report.read_text(encoding="utf-8", errors="replace").strip() if report.exists() else ""
         details = details or completed.stderr.strip() or completed.stdout.strip() or "ROBOT did not produce a report."
         summary = summarise_profile_report(details)
-        if summary is None:
-            summary = details[:UNPARSED_MESSAGE_LENGTH]
-            if len(details) > UNPARSED_MESSAGE_LENGTH:
-                summary += "… (full output in the JSON report)"
+        if summary is None:  # no violation list: a missing image, a Docker or Java error, a permission problem
+            quoted = details[:UNPARSED_MESSAGE_LENGTH] + ("…" if len(details) > UNPARSED_MESSAGE_LENGTH else "")
+            raise ProfileCheckFailed(f"ROBOT exited {completed.returncode} without a profile report: {quoted}")
         return [
             Finding(
                 "SEM001",
                 SEVERITY["SEM001"],
-                str(source),
+                "(ontology)",
                 f"ROBOT OWL {profile} profile validation failed: {summary}",
                 FIXES["SEM001"],
                 "certain",
-                details if summary != details else None,  # only when the message abbreviates it
+                details,
             )
         ]
 

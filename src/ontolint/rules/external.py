@@ -44,11 +44,12 @@ printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection nev
   otherwise).  For each ontology argument, the original file (not an ``owl:imports`` closure) is run through
   ``robot validate-profile`` in ``--robot-image`` (default ``ontolint-robot:1.9.11``), with ``--network none``,
   its directory mounted read-only, 2 GB memory, 256 processes, 2 CPUs, no capabilities and ``--robot-timeout``
-  seconds (default 120).  Exit ``0`` is no finding.  Any other exit gives exactly one finding focused on the
-  file's absolute resolved path: the message groups the reported violations by kind and subject (at most 10
-  kinds, 5 subjects each) and the full report goes in ``details``; output that is no violation list (ROBOT or
-  Docker failing) is quoted up to 500 characters instead (``details`` only when cut), still as a SEM001
-  finding.  A timeout or a failure to start ``docker`` makes the rule ``failed`` (TOOL001, exit ``2``).
+  seconds (default 120).  Exit ``0`` is no finding.  Any other exit with a profile report that lists
+  violations gives exactly one finding focused on ``(ontology)`` (the report path names the file): the
+  message groups the violations by kind and subject (at most 10 kinds, 5 subjects each) and the full report
+  goes in ``details``.  Any other exit without such a list (a missing image, a Docker, Java or permission
+  error) is no verdict on the ontology: the rule is ``failed`` with ROBOT's output quoted up to 500 characters
+  (TOOL001, exit ``2``), as are a timeout and a failure to start ``docker``.
   Confidence ``certain``: the verdict is the OWL API's.  Why error: the user asked for this profile explicitly,
   and an ontology outside it cannot be relied on by the tools and reasoners built for that profile.
 """

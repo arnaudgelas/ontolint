@@ -406,6 +406,11 @@ networking, drops Linux capabilities, and applies CPU, memory, process, and
 timeout limits. The image build verifies the ROBOT JAR against a pinned
 SHA-256. Supply a digest-pinned image with `--robot-image` in CI.
 
+`SEM001` is reported only when ROBOT lists profile violations. Any other failure (a missing
+image, a Docker, Java or permission error) is no verdict on the ontology: the rule is `failed`,
+with ROBOT's output in its detail, and the run exits `2`, as for a timeout. A profile pass says
+the ontology fits the profile; it does not say the ontology is consistent.
+
 ## Policy and baselines
 
 A JSON policy can supply a base IRI, label-language requirements, thresholds,

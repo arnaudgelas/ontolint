@@ -21,6 +21,11 @@ from ontolint.paths import InputFile
 from ontolint.reporting import FileReport, Location, RunReport, exit_code, fingerprint, render_report
 from ontolint.rules import builtin
 
+ROBOT_REPORT = (
+    "OWL 2 DL Profile Report: Ontology and imports closure NOT in profile. The following violations are present:\n"
+    "Use of undeclared class: <http://e/C> [SubClassOf(<http://e/A> <http://e/C>)]"
+)
+
 
 def _finding(severity: str = "warning", rule: str = "ONT001") -> Finding:
     return Finding(rule, severity, "focus", "message", "fix")
@@ -201,13 +206,18 @@ def test_robot_subprocess_is_not_checked(monkeypatch: pytest.MonkeyPatch, tmp_pa
         seen.update(kwargs)
         if kwargs.get("check"):
             raise subprocess.CalledProcessError(1, command)
-        return subprocess.CompletedProcess(command, 1, stdout="", stderr="bad profile")
+        return subprocess.CompletedProcess(
+            command,
+            1,
+            stdout="",
+            stderr=ROBOT_REPORT,
+        )
 
     monkeypatch.setattr(robot_adapter.subprocess, "run", fake_run)
     findings = robot_adapter.robot_profile_issues(ttl, "EL", "img", 5)
     assert seen == {"capture_output": True, "text": True, "timeout": 5, "check": False}
     assert [f.rule for f in findings] == ["SEM001"]
-    assert "bad profile" in findings[0].message
+    assert "Use of undeclared class" in findings[0].message
 
 
 def test_robot_container_runs_as_the_calling_user(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

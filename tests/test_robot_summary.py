@@ -127,21 +127,17 @@ def test_the_finding_summarises_and_keeps_the_full_report(monkeypatch: pytest.Mo
     assert finding.details == DL_REPORT
 
 
-def test_an_unparsed_failure_is_cut_at_500_characters(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_output_that_is_no_violation_list_fails_the_check(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """A crash, a missing image or a permission error is no verdict on the ontology (cut at 500 characters)."""
     ttl = tmp_path / "a.ttl"
     ttl.write_text("", encoding="utf-8")
-    stderr = "x" * 600
-    monkeypatch.setattr(robot_adapter.subprocess, "run", _fake_robot(None, stderr))
-    [finding] = robot_adapter.robot_profile_issues(ttl, "DL", "img", 5)
-    assert finding.message == f"ROBOT OWL DL profile validation failed: {'x' * 500}… (full output in the JSON report)"
-    assert finding.details == stderr
-    monkeypatch.setattr(robot_adapter.subprocess, "run", _fake_robot(None, "short"))
-    [finding] = robot_adapter.robot_profile_issues(ttl, "DL", "img", 5)
-    assert finding.message == "ROBOT OWL DL profile validation failed: short"
-    assert finding.details is None  # the message already holds all of it
+    monkeypatch.setattr(robot_adapter.subprocess, "run", _fake_robot(None, "x" * 600))
+    with pytest.raises(robot_adapter.ProfileCheckFailed) as raised:
+        robot_adapter.robot_profile_issues(ttl, "DL", "img", 5)
+    assert str(raised.value) == f"ROBOT exited 1 without a profile report: {'x' * 500}…"
     monkeypatch.setattr(robot_adapter.subprocess, "run", _fake_robot(None, "y" * 500))
-    [finding] = robot_adapter.robot_profile_issues(ttl, "DL", "img", 5)
-    assert finding.message == f"ROBOT OWL DL profile validation failed: {'y' * 500}"
+    with pytest.raises(robot_adapter.ProfileCheckFailed, match=r"report: y{500}$"):
+        robot_adapter.robot_profile_issues(ttl, "DL", "img", 5)
 
 
 def test_details_appear_in_json_and_sarif_only_when_set() -> None:
