@@ -20,6 +20,29 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **SHACL-EVIDENCE** (P1): each `SHACL001` finding carries every field of its SHACL validation
+    result as JSON `evidence` (after `details`) and SARIF `properties.evidence` (before `graphs`),
+    never in text: `focusNode`, `resultPath`, `value`, `sourceShape`, `sourceConstraintComponent`,
+    `sourceConstraint`, `detail`, `resultMessage`, `resultSeverity`, each only when the report has
+    it. Spellings (README "Optional SHACL validation"): IRIs plain, blank nodes the content-stable
+    `_:` id, literals one-line N-Triples, complex paths in SPARQL property-path syntax,
+    `(malformed path)` for a cyclic, over-deep (32) or over-large (1,000 nodes) one; `sh:detail`
+    nests at most 8 deep.
+    `Finding.evidence` is `compare=False`, so identity, fingerprints and baselines ignore it, and
+    `adapters.shacl.shacl_result_key` gives BASELINE-V2 its SHACL001 subject. Found and fixed with
+    it: pySHACL's result order depends on `PYTHONHASHSEED`, so the adapter now sorts tied findings
+    by their evidence. Verified: the two non-integer values of the original reproduction now
+    differ in `evidence.value`; a fixture per family (value type, cardinality, property pair,
+    logical, SPARQL-based, plus `sh:node` and complex paths) pins the exact evidence, and a test
+    checks both ways that every property pySHACL writes on those results reaches JSON and SARIF;
+    text output and a `--write-baseline` file are byte-identical before and after;
+    `legacy_rules.json` did not move, and in `differential.json` only
+    `json_clean_shacl_violation`'s two full-output hashes changed (JSON-tree diff); JSON bytes
+    are equal under seeds 1 and 2, which reversed pySHACL's order. Targeted mutation run
+    (`adapters/shacl.py`, `models.py`, `reporting.py`): 137 mutants, none surviving, 1 pardoned
+    (older), 1 timeout and 5 errors from tests slower than half the mutant timeout. Left open,
+    under P1 "SHACL001 evidence": nested `sh:detail` results are still also findings of their
+    own (the maintainer's decision), evidence in text output, and SHACL-AF `sh:resultAnnotation`.
   - **DATASET-PROVENANCE** (P0): each finding of a TriG, N-Quads or JSON-LD dataset names the
     graphs its terms come from, as JSON `graphs` (between `path` and `modules`), SARIF
     `properties.graphs` and text `In: graph X` / `In: graphs X, Y`. The loader records, before
@@ -315,21 +338,32 @@ Validation corpus (public; licences per repository):
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
 
-- [ ] **Keep SHACL's evidence in SHACL001.** A finding carries the result message, focus and
-  source shape only; the report's `sh:resultPath`, `sh:value`, `sh:sourceConstraintComponent` and
-  `sh:resultSeverity` are dropped, so two violations of one shape on one node read alike and a
-  fix has to be found by rerunning pySHACL. Put them in the finding (`details` in JSON and SARIF
-  today; the message only if a baseline break is accepted, see the next item), with a fixture per
-  constraint component family (value type, cardinality, property pair, logical, SPARQL-based).
-  *Done when:* every SHACL Core result field present in the report reaches JSON and SARIF.
+- [ ] **SHACL001 evidence: what is left to the maintainer.** The evidence itself is done
+  (unreleased, see "Recently done"). Three choices were left out because each changes a contract:
+  - *Nested results reported twice.* pySHACL types the `sh:detail` results of a `sh:node`
+    violation as `sh:ValidationResult` too, although the report's `sh:result` does not list them,
+    so each is a finding of its own as well as an entry
+    of its parent's `evidence.detail` (reproduced 2026-11-10: 12 typed results, 11 top-level).
+    Dropping the nested ones changes finding counts, stale-baseline lists and `--fail-on` exit
+    codes; keep or drop is the maintainer's decision, and the evidence now makes the duplicate
+    visible.
+  - *Evidence in text output* (a `Value:` line, say): the text format is a protected contract.
+  - *SHACL-AF `sh:resultAnnotation`* (with `advanced=True`): such a property would not reach the
+    evidence. `tests/test_shacl_evidence.py` fails if pySHACL writes an unmapped property on its
+    fixtures, but a shape that declares annotations is not among them.
+  *Done when:* each of the three is decided, and a decided change has its fixture.
 
 - [ ] **Decouple baseline identity from message wording.** A fingerprint hashes `(rule, focus,
   message)`, so every message fix is a baseline break: 0.10.0 broke baselines for ONT005 and
   OWL013, and fixing OWL034, OWL036, OWL040 and SEC014 will break them again. Design a version 2
   identity from the rule, the focus and the finding's structured subject (the terms, predicate or
-  axiom it is about, which `Finding.related` already starts to carry), never from prose; write it
+  axiom it is about, which `Finding.related` already starts to carry; for SHACL001,
+  `adapters.shacl.shacl_result_key(finding.evidence)`: source shape, constraint component, path,
+  value and SPARQL constraint), never from prose; write it
   next to the version 1 hash in `--write-baseline` and accept either when reading, so existing
-  baselines keep working. Decide it before the next message change, not after. Make it independent
+  baselines keep working. Decide it before the next message change, not after. Today a baseline
+  that accepts one SHACL001 result accepts every result with its message: two datatype violations
+  on one node share a fingerprint and differ only in `evidence.value`. Make it independent
   of the run's shape too: only multi-file runs hash the report path today, so a baseline written
   from one file does not carry over to a multi-file run (README "Several files"); keep the path as
   a field of the identity and match on it when both sides have one. *Done when:* a message-only
@@ -531,8 +565,10 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   commands cap, plus MARKDOWN-SUMMARY in `$GITHUB_STEP_SUMMARY`. A native annotation formatter
   comes only if a user without code scanning asks for one. `action.yml` sits at the repository
   root, so `uses: arnaudgelas/ontolint@vX.Y.Z` pins the Action and the ontolint it installs to one
-  release: from PyPI, by exact version with hashes, never the latest. The `tags` ruleset already
-  protects that tag. Decide:
+  release: from PyPI, by exact version with hashes, never the latest. Code scanning ignores SARIF
+  property bags, so `properties.evidence` does not reach its UI, and results with one message on
+  one location may be shown as one (there are no `partialFingerprints`); check both. The `tags`
+  ruleset already protects that tag. Decide:
   - whether SARIF upload is the Action's job, which needs `security-events: write`, or the
     caller's;
   - whether the ROBOT image is in scope. It is not at first.
@@ -725,10 +761,10 @@ moves from `proposed` merely because it has an attractive title.
   consumer. JSON and SARIF are the integration contracts to keep sound first. Markdown now has its
   consumer (MARKDOWN-SUMMARY, P1) and a CI test format is CTRF-REPORT (P2), which takes JUnit's
   place.
-- **Automatic fixes (`--fix`):** defer until findings carry structured evidence (the SHACL and
-  baseline-identity items in P1); only round-trip-verified, meaning-preserving edits would ever
-  qualify, and modelling or logical corrections (deleting an axiom that causes an inconsistency)
-  never.
+- **Automatic fixes (`--fix`):** defer until findings carry structured evidence (SHACL001 does,
+  unreleased; the baseline-identity item in P1 is still open); only round-trip-verified,
+  meaning-preserving edits would ever qualify, and modelling or logical corrections (deleting an
+  axiom that causes an inconsistency) never.
 - **Editor integration (a language server):** defer until source regions are exact for the
   formats it would serve; today they locate a term's occurrence, not the offending axiom.
 - **A single quality score, and AI-generated suggestions presented as checks:** rejected. A score
