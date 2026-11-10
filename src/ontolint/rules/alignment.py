@@ -208,7 +208,13 @@ def _misspelt_predicates(ctx: RuleContext) -> None:
         hint = f"; did you mean {_name(known)}?" if known is not None else ""
         for s in _ordered(s for s in ctx.g.subjects(p, None) if isinstance(s, URIRef)):
             if ctx.local(s):
-                ctx.add("ALIGN002", s, f"{text} is not a SKOS or OWL mapping property{hint}", confidence="certain")
+                ctx.add(
+                    "ALIGN002",
+                    s,
+                    f"{text} is not a SKOS or OWL mapping property{hint}",
+                    confidence="certain",
+                    subject=(p,),
+                )
 
 
 # --- ALIGN003 / ALIGN004 / ALIGN014 ----------------------------------------------------------
@@ -235,6 +241,7 @@ def _exact_chain_conflicts(ctx: RuleContext) -> None:
                 f"{narrow} and {broad} are exactMatch-equivalent through a chain but also linked by "
                 "broadMatch/narrowMatch.",
                 confidence="certain",
+                subject=(broad,),
             )
 
 
@@ -251,6 +258,7 @@ def _contradictory_strengths(ctx: RuleContext) -> None:
                 narrow,
                 f"{narrow} and {broad} are each mapped as broader than the other.",
                 confidence="certain",
+                subject=(SKOS.broadMatch, broad),
             )
     undirected = {frozenset(pair) for pair in hierarchy}
     for s, _, o in _edges(ctx.g, (SKOS.relatedMatch,)):
@@ -260,6 +268,7 @@ def _contradictory_strengths(ctx: RuleContext) -> None:
                 s,
                 f"{s} and {o} are linked by skos:relatedMatch and by broadMatch/narrowMatch.",
                 confidence="certain",
+                subject=(SKOS.relatedMatch, o),
             )
 
 
@@ -297,6 +306,7 @@ def _hierarchy_contradictions(ctx: RuleContext) -> None:
                 f"{_name(p)} makes {broad} broader than {narrow}, but the asserted hierarchy places {broad} "
                 f"below {narrow}.",
                 confidence="certain",
+                subject=(p, o),
             )
 
 
@@ -343,6 +353,7 @@ def _exact_targets_per_namespace(ctx: RuleContext) -> None:
                     "ALIGN005",
                     source,
                     f"Term has {len(members)} distinct skos:exactMatch targets in {namespace}: {names}.",
+                    subject=(namespace,),
                 )
 
 
@@ -353,7 +364,12 @@ def _one_way_symmetric(ctx: RuleContext) -> None:
     g = ctx.g
     for s, p, o in _edges(g, _SYMMETRIC_SKOS):
         if (o, p, s) not in g and (o, None, None) in g and ctx.local(s) and ctx.local(o):
-            ctx.add("ALIGN007", s, f"{_name(p)} to {o} has no inverse assertion, although {o} is described here.")
+            ctx.add(
+                "ALIGN007",
+                s,
+                f"{_name(p)} to {o} has no inverse assertion, although {o} is described here.",
+                subject=(p, o),
+            )
 
 
 # --- ALIGN009 --------------------------------------------------------------------------------
@@ -378,6 +394,7 @@ def _incompatible_kinds(ctx: RuleContext) -> None:
             s,
             f"{_name(p)} maps {kinds[0]} {s} to {kinds[1]} {o}.",
             confidence="certain" if p in _OWL_EQUIVALENCE else "heuristic",
+            subject=(p, o),
         )
 
 
@@ -394,7 +411,12 @@ def _duplicate_mappings(ctx: RuleContext) -> None:
         first, second = _ordered(pair)
         if len(used) > 1 and (ctx.local(first) or ctx.local(second)):
             names = ", ".join(sorted(_name(p) for p in used))
-            ctx.add("ALIGN013", first, f"{first} and {second} are related by several equivalence predicates: {names}.")
+            ctx.add(
+                "ALIGN013",
+                first,
+                f"{first} and {second} are related by several equivalence predicates: {names}.",
+                subject=("equivalence", second),
+            )
     for narrow, broad in _hierarchy_edges(g):
         if (
             (narrow, SKOS.broadMatch, broad) in g
@@ -405,6 +427,7 @@ def _duplicate_mappings(ctx: RuleContext) -> None:
                 "ALIGN013",
                 narrow,
                 f"{broad} being broader than {narrow} is asserted by both skos:broadMatch and skos:narrowMatch.",
+                subject=(SKOS.broadMatch, SKOS.narrowMatch, broad),
             )
 
 
@@ -427,7 +450,7 @@ def _mapping_set_metadata(ctx: RuleContext) -> None:
         for node in _ordered(s for s in ctx.context.subjects_by_type.get(kind, ()) if isinstance(s, URIRef)):
             missing = [label for label, predicates in required if not any((node, p, None) in g for p in predicates)]
             if missing and ctx.local(node):
-                ctx.add("ALIGN015", node, f"Mapping set has no {_or(missing)}.")
+                ctx.add("ALIGN015", node, f"Mapping set has no {_or(missing)}.", subject=())
 
 
 def run(ctx: RuleContext) -> None:

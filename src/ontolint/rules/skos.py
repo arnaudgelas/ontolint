@@ -134,7 +134,13 @@ def _concept_labels(ctx: RuleContext) -> None:
                 # A tag written one way is reported as written; mixed spellings are reported in lower case.
                 tags = spellings[language]
                 shown = next(iter(tags)) if len(tags) == 1 else language
-                ctx.add("SKOS001", c, f"{len(labels)} prefLabels in language {shown}.", confidence="certain")
+                ctx.add(
+                    "SKOS001",
+                    c,
+                    f"{len(labels)} prefLabels in language {shown}.",
+                    confidence="certain",
+                    subject=(language,),
+                )
         if not by_lang and _needs_label(ctx, c):
             ctx.add("SKOS004", c, "Concept has no skos:prefLabel.")
         if (c, SKOS.inScheme, None) not in g:
@@ -176,6 +182,7 @@ def _label_overlaps(ctx: RuleContext) -> None:
                     resource,
                     f"Literal {str(value)[:60]!r} ({language}) appears in {' and '.join(names)}.",
                     confidence="certain",
+                    subject=(value,),
                 )
 
 
@@ -187,10 +194,13 @@ def _broader_cycles(ctx: RuleContext) -> None:
                 "SKOS003",
                 sorted(component, key=str)[0],
                 "SKOS broader cycle: " + ", ".join(map(str, sorted(component, key=str))),
+                subject=(),
             )
 
 
 def _top_concepts(ctx: RuleContext) -> None:
     for concept, scheme in ctx.g.subject_objects(SKOS.topConceptOf):
         if (concept, SKOS.broader, None) in ctx.g:
-            ctx.add("SKOS006", concept, f"Top concept of {scheme} also has an asserted broader concept.")
+            ctx.add(
+                "SKOS006", concept, f"Top concept of {scheme} also has an asserted broader concept.", subject=(scheme,)
+            )

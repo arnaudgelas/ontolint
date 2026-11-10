@@ -180,3 +180,59 @@ def test_data003_names_the_predicate_and_the_whole_literal() -> None:
         ("A", ("p", '"x"^^<xsd:integer>')),
         ("A", ("q", '"y"^^<xsd:integer>')),
     }
+
+
+# --- SKOS and alignment ------------------------------------------------------------------------------
+
+SKOS = "http://www.w3.org/2004/02/skos/core#"
+
+
+def _skos(found: set[tuple[str, tuple[str, ...]]]) -> set[tuple[str, tuple[str, ...]]]:
+    return {(focus, tuple(part.replace(SKOS, "skos:") for part in about)) for focus, about in found}
+
+
+def test_skos001_names_the_language_not_the_count() -> None:
+    turtle = 'ex:c a skos:Concept ; skos:prefLabel "a"@en, "b"@en, "c"@fr, "d"@FR .'
+    assert subjects("SKOS001", turtle) == {("c", ("en",)), ("c", ("fr",))}
+
+
+def test_skos018_names_the_redundant_broader_and_the_path_through_it() -> None:
+    turtle = """
+        ex:c skos:broader ex:p1, ex:p2, ex:g . ex:p1 skos:broader ex:g . ex:p2 skos:broader ex:g .
+        ex:c a skos:Concept . ex:p1 a skos:Concept . ex:p2 a skos:Concept . ex:g a skos:Concept .
+    """
+    assert subjects("SKOS018", turtle) == {("c", ("g", "p1")), ("c", ("g", "p2"))}
+
+
+def test_skos021_names_the_scheme_and_the_shared_label_not_how_many_share_it() -> None:
+    two = """
+        ex:s a skos:ConceptScheme .
+        ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Same"@en .
+        ex:b a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "same"@en .
+    """
+    three = two + 'ex:c a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "SAME"@en .'
+    expected = {("a", ("s", "en", "same")), ("b", ("s", "en", "same"))}
+    assert subjects("SKOS021", two) == expected
+    assert subjects("SKOS021", three) == {*expected, ("c", ("s", "en", "same"))}
+
+
+def test_align004_tells_mutual_broader_from_related_and_broader() -> None:
+    turtle = """
+        ex:a skos:broadMatch ex:b . ex:b skos:broadMatch ex:a .
+        ex:a skos:relatedMatch ex:b .
+    """
+    assert _skos(subjects("ALIGN004", turtle)) == {
+        ("a", ("skos:broadMatch", "b")),
+        ("a", ("skos:relatedMatch", "b")),
+    }
+
+
+def test_align013_tells_equivalence_predicates_from_both_hierarchy_directions() -> None:
+    turtle = """
+        ex:a skos:exactMatch ex:b ; skos:closeMatch ex:b ; skos:broadMatch ex:b .
+        ex:b skos:narrowMatch ex:a .
+    """
+    assert _skos(subjects("ALIGN013", turtle)) == {
+        ("a", ("equivalence", "b")),
+        ("a", ("skos:broadMatch", "skos:narrowMatch", "b")),
+    }

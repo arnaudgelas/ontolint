@@ -309,6 +309,7 @@ def _related_conflicts(ctx: RuleContext) -> None:
                 first,
                 f"skos:related and a hierarchical link both connect {first} and {second}.",
                 confidence="certain",
+                subject=(second,),
             )
     for c in _iris(g.subjects(SKOS.related, None)):
         if (c, SKOS.related, c) in g and ctx.local(c):
@@ -327,6 +328,7 @@ def _mapping_conflicts(ctx: RuleContext) -> None:
                 first,
                 f"skos:exactMatch and another mapping type both connect {first} and {second}.",
                 confidence="certain",
+                subject=(second,),
             )
 
 
@@ -344,9 +346,16 @@ def _labels(ctx: RuleContext) -> None:
                     s,
                     f"skos:{name} value {str(label)[:60]!r} is not a string literal.",
                     confidence="certain",
+                    subject=(p, label),
                 )
             elif not str(label).strip() or str(label) != str(label).strip():
-                ctx.add("SKOS014", s, f"skos:{name} is empty or has leading/trailing whitespace.", confidence="certain")
+                ctx.add(
+                    "SKOS014",
+                    s,
+                    f"skos:{name} is empty or has leading/trailing whitespace.",
+                    confidence="certain",
+                    subject=(p,),
+                )
 
 
 def _relation_values(ctx: RuleContext) -> None:
@@ -354,7 +363,13 @@ def _relation_values(ctx: RuleContext) -> None:
     for p in _RELATIONS:
         for s, o in g.subject_objects(p):
             if isinstance(o, Literal) and ctx.local(s):
-                ctx.add("SKOS016", s, f"skos:{p.rsplit('#', 1)[-1]} has a literal value.", confidence="certain")
+                ctx.add(
+                    "SKOS016",
+                    s,
+                    f"skos:{p.rsplit('#', 1)[-1]} has a literal value.",
+                    confidence="certain",
+                    subject=(p,),
+                )
     owned = owned_checker(ctx)
     for p in _LINK_TARGETS:
         for s, o in sorted(g.subject_objects(p), key=lambda t: (str(t[0]), str(t[1]))):
@@ -365,7 +380,12 @@ def _relation_values(ctx: RuleContext) -> None:
                 and (p not in _MAPPING or namespace_of(o) == namespace_of(s))
                 and (o, None, None) not in g
             ):
-                ctx.add("SKOS017", s, f"skos:{p.rsplit('#', 1)[-1]} target {o} is not described in the graph.")
+                ctx.add(
+                    "SKOS017",
+                    s,
+                    f"skos:{p.rsplit('#', 1)[-1]} target {o} is not described in the graph.",
+                    subject=(p, o),
+                )
 
 
 def _scheme_scope(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
@@ -375,12 +395,22 @@ def _scheme_scope(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
     for pair in sorted(mapped, key=_ordered):
         first, second = _ordered(pair)
         if schemes.get(first, set()) & schemes.get(second, set()) and (ctx.local(first) or ctx.local(second)):
-            ctx.add("SKOS011", first, f"Mapping property links {first} and {second}, which share a concept scheme.")
+            ctx.add(
+                "SKOS011",
+                first,
+                f"Mapping property links {first} and {second}, which share a concept scheme.",
+                subject=(second,),
+            )
     for pair in sorted(hierarchical, key=_ordered):
         first, second = _ordered(pair)
         a, b = schemes.get(first), schemes.get(second)
         if a and b and not a & b and (ctx.local(first) or ctx.local(second)):
-            ctx.add("SKOS019", first, f"Hierarchical link between {first} and {second} crosses concept schemes.")
+            ctx.add(
+                "SKOS019",
+                first,
+                f"Hierarchical link between {first} and {second} crosses concept schemes.",
+                subject=(second,),
+            )
 
 
 def _scheme_members(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
@@ -392,7 +422,12 @@ def _scheme_members(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> Non
     for scheme in _iris(g.subjects(RDF.type, SKOS.ConceptScheme)):
         has_top = (scheme, SKOS.hasTopConcept, None) in g or (None, SKOS.topConceptOf, scheme) in g
         if members.get(scheme) and not has_top and ctx.local(scheme):
-            ctx.add("SKOS015", scheme, f"Concept scheme has {len(members[scheme])} concept(s) but no top concept.")
+            ctx.add(
+                "SKOS015",
+                scheme,
+                f"Concept scheme has {len(members[scheme])} concept(s) but no top concept.",
+                subject=(),
+            )
 
 
 def _redundant_broader(ctx: RuleContext) -> None:
@@ -411,6 +446,7 @@ def _redundant_broader(ctx: RuleContext) -> None:
                         child,
                         f"skos:broader {grand} is redundant: already reachable through {parent}.",
                         confidence="certain",
+                        subject=(grand, parent),
                     )
 
 
@@ -443,13 +479,17 @@ def _uniqueness(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
                 if isinstance(label, Literal) and str(label).strip():
                     labels[scheme, (label.language or "").lower(), str(label).strip().casefold()].add(concept)
     for (scheme, notation), owners in sorted(notations.items()):
-        _report_shared(ctx, "SKOS020", owners, f"skos:notation {notation.split('^^')[0][:60]!r}", scheme)
+        what = f"skos:notation {notation.split('^^')[0][:60]!r}"
+        _report_shared(ctx, "SKOS020", owners, what, scheme, key=(notation,))
     for (scheme, language, text), owners in sorted(labels.items()):
-        _report_shared(ctx, "SKOS021", owners, f"skos:prefLabel {text[:60]!r} ({language or 'no language'})", scheme)
+        what = f"skos:prefLabel {text[:60]!r} ({language or 'no language'})"
+        _report_shared(ctx, "SKOS021", owners, what, scheme, key=(language, text))
 
 
-def _report_shared(ctx: RuleContext, rule: str, owners: set[URIRef], what: str, scheme: URIRef) -> None:
+def _report_shared(  # noqa: PLR0913 -- the rule, who shares what in which scheme, and the shared key.
+    ctx: RuleContext, rule: str, owners: set[URIRef], what: str, scheme: URIRef, *, key: tuple[str, ...]
+) -> None:
     if len(owners) < MINIMUM_SHARED:
         return
     for concept in sorted(o for o in owners if ctx.local(o)):
-        ctx.add(rule, concept, f"{what} is shared by {len(owners)} concepts of {scheme}.")
+        ctx.add(rule, concept, f"{what} is shared by {len(owners)} concepts of {scheme}.", subject=(scheme, *key))
