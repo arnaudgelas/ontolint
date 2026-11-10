@@ -140,7 +140,7 @@ Supported report formats are `text`, `json`, and `sarif`.
 | --- | --- |
 | `0` | No finding meets the configured `--fail-on` threshold. |
 | `1` | At least one finding meets the threshold. |
-| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker). |
+| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker, or a SHACL validation that exceeds `--max-validation-seconds`). |
 
 Exit `2` outranks `1`: when a requested backend did not deliver a verdict the run cannot
 pass, even with `--fail-on never`. The report is still written so you can see why. Rules that
@@ -409,8 +409,11 @@ Pass a shapes graph with `--shapes` to enable pySHACL validation:
 ontolint ontology.ttl --shapes shapes.ttl
 ```
 
-The integration uses `meta_shacl=True` and `advanced=True`. Newer SHACL draft
-features are not guaranteed to be supported.
+The integration uses `meta_shacl=True` and `advanced=True`, with `inference="none"` and the
+network disabled (see "Input safety" for what that admits). Newer SHACL draft
+features are not guaranteed to be supported. Shapes can make validation run for a long time;
+`--max-validation-seconds` (or `max_validation_seconds` in the policy) stops it, and `SHACL001`
+then fails (exit `2`).
 
 When a [W3C PROF](https://www.w3.org/TR/dx-prof/) profile names the shapes (`prof:hasResource [
 prof:hasRole role:validator ; prof:hasArtifact <…/validator> ]`), let the profile say which:
@@ -502,6 +505,7 @@ ignored rules, and severity overrides.
   "alignment_namespaces": ["http://purl.obolibrary.org/obo/"],
   "alignment_min_coverage": 0.5,
   "max_parse_seconds": 60,
+  "max_validation_seconds": 120,
   "module_by": "namespace"
 }
 ```
@@ -516,7 +520,11 @@ Unknown keys are reported by `GOV020`,
 and an unsupported `policy_version` rejects the file. `max_parse_seconds` (also
 `--max-parse-seconds`) limits the time spent parsing one input and reports `SEC003`
 when it is exceeded; it parses in a worker process, so leave it unset for the fastest
-in-process load.
+in-process load. `max_validation_seconds` (also `--max-validation-seconds`) does the same for
+SHACL validation: past it the validation is stopped and `SHACL001` is `failed` (no finding,
+`TOOL001` on stderr, exit `2`, as for a ROBOT timeout). It counts from the moment the worker
+process has imported pySHACL, once per linted file, and includes handing the data and shapes
+graphs to the worker. It has no effect without shapes. Neither key inherits the other.
 
 ```bash
 # Emit SARIF using a policy
@@ -740,11 +748,23 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   refused (`SEC006`). `owl:imports` is never fetched; `--follow-imports` loads only local files.
 - SHACL validation runs with the network disabled too: a socket or DNS attempt
   by a shape, even one pySHACL catches, makes `SHACL001` `failed` (exit `2`).
+  It runs with `inference="none"` (no RDFS or OWL entailment is added to the data)
+  and `advanced=True`, which admits SHACL-AF: SPARQL-based and custom targets,
+  `sh:rule` (triple and SPARQL rules, applied once to a copy of the data graph)
+  and SHACL functions; JavaScript extensions stay off. SPARQL-based constraints
+  (`sh:sparql`) are SHACL Core and run whatever `advanced` says, so any shapes
+  file, including one named by a PROF profile or imported as a shape library,
+  can be slow: set `--max-validation-seconds` for shapes you did not write.
 - Inputs and XML catalogs larger than `--max-input-bytes` (default 64 MiB), or inputs
   holding more than `--max-triples` triples (default 5,000,000), are rejected (`SEC001`,
   `SEC002`).
   Both can also be set in the `--config` policy file. With
   `--max-parse-seconds` a parse that runs too long is stopped (`SEC003`).
+- Bounded: sizes and triple counts (always), ROBOT (`--robot-timeout`, 120 s by
+  default) and, when you set a budget, parsing (`--max-parse-seconds`, `SEC003`)
+  and SHACL validation (`--max-validation-seconds`, a `failed` `SHACL001`); those
+  two run in a worker process that is stopped at the budget. Not bounded: the
+  rule families, whose cost on large inputs is measured by `tests/test_scaling.py`.
 - RDF/XML with external entities or nested entity expansion is refused
   (`SEC010`), compressed files are refused (`SEC011`), and relative paths that
   escape the working directory, or leave it through a symlink or a symlinked

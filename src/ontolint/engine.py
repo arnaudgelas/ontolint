@@ -11,7 +11,7 @@ from pathlib import Path
 from rdflib import BNode, Graph
 
 from .adapters.robot import robot_profile_issues
-from .adapters.shacl import shacl_issues
+from .adapters.shacl import bounded_shacl_issues, shacl_issues
 from .context import GraphContext
 from .models import (
     ExecutionStatus,
@@ -29,6 +29,7 @@ from .rules.builtin import RULE_MODULES, module_name, module_runners, module_spe
 from .rules.registry import RuleRegistry, default_registry
 from .rules.runtime import RuleContext
 from .rules.support import stable_blank_id
+from .worker import WorkerFailed
 
 type RuleFamily = Callable[[RuleContext], None]
 
@@ -94,7 +95,17 @@ def _not_run(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -> Ru
 
 
 def _failure(exc: Exception) -> str:
+    """``<ExceptionType>: <message>``; a failure inside a worker names the worker's exception, as in process."""
+    if isinstance(exc, WorkerFailed):
+        return f"{exc.cause_type}: {exc.detail}"
     return f"{type(exc).__name__}: {exc}"
+
+
+def _validate(data: Graph, shapes: Graph, seconds: float | None) -> list[Finding]:
+    """Validate in this process, or with ``max_validation_seconds`` in a worker stopped at the budget."""
+    if seconds is None:
+        return shacl_issues(data, shapes)
+    return bounded_shacl_issues(data, shapes, seconds)
 
 
 def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
@@ -106,12 +117,13 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
     with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.
     """
     assert ctx.shapes is not None  # noqa: S101 -- _not_run rules out SHACL without shapes.
+    seconds = ctx.policy.max_validation_seconds
     if ctx.shacl_background is None:
-        return shacl_issues(ctx.g, ctx.shapes)
+        return _validate(ctx.g, ctx.shapes, seconds)
     data = ctx.g | ctx.shacl_background
     nodes = {node for s, _p, o in ctx.g for node in (s, o)}
     own = {stable_blank_id(data, n) if isinstance(n, BNode) else str(n) for n in nodes}
-    return [finding for finding in shacl_issues(data, ctx.shapes) if finding.focus in own]
+    return [finding for finding in _validate(data, ctx.shapes, seconds) if finding.focus in own]
 
 
 def _run_adapter(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -> tuple[RuleExecution, list[Finding]]:

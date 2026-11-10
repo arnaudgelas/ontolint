@@ -1,15 +1,19 @@
 """pySHACL adapter: SHACL validation results become SHACL001 findings.
 
 Validation runs under :func:`ontolint.loader.network_disabled`, which patches process-global socket functions
-under a lock: validations from several threads of one process are serialised, as parses are.
+under a lock: validations from several threads of one process are serialised, as parses are.  With a time budget
+(:func:`bounded_shacl_issues`) it runs in a :mod:`ontolint.worker` process that is stopped when the budget is
+exhausted; the worker answers with finished findings as JSON, which equal the in-process ones because blank nodes
+are named by their content, never by their label.
 """
 
 from __future__ import annotations
 
+import contextlib
 import json
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Any
 
 from rdflib import BNode, Graph, Literal, URIRef
@@ -18,9 +22,10 @@ from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
 from ontolint.loader import network_disabled
-from ontolint.models import Evidence, EvidenceValue, Finding
+from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import stable_blank_id
+from ontolint.worker import WorkerFailed, WorkerGone, WorkerTimeout, decode_graph, encode_graph, run_bounded
 
 MAX_LIST_LENGTH = 400
 """Longest rdf:list the SHACL backend is asked to validate (pySHACL meta-validation is quadratic in it)."""
@@ -340,3 +345,83 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
             )
         )
     return results
+
+
+# --- validation under a time budget ------------------------------------------------------------------------------
+
+
+class ValidationTimeout(TimeoutError):
+    """SHACL validation did not finish within ``max_validation_seconds``; the worker was stopped."""
+
+
+def _restore_evidence(raw: dict[str, Any]) -> Evidence:
+    """The evidence :func:`plain_evidence` wrote: each list a tuple again, nested results included."""
+    return {key: _restore_value(value) for key, value in raw.items()}
+
+
+def _restore_value(value: Any) -> EvidenceValue:
+    if isinstance(value, str):
+        return value
+    if all(isinstance(item, str) for item in value):
+        return tuple[str, ...](value)
+    return tuple(_restore_evidence(item) for item in value)
+
+
+def _findings_to_json(findings: list[Finding]) -> list[dict[str, Any]]:
+    """Every field of each finding as JSON (tuples become lists, evidence plain mappings)."""
+    encoded = []
+    for finding in findings:
+        record: dict[str, Any] = {f.name: getattr(finding, f.name) for f in fields(Finding)}
+        record["related"], record["subject"] = list(finding.related), list(finding.subject)
+        record["evidence"] = None if finding.evidence is None else plain_evidence(finding.evidence)
+        encoded.append(record)
+    return encoded
+
+
+def _findings_from_json(records: list[dict[str, Any]]) -> list[Finding]:
+    """The findings :func:`_findings_to_json` wrote, field for field."""
+    findings = []
+    for record in records:
+        values: dict[str, Any] = {**record, "related": tuple(record["related"]), "subject": tuple(record["subject"])}
+        values["evidence"] = None if record["evidence"] is None else _restore_evidence(record["evidence"])
+        findings.append(Finding(**values))
+    return findings
+
+
+# gremlin: pardon[equivalent] nothing mutates a job; frozen only guards against it
+@dataclass(frozen=True)
+class _ValidationJob:
+    """A :class:`~ontolint.worker.WorkerTask`: the data and shapes graphs, encoded by the parent."""
+
+    data: bytes
+    shapes: bytes
+
+    def prepare(self) -> None:
+        """Import pySHACL before the budget starts (its absence is reported by :func:`shacl_issues`)."""
+        with contextlib.suppress(ImportError):
+            import pyshacl  # noqa: F401, PLC0415 -- warm-up import only
+
+    def run(self) -> bytes:
+        """Validate and answer with the findings; an exception becomes the worker's ``worker_error`` reply."""
+        data, shapes = decode_graph(json.loads(self.data)), decode_graph(json.loads(self.shapes))
+        return json.dumps({"findings": _findings_to_json(shacl_issues(data, shapes))}).encode()
+
+
+def bounded_shacl_issues(g: Graph, sg: Graph, seconds: float) -> list[Finding]:
+    """:func:`shacl_issues` in a worker process, stopped after ``seconds``: :class:`ValidationTimeout`.
+
+    The budget starts once the worker has imported pySHACL and includes decoding the two graphs there.  A shapes
+    graph the pre-check refuses is refused here, before any worker starts.  A failure inside the worker is a
+    :class:`~ontolint.worker.WorkerFailed` naming the in-process exception, so the rule's detail reads the same.
+    """
+    check_graph(sg, "shapes graph")
+    job = _ValidationJob(encode_graph(g), encode_graph(sg))
+    try:
+        reply = run_bounded(job, seconds, name="validation")
+    except WorkerTimeout:
+        raise ValidationTimeout(
+            f"SHACL validation did not finish within the time budget of {seconds:g} seconds (max_validation_seconds)"
+        ) from None
+    except WorkerGone as exc:
+        raise WorkerFailed("WorkerError", str(exc)) from None
+    return _findings_from_json(reply["findings"])

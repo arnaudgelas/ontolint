@@ -28,7 +28,11 @@ printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection nev
   of the finding's identity: messages and fingerprints are unchanged.  A non-conforming report without result
   nodes gives one error on ``(shapes)``, without evidence.  A shapes graph refused by the pre-check
   (unserialisable IRI, cyclic, shared or overlong ``rdf:list``) or a pySHACL crash makes the rule ``failed`` (no
-  finding, TOOL001 line, exit ``2``).  Confidence ``certain``: the verdict is pySHACL's, on the user's own shapes.
+  finding, TOOL001 line, exit ``2``).  With ``max_validation_seconds`` (``--max-validation-seconds``; default unset,
+  in process) the validation of each file runs in a worker process, with the same findings and failure details,
+  and is stopped at the budget: ``failed`` with ``ValidationTimeout: SHACL validation did not finish within the
+  time budget of <s> seconds (max_validation_seconds)``, the report written, exit ``2``.  Confidence ``certain``:
+  the verdict is pySHACL's, on the user's own shapes.
   Why error: a violated shape is a contract the user wrote; a shape that means less says so with ``sh:severity``.
 * **INPUT001.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or
   unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without

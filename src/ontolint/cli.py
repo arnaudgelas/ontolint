@@ -67,7 +67,7 @@ def _positive_int(text: str) -> int:
 
 
 def _positive_seconds(text: str) -> float:
-    """argparse type for ``--max-parse-seconds``: a finite number above 0 and at most one day."""
+    """argparse type for ``--max-parse-seconds`` and ``--max-validation-seconds``: above 0, at most one day."""
     try:
         value = float(text)
     except ValueError:
@@ -153,6 +153,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Abort parsing an input that takes longer than this wall-clock time (default: no limit); "
         "runs the parse in a worker process",
     )
+    ap.add_argument(
+        "--max-validation-seconds",
+        type=_positive_seconds,
+        help="Stop the SHACL validation of an input that takes longer than this wall-clock time (default: no "
+        "limit; SHACL001 then fails); runs validation in a worker process",
+    )
     ap.add_argument("--owl-profile", choices=("EL", "QL", "RL", "DL", "Full"))
     ap.add_argument(
         "--convert-with-robot",
@@ -198,6 +204,9 @@ def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -
         max_input_bytes=args.max_input_bytes if args.max_input_bytes is not None else config.max_input_bytes,
         max_triples=args.max_triples if args.max_triples is not None else config.max_triples,
         max_parse_seconds=args.max_parse_seconds if args.max_parse_seconds is not None else config.max_parse_seconds,
+        max_validation_seconds=args.max_validation_seconds
+        if args.max_validation_seconds is not None
+        else config.max_validation_seconds,
         ignored_rules=ignored,
         owl_converter=partial(robot_convert, image=args.robot_image, timeout=args.robot_timeout)
         if args.convert_with_robot

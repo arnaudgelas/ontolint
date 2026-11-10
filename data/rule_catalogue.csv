@@ -60,7 +60,7 @@ rule_id,family,title,status,category,backend,test_requirement
 "DATA002","DATA","Property usage conflicts with subject type","implemented","heuristic","RDFLib graph","detector fixture and expected finding"
 "DATA003","DATA","Literal whose lexical form is not valid for its datatype","implemented","deterministic","RDFLib graph","literal fixture with valid and ill-typed values"
 "DATA004","DATA","Datatype outside the OWL 2 datatype map","implemented","deterministic","RDFLib graph","range and restriction fixture with mapped and unmapped datatypes"
-"SHACL001","SHACL","SHACL validation violation","implemented","deterministic","pySHACL","pySHACL fixture: a violated sh:minCount is flagged and conforming data is not; each result keeps its sh:resultSeverity"
+"SHACL001","SHACL","SHACL validation violation","implemented","deterministic","pySHACL","pySHACL fixture: a violated sh:minCount is flagged and conforming data is not; each result keeps its sh:resultSeverity; a sh:sparql constraint that outlives --max-validation-seconds is failed"
 "INPUT001","INPUT","RDF input could not be parsed","implemented","deterministic","CLI","CLI probe: an unparsable or missing input prints INPUT001 on stderr, writes no report and exits 2; a parsable input does not"
 "TOOL001","TOOL","Linter tool or configuration failure","implemented","deterministic","CLI","CLI probe: an unknown selector or a missing policy file prints TOOL001 and exits 2; a failed or unsupported rule exits 2 with the report written"
 "IRI004","IRI","Term namespaces unrelated to the ontology IRI","implemented","heuristic","RDFLib graph","fixture with local and external IRIs"

@@ -18,6 +18,7 @@ from ontolint.adapters import robot as robot_adapter
 from ontolint.linter import Linter
 from ontolint.models import ExecutionStatus, Finding, RuleBackend, RuleExecution, RuleScope, RuleSpec, Severity
 from ontolint.paths import InputFile
+from ontolint.policy import Policy
 from ontolint.reporting import FileReport, Location, RunReport, exit_code, fingerprint, identity, render_report
 from ontolint.rules import builtin
 
@@ -126,7 +127,7 @@ def test_run_adapter_dispatches_on_backend(
 ) -> None:
     monkeypatch.setattr(engine, "shacl_issues", lambda *_: [_finding(rule="SHACL")])
     monkeypatch.setattr(engine, "robot_profile_issues", lambda *_: [_finding(rule="ROBOT")])
-    ctx = types.SimpleNamespace(g=object(), shapes=object(), shacl_background=None)
+    ctx = types.SimpleNamespace(g=object(), shapes=object(), shacl_background=None, policy=Policy())
     robot = engine.RobotRequest(Path("a.ttl"), "EL")
     execution, found = engine._run_adapter(_spec(backend=backend), ctx, robot)  # type: ignore[arg-type]  # noqa: SLF001
     assert execution.status is ExecutionStatus.EXECUTED

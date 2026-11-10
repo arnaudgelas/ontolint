@@ -98,6 +98,8 @@ class Policy:
     module_annotation: str | None = None
     module_by: str | None = None
     max_parse_seconds: float | None = None  # wall-clock budget for parsing one input (SEC003); None = no budget
+    # Wall-clock budget for the SHACL validation of one input (a failed SHACL001); None = no budget, in process.
+    max_validation_seconds: float | None = None
     unknown_keys: tuple[str, ...] = ()  # config keys the policy file carried but ontolint does not know (GOV020)
     # Set by the loader for one file, never by a policy file: the owl:imports IRIs it resolved to local
     # files, and the ontology IRIs declared by those imported files (see :mod:`ontolint.imports`).
@@ -120,7 +122,8 @@ class Policy:
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
             _check_limit(name, getattr(self, name))
-        _check_parse_seconds(self.max_parse_seconds)
+        _check_seconds("max_parse_seconds", self.max_parse_seconds)
+        _check_seconds("max_validation_seconds", self.max_validation_seconds)
 
     @property
     def severity_mapping(self) -> dict[str, str]:
@@ -177,7 +180,8 @@ class Policy:
             required_annotations=_required_annotations(data),
             alignment_namespaces=_iri_list(data, "alignment_namespaces"),
             alignment_min_coverage=_optional_ratio(data, "alignment_min_coverage"),
-            max_parse_seconds=_parse_seconds(data),
+            max_parse_seconds=_seconds(data, "max_parse_seconds"),
+            max_validation_seconds=_seconds(data, "max_validation_seconds"),
             module_annotation=grouping[0],
             module_by=grouping[1],
             unknown_keys=tuple(sorted({str(key) for key in data} - _known_keys())),
@@ -338,23 +342,23 @@ def _loader_limits(data: Mapping[str, Any]) -> dict[str, int]:
 
 
 MAX_PARSE_SECONDS = 86_400.0
-"""Upper bound of ``max_parse_seconds`` (one day): anything longer is a typo, not a budget."""
+"""Upper bound of ``max_parse_seconds`` and ``max_validation_seconds`` (one day): anything longer is a typo."""
 
 
-def _check_parse_seconds(value: Any) -> None:
+def _check_seconds(name: str, value: Any) -> None:
     """``None`` (no budget) or a finite number in ``(0, MAX_PARSE_SECONDS]``; booleans and strings are refused."""
     if value is None:
         return
-    seconds = _real("max_parse_seconds", value)
+    seconds = _real(name, value)
     if seconds <= 0:
-        raise ValueError("max_parse_seconds must be positive")
+        raise ValueError(f"{name} must be positive")
     if seconds > MAX_PARSE_SECONDS:
-        raise ValueError(f"max_parse_seconds must be at most {MAX_PARSE_SECONDS:g}")
+        raise ValueError(f"{name} must be at most {MAX_PARSE_SECONDS:g}")
 
 
-def _parse_seconds(data: Mapping[str, Any]) -> float | None:
-    value = data.get("max_parse_seconds")
-    _check_parse_seconds(value)
+def _seconds(data: Mapping[str, Any], name: str) -> float | None:
+    value = data.get(name)
+    _check_seconds(name, value)
     return None if value is None else float(value)
 
 
