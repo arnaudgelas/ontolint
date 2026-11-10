@@ -59,7 +59,8 @@ def _lines(triples: list[Triple]) -> list[str]:
     graph = Graph()
     for triple in triples:
         graph.add(triple)
-    return [line for line in graph.serialize(format="nt").splitlines() if line]
+    # Split on newlines only: str.splitlines also breaks at U+0085 and other separators a literal may hold.
+    return [line for line in graph.serialize(format="nt").split("\n") if line]
 
 
 def _dataset(spread: list[tuple[Triple, frozenset[URIRef | BNode | None]]], fmt: str, relabel: bool = False) -> str:
