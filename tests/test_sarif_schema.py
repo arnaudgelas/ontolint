@@ -25,6 +25,15 @@ SCHEMA_SHA256 = "c3b4bb2d6093897483348925aaa73af03b3e3f4bd4ca38cef26dcb4212a2682
 
 FINDING = Finding("ONT001", "warning", "https://example.test/A", "Missing label.", "Add a label.")
 BLANK = Finding("ONT001", "warning", "_:b0", "Missing label.", "Add a label.")
+EVIDENCED = Finding(
+    "SHACL001",
+    "error",
+    "https://example.test/a",
+    "Value is not Literal with datatype xsd:integer [shape: _:c1a38aa15c36]",
+    "Fix the data.",
+    "certain",
+    evidence={"value": '"x"', "resultMessage": ("Value is wrong",), "detail": ({"focusNode": '"x"'},)},
+)
 OWL = "http://www.w3.org/2002/07/owl#"
 SMELLY_TTL = f"<https://example.test/A> a <{OWL}Class> .\n[] a <{OWL}Class> .\n"
 CLEAN_TTL = f'<https://example.test/o> a <{OWL}Ontology> ;\n <http://www.w3.org/2000/01/rdf-schema#label> "O"@en .\n'
@@ -55,6 +64,7 @@ CONSTRUCTED = {
     "result-with-line-only": _run(a=FileReport("a.ttl", "file:///a.ttl", (FINDING,), locations={FINDING: Location(2)})),
     "result-without-region": _run(a=FileReport("a.ttl", "file:///a.ttl", (FINDING,))),
     "blank-node-focus": _run(a=FileReport("a.ttl", "file:///a.ttl", (BLANK,))),
+    "result-with-evidence": _run(a=FileReport("a.ttl", "file:///a.ttl", (EVIDENCED,))),
     "every-execution-status": _run(
         a=FileReport(
             "a.ttl",

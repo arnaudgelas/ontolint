@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from collections.abc import Mapping
+from dataclasses import dataclass, field, fields
 from enum import StrEnum
+from typing import Any
+
+type EvidenceValue = str | tuple[str, ...] | tuple[Evidence, ...]
+"""One value of a finding's evidence: a term or text, several of them, or nested evidence."""
+type Evidence = Mapping[str, EvidenceValue]
+"""A backend's structured result behind a finding, keyed by the backend's own field names."""
 
 
 class Severity(StrEnum):
@@ -78,14 +85,31 @@ class Finding:
     """Full tool output behind a summarised message (ROBOT's profile report); JSON and SARIF only."""
     related: tuple[str, ...] = field(default=(), compare=False)
     """Other terms the finding is about (the rest of a collision), used to place it in modules; never rendered."""
+    evidence: Evidence | None = field(default=None, compare=False)
+    """The backend's structured result behind the finding, keyed by its own field names; JSON and SARIF only."""
 
-    def to_dict(self) -> dict[str, str]:
-        """Return a JSON-ready representation with stable field names (``details`` only when set)."""
-        data = asdict(self)
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-ready representation with stable field names (``details`` and ``evidence`` only when set)."""
+        data: dict[str, Any] = {f.name: getattr(self, f.name) for f in fields(self)}
         del data["related"]
         if data["details"] is None:
             del data["details"]
+        if self.evidence is None:
+            del data["evidence"]
+        else:
+            data["evidence"] = plain_evidence(self.evidence)
         return data
+
+
+def plain_evidence(evidence: Evidence) -> dict[str, Any]:
+    """``evidence`` as JSON values: each mapping a ``dict`` and each tuple a ``list``, in the same key order."""
+    return {key: _plain(value) for key, value in evidence.items()}
+
+
+def _plain(value: EvidenceValue) -> Any:
+    if isinstance(value, str):
+        return value
+    return [item if isinstance(item, str) else plain_evidence(item) for item in value]
 
 
 @dataclass(frozen=True)

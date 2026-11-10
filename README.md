@@ -224,14 +224,16 @@ case a `Rule execution:` block is appended.
   each finding, `rules` (id, family, title, effective and default severity, category, backend,
   scope, requirements, suggestion), `execution_summary` and per-file `files[].executions`. A
   finding whose message abbreviates a tool's output also carries the full output in `details`
-  (`SEM001`: ROBOT's profile report, whose violations the message groups by kind). In a dataset
+  (`SEM001`: ROBOT's profile report, whose violations the message groups by kind). A finding
+  whose backend returns a structured result carries it as an `evidence` object after `details`;
+  it is not part of the finding's identity, so fingerprints and baselines ignore it. In a dataset
   with named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
   `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
-  `artifactLocation` on every result (and `properties.details` and `properties.graphs` where
-  JSON has `details` and `graphs`), and a run `invocation`. Skipped, unsupported and failed rules
-  are `toolExecutionNotifications` (levels `note`, `warning`, `error`); `executionSuccessful` is
-  `false` when any rule failed or is unsupported.
+  `artifactLocation` on every result (and `properties.details`, `properties.evidence` and
+  `properties.graphs` where JSON has `details`, `evidence` and `graphs`), and a run `invocation`.
+  Skipped, unsupported and failed rules are `toolExecutionNotifications` (levels `note`,
+  `warning`, `error`); `executionSuccessful` is `false` when any rule failed or is unsupported.
 * SARIF findings for Turtle, N3, N-Triples, N-Quads and RDF/XML inputs include the source line and
   column of their focus term when it can be resolved. JSON-LD findings include a region for an
   explicit `@id`, including compact IRIs defined by a local context; generated JSON-LD nodes retain

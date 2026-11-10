@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ._version import package_version
-from .models import ExecutionStatus, Finding, RuleExecution, RuleSpec
+from .models import ExecutionStatus, Finding, RuleExecution, RuleSpec, plain_evidence
 from .modules import module_summary
 from .rules.registry import default_registry
 
@@ -237,6 +237,8 @@ def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -
     properties: dict[str, Any] = {}
     if f.details is not None:
         properties["details"] = f.details
+    if f.evidence is not None:
+        properties["evidence"] = plain_evidence(f.evidence)
     if f in file.graphs:
         properties["graphs"] = list(file.graphs[f])
     if f in file.modules:

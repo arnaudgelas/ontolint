@@ -18,7 +18,7 @@ from hypothesis_strategies import build_graph as build
 
 from ontolint.cli import _apply_baselines, main
 from ontolint.engine import sort_findings
-from ontolint.models import ExecutionStatus, Finding, RuleExecution
+from ontolint.models import Evidence, ExecutionStatus, Finding, RuleExecution, plain_evidence
 from ontolint.reporting import (
     FAIL_THRESHOLDS,
     SARIF_LEVELS,
@@ -41,6 +41,11 @@ REGISTRY = default_registry()
 KEEP_RATIO = 0.7
 severities = st.sampled_from(SEVERITY_ORDER)
 texts = st.one_of(st.text(max_size=30), st.sampled_from(("", chr(0x202E), "\x00", "x" * 300, "a\nb", '"quoted"', "💥")))
+evidences: st.SearchStrategy[Evidence] = st.recursive(
+    st.dictionaries(texts, st.one_of(texts, st.lists(texts, max_size=3).map(tuple)), max_size=3),
+    lambda inner: st.dictionaries(texts, st.lists(inner, max_size=2).map(tuple), max_size=2),
+    max_leaves=6,
+)
 findings = st.builds(
     Finding,
     rule=st.sampled_from(RULE_IDS + ("ZZZ999",)),
@@ -49,6 +54,7 @@ findings = st.builds(
     message=texts,
     suggestion=texts,
     confidence=st.sampled_from(("certain", "heuristic")),
+    evidence=st.one_of(st.none(), evidences),
 )
 finding_lists = st.lists(findings, max_size=8)
 executions = st.builds(
@@ -234,6 +240,10 @@ def test_json_report_is_valid_json_with_the_required_keys(report: RunReport) -> 
         else {"rule", "severity", "focus", "message", "suggestion", "confidence", "path"}
     )
     assert [r["id"] for r in document["rules"]] == [s.rule_id for s in report.rules]
+    for entry, finding in zip(document["findings"], report.findings, strict=True):
+        assert ("evidence" in entry) == (finding.evidence is not None)
+        if finding.evidence is not None:
+            assert entry["evidence"] == plain_evidence(finding.evidence)
 
 
 @budget(1)
@@ -255,6 +265,8 @@ def test_sarif_report_is_valid_json_with_the_required_keys(report: RunReport, st
         assert result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
         if "ruleIndex" in result:
             assert rules[result["ruleIndex"]]["id"] == finding.rule
+        evidence = result.get("properties", {}).get("evidence")
+        assert evidence == (None if finding.evidence is None else plain_evidence(finding.evidence))
     (invocation,) = run["invocations"]
     non_executed = [x for r in report.files for x in r.executions if x.status is not ExecutionStatus.EXECUTED]
     assert len(invocation["toolExecutionNotifications"]) == len(non_executed)
