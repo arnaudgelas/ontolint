@@ -43,7 +43,9 @@ Pushing the tag starts `.github/workflows/release.yml`:
    the index catches up, checks `ontolint --version`, lints a one-line file and lists the rules.
    It then checks that PyPI holds exactly the files **Build** made, and verifies each file's PEP 740
    attestation with `pypi-attestations` (the `release` dependency group, locked in `uv.lock`): the
-   attestation must name this repository and sign those exact bytes.
+   attestation must name this repository and sign those exact bytes. PyPI's JSON and provenance
+   APIs lag an upload too, so both checks retry (20 attempts, 30 s apart) and fail only when the
+   file list still differs, or an attestation still does not verify, after the last one.
 
 PyPI refuses to overwrite a version, so a failed publish needs a new version. A failure in
 **Verify** means the release is on PyPI but broken: fix it and release the next patch version.

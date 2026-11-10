@@ -110,7 +110,8 @@ jobs:
     name: Install the published release
     needs: pypi-publish
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Each wait on PyPI below may take up to 10 minutes (20 attempts, 30 s apart).
+    timeout-minutes: 45
     steps:
       # Install from PyPI, not from the build artifact, and lint a real file, so a broken upload,
       # bad metadata or a wheel without its packaged catalogue fails the release run.
@@ -161,17 +162,37 @@ jobs:
           name: dist
           path: dist/
 
+      # PyPI's JSON and provenance APIs lag the upload, as the simple index does for the install
+      # above: a version they do not list yet is retried, and only a file list that still differs
+      # from the build, or an attestation that still fails, after the last attempt fails the run.
       - name: Verify the PyPI attestations
         run: |
           version="${GITHUB_REF_NAME#v}"
           built=$(for file in dist/*; do basename "$file"; done | sort)
-          published=$(curl -sSf "https://pypi.org/pypi/ontolint/$version/json" \
-            | python3 -c "import json, sys; print('\n'.join(sorted(u['filename'] for u in json.load(sys.stdin)['urls'])))")
+          published=""
+          for attempt in $(seq 1 20); do
+            if json=$(curl -sSf "https://pypi.org/pypi/ontolint/$version/json"); then
+              published=$(python3 -c "import json, sys; print('\n'.join(sorted(u['filename'] for u in json.load(sys.stdin)['urls'])))" <<<"$json")
+              if [ "$built" = "$published" ]; then
+                break
+              fi
+            fi
+            echo "PyPI does not list the built files for $version yet, attempt $attempt"
+            sleep 30
+          done
           if [ "$built" != "$published" ]; then
             echo "::error::PyPI files for $version differ from the build: built [$built], published [$published]"
             exit 1
           fi
           for file in dist/*; do
-            uv run --frozen --only-group release pypi-attestations verify pypi \
-              --repository "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$file"
+            for attempt in $(seq 1 20); do
+              if uv run --frozen --only-group release pypi-attestations verify pypi \
+                --repository "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$file"; then
+                continue 2
+              fi
+              echo "the attestation of $(basename "$file") does not verify yet, attempt $attempt"
+              sleep 30
+            done
+            echo "::error::the PyPI attestation of $(basename "$file") does not verify"
+            exit 1
           done
