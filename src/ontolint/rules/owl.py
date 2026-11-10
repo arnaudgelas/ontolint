@@ -379,6 +379,7 @@ def _domains_and_ranges(ctx: RuleContext) -> None:
                 p,
                 f"Multiple asserted domains ({len(domains)}) mean intersection, not union.",
                 confidence="certain",
+                subject=(RDFS.domain,),
             )
         if len(ranges) > 1:
             ctx.add(
@@ -386,6 +387,7 @@ def _domains_and_ranges(ctx: RuleContext) -> None:
                 p,
                 f"Multiple asserted ranges ({len(ranges)}) mean intersection, not union.",
                 confidence="certain",
+                subject=(RDFS.range,),
             )
         if is_deprecated(ctx.g, p) or _annotation_only(ctx.g, p):
             continue
@@ -410,13 +412,19 @@ def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> Non
         # InverseObjectProperties is symmetric: "q owl:inverseOf p" gives the symmetric p an inverse too.
         for symmetric, other in ((p, q), (q, p)):
             if p != q and (symmetric, RDF.type, OWL.SymmetricProperty) in g:
-                ctx.add("OWL008", symmetric, f"Symmetric property also declared inverse of {other}.")
+                ctx.add("OWL008", symmetric, f"Symmetric property also declared inverse of {other}.", subject=(other,))
         if p in data_props or q in data_props:
-            ctx.add("OWL009", p, "owl:inverseOf involves a datatype property.", confidence="certain")
+            ctx.add(
+                "OWL009",
+                p,
+                "owl:inverseOf involves a datatype property.",
+                confidence="certain",
+                subject=(OWL.inverseOf,),
+            )
     for t in CHARACTERISTIC_TYPES:
         for p in g.subjects(RDF.type, t):
             if p in data_props:
-                ctx.add("OWL009", p, f"Datatype property declared {t}.", confidence="certain")
+                ctx.add("OWL009", p, f"Datatype property declared {t}.", confidence="certain", subject=(t,))
 
 
 def _property_chains(ctx: RuleContext) -> None:
@@ -450,10 +458,11 @@ def _universal_restrictions(ctx: RuleContext) -> None:
             target = _gci_class(g, restriction)
             if target is not None:
                 message = f"Universal restriction{on} in a general class axiom about {target} does not imply any value."
-                ctx.add("OWL011", target, message)
+                ctx.add("OWL011", target, message, subject=("general class axiom", *on_properties))
                 continue
             on = ""  # unchanged wording for a free-standing restriction
-        ctx.add("OWL011", owner, f"Universal restriction{on} does not imply any property value.")
+        about = on_properties if on else []
+        ctx.add("OWL011", owner, f"Universal restriction{on} does not imply any property value.", subject=about)
 
 
 _CLASS_AXIOMS = (RDFS.subClassOf, OWL.equivalentClass)
@@ -540,7 +549,13 @@ def _object_property_assertions(ctx: RuleContext, object_props: set[Node]) -> No
     for p in object_props:
         for s, o in ctx.g.subject_objects(p):
             if isinstance(o, Literal):
-                ctx.add("OWL013", s, f"Object property {p} points to literal {o.n3()}.", confidence="certain")
+                ctx.add(
+                    "OWL013",
+                    s,
+                    f"Object property {p} points to literal {o.n3()}.",
+                    confidence="certain",
+                    subject=(p, o),
+                )
 
 
 def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> None:
@@ -548,7 +563,9 @@ def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> No
         expected = set(ctx.context.ranges_by_property.get(p, frozenset()))
         for s, o in ctx.g.subject_objects(p):
             if not isinstance(o, Literal):
-                ctx.add("OWL014", s, f"Datatype property {p} points to resource {o}.", confidence="certain")
+                ctx.add(
+                    "OWL014", s, f"Datatype property {p} points to resource {o}.", confidence="certain", subject=(p, o)
+                )
             elif len(expected) == 1:
                 datatype = next(iter(expected))
                 if (
@@ -557,7 +574,12 @@ def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> No
                     and not (datatype == XSD.string and o.datatype in (None, RDF.langString))
                     and not _in_value_space(o, datatype)
                 ):
-                    ctx.add("DATA001", s, f"{p} has range {datatype} but value has datatype {o.datatype}.")
+                    ctx.add(
+                        "DATA001",
+                        s,
+                        f"{p} has range {datatype} but value has datatype {o.datatype}.",
+                        subject=(p, o.datatype or ""),
+                    )
 
 
 def _in_value_space(value: Literal, datatype: Node) -> bool:
@@ -592,18 +614,19 @@ def _domain_disjointness(ctx: RuleContext) -> None:
                             s,
                             f"Usage of {p} infers {domain} but subject is explicitly typed {actual}, "
                             "declared disjoint.",
+                            subject=(p, domain, actual),
                         )
 
 
 def _undeclared_terms(ctx: RuleContext) -> None:
     g = ctx.g
-    for usage, indexed in (
-        ("rdfs:domain", ctx.context.domains_by_property),
-        ("rdfs:range", ctx.context.ranges_by_property),
+    for usage, axiom, indexed in (
+        ("rdfs:domain", RDFS.domain, ctx.context.domains_by_property),
+        ("rdfs:range", RDFS.range, ctx.context.ranges_by_property),
     ):
         for p in indexed:
             if isinstance(p, URIRef) and ctx.local(p) and not any((p, RDF.type, t) in g for t in PROPERTY_TYPES):
-                ctx.add("OWL002", p, f"Predicate used with {usage} but not declared property.")
+                ctx.add("OWL002", p, f"Predicate used with {usage} but not declared property.", subject=(axiom,))
     for c in set(g.subjects(RDFS.subClassOf, None)) | set(g.objects(None, RDFS.subClassOf)):
         if isinstance(c, URIRef) and ctx.local(c) and c not in ctx.classes and c not in (OWL.Thing, OWL.Nothing):
             ctx.add("OWL001", c, "URI used in subclass axiom but not explicitly declared a class.")

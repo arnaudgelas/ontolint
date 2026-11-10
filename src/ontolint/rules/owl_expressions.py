@@ -288,25 +288,46 @@ def _operator_lists(ctx: RuleContext) -> None:
         for subject, head in sorted(g.subject_objects(predicate), key=lambda pair: (str(pair[0]), str(pair[1]))):
             items = list_items(g, head, limit=_MAX_LIST)
             if items is None:
-                ctx.add("OWL031", subject, f"{label} does not point to a well-formed RDF list.", confidence="certain")
+                ctx.add(
+                    "OWL031",
+                    subject,
+                    f"{label} does not point to a well-formed RDF list.",
+                    confidence="certain",
+                    subject=(predicate, "malformed"),
+                )
                 continue
             if not items:
-                ctx.add("OWL031", subject, f"{label} list is empty.", confidence="certain")
+                ctx.add(
+                    "OWL031", subject, f"{label} list is empty.", confidence="certain", subject=(predicate, "empty")
+                )
                 continue
             if predicate in (OWL.unionOf, OWL.intersectionOf) and len(items) == 1:
-                ctx.add("OWL032", subject, f"{label} has a single operand ({_name(items[0])}).", confidence="certain")
+                ctx.add(
+                    "OWL032",
+                    subject,
+                    f"{label} has a single operand ({_name(items[0])}).",
+                    confidence="certain",
+                    subject=(predicate, items[0]),
+                )
             if predicate != OWL.disjointUnionOf and len(set(items)) != len(items):
-                ctx.add("OWL033", subject, f"{label} list repeats a member.", confidence="certain")
+                ctx.add(
+                    "OWL033", subject, f"{label} list repeats a member.", confidence="certain", subject=(predicate,)
+                )
             if predicate in (OWL.unionOf, OWL.intersectionOf):
                 _operands(ctx, subject, predicate, items)
 
 
-def _where(g: Graph, expression: Node) -> str:
-    """`` in the rdfs:range of ex:p`` for an anonymous expression used by a named term, else ``""``."""
+def _use(g: Graph, expression: Node) -> tuple[URIRef, Node] | None:
+    """``(ex:p, rdfs:range)`` for an anonymous expression used by a named term, else ``None``."""
     if not isinstance(expression, BNode):
-        return ""
+        return None
     uses = sorted((s, p) for s, p in g.subject_predicates(expression) if isinstance(s, URIRef))
-    return f" in the {_curie(uses[0][1])} of {_name(uses[0][0])}" if uses else ""
+    return uses[0] if uses else None
+
+
+def _where(use: tuple[URIRef, Node] | None) -> str:
+    """`` in the rdfs:range of ex:p`` for the named term that uses an anonymous expression, else ``""``."""
+    return f" in the {_curie(use[1])} of {_name(use[0])}" if use is not None else ""
 
 
 def _curie(predicate: Node) -> str:
@@ -326,43 +347,62 @@ def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node
     g = ctx.g
     members = set(items)
     union = predicate == OWL.unionOf
-    label = _short(predicate) + _where(g, subject)
+    use = _use(g, subject)
+    label = _short(predicate) + _where(use)
+    # The expression is told from another of its owner by its operator and where the owner uses it.
+    place = (predicate, *(use or ()))
     subject = owning_term(g, subject)  # an anonymous expression is reported on the term that uses it
-    pairs: set[tuple[str, str]] = set()
+    pairs: dict[tuple[str, str], tuple[Node, Node]] = {}
     for member in members:
-        for other in g.objects(member, OWL.complementOf):
+        others = [*g.objects(member, OWL.complementOf), *([] if union else g.objects(member, OWL.disjointWith))]
+        for other in others:
             if other in members:
-                pairs.add((min(_name(member), _name(other)), max(_name(member), _name(other))))
-        if not union:
-            for other in g.objects(member, OWL.disjointWith):
-                if other in members:
-                    pairs.add((min(_name(member), _name(other)), max(_name(member), _name(other))))
+                first, second = sorted((member, other), key=_name)
+                pairs[_name(first), _name(second)] = (first, second)
     effect = "is equivalent to owl:Thing" if union else "is unsatisfiable"
-    for left, right in sorted(pairs):
+    for (left, right), nodes in sorted(pairs.items()):
         kind = "complementary" if union else "complementary or disjoint"
         ctx.add(
             "OWL043",
             subject,
             f"{label} contains {kind} operands {left} and {right}; it {effect}.",
             confidence="certain",
+            subject=(*place, *nodes),
         )
     if union and OWL.Thing in members:
-        ctx.add("OWL043", subject, f"{label} contains owl:Thing; it is equivalent to owl:Thing.", confidence="certain")
+        ctx.add(
+            "OWL043",
+            subject,
+            f"{label} contains owl:Thing; it is equivalent to owl:Thing.",
+            confidence="certain",
+            subject=(*place, OWL.Thing),
+        )
     if not union and OWL.Nothing in members:
-        ctx.add("OWL043", subject, f"{label} contains owl:Nothing; it is unsatisfiable.", confidence="certain")
+        ctx.add(
+            "OWL043",
+            subject,
+            f"{label} contains owl:Nothing; it is unsatisfiable.",
+            confidence="certain",
+            subject=(*place, OWL.Nothing),
+        )
 
 
 # --- restrictions (OWL034-OWL040) ------------------------------------------------------------
 
 
-def _report(ctx: RuleContext, code: str, restriction: Node, message: str, *, confidence: str = "heuristic") -> None:
-    """Emit a restriction finding; the focus stays the stable blank-node identity, the message names the owner."""
+def _report(  # noqa: PLR0913 -- RuleContext.add's parts, with the restriction as focus.
+    ctx: RuleContext, code: str, restriction: Node, message: str, *, confidence: str, subject: Iterable[object]
+) -> None:
+    """Emit a restriction finding; the focus stays the stable blank-node identity, the message names the owner.
+
+    ``subject`` tells the finding from another of the same rule on the same restriction (see ``RuleContext.add``).
+    """
     owner = owning_term(ctx.g, restriction)
     if isinstance(owner, URIRef):
         properties = sorted({str(p) for p in ctx.g.objects(restriction, OWL.onProperty) if isinstance(p, URIRef)})
         where = f"restriction on {', '.join(properties)}" if properties else "restriction"
         message = f"{owner} ({where}): {message}"
-    ctx.add(code, restriction, message, confidence=confidence)
+    ctx.add(code, restriction, message, confidence=confidence, subject=subject)
 
 
 def _restriction(ctx: RuleContext, restriction: Node) -> None:
@@ -370,12 +410,33 @@ def _restriction(ctx: RuleContext, restriction: Node) -> None:
     on_property = list(g.objects(restriction, OWL.onProperty))
     on_properties = list(g.objects(restriction, OWL.onProperties))
     if not on_property and not on_properties:
-        _report(ctx, "OWL034", restriction, "Restriction has no owl:onProperty.", confidence="certain")
+        _report(
+            ctx,
+            "OWL034",
+            restriction,
+            "Restriction has no owl:onProperty.",
+            confidence="certain",
+            subject=(OWL.onProperty, "none"),
+        )
     elif len(on_property) > 1:
-        _report(ctx, "OWL034", restriction, "Restriction has more than one owl:onProperty.", confidence="certain")
+        _report(
+            ctx,
+            "OWL034",
+            restriction,
+            "Restriction has more than one owl:onProperty.",
+            confidence="certain",
+            subject=(OWL.onProperty, "several"),
+        )
     for value in on_property:
         if isinstance(value, Literal):
-            _report(ctx, "OWL034", restriction, f"owl:onProperty points to literal {value!r}.", confidence="certain")
+            _report(
+                ctx,
+                "OWL034",
+                restriction,
+                f"owl:onProperty points to literal {value!r}.",
+                confidence="certain",
+                subject=(OWL.onProperty, value),
+            )
     if not any((restriction, constraint, None) in g for constraint in _CONSTRAINTS):
         _report(
             ctx,
@@ -383,6 +444,7 @@ def _restriction(ctx: RuleContext, restriction: Node) -> None:
             restriction,
             "Restriction has no value, cardinality or self constraint.",
             confidence="certain",
+            subject=(),
         )
     _cardinalities(ctx, restriction)
     _existential_nothing(ctx, restriction)
@@ -401,6 +463,7 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
                     restriction,
                     f"{_short(predicate)} value {value!r} is not a non-negative integer.",
                     confidence="certain",
+                    subject=(predicate, value),
                 )
     qualified = any((restriction, p, None) in g for p in _QUALIFIED)
     if qualified and (restriction, OWL.onClass, None) not in g and (restriction, OWL.onDataRange, None) not in g:
@@ -410,8 +473,9 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
             restriction,
             "Qualified cardinality has neither owl:onClass nor owl:onDataRange.",
             confidence="certain",
+            subject=(OWL.onClass, OWL.onDataRange),
         )
-    for group in (_UNQUALIFIED, _QUALIFIED):
+    for kind, group in (("unqualified", _UNQUALIFIED), ("qualified", _QUALIFIED)):
         minimum, maximum, exact = (_counts(ctx, restriction, p) for p in group)
         lower = max([*minimum, *exact], default=None)
         upper = min([*maximum, *exact], default=None)
@@ -422,6 +486,7 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
                 restriction,
                 f"Lower cardinality bound {lower} exceeds upper bound {upper}.",
                 confidence="certain",
+                subject=(kind,),
             )
 
 
@@ -429,7 +494,12 @@ def _existential_nothing(ctx: RuleContext, restriction: Node) -> None:
     g = ctx.g
     if (restriction, OWL.someValuesFrom, OWL.Nothing) in g:
         _report(
-            ctx, "OWL038", restriction, "owl:someValuesFrom owl:Nothing can never be satisfied.", confidence="certain"
+            ctx,
+            "OWL038",
+            restriction,
+            "owl:someValuesFrom owl:Nothing can never be satisfied.",
+            confidence="certain",
+            subject=(OWL.someValuesFrom,),
         )
     if (restriction, OWL.onClass, OWL.Nothing) in g:
         for predicate in (OWL.minQualifiedCardinality, OWL.qualifiedCardinality):
@@ -440,6 +510,7 @@ def _existential_nothing(ctx: RuleContext, restriction: Node) -> None:
                     restriction,
                     f"{_short(predicate)} above 0 on owl:Nothing can never be satisfied.",
                     confidence="certain",
+                    subject=(predicate,),
                 )
 
 
@@ -447,12 +518,22 @@ def _vacuous(ctx: RuleContext, restriction: Node) -> None:
     g = ctx.g
     if (restriction, OWL.allValuesFrom, OWL.Thing) in g:
         _report(
-            ctx, "OWL039", restriction, "owl:allValuesFrom owl:Thing holds for every individual.", confidence="certain"
+            ctx,
+            "OWL039",
+            restriction,
+            "owl:allValuesFrom owl:Thing holds for every individual.",
+            confidence="certain",
+            subject=(OWL.allValuesFrom,),
         )
     for predicate in (OWL.minCardinality, OWL.minQualifiedCardinality):
         if 0 in _counts(ctx, restriction, predicate):
             _report(
-                ctx, "OWL039", restriction, f"{_short(predicate)} 0 holds for every individual.", confidence="certain"
+                ctx,
+                "OWL039",
+                restriction,
+                f"{_short(predicate)} 0 holds for every individual.",
+                confidence="certain",
+                subject=(predicate,),
             )
 
 
@@ -475,27 +556,35 @@ def _property_kind(ctx: RuleContext, restriction: Node, on_property: list[Node])
         is_object, is_data = OWL.ObjectProperty in types, OWL.DatatypeProperty in types
         if not isinstance(prop, URIRef) or is_object == is_data:
             continue
-        problems: list[str] = []
+        # Each problem with its subject: the predicate (or "filler") and the offending value.
+        problems: list[tuple[str, tuple[object, ...]]] = []
         fillers = [o for p in (OWL.someValuesFrom, OWL.allValuesFrom) for o in g.objects(restriction, p)]
         values = list(g.objects(restriction, OWL.hasValue))
         if is_object:
-            problems += [f"literal hasValue {v!r}" for v in values if isinstance(v, Literal)]
-            problems += [f"datatype filler {_name(f)}" for f in fillers if _datatype_like(ctx, f)]
-            problems += [f"owl:onDataRange {_name(f)}" for f in g.objects(restriction, OWL.onDataRange)]
-        else:
-            problems += [f"resource hasValue {_name(v)}" for v in values if not isinstance(v, Literal)]
+            problems += [(f"literal hasValue {v!r}", (OWL.hasValue, v)) for v in values if isinstance(v, Literal)]
+            problems += [(f"datatype filler {_name(f)}", ("filler", f)) for f in fillers if _datatype_like(ctx, f)]
             problems += [
-                f"class filler {_name(f)}" for f in fillers if _class_like(ctx, f) and not _datatype_like(ctx, f)
+                (f"owl:onDataRange {_name(f)}", (OWL.onDataRange, f)) for f in g.objects(restriction, OWL.onDataRange)
             ]
-            problems += [f"owl:onClass {_name(f)}" for f in g.objects(restriction, OWL.onClass)]
+        else:
+            problems += [
+                (f"resource hasValue {_name(v)}", (OWL.hasValue, v)) for v in values if not isinstance(v, Literal)
+            ]
+            problems += [
+                (f"class filler {_name(f)}", ("filler", f))
+                for f in fillers
+                if _class_like(ctx, f) and not _datatype_like(ctx, f)
+            ]
+            problems += [(f"owl:onClass {_name(f)}", (OWL.onClass, f)) for f in g.objects(restriction, OWL.onClass)]
         kind = "object" if is_object else "datatype"
-        for problem in problems:
+        for problem, about in problems:
             _report(
                 ctx,
                 "OWL040",
                 restriction,
                 f"Restriction on {kind} property {prop} uses {problem}.",
                 confidence="certain",
+                subject=(prop, *about),
             )
 
 
@@ -516,6 +605,7 @@ def _complements(ctx: RuleContext) -> None:
                 operand,
                 f"Class is a subclass of its own complement {_name(expression)}.",
                 confidence="certain",
+                subject=(RDFS.subClassOf, expression),
             )
         if (operand, OWL.equivalentClass, expression) in g or (expression, OWL.equivalentClass, operand) in g:
             ctx.add(
@@ -523,6 +613,7 @@ def _complements(ctx: RuleContext) -> None:
                 operand,
                 f"Class is equivalent to its own complement {_name(expression)}.",
                 confidence="certain",
+                subject=(OWL.equivalentClass, expression),
             )
     _odd_cycles(ctx, adjacent)
 
@@ -583,6 +674,7 @@ def _identity(ctx: RuleContext) -> None:
                 a,
                 f"Individual is asserted different from {_name(b)}, but a chain of owl:sameAs makes them the same.",
                 confidence="certain",
+                subject=(b,),
             )
     _all_different_conflicts(ctx, parent)
 
@@ -599,6 +691,7 @@ def _all_different_conflicts(ctx: RuleContext, parent: dict[Node, Node]) -> None
                         axiom,
                         f"owl:AllDifferent contains {_name(roots[root])} and {_name(item)}, asserted the same.",
                         confidence="certain",
+                        subject=(roots[root], item),
                     )
                 roots.setdefault(root, item)
 
@@ -612,13 +705,43 @@ def _pairwise_axioms(ctx: RuleContext) -> None:
         for axiom in sorted(ctx.context.subjects_by_type.get(type_, frozenset()), key=str):
             lists = _members(ctx, axiom, predicates)
             if not lists:
-                ctx.add("OWL045", axiom, f"{label} has no member list.", confidence="certain")
+                ctx.add(
+                    "OWL045",
+                    axiom,
+                    f"{label} has no member list.",
+                    confidence="certain",
+                    subject=(type_, "no member list"),
+                )
             elif len(lists) > 1:
-                ctx.add("OWL045", axiom, f"{label} has more than one member list.", confidence="certain")
+                ctx.add(
+                    "OWL045",
+                    axiom,
+                    f"{label} has more than one member list.",
+                    confidence="certain",
+                    subject=(type_, "several member lists"),
+                )
             for items in lists:
                 if items is None:
-                    ctx.add("OWL045", axiom, f"{label} member list is malformed.", confidence="certain")
+                    ctx.add(
+                        "OWL045",
+                        axiom,
+                        f"{label} member list is malformed.",
+                        confidence="certain",
+                        subject=(type_, "malformed"),
+                    )
                 elif len(items) < _MIN_DISTINCT_MEMBERS:
-                    ctx.add("OWL045", axiom, f"{label} has fewer than two members.", confidence="certain")
+                    ctx.add(
+                        "OWL045",
+                        axiom,
+                        f"{label} has fewer than two members.",
+                        confidence="certain",
+                        subject=(type_, "fewer than two members"),
+                    )
                 elif len(set(items)) != len(items):
-                    ctx.add("OWL045", axiom, f"{label} repeats a member.", confidence="certain")
+                    ctx.add(
+                        "OWL045",
+                        axiom,
+                        f"{label} repeats a member.",
+                        confidence="certain",
+                        subject=(type_, "repeated member"),
+                    )

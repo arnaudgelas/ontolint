@@ -307,7 +307,7 @@ def _reflexivity_on_datatype_properties(ctx: RuleContext) -> None:
     data_props = _typed(ctx, OWL.DatatypeProperty)
     for type_ in (OWL.ReflexiveProperty, OWL.IrreflexiveProperty):
         for p in _ordered(_typed(ctx, type_) & data_props):
-            ctx.add("OWL016", p, f"Datatype property is declared {type_}.", confidence="certain")
+            ctx.add("OWL016", p, f"Datatype property is declared {type_}.", confidence="certain", subject=(type_,))
 
 
 def _contradictory_characteristics(ctx: RuleContext) -> None:
@@ -316,9 +316,21 @@ def _contradictory_characteristics(ctx: RuleContext) -> None:
     for p in _ordered(symmetric & asymmetric):
         ctx.add("OWL017", p, "Property is declared both symmetric and asymmetric.", confidence="certain")
     for p in _ordered(reflexive & irreflexive):
-        ctx.add("OWL018", p, "Property is declared both reflexive and irreflexive.", confidence="certain")
+        ctx.add(
+            "OWL018",
+            p,
+            "Property is declared both reflexive and irreflexive.",
+            confidence="certain",
+            subject=(OWL.ReflexiveProperty, OWL.IrreflexiveProperty),
+        )
     for p in _ordered(reflexive & asymmetric):
-        ctx.add("OWL018", p, "Property is declared both reflexive and asymmetric.", confidence="certain")
+        ctx.add(
+            "OWL018",
+            p,
+            "Property is declared both reflexive and asymmetric.",
+            confidence="certain",
+            subject=(OWL.ReflexiveProperty, OWL.AsymmetricProperty),
+        )
 
 
 def _non_simple_properties(ctx: RuleContext) -> None:
@@ -337,6 +349,7 @@ def _non_simple_properties(ctx: RuleContext) -> None:
                 p,
                 f"Property is {reason} (non-simple) but declared {label}.",
                 confidence="certain",
+                subject=(type_,),
             )
 
 
@@ -398,7 +411,7 @@ def _subproperty_cycles(ctx: RuleContext) -> None:
             edges.setdefault(q, set())
     for component in _strongly_connected(edges):
         names = ", ".join(str(n) for n in component)
-        ctx.add("OWL020", component[0], f"rdfs:subPropertyOf cycle among: {names}.", confidence="certain")
+        ctx.add("OWL020", component[0], f"rdfs:subPropertyOf cycle among: {names}.", confidence="certain", subject=())
 
 
 def _object_only(ctx: RuleContext) -> frozenset[Node]:
@@ -421,6 +434,7 @@ def _property_kind_mismatches(ctx: RuleContext) -> None:
                     p,
                     f"{kind.capitalize()} property is related by {predicate} to {other} property {q}.",
                     confidence="certain",
+                    subject=(predicate, q),
                 )
 
 
@@ -441,12 +455,12 @@ def _range_kind_conflicts(ctx: RuleContext) -> None:
     for p in _ordered(_object_only(ctx)):
         for r in _ordered(ranges.get(p, frozenset())):
             if _is_datatype_term(ctx, r):
-                ctx.add("OWL022", p, f"Object property has datatype range {r}.", confidence="certain")
+                ctx.add("OWL022", p, f"Object property has datatype range {r}.", confidence="certain", subject=(r,))
     for p in _ordered(_data_only(ctx)):
         for r in _ordered(ranges.get(p, frozenset())):
             is_class = r == OWL.Thing or OWL.Class in _types_of(ctx, r)
             if isinstance(r, URIRef) and is_class and RDFS.Datatype not in _types_of(ctx, r):
-                ctx.add("OWL022", p, f"Datatype property has class range {r}.", confidence="certain")
+                ctx.add("OWL022", p, f"Datatype property has class range {r}.", confidence="certain", subject=(r,))
 
 
 def _multiple_inverses(ctx: RuleContext) -> None:
@@ -458,7 +472,7 @@ def _multiple_inverses(ctx: RuleContext) -> None:
     for p in _ordered(set(inverses)):
         if len(inverses[p]) > 1:
             names = ", ".join(str(n) for n in _ordered(inverses[p]))
-            ctx.add("OWL023", p, f"Property has several distinct inverses: {names}.")
+            ctx.add("OWL023", p, f"Property has several distinct inverses: {names}.", subject=())
 
 
 def _disjoint_conflicts(ctx: RuleContext, code: str, pair_predicate: Node, group_type: Node, kind: str) -> None:
@@ -489,7 +503,7 @@ def _disjoint_conflicts(ctx: RuleContext, code: str, pair_predicate: Node, group
             relation = f"is disjoint with {b} but also asserted a sub{kind} of or equivalent to it"
         else:
             continue
-        ctx.add(code, a, f"The {kind} {relation}.", confidence="certain")
+        ctx.add(code, a, f"The {kind} {relation}.", confidence="certain", subject=(b,))
 
 
 def _same_and_different(ctx: RuleContext) -> None:
@@ -501,9 +515,15 @@ def _same_and_different(ctx: RuleContext) -> None:
             continue
         seen.add(key)
         if a == b:
-            ctx.add("OWL026", a, "Individual is declared different from itself.", confidence="certain")
+            ctx.add("OWL026", a, "Individual is declared different from itself.", confidence="certain", subject=(a,))
         elif (a, OWL.sameAs, b) in g or (b, OWL.sameAs, a) in g:
-            ctx.add("OWL026", a, f"Individual is both owl:sameAs and owl:differentFrom {b}.", confidence="certain")
+            ctx.add(
+                "OWL026",
+                a,
+                f"Individual is both owl:sameAs and owl:differentFrom {b}.",
+                confidence="certain",
+                subject=(b,),
+            )
 
 
 def _negative_assertions(ctx: RuleContext) -> None:
@@ -519,6 +539,7 @@ def _negative_assertions(ctx: RuleContext) -> None:
                             s,
                             f"Negative assertion on {p} with {target} contradicts an asserted triple.",
                             confidence="certain",
+                            subject=(p, target),
                         )
 
 
@@ -527,7 +548,11 @@ def _irreflexive_usage(ctx: RuleContext) -> None:
         for s, o in ctx.g.subject_objects(p):
             if s == o:
                 ctx.add(
-                    "OWL028", s, f"Irreflexive property {p} relates the individual to itself.", confidence="certain"
+                    "OWL028",
+                    s,
+                    f"Irreflexive property {p} relates the individual to itself.",
+                    confidence="certain",
+                    subject=(p,),
                 )
 
 
@@ -538,19 +563,32 @@ def _asymmetric_usage(ctx: RuleContext) -> None:
             if isinstance(o, Literal):
                 continue
             if s == o:
-                ctx.add("OWL029", s, f"Asymmetric property {p} relates the individual to itself.", confidence="certain")
+                ctx.add(
+                    "OWL029",
+                    s,
+                    f"Asymmetric property {p} relates the individual to itself.",
+                    confidence="certain",
+                    subject=(p,),
+                )
             elif str(s) < str(o) and (o, p, s) in g:
                 ctx.add(
                     "OWL029",
                     s,
                     f"Asymmetric property {p} is asserted in both directions with {o}.",
                     confidence="certain",
+                    subject=(p, o),
                 )
 
 
 def _illegal_punning(ctx: RuleContext) -> None:
     for node in _ordered(_typed(ctx, OWL.Class) & _typed(ctx, RDFS.Datatype)):
-        ctx.add("OWL030", node, "Term is declared both owl:Class and rdfs:Datatype.", confidence="certain")
+        ctx.add(
+            "OWL030",
+            node,
+            "Term is declared both owl:Class and rdfs:Datatype.",
+            confidence="certain",
+            subject=(OWL.Class, RDFS.Datatype),
+        )
     both = _typed(ctx, OWL.ObjectProperty) | _typed(ctx, OWL.DatatypeProperty)
     for node in _ordered(_typed(ctx, OWL.AnnotationProperty) & both):
         ctx.add(
@@ -558,4 +596,5 @@ def _illegal_punning(ctx: RuleContext) -> None:
             node,
             "Term is declared both an annotation property and an object/datatype property.",
             confidence="certain",
+            subject=(OWL.AnnotationProperty,),
         )
