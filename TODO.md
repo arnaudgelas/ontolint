@@ -15,21 +15,13 @@ record.
 
 ## Hotfix
 
-- [ ] **Release 0.10.2.** The four fixes below ("Recently done") are committed on the local `main`
-  (`65e8a04`, `a3f8f5a`, `37f1e48`, `f2db7ac`, plus the test `f9ccf1a`), not pushed or tagged as of
-  2026-11-10. Each commit passed the tests on its own, in a clean worktree, and the full gate
-  passed at `f9ccf1a`. A targeted mutation run of `adapters/robot.py`, `engine.py` and `loader.py`
-  killed 159 of 165 mutants: the 3 survivors were in `robot_convert`'s subprocess call (0.9.0
-  code, untouched here) and `f9ccf1a` adds the test that pins it; the 3 errors are unexplained, and
-  a second run, with `cli.py` (the shape-library split) and a JSON report, was still going. Left:
-  read that run and kill or pardon what survives; bump with `scripts/bump_version.py patch`, with
-  an upgrade note for the SEM001 baseline break and the findings that were silently lost; push
-  `main` with the release commit as the head of the push, then the tag; approve "Publish to PyPI".
-  *Done when:* 0.10.2 is on PyPI and its release run is green end to end.
+- [ ] **Release 0.10.2.** Tagged locally (`v0.10.2`), not pushed: push `main` with the release
+  commit as the head of the push, then the tag, and approve "Publish to PyPI". *Done when:* 0.10.2
+  is on PyPI and its release run is green end to end.
 
 ## Recently done
 
-- 0.10.2 (committed, not yet released; see "Hotfix"): four ways a run could pass, or fail,
+- 0.10.2 (tag `v0.10.2`, not yet pushed; see "Hotfix"): four ways a run could pass, or fail,
   without the ontology deserving it, each found by triaging an external review, reproduced on
   0.10.1 and fixed with that reproduction as its regression test (against the 0.10.1 code, 9 of
   the new tests fail; all pass now):
@@ -39,6 +31,14 @@ record.
     `TOOL009` note; its other triples join the background), where they were used as data;
   - TriG and N-Quads named graphs are merged into the linted graph, where only the default graph
     was read (`max_triples` counts every graph; in process and in the parse worker);
+  - verified: each fix commit passed the tests on its own, in a clean worktree, and the gate
+    passed at the release commit. Targeted mutation runs of `adapters/robot.py`, `engine.py`,
+    `loader.py` and `cli.py` killed every mutant in the code 0.10.2 changes. The rest, all older
+    code, is left for the mutation-baseline item in P1: 3 in `robot_convert`'s subprocess call
+    (killed by `f9ccf1a`), 3 in the TOOL005 hint (0.8.0), 3 in 0.10.0's `cli.py` code that its
+    own mutation run left out (`_library_origins`'s empty result and `_file_modules`'s prefix
+    fallback, both equivalent; `_library`'s default import root, which needs a test), and 3 errors
+    (two `frozen=True` mutants, one timeout in `engine._not_run`);
   - SEM001 is a verdict only when ROBOT lists profile violations; a missing image, a Docker, Java
     or permission error fails the rule (exit 2) instead of becoming a baselinable finding, and its
     focus is `(ontology)`, not the machine's absolute path. Baseline break for SEM001 entries;
