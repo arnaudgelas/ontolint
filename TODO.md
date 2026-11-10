@@ -15,20 +15,51 @@ record.
 
 ## Hotfix
 
-- [ ] **The release `verify` job read PyPI's JSON API once, without retrying.** The 0.10.0 run
-  (42774442860, 2026-11-10) published both files, installed 0.10.0 from PyPI (that step retries,
-  20 × 30 s) and then failed in "Verify the PyPI attestations": its `curl -sSf
-  https://pypi.org/pypi/ontolint/0.10.0/json` got a 404 because the JSON API had not caught up
-  yet, and `json.load` failed on the empty body. Checked by hand the same day: PyPI holds exactly
-  the two built files and `pypi-attestations verify pypi --repository
-  https://github.com/arnaudgelas/ontolint` prints OK for both, so 0.10.0 itself is sound. Fixed for
-  0.10.1: the file-list fetch and each attestation check retry like the install step, and the
-  job's timeout is 45 minutes. The step's script was run locally with stub `curl`, `uv` and
-  `sleep`: a lagging API passes after retrying, an extra file on PyPI or an attestation that never
-  verifies still fails, and the old script fails on the lag exactly as the 0.10.0 run did.
-  *Done when:* the 0.10.1 release run passes `verify` end to end.
+Four ways a run can pass, or fail, without the ontology deserving it. Each was reproduced on
+2026-11-10 (against 0.10.1, while triaging an external review) and each contradicts the purpose
+stated above; ship them together as 0.10.2, each with the reproducing fixture as its regression
+test. They change results (findings that were silently lost now appear), so the changelog needs an
+upgrade note.
+
+- [ ] **SHACL with an ontology background drops focus nodes that are not subjects of the data.**
+  `engine._shacl_with_background` keeps only results whose focus is a subject of the linted graph,
+  to hide results about the background's own nodes. A focus selected by `sh:targetObjectsOf` (or
+  reached as a value) may never be a subject: `ex:a ex:knows ex:b` with a shape on the objects of
+  `ex:knows` requiring `ex:code` reports `ex:b` without `--follow-imports` and nothing with it.
+  Keep a result when its focus occurs in the linted graph at all (subject or object, blank nodes by
+  their stable identity), and drop only nodes that occur in the background alone.
+- [ ] **Shapes imported by the shapes file are used as data, never as shapes.**
+  `cli._shapes_background` loads the shapes file's `owl:imports` closure and passes everything but
+  the shapes file itself to SHACL as *data*. A shapes file that imports a shape library therefore
+  validates with none of the library's shapes, silently: a library shape requiring `ex:name` on
+  subjects of `ex:knows` reports nothing. Split the closure: files that declare shapes (typed
+  `sh:NodeShape`/`sh:PropertyShape`, or with `sh:path`/targets) join the shapes graph, the rest is the
+  ontology background, and say which file went where (a `TOOL` note), since one file can be both.
+- [ ] **Named graphs in TriG and N-Quads are dropped.** The loader parses a dataset into one
+  `Graph`, which keeps only the default graph: a TriG file whose classes sit in `ex:g1 { … }` loads
+  one triple (its header) and reports nothing, although the README lists both formats as read. Lint
+  the union of all graphs (what an ontology author means by "this file"), keep each triple's graph
+  for source regions and a later per-graph policy, and say in the README that graphs are merged.
+  Rejecting datasets with named graphs is the alternative if the union is judged wrong; silently
+  linting only the default graph is not.
+- [ ] **SEM001 reports ROBOT's own failures as profile violations.** `robot_profile_issues` turns
+  every non-zero exit into a `certain` SEM001 finding (exit 1, baselinable). A timeout already
+  becomes `failed` and a missing `docker` `unsupported`, but a missing image, a Docker daemon error
+  or a permission problem does not: the first Validation run (2026-11-09) reported "/output/
+  profile.txt (Permission denied)" as an OWL DL violation. Emit SEM001 only when ROBOT wrote a
+  report that `summarise_profile_report` recognises as profile violations; anything else makes the
+  rule `failed` with ROBOT's stderr (exit 2). Fixtures: a fake `docker` exiting 125, a Java crash
+  without a report, a genuine violation report, a timeout. Move SEM001's focus off the absolute path
+  (the ontology IRI, or the report path) at the same time, since both change its fingerprint.
 
 ## Recently done
+
+- 0.10.1 (`45175d3`, tag `v0.10.1`), released 2026-11-10: the release `verify` job retries its PyPI
+  file-list and attestation checks (`7fa251f`), after the 0.10.0 run (42774442860) failed there on
+  PyPI's lagging JSON API although its files were sound (checked by hand). Run 42778283292 passed
+  every job; its install step needed one retry, the attestation step none, so the new retries are
+  proven only by the local run of the step's script with stub `curl`, `uv` and `sleep` (a lagging
+  API passes, an extra file or a failing attestation still fails). Same code as 0.10.0.
 
 - 0.10.0 (`d6c45c1`, tag `v0.10.0`), released 2026-11-10: run 42774442860 passed the CodeQL gate,
   tests and build, and published both files; its `verify` job failed on PyPI's lagging JSON API
@@ -238,6 +269,23 @@ Validation corpus (public; licences per repository):
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
 
+- [ ] **Keep SHACL's evidence in SHACL001.** A finding carries the result message, focus and
+  source shape only; the report's `sh:resultPath`, `sh:value`, `sh:sourceConstraintComponent` and
+  `sh:resultSeverity` are dropped, so two violations of one shape on one node read alike and a
+  fix has to be found by rerunning pySHACL. Put them in the finding (`details` in JSON and SARIF
+  today; the message only if a baseline break is accepted, see the next item), with a fixture per
+  constraint component family (value type, cardinality, property pair, logical, SPARQL-based).
+  *Done when:* every SHACL Core result field present in the report reaches JSON and SARIF.
+
+- [ ] **Decouple baseline identity from message wording.** A fingerprint hashes `(rule, focus,
+  message)`, so every message fix is a baseline break: 0.10.0 broke baselines for ONT005 and
+  OWL013, and fixing OWL034, OWL036, OWL040 and SEC014 will break them again. Design a version 2
+  identity from the rule, the focus and the finding's structured subject (the terms, predicate or
+  axiom it is about, which `Finding.related` already starts to carry), never from prose; write it
+  next to the version 1 hash in `--write-baseline` and accept either when reading, so existing
+  baselines keep working. Decide it before the next message change, not after. *Done when:* a
+  message-only change leaves every baseline matching, proven by a test that rewords a message.
+
 - [ ] **Audit the specifications of implemented rules, not only proposed rules.** A rule can be
   implemented, tested, and still be semantically under-specified if it began as a catalogue title;
   roughly 120 of the 244 implemented rules (tranche 1, OWL, METRIC and the leftovers) were
@@ -262,11 +310,13 @@ Validation corpus (public; licences per repository):
     and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
   - *Defects that change an exit code, a focus or a message:* an unwritable `--output` raises a
     traceback and exits 1 instead of TOOL001 and exit 2 (`cli.py` `main`, README "Exit codes");
-    SEM001 reports a failed image pull or a ROBOT crash as a profile violation (exit 1,
-    baselinable) instead of a failed rule (exit 2); SEM001's focus is the absolute file path, so
-    its fingerprint depends on the machine; SEC014's focus repeats the password it reports (RFC
+    (SEM001's misclassification and machine-dependent focus moved to "Hotfix"); SEC014's focus repeats the password it reports (RFC
     3986 §3.2.1 says not to show it); OWL013 (legacy), OWL034, OWL036 and OWL040 print Python
-    reprs (`rdflib.term.Literal(...)`) instead of N3.
+    reprs (`rdflib.term.Literal(...)`) instead of N3 (OWL013 fixed in 0.10.0);
+  - *False positives found by the 2026-11-10 review:* LEX002 (and every rule using
+    `RuleContext.descriptions`) follows `rdfs:subPropertyOf` one step only, so a definition through
+    `ex:def2 ⊑ ex:def1 ⊑ skos:definition` is reported missing (reproduced). Take the transitive
+    closure, bounded and cycle-safe.
   - *Policy that silently does nothing:* `--ignore`, `--select` and `severity_overrides` accept the
     pipeline rules (SEC001-SEC015, INPUT001, TOOL001) and have no effect; reject them or say so.
     A file in an `--import-dir` that the safe loader refuses is skipped without a note.
@@ -339,6 +389,15 @@ Validation corpus (public; licences per repository):
   *Done when:* the slow/fuzz/benchmark suites have named cadence, timeout, owner, and failure
   policy; every remaining skip is either platform-impossible or linked to that scheduled work.
 
+- [ ] **Record per-rule findings on the validation corpus at every release.** The corpus in
+  "Real-world ontologies" is only used by hand, so a release can double one rule's findings on CCO
+  unnoticed. Pin each repository's commit, run a fixed command per file, and keep the per-rule
+  counts in the repository; a release shows the diff and explains every change (the 0.8.0 and
+  0.9.0 entries above did this by hand). This is the cheap half of precision measurement; labelled
+  true and false positives remain the metric-calibration item's job. *Done when:* a script
+  reproduces the counts from pinned sources and the release instructions require reviewing their
+  diff.
+
 - [ ] **Decide the GitHub integration before implementing `--format github`.** GitHub workflow
   annotations are capped, whereas SARIF upload offers richer code-scanning UX. Write a short ADR
   comparing a native annotation formatter, documented SARIF upload, and both; choose one supported
@@ -363,7 +422,13 @@ moves from `proposed` merely because it has an attractive title.
 
 - [ ] **Version comparison (`COMP*`).** Define a two-input CLI, graph identity/version semantics,
   blank-node treatment, and compatibility policy. *Gate:* accepted ADR plus a representative pair
-  corpus and a memory/time budget.
+  corpus and a memory/time budget. The ADR must also fix: an import lock (each import's resolved
+  file and checksum, recorded per side), since comparing two versions over different dependency
+  closures proves nothing; open-world semantics (a narrower domain adds inferences, it rejects no
+  data, so "breaking" is relative to a stated consumer policy); and the change classes reported
+  (annotation, vocabulary, asserted axiom, entailed axiom, which needs the SEM backend). A text
+  diff that calls every removed triple breaking is not acceptable. Whether two-input commands mean
+  subcommands (`ontolint diff`) is part of this ADR; flags on today's command are not.
 - [ ] **Competency questions (`CQ*`).** Define query packaging, expected bindings/ASK semantics,
   deterministic result serialisation, and query execution limits. A format already used in
   practice, and a good first candidate: one SPARQL `SELECT ?answer` per `.rq` file, the question in
@@ -372,7 +437,16 @@ moves from `proposed` merely because it has an attractive title.
   sets. *Gate:* accepted format and at least one public corpus that justifies maintaining it.
 - [ ] **Reasoner-backed semantics (`SEM*`).** Define supported reasoners/profiles, Docker versus
   local dependency model, reproducibility, timeout/failure behavior, and CI image ownership.
-  *Gate:* accepted adapter contract and deterministic container fixtures.
+  *Gate:* accepted adapter contract and deterministic container fixtures. Recommended as the first
+  bet (2026-11-10, after an external review ranked semantic verification, version comparison and
+  competency questions as the three gaps that matter most): it is the cheapest, because the
+  isolated ROBOT image, its adapter and the CI job that builds it already exist (`robot reason`
+  and `explain` give consistency, unsatisfiable classes and justifications), and it is a
+  prerequisite of the others' semantic rules (COMP016, COMP017, ALIGN010). Its adapter contract is
+  the SEM001 fix in "Hotfix" generalised: a verdict only from a parsed report, every other outcome
+  `failed`, `unsupported` or a timeout. Keep OWL *profile* compliance (SEM001) and *consistency*
+  (SEM002, SEM003) as separate rules and say so in the README; a profile pass proves nothing about
+  consistency, and ELK (EL only) must not report "consistent" for an ontology outside EL.
 - [ ] **Policy packs and domain profiles.** The `obo` and `fair` opt-in families and profiles
   already exist, so this gate covers only what they do not: externally authored, versioned packs.
   Define profile ownership, rule-selection/override
@@ -384,7 +458,13 @@ moves from `proposed` merely because it has an attractive title.
 - [ ] **Network-dependent FAIR/IRI/GOV checks (`FAIR*`, `IRI007`, `GOV018`).** This conflicts with
   the present offline-first threat model. *Gate:* either a decision to reject it permanently, or an
   accepted opt-in isolated resolver design with allowlists, cache/privacy policy, and deterministic
-  mocked tests. There is no default-network implementation.
+  mocked tests. There is no default-network implementation. The design must cover, with tests:
+  one HTTP client for all three families; destinations checked at every connection and redirect
+  (no loopback, private, link-local or metadata addresses; DNS rebinding); response size,
+  decompression, time and redirect limits; no credentials; and evidence per request (URL, redirect
+  chain, status, negotiated type, time), because a DNS or HTTP failure is an observation, not proof
+  that an ontology is not FAIR. Registry absence (FAIR005) is not a defect for an internal
+  ontology; it belongs in an opt-in profile.
 - [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built (see "Recently
   done"): offline resolution, per-module provenance, closure semantics and SHACL with the ontology
   as background. Left:
@@ -412,6 +492,14 @@ moves from `proposed` merely because it has an attractive title.
   unreliable location data.
 - **More report formats (OPS012):** do not create JUnit/Markdown/HTML outputs without an identified
   consumer. JSON and SARIF are the integration contracts to keep sound first.
+- **Automatic fixes (`--fix`):** defer until findings carry structured evidence (the SHACL and
+  baseline-identity items in P1); only round-trip-verified, meaning-preserving edits would ever
+  qualify, and modelling or logical corrections (deleting an axiom that causes an inconsistency)
+  never.
+- **Editor integration (a language server):** defer until source regions are exact for the
+  formats it would serve; today they locate a term's occurrence, not the offending axiom.
+- **A single quality score, and AI-generated suggestions presented as checks:** rejected. A score
+  hides which dimension failed; generated text is not a deterministic verdict.
 - **Bulk implementation of proposed rules:** each needs an approved specification, positive and
   negative fixtures, expected confidence/severity, and an identified backend. A count of proposed
   rules is not a delivery plan.
@@ -429,6 +517,18 @@ moves from `proposed` merely because it has an attractive title.
 
 Each was an open question in the old local backlog and no longer is. Listed so they are not asked
 again.
+
+- **External review of 2026-11-10 (written against 0.8.0):** its confirmed defects are in
+  "Hotfix" and P1, its product ranking informs "Decision gates". Claims checked and not taken up:
+  the catalog is already read bounded (`imports._catalog_bytes` reads at most `max_bytes + 1`,
+  SEC001, since 0.9.0); `--explain RULE`, `--list-rules --format json` and per-rule execution
+  status with exit `2` for a failed or unsupported rule already exist, which is the "incomplete
+  analysis" signal it asks for (what was missing is that SEM001 bypassed it, now in "Hotfix");
+  SHACL severities are already kept (`sh:Warning` is `warning`); selecting one rule still runs its
+  module and filters, which costs time, not correctness, and is left until profiling says
+  otherwise; the process-wide socket block is defence in depth around a single-process CLI, and
+  parsing moves to a worker process with `--max-parse-seconds`. Its proposed CLI subcommands and
+  evidence model are design input for the COMP ADR and the P1 SHACL item, not tasks of their own.
 
 - **Exit code 2 with `--fail-on never`:** decided and documented in the README exit-code table.
 - **License choice:** Apache-2.0. Only the copyright-holder attribution and the OOPS!/OntoSniff
