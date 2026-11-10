@@ -73,7 +73,7 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items
+from .support import list_items, shape_term
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -287,7 +287,7 @@ def _ordered_pair(
     lo, hi = _single(sg, shape, bounds[0]), _single(sg, shape, bounds[1])
     lo_n, hi_n = _natural(lo), _natural(hi)
     if lo_n is not None and hi_n is not None and lo_n > hi_n:
-        ctx.add(report[0], shape, report[1].format(lo=lo_n, hi=hi_n), confidence="certain")
+        ctx.add(report[0], shape, report[1].format(lo=lo_n, hi=hi_n), confidence="certain", subject=())
 
 
 def _cardinality_order(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -308,6 +308,7 @@ def _cardinality_values(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                     "SHQ008",
                     shape,
                     f"{predicate.n3(sg.namespace_manager)} value {value!s} is not a non-negative integer.",
+                    subject=(predicate, shape_term(value)),
                 )
 
 
@@ -346,7 +347,7 @@ def _regex(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 warnings.simplefilter("ignore")
                 re.compile(text, flags)
         except (re.error, RecursionError, OverflowError) as exc:
-            ctx.add("SHQ011", shape, f"sh:pattern does not compile: {exc}", confidence="heuristic")
+            ctx.add("SHQ011", shape, f"sh:pattern does not compile: {exc}", confidence="heuristic", subject=(pattern,))
 
 
 def _logical_members(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -354,7 +355,12 @@ def _logical_members(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         for head in sg.objects(shape, predicate):
             items = None if isinstance(head, Literal) else list_items(sg, head)
             if items is not None and len(items) < MIN_LOGICAL_MEMBERS:
-                ctx.add("SHQ025", shape, f"{predicate.n3(sg.namespace_manager)} has {len(items)} member(s).")
+                ctx.add(
+                    "SHQ025",
+                    shape,
+                    f"{predicate.n3(sg.namespace_manager)} has {len(items)} member(s).",
+                    subject=(predicate,),
+                )
 
 
 def _datatype_and_class(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -402,7 +408,9 @@ def _numeric_range(ctx: RuleContext, sg: Graph, shape: Node) -> None:
             lo = _promote(_promote(low, low_rank), rank)
             hi = _promote(_promote(high, high_rank), rank)
             if lo > hi or (lo == hi and (low_strict or high_strict)):
-                ctx.add("SHQ018", shape, f"Numeric bounds {low} and {high} admit no value.")
+                ctx.add(
+                    "SHQ018", shape, f"Numeric bounds {low} and {high} admit no value.", subject=(str(low), str(high))
+                )
 
 
 def _deactivated(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -426,14 +434,19 @@ def _duplicate_paths(ctx: RuleContext, sg: Graph, shape: Node) -> None:
             by_path[paths[0]].append(prop)
     for path, props in sorted(by_path.items(), key=lambda kv: str(kv[0])):
         if len(props) > 1:
-            ctx.add("SHQ026", shape, f"{len(props)} property shapes constrain the same path {path!s}.")
+            ctx.add("SHQ026", shape, f"{len(props)} property shapes constrain the same path {path!s}.", subject=(path,))
 
 
 def _undefined_references(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     for predicate in (SH.node, SH.property):
         for target in sg.objects(shape, predicate):
             if isinstance(target, URIRef) and (target, None, None) not in sg:
-                ctx.add("SHQ019", shape, f"{predicate.n3(sg.namespace_manager)} refers to undefined shape {target!s}.")
+                ctx.add(
+                    "SHQ019",
+                    shape,
+                    f"{predicate.n3(sg.namespace_manager)} refers to undefined shape {target!s}.",
+                    subject=(predicate, target),
+                )
 
 
 def _unused_node_shape(ctx: RuleContext, sg: Graph, shape: Node, referenced: set[Node]) -> None:
@@ -459,7 +472,12 @@ def _undeclared_targets(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         return
     for target in sg.objects(shape, SH.targetClass):
         if ctx.local(target) and target not in ctx.classes and target not in ctx.terms:
-            ctx.add("SHQ027", shape, f"sh:targetClass {target!s} is not declared as a class in the ontology.")
+            ctx.add(
+                "SHQ027",
+                shape,
+                f"sh:targetClass {target!s} is not declared as a class in the ontology.",
+                subject=(shape_term(target),),
+            )
 
 
 SHAPE_CHECKS: tuple[Check, ...] = (

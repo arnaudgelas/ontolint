@@ -135,7 +135,7 @@ def _messages_and_languages(ctx: RuleContext, sg: Graph, shapes: set[Node]) -> N
         for p in (SH.name, SH.description, SH.message):
             counts = Counter((o.language or "und").lower() for o in sg.objects(shape, p) if isinstance(o, Literal))
             if any(n > 1 for n in counts.values()):
-                ctx.add("SHQ005", shape, f"Multiple {p} values in the same language.")
+                ctx.add("SHQ005", shape, f"Multiple {p} values in the same language.", subject=(p,))
 
 
 def _class_targets(ctx: RuleContext, sg: Graph, node_shapes: set[Node]) -> None:

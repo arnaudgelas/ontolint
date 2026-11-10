@@ -22,7 +22,7 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items
+from .support import list_items, shape_term
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -132,9 +132,14 @@ def _in_list(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         if items is None:
             continue
         if not items:
-            ctx.add("SHQ009", shape, "sh:in list is empty; no value can satisfy it.")
+            ctx.add("SHQ009", shape, "sh:in list is empty; no value can satisfy it.", subject=(SH["in"], "empty"))
         elif len(set(items)) < len(items):
-            ctx.add("SHQ009", shape, f"sh:in list repeats {len(items) - len(set(items))} member(s).")
+            ctx.add(
+                "SHQ009",
+                shape,
+                f"sh:in list repeats {len(items) - len(set(items))} member(s).",
+                subject=(SH["in"], "repeated"),
+            )
 
 
 def _language_in(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -142,7 +147,12 @@ def _language_in(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         items = None if isinstance(head, Literal) else list_items(sg, head)
         for item in items or ():
             if not isinstance(item, Literal) or LANGUAGE_TAG.fullmatch(str(item)) is None:
-                ctx.add("SHQ010", shape, f"sh:languageIn member {item!s} is not a well-formed language tag.")
+                ctx.add(
+                    "SHQ010",
+                    shape,
+                    f"sh:languageIn member {item!s} is not a well-formed language tag.",
+                    subject=(shape_term(item),),
+                )
 
 
 def _unique_lang(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -154,6 +164,7 @@ def _unique_lang(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 "SHQ012",
                 shape,
                 f"sh:uniqueLang is vacuous with sh:datatype {datatype!s}; only rdf:langString values have a language.",
+                subject=(datatype,),
             )
 
 
@@ -162,23 +173,35 @@ def _severity(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         if value in SEVERITIES:
             continue
         if not isinstance(value, URIRef) or str(value).startswith(SHAPE_NS):
-            ctx.add("SHQ014", shape, f"sh:severity value {value!s} is not sh:Info, sh:Warning or sh:Violation.")
+            ctx.add(
+                "SHQ014",
+                shape,
+                f"sh:severity value {value!s} is not sh:Info, sh:Warning or sh:Violation.",
+                subject=(shape_term(value),),
+            )
 
 
 def _flags(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     values = list(sg.objects(shape, SH.flags))
     for flag in values:
         if not isinstance(flag, Literal) or not set(str(flag)) <= XPATH_FLAGS:
-            ctx.add("SHQ015", shape, f"sh:flags value {flag!s} is not made of the flags s, m, i, x and q.")
+            ctx.add(
+                "SHQ015",
+                shape,
+                f"sh:flags value {flag!s} is not made of the flags s, m, i, x and q.",
+                subject=(shape_term(flag),),
+            )
     if values and (shape, SH.pattern, None) not in sg:
-        ctx.add("SHQ015", shape, "sh:flags is used without an sh:pattern.")
+        ctx.add("SHQ015", shape, "sh:flags is used without an sh:pattern.", subject=(SH.pattern,))
 
 
 def _targets(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     for predicate, name in TARGET_NAMES.items():
         for value in sg.objects(shape, predicate):
             if not isinstance(value, URIRef):
-                ctx.add("SHQ022", shape, f"{name} value {value!s} is not an IRI.")
+                ctx.add(
+                    "SHQ022", shape, f"{name} value {value!s} is not an IRI.", subject=(predicate, shape_term(value))
+                )
 
 
 def _property_path(ctx: RuleContext, sg: Graph, shape: Node, property_shapes: set[Node]) -> None:
@@ -186,9 +209,9 @@ def _property_path(ctx: RuleContext, sg: Graph, shape: Node, property_shapes: se
         return
     count = len(set(sg.objects(shape, SH.path)))
     if count == 0:
-        ctx.add("SHQ023", shape, "Property shape has no sh:path.")
+        ctx.add("SHQ023", shape, "Property shape has no sh:path.", subject=(SH.path, "none"))
     elif count > 1:
-        ctx.add("SHQ023", shape, f"Property shape has {count} sh:path values.")
+        ctx.add("SHQ023", shape, f"Property shape has {count} sh:path values.", subject=(SH.path, "several"))
 
 
 # --- recursion (SHQ016) ----------------------------------------------------------------------
@@ -270,4 +293,4 @@ def run(ctx: RuleContext) -> None:
             check(ctx, sg, shape)
         _property_path(ctx, sg, shape, property_shapes)
     for shape, size in _cyclic_shapes(sg, shapes).items():
-        ctx.add("SHQ016", shape, f"Shape is part of a reference cycle of {size} shape(s).")
+        ctx.add("SHQ016", shape, f"Shape is part of a reference cycle of {size} shape(s).", subject=())

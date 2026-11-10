@@ -167,3 +167,15 @@ def describing_nodes(g: Graph, ontology: Node) -> list[Node]:
     creators on ``<https://w3id.org/mod#>``, which says ``owl:ontologyIRI <https://w3id.org/mod>``).
     """
     return [ontology, *sorted(g.subjects(ONTOLOGY_IRI, ontology), key=str)]
+
+
+SHAPES_BLANK_NODE = "(blank node)"
+
+
+def shape_term(node: Node) -> Node | str:
+    """``node`` of a shapes graph as a finding subject: a blank node there has no stable identity, so it is a key.
+
+    A finding's blank nodes are named by their content in the data graph (:func:`stable_blank_id`), which
+    a shapes-graph node is not part of.
+    """
+    return SHAPES_BLANK_NODE if isinstance(node, BNode) else node

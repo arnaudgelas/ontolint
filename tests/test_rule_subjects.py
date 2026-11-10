@@ -25,9 +25,10 @@ def _short(text: str) -> str:
     return text.removeprefix(BASE).replace(OWL, "owl:").replace(RDFS, "rdfs:").replace(XSD, "xsd:")
 
 
-def subjects(rule: str, turtle: str, **options: object) -> set[tuple[str, tuple[str, ...]]]:
+def subjects(rule: str, turtle: str, shapes: str | None = None, **options: object) -> set[tuple[str, tuple[str, ...]]]:
     """``(focus, subject)`` of every finding ``rule`` reports on ``turtle``, with the usual prefixes shortened."""
-    findings = Linter(graph(turtle), **options).execute([rule]).findings  # type: ignore[arg-type]
+    shapes_graph = graph(shapes) if shapes is not None else None
+    findings = Linter(graph(turtle), shapes_graph, **options).execute([rule]).findings  # type: ignore[arg-type]
     pairs = [(_short(f.focus), tuple(map(_short, f.subject))) for f in findings if f.rule == rule]
     assert len(pairs) == len(set(pairs)), f"{rule}: two findings share a subject: {pairs}"
     return set(pairs)
@@ -308,3 +309,34 @@ def test_fair011_names_the_value_kind_and_identifier() -> None:
     text = "0000-0002-1825-0099 and 0000-0002-1825-0098"
     found = subjects("FAIR011", f'<https://example.test/o> a owl:Ontology ; dcterms:creator "{text}" .')
     assert found == {("https://example.test/o", (text, "ORCID iD", "0000-0002-1825-0098"))}
+
+
+# --- SHACL authoring and quality ---------------------------------------------------------------------
+
+SH = "http://www.w3.org/ns/shacl#"
+
+
+def _sh(found: set[tuple[str, tuple[str, ...]]]) -> set[tuple[str, tuple[str, ...]]]:
+    return {(focus, tuple(part.replace(SH, "sh:") for part in about)) for focus, about in found}
+
+
+def test_shq009_tells_an_empty_list_from_a_repeating_one() -> None:
+    shapes = "ex:S a sh:NodeShape ; sh:in () ; sh:in ( ex:a ex:a ) ."
+    assert _sh(subjects("SHQ009", "", shapes)) == {("S", ("sh:in", "empty")), ("S", ("sh:in", "repeated"))}
+
+
+def test_shq015_tells_a_bad_flag_from_flags_without_a_pattern() -> None:
+    shapes = 'ex:S a sh:NodeShape ; sh:flags "z" .'
+    assert _sh(subjects("SHQ015", "", shapes)) == {("S", ('"z"',)), ("S", ("sh:pattern",))}
+
+
+def test_shq019_and_shq008_name_the_predicate_and_the_value() -> None:
+    shapes = """
+        ex:S a sh:NodeShape ; sh:node ex:Missing ; sh:property ex:Gone .
+        ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount -1 ; sh:maxCount [ ] .
+    """
+    assert _sh(subjects("SHQ019", "", shapes)) == {("S", ("sh:node", "Missing")), ("S", ("sh:property", "Gone"))}
+    assert _sh(subjects("SHQ008", "", shapes)) == {
+        ("P", ("sh:minCount", '"-1"^^<xsd:integer>')),
+        ("P", ("sh:maxCount", "(blank node)")),
+    }
