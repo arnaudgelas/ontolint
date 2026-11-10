@@ -20,6 +20,47 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **BASELINE-V2** (P1): baselines match a finding by its identity (rule, focus and a structured
+    `Finding.subject`, never the message) as well as by its version 1 fingerprint, so a reworded
+    message, a pySHACL upgrade or a measurement that moves keeps an accepted finding accepted and
+    its entry not stale. `--write-baseline` writes version 2: the unchanged `fingerprints` list,
+    `files` (the run's report paths) and `identities` (per path, identity → fingerprint).
+    Identities are matched per report path, or for any path when both runs have one file, so
+    one-file and multi-file baselines carry over to each other and a renamed file keeps its
+    baseline. Two findings of one file that share an identity are matched by fingerprint only. A
+    malformed baseline file exits 2 (`TOOL001 … BaselineError`) instead of matching nothing.
+    Every `RuleContext.add` site states its subject (`subject=()` where a rule reports at most once
+    per focus); counts, ratios, thresholds and prose are never part of it, so METRIC*, OWL004,
+    CLS006, SEC004/SEC005 and SEM001 (subject: the profile) are baselinable through measurement
+    changes; SHACL001's subject is `shacl_result_key`; SEC014's is empty, never the password.
+    When one message reaches `add` with several subjects, the finding keeps the least, so the
+    identity does not depend on the hash seed. Verified: a test rewords every message of every
+    positive rule case, the kitchen sink (with its shapes) and each SHACL constraint family, and
+    finds nothing new and nothing stale; the same with `--fail-on-stale-baseline` through the CLI,
+    for rule findings and for two SHACL001 results sharing one message; a baseline written by
+    0.10.2 (`tests/fixtures/baseline_0_10_2.json`) gives exactly the 0.10.2 results, and 0.10.2's
+    reader gives the version 1 results on a version 2 file; one-file → multi-file, multi-file →
+    one-file, renamed one-file runs and their negatives; ambiguity, staleness and an 11-case
+    malformed-file matrix. Subjects are kept unique by an AST contract
+    (`tests/test_subject_contract.py`, which names the file and line of an add site lacking
+    `subject=`), by a corpus run of every rule case and fixture with all rules, and by a
+    Hypothesis property. The reproduction prints
+    0 / 0 / 4 of 4 / 0 (was 0 / 4 / 8 / 4); the 0.10.0 ONT005/OWL013 rewording, replayed against
+    a version 2 baseline, reopens nothing. Reports, exit codes, `legacy_rules.json` and
+    `differential.json` did not move (`git diff tests/golden` is empty across the series), and
+    each commit passed Ruff, Pyright, mypy (host and Win32) and the tests on its own in a clean
+    worktree.
+    Found and fixed with it: `test_properties_datasets.py` split N-Triples with
+    `str.splitlines`, which also breaks at U+0085 inside a literal. Targeted mutation run
+    (`baseline.py`, `reporting.py`, `rules/runtime.py`): 137 mutants, 131 killed, 1 older pardon,
+    2 timeouts (not named by the console report) and 4 survivors, now settled: the two path-free
+    boundaries (`len(files) == 1`, `len(reports) == 1` shifted to 0) are killed by a new
+    renamed-and-reworded test (each of the four shifts checked by hand to fail a test), and two
+    equivalents are pardoned (`zip(strict=True)` over lists built from one another; `<` or `<=`
+    when keeping the least subject). The run was not repeated after those changes.
+    Left open, under P1 "Baseline identity": release sequencing, the upgrade note to paste at
+    release, the lenient version 1 match, SARIF `partialFingerprints`. Messages this release
+    changes for an unchanged input: none so far (list each later rule here as it lands).
   - **SHACL-EVIDENCE** (P1): each `SHACL001` finding carries every field of its SHACL validation
     result as JSON `evidence` (after `details`) and SARIF `properties.evidence` (before `graphs`),
     never in text: `focusNode`, `resultPath`, `value`, `sourceShape`, `sourceConstraintComponent`,
@@ -353,22 +394,24 @@ Validation corpus (public; licences per repository):
     fixtures, but a shape that declares annotations is not among them.
   *Done when:* each of the three is decided, and a decided change has its fixture.
 
-- [ ] **Decouple baseline identity from message wording.** A fingerprint hashes `(rule, focus,
-  message)`, so every message fix is a baseline break: 0.10.0 broke baselines for ONT005 and
-  OWL013, and fixing OWL034, OWL036, OWL040 and SEC014 will break them again. Design a version 2
-  identity from the rule, the focus and the finding's structured subject (the terms, predicate or
-  axiom it is about, which `Finding.related` already starts to carry; for SHACL001,
-  `adapters.shacl.shacl_result_key(finding.evidence)`: source shape, constraint component, path,
-  value and SPARQL constraint), never from prose; write it
-  next to the version 1 hash in `--write-baseline` and accept either when reading, so existing
-  baselines keep working. Decide it before the next message change, not after. Today a baseline
-  that accepts one SHACL001 result accepts every result with its message: two datatype violations
-  on one node share a fingerprint and differ only in `evidence.value`. Make it independent
-  of the run's shape too: only multi-file runs hash the report path today, so a baseline written
-  from one file does not carry over to a multi-file run (README "Several files"); keep the path as
-  a field of the identity and match on it when both sides have one. *Done when:* a message-only
-  change leaves every baseline matching, proven by a test that rewords a message, and a one-file
-  baseline matches the same file's findings in a multi-file run.
+- [ ] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
+  (unreleased, see "Recently done"). Left open, each a decision rather than code:
+  - *Release sequencing.* Baselines written by 0.10.x hold version 1 hashes only, so a message
+    fix shipped in the same release as identity v2 still breaks those entries once. Recommended:
+    ship v2 in release N, with the upgrade note "regenerate the baseline once", and the message
+    fixes (OWL034, OWL036, OWL040, SEC014's focus, METRIC rounding) in N+1. Bundling them, as the
+    0.10.0 entry hoped, is the maintainer's call. SEC014's planned focus change breaks both hashes
+    by design (the focus is part of the identity); its upgrade note must say so.
+  - *The upgrade note* goes into the release's CHANGELOG by hand (docs/releasing.md step 1); the
+    text is in the body of the `feat:` commit that matches baselines by identity.
+  - *Version 1 acceptance stays lenient.* `--baseline` accepts a finding when either hash is
+    recorded, so a new SHACL001 result whose message equals an accepted one's is still accepted
+    by its fingerprint. Refusing version 1 matches for paths a version 2 file covers would close
+    that, but would also reopen findings whenever a later release refines a rule's subject:
+    decide which risk to take.
+  - *SARIF `partialFingerprints`* (code scanning merges results without them): left to the
+    GITHUB-ACTION item, which has the consumer.
+  *Done when:* each is decided, and a decided change has its test.
 
 - [ ] **Audit the specifications of implemented rules, not only proposed rules.** A rule can be
   implemented, tested, and still be semantically under-specified if it began as a catalogue title;
@@ -762,8 +805,8 @@ moves from `proposed` merely because it has an attractive title.
   consumer (MARKDOWN-SUMMARY, P1) and a CI test format is CTRF-REPORT (P2), which takes JUnit's
   place.
 - **Automatic fixes (`--fix`):** defer until findings carry structured evidence (SHACL001 does,
-  unreleased; the baseline-identity item in P1 is still open); only round-trip-verified,
-  meaning-preserving edits would ever qualify, and modelling or logical corrections (deleting an
+  unreleased, and every finding names its subject for its baseline identity); only
+  round-trip-verified, meaning-preserving edits would ever qualify, and modelling or logical corrections (deleting an
   axiom that causes an inconsistency) never.
 - **Editor integration (a language server):** defer until source regions are exact for the
   formats it would serve; today they locate a term's occurrence, not the offending axiom.
@@ -801,8 +844,8 @@ again.
   evidence model are design input for the COMP ADR and the P1 SHACL item, not tasks of their own.
   Its fuller version (same date and target) was rechecked against 0.10.2 on 2026-11-10. Taken up
   from it: SHACL validation has no time budget (reproduced; P1), named-graph provenance
-  (DATASET-PROVENANCE, P0), the single-file and multi-file fingerprint split (in the
-  baseline-identity item), a JSON Schema for the JSON report (OPS item, P2), the blank-node identity
+  (DATASET-PROVENANCE, P0), the single-file and multi-file fingerprint split (BASELINE-V2,
+  unreleased), a JSON Schema for the JSON report (OPS item, P2), the blank-node identity
   cost (P2), and acceptance cases for the SEM, CQ, ALIGN and policy-pack gates. Checked and not
   taken up:
   - metamorphic tests exist: `test_properties_lint.py` covers triple order, blank-node labels,
