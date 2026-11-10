@@ -7,6 +7,7 @@ import random
 import re
 import tempfile
 from argparse import Namespace
+from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 
@@ -16,6 +17,10 @@ from hypothesis import strategies as st
 from hypothesis_strategies import RULE_IDS, budget, roundtrip_triple_lists
 from hypothesis_strategies import build_graph as build
 
+from ontolint.baseline import apply as apply_baseline
+from ontolint.baseline import build as build_baseline
+from ontolint.baseline import dumps as dump_baseline
+from ontolint.baseline import loads as load_baseline
 from ontolint.cli import _apply_baselines, main
 from ontolint.engine import sort_findings
 from ontolint.models import Evidence, ExecutionStatus, Finding, RuleExecution, plain_evidence
@@ -33,6 +38,7 @@ from ontolint.reporting import (
     to_sarif,
     to_sarif_report,
 )
+from ontolint.reporting import identity as baseline_identity
 from ontolint.rules.registry import default_registry
 
 pytestmark = pytest.mark.slow
@@ -55,6 +61,7 @@ findings = st.builds(
     suggestion=texts,
     confidence=st.sampled_from(("certain", "heuristic")),
     evidence=st.one_of(st.none(), evidences),
+    subject=st.lists(st.sampled_from(("", "a", "b", "\udfff")), max_size=2).map(tuple),
 )
 finding_lists = st.lists(findings, max_size=8)
 executions = st.builds(
@@ -134,22 +141,56 @@ def _baseline_args(baseline: Path | None = None, write: Path | None = None) -> N
     return Namespace(baseline=str(baseline) if baseline else None, write_baseline=str(write) if write else None)
 
 
+def _unique_identities(report: FileReport) -> set[str]:
+    counts = Counter(baseline_identity(f) for f in report.findings)
+    return {i for i, n in counts.items() if n == 1}
+
+
 @budget(0.5)
 @given(finding_lists, st.randoms(use_true_random=False), st.booleans())
 def test_baseline_removes_exactly_the_baselined_findings(items: list[Finding], rnd: random.Random, multi: bool) -> None:
-    """INVARIANT: applying a baseline removes exactly the findings whose fingerprints it holds."""
+    """INVARIANT: a baseline removes the findings whose version 1 hash it holds, or whose unambiguous identity
+    it holds for the same path (any path when both runs have one file), and only those."""
     paths = ("a.ttl", "b.ttl") if multi else ("a.ttl",)
     reports = [FileReport(p, p, tuple(i for i in items if rnd.random() < KEEP_RATIO)) for p in paths]
     known = [replace(r, findings=r.findings[: len(r.findings) // 2]) for r in reports]
+    reworded = [replace(r, findings=tuple(replace(f, message=f.message + "!") for f in r.findings)) for r in reports]
     with tempfile.TemporaryDirectory() as folder:
         baseline = Path(folder) / "baseline.json"
         _apply_baselines(known, _baseline_args(write=baseline))
         kept, _stale = _apply_baselines(reports, _baseline_args(baseline=baseline))
+        kept_reworded, _stale = _apply_baselines(reworded, _baseline_args(baseline=baseline))
 
     prints = {fingerprint(f, r.path if multi else None) for r in known for f in r.findings}
-    for before, after in zip(reports, kept, strict=True):
-        expected = tuple(f for f in before.findings if fingerprint(f, before.path if multi else None) not in prints)
-        assert after.findings == expected
+    accepted = {(r.path, i) for r in known for i in _unique_identities(r)}
+    for before, after, again, after_again in zip(reports, kept, reworded, kept_reworded, strict=True):
+        for report, result in ((before, after), (again, after_again)):
+            unique = _unique_identities(report)
+            expected = tuple(
+                f
+                for f in report.findings
+                if fingerprint(f, report.path if multi else None) not in prints
+                and not (baseline_identity(f) in unique and (report.path, baseline_identity(f)) in accepted)
+            )
+            assert result.findings == expected
+
+
+@budget(0.5)
+@given(finding_lists, st.booleans())
+def test_rewording_every_message_leaves_no_baselined_finding_and_no_stale_entry(
+    items: list[Finding], multi: bool
+) -> None:
+    """INVARIANT: with unambiguous identities, a message-only change keeps every finding accepted and every entry."""
+    paths = ("a.ttl", "b.ttl") if multi else ("a.ttl",)
+    distinct = list({baseline_identity(f): f for f in items}.values())
+    reports = [FileReport(p, p, tuple(distinct)) for p in paths]
+    accepted = build_baseline(reports)
+    reworded = [replace(r, findings=tuple(replace(f, message="x" + f.message) for f in r.findings)) for r in reports]
+
+    applied = apply_baseline(load_baseline(dump_baseline(accepted)), reworded)
+
+    assert [r.findings for r in applied.files] == [(), ()][: len(paths)]
+    assert applied.stale == ()
 
 
 @budget(0.3)

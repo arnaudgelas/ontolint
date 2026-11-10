@@ -86,7 +86,8 @@ class RunReport:
     files: tuple[FileReport, ...]
     rules: tuple[RuleSpec, ...] = ()
     severity_overrides: Mapping[str, str] = field(default_factory=dict[str, str])
-    # Baseline fingerprints that matched no finding of this run; ``None`` when no baseline was read.
+    # Baseline entries (their version 1 fingerprints) that matched no finding of this run by either hash;
+    # ``None`` when no baseline was read.
     stale_baseline: tuple[str, ...] | None = None
 
     @property
@@ -101,13 +102,26 @@ class RunReport:
 
 
 def fingerprint(f: Finding, path: str | None = None) -> str:
-    """Return a stable identity for baseline comparison.
+    """Return the version 1 baseline hash of a finding, which depends on its message (see :func:`identity`).
 
     Single-file runs hash ``(rule, focus, message)``, unchanged from earlier releases so existing
     baselines keep working.  Multi-file runs pass the report path, which is appended to the payload.
     """
     parts = [f.rule, f.focus, f.message] if path is None else [f.rule, f.focus, f.message, path]
     payload = json.dumps(parts, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8", errors="surrogatepass")).hexdigest()
+
+
+IDENTITY_TAG = "ontolint-identity-2"
+
+
+def identity(f: Finding) -> str:
+    """Return the version 2 baseline identity: a hash of the rule, the focus and the subject, never the message.
+
+    The tag and the nested subject list keep the payload from ever reading as a version 1 one.  The path is
+    not hashed: a baseline keys identities by report path, so one identity can be matched with or without it.
+    """
+    payload = json.dumps([IDENTITY_TAG, f.rule, f.focus, list(f.subject)], ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8", errors="surrogatepass")).hexdigest()
 
 

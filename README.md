@@ -258,10 +258,12 @@ ontolint ontologies/*.ttl --format sarif --output findings.sarif
   relative to the working directory when the file is beneath it (`onto/a.ttl`), otherwise
   absolute (`file:///C:/x/a.ttl` in SARIF), with backslashes converted. Run from a stable
   directory such as the repository root so baselines and SARIF paths are portable.
-* Fingerprints: a single-file run hashes `(rule, focus, message)` exactly as before, so existing
-  baselines keep working. A multi-file run also hashes the report path so identical findings in
-  two files stay distinct; a baseline written from one file therefore does not carry over to a
-  multi-file run. Write multi-file baselines from multi-file runs.
+* Baselines: a baseline records each finding's identity under its report path, so a baseline
+  written from one file applies to that file in a multi-file run, and a multi-file baseline to
+  one of its files linted alone (the entries of the files not linted are then stale). A baseline
+  written from one file still applies to a one-file run whatever the file is called. The version
+  1 fingerprints written next to the identities are unchanged: a single-file run hashes `(rule,
+  focus, message)` and a multi-file run adds the report path (see "Policy and baselines").
 
 ### Modular ontologies: following `owl:imports`
 
@@ -294,8 +296,8 @@ imported twice is loaded once. The headers of imported modules do not count as e
 
 A finding belongs to the module that declares its focus (gives it an `rdf:type`), or else to the
 first module that mentions it: JSON gives that module's `path`, SARIF its `artifactLocation` and
-region, and text adds an `In:` line. Baseline fingerprints are unchanged, so a closure baseline
-keeps matching.
+region, and text adds an `In:` line. Baseline fingerprints and identities are unchanged, so a
+closure baseline keeps matching.
 
 The closure is linted as one published ontology, the root's: header rules (`ONT003`-`ONT006`,
 `GOV004` and the like) judge the root ontology only, as the modules inherit its metadata (lint a
@@ -334,7 +336,7 @@ collision belongs to the modules of every term involved, so a collision *between
 both. Text adds `In: module X` (or `In: modules A, B`) and a `Findings by module:` summary; JSON
 adds `modules` to each finding and `module_summary` (counts by severity) to each file; SARIF adds
 `properties.modules`. Findings whose focus is not an IRI, or whose term has no annotation, belong to
-no module. Fingerprints and baselines are the same with and without grouping. The policy keys
+no module. Fingerprints, identities and baselines are the same with and without grouping. The policy keys
 `module_annotation` (an absolute IRI) and `module_by` (`"namespace"`) do the same; the two are
 alternatives, and a CLI option replaces the policy's choice.
 
@@ -429,7 +431,8 @@ Each SHACL result becomes a `SHACL001` finding at the result's own severity:
 `sh:Violation` is `error`, `sh:Warning` is `warning` and `sh:Info` is `info`, so
 warnings-only data passes the default `--fail-on error`. A custom severity is
 reported as `error` and named in the message. Blank-node shapes and focus nodes
-are named by a content-stable identity, so baselines keep matching across runs.
+are named by a content-stable identity, in the focus and in a finding's baseline identity alike,
+so baselines keep matching across runs.
 
 In JSON and SARIF (not in text), each `SHACL001` finding also carries the whole result as
 `evidence` (`properties.evidence` in SARIF), so two violations of one shape on one node, which
@@ -449,7 +452,10 @@ results as validation results too, so each is also a finding of its own, as befo
 copies each value in full, so a report with many results on long literals grows accordingly.
 Findings with the same message are ordered by their evidence, so the output no longer depends on
 pySHACL's hash-seed-dependent result order. The message, focus, severity and fingerprint are
-unchanged: a baseline still matches by message, and so accepts every result that shares one.
+unchanged. A baseline identity is made of the source shape, constraint component, path, value and
+SPARQL constraint, so a pySHACL upgrade that rewords its messages keeps results accepted. Because
+the version 1 fingerprint (by message) is still accepted too, a new result whose message equals an
+accepted one's is accepted as well.
 
 The data graph of a TriG, N-Quads or JSON-LD dataset is the union of its graphs, as for every
 other rule: SHACL defines the validation of one data graph, and a value typed in one graph and
@@ -523,14 +529,38 @@ ontolint ontology.ttl \
   --baseline baseline.json --fail-on warning
 ```
 
-Baselines compare stable hashes of `(rule, focus, message)` (plus the report path for multi-file runs). They are useful for
-incremental adoption, but are not semantic version comparisons.
+A baseline file (version 2) records every finding of the run twice. `fingerprints` lists the
+version 1 hash of `(rule, focus, message)`, plus the report path in a multi-file run, exactly as
+ontolint 0.10 wrote it. `identities` maps each report path to the finding's *identity*, a hash of
+its rule, focus and subject. The subject is what the finding is about besides its focus: the
+predicate, the other term, the literal, the language. It never includes the message, counts,
+ratios or thresholds. `files` lists the report paths of the run. `--baseline` accepts a finding
+when either hash is recorded, so:
 
-A baseline entry that matches no finding of the run is *stale*: the finding was fixed, or its rule
-was not selected this time. Every format reports stale entries (a note in text and SARIF, the list
+* rewording a message, a pySHACL upgrade, or a measurement that changes (a `METRIC*` ratio, an
+  `OWL004` count, ROBOT's `SEM001` summary) no longer reopens an accepted finding. This loosens
+  gating on purpose: a metric ratio that rises further stays accepted, and `SEM001` stays accepted
+  until the profile passes;
+* identities are matched per report path (see "Several files"), so one-file and multi-file
+  baselines carry over to each other.
+
+Two findings of one file that share an identity are recorded and matched by fingerprint only, so
+a new problem is never hidden behind an accepted one. A baseline written by 0.10 (no `version`,
+only `fingerprints`) keeps its old behaviour until it is regenerated once with `--write-baseline`.
+ontolint 0.10 reads a version 2 file's `fingerprints` and ignores the rest, but drops `identities`
+if it rewrites the file. Deleting a line from `fingerprints` withdraws that finding's identity too.
+A file whose `fingerprints`, `files`, `version` or `identities` has the wrong shape (a `version`
+below 1, `identities` for a path missing from `files`), or that is not JSON, exits `2` (`TOOL001: lint execution failed: BaselineError: …`). Unknown keys are ignored, and
+a later `version` is read for the sections this one knows. Baselines are useful for incremental
+adoption, but are not semantic version comparisons.
+
+A baseline entry (a fingerprint and its identity) that matches no finding of the run by either hash
+is *stale*: the finding was fixed, or its rule was not selected this time. Every format reports
+stale entries (a note in text and SARIF, the list of their fingerprints
 `baseline.stale_fingerprints` in JSON), and `--fail-on-stale-baseline` makes them exit `1` so CI
-asks for the baseline to be regenerated. Run with the same rule selection that wrote the baseline,
-or entries for unselected rules will count as stale.
+asks for the baseline to be regenerated. A reworded finding matched by its identity is not stale.
+Run with the same rule selection that wrote the baseline, or entries for unselected rules will
+count as stale.
 
 ## Development and quality checks
 

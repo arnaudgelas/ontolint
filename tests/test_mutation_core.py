@@ -18,7 +18,7 @@ from ontolint.adapters import robot as robot_adapter
 from ontolint.linter import Linter
 from ontolint.models import ExecutionStatus, Finding, RuleBackend, RuleExecution, RuleScope, RuleSpec, Severity
 from ontolint.paths import InputFile
-from ontolint.reporting import FileReport, Location, RunReport, exit_code, fingerprint, render_report
+from ontolint.reporting import FileReport, Location, RunReport, exit_code, fingerprint, identity, render_report
 from ontolint.rules import builtin
 
 ROBOT_REPORT = (
@@ -65,7 +65,12 @@ def test_single_file_baseline_uses_path_free_fingerprints(tmp_path: Path) -> Non
     report = FileReport("a.ttl", "a.ttl", (finding,))
     cli._apply_baselines([report], _baseline_args(tmp_path))  # noqa: SLF001
     written = json.loads((tmp_path / "b.json").read_text(encoding="utf-8"))
-    assert written == {"fingerprints": [fingerprint(finding)]}
+    assert written == {
+        "version": 2,
+        "files": ["a.ttl"],
+        "fingerprints": [fingerprint(finding)],
+        "identities": {"a.ttl": {identity(finding): fingerprint(finding)}},
+    }
 
 
 def test_two_file_baseline_uses_path_scoped_fingerprints(tmp_path: Path) -> None:
@@ -73,7 +78,15 @@ def test_two_file_baseline_uses_path_scoped_fingerprints(tmp_path: Path) -> None
     reports = [FileReport("a.ttl", "a.ttl", (finding,)), FileReport("b.ttl", "b.ttl", (finding,))]
     cli._apply_baselines(reports, _baseline_args(tmp_path))  # noqa: SLF001
     written = json.loads((tmp_path / "b.json").read_text(encoding="utf-8"))
-    assert written == {"fingerprints": sorted([fingerprint(finding, "a.ttl"), fingerprint(finding, "b.ttl")])}
+    assert written == {
+        "version": 2,
+        "files": ["a.ttl", "b.ttl"],
+        "fingerprints": sorted([fingerprint(finding, "a.ttl"), fingerprint(finding, "b.ttl")]),
+        "identities": {
+            "a.ttl": {identity(finding): fingerprint(finding, "a.ttl")},
+            "b.ttl": {identity(finding): fingerprint(finding, "b.ttl")},
+        },
+    }
 
 
 def _bad_ttl(tmp_path: Path, name: str) -> InputFile:

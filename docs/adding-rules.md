@@ -24,7 +24,11 @@ guarantees that proposed rules are never reported as executed.
      predicate, the other term, the literal (in N3, with its language), the language tag. Pass it
      in a fixed order, sorted where it is a set. Never put prose, counts, ratios, thresholds or
      labels quoted for readability in it: with the rule and the focus, the subject is the
-     finding's identity, independent of how its message is worded.
+     finding's identity, independent of how its message is worded. A baseline matches findings
+     by that identity, so a reworded message, or a measurement that changes, does not reopen an
+     accepted finding, and two problems that share a subject would hide each other.
+     `tests/test_subject_contract.py` fails for an add site with a computed message, or of a rule
+     with several add sites, that does not pass `subject=`.
      `subject=()` says that the rule reports at most one finding per focus.
      Use `ctx.context` (pre-built indexes), `ctx.classes`, `ctx.local(...)`, and helpers in
      `rules/support.py`; do not re-scan the graph per term.
@@ -74,6 +78,7 @@ guarantees that proposed rules are never reported as executed.
 | `test_rule_modules.py` | module list consistent (`validate_modules`), each module emits only its own `SPECS`, catalogue status matches registration, proposed rules are never reported as executed |
 | `test_rule_cases.py` | every implemented rule has positive and negative cases, positives fire exactly the rule, negatives do not, no rule module crashes on odd inputs, large hierarchies do not recurse |
 | `test_registry.py` | reachability of every graph rule, spec/catalogue field agreement, execution-status semantics |
+| `test_subject_contract.py` | every add site that needs a `subject=` passes one, and no two findings of a corpus or random run share rule, focus and subject |
 
 A `proposed` rule must not appear in `CASES` or the registry; `execute()` reports a rule as
 `executed` only when its module or adapter actually ran.

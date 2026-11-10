@@ -125,8 +125,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--module-by", choices=MODULE_BY, help="Group findings by module: 'namespace' groups them by term namespace"
     )
     ap.add_argument("--config", help="Optional JSON policy with ignored_rules, severity_overrides and thresholds")
-    ap.add_argument("--baseline", help="JSON of fingerprints to exclude from displayed and gating findings")
-    ap.add_argument("--write-baseline", help="Write full set of fingerprints for future differential linting")
+    ap.add_argument(
+        "--baseline", help="Baseline file (from --write-baseline) whose findings are excluded from display and gating"
+    )
+    ap.add_argument(
+        "--write-baseline", help="Write every finding of the run (version 1 hash and identity) as a baseline file"
+    )
     ap.add_argument(
         "--fail-on-stale-baseline",
         action="store_true",
@@ -414,7 +418,7 @@ def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:
 def _apply_baselines(
     files: list[FileReport], args: argparse.Namespace
 ) -> tuple[list[FileReport], tuple[str, ...] | None]:
-    """Write and/or apply the baseline; also return its fingerprints that matched no finding (OPS003)."""
+    """Write and/or apply the baseline (see :mod:`ontolint.baseline`); also return its stale entries (OPS003)."""
     if args.write_baseline:
         Path(args.write_baseline).write_text(baseline.dumps(baseline.build(files)), encoding="utf-8")
     if args.baseline:

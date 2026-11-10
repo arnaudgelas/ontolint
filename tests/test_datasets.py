@@ -510,7 +510,11 @@ def test_moving_a_triple_to_another_graph_keeps_the_baseline(
     main([str(turtle), "--fail-on", "never", "--write-baseline", str(tmp_path / "ttl.json")])
     capsys.readouterr()
     baseline = json.loads((tmp_path / "trig.json").read_text(encoding="utf-8"))
-    assert baseline == json.loads((tmp_path / "ttl.json").read_text(encoding="utf-8"))
+    flat = json.loads((tmp_path / "ttl.json").read_text(encoding="utf-8"))
+    # The same entries; only the report path the identities are filed under differs.
+    assert baseline["fingerprints"] == flat["fingerprints"]
+    assert list(baseline["identities"].values()) == list(flat["identities"].values())
+    assert list(baseline["identities"]) == baseline["files"] == [str(trig)]
     trig.write_text(trig.read_text(encoding="utf-8").replace("ex:g2 {", "ex:g3 {"), encoding="utf-8")
     out = _run(tmp_path, capsys, "a.trig", "--baseline", str(tmp_path / "trig.json"))
     assert out.startswith("Ontology linter: 0 finding(s)")
