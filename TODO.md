@@ -17,42 +17,42 @@ record.
 
 0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
 release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). 0.9.0 was tagged the same
-day (`f15e67e`) but not pushed: push `main` and the tag together, then approve the release run.
-Kept only so the
-next audit can confirm them, then delete these entries. Leftovers from each are in the open items
+day (`98b82f6`) and pushed with `main`; its release run (42694579076, started 2026-11-10) was
+still in its CodeQL gate when last checked, and PyPI still showed 0.8.0: approve "Publish to PyPI"
+and confirm the upload. Kept only so the next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- 0.9.0 (`f15e67e`, tag `v0.9.0`), tagged locally, not pushed; confirm the release run and the
-  PyPI upload:
-  - borrowed vocabulary terms are not the ontology's own (`deed446`): Dublin Core, SKOS, DCAT, IAO
+- 0.9.0 (`98b82f6`, tag `v0.9.0`), pushed; release run 42694579076 in progress, confirm it and
+  the PyPI upload:
+  - borrowed vocabulary terms are not the ontology's own (`f31e419`): Dublin Core, SKOS, DCAT, IAO
     and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
     METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
     now; the corpus, twelve well-known vocabularies linted on their own and the CCO closure are
     unchanged;
   - SEM001 groups ROBOT's violations by kind and subject; the full report is the finding's new
-    `details` field in JSON and SARIF (`fd65893`);
+    `details` field in JSON and SARIF (`7340436`);
   - the release `verify` job checks PyPI holds exactly the built files and verifies each one's
-    PEP 740 attestation (`07099e5`), tried on the published 0.8.0 files and on tampered copies;
+    PEP 740 attestation (`7e65c06`), tried on the published 0.8.0 files and on tampered copies;
   - specifications for every error-severity rule and the whole OWL family (OWL001-OWL045, the
     SKOS errors, ALIGN003, the SHQ errors, SEC014 and the pipeline rules), in each module's
     docstring with cases for each condition and exclusion and corrected catalogue rows
-    (`28a39cf` to `19291b4`). Defects fixed on the way: OWL008, OWL011 (the closure axiom it
+    (`d0325a3` to `627ed47`). Defects fixed on the way: OWL008, OWL011 (the closure axiom it
     recommends: 20 false positives gone on the corpus, nothing else changed), OWL022, OWL024,
     OWL036 (`-0`), SKOS001 (tag case, `xsd:string`), SKOS002, SKOS008, SKOS009 (transitive),
     SKOS016, SHQ011 (`x` and `q` flags), SHQ018 (a crash and numeric promotion), and in the safe
     loader SEC001 (catalog size), SEC009 (symlinked directories) and SEC013 (C resolvers, UDP).
   - the first `validation.yml` run (42611542815, scheduled, 2026-11-09) failed in both jobs, both
     fixed but not yet proven by a hosted run: the ROBOT container runs as the calling user
-    (`634e06f`, `7d2ad74`), as the image's `nonroot` user could not write `profile.txt` into the
+    (`30e5732`, `bc250fe`), as the image's `nonroot` user could not write `profile.txt` into the
     0700 output directory on Linux (SEM001 "Permission denied"; Docker Desktop hides it); and
-    `coverage_timeout = 900` for gremlins (`e906c7c`), since the pre-scan exceeded the 120 s
+    `coverage_timeout = 900` for gremlins (`d1754e9`), since the pre-scan exceeded the 120 s
     default, test selection was disabled, and the run hit the two-hour job timeout at mutant 1446
     of 1696.
   - Turtle that starts with an anonymous blank node (`[] a ex:K .`, as RDFLib writes one) is no
-    longer sniffed as a JSON-LD array, which failed to parse (`9aebf0b`); found by the round-trip
+    longer sniffed as a JSON-LD array, which failed to parse (`a02f05b`); found by the round-trip
     property test, whose case is now an explicit `@example`;
-  - `--convert-with-robot` (`62e9c2c`) reads OWL Functional, Manchester and OWL/XML files, inputs
+  - `--convert-with-robot` (`681af62`) reads OWL Functional, Manchester and OWL/XML files, inputs
     and imports, by converting each to Turtle with the ROBOT image, alone, read-only, offline, with
     its imports stubbed through a generated catalog and the sniffed syntax named (without one, OWL
     API falls back to its OBO parser and accepts almost anything). The automatce edit file and its
@@ -200,8 +200,8 @@ Validation corpus (public; licences per repository):
 
 - [ ] **Audit the specifications of implemented rules, not only proposed rules.** A rule can be
   implemented, tested, and still be semantically under-specified if it began as a catalogue title;
-  roughly 120 of the 239 implemented rules (tranche 1, OWL, METRIC and the leftovers) were
-  specified from placeholder titles and never reviewed. The goal as written covers all 239 and will
+  roughly 120 of the 244 implemented rules (tranche 1, OWL, METRIC and the leftovers) were
+  specified from placeholder titles and never reviewed. The goal as written covers all 244 and will
   not finish: take one family per milestone, starting with error-severity rules and the OWL and
   METRIC families. Done in 0.5.2 for the three rules known to have drifted (IRI015, LEX018 and
   LEX021): their module states each condition, and their catalogue test requirements no longer
@@ -210,7 +210,7 @@ Validation corpus (public; licences per repository):
   fixtures; correct documentation or implementation when they disagree.
   *Done when:* each implemented rule has an approved, testable specification and its catalogue,
   user documentation, and fixtures state the same contract.
-  Done for 0.9.0 (unreleased): every error-severity rule and the whole OWL family (see "Recently
+  Done for 0.9.0: every error-severity rule and the whole OWL family (see "Recently
   done"); the specifications await the maintainer's approval. Next: the METRIC family. Left open
   by that review:
   - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
@@ -259,8 +259,8 @@ Validation corpus (public; licences per repository):
     MPL-2.0 (certifi, pathspec, hypothesis); the ROBOT jar is downloaded at image build with a
     pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
     origin is not recorded;
-  - verifying the attestation in the release `verify` job: done for 0.9.0 (`07099e5`);
-    it is proven by the next release run.
+  - verifying the attestation in the release `verify` job: done for 0.9.0 (`7e65c06`);
+    it is proven once the 0.9.0 release run (42694579076) passes `verify`.
   *Done when:* the copyright-holder question has a written answer in the repository, and a release run
   fails if the published files' attestations do not verify.
 
@@ -275,7 +275,8 @@ Validation corpus (public; licences per repository):
   survivors killed. `context.py`, changed in 0.5.1 and 0.7.0, is outside the mutation scope; decide
   whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. The
   first hosted run (42611542815) timed out before writing a report; its causes are fixed (see
-  "Recently done"), so push them and run the validation workflow manually again, then have a
+  "Recently done") and on `main` since 2026-11-09, but no Validation run has followed, so run the
+  workflow manually again, then have a
   reviewer other than the change author audit
   every active pardon, then change the repository variable. *Done when:* a current hosted run meets
   all thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking`
@@ -346,9 +347,10 @@ moves from `proposed` merely because it has an attractive title.
 - [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built (see "Recently
   done"): offline resolution, per-module provenance, closure semantics and SHACL with the ontology
   as background. Left:
-  - *Validation on a public corpus:* started on 2026-11-09, see "Real-world ontologies — left open by 0.8.0":
-    CCO, EMMO and automatce are blocked by the import root, ownership and Functional Syntax items
-    there; the closure itself loaded correctly once the root was widened.
+  - *Validation on a public corpus:* started on 2026-11-09, see "Real-world ontologies — left open
+    by 0.8.0". The import root and ownership (0.8.0) and Functional Syntax (`--convert-with-robot`,
+    0.9.0) no longer block it: CCO and EMMO lint as closures, and the automatce edit file with its
+    12 imports. What is left is the maintainers' false-positive review below.
   - *Memory:* each module's source index keeps its graph alive, so a closure holds its triples
     twice. Bounded by `max_triples`, but measure a large closure and drop the per-module graphs if
     it matters.
