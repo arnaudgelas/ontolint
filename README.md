@@ -428,6 +428,12 @@ warnings-only data passes the default `--fail-on error`. A custom severity is
 reported as `error` and named in the message. Blank-node shapes and focus nodes
 are named by a content-stable identity, so baselines keep matching across runs.
 
+The data graph of a TriG, N-Quads or JSON-LD dataset is the union of its graphs, as for every
+other rule: SHACL defines the validation of one data graph, and a value typed in one graph and
+referenced from another conforms to `sh:class`. A `SHACL001` finding names the graphs of its
+focus node (see "Datasets: named graphs"). To validate each graph on its own, write each one to
+its own file and lint the files together; each file is validated separately.
+
 ### OWL profile validation with ROBOT in Docker
 
 Build the minimal project image once. Its final stage contains only the ROBOT

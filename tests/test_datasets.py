@@ -515,3 +515,32 @@ def test_moving_a_triple_to_another_graph_keeps_the_baseline(
     out = _run(tmp_path, capsys, "a.trig", "--baseline", str(tmp_path / "trig.json"))
     assert out.startswith("Ontology linter: 0 finding(s)")
     assert "Baseline:" not in out
+
+
+# --- SHACL validates the union of a dataset's graphs ----------------------------------------------------------
+
+SHAPES = (
+    "@prefix sh: <http://www.w3.org/ns/shacl#> .\n@prefix e: <http://example.org/> .\n"
+    "e:PersonShape a sh:NodeShape ; sh:targetClass e:Person ;\n"
+    "    sh:property [ sh:path e:knows ; sh:class e:Person ] .\n"
+)
+PEOPLE = HEADER + "e:g1 { e:bob a e:Person . }\ne:g2 { e:alice a e:Person ; e:knows e:bob . }\n"
+
+
+def _shacl(tmp_path: Path, capsys: pytest.CaptureFixture[str], data: str) -> list[dict[str, Any]]:
+    pytest.importorskip("pyshacl")
+    (tmp_path / "shapes.ttl").write_text(SHAPES, encoding="utf-8")
+    (tmp_path / "people.trig").write_text(data, encoding="utf-8")
+    findings = _json(tmp_path, capsys, "people.trig", "--shapes", str(tmp_path / "shapes.ttl"), "--select", "SHACL001")
+    return findings
+
+
+def test_shacl_validates_the_union_of_the_graphs(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # e:bob is typed in e:g1 and referenced from e:g2: valid in the union, a violation in e:g2 alone.
+    assert _shacl(tmp_path, capsys, PEOPLE) == []
+
+
+def test_a_shacl_finding_names_the_graphs_of_its_focus(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (violation,) = _shacl(tmp_path, capsys, PEOPLE.replace("e:knows e:bob .", "e:knows e:bob , e:rock ."))
+    assert violation["focus"] == f"{E}alice"
+    assert violation["graphs"] == [f"{E}g2"]
