@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+>
+  <rdf:Description rdf:about="http://example.org/single#Part">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/single#Thing"/>
+    <rdfs:subClassOf rdf:nodeID="restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="restriction">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/single#partOf"/>
+    <owl:someValuesFrom rdf:resource="http://example.org/single#Thing"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/single">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+    <rdfs:label xml:lang="en">Single graph</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/single#Thing">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label xml:lang="en">Thing</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/single#partOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">part of</rdfs:label>
+  </rdf:Description>
+</rdf:RDF>

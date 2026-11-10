@@ -1,0 +1,55 @@
+{
+  "@context": {
+    "ex": "http://example.org/single#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdfs:subClassOf": {
+      "@type": "@id"
+    },
+    "owl:onProperty": {
+      "@type": "@id"
+    },
+    "owl:someValuesFrom": {
+      "@type": "@id"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "http://example.org/single",
+      "@type": "owl:Ontology",
+      "rdfs:label": {
+        "@value": "Single graph",
+        "@language": "en"
+      }
+    },
+    {
+      "@id": "ex:Thing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@value": "Thing",
+        "@language": "en"
+      }
+    },
+    {
+      "@id": "ex:Part",
+      "@type": "owl:Class",
+      "rdfs:subClassOf": [
+        "ex:Thing",
+        {
+          "@id": "_:restriction",
+          "@type": "owl:Restriction",
+          "owl:onProperty": "ex:partOf",
+          "owl:someValuesFrom": "ex:Thing"
+        }
+      ]
+    },
+    {
+      "@id": "ex:partOf",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": {
+        "@value": "part of",
+        "@language": "en"
+      }
+    }
+  ]
+}

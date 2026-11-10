@@ -1,0 +1,15 @@
+@prefix ex: <http://example.org/single#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://example.org/single> a owl:Ontology ;
+    rdfs:label "Single graph"@en .
+
+ex:Thing a owl:Class ;
+    rdfs:label "Thing"@en .
+
+ex:Part a owl:Class ;
+    rdfs:subClassOf ex:Thing , [ a owl:Restriction ; owl:onProperty ex:partOf ; owl:someValuesFrom ex:Thing ] .
+
+ex:partOf a owl:ObjectProperty ;
+    rdfs:label "part of"@en .

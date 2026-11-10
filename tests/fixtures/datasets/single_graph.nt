@@ -1,0 +1,12 @@
+<http://example.org/single#Part> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://example.org/single#Part> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:restriction .
+<http://example.org/single#Part> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://example.org/single#Thing> .
+_:restriction <http://www.w3.org/2002/07/owl#someValuesFrom> <http://example.org/single#Thing> .
+<http://example.org/single> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> .
+<http://example.org/single#Thing> <http://www.w3.org/2000/01/rdf-schema#label> "Thing"@en .
+<http://example.org/single#Thing> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://example.org/single#partOf> <http://www.w3.org/2000/01/rdf-schema#label> "part of"@en .
+_:restriction <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+<http://example.org/single> <http://www.w3.org/2000/01/rdf-schema#label> "Single graph"@en .
+_:restriction <http://www.w3.org/2002/07/owl#onProperty> <http://example.org/single#partOf> .
+<http://example.org/single#partOf> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .

@@ -1,0 +1,74 @@
+{
+ "single_graph.jsonld json": {
+  "exit": 0,
+  "stdout": "sha256:08121af682532c97ce39022eaf62d61a010e5ee8927ce8c080dae3a03c255220 (114507 chars)"
+ },
+ "single_graph.jsonld sarif": {
+  "exit": 0,
+  "stdout": "sha256:fdebd219c68c1dd3a3d6d8333e36104e62b2224e70affd07ffb9b7f1b3f54983 (205006 chars)"
+ },
+ "single_graph.jsonld text": {
+  "exit": 0,
+  "stdout": "Ontology linter: 11 finding(s)\n[WARNING] LEX001 http://example.org/single#Part: Term has no label.\n    Fix: Add rdfs:label or an accepted alternative to the declared local term.\n[WARNING] ONT003 http://example.org/single: Ontology has no license annotation.\n    Fix: Add dcterms:license (or an agreed equivalent) to the ontology.\n[WARNING] ONT006 http://example.org/single: Missing ontology description.\n    Fix: Describe the ontology with dcterms:description or rdfs:comment.\n[INFO   ] GOV004 http://example.org/single: Ontology names no contact, publisher or maintainer.\n    Fix: Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.\n[INFO   ] LEX002 http://example.org/single#Part: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#Thing: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#partOf: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] ONT004 http://example.org/single: No versionIRI/versionInfo.\n    Fix: Add owl:versionIRI or owl:versionInfo according to your release policy.\n[INFO   ] ONT005 http://example.org/single: Missing creator and dcterms:created provenance.\n    Fix: Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\n[INFO   ] OWL005 http://example.org/single#partOf: Property has no asserted rdfs:domain.\n    Fix: Consider declaring domain or explaining why a global domain is inappropriate.\n[INFO   ] OWL006 http://example.org/single#partOf: Property has no asserted rdfs:range.\n    Fix: Consider declaring range or explaining why a global range is inappropriate.\n"
+ },
+ "single_graph.nq json": {
+  "exit": 0,
+  "stdout": "sha256:de943260e6ab0b6775ba2c133f4ea7cc1bd31648028b0905070ec654adb5cf3a (114459 chars)"
+ },
+ "single_graph.nq sarif": {
+  "exit": 0,
+  "stdout": "sha256:397b9dc878d705bdebad93a9e3e63786ab4b728e1a67e63063805c49bf14e24a (204813 chars)"
+ },
+ "single_graph.nq text": {
+  "exit": 0,
+  "stdout": "Ontology linter: 11 finding(s)\n[WARNING] LEX001 http://example.org/single#Part: Term has no label.\n    Fix: Add rdfs:label or an accepted alternative to the declared local term.\n[WARNING] ONT003 http://example.org/single: Ontology has no license annotation.\n    Fix: Add dcterms:license (or an agreed equivalent) to the ontology.\n[WARNING] ONT006 http://example.org/single: Missing ontology description.\n    Fix: Describe the ontology with dcterms:description or rdfs:comment.\n[INFO   ] GOV004 http://example.org/single: Ontology names no contact, publisher or maintainer.\n    Fix: Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.\n[INFO   ] LEX002 http://example.org/single#Part: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#Thing: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#partOf: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] ONT004 http://example.org/single: No versionIRI/versionInfo.\n    Fix: Add owl:versionIRI or owl:versionInfo according to your release policy.\n[INFO   ] ONT005 http://example.org/single: Missing creator and dcterms:created provenance.\n    Fix: Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\n[INFO   ] OWL005 http://example.org/single#partOf: Property has no asserted rdfs:domain.\n    Fix: Consider declaring domain or explaining why a global domain is inappropriate.\n[INFO   ] OWL006 http://example.org/single#partOf: Property has no asserted rdfs:range.\n    Fix: Consider declaring range or explaining why a global range is inappropriate.\n"
+ },
+ "single_graph.nt json": {
+  "exit": 0,
+  "stdout": "sha256:a59120dd90e7fb31fbf1bf5776b45b9d441ce0bcad42c1213d463971ead8ee16 (114459 chars)"
+ },
+ "single_graph.nt sarif": {
+  "exit": 0,
+  "stdout": "sha256:188b3447b895630bfd2a1c58a976d57dd0c16924f295fbddab81f08055445f62 (204813 chars)"
+ },
+ "single_graph.nt text": {
+  "exit": 0,
+  "stdout": "Ontology linter: 11 finding(s)\n[WARNING] LEX001 http://example.org/single#Part: Term has no label.\n    Fix: Add rdfs:label or an accepted alternative to the declared local term.\n[WARNING] ONT003 http://example.org/single: Ontology has no license annotation.\n    Fix: Add dcterms:license (or an agreed equivalent) to the ontology.\n[WARNING] ONT006 http://example.org/single: Missing ontology description.\n    Fix: Describe the ontology with dcterms:description or rdfs:comment.\n[INFO   ] GOV004 http://example.org/single: Ontology names no contact, publisher or maintainer.\n    Fix: Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.\n[INFO   ] LEX002 http://example.org/single#Part: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#Thing: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#partOf: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] ONT004 http://example.org/single: No versionIRI/versionInfo.\n    Fix: Add owl:versionIRI or owl:versionInfo according to your release policy.\n[INFO   ] ONT005 http://example.org/single: Missing creator and dcterms:created provenance.\n    Fix: Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\n[INFO   ] OWL005 http://example.org/single#partOf: Property has no asserted rdfs:domain.\n    Fix: Consider declaring domain or explaining why a global domain is inappropriate.\n[INFO   ] OWL006 http://example.org/single#partOf: Property has no asserted rdfs:range.\n    Fix: Consider declaring range or explaining why a global range is inappropriate.\n"
+ },
+ "single_graph.rdf json": {
+  "exit": 0,
+  "stdout": "sha256:bb7cfdc276398d7742aa26771ad02ba728df2409ac932f20cfa9583659d17c29 (114471 chars)"
+ },
+ "single_graph.rdf sarif": {
+  "exit": 0,
+  "stdout": "sha256:40eecc909fa4f21559c4908cbfcc2d074ac0646275b56a3a24d649b76cad92c1 (204863 chars)"
+ },
+ "single_graph.rdf text": {
+  "exit": 0,
+  "stdout": "Ontology linter: 11 finding(s)\n[WARNING] LEX001 http://example.org/single#Part: Term has no label.\n    Fix: Add rdfs:label or an accepted alternative to the declared local term.\n[WARNING] ONT003 http://example.org/single: Ontology has no license annotation.\n    Fix: Add dcterms:license (or an agreed equivalent) to the ontology.\n[WARNING] ONT006 http://example.org/single: Missing ontology description.\n    Fix: Describe the ontology with dcterms:description or rdfs:comment.\n[INFO   ] GOV004 http://example.org/single: Ontology names no contact, publisher or maintainer.\n    Fix: Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.\n[INFO   ] LEX002 http://example.org/single#Part: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#Thing: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#partOf: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] ONT004 http://example.org/single: No versionIRI/versionInfo.\n    Fix: Add owl:versionIRI or owl:versionInfo according to your release policy.\n[INFO   ] ONT005 http://example.org/single: Missing creator and dcterms:created provenance.\n    Fix: Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\n[INFO   ] OWL005 http://example.org/single#partOf: Property has no asserted rdfs:domain.\n    Fix: Consider declaring domain or explaining why a global domain is inappropriate.\n[INFO   ] OWL006 http://example.org/single#partOf: Property has no asserted rdfs:range.\n    Fix: Consider declaring range or explaining why a global range is inappropriate.\n"
+ },
+ "single_graph.trig json": {
+  "exit": 0,
+  "stdout": "sha256:89af76862af351f5d759fe87853be468de482f48ef4b4656a03cfbe330aaf5b6 (114483 chars)"
+ },
+ "single_graph.trig sarif": {
+  "exit": 0,
+  "stdout": "sha256:fb481469e109351d5872f1820ad6e0657f7077fa342a355213e54077966f426b (203622 chars)"
+ },
+ "single_graph.trig text": {
+  "exit": 0,
+  "stdout": "Ontology linter: 11 finding(s)\n[WARNING] LEX001 http://example.org/single#Part: Term has no label.\n    Fix: Add rdfs:label or an accepted alternative to the declared local term.\n[WARNING] ONT003 http://example.org/single: Ontology has no license annotation.\n    Fix: Add dcterms:license (or an agreed equivalent) to the ontology.\n[WARNING] ONT006 http://example.org/single: Missing ontology description.\n    Fix: Describe the ontology with dcterms:description or rdfs:comment.\n[INFO   ] GOV004 http://example.org/single: Ontology names no contact, publisher or maintainer.\n    Fix: Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.\n[INFO   ] LEX002 http://example.org/single#Part: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#Thing: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#partOf: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] ONT004 http://example.org/single: No versionIRI/versionInfo.\n    Fix: Add owl:versionIRI or owl:versionInfo according to your release policy.\n[INFO   ] ONT005 http://example.org/single: Missing creator and dcterms:created provenance.\n    Fix: Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\n[INFO   ] OWL005 http://example.org/single#partOf: Property has no asserted rdfs:domain.\n    Fix: Consider declaring domain or explaining why a global domain is inappropriate.\n[INFO   ] OWL006 http://example.org/single#partOf: Property has no asserted rdfs:range.\n    Fix: Consider declaring range or explaining why a global range is inappropriate.\n"
+ },
+ "single_graph.ttl json": {
+  "exit": 0,
+  "stdout": "sha256:f2e42432c679d8f02571d714dd5bdd258017e75bac01c7bb306f601b19d87d43 (114471 chars)"
+ },
+ "single_graph.ttl sarif": {
+  "exit": 0,
+  "stdout": "sha256:af9e5035b29ac33f0ae19160a670475455f560f418c4ab4a9b7870d81cdc45c0 (204863 chars)"
+ },
+ "single_graph.ttl text": {
+  "exit": 0,
+  "stdout": "Ontology linter: 11 finding(s)\n[WARNING] LEX001 http://example.org/single#Part: Term has no label.\n    Fix: Add rdfs:label or an accepted alternative to the declared local term.\n[WARNING] ONT003 http://example.org/single: Ontology has no license annotation.\n    Fix: Add dcterms:license (or an agreed equivalent) to the ontology.\n[WARNING] ONT006 http://example.org/single: Missing ontology description.\n    Fix: Describe the ontology with dcterms:description or rdfs:comment.\n[INFO   ] GOV004 http://example.org/single: Ontology names no contact, publisher or maintainer.\n    Fix: Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.\n[INFO   ] LEX002 http://example.org/single#Part: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#Thing: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] LEX002 http://example.org/single#partOf: Term has no description or definition.\n    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).\n[INFO   ] ONT004 http://example.org/single: No versionIRI/versionInfo.\n    Fix: Add owl:versionIRI or owl:versionInfo according to your release policy.\n[INFO   ] ONT005 http://example.org/single: Missing creator and dcterms:created provenance.\n    Fix: Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\n[INFO   ] OWL005 http://example.org/single#partOf: Property has no asserted rdfs:domain.\n    Fix: Consider declaring domain or explaining why a global domain is inappropriate.\n[INFO   ] OWL006 http://example.org/single#partOf: Property has no asserted rdfs:range.\n    Fix: Consider declaring range or explaining why a global range is inappropriate.\n"
+ }
+}
