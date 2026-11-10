@@ -9,7 +9,7 @@ from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any
 
-from .models import Severity, SourceFacts
+from .models import PatternLibrary, Severity, SourceFacts
 
 _ABSOLUTE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
 DEFAULT_DEPTH_LIMIT = 10
@@ -114,6 +114,8 @@ class Policy:
     # Set by the CLI from --convert-with-robot, never by a policy file: how the loader reads OWL Functional,
     # Manchester and OWL/XML files; None refuses them with a message naming the conversion.
     owl_converter: OwlConverter | None = None
+    # Set by the CLI from --pattern-library, never by a policy file: the library whose index is linted.
+    library: PatternLibrary | None = None
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -185,6 +187,7 @@ class Policy:
             root_terms=frozenset(),
             source=SourceFacts(),
             owl_converter=None,
+            library=None,
         )
 
 
@@ -205,6 +208,7 @@ _RUNTIME_FIELDS = frozenset(
         "root_terms",
         "source",
         "owl_converter",
+        "library",
     }
 )
 """Policy fields filled in while linting, not accepted from a policy file."""

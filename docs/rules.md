@@ -23,7 +23,7 @@ All examples assume these prefixes:
 ```
 
 
-**244 of 299 catalogue rules are implemented; 55 are TODO.**
+**247 of 302 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -37,6 +37,7 @@ All examples assume these prefixes:
 | [INPUT](#input) | 1 | 0 |
 | [IRI](#iri) | 18 | 1 |
 | [LEX](#lex) | 24 | 0 |
+| [LIB](#lib) | 3 | 0 |
 | [METRIC](#metric) | 13 | 0 |
 | [OBO](#obo) | 12 | 0 |
 | [ONT](#ont) | 6 | 0 |
@@ -198,7 +199,7 @@ ex:C a owl:Class . ex:D a owl:Class . ex:C owl:equivalentClass ex:D .
 ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None)`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=None)`.
 
 Reported: `skos:exactMatch target https://elsewhere.test/A is outside the declared alignment namespaces.`
 
@@ -294,7 +295,7 @@ ex:C9 a owl:Class .
 ex:C0 skos:exactMatch <https://ref.test/a#C0> .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=0.5, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None)`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=0.5, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=None)`.
 
 Reported: `1 of 10 classes and properties have a mapping (0.10 < 0.50).`
 
@@ -1451,7 +1452,7 @@ Linter options: `base='https://example.test/onto#'`.
 ex:A a owl:Class ; rdfs:label "A" .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None)`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=None)`.
 
 Reported: `Missing required annotations: rdfs:comment.`
 
@@ -1495,7 +1496,7 @@ ex:o a owl:Ontology .
 ex:A a owl:Class .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=('bogus',), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None)`.
+Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=('bogus',), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=None)`.
 
 Reported: `Unknown policy key 'bogus' is ignored.`
 
@@ -2369,6 +2370,87 @@ Reported: `2 skos:definition values for language en.`
 ```turtle
 ex:A a owl:Class ; skos:definition "One."@en, "Un."@fr .
 ```
+
+## LIB
+
+#### LIB001: Pattern library index entry names no member ontology
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** heuristic
+- **Fix:** Give the entry the member's ontology IRI, or link it to the member (for example with rdfs:isDefinedBy).
+
+*Flagged:* same name, no IRI link (MODL)
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a owl:NamedIndividual , ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',), references=()),), unreadable=()))`.
+
+Reported: `Index entry names no pattern ontology by IRI; <https://example.test/library/event> has its name: link them (for example rdfs:isDefinedBy <https://example.test/library/event>).`
+
+*Clean:* linked by rdfs:isDefinedBy
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',), references=()),), unreadable=()))`.
+
+#### LIB002: Pattern library member missing from the index
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** heuristic
+- **Fix:** Add an index entry for the pattern ontology, or remove the file from the library.
+
+*Flagged:* a member nothing names
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',), references=()), LibraryMember(display='place.ttl', uri='file:///lib/place.ttl', ontology='https://example.test/library/place', identities=frozenset({'https://example.test/library/place'}), names=('Place',), references=())), unreadable=()))`.
+
+Reported: `Pattern ontology is not in the index: no entry names it.`
+
+*Clean:* every member linked
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',), references=()),), unreadable=()))`.
+
+#### LIB003: Pattern library member refers to a pattern the library lacks
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** heuristic
+- **Fix:** Correct the IRI, or add the pattern ontology it names to the library.
+
+*Flagged:* a related pattern the library lacks
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=PatternLibrary(directory='lib', members=(LibraryMember(display='agentrole.ttl', uri='file:///lib/agentrole.ttl', ontology='https://example.test/library/agentrole', identities=frozenset({'https://example.test/library/agentrole'}), names=(), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/library/agent'),)), LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',), references=())), unreadable=()))`.
+
+Reported: `The header names <https://example.test/library/agent> (hasRelatedPattern), which no pattern ontology of the library declares.`
+
+*Clean:* a related pattern the library has
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=PatternLibrary(directory='lib', members=(LibraryMember(display='agentrole.ttl', uri='file:///lib/agentrole.ttl', ontology='https://example.test/library/agentrole', identities=frozenset({'https://example.test/library/agentrole'}), names=(), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/library/event'),)), LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',), references=())), unreadable=()))`.
 
 ## METRIC
 

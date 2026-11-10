@@ -84,6 +84,8 @@ def _not_run(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -> Ru
         reason = skipped, "no SHACL shapes graph was supplied"
     elif spec.requires is Requirement.OWL_PROFILE and robot is None:
         reason = skipped, "OWL profile validation was not requested"
+    elif spec.requires is Requirement.PATTERN_LIBRARY and ctx.policy.library is None:
+        reason = skipped, "no pattern library was supplied (--pattern-library)"
     elif spec.backend is RuleBackend.PYSHACL and find_spec("pyshacl") is None:
         reason = unsupported, "pySHACL is not installed"
     elif spec.backend is RuleBackend.ROBOT_DOCKER and shutil.which("docker") is None:

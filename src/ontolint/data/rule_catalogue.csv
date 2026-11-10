@@ -298,3 +298,6 @@ rule_id,family,title,status,category,backend,test_requirement
 "OBO010","OBO","Whole OBO ontology imported instead of a module","implemented","context-dependent","RDFLib graph","OBO fixture"
 "OBO011","OBO","Ontology or version IRI that does not follow the OBO PURL pattern","implemented","context-dependent","RDFLib graph","OBO fixture"
 "OBO012","OBO","Label that breaks OBO naming conventions","implemented","context-dependent","RDFLib graph","OBO fixture"
+"LIB001","LIB","Pattern library index entry names no member ontology","implemented","heuristic","RDFLib graph","pattern library fixture: an entry linked by IRI or rdfs:isDefinedBy (negative), one sharing only a name with a member (positive, message names the member), an individual of a non-entry class (negative)"
+"LIB002","LIB","Pattern library member missing from the index","implemented","heuristic","RDFLib graph","pattern library fixture: a member no entry links or names (positive), a member matched by name (negative)"
+"LIB003","LIB","Pattern library member refers to a pattern the library lacks","implemented","heuristic","RDFLib graph","pattern library fixture: a header IRI literal under the library namespace naming no member (positive), one naming a member or a member's term (negative)"

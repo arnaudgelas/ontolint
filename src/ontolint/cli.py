@@ -35,8 +35,9 @@ from .imports import (
     load_closure,
     read_catalog,
 )
+from .library import load_library
 from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, loaded_graph, source_index
-from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
+from .models import ExecutionStatus, Finding, PatternLibrary, RuleBackend, RuleExecution
 from .modules import MODULE_BY, UnresolvedModulePredicate, finding_modules, resolve_predicate
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
@@ -104,6 +105,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument(
         "--import-root",
         help="Directory imported files must stay in (default: the enclosing git repository of the catalog or input)",
+    )
+    ap.add_argument(
+        "--pattern-library",
+        metavar="DIR",
+        help="Lint the input as the index of a pattern library whose member ontologies are the RDF files under "
+        "DIR (rules LIB001-LIB003)",
     )
     ap.add_argument("--base", help="Only lint declared terms in this namespace")
     ap.add_argument(
@@ -299,19 +306,26 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
     # Only SARIF renders regions, and the index is computed on first use, so other formats skip it.
     sarif = args.format == "sarif"
     modules = _file_modules(item, loaded, plan.policy, findings)
+    executions_sorted = tuple(sorted(executions, key=lambda x: x.rule_id))
     if loaded.modules:
         origins, locations, problem = _module_origins(loaded.modules, graph, findings, sarif)
-        executions_sorted = tuple(sorted(executions, key=lambda x: x.rule_id))
-        return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules)
-    return FileReport(
-        item.display,
-        item.uri,
-        findings,
-        tuple(sorted(executions, key=lambda x: x.rule_id)),
-        loaded.source_index.for_findings(graph, findings) if sarif else {},
-        loaded.source_index.problem if sarif else None,
-        modules=modules,
-    )
+    else:
+        origins = {}
+        locations = loaded.source_index.for_findings(graph, findings) if sarif else {}
+        problem = loaded.source_index.problem if sarif else None
+    members = _library_origins(plan.policy.library, findings)
+    if members:  # a finding about a member ontology belongs to the member's file, not to the index
+        origins = {**origins, **members}
+        locations = {f: where for f, where in locations.items() if f not in members}
+    return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules)
+
+
+def _library_origins(library: PatternLibrary | None, findings: Sequence[Finding]) -> dict[Finding, Origin]:
+    """With ``--pattern-library``: the member file of each finding whose focus is a member ontology."""
+    if library is None:
+        return {}
+    files = {m.ontology: Origin(m.display, m.uri) for m in library.members}
+    return {f: files[f.focus] for f in findings if f.focus in files}
 
 
 def _file_modules(
@@ -528,6 +542,19 @@ def _shapes_inputs(args: argparse.Namespace, policy: Policy, imports: ImportOpti
     return items
 
 
+def _library(
+    args: argparse.Namespace, policy: Policy, imports: ImportOptions | None, inputs: Sequence[InputFile]
+) -> PatternLibrary | None:
+    """The members of ``--pattern-library``, read inside the import root; the linted files are not members."""
+    if not args.pattern_library:
+        return None
+    directory = Path(args.pattern_library)
+    if not directory.is_dir():
+        raise InputRejected("TOOL001", f"--pattern-library {directory} is not a directory")
+    root = (imports.import_root if imports else None) or default_import_root(directory)
+    return load_library(directory, policy, root, exclude=[item.path for item in inputs])
+
+
 def _parse_inputs(inputs: list[InputFile], imports: ImportOptions | None = None) -> tuple[list[LoadedGraph], list[str]]:
     """Parse every input safely (no network, bounded size); return the graphs and one message per failure.
 
@@ -623,7 +650,7 @@ def _emit(output: str, args: argparse.Namespace) -> None:
 
 
 def _secondary_input_error(exc: InputRejected | _ShapesParseFailure | ProfileError) -> str:
-    """The failure line for a shapes or profile input that cannot be used."""
+    """The failure line for a shapes, profile or pattern-library input that cannot be used."""
     if isinstance(exc, InputRejected):
         return f"{exc.rule_id}: {exc.message}"
     if isinstance(exc, _ShapesParseFailure):
@@ -651,11 +678,14 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         return 2
     try:
         shapes, background = _load_shapes(args, limits, imports)
+        library = _library(args, limits, imports, inputs)
     except (InputRejected, _ShapesParseFailure, ProfileError) as exc:
         print(_secondary_input_error(exc), file=sys.stderr)
         return 2
     stage[0] = "lint execution"
     plan = replace(_plan(args, config, shapes, registry), shacl_background=background)
+    if library is not None:
+        plan = replace(plan, policy=replace(plan.policy, library=library))
     files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]
     files, stale = _apply_baselines(files, args)
     return RunReport(tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale)

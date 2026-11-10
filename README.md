@@ -14,7 +14,7 @@
   <a href="https://pypi.org/project/ontolint/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/ontolint"></a>
   <a href="https://pypi.org/project/ontolint/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/ontolint"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 244 of 299" src="https://img.shields.io/badge/rules-244%2F299_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 247 of 302" src="https://img.shields.io/badge/rules-247%2F302_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -33,7 +33,7 @@ OWL 2 DL validation, a reasoner, or expert ontology review.
 
 ## What it checks
 
-244 of the 299 catalogue rules are implemented; the rest are planned. The
+247 of the 302 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
 - 227 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -154,8 +154,9 @@ entry that names a missing file. `TOOL005` notes when most terms without a defin
 carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
 the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate
 already counts. `TOOL006` says when `--module-annotation` cannot group a file (its prefix is not
-declared, or no term carries the predicate), and `TOOL007` names the validator
-`--shapes-from-profile` uses (or passes over, when it is not SHACL).
+declared, or no term carries the predicate), `TOOL007` names the validator `--shapes-from-profile`
+uses (or passes over, when it is not SHACL), and `TOOL008` warns that a file under
+`--pattern-library` does not parse and was skipped.
 
 ### Discovering rules
 
@@ -328,6 +329,26 @@ adds `modules` to each finding and `module_summary` (counts by severity) to each
 no module. Fingerprints and baselines are the same with and without grouping. The policy keys
 `module_annotation` (an absolute IRI) and `module_by` (`"namespace"`) do the same; the two are
 alternatives, and a CLI option replaces the policy's choice.
+
+### Pattern libraries
+
+A pattern library is an index ontology plus one ontology per pattern, linked by naming
+conventions rather than `owl:imports`. `--pattern-library DIR` lints the input as the index and the
+RDF files under `DIR` that declare an `owl:Ontology` as its members (the index itself is not one):
+
+```bash
+ontolint modl/modl.owl --pattern-library modl
+```
+
+`LIB001` reports an index entry that names no member by IRI (its IRI is not a member's ontology or
+version IRI, no index triple points at one, and no member header names it); when a member has the
+same name (`AgentRole` and "Agent Role"), the message names it and how to link the two. `LIB002`
+reports a member no entry names, and `LIB003` a member header naming an IRI in the library
+namespace that no member declares (an `opla-core:hasRelatedPattern` to a missing pattern).
+Findings about a member belong to its file. Members are read like `--import-dir` files: through
+the safe loader, inside the import root (`SEC009`), at most `max_imported_files` (`SEC015`). A file
+that does not parse is skipped with a `TOOL008` warning, and the rules then say what they report
+missing may be in one of the skipped files. Without the option the `LIB` rules are `skipped`.
 
 ### GitHub annotations
 
@@ -628,7 +649,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 299 entries: 244 executable diagnostics and 55 proposed
+catalogue. It records 302 entries: 247 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an

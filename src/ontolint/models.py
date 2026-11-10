@@ -41,6 +41,7 @@ class Requirement(StrEnum):
     NONE = "none"
     SHAPES = "shapes"
     OWL_PROFILE = "owl-profile"
+    PATTERN_LIBRARY = "pattern-library"
 
 
 class CatalogueStatus(StrEnum):
@@ -136,3 +137,31 @@ class RunResult:
     def with_status(self, status: ExecutionStatus) -> tuple[RuleExecution, ...]:
         """Return the executions that ended in ``status``."""
         return tuple(x for x in self.executions if x.status == status)
+
+
+@dataclass(frozen=True)
+class LibraryMember:
+    """One ontology of a pattern library (``--pattern-library``): where it is and what its header says."""
+
+    display: str
+    """The member file's report path."""
+    uri: str
+    """The member file's URI (a SARIF artifact)."""
+    ontology: str
+    """Its ontology IRI."""
+    identities: frozenset[str]
+    """Its ontology IRI and version IRIs: what an index entry may name it by."""
+    names: tuple[str, ...] = ()
+    """The names its header gives it (``opla-core:hasPatternName``, ``rdfs:label``, ``dcterms:title`` ...)."""
+    references: tuple[tuple[str, str], ...] = ()
+    """``(predicate, IRI)`` for every IRI its header names, as an IRI or as a literal spelling one."""
+
+
+@dataclass(frozen=True)
+class PatternLibrary:
+    """The member ontologies of a pattern library, whose index is the linted file (rules ``LIB001``-``LIB003``)."""
+
+    directory: str
+    members: tuple[LibraryMember, ...] = ()
+    unreadable: tuple[str, ...] = ()
+    """Report paths of RDF files under the directory that did not parse: the library may be incomplete."""

@@ -11,7 +11,7 @@ import pytest
 from ontolint.ontolint import SEVERITY, _robot_profile_issues
 
 CATALOGUE = Path(__file__).parents[1] / "data" / "rule_catalogue.csv"
-CATALOGUE_RULE_COUNT = 299
+CATALOGUE_RULE_COUNT = 302
 
 
 def test_catalogue_covers_all_registered_rules_and_has_unique_identifiers() -> None:

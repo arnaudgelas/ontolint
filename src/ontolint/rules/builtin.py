@@ -37,6 +37,7 @@ from . import (
     iri_quality,
     lexical,
     lexical_quality,
+    library,
     literals,
     metadata,
     metrics,
@@ -99,6 +100,7 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     imports_note,
     fair_offline,
     literals,
+    library,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).
