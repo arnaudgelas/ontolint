@@ -26,12 +26,21 @@ from . import engine
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
-from .imports import CATALOG_NAME, Catalog, index_directory, load_closure, read_catalog
+from .imports import (
+    CATALOG_NAME,
+    Catalog,
+    default_import_root,
+    index_directory,
+    inside_root,
+    load_closure,
+    read_catalog,
+)
 from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, loaded_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
 from .modules import MODULE_BY, UnresolvedModulePredicate, finding_modules, resolve_predicate
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
+from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
 from .reporting import FileReport, Location, Origin, RunReport, fingerprint, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
@@ -74,6 +83,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Ontology RDF file(s); each is linted independently. Expand globs in your shell; directories are rejected",
     )
     ap.add_argument("--shapes", help="Optional SHACL shapes graph (requires pyshacl)")
+    ap.add_argument(
+        "--shapes-from-profile",
+        metavar="PROFILE",
+        help="Use as --shapes the SHACL validator a W3C PROF profile names (prof:hasRole role:validator), "
+        "found locally through a catalog, --import-dir or a file named after it beside the profile",
+    )
     ap.add_argument(
         "--follow-imports",
         action="store_true",
@@ -447,6 +462,72 @@ def _shapes_background(item: InputFile, shapes: Graph, policy: Policy, options: 
     return background if len(background) else None
 
 
+class _ShapesParseFailure(Exception):
+    """A shapes, profile or validator file did not parse; ``display`` names it unless it is ``--shapes``."""
+
+    def __init__(self, failure: ParseFailure, display: str | None) -> None:
+        super().__init__(str(failure))
+        self.failure = failure
+        self.display = display
+
+
+def _parsed(item: InputFile, policy: Policy, named: bool) -> Graph:
+    try:
+        return load_graph(item, policy)
+    except ParseFailure as exc:
+        raise _ShapesParseFailure(exc, item.display if named else None) from exc
+
+
+def _load_shapes(
+    args: argparse.Namespace, policy: Policy, imports: ImportOptions | None
+) -> tuple[Graph | None, Graph | None]:
+    """The run's shapes graph and its SHACL-only background (the ontology the shapes import), if any.
+
+    Several validators of one profile are merged into one shapes graph, and their backgrounds likewise.
+    """
+    shapes: Graph | None = None
+    background: Graph | None = None
+    named = bool(args.shapes_from_profile)  # the historical --shapes failure line names no file
+    for item in _shapes_inputs(args, policy, imports):
+        graph = _parsed(item, policy, named)
+        shapes = graph if shapes is None else shapes + graph
+        more = _shapes_background(item, graph, policy, imports) if imports is not None else None
+        background = more if background is None or more is None else background + more
+    return shapes, background
+
+
+def _shapes_inputs(args: argparse.Namespace, policy: Policy, imports: ImportOptions | None) -> list[InputFile]:
+    """The shapes files of the run: ``--shapes``, or the SHACL validators ``--shapes-from-profile`` names."""
+    if args.shapes:
+        return [resolve_inputs([args.shapes], Path.cwd())[0]]
+    if not args.shapes_from_profile:
+        return []
+    profile = resolve_inputs([args.shapes_from_profile], Path.cwd())[0]
+    graph = _parsed(profile, policy, named=True)
+    beside = profile.path.parent / CATALOG_NAME
+    catalogs = [
+        *([read_catalog(beside, policy.max_input_bytes)] if beside.is_file() else []),
+        *([imports.catalog] if imports is not None and imports.catalog is not None else []),
+    ]
+    found, passed_over = shapes_files(profile.path, graph, catalogs, imports.import_dirs if imports else ())
+    root = (imports.import_root if imports else None) or default_import_root(profile.path.parent)
+    for iri in passed_over:
+        print(
+            f"TOOL007: note: {profile.display} names validator {iri}, which is not SHACL; it is not used",
+            file=sys.stderr,
+        )
+    items: list[InputFile] = []
+    for iri, path in found:
+        if not inside_root(path, root):
+            raise InputRejected("SEC009", f"the validator {iri} resolves to {path}, outside the import root {root}")
+        item = resolve_inputs([str(path)], Path.cwd())[0]
+        print(
+            f"TOOL007: note: {profile.display} names validator {iri}; using {item.display} as --shapes", file=sys.stderr
+        )
+        items.append(item)
+    return items
+
+
 def _parse_inputs(inputs: list[InputFile], imports: ImportOptions | None = None) -> tuple[list[LoadedGraph], list[str]]:
     """Parse every input safely (no network, bounded size); return the graphs and one message per failure.
 
@@ -541,6 +622,15 @@ def _emit(output: str, args: argparse.Namespace) -> None:
         print(output)
 
 
+def _secondary_input_error(exc: InputRejected | _ShapesParseFailure | ProfileError) -> str:
+    """The failure line for a shapes or profile input that cannot be used."""
+    if isinstance(exc, InputRejected):
+        return f"{exc.rule_id}: {exc.message}"
+    if isinstance(exc, _ShapesParseFailure):
+        return _parse_error(exc.failure, exc.display)
+    return f"TOOL001: --shapes-from-profile: {exc}"
+
+
 def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     """Run the whole lint; ``stage`` tracks progress for error messages. Returns a report or an exit code."""
     registry = default_registry()
@@ -559,20 +649,11 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2
-    shapes: Graph | None = None
-    background: Graph | None = None
-    if args.shapes:
-        try:
-            shapes_item = resolve_inputs([args.shapes], Path.cwd())[0]
-            shapes = load_graph(shapes_item, limits)
-            if imports is not None:
-                background = _shapes_background(shapes_item, shapes, limits, imports)
-        except InputRejected as exc:
-            print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
-            return 2
-        except ParseFailure as exc:
-            print(_parse_error(exc, None), file=sys.stderr)
-            return 2
+    try:
+        shapes, background = _load_shapes(args, limits, imports)
+    except (InputRejected, _ShapesParseFailure, ProfileError) as exc:
+        print(_secondary_input_error(exc), file=sys.stderr)
+        return 2
     stage[0] = "lint execution"
     plan = replace(_plan(args, config, shapes, registry), shacl_background=background)
     files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]
@@ -593,6 +674,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("at least one ONTOLOGY path is required")
     if args.fail_on_stale_baseline and not args.baseline:
         parser.error("--fail-on-stale-baseline requires --baseline")
+    if args.shapes and args.shapes_from_profile:
+        parser.error("--shapes and --shapes-from-profile are alternatives; give one")
     if args.module_annotation is not None and args.module_by is not None:
         parser.error("--module-annotation and --module-by are alternatives; give one")
     stage = ["configuration"]

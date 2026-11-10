@@ -151,7 +151,8 @@ def _directory(path: Path) -> str:
     return path.resolve().parent.as_uri().rstrip("/") + "/"
 
 
-def _inside(path: Path, root: Path) -> bool:
+def inside_root(path: Path, root: Path) -> bool:
+    """Whether ``path`` lies under ``root`` once both have their symlinks followed (SEC009)."""
     return Path(os.path.realpath(path)).is_relative_to(Path(os.path.realpath(root)))
 
 
@@ -294,7 +295,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         if path is None:
             walk.unresolved.add(iri)
             continue
-        if not any(_inside(path, root) for root in sandbox):
+        if not any(inside_root(path, root) for root in sandbox):
             raise InputRejected("SEC009", f"owl:imports {iri} resolves to {path}, outside the import root {sandbox[0]}")
         if not path.is_file():
             walk.missing[iri] = path
@@ -334,7 +335,7 @@ def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
         )
     walk.seen_files.add(os.path.realpath(path))
     item = resolve_inputs([str(path)], Path.cwd())[0]
-    document = load_document(item, policy, next(root for root in sandbox if _inside(path, root)))
+    document = load_document(item, policy, next(root for root in sandbox if inside_root(path, root)))
     walk.files.append(item.display)
     walk.modules.append(
         Module(item.display, item.uri, _declared(document.graph), document.source_index, _directory(path))

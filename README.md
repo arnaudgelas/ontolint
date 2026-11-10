@@ -154,7 +154,8 @@ entry that names a missing file. `TOOL005` notes when most terms without a defin
 carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
 the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate
 already counts. `TOOL006` says when `--module-annotation` cannot group a file (its prefix is not
-declared, or no term carries the predicate).
+declared, or no term carries the predicate), and `TOOL007` names the validator
+`--shapes-from-profile` uses (or passes over, when it is not SHACL).
 
 ### Discovering rules
 
@@ -344,6 +345,20 @@ ontolint ontology.ttl --shapes shapes.ttl
 The integration uses `meta_shacl=True` and `advanced=True`. Newer SHACL draft
 features are not guaranteed to be supported.
 
+When a [W3C PROF](https://www.w3.org/TR/dx-prof/) profile names the shapes (`prof:hasResource [
+prof:hasRole role:validator ; prof:hasArtifact <…/validator> ]`), let the profile say which:
+
+```bash
+ontolint ontology.ttl --shapes-from-profile profile.ttl
+```
+
+Each SHACL validator of the profile (a descriptor whose `dct:conformsTo` names SHACL, or nothing)
+is found offline, in this order: the catalog next to the profile or `--catalog`, `--import-dir` by
+ontology or version IRI, or a file beside the profile named after the IRI's last path segment
+(`…/validator` → `validator.ttl`). It must lie inside the import root (`SEC009`). Several
+validators are merged; a validator of another standard is passed over with a `TOOL007` note. A
+profile that names no SHACL validator, or one with no local copy, fails the run (`TOOL001`, exit
+`2`). `--shapes` and `--shapes-from-profile` are alternatives.
 
 Each SHACL result becomes a `SHACL001` finding at the result's own severity:
 `sh:Violation` is `error`, `sh:Warning` is `warning` and `sh:Info` is `info`, so
