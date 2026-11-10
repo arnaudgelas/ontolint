@@ -1,16 +1,23 @@
-"""pySHACL adapter: SHACL validation results become SHACL001 findings."""
+"""pySHACL adapter: SHACL validation results become SHACL001 findings.
+
+Validation runs under :func:`ontolint.loader.network_disabled`, which patches process-global socket functions
+under a lock: validations from several threads of one process are serialised, as parses are.
+"""
 
 from __future__ import annotations
 
 import json
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.extras.shacl import SHACLPathError, parse_shacl_path
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
+from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import stable_blank_id
@@ -254,6 +261,36 @@ def shacl_result_key(evidence: Evidence) -> tuple[str, ...]:
     return tuple(value if isinstance(value := evidence.get(key, ""), str) else "" for key in _RESULT_KEY)
 
 
+def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, object]:
+    """``(conforms, report)`` from pySHACL, run with the network disabled; a failure is diagnosed, then re-raised.
+
+    Shapes are input too: a SPARQL constraint or SHACL-AF function must not reach the network, and an attempt
+    fails the rule even when pySHACL swallowed the refusal.
+    """
+    failure: Exception | None = None
+    with network_disabled() as attempts:
+        try:
+            conforms, report, _ = validate(
+                g, shacl_graph=sg, inference="none", advanced=True, meta_shacl=True, abort_on_first=False
+            )
+        except Exception as exc:  # noqa: BLE001 -- classified below, once the network guard is lifted.
+            failure = exc
+    if attempts.network:
+        raise RuntimeError(
+            f"SHACL validation tried to use the network ({attempts.network[0]}); the network is disabled"
+        ) from failure
+    if failure is None:
+        return bool(conforms), report
+    if not isinstance(failure, ShapesRejected):
+        # The data graph may hold large enumerations, odd IRIs (IRI001 reports those) or malformed lists, and
+        # pySHACL fails on them only when a violation message has to describe such a node: diagnose it then.
+        try:
+            check_graph(g, "data graph", strict=False)
+        except ShapesRejected as problem:
+            raise ShapesRejected(f"{problem}; pySHACL failed on it: {type(failure).__name__}: {failure}") from failure
+    raise failure
+
+
 def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
     """Validate ``g`` against ``sg`` with pySHACL (imported lazily; required only with shapes)."""
     try:
@@ -261,20 +298,7 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
     except ImportError:
         raise RuntimeError("pySHACL is needed for --shapes: pip install pyshacl") from None
     check_graph(sg, "shapes graph")
-    try:
-        conforms, report, _ = validate(
-            g, shacl_graph=sg, inference="none", advanced=True, meta_shacl=True, abort_on_first=False
-        )
-    except ShapesRejected:
-        raise
-    except Exception as exc:
-        # The data graph may hold large enumerations, odd IRIs (IRI001 reports those) or malformed lists, and
-        # pySHACL fails on them only when a violation message has to describe such a node: diagnose it then.
-        try:
-            check_graph(g, "data graph", strict=False)
-        except ShapesRejected as problem:
-            raise ShapesRejected(f"{problem}; pySHACL failed on it: {type(exc).__name__}: {exc}") from exc
-        raise
+    conforms, report = _pyshacl(validate, g, sg)
     if conforms:
         return []
     if not isinstance(report, Graph):

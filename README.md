@@ -738,6 +738,8 @@ Ontologies are untrusted input, so the loader is deliberately strict:
 - Parsing runs with the network disabled. Any socket, UDP or DNS attempt is blocked
   and reported (`SEC013`); a JSON-LD file with an external `@context` is
   refused (`SEC006`). `owl:imports` is never fetched; `--follow-imports` loads only local files.
+- SHACL validation runs with the network disabled too: a socket or DNS attempt
+  by a shape, even one pySHACL catches, makes `SHACL001` `failed` (exit `2`).
 - Inputs and XML catalogs larger than `--max-input-bytes` (default 64 MiB), or inputs
   holding more than `--max-triples` triples (default 5,000,000), are rejected (`SEC001`,
   `SEC002`).
