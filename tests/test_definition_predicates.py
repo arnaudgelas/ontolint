@@ -377,3 +377,18 @@ def test_a_definition_subproperty_declared_in_an_import_counts(
     main([*argv, "--fail-on", "never"])  # without the import the chain is unknown
     assert [f["focus"] for f in json.loads(out.read_text(encoding="utf-8"))["findings"]] == [A]
     capsys.readouterr()
+
+
+def test_a_subproperty_of_an_extra_definition_predicate_counts() -> None:
+    body = (
+        ONTO + f"ex:g2 rdfs:subPropertyOf <{EXTRA}> . ex:g3 rdfs:subPropertyOf ex:g2 . "
+        "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:g3 'An A.'@en ."
+    )
+    assert fired(body, "LEX002") == [A]
+    assert fired(body, "LEX002", extra_definition_predicates=[EXTRA]) == []
+    descriptions = _descriptions(body, extra_definition_predicates=[EXTRA])
+    assert descriptions == (*DESCRIPTIONS, URIRef(EXTRA), URIRef(ONTO_NS + "g2"), URIRef(ONTO_NS + "g3"))
+    # Configured first, then inferred, each derived predicate once.
+    chained = "ex:z rdfs:subPropertyOf skos:definition . ex:a rdfs:subPropertyOf skos:definition ."
+    extra = _descriptions(chained, extra_definition_predicates=[EXTRA])
+    assert extra == (*DESCRIPTIONS, URIRef(EXTRA), URIRef(ONTO_NS + "a"), URIRef(ONTO_NS + "z"))

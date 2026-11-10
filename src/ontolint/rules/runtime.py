@@ -63,9 +63,9 @@ class RuleContext:
         self._blank_ids: dict[BNode, str] = {}
         self._blank_nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._blank_pattern: re.Pattern[str] | None = None
-        self.descriptions: tuple[URIRef, ...] = _with_extras(
-            (*DESCRIPTIONS, *_subproperties(graph, DESCRIPTIONS)), policy.extra_definition_predicates
-        )
+        # The configured definition predicates, then every IRI below one of them (sorted).
+        seeds = _with_extras(DESCRIPTIONS, policy.extra_definition_predicates)
+        self.descriptions: tuple[URIRef, ...] = (*seeds, *_subproperties(graph, seeds))
         self.labels: tuple[URIRef, ...] = _with_extras(LABELS, policy.extra_label_predicates)
 
     @property

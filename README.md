@@ -152,8 +152,8 @@ linted file looks like a SHACL shapes graph (more shapes than declared terms), w
 probably be passed with `--shapes` instead. With `--follow-imports`, `TOOL004` notes a catalog
 entry that names a missing file. `TOOL005` notes when most terms without a definition (`LEX002`)
 carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
-the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate,
-directly or through a chain of sub-properties (cycles are fine), already counts. `TOOL006` says
+the built-in and configured lists, any predicate the ontology declares `rdfs:subPropertyOf` one of
+them, directly or through a chain of sub-properties (cycles are fine), already counts. `TOOL006` says
 when `--module-annotation` cannot group a file (its prefix is not declared, or no term carries the
 predicate), `TOOL007` names the validator `--shapes-from-profile` uses (or passes over, when it is
 not SHACL), `TOOL008` warns that a file under
@@ -668,6 +668,8 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
 - Definitions are read from `rdfs:comment`, `skos:definition`, `dcterms:description`, `dc:description`,
   `obo:IAO_0000115`, `obo:IAO_0000600` and `prov:definition`; labels from `rdfs:label` and `skos:prefLabel`.
   Add more with the policy lists `extra_definition_predicates` and `extra_label_predicates` (absolute IRIs).
+  A predicate the ontology declares `rdfs:subPropertyOf` a definition predicate, built-in or extra,
+  directly or through a chain, is a definition predicate too.
 - With `--shapes`, the SHACL step first checks the shapes graph and reports SHACL001 as failed with
   `ShapesRejected` when pySHACL would crash or stall on it: an IRI that rdflib cannot serialise (such as
   `{`, `}`, `|`, `^`, a space or a quote), a cyclic `rdf:list`, a list cell with several `rdf:rest` values,
