@@ -15,55 +15,46 @@ record.
 
 ## Hotfix
 
-Four ways a run can pass, or fail, without the ontology deserving it. Each was reproduced on
-2026-11-10 (against 0.10.1, while triaging an external review) and each contradicts the purpose
-stated above; ship them together as 0.10.2, each with the reproducing fixture as its regression
-test. They change results (findings that were silently lost now appear), so the changelog needs an
-upgrade note.
-
-- [ ] **SHACL with an ontology background drops focus nodes that are not subjects of the data.**
-  `engine._shacl_with_background` keeps only results whose focus is a subject of the linted graph,
-  to hide results about the background's own nodes. A focus selected by `sh:targetObjectsOf` (or
-  reached as a value) may never be a subject: `ex:a ex:knows ex:b` with a shape on the objects of
-  `ex:knows` requiring `ex:code` reports `ex:b` without `--follow-imports` and nothing with it.
-  Keep a result when its focus occurs in the linted graph at all (subject or object, blank nodes by
-  their stable identity), and drop only nodes that occur in the background alone.
-- [ ] **Shapes imported by the shapes file are used as data, never as shapes.**
-  `cli._shapes_background` loads the shapes file's `owl:imports` closure and passes everything but
-  the shapes file itself to SHACL as *data*. A shapes file that imports a shape library therefore
-  validates with none of the library's shapes, silently: a library shape requiring `ex:name` on
-  subjects of `ex:knows` reports nothing. Split the closure: files that declare shapes (typed
-  `sh:NodeShape`/`sh:PropertyShape`, or with `sh:path`/targets) join the shapes graph, the rest is the
-  ontology background, and say which file went where (a `TOOL` note), since one file can be both.
-- [ ] **Named graphs in TriG and N-Quads are dropped.** The loader parses a dataset into one
-  `Graph`, which keeps only the default graph: a TriG file whose classes sit in `ex:g1 { … }` loads
-  one triple (its header) and reports nothing, although the README lists both formats as read. Lint
-  the union of all graphs (what an ontology author means by "this file"), keep each triple's graph
-  for source regions and a later per-graph policy, and say in the README that graphs are merged.
-  Rejecting datasets with named graphs is the alternative if the union is judged wrong; silently
-  linting only the default graph is not.
-- [ ] **SEM001 reports ROBOT's own failures as profile violations.** `robot_profile_issues` turns
-  every non-zero exit into a `certain` SEM001 finding (exit 1, baselinable). A timeout already
-  becomes `failed` and a missing `docker` `unsupported`, but a missing image, a Docker daemon error
-  or a permission problem does not: the first Validation run (2026-11-09) reported "/output/
-  profile.txt (Permission denied)" as an OWL DL violation. Emit SEM001 only when ROBOT wrote a
-  report that `summarise_profile_report` recognises as profile violations; anything else makes the
-  rule `failed` with ROBOT's stderr (exit 2). Fixtures: a fake `docker` exiting 125, a Java crash
-  without a report, a genuine violation report, a timeout. Move SEM001's focus off the absolute path
-  (the ontology IRI, or the report path) at the same time, since both change its fingerprint.
+- [ ] **Release 0.10.2.** The four fixes below ("Recently done") are committed on the local `main`
+  (`65e8a04`, `a3f8f5a`, `37f1e48`, `f2db7ac`, plus the test `f9ccf1a`), not pushed or tagged as of
+  2026-11-10. Each commit passed the tests on its own, in a clean worktree, and the full gate
+  passed at `f9ccf1a`. A targeted mutation run of `adapters/robot.py`, `engine.py` and `loader.py`
+  killed 159 of 165 mutants: the 3 survivors were in `robot_convert`'s subprocess call (0.9.0
+  code, untouched here) and `f9ccf1a` adds the test that pins it; the 3 errors are unexplained, and
+  a second run, with `cli.py` (the shape-library split) and a JSON report, was still going. Left:
+  read that run and kill or pardon what survives; bump with `scripts/bump_version.py patch`, with
+  an upgrade note for the SEM001 baseline break and the findings that were silently lost; push
+  `main` with the release commit as the head of the push, then the tag; approve "Publish to PyPI".
+  *Done when:* 0.10.2 is on PyPI and its release run is green end to end.
 
 ## Recently done
 
+- 0.10.2 (committed, not yet released; see "Hotfix"): four ways a run could pass, or fail,
+  without the ontology deserving it, each found by triaging an external review, reproduced on
+  0.10.1 and fixed with that reproduction as its regression test (against the 0.10.1 code, 9 of
+  the new tests fail; all pass now):
+  - SHACL with an ontology background keeps results on foci the linted file mentions as objects
+    (`sh:targetObjectsOf`), not only as subjects;
+  - shapes a shapes file imports are validated (a shape library joins the shapes graph, with a
+    `TOOL009` note; its other triples join the background), where they were used as data;
+  - TriG and N-Quads named graphs are merged into the linted graph, where only the default graph
+    was read (`max_triples` counts every graph; in process and in the parse worker);
+  - SEM001 is a verdict only when ROBOT lists profile violations; a missing image, a Docker, Java
+    or permission error fails the rule (exit 2) instead of becoming a baselinable finding, and its
+    focus is `(ontology)`, not the machine's absolute path. Baseline break for SEM001 entries;
+    `legacy_rules.json` re-pinned after its other findings and exit codes were shown unchanged.
+
 - 0.10.1 (`45175d3`, tag `v0.10.1`), released 2026-11-10: the release `verify` job retries its PyPI
   file-list and attestation checks (`7fa251f`), after the 0.10.0 run (42774442860) failed there on
-  PyPI's lagging JSON API although its files were sound (checked by hand). Run 42778283292 passed
+  PyPI's lagging JSON API although its files were sound (checked by hand). That run stays red
+  unless someone with admin rights re-runs its failed job; nothing depends on it. Run 42778283292 passed
   every job; its install step needed one retry, the attestation step none, so the new retries are
   proven only by the local run of the step's script with stub `curl`, `uv` and `sleep` (a lagging
   API passes, an extra file or a failing attestation still fails). Same code as 0.10.0.
 
 - 0.10.0 (`d6c45c1`, tag `v0.10.0`), released 2026-11-10: run 42774442860 passed the CodeQL gate,
   tests and build, and published both files; its `verify` job failed on PyPI's lagging JSON API
-  (see "Hotfix"), and the attestations were verified by hand instead. Its changelog has the upgrade
+  (fixed in 0.10.1), and the attestations were verified by hand instead. Its changelog has the upgrade
   note below. The gate passed (5663 tests, 99.4% coverage), and a
   targeted mutation run of `modules.py`, `prof.py`, `library.py`, `rules/library.py` and
   `reporting.py` killed every mutant (one equivalent `frozen=True` pardoned):
@@ -310,8 +301,8 @@ Validation corpus (public; licences per repository):
     and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
   - *Defects that change an exit code, a focus or a message:* an unwritable `--output` raises a
     traceback and exits 1 instead of TOOL001 and exit 2 (`cli.py` `main`, README "Exit codes");
-    (SEM001's misclassification and machine-dependent focus moved to "Hotfix"); SEC014's focus repeats the password it reports (RFC
-    3986 §3.2.1 says not to show it); OWL013 (legacy), OWL034, OWL036 and OWL040 print Python
+    (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2); SEC014's focus
+    repeats the password it reports (RFC 3986 §3.2.1 says not to show it); OWL013 (legacy), OWL034, OWL036 and OWL040 print Python
     reprs (`rdflib.term.Literal(...)`) instead of N3 (OWL013 fixed in 0.10.0);
   - *False positives found by the 2026-11-10 review:* LEX002 (and every rule using
     `RuleContext.descriptions`) follows `rdfs:subPropertyOf` one step only, so a definition through
@@ -443,7 +434,7 @@ moves from `proposed` merely because it has an attractive title.
   isolated ROBOT image, its adapter and the CI job that builds it already exist (`robot reason`
   and `explain` give consistency, unsatisfiable classes and justifications), and it is a
   prerequisite of the others' semantic rules (COMP016, COMP017, ALIGN010). Its adapter contract is
-  the SEM001 fix in "Hotfix" generalised: a verdict only from a parsed report, every other outcome
+  the SEM001 fix of 0.10.2 generalised: a verdict only from a parsed report, every other outcome
   `failed`, `unsupported` or a timeout. Keep OWL *profile* compliance (SEM001) and *consistency*
   (SEM002, SEM003) as separate rules and say so in the README; a profile pass proves nothing about
   consistency, and ELK (EL only) must not report "consistent" for an ontology outside EL.
@@ -518,12 +509,12 @@ moves from `proposed` merely because it has an attractive title.
 Each was an open question in the old local backlog and no longer is. Listed so they are not asked
 again.
 
-- **External review of 2026-11-10 (written against 0.8.0):** its confirmed defects are in
-  "Hotfix" and P1, its product ranking informs "Decision gates". Claims checked and not taken up:
+- **External review of 2026-11-10 (written against 0.8.0):** its confirmed defects were fixed in
+  0.10.2 or are in P1, its product ranking informs "Decision gates". Claims checked and not taken up:
   the catalog is already read bounded (`imports._catalog_bytes` reads at most `max_bytes + 1`,
   SEC001, since 0.9.0); `--explain RULE`, `--list-rules --format json` and per-rule execution
   status with exit `2` for a failed or unsupported rule already exist, which is the "incomplete
-  analysis" signal it asks for (what was missing is that SEM001 bypassed it, now in "Hotfix");
+  analysis" signal it asks for (what was missing is that SEM001 bypassed it, fixed in 0.10.2);
   SHACL severities are already kept (`sh:Warning` is `warning`); selecting one rule still runs its
   module and filters, which costs time, not correctness, and is left until profiling says
   otherwise; the process-wide socket block is defence in depth around a single-process CLI, and
