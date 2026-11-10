@@ -131,15 +131,24 @@ def _required_annotations(ctx: RuleContext) -> None:
     for term, wanted in needed.items():
         if is_deprecated(ctx.g, term):
             continue
-        missing = sorted(_compact(p) for p in wanted if not _has_value(ctx, term, URIRef(p)))
-        if missing:
-            ctx.add("GOV016", term, f"Missing required annotations: {', '.join(missing)}.", confidence="certain")
+        absent = sorted(p for p in wanted if not _has_value(ctx, term, URIRef(p)))
+        if absent:
+            missing = sorted(map(_compact, absent))
+            ctx.add(
+                "GOV016",
+                term,
+                f"Missing required annotations: {', '.join(missing)}.",
+                confidence="certain",
+                subject=map(URIRef, absent),
+            )
 
 
 def _unknown_keys(ctx: RuleContext) -> None:
     for key in ctx.policy.unknown_keys:
         shown = key if len(key) <= MAX_KEY_CHARS else key[:MAX_KEY_CHARS] + "..."
-        ctx.add("GOV020", POLICY_FOCUS, f"Unknown policy key {shown!r} is ignored.", confidence="certain")
+        ctx.add(
+            "GOV020", POLICY_FOCUS, f"Unknown policy key {shown!r} is ignored.", confidence="certain", subject=(key,)
+        )
 
 
 def _mappings(ctx: RuleContext, subjects: Iterable[Node]) -> Iterable[tuple[URIRef, URIRef, URIRef]]:
@@ -162,6 +171,7 @@ def _mapping_namespaces(ctx: RuleContext) -> None:
                 term,
                 f"{_compact(str(predicate))} target {target} is outside the declared alignment namespaces.",
                 confidence="certain",
+                subject=(predicate, target),
             )
 
 
@@ -180,6 +190,7 @@ def _mapping_coverage(ctx: RuleContext) -> None:
             "ALIGN016",
             _focus(ctx),
             f"{mapped} of {total} classes and properties have a mapping ({ratio:.2f} < {minimum:.2f}).",
+            subject=(),
         )
 
 

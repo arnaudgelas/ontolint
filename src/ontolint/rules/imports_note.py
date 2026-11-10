@@ -64,4 +64,4 @@ def run(ctx: RuleContext) -> None:
     if count > MAX_LISTED:
         listed += f" and {count - MAX_LISTED} more"
     noun = "owl:import was" if count == 1 else "owl:imports were"
-    ctx.add("SEC007", "(imports)", f"{count} {noun} not followed: {listed}.", confidence="certain")
+    ctx.add("SEC007", "(imports)", f"{count} {noun} not followed: {listed}.", confidence="certain", subject=())

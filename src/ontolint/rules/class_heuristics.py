@@ -141,12 +141,17 @@ def _sibling_labels(ctx: RuleContext, parent: URIRef, kids: list[URIRef], keys: 
         if len(group) > 1:
             for kid in group:
                 other = next(k for k in group if k != kid)
-                ctx.add("CLS010", kid, f"Shares label {key[1]!r} with sibling {other} under {parent}.")
+                ctx.add(
+                    "CLS010",
+                    kid,
+                    f"Shares label {key[1]!r} with sibling {other} under {parent}.",
+                    subject=(parent, *key),
+                )
 
 
 def _unlabelled_parent(ctx: RuleContext, parent: URIRef, kids: list[URIRef], keys: LabelLookup) -> None:
     if len(kids) >= MINIMUM_UNLABELLED_PARENT_SUBCLASSES and not keys(parent):
-        ctx.add("CLS015", parent, f"Class has {len(kids)} direct subclasses but no label.")
+        ctx.add("CLS015", parent, f"Class has {len(kids)} direct subclasses but no label.", subject=())
 
 
 def _sibling_naming(ctx: RuleContext, parent: URIRef, kids: list[URIRef]) -> None:
@@ -161,6 +166,7 @@ def _sibling_naming(ctx: RuleContext, parent: URIRef, kids: list[URIRef]) -> Non
             "CLS024",
             outliers[0],
             f"Name does not end in '{head[-1]}' like its {len(kids) - 1} siblings under {parent}.",
+            subject=(parent,),
         )
 
 
@@ -190,7 +196,7 @@ def _punned(ctx: RuleContext, cls: URIRef, plain_classes: frozenset[URIRef]) -> 
 def _name_shape(ctx: RuleContext, cls: URIRef) -> None:
     name = local_name(cls)
     if PROPERTY_LIKE_NAME.match(name):
-        ctx.add("CLS022", cls, f"Local name '{name}' looks like a property name.")
+        ctx.add("CLS022", cls, f"Local name '{name}' looks like a property name.", subject=())
     tokens = _tokens(name)
     if any(t in CONJUNCTIONS for t in tokens[1:-1]):
-        ctx.add("CLS023", cls, f"Local name '{name}' joins concepts with a conjunction.")
+        ctx.add("CLS023", cls, f"Local name '{name}' joins concepts with a conjunction.", subject=())

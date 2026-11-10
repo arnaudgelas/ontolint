@@ -211,10 +211,12 @@ def _per_class(ctx: RuleContext, supers: Adjacency, children: Adjacency) -> None
         if individuals and not has_instance and not children[c]:
             ctx.add("CLS002", c, "Class has no directly typed instance or subclass in this graph.")
         if len(supers[c]) > policy.inheritance_limit:
-            ctx.add("CLS006", c, f"{len(supers[c])} direct superclasses (threshold {policy.inheritance_limit}).")
+            ctx.add(
+                "CLS006", c, f"{len(supers[c])} direct superclasses (threshold {policy.inheritance_limit}).", subject=()
+            )
         direct_properties = ctx.context.properties_by_domain.get(c, frozenset())
         if len(direct_properties) > policy.soup_limit:
-            ctx.add("CLS008", c, f"{len(direct_properties)} properties with asserted domain {c}.")
+            ctx.add("CLS008", c, f"{len(direct_properties)} properties with asserted domain {c}.", subject=())
 
 
 def _cycles(ctx: RuleContext, components: Iterable[Set[URIRef]], edges: Edges) -> None:
@@ -226,6 +228,7 @@ def _cycles(ctx: RuleContext, components: Iterable[Set[URIRef]], edges: Edges) -
                 representative,
                 "Asserted subclass cycle: " + ", ".join(str(n) for n in sorted(component, key=str)),
                 confidence="certain",
+                subject=(),
             )
 
 
@@ -233,7 +236,13 @@ def _redundant_edges(ctx: RuleContext, edges: Edges, components: list[set[URIRef
     redundant = transitively_redundant_edges(edges, components)
     for c, parent in edges:
         if (c, parent) in redundant:
-            ctx.add("CLS004", c, f"Asserted subclass edge to {parent} is transitively redundant.", confidence="certain")
+            ctx.add(
+                "CLS004",
+                c,
+                f"Asserted subclass edge to {parent} is transitively redundant.",
+                confidence="certain",
+                subject=(parent,),
+            )
 
 
 def _depth(ctx: RuleContext, edges: Edges) -> None:
@@ -243,7 +252,7 @@ def _depth(ctx: RuleContext, edges: Edges) -> None:
     deep = {c for c in ctx.classes if depths[c] > limit}
     below = {child for child, parent in edges if parent in deep and child != parent}
     for c in deep - below:
-        ctx.add("CLS005", c, f"Asserted subtree depth {depths[c]} exceeds {limit}.")
+        ctx.add("CLS005", c, f"Asserted subtree depth {depths[c]} exceeds {limit}.", subject=())
 
 
 def _chain_lengths(classes: Iterable[URIRef], children: Adjacency) -> dict[URIRef, int]:
@@ -282,7 +291,7 @@ def _single_child_chains(ctx: RuleContext, children: Adjacency) -> None:
     lengths = _chain_lengths(ctx.classes, children)
     for c in ctx.classes:
         if lengths[c] >= MINIMUM_SINGLE_CHILD_CHAIN_LENGTH:
-            ctx.add("CLS007", c, f"Single-child hierarchy extends {lengths[c]} edges below class.")
+            ctx.add("CLS007", c, f"Single-child hierarchy extends {lengths[c]} edges below class.", subject=())
 
 
 def _equivalences(ctx: RuleContext) -> None:
@@ -294,4 +303,9 @@ def _equivalences(ctx: RuleContext) -> None:
             ls = {str(x).casefold() for x in g.objects(left, RDFS.label)}
             rs = {str(x).casefold() for x in g.objects(right, RDFS.label)}
             if ls and (ls & rs):
-                ctx.add("CLS009", left, f"Equivalent class {right} has an identical label (review duplication).")
+                ctx.add(
+                    "CLS009",
+                    left,
+                    f"Equivalent class {right} has an identical label (review duplication).",
+                    subject=(right,),
+                )

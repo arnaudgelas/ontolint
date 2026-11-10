@@ -188,14 +188,16 @@ def _wide_fan_out(ctx: RuleContext, h: Hierarchy) -> None:
     for parent in sorted(h.children, key=str):
         kids = h.children[parent]
         if len(kids) > limit:
-            ctx.add("CLS011", parent, f"{len(kids)} direct subclasses (threshold {limit}).")
+            ctx.add("CLS011", parent, f"{len(kids)} direct subclasses (threshold {limit}).", subject=())
 
 
 def _unused_leaves(ctx: RuleContext, h: Hierarchy) -> None:
     for parent in sorted(h.children, key=str):
         kids = h.children[parent]
         if _has_instance(ctx, parent) and all(not h.children.get(k) and not _has_instance(ctx, k) for k in kids):
-            ctx.add("CLS012", parent, f"Class has instances but its {len(kids)} subclass(es) are unused leaves.")
+            ctx.add(
+                "CLS012", parent, f"Class has instances but its {len(kids)} subclass(es) are unused leaves.", subject=()
+            )
 
 
 def _tokens(text: str) -> tuple[str, ...]:
@@ -225,7 +227,7 @@ def _remainder_classes(ctx: RuleContext, h: Hierarchy) -> None:
         for parent in sorted(h.supers[cls], key=str):
             parent_tokens = {t for n in _names(ctx, parent) for t in n}
             if any(_is_remainder(n, parent_tokens) for n in names):
-                ctx.add("CLS013", cls, f"Catch-all subclass of {parent}.")
+                ctx.add("CLS013", cls, f"Catch-all subclass of {parent}.", subject=())
                 break
 
 
@@ -300,6 +302,7 @@ def _disjoint_conflicts(ctx: RuleContext, h: Hierarchy) -> None:
                 cls,
                 f"Below disjoint classes {involved[found[0]]} and {involved[found[1]]}.",
                 confidence="certain",
+                subject=(),
             )
 
 
@@ -331,7 +334,7 @@ def _same_label_as_parent(ctx: RuleContext, h: Hierarchy) -> None:
     for child, parent in sorted(h.edges(), key=str):
         same = _label_keys(ctx, child) & _label_keys(ctx, parent)
         if same:
-            ctx.add("CLS020", child, f"Same label as its superclass {parent}.")
+            ctx.add("CLS020", child, f"Same label as its superclass {parent}.", subject=(parent,))
 
 
 def _equivalent_ancestors(ctx: RuleContext, h: Hierarchy) -> None:
@@ -346,7 +349,7 @@ def _equivalent_ancestors(ctx: RuleContext, h: Hierarchy) -> None:
         seen.add(key)
         for low, high in ((a, b), (b, a)):
             if high in h.ancestors(low):
-                ctx.add("CLS021", low, f"Equivalent to its asserted ancestor {high}.")
+                ctx.add("CLS021", low, f"Equivalent to its asserted ancestor {high}.", subject=(high,))
 
 
 def _multi_typed(ctx: RuleContext) -> dict[URIRef, frozenset[URIRef]]:
@@ -366,4 +369,4 @@ def _redundant_types(ctx: RuleContext, h: Hierarchy) -> None:
     for subject in sorted(typed, key=str):
         for cls in sorted(typed[subject], key=str):
             for ancestor in sorted(above[cls] & typed[subject] - {cls}, key=str):
-                ctx.add("CLS025", subject, f"Typed {cls} and its ancestor {ancestor}.")
+                ctx.add("CLS025", subject, f"Typed {cls} and its ancestor {ancestor}.", subject=(cls, ancestor))

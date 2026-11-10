@@ -187,7 +187,7 @@ def _coverage_rule(ctx: RuleContext, code: str, terms: frozenset[URIRef], predic
     missing = total - _covered(ctx, terms, predicates)
     ratio = _ratio(missing, total)
     if ratio > limit:
-        ctx.add(code, _focus(ctx), f"{missing} of {total} {noun} lack {what} ({ratio:.2f} > {limit:.2f}).")
+        ctx.add(code, _focus(ctx), f"{missing} of {total} {noun} lack {what} ({ratio:.2f} > {limit:.2f}).", subject=())
 
 
 def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: frozenset[URIRef]) -> None:
@@ -203,6 +203,7 @@ def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: froze
                 _focus(ctx),
                 f"{len(properties)} properties for {len(classes)} classes "
                 f"({ratio:.2f} < {policy.metric_min_property_class_ratio:.2f}).",
+                subject=(),
             )
         if ratio > policy.metric_max_property_class_ratio:
             ctx.add(
@@ -210,6 +211,7 @@ def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: froze
                 _focus(ctx),
                 f"{len(properties)} properties for {len(classes)} classes "
                 f"({ratio:.2f} > {policy.metric_max_property_class_ratio:.2f}).",
+                subject=(),
             )
 
 
@@ -226,6 +228,7 @@ def _hierarchy_rules(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
                 _focus(ctx),
                 f"{len(h.children)} parent classes have {mean:.2f} direct subclasses on average "
                 f"(threshold {policy.metric_max_mean_fanout:.2f}).",
+                subject=(),
             )
     used: set[object] = set(ctx.context.subjects_by_type)  # typed subjects include every instance
     for prop in ctx.context.properties_by_domain:
@@ -247,6 +250,7 @@ def _hierarchy_rules(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
             _focus(ctx),
             f"{orphans} of {len(classes)} classes are orphans: no asserted sub/superclass, instance, "
             f"domain or range ({ratio:.2f} > {policy.metric_max_orphan_ratio:.2f}).",
+            subject=(),
         )
 
 
@@ -272,6 +276,7 @@ def _signature_rule(ctx: RuleContext) -> None:
             _focus(ctx),
             f"{unsigned} of {len(props)} object/datatype properties have neither domain nor range "
             f"({ratio:.2f} > {limit:.2f}).",
+            subject=(),
         )
 
 
@@ -293,6 +298,7 @@ def _language_rule(ctx: RuleContext, terms: frozenset[URIRef]) -> None:
                 _focus(ctx),
                 f"{len(tagged)} of {len(labelled)} labelled terms have a language-tagged label "
                 f"({coverage:.2f} < {policy.metric_min_language_coverage:.2f}).",
+                subject=(),
             )
 
 
@@ -311,6 +317,7 @@ def _definition_rule(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
                 _focus(ctx),
                 f"{len(words)} defined classes average {mean:.2f} words per definition "
                 f"(threshold {policy.metric_min_definition_words:.2f}).",
+                subject=(),
             )
 
 
@@ -329,6 +336,7 @@ def _reference_rule(ctx: RuleContext, classes: frozenset[URIRef], properties: fr
             "METRIC010",
             _focus(ctx),
             f"{foreign} of {total} structural references point to another namespace ({ratio:.2f} > {limit:.2f}).",
+            subject=(),
         )
 
 
@@ -380,6 +388,7 @@ def _graph_rules(ctx: RuleContext) -> None:
             _focus(ctx),
             f"{len(imports)} distinct owl:imports (threshold {ctx.policy.metric_max_imports}).",
             confidence="certain",
+            subject=(),
         )
     # Axioms, restrictions, class expressions and RDF-list cells are structure, not free blank nodes.
     subjects = {s for s in ctx.g.subjects() if not _is_structural_blank(ctx.g, s)}
@@ -392,6 +401,7 @@ def _graph_rules(ctx: RuleContext) -> None:
                 _focus(ctx),
                 f"{blanks} of {len(subjects)} subjects are blank nodes "
                 f"({ratio:.2f} > {ctx.policy.metric_max_blank_node_ratio:.2f}).",
+                subject=(),
             )
 
 

@@ -340,3 +340,41 @@ def test_shq019_and_shq008_name_the_predicate_and_the_value() -> None:
         ("P", ("sh:minCount", '"-1"^^<xsd:integer>')),
         ("P", ("sh:maxCount", "(blank node)")),
     }
+
+
+# --- classes, hierarchy, metrics, safety and policy --------------------------------------------------
+
+
+def test_cls010_names_the_parent_and_the_shared_label_not_the_sibling() -> None:
+    turtle = """
+        ex:P a owl:Class . ex:Q a owl:Class .
+        ex:A a owl:Class ; rdfs:subClassOf ex:P, ex:Q ; rdfs:label "Thing" .
+        ex:B a owl:Class ; rdfs:subClassOf ex:P, ex:Q ; rdfs:label "thing" .
+    """
+    found = {about for focus, about in subjects("CLS010", turtle) if focus == "A"}
+    assert {about[0] for about in found} == {"P", "Q"}
+    assert all("B" not in about for about in found)
+
+
+def test_cls025_names_both_types() -> None:
+    turtle = """
+        ex:A a owl:Class . ex:B a owl:Class ; rdfs:subClassOf ex:A . ex:C a owl:Class ; rdfs:subClassOf ex:B .
+        ex:i a ex:A, ex:B, ex:C .
+    """
+    assert subjects("CLS025", turtle) == {("i", ("B", "A")), ("i", ("C", "A")), ("i", ("C", "B"))}
+
+
+def test_gov016_names_the_missing_annotations_by_iri() -> None:
+    policy = Policy.from_mapping({"required_annotations": {"class": [RDFS + "label", RDFS + "comment"]}})
+    assert subjects("GOV016", "ex:A a owl:Class .", policy=policy) == {("A", ("rdfs:comment", "rdfs:label"))}
+
+
+def test_sec012_tells_literals_on_two_predicates_apart_and_ignores_which_characters() -> None:
+    turtle = 'ex:a ex:p "x\\u202Ey" ; ex:q "x\\u0007y" .'
+    assert subjects("SEC012", turtle) == {("a", ("p",)), ("a", ("q",))}
+
+
+def test_metric_findings_carry_no_subject_so_a_new_ratio_is_the_same_finding() -> None:
+    few = "".join(f"ex:C{i} a owl:Class . " for i in range(12))
+    more = few + "".join(f"ex:D{i} a owl:Class . " for i in range(5))
+    assert subjects("METRIC001", few) == subjects("METRIC001", more) == {("urn:ontolint:graph", ())}

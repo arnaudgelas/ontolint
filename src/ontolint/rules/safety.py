@@ -208,6 +208,7 @@ def _blank_node_depth(ctx: RuleContext) -> None:
             owners.get(root, root),
             f"Blank-node structure is nested {depth[root]} levels deep (limit {MAX_BLANK_NODE_DEPTH}).",
             confidence="certain",
+            subject=("nesting",),
         )
 
 
@@ -231,6 +232,7 @@ def _list_length(ctx: RuleContext) -> None:
             owners.get(head, head),
             f"RDF list has {length} members (limit {MAX_LIST_LENGTH}).",
             confidence="certain",
+            subject=("list",),
         )
 
 
@@ -252,6 +254,7 @@ def _terms(ctx: RuleContext) -> None:
                     s,
                     f"Literal on {p} has {len(text)} characters (limit {MAX_LITERAL_LENGTH}).",
                     confidence="certain",
+                    subject=(p,),
                 )
             found = _hazards(text, _LITERAL_HAZARD)
             if found:
@@ -260,6 +263,7 @@ def _terms(ctx: RuleContext) -> None:
                     s,
                     f"Literal on {p} contains control or bidirectional-override characters ({found}).",
                     confidence="certain",
+                    subject=(p,),
                 )
     for iri in sorted(iris):
         _check_iri(ctx, iri)
@@ -270,7 +274,9 @@ def _check_iri(ctx: RuleContext, iri: str) -> None:
         return  # a relative reference resolved against the file (GOV002 reports relative imports)
     scheme = _SCHEME.match(iri.lstrip("\x00 \t\r\n\x0b\x0c").translate(_URL_STRIPPED))
     if scheme and scheme.group(1).lower() in UNSAFE_SCHEMES:
-        ctx.add("SEC008", iri, f"IRI uses the unsafe scheme {scheme.group(1).lower()}:.", confidence="certain")
+        ctx.add(
+            "SEC008", iri, f"IRI uses the unsafe scheme {scheme.group(1).lower()}:.", confidence="certain", subject=()
+        )
     found = _hazards(iri, _IRI_HAZARD)
     if found:
         ctx.add(
@@ -278,9 +284,10 @@ def _check_iri(ctx: RuleContext, iri: str) -> None:
             iri,
             f"IRI contains control or bidirectional-override characters ({found}).",
             confidence="certain",
+            subject=(),
         )
     userinfo = _USERINFO.match(iri)
     if userinfo:
         user, separator, password = userinfo.group(1).partition(":")
         if separator and password:
-            ctx.add("SEC014", iri, f"IRI embeds a password for user {user!r}.", confidence="certain")
+            ctx.add("SEC014", iri, f"IRI embeds a password for user {user!r}.", confidence="certain", subject=())

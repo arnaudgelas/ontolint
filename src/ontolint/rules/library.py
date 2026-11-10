@@ -169,9 +169,10 @@ def _lib001(ctx: RuleContext, entry: URIRef, same_name: list[str]) -> None:
             entry,
             f"Index entry names no pattern ontology by IRI; <{same_name[0]}> has its name: link them "
             f"(for example rdfs:isDefinedBy <{same_name[0]}>).",
+            subject=(),
         )
     else:
-        ctx.add("LIB001", entry, "Index entry names no pattern ontology of the library." + _caveat(ctx))
+        ctx.add("LIB001", entry, "Index entry names no pattern ontology of the library." + _caveat(ctx), subject=())
 
 
 def _lib002(ctx: RuleContext, library: PatternLibrary, covered: set[str]) -> None:
@@ -196,4 +197,5 @@ def _lib003(ctx: RuleContext, library: PatternLibrary) -> None:
                 URIRef(member.ontology),
                 f"The header names <{iri}> ({local_name(URIRef(predicate))}), which no pattern ontology of the "
                 "library declares." + _caveat(ctx),
+                subject=(URIRef(predicate), URIRef(iri)),
             )
