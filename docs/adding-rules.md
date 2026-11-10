@@ -18,7 +18,14 @@ guarantees that proposed rules are never reported as executed.
 2. **Write the module** `src/ontolint/rules/<family>.py`:
    * `SPECS: tuple[RuleSpec, ...]` -- one `RuleSpec` per rule (id, family prefix, title matching the
      catalogue, severity, suggestion, category, backend, scope, `module="<family>"`);
-   * `def run(ctx: RuleContext) -> None` -- emit with `ctx.add(rule_id, focus, message, confidence=...)`.
+   * `def run(ctx: RuleContext) -> None` -- emit with `ctx.add(rule_id, focus, message, confidence=...,
+     subject=...)`.
+     `subject` is what tells this finding from another of the same rule on the same focus: the
+     predicate, the other term, the literal (in N3, with its language), the language tag. Pass it
+     in a fixed order, sorted where it is a set. Never put prose, counts, ratios, thresholds or
+     labels quoted for readability in it: with the rule and the focus, the subject is the
+     finding's identity, independent of how its message is worded.
+     `subject=()` says that the rule reports at most one finding per focus.
      Use `ctx.context` (pre-built indexes), `ctx.classes`, `ctx.local(...)`, and helpers in
      `rules/support.py`; do not re-scan the graph per term.
    * Import `RuleContext` under `if TYPE_CHECKING:` (the module must not import `runtime` at run

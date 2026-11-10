@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from rdflib import BNode, Graph, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDFS
 
 from ontolint.context import GraphContext
@@ -74,13 +74,28 @@ class RuleContext:
         """Return whether ``node`` is owned by the linted ontology (see :mod:`ontolint.ownership`)."""
         return self.context.ownership.owns(node)
 
-    def add(
-        self, code: str, focus: object, message: str, *, confidence: str = "heuristic", related: Iterable[object] = ()
+    def add(  # noqa: PLR0913 -- the finding's parts; everything after the message is keyword-only.
+        self,
+        code: str,
+        focus: object,
+        message: str,
+        *,
+        confidence: str = "heuristic",
+        related: Iterable[object] = (),
+        subject: Iterable[object] = (),
     ) -> None:
         """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs.
 
         ``related`` names the other terms a finding is about (the rest of a collision); they place the
         finding in every module involved (``--module-by``) and never change its identity or text.
+
+        ``subject`` is what tells this finding from another of the same rule on the same focus, in a fixed
+        order (sorted where it is a set): the baseline identity is the rule, the focus and the subject, so
+        a reworded message keeps matching a baseline.  It holds machine values only: IRIs, blank nodes
+        (rendered by their stable identity), literals (in N3, with their language or datatype), language
+        tags and other keys.  Never prose, counts, ratios, thresholds or labels quoted for readability:
+        a measurement that changes is not a new problem.  ``subject=()`` states that the rule reports at
+        most one finding per focus.  It is never rendered.
         """
         if confidence not in CONFIDENCES:
             raise ValueError(f"{code}: confidence must be one of {sorted(CONFIDENCES)}, not {confidence!r}")
@@ -90,7 +105,10 @@ class RuleContext:
         if key not in self.seen:
             self.seen.add(key)
             others = tuple(dict.fromkeys(t for t in map(self._focus_text, related) if t != text))
-            self.findings.append(Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others))
+            about = tuple(map(self._subject_text, subject))
+            self.findings.append(
+                Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about)
+            )
 
     def _stable_id(self, node: BNode) -> str:
         if node not in self._blank_ids:
@@ -120,6 +138,22 @@ class RuleContext:
         return self._blank_pattern.sub(
             lambda match: self._stable_id(nodes[match.group("prefixed") or match.group("bare")]), message
         )
+
+    def _subject_text(self, item: object) -> str:
+        """Render one part of a subject: a blank node by its stable identity, a literal in N3, an IRI as is.
+
+        A string is taken as an already rendered key; anything else (a count, say) is refused, because a
+        subject names what a finding is about, never how much.
+        """
+        if isinstance(item, BNode):
+            return self._stable_id(item)
+        if isinstance(item, Literal):
+            return item.n3()
+        if isinstance(item, URIRef):
+            return str(item) or EMPTY_FOCUS
+        if isinstance(item, str):
+            return item
+        raise TypeError(f"a finding subject holds terms and keys, not {type(item).__name__}: {item!r}")
 
     def _focus_text(self, focus: object) -> str:
         """Render a focus: blank nodes by stable content identity, the empty IRI as ``<>``."""

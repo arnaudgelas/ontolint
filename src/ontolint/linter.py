@@ -64,8 +64,11 @@ class Linter:
             return support.is_local(self.base, node)
         return self.rule_context.local(node)
 
-    def add(self, code: str, focus: object, message: str, *, confidence: str = "heuristic") -> None:
-        self.rule_context.add(code, focus, message, confidence=confidence)
+    def add(
+        self, code: str, focus: object, message: str, *, confidence: str = "heuristic", subject: Iterable[object] = ()
+    ) -> None:
+        """Record a finding; ``subject`` is passed to :meth:`RuleContext.add`, which says what it may hold."""
+        self.rule_context.add(code, focus, message, confidence=confidence, subject=subject)
 
     def run(self) -> list[Finding]:
         return engine.run_rules(self.rule_context)
