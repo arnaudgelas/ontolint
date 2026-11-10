@@ -82,6 +82,19 @@ def test_subject_is_not_rendered_and_not_part_of_equality_or_fingerprint() -> No
     assert "subject" not in json.loads(render_report(RunReport((FileReport("a.ttl", "a.ttl", (about,)),)), "json"))
 
 
+def test_one_message_with_several_subjects_keeps_the_least_whatever_the_order() -> None:
+    first, second = (URIRef(EX + "b"),), (URIRef(EX + "a"),)
+    forward, backward = _ctx(), _ctx()
+    for ctx, order in ((forward, (first, second)), (backward, (second, first))):
+        ctx.add("OWL002", URIRef(EX + "p"), "message", subject=order[0])
+        ctx.add("OWL002", URIRef(EX + "q"), "other")
+        ctx.add("OWL002", URIRef(EX + "p"), "message", subject=order[1])
+
+    assert [f.subject for f in forward.findings] == [(EX + "a",), ()]
+    assert [f.subject for f in backward.findings] == [(EX + "a",), ()]
+    assert forward.findings == backward.findings
+
+
 def test_the_linter_facade_passes_the_subject_through() -> None:
     linter = Linter(Graph())
     linter.add("OWL002", URIRef(EX + "p"), "message", subject=(RDFS.range,))

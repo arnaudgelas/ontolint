@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from dataclasses import replace
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDFS
@@ -42,6 +43,7 @@ class RuleContext:
         self.context = context
         self.findings: list[Finding] = []
         self.seen: set[tuple[str, str, str]] = set()
+        self._emitted: dict[tuple[str, str, str], int] = {}  # each seen key's position in ``findings``
         self._blank_ids: dict[BNode, str] = {}
         self._blank_nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._blank_pattern: re.Pattern[str] | None = None
@@ -95,20 +97,30 @@ class RuleContext:
         (rendered by their stable identity), literals (in N3, with their language or datatype), language
         tags and other keys.  Never prose, counts, ratios, thresholds or labels quoted for readability:
         a measurement that changes is not a new problem.  ``subject=()`` states that the rule reports at
-        most one finding per focus.  It is never rendered.
+        most one finding per focus.  It is never rendered.  When one message is emitted with several
+        subjects, the finding keeps the least of them, so it does not depend on iteration order; a subject
+        should still say no more than the message does.
         """
         if confidence not in CONFIDENCES:
             raise ValueError(f"{code}: confidence must be one of {sorted(CONFIDENCES)}, not {confidence!r}")
         text = self._focus_text(focus)
         message = self._message_text(message)
         key = (code, text, message)
-        if key not in self.seen:
-            self.seen.add(key)
-            others = tuple(dict.fromkeys(t for t in map(self._focus_text, related) if t != text))
-            about = tuple(map(self._subject_text, subject))
-            self.findings.append(
-                Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about)
-            )
+        about = tuple(map(self._subject_text, subject))
+        if key in self.seen:
+            # One finding per message: of the subjects offered for it, keep the least, so the subject does not
+            # depend on the order the graph is iterated in (a rule's subject finer than its message).
+            index = self._emitted[key]
+            # gremlin: pardon[equivalent] replacing an equal subject by itself changes nothing
+            if about < self.findings[index].subject:
+                self.findings[index] = replace(self.findings[index], subject=about)
+            return
+        self.seen.add(key)
+        self._emitted[key] = len(self.findings)
+        others = tuple(dict.fromkeys(t for t in map(self._focus_text, related) if t != text))
+        self.findings.append(
+            Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about)
+        )
 
     def _stable_id(self, node: BNode) -> str:
         if node not in self._blank_ids:
