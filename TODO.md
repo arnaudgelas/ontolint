@@ -180,6 +180,23 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
 
 ## P0 — before 0.11.0
 
+- [ ] **DATASET-PROVENANCE: keep each triple's file and named graph.** Files are owned already: a
+  closure finding names its declaring module (JSON `path`, SARIF artifact, text `In:`) and a
+  multi-file run reports per file. Named graphs are not: since 0.10.2 TriG and N-Quads graphs are
+  merged into the linted graph, so no finding, source region or (later) measurement can say which
+  graph it came from, and SHACL validates their union. Record every triple's origin as (file, graph
+  name or default graph) in the loader beside the module index; carry it on `Finding` as modules are
+  carried (a `graph` field in JSON, SARIF `properties`, text `In:`), fingerprints unchanged. Decide,
+  and write in the README, whether SHACL validates the union (today) or each graph, and whether a
+  triple asserted in two graphs belongs to both (as a collision belongs to every module). Challenge
+  recorded (2026-11-10): no ontology of the validation corpus is a dataset, so the file half is what
+  users exercise today. It is P0 because the quality subsystem cannot attribute a measurement
+  without it, DUPLICATE-ONTOLOGY-ID needs it inside a dataset, and widening `Finding` after the
+  report schema is versioned (OPS item in P2) costs a schema break. *Done when:* a TriG fixture with
+  one term in two named graphs gives findings that name their graph in all three formats, the
+  union-or-per-graph decision is in the README, and a single-graph file's output is byte-identical
+  to 0.10.2's.
+
 - [ ] **Turn Renovate on, and watch its first rebase.** Rechecked 2026-11-10: `.github/renovate.json`
   passes `renovate-config-validator --strict` (Renovate 41), and the repository still has only
   `main`, no pull request and no issue, so the app is not running here; the cause is outside the
@@ -246,6 +263,20 @@ Validation corpus (public; licences per repository):
 
 ## P1 — reporting, policy and supply-chain correctness
 
+- [ ] **Bound SHACL validation in time, as parsing is.** Reproduced on 0.10.2 (2026-11-10): a
+  shapes file whose `sh:sparql` constraint joins four triple patterns, on a 300-triple data file,
+  was still running after 30 s with `--max-parse-seconds 2`. Nothing stops it: pySHACL runs in
+  process after the parse budget has ended, and `advanced=True` also admits SHACL-AF rules and
+  functions. Shapes are input too, and since 0.10.0 and 0.10.2 they also come from a PROF profile or
+  from a shape library a shapes file imports, not only from the user's own file. Run validation in
+  the killable worker the parse budget already uses (`loader._parse_in_worker`), with the network
+  guard inside it, under a `max_validation_seconds` policy key and flag; a timeout is a `failed`
+  SHACL001 execution and exit 2, as for ROBOT. Say in the README's "Input safety" which phases are
+  bounded (sizes, parsing, ROBOT, then SHACL) and which are not (the rule families: measured by
+  `tests/test_scaling.py`, not bounded), that validation runs with `inference="none"`, and what
+  `advanced=True` admits. The CQ gate's SPARQL runner needs the same worker; build it once.
+  *Done when:* the reproduction above ends within its budget with exit 2 and a `failed` execution.
+
 - [ ] **Source regions: confirm one real-world JSON-LD layout.** Everything else in this item is
   done (0.5.0 and 0.5.2): property tests check that every region spells its node in all four
   formats and that JSON-LD layout (whitespace, decoy duplicate keys) never changes the findings.
@@ -274,8 +305,12 @@ Validation corpus (public; licences per repository):
   identity from the rule, the focus and the finding's structured subject (the terms, predicate or
   axiom it is about, which `Finding.related` already starts to carry), never from prose; write it
   next to the version 1 hash in `--write-baseline` and accept either when reading, so existing
-  baselines keep working. Decide it before the next message change, not after. *Done when:* a
-  message-only change leaves every baseline matching, proven by a test that rewords a message.
+  baselines keep working. Decide it before the next message change, not after. Make it independent
+  of the run's shape too: only multi-file runs hash the report path today, so a baseline written
+  from one file does not carry over to a multi-file run (README "Several files"); keep the path as
+  a field of the identity and match on it when both sides have one. *Done when:* a message-only
+  change leaves every baseline matching, proven by a test that rewords a message, and a one-file
+  baseline matches the same file's findings in a multi-file run.
 
 - [ ] **Audit the specifications of implemented rules, not only proposed rules.** A rule can be
   implemented, tested, and still be semantically under-specified if it began as a catalogue title;
@@ -364,7 +399,174 @@ Validation corpus (public; licences per repository):
   all thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking`
   has survived at least one scheduled run.
 
+## P1 — quality observability: measurements, not a score
+
+Requested 2026-11-10: publish the measurements behind the METRIC rules as a vector, compare them
+across commits and releases, and gate on explicit thresholds; never one health score (rejected
+under "Explicitly deferred"). What it builds on: METRIC001-METRIC013 already compute thirteen
+aggregates in single passes over `ctx.context`, but a value is visible only as a finding when it
+crosses a threshold, so nothing below a threshold is published and no trend can be built from
+today's reports. Every item here keeps to these rules:
+
+- a measurement has an ID, a definition version and a population (owned terms only, by the
+  ownership rules of 0.8.0; per file, module or named graph). A ratio is published as its numerator
+  and denominator, never as the ratio alone;
+- a measurement that could not be taken (no reasoner ran, no CQ manifest) is absent with a reason,
+  never 0. A threshold on it makes the run incomplete (exit 2); it never passes;
+- measurements are deterministic and stay out of the default text output. They change no finding,
+  fingerprint or exit code unless a budget is configured.
+
+Order: DATASET-PROVENANCE (P0), then METRICS-ENGINE, then the snapshot (QUALITY-BASELINE and
+QUALITY-TRENDS), then QUALITY-BUDGET (P2). DQV-REPORT and MARKDOWN-SUMMARY render the same model and
+GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and can go first.
+
+- [ ] **METRICS-ENGINE: reusable graph- and term-level measurements.** Move each METRIC rule's
+  computation into a named measurement and make the rule a threshold over it. `differential.json`
+  and the legacy golden must not move, because the refactor changes no finding. Publish the vector
+  in JSON (`measurements`, per file and per module or graph). The first set is all computable
+  offline today:
+  - label, definition and property-documentation coverage (METRIC001-003). Definitions need the
+    transitive subproperty closure (the LEX002 item under P1), or the numbers inherit its false
+    negative;
+  - the hierarchy-depth distribution, as a histogram rather than only the maximum that
+    `--depth-limit` checks;
+  - disconnected parts of the asserted hierarchy. Define them as weakly connected components of
+    `rdfs:subClassOf` among owned classes with `owl:Thing` excluded; with it, every ontology is one
+    component;
+  - externally referenced terms (METRIC010's count, by namespace);
+  - unresolved imports (SEC007's list, as a count);
+  - SHACL target coverage (owned classes some shape targets): the test coverage available without
+    CQ.
+
+  Measurements that belong to their gates and are not faked now:
+  - unsatisfiable classes (SEM gate). The measurement is "unsatisfiable under reasoner R, version
+    V" and is absent without a reasoner. An empty extension in the asserted graph is not
+    unsatisfiability, and a class without asserted instances is no defect in a TBox;
+  - CQ pass rate and the vocabulary CQs exercise (CQ gate, CQ009);
+  - mapping coverage and unreviewed equivalence mappings (ALIGN gate). These need SSSOM review
+    status, and counting `skos:*Match` and `owl:equivalentClass` alike would treat a link as a
+    logical axiom.
+
+  Term-level values (which terms lack a definition) go into the snapshot, not into the report
+  body, so reports stay small. *Done when:* METRIC001-013 read their values from the engine with
+  unchanged findings, JSON carries the vector with numerators and denominators, and each
+  measurement's population and exclusions are documented in `docs/`.
+
+- [ ] **QUALITY-BASELINE and QUALITY-TRENDS: one snapshot format, two uses.** A snapshot holds:
+  - one run's measurement vector;
+  - for every coverage measure, the sorted IRIs in its numerator and denominator;
+  - the measurement definition versions and the policy that shaped each population.
+
+  A *quality baseline* is a snapshot committed to the repository: the accepted values. It is
+  distinct from `--baseline`, which suppresses findings by fingerprint, and gets a different flag
+  name so the two never mix. A *trend* compares two snapshot files. ontolint does not walk git
+  history; CI keeps the snapshots as artifacts. The comparison must tell a regression from a
+  denominator change, which aggregates cannot do: adding 1,000 classes without definitions lowers
+  definition coverage while the number of documented classes rises. With the term sets, a coverage
+  change splits into four counts, each reported with the ratio delta:
+  - terms that lost the property: the real regression;
+  - new terms without it: dilution;
+  - removed terms;
+  - terms that gained it.
+
+  A renamed term counts as one removal plus one new term until COMP's rename detection exists; the
+  report says so. Measurements whose definition version or population differs between the two
+  snapshots are reported as not comparable, each one separately, never silently diffed. This needs
+  no COMP ADR, because it compares measurements, not graphs. *Done when:* a fixture pair with a
+  regression, a dilution and a removal is classified correctly, a snapshot round-trips, and an
+  incompatible pair is refused measurement by measurement.
+
+- [ ] **DQV-REPORT: the measurements as W3C DQV.** One `dqv:QualityMeasurement` per value, with
+  `dqv:isMeasurementOf` a `dqv:Metric`, `dqv:computedOn` the ontology (its version IRI when it has
+  one), a typed `dqv:value`, and `prov:wasGeneratedBy` the run (tool and catalogue versions).
+  Decide first:
+  - the IRIs of ontolint's metric definitions. Use a namespace the project commits to keep, or
+    `urn:` if it will host none; a `w3id.org` redirect is a promise to maintain;
+  - whether findings are published too, as `dqv:QualityAnnotation`. Start without them.
+
+  The output is deterministic: serialisation is sorted, and a timestamp appears only when
+  `SOURCE_DATE_EPOCH` or a flag supplies one. Name the consumer (a DCAT catalogue or FAIR
+  assessment that reads DQV) before calling this done. *Done when:* the output parses, lints clean
+  with ontolint's own rules, is byte-stable across runs, and the namespace decision is recorded.
+
+- [ ] **MARKDOWN-SUMMARY: a human-readable pull-request summary.** It shows:
+  - counts per severity, and new findings against baselined ones;
+  - the rules that delivered no verdict, which cause exit 2 (OPS018);
+  - with a quality baseline, the measurement deltas split as above;
+  - the first findings, with a pointer to the full SARIF.
+
+  Messages quote ontology literals, so the renderer escapes Markdown and HTML (a label must not
+  become a link, an image or an `@` mention in a pull request) and caps its size, since GitHub's
+  step summary has a size limit. This is the consumer that OPS012's deferral asked for, for
+  Markdown only. *Done when:* escaping is property-tested against hostile labels and the output is
+  deterministic.
+
+- [ ] **GITHUB-ACTION: a maintained, version-pinned Action.** This replaces the P2 ADR on
+  `--format github` by answering its question: SARIF upload for annotations, which workflow
+  commands cap, plus MARKDOWN-SUMMARY in `$GITHUB_STEP_SUMMARY`. A native annotation formatter
+  comes only if a user without code scanning asks for one. `action.yml` sits at the repository
+  root, so `uses: arnaudgelas/ontolint@vX.Y.Z` pins the Action and the ontolint it installs to one
+  release: from PyPI, by exact version with hashes, never the latest. The `tags` ruleset already
+  protects that tag. Decide:
+  - whether SARIF upload is the Action's job, which needs `security-events: write`, or the
+    caller's;
+  - whether the ROBOT image is in scope. It is not at first.
+
+  The release instructions gain a step that proves the Action at the new tag. `src/ontolint/github.py`
+  then either serves it or goes (see "Documentation debt"). *Done when:* a workflow in this
+  repository uses the Action at the released tag on a fixture, and its SARIF and its summary both
+  appear.
+
+- [ ] **DUPLICATE-ONTOLOGY-ID: one ontology IRI declared by two files.** Nothing checks this
+  across files. A multi-file run lints each file alone, and `--import-dir` maps an IRI to the first
+  file in path order (`imports.index_directory`, `entries.setdefault`) with no note when another
+  file declares it too, so which copy is imported depends on file names (read in the code,
+  2026-11-10). Report it, with both paths, in four places:
+  - across the inputs of one run;
+  - within one `--import-dir`;
+  - within a closure, when two modules carry one ontology IRI;
+  - between the named graphs of a dataset (needs DATASET-PROVENANCE).
+
+  Report a version IRI shared by files with different content the same way. This needs a set-level
+  rule scope, since rules run per file today, and a catalogue row. An identical copy (same content
+  hash) is a note, not a warning. *Done when:* each of the four cases has a fixture, and
+  `--import-dir` with two candidates names both and says which it chose.
+
 ## P2 — platform reliability and useful integration
+
+- [ ] **QUALITY-BUDGET: explicit thresholds over measurements.** The proposed shape, not yet a
+  syntax: a `quality_budgets` policy key mapping measurement names to `minimum`/`maximum` (for
+  example `definition_coverage: {minimum: 0.95}`, `unresolved_imports: {maximum: 0}`). Two kinds
+  of bound:
+  - absolute bounds on a measurement;
+  - against a quality baseline, bounds on the classified deltas: `lost: 0` for terms losing a
+    definition, a minimum coverage among new terms. Never a bound on the raw ratio delta, which a
+    denominator change moves.
+
+  Keep one threshold mechanism: METRIC001-013's policy keys become built-in budgets (the old keys
+  stay as aliases), not a second, competing setting. There are no default budgets, so the
+  metric-calibration item does not block this one. Outcomes:
+  - a breach is a finding of one new rule, at its severity, baselinable like any other;
+  - a budget on a measurement that was not taken is exit 2, never a pass;
+  - an unknown measurement name is a configuration error (GOV020).
+
+  Budgets on `new_unsatisfiable_classes`, `competency_question_pass_rate` and
+  `unreviewed_equivalence_mappings` wait for the SEM, CQ and ALIGN gates. *Done when:* the absolute
+  and delta bounds each have a passing and a failing fixture, the METRIC aliases leave
+  `differential.json` unchanged, and an untaken measurement exits 2.
+
+- [ ] **CTRF-REPORT: a CI test-result format.** This is OPS012 with a consumer: choose CTRF or
+  JUnit, not both. The mapping is the design: one test per (file, rule), `passed`, `failed` when it
+  has a gating finding, `skipped`, and `other` for a `failed` or `unsupported` execution, so an
+  infrastructure failure never reads as a failed test or as a pass. Durations need OPS011's opt-in
+  timing. *Done when:* every execution status has a fixture and the report validates against the
+  CTRF schema, vendored with its checksum as the SARIF schema is.
+
+- [ ] **Measure the blank-node identities SHACL with a background computes.**
+  `engine._shacl_with_background` computes a content-digest identity (`stable_blank_id`) for every
+  blank node the linted file mentions, in order to keep results whose foci are usually few. Time it
+  on a blank-node-heavy OWL file, where restrictions make up most of a TBox; if it matters, compute
+  identities only for the blank foci of the results.
 
 - [ ] **Run a deliberately small cross-platform smoke suite on Windows and macOS.** A Win32 mypy
   pass does not exercise multiprocessing, path handling, file permissions, or CLI encoding. Do not
@@ -389,21 +591,17 @@ Validation corpus (public; licences per repository):
   reproduces the counts from pinned sources and the release instructions require reviewing their
   diff.
 
-- [ ] **Decide the GitHub integration before implementing `--format github`.** GitHub workflow
-  annotations are capped, whereas SARIF upload offers richer code-scanning UX. Write a short ADR
-  comparing a native annotation formatter, documented SARIF upload, and both; choose one supported
-  path and its authentication/upload responsibility.
-  *Done when:* the ADR is accepted and, if a formatter is chosen, end-to-end escaping and annotation
-  limit tests exist.
-
 - [ ] **OPS006, OPS001, OPS011 and OPS018: version reports before enriching them.** Catalogue
   identity, per-rule counts, optional timing and a fuller explanation of exit code 2 (today the
   failed and unsupported rules are listed, but not why the run as a whole exited 2) are useful only
   with a clear compatibility contract. Publish
   a versioned JSON/SARIF extension policy first; timing must be opt-in and must not perturb default
-  deterministic output.
+  deterministic output. JSON's `schema_version` is 1 with no schema behind it: publish a JSON
+  Schema for the JSON report (with `measurements` once METRICS-ENGINE lands) and validate every
+  report shape against it, as `tests/test_sarif_schema.py` does for SARIF.
   *Done when:* report consumers can identify the catalogue and schema version, obtain deterministic
-  per-rule counts, and request timing without changing default output.
+  per-rule counts, and request timing without changing default output, and every JSON report shape
+  validates against the published schema.
 
 ## Decision gates — choose one product bet; do not start all of them
 
@@ -425,7 +623,12 @@ moves from `proposed` merely because it has an attractive title.
   practice, and a good first candidate: one SPARQL `SELECT ?answer` per `.rq` file, the question in
   a `# CQ:` comment and the expected set of answers in an `# expect: a | b` comment, evaluated
   against the import closure (`--follow-imports`, available since 0.6.0) and compared as
-  sets. *Gate:* accepted format and at least one public corpus that justifies maintaining it.
+  sets. An empty expected set is a legitimate answer, and a question with no expectation is CQ007
+  (no oracle), never CQ003 (unexpected empty result). Compare answers after normalising literals
+  (`"01"^^xsd:integer` and `"1"^^xsd:integer` are one value) and blank nodes; order matters only
+  under `ORDER BY`. Queries run in the bounded worker of the P1 SHACL item, since rdflib's SPARQL
+  has no timeout of its own. *Gate:* accepted format and at least one public corpus that justifies
+  maintaining it.
 - [ ] **Reasoner-backed semantics (`SEM*`).** Define supported reasoners/profiles, Docker versus
   local dependency model, reproducibility, timeout/failure behavior, and CI image ownership.
   *Gate:* accepted adapter contract and deterministic container fixtures. Recommended as the first
@@ -437,15 +640,26 @@ moves from `proposed` merely because it has an attractive title.
   the SEM001 fix of 0.10.2 generalised: a verdict only from a parsed report, every other outcome
   `failed`, `unsupported` or a timeout. Keep OWL *profile* compliance (SEM001) and *consistency*
   (SEM002, SEM003) as separate rules and say so in the README; a profile pass proves nothing about
-  consistency, and ELK (EL only) must not report "consistent" for an ontology outside EL.
+  consistency, and ELK (EL only) must not report "consistent" for an ontology outside EL. The
+  adapter's acceptance cases, each with its own expected rule and execution status, not just "some
+  finding": an unsatisfiable class in an otherwise consistent ontology (SEM003), an inconsistent
+  ontology (SEM002), an ontology outside the reasoner's profile (`unsupported`), malformed input,
+  a crashed Java process and a timeout (all `failed`). `robot reason` exits non-zero on an
+  inconsistent ontology, which is exactly the trap SEM001 fell into before 0.10.2.
 - [ ] **Policy packs and domain profiles.** The `obo` and `fair` opt-in families and profiles
   already exist, so this gate covers only what they do not: externally authored, versioned packs.
   Define profile ownership, rule-selection/override
   precedence, versioning, and how a pack is validated without weakening the core policy model.
+  Each pack, and each built-in profile, states the kind of ontology it is for (an OWL TBox,
+  instance data, a SKOS vocabulary, a SHACL-first graph) and which rules it leaves out as
+  inapplicable there, so a SKOS thesaurus is not judged by OWL modelling conventions.
   *Gate:* accepted pack format and two independently useful example profiles.
 - [ ] **Mapping and alignment (`ALIGN*`, 4 rules).** They need a mapping registry (SSSOM files or
   similar) as a second input. *Gate:* accepted input format; can share the two-input CLI design
-  with `COMP*`, so decide them together.
+  with `COMP*`, so decide them together. Semantics are relation-specific: `owl:equivalentClass` is
+  a logical axiom, `skos:exactMatch` and `skos:closeMatch` are not, and ALIGN010 must not reason
+  over SKOS links as if they were equivalences. ALIGN011 (dissimilar labels) stays an advisory
+  heuristic, because translated, abbreviated or historical labels differ on legitimate mappings.
 - [ ] **Network-dependent FAIR/IRI/GOV checks (`FAIR*`, `IRI007`, `GOV018`).** This conflicts with
   the present offline-first threat model. *Gate:* either a decision to reject it permanently, or an
   accepted opt-in isolated resolver design with allowlists, cache/privacy policy, and deterministic
@@ -481,8 +695,10 @@ moves from `proposed` merely because it has an attractive title.
 - **Changed-lines filtering and inline suppressions (OPS014–OPS016):** defer until baseline hygiene
   is complete and a source-region accuracy contract is stable; otherwise they hide findings using
   unreliable location data.
-- **More report formats (OPS012):** do not create JUnit/Markdown/HTML outputs without an identified
-  consumer. JSON and SARIF are the integration contracts to keep sound first.
+- **More report formats (OPS012):** do not create JUnit or HTML outputs without an identified
+  consumer. JSON and SARIF are the integration contracts to keep sound first. Markdown now has its
+  consumer (MARKDOWN-SUMMARY, P1) and a CI test format is CTRF-REPORT (P2), which takes JUnit's
+  place.
 - **Automatic fixes (`--fix`):** defer until findings carry structured evidence (the SHACL and
   baseline-identity items in P1); only round-trip-verified, meaning-preserving edits would ever
   qualify, and modelling or logical corrections (deleting an axiom that causes an inconsistency)
@@ -490,7 +706,8 @@ moves from `proposed` merely because it has an attractive title.
 - **Editor integration (a language server):** defer until source regions are exact for the
   formats it would serve; today they locate a term's occurrence, not the offending axiom.
 - **A single quality score, and AI-generated suggestions presented as checks:** rejected. A score
-  hides which dimension failed; generated text is not a deterministic verdict.
+  hides which dimension failed; generated text is not a deterministic verdict. The quality
+  observability items publish the vector of measurements and explicit budgets instead.
 - **Bulk implementation of proposed rules:** each needs an approved specification, positive and
   negative fixtures, expected confidence/severity, and an identified backend. A count of proposed
   rules is not a delivery plan.
@@ -499,7 +716,7 @@ moves from `proposed` merely because it has an attractive title.
 
 - [ ] Correct stale source comments: `src/ontolint/github.py` says findings "carry no source
   locations" (false since 0.3.0) and the module has no caller outside its own test until a
-  formatter exists. Either make it earn its place via the GitHub-integration ADR or delete it.
+  formatter exists. Either make it earn its place in GITHUB-ACTION (P1) or delete it.
 - [ ] Keep README, release instructions, policy schema, and report examples in the same change as
   any CLI/report-contract modification. Documentation-only corrections do not need a feature
   release, but behavior changes do.
@@ -520,6 +737,19 @@ again.
   otherwise; the process-wide socket block is defence in depth around a single-process CLI, and
   parsing moves to a worker process with `--max-parse-seconds`. Its proposed CLI subcommands and
   evidence model are design input for the COMP ADR and the P1 SHACL item, not tasks of their own.
+  Its fuller version (same date and target) was rechecked against 0.10.2 on 2026-11-10. Taken up
+  from it: SHACL validation has no time budget (reproduced; P1), named-graph provenance
+  (DATASET-PROVENANCE, P0), the single-file and multi-file fingerprint split (in the
+  baseline-identity item), a JSON Schema for the JSON report (OPS item, P2), the blank-node identity
+  cost (P2), and acceptance cases for the SEM, CQ, ALIGN and policy-pack gates. Checked and not
+  taken up:
+  - metamorphic tests exist: `test_properties_lint.py` covers triple order, blank-node labels,
+    the base IRI and the hash seed, and worker and in-process parses agree;
+  - configuration is validated (OPS008, GOV020), and import cycles terminate;
+  - its "rule-quality dashboard" is the corpus-count and metric-calibration items;
+  - its "execution manifest" is the per-rule `executions` plus exit 2;
+  - a language server, `--fix`, caching and changed-line filtering stay deferred, for the reasons
+    under "Explicitly deferred".
 
 - **Exit code 2 with `--fail-on never`:** decided and documented in the README exit-code table.
 - **License choice:** Apache-2.0. Only the copyright-holder attribution and the OOPS!/OntoSniff
