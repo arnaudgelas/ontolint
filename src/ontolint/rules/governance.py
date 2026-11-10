@@ -115,13 +115,20 @@ def _deprecated_usage(ctx: RuleContext) -> None:
                 for owner, owner_predicate in sorted(_list_owners(ctx, s), key=str):
                     focus = owning_term(g, owner)
                     if owner_predicate not in ANNOTATION_REFERENCES and not _foreign(ctx, focus):
-                        ctx.add("GOV001", focus, f"Deprecated term {term} appears in a list of {owner_predicate}.")
+                        ctx.add(
+                            "GOV001",
+                            focus,
+                            f"Deprecated term {term} appears in a list of {owner_predicate}.",
+                            subject=(term, "list", owner_predicate),
+                        )
                 continue
             if not _foreign(ctx, focus := owning_term(g, s)):
-                ctx.add("GOV001", focus, f"Deprecated term {term} appears as object of {p}.")
+                ctx.add(
+                    "GOV001", focus, f"Deprecated term {term} appears as object of {p}.", subject=(term, "object", p)
+                )
         for s, _o in g.subject_objects(term):
             if not _foreign(ctx, s):
-                ctx.add("GOV001", s, f"Deprecated property {term} used in assertion.")
+                ctx.add("GOV001", s, f"Deprecated property {term} used in assertion.", subject=(term, "predicate"))
 
 
 def _foreign(ctx: RuleContext, node: object) -> bool:
@@ -143,7 +150,7 @@ def _imports(ctx: RuleContext) -> None:
         relative: list[str] = []
         for imported in set(ctx.g.objects(ont, OWL.imports)):
             if not isinstance(imported, URIRef):
-                ctx.add("GOV002", ont, f"Non-IRI import target: {imported}.")
+                ctx.add("GOV002", ont, f"Non-IRI import target: {imported}.", subject=(imported,))
             elif (reference := relative_reference(str(imported), bases)) is not None:
                 relative.append(reference)
         if relative:
@@ -157,6 +164,7 @@ def _imports(ctx: RuleContext) -> None:
                 f"{len(relative)} owl:imports use relative references ({shown}{more}), which resolve differently "
                 "depending on where the file is read; import absolute IRIs and map them with a catalog.",
                 confidence="certain",
+                subject=(),
             )
 
 

@@ -105,7 +105,7 @@ def run(ctx: RuleContext) -> None:
     if not ctx.ontologies:
         ctx.add("ONT001", "(ontology)", "Missing owl:Ontology declaration.", confidence="certain")
     if len(ctx.ontologies) > 1:  # in an import closure, module headers are not counted (GraphContext.build)
-        ctx.add("ONT002", "(ontology)", f"{len(ctx.ontologies)} owl:Ontology declarations found.")
+        ctx.add("ONT002", "(ontology)", f"{len(ctx.ontologies)} owl:Ontology declarations found.", subject=())
     for ont in sorted(ctx.ontologies, key=str):
         nodes = describing_nodes(g, ont)  # the header, and any node naming it with owl:ontologyIRI
 
@@ -115,11 +115,13 @@ def run(ctx: RuleContext) -> None:
         if not has(META_LICENSE):
             spdx = ctx.policy.source.comment_license
             hint = f" The file names {spdx} only in an SPDX comment; state it with dcterms:license." if spdx else ""
-            ctx.add("ONT003", ont, f"Ontology has no license annotation.{hint}", confidence="certain")
+            ctx.add("ONT003", ont, f"Ontology has no license annotation.{hint}", confidence="certain", subject=())
         if not has((OWL.versionIRI, OWL.versionInfo)):
             ctx.add("ONT004", ont, "No versionIRI/versionInfo.")
-        missing = [name for name, found in _PROVENANCE if not has(found)]
+        missing = [(name, found) for name, found in _PROVENANCE if not has(found)]
         if missing:
-            ctx.add("ONT005", ont, f"Missing {' and '.join(missing)} provenance.")
+            names = " and ".join(name for name, _found in missing)
+            # The subject is the first predicate of each missing kind, not its name in the message.
+            ctx.add("ONT005", ont, f"Missing {names} provenance.", subject=[found[0] for _name, found in missing])
         if not has(ctx.descriptions):
             ctx.add("ONT006", ont, "Missing ontology description.")

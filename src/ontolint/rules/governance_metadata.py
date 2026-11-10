@@ -249,7 +249,7 @@ def _coverage(ctx: RuleContext, rule: str, predicates: tuple[Node, ...], what: s
     if MAJORITY_FACTOR * (len(terms) - len(missing)) < len(terms):
         return
     for term in missing:
-        ctx.add(rule, term, f"Term has no {what}, though most local terms do.")
+        ctx.add(rule, term, f"Term has no {what}, though most local terms do.", subject=())
 
 
 def _release_metadata(ctx: RuleContext) -> None:
@@ -279,10 +279,10 @@ def _obsolete_usage(ctx: RuleContext) -> None:
         for s, p in g.subject_predicates(term):
             if p in REFERENCE_ANNOTATIONS or s == term or s in obsolete or _is_deprecated(ctx, s):
                 continue
-            ctx.add("GOV013", s, f"Obsolete term {term} appears as object of {p}.")
+            ctx.add("GOV013", s, f"Obsolete term {term} appears as object of {p}.", subject=(term, p))
         for s, _o in g.subject_objects(term):
             if s not in obsolete and not _is_deprecated(ctx, s):
-                ctx.add("GOV013", s, f"Obsolete property {term} used in assertion.")
+                ctx.add("GOV013", s, f"Obsolete property {term} used in assertion.", subject=(term,))
 
 
 def _foreign_definitions(ctx: RuleContext) -> None:
@@ -297,4 +297,4 @@ def _foreign_definitions(ctx: RuleContext) -> None:
     }
     for term in sorted(declared, key=str):
         if _has_any(ctx, term, DEFINING_PREDICATES):
-            ctx.add("GOV014", term, f"Term is defined with axioms outside the base namespace {base}.")
+            ctx.add("GOV014", term, f"Term is defined with axioms outside the base namespace {base}.", subject=())

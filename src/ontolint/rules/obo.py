@@ -220,6 +220,7 @@ def _identifier_pattern(ctx: RuleContext, terms: list[URIRef], deprecated: froze
                 term,
                 f"OBO identifier {iri[len(OBO_NS) :]!r} does not follow the PREFIX_0000000 pattern.",
                 confidence="certain",
+                subject=(),
             )
 
 
@@ -232,7 +233,13 @@ def _required_metadata(ctx: RuleContext) -> None:
     for ontology in sorted(ctx.ontologies, key=str):
         for name, curie, predicates in required:
             if not _has_value(ctx.g, ontology, predicates):
-                ctx.add("OBO002", ontology, f"Ontology header has no {name} ({curie}).", confidence="certain")
+                ctx.add(
+                    "OBO002",
+                    ontology,
+                    f"Ontology header has no {name} ({curie}).",
+                    confidence="certain",
+                    subject=(predicates[0],),
+                )
 
 
 def _definitions(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
@@ -248,14 +255,20 @@ def _labels(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]
             continue
         labels = _texts(ctx.g, term, RDFS.label)
         if not labels:
-            ctx.add("OBO004", term, "Term has no rdfs:label.", confidence="certain")
+            ctx.add("OBO004", term, "Term has no rdfs:label.", confidence="certain", subject=())
         for label in labels:
             users[str(label), (label.language or "").lower()].add(term)
-    for (text, _language), sharing in sorted(users.items()):
+    for (text, language), sharing in sorted(users.items()):
         for term in sorted(sharing, key=str):
             others = ", ".join(str(t) for t in sorted(sharing - {term}, key=str))
             if others:
-                ctx.add("OBO004", term, f"Label {_quote(text)} is also used by {others}.", confidence="certain")
+                ctx.add(
+                    "OBO004",
+                    term,
+                    f"Label {_quote(text)} is also used by {others}.",
+                    confidence="certain",
+                    subject=(text, language),
+                )
 
 
 def _ro_duplicates(ctx: RuleContext, deprecated: frozenset[URIRef]) -> None:
@@ -278,6 +291,7 @@ def _ro_duplicates(ctx: RuleContext, deprecated: frozenset[URIRef]) -> None:
                     "OBO005",
                     prop,
                     f"Object property labelled {_quote(str(label))} duplicates the existing relation {ro}.",
+                    subject=(str(label), ro),
                 )
 
 
@@ -360,7 +374,9 @@ def _synonym_scope(ctx: RuleContext) -> None:
     for predicate in UNSCOPED_SYNONYMS:
         for s, o in sorted(ctx.g.subject_objects(predicate), key=lambda pair: (str(pair[0]), str(pair[1]))):
             if isinstance(s, URIRef) and ctx.local(s) and isinstance(o, Literal) and str(o).strip():
-                ctx.add("OBO009", s, f"Synonym {_quote(str(o))} ({predicate}) has no scope.")
+                ctx.add(
+                    "OBO009", s, f"Synonym {_quote(str(o))} ({predicate}) has no scope.", subject=(predicate, str(o))
+                )
 
 
 def _module_imports(ctx: RuleContext) -> None:
@@ -368,7 +384,9 @@ def _module_imports(ctx: RuleContext) -> None:
         if str(target) in FOUNDATIONAL_IMPORTS:
             continue
         if isinstance(target, URIRef) and any(p.fullmatch(str(target)) for p in FULL_IMPORT_PATTERNS):
-            ctx.add("OBO010", ontology, f"Import {target} is a whole ontology, not an import module.")
+            ctx.add(
+                "OBO010", ontology, f"Import {target} is a whole ontology, not an import module.", subject=(target,)
+            )
 
 
 def _purl_pattern(ctx: RuleContext) -> None:
@@ -380,6 +398,7 @@ def _purl_pattern(ctx: RuleContext) -> None:
                 ontology,
                 f"Ontology IRI {ontology} does not follow the OBO PURL pattern {OBO_NS}<id>.owl.",
                 confidence="certain",
+                subject=(),
             )
         for version in _ordered(ctx.g.objects(ontology, OWL.versionIRI)):
             found = VERSION_PATTERN.fullmatch(str(version))
@@ -389,6 +408,7 @@ def _purl_pattern(ctx: RuleContext) -> None:
                     ontology,
                     f"Version IRI {version} does not follow {OBO_NS}<id>/releases/YYYY-MM-DD/<id>.owl.",
                     confidence="certain",
+                    subject=(OWL.versionIRI, version),
                 )
 
 
@@ -400,9 +420,14 @@ def _label_conventions(ctx: RuleContext, terms: list[URIRef], deprecated: frozen
             text = str(label)
             shown = _quote(text)
             if text != text.strip() or "  " in text:
-                ctx.add("OBO012", term, f"Label {shown} has leading, trailing or repeated whitespace.")
+                ctx.add(
+                    "OBO012",
+                    term,
+                    f"Label {shown} has leading, trailing or repeated whitespace.",
+                    subject=(text, "whitespace"),
+                )
             if "_" in text:
-                ctx.add("OBO012", term, f"Label {shown} contains an underscore.")
+                ctx.add("OBO012", term, f"Label {shown} contains an underscore.", subject=(text, "underscore"))
 
 
 def run(ctx: RuleContext) -> None:

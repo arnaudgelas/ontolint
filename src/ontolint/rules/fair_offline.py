@@ -220,6 +220,7 @@ def _persistent_iris(ctx: RuleContext) -> None:
                     ontology,
                     f"{kind} {iri} is on {reason}, not a persistent identifier.",
                     confidence="certain",
+                    subject=(iri,),
                 )
 
 
@@ -244,12 +245,14 @@ def _licenses(ctx: RuleContext) -> None:
                         ontology,
                         f"Licence {_quote(str(value))} is a text literal, not a licence IRI.",
                         confidence="certain",
+                        subject=(value,),
                     )
                 elif isinstance(value, URIRef) and not _known_license(str(value)):
                     ctx.add(
                         "FAIR006",
                         ontology,
                         f"Licence IRI {value} is outside the well-known licence families.",
+                        subject=(value,),
                     )
 
 
@@ -282,7 +285,7 @@ def _versions(ctx: RuleContext) -> None:
                 )
             else:
                 continue
-            ctx.add("FAIR007", ontology, message, confidence="certain")
+            ctx.add("FAIR007", ontology, message, confidence="certain", subject=(version,))
 
 
 # --- FAIR011 -----------------------------------------------------------------------------------
@@ -330,28 +333,28 @@ _TEXT_PATTERNS = (
 )
 
 
-def _identifier_problems(value: Node) -> list[tuple[str, str]]:
-    """``(kind, problem)`` pairs for every malformed ORCID or ROR identifier carried by ``value``."""
+def _identifier_problems(value: Node) -> list[tuple[str, str, str]]:
+    """``(kind, identifier, problem)`` for every malformed ORCID or ROR identifier carried by ``value``."""
     text = str(value).strip()
     if isinstance(value, URIRef):
         orcid, ror = ORCID_URL.fullmatch(text), ROR_URL.fullmatch(text)
         problems = [
-            *([("ORCID iD", orcid_problem(orcid.group(1)))] if orcid else []),
-            *([("ROR identifier", ror_problem(ror.group(1)))] if ror else []),
+            *([("ORCID iD", orcid.group(1), orcid_problem(orcid.group(1)))] if orcid else []),
+            *([("ROR identifier", ror.group(1), ror_problem(ror.group(1)))] if ror else []),
         ]
-        return [(kind, problem) for kind, problem in problems if problem]
+        return [(kind, identifier, problem) for kind, identifier, problem in problems if problem]
     if not isinstance(value, Literal):
         return []
-    found: list[tuple[str, str]] = []
+    found: list[tuple[str, str, str]] = []
     tails = [(k, t.rstrip("."), c) for k, c, pattern in _TEXT_PATTERNS for t in pattern.findall(text)]
     for kind, tail, check in tails:
         problem = check(tail)
         if problem:
-            found.append((kind, problem))
+            found.append((kind, tail, problem))
     for bare in ORCID_BARE.findall(text):
         problem = orcid_problem(bare)
         if problem and not any(tail.startswith(bare) for _, tail, _ in tails):
-            found.append(("ORCID iD", problem))
+            found.append(("ORCID iD", bare, problem))
     return found
 
 
@@ -363,12 +366,13 @@ def _person_identifiers(ctx: RuleContext) -> None:
             if not isinstance(value, URIRef | Literal) or (subject, value) in seen:
                 continue
             seen.add((subject, value))
-            for kind, problem in _identifier_problems(value):
+            for kind, identifier, problem in _identifier_problems(value):
                 ctx.add(
                     "FAIR011",
                     subject,
                     f"{kind} in {_quote(str(value))} {problem}.",
                     confidence="certain",
+                    subject=(str(value), kind, identifier),
                 )
 
 

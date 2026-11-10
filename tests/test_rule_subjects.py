@@ -236,3 +236,75 @@ def test_align013_tells_equivalence_predicates_from_both_hierarchy_directions() 
         ("a", ("equivalence", "b")),
         ("a", ("skos:broadMatch", "skos:narrowMatch", "b")),
     }
+
+
+# --- OBO, metadata, governance and FAIR --------------------------------------------------------------
+
+DCT = "http://purl.org/dc/terms/"
+
+
+def _dct(found: set[tuple[str, tuple[str, ...]]]) -> set[tuple[str, tuple[str, ...]]]:
+    return {(focus, tuple(part.replace(DCT, "dcterms:") for part in about)) for focus, about in found}
+
+
+def test_obo002_names_each_missing_header_field_by_its_predicate() -> None:
+    assert _dct(subjects("OBO002", "<https://example.test/o> a owl:Ontology .")) == {
+        ("https://example.test/o", ("dcterms:title",)),
+        ("https://example.test/o", ("dcterms:description",)),
+        ("https://example.test/o", ("dcterms:license",)),
+    }
+
+
+def test_obo011_tells_the_ontology_iri_from_each_version_iri() -> None:
+    turtle = "<https://example.test/o> a owl:Ontology ; owl:versionIRI <https://example.test/o/1> ."
+    assert subjects("OBO011", turtle) == {
+        ("https://example.test/o", ()),
+        ("https://example.test/o", ("owl:versionIRI", "https://example.test/o/1")),
+    }
+
+
+def test_obo004_and_obo012_name_the_label_and_the_problem() -> None:
+    turtle = """
+        <http://purl.obolibrary.org/obo/X_0000001> a owl:Class ; rdfs:label " a_b"@en .
+        <http://purl.obolibrary.org/obo/X_0000002> a owl:Class ; rdfs:label " a_b"@en .
+        <http://purl.obolibrary.org/obo/X_0000003> a owl:Class .
+    """
+    obo = "http://purl.obolibrary.org/obo/"
+    assert subjects("OBO012", turtle) >= {
+        (f"{obo}X_0000001", (" a_b", "whitespace")),
+        (f"{obo}X_0000001", (" a_b", "underscore")),
+    }
+    assert subjects("OBO004", turtle) == {
+        (f"{obo}X_0000001", (" a_b", "en")),
+        (f"{obo}X_0000002", (" a_b", "en")),
+        (f"{obo}X_0000003", ()),
+    }
+
+
+def test_ont005_names_the_missing_provenance_by_predicate() -> None:
+    assert _dct(subjects("ONT005", "<https://example.test/o> a owl:Ontology .")) == {
+        ("https://example.test/o", ("dcterms:creator", "dcterms:created")),
+    }
+    with_creator = '<https://example.test/o> a owl:Ontology ; dcterms:creator "A" .'
+    assert _dct(subjects("ONT005", with_creator)) == {("https://example.test/o", ("dcterms:created",))}
+
+
+def test_gov001_tells_a_list_member_an_object_and_a_predicate_apart() -> None:
+    turtle = """
+        ex:old a owl:Class ; owl:deprecated true .
+        ex:oldp a owl:ObjectProperty ; owl:deprecated true .
+        ex:A a owl:Class ; rdfs:subClassOf ex:old ; owl:unionOf ( ex:old ex:B ) ; ex:oldp ex:B .
+    """
+    found = {about for focus, about in subjects("GOV001", turtle) if focus == "A"}
+    assert found == {("old", "object", "rdfs:subClassOf"), ("old", "list", "owl:unionOf"), ("oldp", "predicate")}
+
+
+def test_fair011_names_the_value_kind_and_identifier() -> None:
+    iri = "<https://example.test/o> a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0099> ."
+    assert subjects("FAIR011", iri) == {
+        ("https://example.test/o", ("https://orcid.org/0000-0002-1825-0099", "ORCID iD", "0000-0002-1825-0099")),
+    }
+    # Two identifiers failing the same way give one message, hence one finding: it keeps the least subject.
+    text = "0000-0002-1825-0099 and 0000-0002-1825-0098"
+    found = subjects("FAIR011", f'<https://example.test/o> a owl:Ontology ; dcterms:creator "{text}" .')
+    assert found == {("https://example.test/o", (text, "ORCID iD", "0000-0002-1825-0098"))}
