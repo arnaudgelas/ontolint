@@ -1,6 +1,6 @@
 [project]
 name = "ontolint"
-version = "0.9.1"
+version = "0.10.0"
 description = "Offline ontology-quality linter for RDF, OWL, SKOS, and SHACL graphs"
 readme = "README.md"
 license = "Apache-2.0"
