@@ -166,3 +166,24 @@ def test_a_library_with_other_triples_is_shapes_and_background(project: Path) ->
     assert set(library.subjects(RDF.type, SH.NodeShape)) == {URIRef("https://ex.test/L")}
     assert not set(background.subjects(RDF.type, SH.NodeShape))
     assert not set(background.subjects(SH.path, None))  # the inline property shape stays with its shape
+
+
+def test_evidence_names_data_values_in_the_merged_graph_and_keeps_the_filter(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Both ex:a (data) and ex:x (background only) know a blank node; only ex:a's result is kept, and its blank
+    # value has the same content-stable name with the ontology merged in as without it.
+    (project / "onto.ttl").write_text(ONTO + "<https://ex.test/x> <https://ex.test/knows> [] .\n", encoding="utf-8")
+    shapes = OBJECT_SHAPES.replace("sh:targetObjectsOf", "sh:targetSubjectsOf").replace(
+        "sh:path <https://ex.test/code> ; sh:minCount 1", "sh:path <https://ex.test/knows> ; sh:nodeKind sh:IRI"
+    )
+    (project / "shapes.ttl").write_text(shapes, encoding="utf-8")
+    (project / "data.ttl").write_text("<https://ex.test/a> <https://ex.test/knows> [ <https://ex.test/n> 1 ] .\n")
+    _, without, _ = _shacl(capsys, project / "data.ttl", project / "shapes.ttl", "--fail-on", "never")
+    _, merged, _ = _shacl(
+        capsys, project / "data.ttl", project / "shapes.ttl", "--follow-imports", "--fail-on", "never"
+    )
+    assert [f["focus"] for f in merged] == [f["focus"] for f in without] == ["https://ex.test/a"]
+    assert merged[0]["evidence"]["value"].startswith("_:")
+    assert merged[0]["evidence"] == without[0]["evidence"]
+    assert merged[0]["evidence"]["sourceConstraintComponent"] == str(SH.NodeKindConstraintComponent)

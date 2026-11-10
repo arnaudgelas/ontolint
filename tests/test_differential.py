@@ -36,6 +36,13 @@ other non-zero exit fails the rule instead.  The fake ROBOT of the ``json_robot_
 real violation list (it wrote "profile problem", which is exactly the ROBOT failure no longer reported as
 a finding), and SEM001's focus is ``(ontology)`` instead of the file's path.  Only ``json_robot_fail``
 changed: its exit code and every other finding were shown identical before it was re-pinned.
+
+Deliberate golden update (SHACL001 evidence): each SHACL001 finding gained the optional JSON key
+``evidence``, every field of its SHACL validation result.  It is additive, like ``path``, so the
+legacy view drops both and ``legacy_rules.json`` did not move; neither did any message, focus,
+severity, fingerprint, text report or exit code.  The only SHACL001 finding in this snapshot is
+``json_clean_shacl_violation``'s, and only that case's two full-output hashes (``to_file.file`` and
+``to_stdout.stdout``) changed; a JSON diff of the two snapshots showed nothing else.
 """
 
 from __future__ import annotations
@@ -67,6 +74,8 @@ ROBOT_REPORT = (
 FIXTURES = Path(__file__).parent / "fixtures"
 GOLDEN = Path(__file__).parent / "golden" / "differential.json"
 UPDATE = os.environ.get("ONTOLINT_UPDATE_GOLDEN") == "1"
+ADDITIVE_FINDING_KEYS = frozenset({"path", "evidence"})
+"""JSON finding keys added after the historical report; the legacy view leaves them out."""
 KITCHEN_BASE = "https://example.test/onto#"
 MAX_VERBATIM = 3000
 
@@ -246,7 +255,7 @@ def _cli_snapshot(name: str, tmp: Path, capsys: pytest.CaptureFixture[str], monk
 def _legacy_json_view(stdout: str, tmp: Path) -> str:
     """The JSON report reduced to the historical ``summary``/``findings`` keys, as the old CLI printed it."""
     document = json.loads(stdout)
-    findings = [{k: v for k, v in f.items() if k != "path"} for f in document["findings"]]
+    findings = [{k: v for k, v in f.items() if k not in ADDITIVE_FINDING_KEYS} for f in document["findings"]]
     legacy = json.dumps({"summary": document["summary"], "findings": findings}, indent=2) + "\n"
     return _normalise(legacy, tmp)
 

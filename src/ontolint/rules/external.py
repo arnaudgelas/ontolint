@@ -15,11 +15,20 @@ printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection nev
   its ``sh:focusNode`` (a blank node by its content-stable id), with the result messages joined by ``; `` and
   ``[shape: <source shape>]``.  The severity is the result's: ``sh:Violation`` error, ``sh:Warning`` warning,
   ``sh:Info`` info, any other value error with ``(severity <value>)`` appended; the spec's ``error`` is only the
-  default shown in rule listings.  A non-conforming report without result nodes gives one error on
-  ``(shapes)``.  A shapes graph refused by the pre-check (unserialisable IRI, cyclic, shared or overlong
-  ``rdf:list``) or a pySHACL crash makes the rule ``failed`` (no finding, TOOL001 line, exit ``2``).  Confidence
-  ``certain``: the verdict is pySHACL's, on the user's own shapes.  Why error: a violated shape is a contract the
-  user wrote; a shape that means less says so with ``sh:severity``.
+  default shown in rule listings.  Each finding's ``evidence`` (JSON ``evidence``, SARIF ``properties.evidence``,
+  never text) holds every property of its result under its SHACL name, in this order and only when present:
+  ``focusNode``, ``resultPath``, ``value``, ``sourceShape``, ``sourceConstraintComponent``, ``sourceConstraint``,
+  ``detail``, ``resultMessage`` (sorted, without language tags), ``resultSeverity`` (the original IRI).  IRIs are
+  plain, blank nodes the content-stable ``_:`` id (data terms in the data graph, shapes terms in the shapes graph),
+  literals one-line N-Triples, a complex path SPARQL 1.1 property-path syntax, or ``(malformed path)`` when it
+  does not parse or exceeds 32 levels or 1,000 nodes; ``detail`` nests the ``sh:detail`` results, sorted, at most
+  8 deep, never around a cycle, and each of them is also a finding of its own.  Findings tied on focus and message
+  are ordered by their evidence, since pySHACL's result order depends on the hash seed.  The evidence is not part
+  of the finding's identity: messages and fingerprints are unchanged.  A non-conforming report without result
+  nodes gives one error on ``(shapes)``, without evidence.  A shapes graph refused by the pre-check
+  (unserialisable IRI, cyclic, shared or overlong ``rdf:list``) or a pySHACL crash makes the rule ``failed`` (no
+  finding, TOOL001 line, exit ``2``).  Confidence ``certain``: the verdict is pySHACL's, on the user's own shapes.
+  Why error: a violated shape is a contract the user wrote; a shape that means less says so with ``sh:severity``.
 * **INPUT001.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or
   unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without
   ``--convert-with-robot`` (``UnsupportedSyntax``; the message names the flag and suggests ``robot convert``) or

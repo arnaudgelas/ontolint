@@ -225,9 +225,10 @@ case a `Rule execution:` block is appended.
   scope, requirements, suggestion), `execution_summary` and per-file `files[].executions`. A
   finding whose message abbreviates a tool's output also carries the full output in `details`
   (`SEM001`: ROBOT's profile report, whose violations the message groups by kind). A finding
-  whose backend returns a structured result carries it as an `evidence` object after `details`;
-  it is not part of the finding's identity, so fingerprints and baselines ignore it. In a dataset
-  with named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
+  whose backend returns a structured result carries it as an `evidence` object after `details`
+  (`SHACL001`: every field of the SHACL validation result, see "Optional SHACL validation"); it is
+  not part of the finding's identity, so fingerprints and baselines ignore it. In a dataset with
+  named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
   `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
   `artifactLocation` on every result (and `properties.details`, `properties.evidence` and
@@ -429,6 +430,26 @@ Each SHACL result becomes a `SHACL001` finding at the result's own severity:
 warnings-only data passes the default `--fail-on error`. A custom severity is
 reported as `error` and named in the message. Blank-node shapes and focus nodes
 are named by a content-stable identity, so baselines keep matching across runs.
+
+In JSON and SARIF (not in text), each `SHACL001` finding also carries the whole result as
+`evidence` (`properties.evidence` in SARIF), so two violations of one shape on one node, which
+share their message, still say which value or path to fix. Its keys are the SHACL names of the
+result's properties, in this order, each present only when the report has it: `focusNode`,
+`resultPath`, `value`, `sourceShape`, `sourceConstraintComponent`, `sourceConstraint` (SPARQL-based
+constraints), `detail`, `resultMessage` (every message, sorted, without language tags) and
+`resultSeverity` (the original IRI, also for a custom severity). An IRI is written as is, a blank
+node by the same content-stable `_:` identity as a focus, and a literal as one N-Triples term
+on one line (`"x"`, `"5"^^<http://www.w3.org/2001/XMLSchema#integer>`, `"chat"@fr`, with `\"`,
+`\\`, `\n` and `\r` escaped), so a literal focus is `"x"` in the evidence but `x` in `focus`.
+A path other than a single predicate is written in SPARQL property-path syntax (`^<p>`,
+`<a>/<b>`, `<a>|<b>*`); a malformed, cyclic, or over-deep or over-large one is
+`(malformed path)`. `detail` lists the nested results of a `sh:node` (or
+similar) violation as evidence objects, sorted, at most 8 levels deep. pySHACL types those nested
+results as validation results too, so each is also a finding of its own, as before. The evidence
+copies each value in full, so a report with many results on long literals grows accordingly.
+Findings with the same message are ordered by their evidence, so the output no longer depends on
+pySHACL's hash-seed-dependent result order. The message, focus, severity and fingerprint are
+unchanged: a baseline still matches by message, and so accepts every result that shares one.
 
 The data graph of a TriG, N-Quads or JSON-LD dataset is the union of its graphs, as for every
 other rule: SHACL defines the validation of one data graph, and a value typed in one graph and

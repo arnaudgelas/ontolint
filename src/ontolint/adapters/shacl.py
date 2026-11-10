@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from dataclasses import dataclass, field
 
-from rdflib import BNode, Graph, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.extras.shacl import SHACLPathError, parse_shacl_path
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
-from ontolint.models import Finding
+from ontolint.models import Evidence, EvidenceValue, Finding
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import stable_blank_id
 
@@ -24,6 +26,33 @@ _BAD_IRI_CHARS = frozenset('<>" {}|\\^`')
 
 SEVERITIES: dict[Node, str] = {SH.Violation: "error", SH.Warning: "warning", SH.Info: "info"}
 """Finding severity for each standard ``sh:resultSeverity``; any other (custom) severity is an error."""
+
+MAX_PATH_DEPTH = 32
+"""Deepest nesting of SHACL path constructors spelled in evidence; a deeper ``sh:resultPath`` is malformed."""
+MAX_PATH_SIZE = 1_000
+"""Most path nodes and list cells walked for one ``sh:resultPath``, counted again each time a shared part is."""
+MAX_DETAIL_DEPTH = 8
+"""Deepest ``sh:detail`` nesting copied into evidence; the results below it are still findings of their own."""
+MALFORMED_PATH = "(malformed path)"
+"""The ``resultPath`` evidence of a path that is not a well-formed, bounded SHACL path."""
+
+_FIELDS = (
+    ("focusNode", SH.focusNode),
+    ("resultPath", SH.resultPath),
+    ("value", SH.value),
+    ("sourceShape", SH.sourceShape),
+    ("sourceConstraintComponent", SH.sourceConstraintComponent),
+    ("sourceConstraint", SH.sourceConstraint),
+    ("detail", SH.detail),
+    ("resultMessage", SH.resultMessage),
+    ("resultSeverity", SH.resultSeverity),
+)
+"""Each evidence key and the result property it holds, in the order of the SHACL result table (SHACL 3.6.2)."""
+EVIDENCE_FIELDS = frozenset(predicate for _key, predicate in _FIELDS)
+"""Every validation result property SHACL001 keeps (all but ``rdf:type``)."""
+_RESULT_KEY = ("sourceShape", "sourceConstraintComponent", "resultPath", "value", "sourceConstraint")
+_PATH_LINKS = (SH.inversePath, SH.alternativePath, SH.zeroOrMorePath, SH.oneOrMorePath, SH.zeroOrOnePath, RDF.first)
+"""The path constructors (and the list items of a sequence or alternative) nested one level below a path node."""
 
 
 class ShapesRejected(ValueError):
@@ -120,6 +149,111 @@ def _name(graph: Graph, node: Node | None) -> str:
     return str(node)
 
 
+_NT_ESCAPES = str.maketrans({"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r"})
+"""What N-Triples escapes in a quoted string (``Literal.n3()`` would write a multi-line value as a long string)."""
+
+
+def ntriples_literal(literal: Literal) -> str:
+    """``literal`` as an N-Triples term on one line: quoted, then ``@lang`` or ``^^<datatype>`` when it has one."""
+    quoted = f'"{str(literal).translate(_NT_ESCAPES)}"'
+    if literal.language:
+        return f"{quoted}@{literal.language}"
+    return f"{quoted}^^<{literal.datatype}>" if literal.datatype else quoted
+
+
+def _term(graph: Graph, node: Node) -> str:
+    """A data term as evidence: a literal in N-Triples (never confused with an IRI), any other node as :func:`_name`."""
+    return ntriples_literal(node) if isinstance(node, Literal) else _name(graph, node)
+
+
+def _check_path(graph: Graph, node: Node) -> None:
+    """Raise :class:`SHACLPathError` unless the path below ``node`` is acyclic and within the depth and size bounds.
+
+    rdflib's parser recurses once per nesting level and expands a shared part each time it is reached, and
+    the report is input like any other graph, so this walk comes first (iteratively).
+    """
+    stack: list[tuple[Node, int, frozenset[Node]]] = [(node, 0, frozenset())]
+    size = 0
+    while stack:
+        current, depth, above = stack.pop()
+        size += 1
+        if size > MAX_PATH_SIZE or depth > MAX_PATH_DEPTH or current in above:
+            raise SHACLPathError("the path is cyclic, too deep or too large")
+        if isinstance(current, BNode):
+            above |= {current}
+            stack.extend((child, depth + 1, above) for link in _PATH_LINKS for child in graph.objects(current, link))
+            stack.extend((tail, depth, above) for tail in graph.objects(current, RDF.rest))
+
+
+def _path_text(report: Graph, sg: Graph, node: Node) -> str:
+    """``sh:resultPath`` as evidence: a predicate path's IRI, any other path in SPARQL 1.1 property-path syntax."""
+    if isinstance(node, URIRef):
+        return str(node)
+    for graph in (report, sg):  # pySHACL copies a complex path into the report; the shapes graph is a fallback
+        try:
+            _check_path(graph, node)
+            return parse_shacl_path(graph, node).n3()
+        except (SHACLPathError, TypeError, ValueError):
+            continue
+    return MALFORMED_PATH
+
+
+def _canonical(evidence: Evidence) -> str:
+    """The sort key of an evidence object: its JSON, keys in field order, characters unescaped (code-point order)."""
+    return json.dumps(evidence, ensure_ascii=False)
+
+
+@dataclass(frozen=True)
+class _Report:
+    """A validation report with the graphs its terms are named in."""
+
+    graph: Graph
+    data: Graph
+    shapes: Graph
+
+
+def _evidence(report: _Report, result: Node, depth: int = 0, above: frozenset[Node] = frozenset()) -> Evidence:
+    """Every property of one validation result, keyed by its SHACL name; a property the report lacks is omitted.
+
+    Data terms (focus node, value) are named in the data graph and shapes terms in the shapes graph, as the
+    finding names them.  ``sh:detail`` results are nested, sorted, at most :data:`MAX_DETAIL_DEPTH` deep and
+    never around a cycle.
+    """
+    evidence: dict[str, EvidenceValue] = {}
+    for key, predicate in _FIELDS:
+        values = list(report.graph.objects(result, predicate))
+        if not values:
+            continue
+        if key == "resultMessage":  # the lexical forms, as in the finding's message (language tags dropped)
+            evidence[key] = tuple(sorted(map(str, values)))
+        elif key == "detail":
+            inside = above | {result}
+            nested = (
+                [_evidence(report, d, depth + 1, inside) for d in values if d not in inside]
+                if depth < MAX_DETAIL_DEPTH
+                else []
+            )
+            if nested:
+                evidence[key] = tuple(sorted(nested, key=_canonical))
+        # The single-valued fields below take one value, arbitrarily, if a (non-pySHACL) report gives several.
+        elif key in ("focusNode", "value"):
+            evidence[key] = _term(report.data, values[0])
+        elif key == "resultPath":
+            evidence[key] = _path_text(report.graph, report.shapes, values[0])
+        else:
+            evidence[key] = _name(report.shapes, values[0])
+    return evidence
+
+
+def shacl_result_key(evidence: Evidence) -> tuple[str, ...]:
+    """What tells one SHACL result from another of the same shape on the same focus, ``""`` for a missing part.
+
+    ``(sourceShape, sourceConstraintComponent, resultPath, value, sourceConstraint)``: the structured subject of a
+    SHACL001 finding, independent of the message wording.
+    """
+    return tuple(value if isinstance(value := evidence.get(key, ""), str) else "" for key in _RESULT_KEY)
+
+
 def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
     """Validate ``g`` against ``sg`` with pySHACL (imported lazily; required only with shapes)."""
     try:
@@ -145,7 +279,8 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
         return []
     if not isinstance(report, Graph):
         raise RuntimeError(f"pySHACL returned an unexpected report type: {type(report).__name__}")
-    results: list[Finding] = []
+    keyed: list[tuple[tuple[str, str, str], Finding]] = []
+    graphs = _Report(report, g, sg)
     for result in report.subjects(RDF.type, SH.ValidationResult):
         focus = _name(g, next(report.objects(result, SH.focusNode), None))
         message = "; ".join(sorted(map(str, report.objects(result, SH.resultMessage)))) or "SHACL constraint violation"
@@ -154,7 +289,12 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
         severity = SEVERITIES.get(level, "error")
         if level not in SEVERITIES:
             message += f" (severity {level})"
-        results.append(Finding("SHACL001", severity, focus, f"{message} [shape: {src}]", FIXES["SHACL001"], "certain"))
+        message = f"{message} [shape: {src}]"
+        evidence = _evidence(graphs, result)
+        finding = Finding("SHACL001", severity, focus, message, FIXES["SHACL001"], "certain", evidence=evidence)
+        keyed.append(((focus, message, _canonical(evidence)), finding))
+    # pySHACL's result order depends on the hash seed; findings tied on their message differ in evidence.
+    results = [finding for _key, finding in sorted(keyed, key=lambda pair: pair[0])]
     if not results:
         results.append(
             Finding(

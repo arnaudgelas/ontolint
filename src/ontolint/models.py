@@ -86,7 +86,7 @@ class Finding:
     related: tuple[str, ...] = field(default=(), compare=False)
     """Other terms the finding is about (the rest of a collision), used to place it in modules; never rendered."""
     evidence: Evidence | None = field(default=None, compare=False)
-    """The backend's structured result behind the finding, keyed by its own field names; JSON and SARIF only."""
+    """The backend's structured result (SHACL001: every field of the SHACL validation result); JSON and SARIF only."""
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-ready representation with stable field names (``details`` and ``evidence`` only when set)."""
