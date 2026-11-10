@@ -6,25 +6,33 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the next feature release (0.10.0; 0.8.0 shipped, and 0.9.0 was tagged, while it was still
-open). `P1` is the next milestone after P0. `P2` is worthwhile only after the preceding work is
+blocks the next feature release (0.10.0; 0.8.0 shipped, and 0.9.0 was tagged but not published,
+while it was still open). `P1` is the next milestone after P0. `P2` is worthwhile only after the preceding work is
 complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
 record.
 
+## Hotfix
+
+- [ ] **Publish the 0.9.0 code as 0.9.1.** The 0.9.0 release run (42694579076, 2026-11-10) failed
+  at the CodeQL gate ("no completed CodeQL scan on 98b82f6"): `main` was pushed with a TODO.md
+  commit on top of the tagged one, and CodeQL scans only the head of a push. Build, Publish and
+  Verify were skipped, PyPI still shows 0.8.0, and the `tags` ruleset refuses to move `v0.9.0`.
+  0.9.1 is the same code from a release commit that is the head of its push;
+  `docs/releasing.md` now states that rule. *Done when:* 0.9.1 is on PyPI and its `verify` job,
+  the first to check the PEP 740 attestations, passed.
+
 ## Recently done
 
 0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
 release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). 0.9.0 was tagged the same
-day (`98b82f6`) and pushed with `main`; its release run (42694579076, started 2026-11-10) was
-still in its CodeQL gate when last checked, and PyPI still showed 0.8.0: approve "Publish to PyPI"
-and confirm the upload. Kept only so the next audit can confirm them, then delete these entries. Leftovers from each are in the open items
+day (`98b82f6`) and pushed, but its release run failed before publishing; the same code ships as
+0.9.1 (see "Hotfix"). Kept only so the next audit can confirm them, then delete these entries. Leftovers from each are in the open items
 below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
-- 0.9.0 (`98b82f6`, tag `v0.9.0`), pushed; release run 42694579076 in progress, confirm it and
-  the PyPI upload:
+- 0.9.0 (`98b82f6`, tag `v0.9.0`), tagged and pushed but not published; released as 0.9.1:
   - borrowed vocabulary terms are not the ontology's own (`f31e419`): Dublin Core, SKOS, DCAT, IAO
     and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
     METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
@@ -260,7 +268,7 @@ Validation corpus (public; licences per repository):
     pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
     origin is not recorded;
   - verifying the attestation in the release `verify` job: done for 0.9.0 (`7e65c06`);
-    it is proven once the 0.9.0 release run (42694579076) passes `verify`.
+    not yet proven: the 0.9.0 run never reached `verify`, so the 0.9.1 run is the first.
   *Done when:* the copyright-holder question has a written answer in the repository, and a release run
   fails if the published files' attestations do not verify.
 

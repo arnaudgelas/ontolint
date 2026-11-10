@@ -24,14 +24,18 @@ section by hand if a subject reads badly; the script will not touch earlier sect
 1. Run the script, then review `git diff` and edit `CHANGELOG.md` if needed.
 2. `git commit -am 'chore: release X.Y.Z'`
 3. `git tag -a vX.Y.Z -m 'ontolint X.Y.Z'`
-4. `git push && git push origin vX.Y.Z`
+4. `git push && git push origin vX.Y.Z`, with the release commit as the head of `main`: do not push
+   it together with later commits. CodeQL scans only the head of each push, so a tagged commit
+   with commits pushed on top of it is never scanned and its release run fails at **CodeQL**
+   (0.9.0 did). To release several versions, push `main` up to each release commit and its tag,
+   one at a time, and wait for CodeQL to finish on each before the next push.
 
 Pushing the tag starts `.github/workflows/release.yml`:
 
 1. **Test** runs the CI workflow, that is the validation gate (`scripts/gate.py`).
 2. **CodeQL** waits for the CodeQL scans of the tagged commit and fails unless every one succeeded.
-   CodeQL scans pushes to `main`, so tag a commit that is on `main` and push both together
-   (step 4 above); a tag on an unscanned commit never releases.
+   CodeQL scans the head of each push to `main`, so tag the head and push both together (step 4
+   above); a tag on an unscanned commit never releases, and the tag cannot be moved afterwards.
 3. **Build** checks that the tag equals the version in `pyproject.toml` and builds the
    distributions.
 4. **Publish** uploads them to PyPI from the `pypi` environment (Trusted Publishing).
