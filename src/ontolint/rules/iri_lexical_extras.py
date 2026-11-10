@@ -148,6 +148,7 @@ def _mixed_naming(ctx: RuleContext) -> None:
             namespace,
             f"Namespace mixes {len(opaque[namespace])} opaque local names (e.g. {', '.join(first_opaque)}) "
             f"and {len(readable[namespace])} readable ones (e.g. {', '.join(first_readable)}).",
+            subject=(),
         )
 
 
@@ -165,6 +166,6 @@ def _label_text(ctx: RuleContext) -> None:
             for label in sorted((o for o in ctx.g.objects(term, predicate) if isinstance(o, Literal)), key=str):
                 value = str(label)
                 if MARKUP.search(_without_disambiguator(value)):
-                    ctx.add("LEX018", term, f"Label {value!r} contains markup or a character entity.")
+                    ctx.add("LEX018", term, f"Label {value!r} contains markup or a character entity.", subject=(value,))
                 if unicodedata.normalize("NFC", value) != value:
-                    ctx.add("LEX021", term, f"Label {value!r} is not Unicode NFC-normalized.")
+                    ctx.add("LEX021", term, f"Label {value!r} is not Unicode NFC-normalized.", subject=(value,))

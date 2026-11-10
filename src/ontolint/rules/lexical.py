@@ -175,7 +175,7 @@ def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label
         language = (o.language or "und").lower()
         by_language[language].append(o)
         if not str(o).strip() or str(o) != str(o).strip():
-            ctx.add("LEX005", term, f"Blank or padded label: {str(o)!r}.", confidence="certain")
+            ctx.add("LEX005", term, f"Blank or padded label: {str(o)!r}.", confidence="certain", subject=(str(o),))
         text = str(o).strip()
         if _indexable_label(ctx, term, text):
             for kind in _kinds(ctx, term):
@@ -185,7 +185,7 @@ def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label
         ctx.add("LEX006", term, "Mixed plain and language-tagged preferred labels.")
     for lang in ctx.policy.languages:
         if lang not in by_language:
-            ctx.add("LEX008", term, f"Missing preferred label in language {lang}.")
+            ctx.add("LEX008", term, f"Missing preferred label in language {lang}.", subject=(lang,))
 
 
 def _multiple_labels(ctx: RuleContext, term: URIRef, labels: set[Literal]) -> None:
@@ -199,7 +199,7 @@ def _multiple_labels(ctx: RuleContext, term: URIRef, labels: set[Literal]) -> No
         family[(o.language or "und").lower()] += 1
     for lang, count in family.items():
         if count > 1:
-            ctx.add("LEX003", term, f"{count} labels for language {lang}.")
+            ctx.add("LEX003", term, f"{count} labels for language {lang}.", subject=(lang,))
 
 
 def _kinds(ctx: RuleContext, term: URIRef) -> tuple[str, ...]:
@@ -218,13 +218,14 @@ def _indexable_label(ctx: RuleContext, term: URIRef, text: str) -> bool:
 
 
 def _duplicate_labels(ctx: RuleContext, label_index: LabelIndex) -> None:
-    for (duplicate_label, lang, _kind), terms in sorted(label_index.items()):
+    for (duplicate_label, lang, kind), terms in sorted(label_index.items()):
         if len(terms) > 1:
             ctx.add(
                 "LEX004",
                 sorted(terms, key=str)[0],
                 f"Duplicate label {duplicate_label!r}@{lang} for " + ", ".join(map(str, sorted(terms, key=str)[:5])),
                 related=terms,
+                subject=(duplicate_label, lang, kind),
             )
 
 
@@ -265,6 +266,7 @@ def _capitalization(ctx: RuleContext) -> None:
                     term,
                     f"{kind} label begins with {case} case, but {count} of {total} {kind.lower()} labels "
                     f"begin with {dominant} case (style review).",
+                    subject=(kind,),
                 )
 
 
@@ -277,4 +279,4 @@ def _naming_styles(ctx: RuleContext) -> None:
     )
     meaningful = [style for style in styles if style != "other"]
     if len(meaningful) > 1 and len(names) >= MINIMUM_STYLE_SAMPLE_SIZE:
-        ctx.add("LEX007", "(vocabulary)", f"Mixed identifier styles: {dict(sorted(styles.items()))}.")
+        ctx.add("LEX007", "(vocabulary)", f"Mixed identifier styles: {dict(sorted(styles.items()))}.", subject=())

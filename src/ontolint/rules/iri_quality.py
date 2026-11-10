@@ -159,6 +159,7 @@ def run(ctx: RuleContext) -> None:
             "IRI013",
             namespace,
             f"{len(iris)} term IRIs in this namespace embed a version or date segment (e.g. {iris[0]}).",
+            subject=(),
         )
     _namespace_mix(ctx)
     for ontology in sorted(ctx.ontologies, key=str):
@@ -199,6 +200,7 @@ def _namespace_mix(ctx: RuleContext) -> None:
             "IRI005",
             "(vocabulary)",
             f"{len(hashed)} hash-style and {len(slashed)} slash-style term IRIs, e.g. {hashed[0]} and {slashed[0]}.",
+            subject=(),
         )
     schemes = {safe_urlsplit(iri).scheme.lower() for iri in named}
     if {"http", "https"} <= schemes:
@@ -212,13 +214,20 @@ def _ontology_checks(ctx: RuleContext, ontology: URIRef) -> None:
     if ctx.context.types_by_subject.get(ontology, frozenset()) & set(KINDS):
         ctx.add("IRI017", ontology, "Ontology IRI is also declared as a term.", confidence="certain")
     if PROTEGE_UNTITLED.search(str(ontology)):
-        ctx.add("IRI018", ontology, "Ontology IRI is Protege's untitled-ontology placeholder.", confidence="certain")
+        ctx.add(
+            "IRI018",
+            ontology,
+            "Ontology IRI is Protege's untitled-ontology placeholder.",
+            confidence="certain",
+            subject=(),
+        )
     elif PROTEGE_DEFAULT_BASE.match(str(ontology)):
         ctx.add(
             "IRI018",
             ontology,
             "Ontology IRI is under Protege's default http://www.semanticweb.org/<user>/ontologies/ base, "
             "which its authors do not control.",
+            subject=(),
         )
 
 
@@ -246,7 +255,12 @@ def _unused_prefixes(ctx: RuleContext) -> None:
             continue  # some IRI is in the namespace (or is the namespace itself)
         if namespace.rstrip("#/") in iris:
             continue  # the namespace names the ontology (<https://x.test/o> for o: <https://x.test/o#>)
-        ctx.add("IRI019", URIRef(namespace), f"Prefix {prefix}: is declared for <{namespace}>, but no IRI uses it.")
+        ctx.add(
+            "IRI019",
+            URIRef(namespace),
+            f"Prefix {prefix}: is declared for <{namespace}>, but no IRI uses it.",
+            subject=(prefix,),
+        )
 
 
 def _ontology_namespace(ctx: RuleContext) -> None:

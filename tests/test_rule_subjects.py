@@ -11,6 +11,10 @@ import pytest
 from rule_harness import BASE, graph
 
 from ontolint import Linter
+from ontolint.engine import build_context
+from ontolint.models import SourceFacts
+from ontolint.policy import Policy
+from ontolint.rules import iri_quality
 
 OWL = "http://www.w3.org/2002/07/owl#"
 RDFS = "http://www.w3.org/2000/01/rdf-schema#"
@@ -133,4 +137,46 @@ def test_owl043_names_the_operator_the_use_and_the_operands() -> None:
     assert subjects("OWL043", turtle) == {
         ("A", ("owl:intersectionOf", "B", "C")),
         ("A", ("owl:intersectionOf", "owl:Nothing")),
+    }
+
+
+# --- lexical and IRI ---------------------------------------------------------------------------------
+
+
+def test_lex008_names_each_missing_language() -> None:
+    found = subjects("LEX008", 'ex:A a owl:Class ; rdfs:label "A"@de .', languages=("en", "fr"))
+    assert found == {("A", ("en",)), ("A", ("fr",))}
+
+
+def test_lex003_names_the_language_not_the_count() -> None:
+    turtle = 'ex:A a owl:Class ; rdfs:label "A"@en, "B"@en, "C"@fr, "D"@fr, "E"@fr .'
+    assert subjects("LEX003", turtle) == {("A", ("en",)), ("A", ("fr",))}
+
+
+def test_lex004_and_iri003_name_the_collision_key_not_its_members() -> None:
+    two = 'ex:A a owl:Class ; rdfs:label "Same"@en . ex:B a owl:Class ; rdfs:label "Same"@en .'
+    three = two + ' ex:C a owl:Class ; rdfs:label "Same"@en .'
+    assert subjects("LEX004", two) == subjects("LEX004", three) == {("A", ("Same", "en", "class"))}
+    collision = "ex:Thing a owl:Class . ex:thing a owl:Class . ex:THING a owl:ObjectProperty, owl:Class ."
+    assert subjects("IRI003", collision) == {("THING", ("thing", "class"))}
+
+
+def test_lex014_names_the_label_and_its_datatype() -> None:
+    labels = 'ex:A a owl:Class ; rdfs:label "A"^^xsd:token, "B"^^xsd:token .'
+    assert subjects("LEX014", labels) == {("A", ("A", "xsd:token")), ("A", ("B", "xsd:token"))}
+
+
+def test_iri019_names_each_unused_prefix_of_a_namespace() -> None:
+    declared = (("a", "https://unused.test/"), ("b", "https://unused.test/"))
+    ctx = build_context(graph("ex:A a owl:Class ."), None, Policy(source=SourceFacts(declared_prefixes=declared)))
+    iri_quality.run(ctx)
+    found = {(f.focus, f.subject) for f in ctx.findings if f.rule == "IRI019"}
+    assert found == {("https://unused.test/", ("a",)), ("https://unused.test/", ("b",))}
+
+
+def test_data003_names_the_predicate_and_the_whole_literal() -> None:
+    turtle = 'ex:A a owl:Class ; ex:p "x"^^xsd:integer ; ex:q "y"^^xsd:integer .'
+    assert subjects("DATA003", turtle) == {
+        ("A", ("p", '"x"^^<xsd:integer>')),
+        ("A", ("q", '"y"^^<xsd:integer>')),
     }

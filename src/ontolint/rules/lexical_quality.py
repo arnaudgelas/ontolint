@@ -187,9 +187,15 @@ def _label_style(ctx: RuleContext, term: URIRef, text: TermText) -> None:
         if ODD_WHITESPACE.search(value):
             ctx.add("LEX011", term, "Label contains line breaks, tabs or repeated whitespace.", confidence="certain")
         if value.endswith(TERMINAL_PUNCTUATION):
-            ctx.add("LEX012", term, f"Label {value!r} ends with punctuation.")
+            ctx.add("LEX012", term, f"Label {value!r} ends with punctuation.", subject=(value,))
         if label.datatype is not None and label.datatype != XSD.string:
-            ctx.add("LEX014", term, f"Label {value!r} has datatype {label.datatype}.", confidence="certain")
+            ctx.add(
+                "LEX014",
+                term,
+                f"Label {value!r} has datatype {label.datatype}.",
+                confidence="certain",
+                subject=(value, label.datatype),
+            )
 
 
 def _verbatim_labels(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
@@ -217,10 +223,11 @@ def _verbatim_labels(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
             focus,
             f"{len({term for term, _ in flagged})} of {labelled} labelled terms use their identifier as the label "
             f"(e.g. {flagged[0][1]!r}).",
+            subject=(),
         )
         return
     for term, value in flagged:
-        ctx.add("LEX010", term, f"Label {value!r} repeats the identifier.")
+        ctx.add("LEX010", term, f"Label {value!r} repeats the identifier.", subject=(value,))
 
 
 def _label_types(ctx: RuleContext, term: URIRef) -> None:
@@ -230,14 +237,19 @@ def _label_types(ctx: RuleContext, term: URIRef) -> None:
         for value in ctx.g.objects(term, predicate):
             if isinstance(value, Literal) or (node_allowed and (value, RDF.value, None) in ctx.g):
                 continue
-            ctx.add("LEX013", term, f"{predicate} value is not a literal.", confidence="certain")
+            ctx.add("LEX013", term, f"{predicate} value is not a literal.", confidence="certain", subject=(predicate,))
 
 
 def _alternatives(ctx: RuleContext, term: URIRef, text: TermText) -> None:
     own = {(_norm(label), _language(label)) for label in text.primary}
     for alternative in text.alternatives:
         if (_norm(alternative), _language(alternative)) in own:
-            ctx.add("LEX015", term, f"Alternative label {str(alternative)!r} repeats the term's own label.")
+            ctx.add(
+                "LEX015",
+                term,
+                f"Alternative label {str(alternative)!r} repeats the term's own label.",
+                subject=(str(alternative),),
+            )
 
 
 def _definitions(ctx: RuleContext, term: URIRef, text: TermText) -> None:
@@ -246,13 +258,13 @@ def _definitions(ctx: RuleContext, term: URIRef, text: TermText) -> None:
         if not str(definition).strip():
             ctx.add("LEX019", term, "Definition is blank.", confidence="certain")
         elif _norm(definition) in labels:
-            ctx.add("LEX017", term, f"Definition {str(definition)!r} repeats the label.")
+            ctx.add("LEX017", term, f"Definition {str(definition)!r} repeats the label.", subject=(str(definition),))
     counts: defaultdict[str, int] = defaultdict(int)
     for definition in text.skos_definitions:
         counts[_language(definition)] += 1
     for language, count in sorted(counts.items()):
         if count > 1:
-            ctx.add("LEX024", term, f"{count} skos:definition values for language {language}.")
+            ctx.add("LEX024", term, f"{count} skos:definition values for language {language}.", subject=(language,))
 
 
 def _language_policy(ctx: RuleContext, term: URIRef, text: TermText) -> None:
@@ -262,12 +274,12 @@ def _language_policy(ctx: RuleContext, term: URIRef, text: TermText) -> None:
     for label in text.labels:
         tag = _language(label)
         if tag != "und" and not any(tag == lang or tag.startswith(lang + "-") for lang in allowed):
-            ctx.add("LEX022", term, f"Label language {tag} is not among the configured languages.")
+            ctx.add("LEX022", term, f"Label language {tag} is not among the configured languages.", subject=(tag,))
     present = {_language(d) for d in text.definitions if str(d).strip()}
     if present:
         for lang in allowed:
             if not any(tag == lang or tag.startswith(lang + "-") for tag in present):
-                ctx.add("LEX023", term, f"Missing definition in language {lang}.")
+                ctx.add("LEX023", term, f"Missing definition in language {lang}.", subject=(lang,))
 
 
 def _cross_term(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
@@ -284,8 +296,18 @@ def _cross_term(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
             others = owners.get((_norm(alternative), _language(alternative)), set()) - {term}
             if _norm(alternative) and others:
                 other: Node = sorted(others, key=str)[0]
-                ctx.add("LEX016", term, f"Alternative label {str(alternative)!r} is the label of {other}.")
+                ctx.add(
+                    "LEX016",
+                    term,
+                    f"Alternative label {str(alternative)!r} is the label of {other}.",
+                    subject=(str(alternative),),
+                )
     for (value, language), terms in sorted(definitions.items()):
         if len(terms) > 1:
             names = ", ".join(sorted(map(str, terms))[:5])
-            ctx.add("LEX020", sorted(map(str, terms))[0], f"Identical definition {value!r}@{language} on {names}.")
+            ctx.add(
+                "LEX020",
+                sorted(map(str, terms))[0],
+                f"Identical definition {value!r}@{language} on {names}.",
+                subject=(value, language),
+            )

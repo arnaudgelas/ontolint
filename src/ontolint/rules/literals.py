@@ -148,7 +148,7 @@ def _ill_typed(ctx: RuleContext) -> None:
         if _foreign(ctx, owner):
             continue
         shown = str(o) if len(str(o)) <= LEXICAL_FORM_SHOWN else str(o)[:LEXICAL_FORM_SHOWN] + "..."
-        ctx.add("DATA003", owner, f"Value {shown!r} of {p} is typed {datatype}, but {problem}.")
+        ctx.add("DATA003", owner, f"Value {shown!r} of {p} is typed {datatype}, but {problem}.", subject=(p, o))
 
 
 def _unmapped_datatypes(ctx: RuleContext) -> None:
@@ -169,4 +169,4 @@ def _unmapped_datatypes(ctx: RuleContext) -> None:
             reason = "is not in the OWL 2 datatype map, so OWL 2 DL tools reject it; xsd:dateTime is"
         else:
             reason = "is not in the OWL 2 datatype map, so OWL 2 DL tools reject it"
-        ctx.add("DATA004", owner, f"{_curie(o)} (used as {_curie(p)}) {reason}.", confidence="certain")
+        ctx.add("DATA004", owner, f"{_curie(o)} (used as {_curie(p)}) {reason}.", confidence="certain", subject=(o, p))

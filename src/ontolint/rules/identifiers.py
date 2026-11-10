@@ -67,7 +67,7 @@ def run(ctx: RuleContext) -> None:
         s = str(u)
         pieces = safe_urlsplit(s)
         if any(character.isspace() for character in s) or not pieces.scheme:
-            ctx.add("IRI001", u, "IRI contains whitespace or is not absolute.", confidence="certain")
+            ctx.add("IRI001", u, "IRI contains whitespace or is not absolute.", confidence="certain", subject=())
         elif pieces.scheme.lower() in {"http", "https"} and not pieces.netloc:
             # "http:example.org/x" (one missing "//") parses as an absolute IRI but names no host.
             ctx.add(
@@ -75,6 +75,7 @@ def run(ctx: RuleContext) -> None:
                 u,
                 f"{pieces.scheme}: IRI has no '//' host, so it cannot be dereferenced.",
                 confidence="certain",
+                subject=(),
             )
         if (
             u in ctx.ontologies
@@ -86,7 +87,7 @@ def run(ctx: RuleContext) -> None:
             # A class and a property sharing a name (``Agent`` / ``agent``) is ordinary vocabulary style.
             for kind in _kinds(ctx, u):
                 names[(local_name(u).casefold(), kind)].add(u)
-    for iris in names.values():
+    for (name, kind), iris in names.items():
         # The set cannot contain two distinct IRIs with the same complete
         # namespace/local-name split, so cardinality alone is sufficient.
         if len(iris) > 1:
@@ -95,4 +96,5 @@ def run(ctx: RuleContext) -> None:
                 sorted(map(str, iris))[0],
                 "Local-name collision across IRIs: " + ", ".join(sorted(map(str, iris))[:5]),
                 related=iris,
+                subject=(name, kind),
             )
