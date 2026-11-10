@@ -18,11 +18,10 @@ from typing import Any
 from unittest import mock
 
 import pytest
-from rdflib import BNode, Graph, Literal, URIRef
+from rdflib import Graph
 from rdflib.compare import isomorphic
-from rdflib.namespace import XSD
 
-from ontolint import loader, main
+from ontolint import loader, main, worker
 from ontolint.cli import build_parser
 from ontolint.loader import InputRejected, ParseFailure, load_graph
 from ontolint.paths import InputFile, resolve_inputs
@@ -112,25 +111,6 @@ def test_cli_option_overrides_the_policy_file(tmp_path: Path) -> None:
     assert _policy(args, config, frozenset()).max_parse_seconds == 5.0
     args = build_parser().parse_args(["a.ttl", "--max-parse-seconds", "7"])
     assert _policy(args, config, frozenset()).max_parse_seconds == 7.0
-
-
-# --- term encoding -----------------------------------------------------------------------------------
-
-
-def test_graph_survives_the_wire_format_exactly() -> None:
-    graph = Graph()
-    graph.bind("ex", "http://e/")
-    node = BNode("keepme")
-    graph.add((URIRef("http://e/a"), URIRef("http://e/p"), node))
-    graph.add((node, URIRef("http://e/q"), Literal("hola", lang="es")))
-    graph.add((node, URIRef("http://e/q"), Literal("abc", datatype=XSD.integer)))  # ill-typed, kept verbatim
-    graph.add((node, URIRef("http://e/q"), Literal("007", datatype=XSD.integer)))
-    graph.add((node, URIRef("http://e/q"), Literal("plain")))
-    decoded = loader._decode_graph(json.loads(loader._encode_graph(graph)))
-    assert set(decoded) == set(graph)
-    assert {str(t.datatype) for _, _, t in decoded if isinstance(t, Literal) and t.datatype} == {str(XSD.integer)}
-    assert Literal("007", datatype=XSD.integer) in {o for _, _, o in decoded}
-    assert dict(decoded.namespaces())["ex"] == URIRef("http://e/")
 
 
 # --- the worker --------------------------------------------------------------------------------------
@@ -239,7 +219,7 @@ def test_worker_dialling_out_is_sec013() -> None:
         socket.create_connection(("127.0.0.1", 9))
 
     with mock.patch.object(Graph, "parse", dial):
-        loader._worker_main(Pipe(), loader._ParseJob(b"x", "turtle", "file:///x.ttl", "x.ttl", 10))
+        worker._worker_main(Pipe(), loader._ParseJob(b"x", "turtle", "file:///x.ttl", "x.ttl", 10))
     assert sent[0] == b"ready"
     assert json.loads(sent[1]) == {
         "rejected": ["SEC013", "x.ttl tried to use the network (connect ('127.0.0.1', 9)); the network is disabled"]
@@ -257,7 +237,7 @@ def test_worker_always_answers_even_on_unexpected_errors() -> None:
             pass
 
     with mock.patch.object(loader, "_parse_bytes", side_effect=KeyboardInterrupt()):
-        loader._worker_main(Pipe(), loader._ParseJob(b"x", "turtle", "file:///x.ttl", "x.ttl", 10))
+        worker._worker_main(Pipe(), loader._ParseJob(b"x", "turtle", "file:///x.ttl", "x.ttl", 10))
     assert json.loads(sent[1]) == {"parse_failure": ["KeyboardInterrupt", ""]}
 
 
@@ -287,13 +267,13 @@ def silent_before_ready(connection: Any, *args: Any) -> None:
 def started_pids(monkeypatch: pytest.MonkeyPatch) -> Iterator[list[int]]:
     """Record the pid of every worker the loader starts, to check afterwards that none survives."""
     pids: list[int] = []
-    real_stop = loader._stop
+    real_stop = worker._stop
 
     def recording_stop(process: Any) -> None:
         pids.append(process.pid)
         real_stop(process)
 
-    monkeypatch.setattr(loader, "_stop", recording_stop)
+    monkeypatch.setattr(worker, "_stop", recording_stop)
     yield pids
 
 
@@ -310,7 +290,7 @@ def pid_exists(pid: int) -> bool:
 def test_hanging_worker_is_killed_at_the_budget_and_leaves_no_process(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, started_pids: list[int]
 ) -> None:
-    monkeypatch.setattr(loader, "_worker_main", hang_worker)
+    monkeypatch.setattr(worker, "_worker_main", hang_worker)
     started = time.monotonic()
     with pytest.raises(InputRejected) as info:
         load(tmp_path, "a.ttl", TTL, Policy(max_parse_seconds=0.3))
@@ -325,7 +305,7 @@ def test_hanging_worker_is_killed_at_the_budget_and_leaves_no_process(
 def test_worker_that_dies_without_a_result_is_a_parse_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, started_pids: list[int]
 ) -> None:
-    monkeypatch.setattr(loader, "_worker_main", die_after_ready)
+    monkeypatch.setattr(worker, "_worker_main", die_after_ready)
     with pytest.raises(ParseFailure) as info:
         load(tmp_path, "a.ttl", TTL, Policy(max_parse_seconds=GENEROUS))
     assert (info.value.cause_type, info.value.detail) == (
@@ -336,7 +316,7 @@ def test_worker_that_dies_without_a_result_is_a_parse_failure(
 
 
 def test_worker_that_never_starts_is_a_parse_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(loader, "_worker_main", die_before_ready)
+    monkeypatch.setattr(worker, "_worker_main", die_before_ready)
     with pytest.raises(ParseFailure) as info:
         load(tmp_path, "a.ttl", TTL, Policy(max_parse_seconds=GENEROUS))
     assert (info.value.cause_type, info.value.detail) == ("WorkerError", "the parse worker did not start")
@@ -345,50 +325,11 @@ def test_worker_that_never_starts_is_a_parse_failure(tmp_path: Path, monkeypatch
 def test_slow_worker_start_is_not_counted_against_the_budget_but_has_its_own_limit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, started_pids: list[int]
 ) -> None:
-    monkeypatch.setattr(loader, "_worker_main", silent_before_ready)
-    monkeypatch.setattr(loader, "WORKER_START_TIMEOUT", 0.3)
+    monkeypatch.setattr(worker, "_worker_main", silent_before_ready)
+    monkeypatch.setattr(worker, "WORKER_START_TIMEOUT", 0.3)
     with pytest.raises(ParseFailure, match="did not start"):
         load(tmp_path, "a.ttl", TTL, Policy(max_parse_seconds=GENEROUS))
     assert not pid_exists(started_pids[0])
-
-
-class FakeProcess:
-    """A worker that ignores SIGTERM: only ``kill`` ends it."""
-
-    def __init__(self, survives_terminate: bool) -> None:
-        self.survives_terminate = survives_terminate
-        self.alive = True
-        self.calls: list[str] = []
-
-    def is_alive(self) -> bool:
-        return self.alive
-
-    def terminate(self) -> None:
-        self.calls.append("terminate")
-        self.alive = self.survives_terminate
-
-    def kill(self) -> None:
-        self.calls.append("kill")
-        self.alive = False
-
-    def join(self, timeout: float | None = None) -> None:
-        self.calls.append(f"join({timeout})")
-
-    def close(self) -> None:
-        self.calls.append("close")
-
-
-def test_stop_terminates_first_and_kills_only_a_worker_that_survives() -> None:
-    polite = FakeProcess(survives_terminate=False)
-    loader._stop(polite)
-    assert polite.calls == ["terminate", "join(2.0)", "join(None)", "close"]
-    stubborn = FakeProcess(survives_terminate=True)
-    loader._stop(stubborn)
-    assert stubborn.calls == ["terminate", "join(2.0)", "kill", "join(None)", "close"]
-    gone = FakeProcess(survives_terminate=False)
-    gone.alive = False
-    loader._stop(gone)
-    assert gone.calls == ["join(None)", "close"]
 
 
 def test_relative_input_path_is_a_parse_failure_with_and_without_a_budget(tmp_path: Path) -> None:
@@ -398,3 +339,15 @@ def test_relative_input_path_is_a_parse_failure_with_and_without_a_budget(tmp_pa
         with contextlib.chdir(tmp_path), pytest.raises(ParseFailure) as info:
             load_graph(item, policy, tmp_path)
         assert info.value.cause_type == "ValueError"
+
+
+def test_a_worker_failure_the_parse_job_did_not_map_is_a_parse_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def failed(*args: object, **kwargs: object) -> dict[str, Any]:
+        raise worker.WorkerFailed("MemoryError", "out of memory")
+
+    monkeypatch.setattr(worker, "run_bounded", failed)
+    with pytest.raises(ParseFailure) as info:
+        load(tmp_path, "a.ttl", TTL, Policy(max_parse_seconds=GENEROUS))
+    assert (info.value.cause_type, info.value.detail) == ("MemoryError", "out of memory")

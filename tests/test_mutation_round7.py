@@ -13,9 +13,9 @@ from rdflib.namespace import OWL, RDF, XSD
 
 from ontolint import Linter
 from ontolint import cli as cli_module
-from ontolint.loader import _decode_graph, _decode_term, _encode_term
 from ontolint.policy import MAX_PARSE_SECONDS, Policy
 from ontolint.rules import fair_offline, policy_rules
+from ontolint.worker import decode_graph, decode_term, encode_term
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EX = "http://example.org/"
@@ -61,7 +61,7 @@ def test_individuals_keep_only_owned_named_iris() -> None:
 
 def test_worker_wire_format_keeps_the_lexical_form() -> None:
     literal = Literal("01", datatype=XSD.integer, normalize=False)
-    decoded = _decode_term(_encode_term(literal))
+    decoded = decode_term(encode_term(literal))
     assert isinstance(decoded, Literal)
     assert str(decoded) == "01"
     assert decoded.datatype == XSD.integer
@@ -69,6 +69,6 @@ def test_worker_wire_format_keeps_the_lexical_form() -> None:
 
 def test_worker_wire_format_rebinds_default_prefixes() -> None:
     payload = {"namespaces": [["owl", "http://other.test/owl#"]], "triples": []}
-    graph = _decode_graph(payload)
+    graph = decode_graph(payload)
     assert dict(graph.namespaces())["owl"] == URIRef("http://other.test/owl#")
     assert (OWL.Class, RDF.type, None) not in graph

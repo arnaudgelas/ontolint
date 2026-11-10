@@ -25,7 +25,6 @@ from __future__ import annotations
 import codecs
 import contextlib
 import json
-import multiprocessing
 import os
 import re
 import socket
@@ -37,13 +36,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from rdflib import BNode, Graph, Literal, URIRef
+from rdflib import Graph
 from rdflib.plugins.shared.jsonld import context as jsonld_context
 from rdflib.plugins.stores.memory import Memory
-from rdflib.term import Node
 from rdflib.util import guess_format
 
-from . import datasets, syntax
+from . import datasets, syntax, worker
 from .datasets import EMPTY_INDEX, GraphIndex
 from .models import SourceFacts
 from .paths import InputFile
@@ -570,35 +568,7 @@ def _parse_document(data: bytes, fmt: str, public_id: str, display: str, policy:
     return _parse_in_worker(job, policy.max_parse_seconds)
 
 
-# --- time budget: the parse runs in a worker process that can be killed -----------------------------------------
-#
-# A pure-Python parse cannot be interrupted safely in this process: a thread cannot be killed, and a signal timer
-# (SIGALRM) exists on POSIX main threads only and collides with any watchdog the embedding program already uses.
-# A worker started with the ``spawn`` method works the same on Linux, macOS and Windows, shares no state with the
-# parent (so the network guard and the patched parser modules are applied freshly in the worker) and can always be
-# terminated.  The worker only ever returns plain data (JSON text), never pickles, so a compromised parser cannot
-# make the parent execute anything while decoding the result.
-
-WORKER_START_TIMEOUT = 120.0
-"""Seconds to wait for the worker interpreter to start (imports); not part of the user's parse budget."""
-_WORKER_GRACE = 2.0
-
-_Term = list[Any]
-
-
-def _encode_term(term: Node) -> _Term:
-    if isinstance(term, Literal):
-        return ["l", str(term), term.language, None if term.datatype is None else str(term.datatype)]
-    return ["b" if isinstance(term, BNode) else "u", str(term)]
-
-
-def _decode_term(raw: _Term) -> Node:
-    kind = raw[0]
-    if kind == "u":
-        return URIRef(raw[1])
-    if kind == "b":
-        return BNode(raw[1])
-    return Literal(raw[1], lang=raw[2], datatype=None if raw[3] is None else URIRef(raw[3]), normalize=False)
+# --- time budget: the parse runs in a worker process that can be killed (see :mod:`ontolint.worker`) -------------
 
 
 def _encode_graph(graph: Graph, index: GraphIndex = EMPTY_INDEX) -> bytes:
@@ -607,26 +577,15 @@ def _encode_graph(graph: Graph, index: GraphIndex = EMPTY_INDEX) -> bytes:
     Every other file's reply is the same as before the index existed.
     """
     triples = list(graph)
-    document: dict[str, Any] = {
-        "triples": [[_encode_term(t) for t in triple] for triple in triples],
-        "namespaces": [[prefix, str(uri)] for prefix, uri in graph.namespaces()],
-    }
+    document = worker.graph_document(graph, triples)
     if index.triples:
         document["graphs"] = datasets.encode_index(index, triples)
     return json.dumps(document, separators=(",", ":")).encode()
 
 
-def _decode_graph(payload: dict[str, Any]) -> Graph:
-    return _decode_document(payload)[0]
-
-
 def _decode_document(payload: dict[str, Any]) -> tuple[Graph, GraphIndex]:
     """The graph and graph index of a worker reply; a reply without ``graphs`` has the empty index."""
-    graph = Graph()
-    for prefix, uri in payload["namespaces"]:
-        graph.bind(prefix, URIRef(uri), override=True, replace=True)
-    triples = [(_decode_term(s), _decode_term(p), _decode_term(o)) for s, p, o in payload["triples"]]
-    graph.addN((s, p, o, graph) for s, p, o in triples)
+    graph, triples = worker.decode_graph_document(payload)
     try:
         index = datasets.decode_index(payload.get("graphs"), triples)
     except ValueError as exc:
@@ -645,62 +604,38 @@ class _ParseJob:
     display: str
     max_triples: int
 
+    def prepare(self) -> None:
+        """Nothing to do: importing this module (to unpickle the job) already imported rdflib."""
 
-def _worker_main(connection: Any, job: _ParseJob) -> None:
-    """Entry point of the worker: announce readiness, parse, send one JSON document, exit."""
-    connection.send_bytes(b"ready")
-    try:
-        reply = _encode_graph(*_parse_bytes(job.data, job.fmt, job.public_id, job.display, job.max_triples))
-    except InputRejected as exc:
-        reply = json.dumps({"rejected": [exc.rule_id, exc.message]}).encode()
-    except ParseFailure as exc:
-        reply = json.dumps({"parse_failure": [exc.cause_type, exc.detail]}).encode()
-    except BaseException as exc:  # noqa: BLE001 -- the parent must always receive an answer.
-        detail = _describe(exc) if isinstance(exc, Exception) else ""
-        reply = json.dumps({"parse_failure": [type(exc).__name__, detail]}).encode()
-    connection.send_bytes(reply)
-    connection.close()
-
-
-def _stop(process: Any) -> None:
-    """Terminate, then kill, the worker and reap it; safe to call on a worker that already exited."""
-    if process.is_alive():
-        process.terminate()
-        process.join(_WORKER_GRACE)
-    if process.is_alive():
-        process.kill()
-    process.join()
-    process.close()
+    def run(self) -> bytes:
+        """Parse and answer with the graph, or with the ``rejected`` or ``parse_failure`` it ran into."""
+        try:
+            return _encode_graph(*_parse_bytes(self.data, self.fmt, self.public_id, self.display, self.max_triples))
+        except InputRejected as exc:
+            return json.dumps({"rejected": [exc.rule_id, exc.message]}).encode()
+        except ParseFailure as exc:
+            return json.dumps({"parse_failure": [exc.cause_type, exc.detail]}).encode()
+        except BaseException as exc:  # noqa: BLE001 -- the parent must always receive an answer it can map.
+            detail = _describe(exc) if isinstance(exc, Exception) else ""
+            return json.dumps({"parse_failure": [type(exc).__name__, detail]}).encode()
 
 
 def _parse_in_worker(job: _ParseJob, seconds: float) -> tuple[Graph, GraphIndex]:
-    """Parse in a ``spawn`` worker and give it ``seconds`` of wall-clock time from the moment it is ready.
+    """Parse in a bounded worker and give it ``seconds`` of wall-clock time from the moment it is ready.
 
     Interpreter start-up and the import of rdflib are excluded from the budget (they are the tool's cost, not the
     input's); the worker is terminated, then killed, when the budget is exhausted: :class:`InputRejected` ``SEC003``.
     """
-    context = multiprocessing.get_context("spawn")
-    # gremlin: pardon[equivalent] the parent only reads and the worker only writes; duplex adds no behaviour
-    receiver, sender = context.Pipe(duplex=False)
-    # gremlin: pardon[equivalent] the worker is always stopped in `finally`, so daemon only matters if the parent dies
-    process = context.Process(target=_worker_main, args=(sender, job), daemon=True)
-    process.start()
-    sender.close()  # the parent only reads: EOF on the pipe means the worker is gone
     try:
-        if not _ready(receiver, WORKER_START_TIMEOUT):
-            raise ParseFailure("WorkerError", "the parse worker did not start")
-        if not receiver.poll(seconds):
-            raise InputRejected(
-                "SEC003",
-                f"{job.display} was not parsed within the time budget of {seconds:g} seconds (max_parse_seconds)",
-            )
-        try:
-            reply = json.loads(receiver.recv_bytes())
-        except (EOFError, OSError):
-            raise ParseFailure("WorkerError", _worker_death(process)) from None
-    finally:
-        receiver.close()
-        _stop(process)
+        reply = worker.run_bounded(job, seconds, name="parse")
+    except worker.WorkerTimeout:
+        raise InputRejected(
+            "SEC003", f"{job.display} was not parsed within the time budget of {seconds:g} seconds (max_parse_seconds)"
+        ) from None
+    except worker.WorkerGone as exc:
+        raise ParseFailure("WorkerError", str(exc)) from None
+    except worker.WorkerFailed as exc:
+        raise ParseFailure(exc.cause_type, exc.detail) from None
     if "rejected" in reply:
         raise InputRejected(*reply["rejected"])
     if "parse_failure" in reply:
@@ -709,16 +644,3 @@ def _parse_in_worker(job: _ParseJob, seconds: float) -> tuple[Graph, GraphIndex]
     if len(graph) > job.max_triples:  # pragma: no cover - the worker enforces it; defence in depth
         raise InputRejected("SEC002", f"graph has more than {job.max_triples} triples (max_triples)")
     return graph, index
-
-
-def _ready(receiver: Any, timeout: float) -> bool:
-    try:
-        return bool(receiver.poll(timeout)) and receiver.recv_bytes() == b"ready"
-    except (EOFError, OSError):
-        # gremlin: pardon[equivalent] None and False are both falsy for the only caller, `if not _ready(...)`
-        return False
-
-
-def _worker_death(process: Any) -> str:
-    process.join(_WORKER_GRACE)
-    return f"the parse worker exited without a result (exit code {process.exitcode})"
