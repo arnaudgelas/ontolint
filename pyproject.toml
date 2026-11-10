@@ -102,6 +102,7 @@ line-ending = "auto"
 # Mutation testing is opt-in. It is run without pytest-cov because gremlins
 # performs its own coverage-guided selection before executing mutations.
 paths = [
+    "src/ontolint/baseline.py",
     "src/ontolint/engine.py",
     "src/ontolint/linter.py",
     "src/ontolint/cli.py",

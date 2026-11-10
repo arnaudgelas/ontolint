@@ -23,7 +23,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
-from . import engine
+from . import baseline, engine
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
@@ -45,7 +45,7 @@ from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
-from .reporting import FileReport, Location, Origin, RunReport, fingerprint, render_report, run_exit_code
+from .reporting import FileReport, Location, Origin, RunReport, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
@@ -411,28 +411,15 @@ def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:
     return sorted(findings, key=lambda f: rank.get(backends.get(f.rule, RuleBackend.RDFLIB), 0))
 
 
-def _file_fingerprints(report: FileReport, multi: bool) -> set[str]:
-    return {fingerprint(f, report.path if multi else None) for f in report.findings}
-
-
 def _apply_baselines(
     files: list[FileReport], args: argparse.Namespace
 ) -> tuple[list[FileReport], tuple[str, ...] | None]:
     """Write and/or apply the baseline; also return its fingerprints that matched no finding (OPS003)."""
-    multi = len(files) > 1
     if args.write_baseline:
-        everything = sorted(set().union(*(_file_fingerprints(r, multi) for r in files)))
-        Path(args.write_baseline).write_text(
-            json.dumps({"fingerprints": everything}, indent=2) + "\n", encoding="utf-8"
-        )
+        Path(args.write_baseline).write_text(baseline.dumps(baseline.build(files)), encoding="utf-8")
     if args.baseline:
-        prior = set(json.loads(Path(args.baseline).read_text(encoding="utf-8")).get("fingerprints", []))
-        current = set().union(*(_file_fingerprints(r, multi) for r in files))
-        files = [
-            replace(r, findings=tuple(f for f in r.findings if fingerprint(f, r.path if multi else None) not in prior))
-            for r in files
-        ]
-        return files, tuple(sorted(prior - current))
+        applied = baseline.apply(baseline.loads(Path(args.baseline).read_text(encoding="utf-8")), files)
+        return applied.files, applied.stale
     return files, None
 
 
