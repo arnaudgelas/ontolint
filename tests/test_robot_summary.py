@@ -125,6 +125,7 @@ def test_the_finding_summarises_and_keeps_the_full_report(monkeypatch: pytest.Mo
         f"{SKOS_DEFINITION} (6), {DCT_TITLE} (1)."
     )
     assert finding.details == DL_REPORT
+    assert finding.subject == ("DL",)  # one verdict per profile: the summary and its counts are not its identity
 
 
 def test_output_that_is_no_violation_list_fails_the_check(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

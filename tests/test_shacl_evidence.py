@@ -709,6 +709,7 @@ def test_the_result_key_names_shape_component_path_value_and_constraint() -> Non
     keys = [shacl_result_key(first.evidence), shacl_result_key(second.evidence)]
     common = (f"{EX}Age", _component("Datatype"), f"{EX}age")
     assert keys == [(*common, '"x"', ""), (*common, '"y"', "")]
+    assert [first.subject, second.subject] == keys  # the finding's identity beyond rule and focus
 
 
 def test_the_result_key_leaves_missing_or_nested_parts_empty() -> None:

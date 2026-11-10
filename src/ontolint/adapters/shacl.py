@@ -291,7 +291,16 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
             message += f" (severity {level})"
         message = f"{message} [shape: {src}]"
         evidence = _evidence(graphs, result)
-        finding = Finding("SHACL001", severity, focus, message, FIXES["SHACL001"], "certain", evidence=evidence)
+        finding = Finding(
+            "SHACL001",
+            severity,
+            focus,
+            message,
+            FIXES["SHACL001"],
+            "certain",
+            evidence=evidence,
+            subject=shacl_result_key(evidence),
+        )
         keyed.append(((focus, message, _canonical(evidence)), finding))
     # pySHACL's result order depends on the hash seed; findings tied on their message differ in evidence.
     results = [finding for _key, finding in sorted(keyed, key=lambda pair: pair[0])]

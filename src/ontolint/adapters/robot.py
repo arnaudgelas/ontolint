@@ -164,6 +164,8 @@ def robot_profile_issues(ontology: Path, profile: str, image: str, timeout: int)
                 FIXES["SEM001"],
                 "certain",
                 details,
+                # One verdict per profile: the summary is ROBOT's wording and counts, not what the finding is about.
+                subject=(profile,),
             )
         ]
 
