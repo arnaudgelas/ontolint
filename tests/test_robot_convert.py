@@ -48,9 +48,11 @@ class FakeDocker:
         self.output = output
         self.commands: list[list[str]] = []
         self.catalogs: list[str] = []
+        self.kwargs: list[dict[str, Any]] = []
 
-    def __call__(self, command: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def __call__(self, command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
         self.commands.append(command)
+        self.kwargs.append(kwargs)
         directory = Path(next(value for value in command if value.endswith(":/output")).removesuffix(":/output"))
         self.catalogs.append((directory / "catalog.xml").read_text(encoding="utf-8"))
         code, stderr = self.results.pop(0)
@@ -92,6 +94,8 @@ def test_the_container_reads_only_the_file_with_its_syntax_named(
     assert command[command.index("--input-format") + 1] == input_format  # never left to OWL API's guesses
     assert command[command.index("img") + 1 :][:3] == ["convert", "--catalog", "/output/catalog.xml"]
     assert command[-4:] == ["--format", "ttl", "--output", "/output/converted.ttl"]
+    # ROBOT's exit code is read, not raised; its output is text, captured for the failure message.
+    assert docker.kwargs == [{"capture_output": True, "text": True, "timeout": 30, "check": False}]
 
 
 @pytest.mark.parametrize(
