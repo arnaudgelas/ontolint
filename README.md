@@ -152,10 +152,11 @@ linted file looks like a SHACL shapes graph (more shapes than declared terms), w
 probably be passed with `--shapes` instead. With `--follow-imports`, `TOOL004` notes a catalog
 entry that names a missing file. `TOOL005` notes when most terms without a definition (`LEX002`)
 carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
-the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate
-already counts. `TOOL006` says when `--module-annotation` cannot group a file (its prefix is not
-declared, or no term carries the predicate), `TOOL007` names the validator `--shapes-from-profile`
-uses (or passes over, when it is not SHACL), `TOOL008` warns that a file under
+the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate,
+directly or through a chain of sub-properties (cycles are fine), already counts. `TOOL006` says
+when `--module-annotation` cannot group a file (its prefix is not declared, or no term carries the
+predicate), `TOOL007` names the validator `--shapes-from-profile` uses (or passes over, when it is
+not SHACL), `TOOL008` warns that a file under
 `--pattern-library` does not parse and was skipped, and `TOOL009` names each shape library a
 shapes file imports.
 

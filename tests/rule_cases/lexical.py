@@ -32,6 +32,11 @@ CASES = {
             ttl("skos:definition", 'ex:A a owl:Class ; skos:definition "An A." .'),
             ttl("skos:scopeNote", 'ex:A a owl:Class ; skos:scopeNote "Use for As." .'),
             ttl("skos:note", 'ex:A a owl:Class ; skos:note "About A." .'),
+            ttl(
+                "definition through a chain of sub-properties",
+                "ex:d2 rdfs:subPropertyOf ex:d1 . ex:d1 rdfs:subPropertyOf skos:definition . "
+                "ex:A a owl:Class ; ex:d2 'An A.' .",
+            ),
         ],
     ),
     "LEX003": rule_cases(

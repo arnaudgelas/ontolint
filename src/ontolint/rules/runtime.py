@@ -8,6 +8,7 @@ from dataclasses import replace
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDFS
+from rdflib.term import Node
 
 from ontolint.context import GraphContext
 from ontolint.models import CONFIDENCES, Finding
@@ -25,9 +26,24 @@ def _with_extras(defaults: tuple[URIRef, ...], extras: tuple[str, ...]) -> tuple
 
 
 def _subproperties(graph: Graph, predicates: tuple[URIRef, ...]) -> tuple[URIRef, ...]:
-    """Predicates the graph declares ``rdfs:subPropertyOf`` one of ``predicates``: local definition annotations."""
-    found = {s for p in predicates for s in graph.subjects(RDFS.subPropertyOf, p) if isinstance(s, URIRef)}
-    return tuple(sorted(found - set(predicates), key=str))
+    """IRIs that reach one of ``predicates`` through one or more ``rdfs:subPropertyOf`` triples.
+
+    These are the ontology's own definition annotations (``ex:def2 ⊑ ex:def1 ⊑ skos:definition``).
+    The walk is iterative and expands each node once, so a cycle or self-loop ends it and its cost is
+    bounded by the graph's ``rdfs:subPropertyOf`` triples (which ``max_triples`` caps); rdflib's
+    ``transitive_subjects`` recurses once per link instead.  Blank nodes carry the chain but are never
+    returned, as only an IRI can be used as a predicate.  The seeds themselves are left out, and the
+    result is sorted by IRI.
+    """
+    seeds: set[Node] = set(predicates)
+    seen: set[Node] = set(seeds)
+    stack: list[Node] = list(predicates)
+    while stack:
+        for sub in graph.subjects(RDFS.subPropertyOf, stack.pop()):
+            if sub not in seen:
+                seen.add(sub)
+                stack.append(sub)
+    return tuple(sorted((node for node in seen - seeds if isinstance(node, URIRef)), key=str))
 
 
 class RuleContext:

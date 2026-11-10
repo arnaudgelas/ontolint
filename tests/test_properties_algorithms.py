@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from itertools import product
+from random import Random
 
 import pytest
 from hypothesis import assume, given
@@ -18,7 +19,7 @@ from ontolint.engine import build_context
 from ontolint.policy import Policy
 from ontolint.rules.hierarchy_quality import Hierarchy
 from ontolint.rules.safety import MAX_BLANK_NODE_DEPTH, _condensed_depths
-from ontolint.rules.support import list_items
+from ontolint.rules.support import DESCRIPTIONS, list_items
 
 pytestmark = pytest.mark.slow
 
@@ -149,6 +150,54 @@ def test_hierarchy_build_keeps_only_edges_between_declared_classes_without_self_
     expected = {(c, p) for c, p in edges if c in declared and p in declared and c != p}
     assert set(hierarchy.edges()) == expected
     assert {(c, p) for p, cs in hierarchy.children.items() for c in cs} == expected
+
+
+# --- Definition predicates: the rdfs:subPropertyOf closure ------------------------------------------
+
+PROPERTY_NODES: list[Node] = [
+    *(URIRef(f"{BASE}def{i}") for i in range(7)),
+    BNode("QBNP0"),
+    BNode("QBNP1"),
+    *DESCRIPTIONS[:3],
+]
+
+
+def _oracle_descriptions(edges: set[tuple[Node, Node]]) -> set[Node]:
+    """Fixed point: add ``s`` whenever ``s rdfs:subPropertyOf o`` and ``o`` is already in the set."""
+    closure: set[Node] = set(DESCRIPTIONS)
+    changed = True
+    while changed:
+        changed = False
+        for sub, sup in edges:
+            if sup in closure and sub not in closure:
+                closure.add(sub)
+                changed = True
+    return {node for node in closure if isinstance(node, URIRef)}
+
+
+@budget(1)
+@given(
+    st.sets(st.tuples(st.sampled_from(PROPERTY_NODES), st.sampled_from(PROPERTY_NODES)), max_size=20),
+    st.randoms(use_true_random=False),
+)
+def test_descriptions_are_the_subproperty_closure_of_the_seeds(edges: set[tuple[Node, Node]], rng: Random) -> None:
+    """INVARIANT: ctx.descriptions is the defaults, then the IRIs below them sorted, whatever the order or cycles."""
+    triples = [(sub, RDFS.subPropertyOf, sup) for sub, sup in sorted(edges, key=str)]
+    graph = Graph()
+    for triple in triples:
+        graph.add(triple)
+    descriptions = build_context(graph, None, Policy()).descriptions
+
+    assert set(descriptions) == _oracle_descriptions(edges)
+    assert len(descriptions) == len(set(descriptions))
+    assert descriptions[: len(DESCRIPTIONS)] == DESCRIPTIONS
+    tail = descriptions[len(DESCRIPTIONS) :]
+    assert list(tail) == sorted(tail, key=str)
+    rng.shuffle(triples)
+    shuffled = Graph()
+    for triple in triples:
+        shuffled.add(triple)
+    assert build_context(shuffled, None, Policy()).descriptions == descriptions
 
 
 # --- SEC004 blank-node depth -------------------------------------------------------------------------

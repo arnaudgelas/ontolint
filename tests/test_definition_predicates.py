@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import itertools
 import json
+import sys
 from pathlib import Path
 
 import pytest
-from rdflib import Graph, URIRef
+from rdflib import BNode, Graph, URIRef
+from rdflib.namespace import RDFS, SKOS
 
 from ontolint.cli import main
 from ontolint.engine import build_context, execute
@@ -231,3 +234,146 @@ def test_rdflib_warnings_do_not_leak_onto_stderr(tmp_path: Path, capsys: pytest.
     text = PREFIXES + "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\nex:a ex:issued '2024-06-2'^^xsd:date .\n"
     _messages, err = _cli(tmp_path, capsys, text, "ONT001")
     assert err == ""
+
+
+# --- rdfs:subPropertyOf closure (LEX002-CLOSURE) --------------------------------------------------------
+
+A = "https://example.test/onto#A"
+ONTO = "<https://example.test/onto> a owl:Ontology . "
+ONTO_NS = "https://example.test/onto#"
+
+
+def _chain(length: int, seed: str) -> str:
+    """``ex:d<length-1> ⊑ … ⊑ ex:d1 ⊑ seed``: a definition annotation ``length`` sub-property steps below ``seed``."""
+    links = [f"ex:d{i + 1} rdfs:subPropertyOf ex:d{i} . " for i in range(1, length)]
+    return f"ex:d1 rdfs:subPropertyOf {seed} . " + "".join(links)
+
+
+def _descriptions(body: str, **policy: object) -> tuple[URIRef, ...]:
+    graph = Graph().parse(data=PREFIXES + body, format="turtle")
+    return build_context(graph, None, Policy.from_mapping(policy)).descriptions
+
+
+@pytest.mark.parametrize("seed", ["skos:definition", "rdfs:comment", "obo:IAO_0000115"])
+@pytest.mark.parametrize("length", [2, 5])
+def test_a_transitive_subproperty_of_a_definition_predicate_counts(length: int, seed: str) -> None:
+    term = f"ex:A a owl:Class ; rdfs:label 'A'@en ; ex:d{length} 'An A is a thing.'@en ."
+    assert fired(ONTO + _chain(length, seed) + term, "LEX002") == []
+    # The exact example of the 2026-11-10 review.
+    todo = (
+        "ex:def2 rdfs:subPropertyOf ex:def1 . ex:def1 rdfs:subPropertyOf skos:definition . "
+        "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:def2 'An A is a thing.'@en ."
+    )
+    assert fired(ONTO + todo, "LEX002") == []
+
+
+def test_a_subproperty_cycle_terminates_and_counts() -> None:
+    body = (
+        ONTO + "ex:def1 rdfs:subPropertyOf ex:def2 . ex:def2 rdfs:subPropertyOf ex:def1 . "
+        "ex:def1 rdfs:subPropertyOf skos:definition . "
+        "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:def2 'An A is a thing.'@en ."
+    )
+    assert fired(body, "LEX002") == []
+    loops = body + " ex:def1 rdfs:subPropertyOf ex:def1 . skos:definition rdfs:subPropertyOf ex:def2 ."
+    assert fired(loops, "LEX002") == []
+    descriptions = _descriptions(loops)
+    assert descriptions.count(URIRef("http://www.w3.org/2004/02/skos/core#definition")) == 1
+    assert descriptions == (*DESCRIPTIONS, URIRef(ONTO_NS + "def1"), URIRef(ONTO_NS + "def2"))
+
+
+def test_a_deep_subproperty_chain_does_not_recurse() -> None:
+    # rdflib's Graph.transitive_subjects recurses once per link and raises RecursionError here.
+    length = sys.getrecursionlimit() * 3
+    graph = Graph()
+    links = [URIRef(f"{ONTO_NS}d{i}") for i in range(length)]
+    graph.add((links[0], RDFS.subPropertyOf, SKOS.definition))
+    for sub, sup in itertools.pairwise(links):
+        graph.add((sup, RDFS.subPropertyOf, sub))
+    descriptions = build_context(graph, None, Policy()).descriptions
+    assert len(descriptions) == len(set(descriptions)) == len(DESCRIPTIONS) + length
+    assert set(descriptions[len(DESCRIPTIONS) :]) == set(links)
+
+
+def test_a_chain_that_never_reaches_a_definition_predicate_does_not_count() -> None:
+    term = "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:def2 'An A is a thing.'@en ."
+    assert fired(ONTO + "ex:def2 rdfs:subPropertyOf ex:def1 . " + term, "LEX002") == [A]
+    descriptions = _descriptions("ex:def2 rdfs:subPropertyOf ex:def1 .")
+    assert URIRef(ONTO_NS + "def1") not in descriptions
+    assert URIRef(ONTO_NS + "def2") not in descriptions
+    # The walk goes downwards only: a super-property of a definition predicate is not one.
+    upward = ONTO + "skos:definition rdfs:subPropertyOf ex:def1 . ex:A a owl:Class ; rdfs:label 'A' ; ex:def1 'x' ."
+    assert fired(upward, "LEX002") == [A]
+    assert _descriptions("skos:definition rdfs:subPropertyOf ex:def1 .") == DESCRIPTIONS
+
+
+def test_a_broken_chain_does_not_count() -> None:
+    body = (
+        ONTO + "ex:def3 rdfs:subPropertyOf ex:def2 . ex:def1 rdfs:subPropertyOf skos:definition . "
+        "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:def3 'An A is a thing.'@en ."
+    )
+    assert fired(body, "LEX002") == [A]
+
+
+def test_a_chain_through_a_blank_node_counts_but_the_node_is_not_a_predicate() -> None:
+    chain = "ex:p rdfs:subPropertyOf _:b . _:b rdfs:subPropertyOf skos:definition . "
+    descriptions = _descriptions(chain)
+    assert URIRef(ONTO_NS + "p") in descriptions
+    assert not any(isinstance(node, BNode) for node in descriptions)
+    assert descriptions == (*DESCRIPTIONS, URIRef(ONTO_NS + "p"))
+    assert fired(ONTO + chain + "ex:A a owl:Class ; rdfs:label 'A' ; ex:p 'An A.' .", "LEX002") == []
+
+
+def test_derived_definition_predicates_are_sorted_and_follow_the_seeds() -> None:
+    body = "ex:z rdfs:subPropertyOf skos:definition . ex:a rdfs:subPropertyOf skos:definition ."
+    assert _descriptions(body) == (*DESCRIPTIONS, URIRef(ONTO_NS + "a"), URIRef(ONTO_NS + "z"))
+    # Two linked seeds are neither repeated nor moved.
+    assert _descriptions("skos:definition rdfs:subPropertyOf rdfs:comment .") == DESCRIPTIONS
+
+
+def test_transitive_definition_predicates_reach_every_consumer() -> None:
+    chain = ONTO + "ex:def2 rdfs:subPropertyOf ex:def1 . ex:def1 rdfs:subPropertyOf skos:definition . "
+    assert fired(chain + "ex:A a owl:Class ; rdfs:label 'A' ; ex:def2 ex:B .", "LEX013") == [A]
+    assert fired(chain + "ex:A a owl:Class ; rdfs:label 'A' ; ex:def2 '' .", "LEX019") == [A]
+    assert fired(chain + "ex:A a owl:Class ; rdfs:label 'A thing' ; ex:def2 'A thing' .", "LEX017") == [A]
+    described = chain.replace(ONTO, "<https://example.test/onto> a owl:Ontology ; ex:def2 'Described.' . ")
+    assert fired(described, "ONT006") == []
+    classes = "ex:A a owl:Class ; ex:def2 'An A.' . ex:B a owl:Class ; ex:def2 'A B.' ."
+    assert fired(chain + classes, "METRIC002", metric_min_sample=1, metric_max_undefined_ratio=0.0) == []
+
+
+def test_tool005_does_not_suggest_a_transitively_known_predicate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    chain = "<https://v.test/termDefinition> rdfs:subPropertyOf ex:mid . ex:mid rdfs:subPropertyOf skos:definition .\n"
+    terms = "".join(f"ex:C{i} a owl:Class ; <https://v.test/termDefinition> 'Def {i}.'@en .\n" for i in range(12))
+    path = tmp_path / "o.ttl"
+    path.write_text(PREFIXES + "<https://example.test/onto> a owl:Ontology .\n" + chain + terms, encoding="utf-8")
+    out = tmp_path / "r.json"
+    code = main([str(path), "--select", "LEX002", "--format", "json", "--output", str(out)])
+    assert "TOOL005" not in capsys.readouterr().err
+    assert json.loads(out.read_text(encoding="utf-8"))["findings"] == []
+    assert code == 0
+
+
+def test_a_definition_subproperty_declared_in_an_import_counts(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    module = tmp_path / "annotations.ttl"
+    module.write_text(
+        PREFIXES + "<https://example.test/annotations> a owl:Ontology .\n"
+        "ex:def2 rdfs:subPropertyOf ex:def1 . ex:def1 rdfs:subPropertyOf skos:definition .\n",
+        encoding="utf-8",
+    )
+    root = tmp_path / "root.ttl"
+    root.write_text(
+        PREFIXES + f"<https://example.test/onto> a owl:Ontology ; owl:imports <{module.as_uri()}> .\n"
+        "ex:A a owl:Class ; rdfs:label 'A'@en ; ex:def2 'An A is a thing.'@en .\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "r.json"
+    argv = [str(root), "--select", "LEX002", "--format", "json", "--output", str(out)]
+    assert main([*argv, "--follow-imports"]) == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["findings"] == []
+    main([*argv, "--fail-on", "never"])  # without the import the chain is unknown
+    assert [f["focus"] for f in json.loads(out.read_text(encoding="utf-8"))["findings"]] == [A]
+    capsys.readouterr()
