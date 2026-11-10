@@ -304,7 +304,8 @@ SHACL shapes often check the class of a vocabulary individual, which only the on
 instance data validated alone reports false violations (and can silently pass where a target class
 is reached through a subclass). With `--follow-imports`, a shapes file that `owl:imports` the
 ontology supplies it: SHACL validates the data merged with that closure (inference off), reports
-only results about the linted file's own nodes, and the term rules still judge the data file alone.
+only results about nodes the linted file mentions (as a subject or an object, so a
+`sh:targetObjectsOf` focus counts), and the term rules still judge the data file alone.
 
 ```bash
 ontolint data.ttl --shapes shapes.ttl --follow-imports   # shapes.ttl imports the ontology

@@ -9,7 +9,8 @@ printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection nev
 
 * **SHACL001.** Only with ``--shapes FILE`` (the shapes file passes the safe loader) and pySHACL installed
   (``unsupported`` otherwise, which exits ``2``).  The data graph (merged, with ``--follow-imports``, with the
-  ontology the shapes import, keeping only results whose focus is a subject of the linted file) is validated with
+  ontology the shapes import, keeping only results whose focus the linted file mentions, as a subject or an
+  object) is validated with
   ``inference="none"``, ``advanced=True``, ``meta_shacl=True``.  One finding per ``sh:ValidationResult``, focused on
   its ``sh:focusNode`` (a blank node by its content-stable id), with the result messages joined by ``; `` and
   ``[shape: <source shape>]``.  The severity is the result's: ``sh:Violation`` error, ``sh:Warning`` warning,

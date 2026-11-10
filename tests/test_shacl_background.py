@@ -88,3 +88,47 @@ def test_the_background_holds_the_ontology_but_not_the_shapes(corpus: Path) -> N
     assert not set(background.subjects(RDF.type, SH.NodeShape))
     shapes.remove((None, OWL.imports, None))
     assert cli._shapes_background(item, shapes, Policy(), cli.ImportOptions()) is None  # noqa: SLF001
+
+
+# --- what the background may hide -------------------------------------
+
+ONTO = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
+<https://ex.test/onto> a owl:Ontology .
+<https://ex.test/knows> a owl:ObjectProperty .
+<https://ex.test/x> <https://ex.test/knows> <https://ex.test/onlyInOntology> .
+"""
+OBJECT_SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+<https://ex.test/shapes> a owl:Ontology ; owl:imports <https://ex.test/onto> .
+<https://ex.test/S> a sh:NodeShape ; sh:targetObjectsOf <https://ex.test/knows> ;
+    sh:property [ sh:path <https://ex.test/code> ; sh:minCount 1 ] .
+"""
+CATALOG = (
+    '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+    '<uri name="https://ex.test/onto" uri="onto.ttl"/></catalog>'
+)
+
+
+@pytest.fixture
+def project(tmp_path: Path) -> Path:
+    (tmp_path / ".git").mkdir()
+    for name, text in {
+        "onto.ttl": ONTO,
+        "shapes.ttl": OBJECT_SHAPES,
+        "catalog-v001.xml": CATALOG,
+        "data.ttl": "<https://ex.test/a> <https://ex.test/knows> <https://ex.test/b> .\n",
+    }.items():
+        (tmp_path / name).write_text(text, encoding="utf-8")
+    return tmp_path
+
+
+def test_an_object_only_focus_of_the_data_survives_the_background(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # ex:b is only ever an object in the data; ex:onlyInOntology violates too, but only the background has it.
+    _, without, _ = _shacl(capsys, project / "data.ttl", project / "shapes.ttl", "--fail-on", "never")
+    _, with_background, _ = _shacl(
+        capsys, project / "data.ttl", project / "shapes.ttl", "--follow-imports", "--fail-on", "never"
+    )
+    assert [f["focus"] for f in without] == ["https://ex.test/b"]
+    assert [f["focus"] for f in with_background] == ["https://ex.test/b"]

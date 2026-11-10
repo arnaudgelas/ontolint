@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 from pathlib import Path
 
-from rdflib import Graph, URIRef
+from rdflib import BNode, Graph
 
 from .adapters.robot import robot_profile_issues
 from .adapters.shacl import shacl_issues
@@ -101,13 +101,16 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
     """Validate ``ctx.g``, merged with the SHACL-only background when there is one.
 
     The background (the ontology the shapes import) only supplies context, such as the classes of
-    vocabulary individuals: results about its own nodes are not findings of the linted file.
+    vocabulary individuals: results about nodes that only the background mentions are not findings of
+    the linted file.  A node the linted file mentions anywhere is its own, as an object too: a shape
+    with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.
     """
     assert ctx.shapes is not None  # noqa: S101 -- _not_run rules out SHACL without shapes.
     if ctx.shacl_background is None:
         return shacl_issues(ctx.g, ctx.shapes)
     data = ctx.g | ctx.shacl_background
-    own = {str(s) if isinstance(s, URIRef) else stable_blank_id(data, s) for s in set(ctx.g.subjects())}
+    nodes = {node for s, _p, o in ctx.g for node in (s, o)}
+    own = {stable_blank_id(data, n) if isinstance(n, BNode) else str(n) for n in nodes}
     return [finding for finding in shacl_issues(data, ctx.shapes) if finding.focus in own]
 
 
