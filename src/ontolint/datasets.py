@@ -19,26 +19,39 @@ Graph names never depend on where or how the file was read:
   blank graphs with the same triples share the name.
 
 An empty named graph states no triple and so has no name anywhere.
+
+A finding names the graphs of the terms it is about (its focus and :attr:`Finding.related`, as modules
+do): for each term, the graphs that state a triple with it as subject (where its author describes it),
+else those that mention it at all (a superclass that is only used).  Rules still run once on the union,
+so a finding is reported once, however many graphs it names.  A focus that is no node of the file
+(``(ontology)``, a literal, a name no triple holds) names no graph.  Like modules, graphs are
+presentation only: they never change a finding, its fingerprint or the exit code.
 """
 
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, cast
 
-from rdflib import BNode
+from rdflib import BNode, Graph, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.store import Store
 from rdflib.term import Identifier, Node
 
-from .rules.support import STABLE_ID_LENGTH
+from .models import Finding
+from .rules.support import STABLE_ID_LENGTH, stable_blank_id
 
 DEFAULT_GRAPH = "(default graph)"
 """The name of a dataset's default graph (parenthesised like ``(ontology)``, so no IRI can collide with it)."""
 
 Triple = tuple[Node, Node, Node]
+
+
+def ordered(names: Iterable[str]) -> tuple[str, ...]:
+    """``names`` without duplicates, sorted with :data:`DEFAULT_GRAPH` first."""
+    return tuple(sorted(set(names), key=lambda name: (name != DEFAULT_GRAPH, name)))
 
 
 @dataclass(frozen=True)
@@ -51,7 +64,7 @@ class GraphIndex:
     @property
     def names(self) -> tuple[str, ...]:
         """Every graph that states a triple, sorted (:data:`DEFAULT_GRAPH` first)."""
-        return tuple(sorted({name for names in self.triples.values() for name in names}))
+        return ordered(name for names in self.triples.values() for name in names)
 
 
 EMPTY_INDEX = GraphIndex()
@@ -138,7 +151,59 @@ def build_graph_index(store: Store, default: Node, base: str) -> GraphIndex:
         for triple in triples:
             stated.setdefault(triple, set()).add(names[identifier])
     shared: dict[frozenset[str], tuple[str, ...]] = {}  # one tuple per combination of graphs, not per triple
-    return GraphIndex({t: shared.setdefault(frozenset(n), tuple(sorted(n))) for t, n in stated.items()})
+    return GraphIndex({t: shared.setdefault(frozenset(n), ordered(n)) for t, n in stated.items()})
+
+
+class _TermText:
+    """The text a finding uses for a node: an IRI as is, a blank node by its stable identity, a literal not at all."""
+
+    def __init__(self, graph: Graph, blanks: bool) -> None:
+        self.graph = graph
+        self.blank_ids: dict[BNode, str] | None = {} if blanks else None  # None: no finding has a blank focus
+
+    def __call__(self, node: Node) -> str | None:
+        if isinstance(node, URIRef):
+            return str(node)
+        if isinstance(node, BNode) and self.blank_ids is not None:
+            if node not in self.blank_ids:
+                self.blank_ids[node] = stable_blank_id(self.graph, node)
+            return self.blank_ids[node]
+        return None
+
+
+def _term_graphs(
+    index: GraphIndex, wanted: set[str], text: _TermText
+) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    """For each wanted term: the graphs describing it (as subject), and those mentioning it anywhere."""
+    described: dict[str, set[str]] = {}
+    mentioned: dict[str, set[str]] = {}
+    for triple, names in index.triples.items():
+        for position, node in enumerate(triple):
+            term = text(node)
+            if term in wanted:
+                mentioned.setdefault(term, set()).update(names)
+                if position == 0:
+                    described.setdefault(term, set()).update(names)
+    return described, mentioned
+
+
+def finding_graphs(graph: Graph, index: GraphIndex, findings: Sequence[Finding]) -> dict[Finding, tuple[str, ...]]:
+    """The graphs of each finding that names one, through ``index`` (empty for a file without named graphs).
+
+    ``graph`` is the linted graph: a blank-node focus is the :func:`stable_blank_id` of a node in it, which
+    is computed only when some finding has a blank focus.
+    """
+    if not index.triples:
+        return {}
+    wanted = {term for finding in findings for term in (finding.focus, *finding.related)}
+    text = _TermText(graph, any(term.startswith("_:") for term in wanted))
+    described, mentioned = _term_graphs(index, wanted, text)
+    graphs: dict[Finding, tuple[str, ...]] = {}
+    for finding in findings:
+        names = [n for term in (finding.focus, *finding.related) for n in described.get(term, mentioned.get(term, ()))]
+        if names:
+            graphs[finding] = ordered(names)
+    return graphs
 
 
 # --- the parse worker's reply ---------------------------------------------------------------------------------

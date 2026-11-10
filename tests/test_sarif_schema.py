@@ -135,3 +135,12 @@ def test_cli_output_after_a_baseline_and_with_skipped_rules_matches_the_schema(
     assert sarif["runs"][0]["results"] == []
     assert sarif["runs"][0]["invocations"][0]["toolExecutionNotifications"]
     validate(sarif)
+
+
+def test_cli_output_naming_named_graphs_and_modules_matches_the_schema(
+    tmp_path: Path, validate: Callable[[dict[str, Any]], None]
+) -> None:
+    dataset = Path(__file__).parent / "fixtures" / "datasets" / "one_term_two_graphs.trig"
+    sarif = _cli_sarif(tmp_path, str(dataset), "--module-by", "namespace")
+    assert all(r["properties"]["graphs"] for r in sarif["runs"][0]["results"])
+    validate(sarif)

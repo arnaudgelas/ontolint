@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
+from typing import Any
+from unittest import mock
 from urllib.parse import urljoin
 
 import pytest
@@ -12,7 +15,7 @@ from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.plugins.stores.memory import Memory
 
-from ontolint import loader
+from ontolint import loader, main
 from ontolint.datasets import (
     DEFAULT_GRAPH,
     EMPTY_INDEX,
@@ -20,12 +23,17 @@ from ontolint.datasets import (
     build_graph_index,
     decode_index,
     encode_index,
+    finding_graphs,
     graph_name,
     relative_reference,
 )
 from ontolint.loader import LoadedGraph, ParseFailure, load_document, load_graph, loaded_graph
+from ontolint.models import Finding
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.rules.support import stable_blank_id
+
+FIXTURES = Path(__file__).parent / "fixtures" / "datasets"
 
 E = "http://example.org/"
 G1, G2 = f"{E}g1", f"{E}g2"
@@ -292,3 +300,218 @@ def test_every_file_of_an_import_closure_keeps_its_own_index(tmp_path: Path) -> 
     assert root_module.graphs.names == (DEFAULT_GRAPH, f"{E}gr")
     assert module.graphs.names == (DEFAULT_GRAPH, f"{E}gm")
     assert closure.loaded.graphs == document.graphs
+
+
+# --- which graphs a finding names ---------------------------------------------------------------------------
+
+A, B, C = (URIRef(f"{E}{name}") for name in "ABC")
+
+
+def _finding(focus: str, *related: str, rule: str = "LEX002") -> Finding:
+    return Finding(rule, "info", focus, "m", "s", related=related)
+
+
+def test_a_term_is_where_it_is_described_before_where_it_is_used() -> None:
+    index = GraphIndex(
+        {(A, RDF.type, OWL.Class): (G1,), (B, RDFS.subClassOf, A): (G2,), (B, RDFS.subClassOf, C): (G2,)}
+    )
+    used, described, undeclared = _finding(str(A)), _finding(str(B)), _finding(str(C))
+    graphs = finding_graphs(Graph(), index, [used, described, undeclared])
+    assert graphs == {used: (G1,), described: (G2,), undeclared: (G2,)}  # C is only used: where it is mentioned
+
+
+def test_a_finding_about_several_terms_names_the_graphs_of_all_of_them() -> None:
+    index = GraphIndex({(A, RDF.type, OWL.Class): (G1,), (B, RDF.type, OWL.Class): (DEFAULT_GRAPH, G2)})
+    collision = _finding(str(A), str(B), rule="IRI003")
+    assert finding_graphs(Graph(), index, [collision]) == {collision: (DEFAULT_GRAPH, G1, G2)}
+
+
+def test_the_default_graph_is_named_first() -> None:
+    index = GraphIndex({(A, RDF.type, OWL.Class): ("!bang", DEFAULT_GRAPH, "&amp")})
+    finding = _finding(str(A))
+    assert finding_graphs(Graph(), index, [finding]) == {finding: (DEFAULT_GRAPH, "!bang", "&amp")}
+
+
+def test_a_focus_that_is_no_node_of_the_file_names_no_graph() -> None:
+    index = GraphIndex({(A, RDFS.label, Literal("x")): (G1,)})
+    findings = [_finding("(ontology)"), _finding("x"), _finding(f"{E}Unknown"), _finding("_:000000000000")]
+    assert finding_graphs(Graph(), index, findings) == {}
+
+
+def test_a_blank_focus_is_matched_by_its_stable_identity() -> None:
+    restriction = BNode()
+    graph = Graph()
+    graph.add((restriction, RDF.type, OWL.Restriction))
+    graph.add((restriction, OWL.onProperty, A))
+    index = GraphIndex({(restriction, RDF.type, OWL.Restriction): (G1,), (restriction, OWL.onProperty, A): (G1,)})
+    finding = _finding(stable_blank_id(graph, restriction), rule="OWL001")
+    assert finding_graphs(graph, index, [finding]) == {finding: (G1,)}
+
+
+def test_blank_identities_are_computed_only_when_a_dataset_finding_needs_one() -> None:
+    blank = BNode()
+    index = GraphIndex({(blank, RDF.type, OWL.Restriction): (G1,), (A, RDF.type, OWL.Class): (G1,)})
+    with mock.patch("ontolint.datasets.stable_blank_id", side_effect=AssertionError("computed")) as computed:
+        assert finding_graphs(Graph(), EMPTY_INDEX, [_finding("_:000000000000")]) == {}
+        assert finding_graphs(Graph(), index, [_finding(str(A))]) == {_finding(str(A)): (G1,)}
+    computed.assert_not_called()
+
+
+# --- reports: the Done-when case in every format --------------------------------------------------------------
+
+THING, OTHER, ONTO = f"{E}Thing", f"{E}Other", f"{E}onto"
+BOTH = ["http://example.org/g1", "http://example.org/g2"]
+
+
+def _run(tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, *args: str) -> str:
+    target = tmp_path / name
+    if not target.exists():
+        shutil.copy(FIXTURES / name, target)
+    main([str(target), "--fail-on", "never", *args])
+    return capsys.readouterr().out
+
+
+def _json(tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, *args: str) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = json.loads(_run(tmp_path, capsys, name, "--format", "json", *args))["findings"]
+    return findings
+
+
+@pytest.mark.parametrize("seconds", ["", "30"])
+def test_findings_name_their_graphs_in_json(tmp_path: Path, capsys: pytest.CaptureFixture[str], seconds: str) -> None:
+    budget = ["--max-parse-seconds", seconds] if seconds else []
+    findings = _json(tmp_path, capsys, "one_term_two_graphs.trig", *budget)
+    graphs = {(f["rule"], f["focus"]): f.get("graphs") for f in findings}
+    assert graphs[("LEX002", THING)] == BOTH
+    assert graphs[("CLS001", THING)] == BOTH
+    assert graphs[("LEX002", OTHER)] == ["http://example.org/g1"]
+    assert graphs[("ONT003", ONTO)] == [DEFAULT_GRAPH]
+    assert all(f["graphs"] for f in findings)
+    assert list(findings[0]) == [*Finding("r", "info", "f", "m", "s").to_dict(), "path", "graphs"]
+
+
+@pytest.mark.parametrize("seconds", ["", "30"])
+def test_sarif_results_carry_the_same_graphs(tmp_path: Path, capsys: pytest.CaptureFixture[str], seconds: str) -> None:
+    budget = ["--max-parse-seconds", seconds] if seconds else []
+    findings = _json(tmp_path, capsys, "one_term_two_graphs.trig", *budget)
+    sarif = json.loads(_run(tmp_path, capsys, "one_term_two_graphs.trig", "--format", "sarif", *budget))
+    results = sarif["runs"][0]["results"]
+    assert [r["properties"]["graphs"] for r in results] == [f["graphs"] for f in findings]
+
+
+@pytest.mark.parametrize("seconds", ["", "30"])
+def test_text_names_the_graphs_under_the_fix(tmp_path: Path, capsys: pytest.CaptureFixture[str], seconds: str) -> None:
+    budget = ["--max-parse-seconds", seconds] if seconds else []
+    lines = _run(tmp_path, capsys, "one_term_two_graphs.trig", *budget).splitlines()
+    for rule in ("CLS001", "LEX002"):
+        at = lines.index(next(line for line in lines if f"{rule} {THING}:" in line))
+        assert lines[at + 1].startswith("    Fix: ")
+        assert lines[at + 2] == "    In: graphs http://example.org/g1, http://example.org/g2"
+    at = lines.index(next(line for line in lines if f"LEX002 {OTHER}:" in line))
+    assert lines[at + 2] == "    In: graph http://example.org/g1"
+
+
+def test_an_ontology_finding_without_a_node_names_no_graph(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / "a.trig").write_text(
+        HEADER.replace("<http://example.org/o> a owl:Ontology .\n", "") + "e:g1 { e:A a owl:Class . }\n",
+        encoding="utf-8",
+    )
+    findings = _json(tmp_path, capsys, "a.trig")
+    ontology = [f for f in findings if f["focus"] == "(ontology)"]
+    assert ontology
+    assert all("graphs" not in f for f in ontology)
+    assert all(f["graphs"] == ["http://example.org/g1"] for f in findings if f["focus"] == f"{E}A")
+
+
+def test_nquads_and_jsonld_findings_name_their_graphs(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / "a.nq").write_text(
+        f"<{E}A> <{RDF.type}> <{OWL.Class}> .\n<{E}A> <{RDF.type}> <{OWL.Class}> <{G1}> .\n", encoding="utf-8"
+    )
+    (tmp_path / "b.jsonld").write_text(
+        '{"@context": {"e": "http://example.org/", "owl": "http://www.w3.org/2002/07/owl#"}, "@id": "e:g1",'
+        ' "@graph": [{"@id": "e:A", "@type": "owl:Class"}]}',
+        encoding="utf-8",
+    )
+    nquads = [f["graphs"] for f in _json(tmp_path, capsys, "a.nq", "--select", "LEX001")]
+    jsonld = [f["graphs"] for f in _json(tmp_path, capsys, "b.jsonld", "--select", "LEX001")]
+    assert nquads == [[DEFAULT_GRAPH, G1]]
+    assert jsonld == [[G1]]
+
+
+def test_graph_names_hold_no_machine_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / "a.trig").write_text(HEADER + "<rel> { e:A a owl:Class . }\n", encoding="utf-8")
+    for fmt in ("text", "json", "sarif"):
+        out = _run(tmp_path, capsys, "a.trig", "--format", fmt, "--select", "LEX001")
+        assert '"rel"' in out or "In: graph rel" in out
+        assert str(tmp_path) not in out.replace(f"{tmp_path}/a.trig", "").replace((tmp_path / "a.trig").as_uri(), "")
+
+
+def test_a_graph_above_the_files_directory_holds_no_machine_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "a.trig").write_text(HEADER + "<../g> { e:A a owl:Class . }\n", encoding="utf-8")
+    file = tmp_path / "sub" / "a.trig"
+    for fmt in ("text", "json", "sarif"):
+        out = _run(tmp_path, capsys, "sub/a.trig", "--format", fmt, "--select", "LEX001")
+        assert '"../g"' in out or "In: graph ../g" in out
+        assert str(tmp_path) not in out.replace(str(file), "").replace(file.as_uri(), "")
+
+
+def test_relabelling_a_blank_graph_changes_nothing(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    body = " { e:A a owl:Class . [] a owl:Restriction ; owl:onProperty e:p . }\n"
+    (tmp_path / "x.trig").write_text(HEADER + "_:x" + body, encoding="utf-8")
+    (tmp_path / "y.trig").write_text(HEADER + "_:y" + body, encoding="utf-8")
+    x = _run(tmp_path, capsys, "x.trig", "--format", "json")
+    y = _run(tmp_path, capsys, "y.trig", "--format", "json")
+    assert x.replace("x.trig", "y.trig") == y
+    assert '"_:' in x
+
+
+def test_graphs_come_before_modules(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    findings = _json(tmp_path, capsys, "one_term_two_graphs.trig", "--module-by", "namespace")
+    other = next(f for f in findings if f["focus"] == OTHER)
+    assert list(other)[-3:] == ["path", "graphs", "modules"]
+    text = _run(tmp_path, capsys, "one_term_two_graphs.trig", "--module-by", "namespace")
+    assert "    In: graph http://example.org/g1, module http://example.org/" in text.splitlines()
+    sarif = json.loads(
+        _run(tmp_path, capsys, "one_term_two_graphs.trig", "--module-by", "namespace", "--format", "sarif")
+    )
+    assert list(sarif["runs"][0]["results"][0]["properties"]) == ["graphs", "modules"]
+
+
+def test_an_imported_dataset_names_its_graphs_after_its_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "root.ttl").write_text(
+        HEADER + "<http://example.org/o> owl:imports <module.trig> .\ne:R a owl:Class .\n", encoding="utf-8"
+    )
+    (tmp_path / "module.trig").write_text(
+        HEADER.replace("example.org/o>", "example.org/m>") + "e:gm { e:M a owl:Class . }\n", encoding="utf-8"
+    )
+    findings = _json(tmp_path, capsys, "root.ttl", "--follow-imports", "--select", "LEX001")
+    by_focus = {f["focus"]: f for f in findings}
+    assert Path(by_focus[f"{E}M"]["path"]).name == "module.trig"
+    assert by_focus[f"{E}M"]["graphs"] == [f"{E}gm"]
+    assert "graphs" not in by_focus[f"{E}R"]
+    text = _run(tmp_path, capsys, "root.ttl", "--follow-imports", "--select", "LEX001").splitlines()
+    at = text.index(next(line for line in text if f"LEX001 {E}M:" in line))
+    assert text[at + 2].endswith("module.trig, graph http://example.org/gm")
+
+
+def test_moving_a_triple_to_another_graph_keeps_the_baseline(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    trig = tmp_path / "a.trig"
+    shutil.copy(FIXTURES / "one_term_two_graphs.trig", trig)
+    turtle = tmp_path / "a.ttl"  # the same triples, as one Turtle graph
+    union = load_graph(resolve_inputs([str(trig)], tmp_path)[0], Policy(), tmp_path)
+    turtle.write_text(union.serialize(format="turtle"), encoding="utf-8")
+    main([str(trig), "--fail-on", "never", "--write-baseline", str(tmp_path / "trig.json")])
+    main([str(turtle), "--fail-on", "never", "--write-baseline", str(tmp_path / "ttl.json")])
+    capsys.readouterr()
+    baseline = json.loads((tmp_path / "trig.json").read_text(encoding="utf-8"))
+    assert baseline == json.loads((tmp_path / "ttl.json").read_text(encoding="utf-8"))
+    trig.write_text(trig.read_text(encoding="utf-8").replace("ex:g2 {", "ex:g3 {"), encoding="utf-8")
+    out = _run(tmp_path, capsys, "a.trig", "--baseline", str(tmp_path / "trig.json"))
+    assert out.startswith("Ontology linter: 0 finding(s)")
+    assert "Baseline:" not in out

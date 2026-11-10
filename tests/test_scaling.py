@@ -13,10 +13,13 @@ import time
 from collections.abc import Callable
 
 import pytest
-from rdflib import Graph, URIRef
-from rdflib.namespace import OWL, RDF
+from rdflib import BNode, Graph, URIRef
+from rdflib.namespace import OWL, RDF, RDFS
+from rdflib.plugins.stores.memory import Memory
 
 from ontolint import Linter
+from ontolint.datasets import build_graph_index, finding_graphs
+from ontolint.models import Finding
 from ontolint.source_locations import build_source_index
 
 pytestmark = pytest.mark.slow
@@ -54,7 +57,35 @@ def _cls017(count: int) -> float:
     return _best_of_two(lambda: Linter(graph).execute(["CLS017"]))
 
 
-@pytest.mark.parametrize("step", [_locate, _cls017], ids=["source-locator", "CLS017"])
+def _dataset(count: int) -> tuple[Memory, BNode]:
+    """``count`` classes spread over ten named graphs, each labelled in the default graph too."""
+    store = Memory()
+    default = BNode()
+    named = [Graph(store=store, identifier=URIRef(f"https://example.test/g{i}")) for i in range(10)]
+    for i in range(count):
+        term = URIRef(f"https://example.test/C{i}")
+        named[i % 10].add((term, RDF.type, OWL.Class))
+        Graph(store=store, identifier=default).add((term, RDFS.label, URIRef(f"https://example.test/L{i}")))
+    return store, default
+
+
+def _graph_index(count: int) -> float:
+    store, default = _dataset(count)
+    return _best_of_two(lambda: build_graph_index(store, default, "file:///w/"))
+
+
+def _finding_graphs(count: int) -> float:
+    store, default = _dataset(count)
+    index = build_graph_index(store, default, "file:///w/")
+    findings = [Finding("LEX002", "info", f"https://example.test/C{i}", "m", "s") for i in range(count)]
+    return _best_of_two(lambda: finding_graphs(Graph(), index, findings))
+
+
+@pytest.mark.parametrize(
+    "step",
+    [_locate, _cls017, _graph_index, _finding_graphs],
+    ids=["source-locator", "CLS017", "graph-index", "finding-graphs"],
+)
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], float]) -> None:
     small, large = step(SMALL), step(LARGE)
     assert large / small < MAX_RATIO, f"{SMALL} classes: {small:.3f} s, {LARGE} classes: {large:.3f} s"

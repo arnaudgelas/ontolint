@@ -65,6 +65,8 @@ class FileReport:
     origins: Mapping[Finding, Origin] = field(default_factory=dict[Finding, Origin])
     # With --module-annotation or --module-by: the modules inside the file each finding belongs to.
     modules: Mapping[Finding, tuple[str, ...]] = field(default_factory=dict[Finding, tuple[str, ...]])
+    # For a dataset with named graphs (TriG, N-Quads, JSON-LD): the graphs each finding's terms are stated in.
+    graphs: Mapping[Finding, tuple[str, ...]] = field(default_factory=dict[Finding, tuple[str, ...]])
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -154,7 +156,13 @@ def to_json(report: RunReport) -> dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "summary": _severity_summary(report.findings),
         "findings": [
-            {**f.to_dict(), "path": r.path_of(f), **({"modules": list(r.modules[f])} if f in r.modules else {})}
+            {
+                **f.to_dict(),
+                "path": r.path_of(f),
+                # Each present only when it applies, so other files keep their historical shape.
+                **({"graphs": list(r.graphs[f])} if f in r.graphs else {}),
+                **({"modules": list(r.modules[f])} if f in r.modules else {}),
+            }
             for r in report.files
             for f in r.findings
         ],
@@ -229,6 +237,8 @@ def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -
     properties: dict[str, Any] = {}
     if f.details is not None:
         properties["details"] = f.details
+    if f in file.graphs:
+        properties["graphs"] = list(file.graphs[f])
     if f in file.modules:
         properties["modules"] = list(file.modules[f])
     if properties:
@@ -317,8 +327,11 @@ def render_sarif(report: RunReport, exit_status: int | None = None) -> str:
 
 
 def _where(f: Finding, file: FileReport) -> str:
-    """The ``In:`` line: the imported module's file and/or the modules inside the file, if any."""
+    """The ``In:`` line: the imported module's file, the named graphs and the modules inside the file, if any."""
     parts = [file.origins[f].path] if f in file.origins else []
+    graphs = file.graphs.get(f, ())
+    if graphs:
+        parts.append(("graph " if len(graphs) == 1 else "graphs ") + ", ".join(graphs))
     names = file.modules.get(f, ())
     if names:
         parts.append(("module " if len(names) == 1 else "modules ") + ", ".join(names))

@@ -1,0 +1,18 @@
+# One term (ex:Thing) described in two named graphs, another (ex:Other) in one; the header in the default graph.
+@prefix ex: <http://example.org/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://example.org/onto> a owl:Ontology ;
+    rdfs:label "Two graphs"@en .
+
+ex:g1 {
+    ex:Thing a owl:Class .
+    ex:Other a owl:Class ;
+        rdfs:label "Other"@en .
+}
+
+ex:g2 {
+    ex:Thing a owl:Class ;
+        rdfs:label "Thing"@en .
+}

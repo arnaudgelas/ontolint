@@ -224,13 +224,14 @@ case a `Rule execution:` block is appended.
   each finding, `rules` (id, family, title, effective and default severity, category, backend,
   scope, requirements, suggestion), `execution_summary` and per-file `files[].executions`. A
   finding whose message abbreviates a tool's output also carries the full output in `details`
-  (`SEM001`: ROBOT's profile report, whose violations the message groups by kind).
+  (`SEM001`: ROBOT's profile report, whose violations the message groups by kind). In a dataset
+  with named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
   `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
-  `artifactLocation` on every result (and `properties.details` where JSON has `details`), and a
-  run `invocation`. Skipped, unsupported and failed rules are `toolExecutionNotifications`
-  (levels `note`, `warning`, `error`); `executionSuccessful` is `false` when any rule failed or is
-  unsupported.
+  `artifactLocation` on every result (and `properties.details` and `properties.graphs` where
+  JSON has `details` and `graphs`), and a run `invocation`. Skipped, unsupported and failed rules
+  are `toolExecutionNotifications` (levels `note`, `warning`, `error`); `executionSuccessful` is
+  `false` when any rule failed or is unsupported.
 * SARIF findings for Turtle, N3, N-Triples, N-Quads and RDF/XML inputs include the source line and
   column of their focus term when it can be resolved. JSON-LD findings include a region for an
   explicit `@id`, including compact IRIs defined by a local context; generated JSON-LD nodes retain
@@ -333,6 +334,42 @@ adds `modules` to each finding and `module_summary` (counts by severity) to each
 no module. Fingerprints and baselines are the same with and without grouping. The policy keys
 `module_annotation` (an absolute IRI) and `module_by` (`"namespace"`) do the same; the two are
 alternatives, and a CLI option replaces the policy's choice.
+
+### Datasets: named graphs
+
+A TriG, N-Quads or JSON-LD file can hold named graphs. ontolint lints the union of its graphs, so
+every rule runs once and a reference from one graph to a term described in another resolves. Each
+finding then names the graphs it comes from:
+
+```text
+[INFO   ] LEX002 http://example.org/Thing: Term has no description or definition.
+    Fix: Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).
+    In: graphs http://example.org/g1, http://example.org/g2
+```
+
+A finding names the graphs that describe its focus (state a triple with it as the subject), or, if
+none does, the graphs that mention it (a superclass that is only used). A collision (`IRI003`,
+`LEX004`) names the graphs of every term involved, as it names every module. A triple stated in
+two graphs belongs to both, so a term described in two graphs names both; the finding is still
+reported once. A finding whose focus is no node of the file (`(ontology)`, a literal) names no
+graph, and neither does a finding about a pattern library member.
+
+Graph names do not depend on where the file is read. The default graph is `(default graph)` and
+is listed first. A graph IRI is printed in full, except a `file:` IRI, such as a relative
+reference that resolved against the file (`<rel> { … }`, `<../g> { … }`, `<#g> { … }`): it is
+shown relative to the file, `rel`, `../g` or `#g`, never as a `file:` IRI with a local path.
+A blank-node graph (`_:g { … }`) has a new label on every parse, so it is named by its content:
+`_:` and 12 hex digits of a digest of its triples. Two blank graphs with the same triples
+therefore share one name, and editing a blank graph renames it. An empty named graph names
+nothing.
+
+Text adds `In: graph X` (or `In: graphs X, Y`), after an imported module's file and before the
+modules inside the file; JSON adds `graphs` to each finding, between `path` and `modules`; SARIF
+adds `properties.graphs`. All three appear only for a file with at least one triple outside its
+default graph, so every other file reports exactly as before. Like modules, graphs are presentation
+only: fingerprints, baselines and exit codes do not depend on them, and moving a triple to another
+graph keeps its findings baselined. In an import closure, each finding names the graphs of the file
+it belongs to.
 
 ### Pattern libraries
 
@@ -605,7 +642,8 @@ ODK edit files and Protégé exports, often named `.owl`) are not RDF. By defaul
 `INPUT001` that names the syntax and the ways forward. A parse failure in a file that contains an
 HTML page (a saved web page or server error) says where that page starts. The named graphs of a
 TriG, N-Quads or JSON-LD file (a node with `@id` and `@graph`) are merged with its default graph
-and linted as one graph; a triple stated in several graphs counts once.
+and linted as one graph; a triple stated in several graphs counts once. Findings name their graphs
+(see "Datasets: named graphs").
 
 With `--convert-with-robot`, each such file, the input or any file of its import closure, is
 converted to Turtle with the ROBOT image of `--robot-image` (see "OWL profile validation with

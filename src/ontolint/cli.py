@@ -13,7 +13,7 @@ import json
 import logging
 import math
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from functools import partial
@@ -27,6 +27,7 @@ from . import engine
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
+from .datasets import finding_graphs
 from .imports import (
     CATALOG_NAME,
     Catalog,
@@ -309,16 +310,19 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
     modules = _file_modules(item, loaded, plan.policy, findings)
     executions_sorted = tuple(sorted(executions, key=lambda x: x.rule_id))
     if loaded.modules:
-        origins, locations, problem = _module_origins(loaded.modules, graph, findings, sarif)
+        origins, locations, problem, owners = _module_origins(loaded.modules, graph, findings, sarif)
+        graphs = _closure_graphs(loaded.modules, graph, findings, owners)
     else:
         origins = {}
         locations = loaded.source_index.for_findings(graph, findings) if sarif else {}
         problem = loaded.source_index.problem if sarif else None
+        graphs = finding_graphs(graph, loaded.graphs, findings)
     members = _library_origins(plan.policy.library, findings)
     if members:  # a finding about a member ontology belongs to the member's file, not to the index
         origins = {**origins, **members}
         locations = {f: where for f, where in locations.items() if f not in members}
-    return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules)
+        graphs = {f: names for f, names in graphs.items() if f not in members}
+    return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules, graphs)
 
 
 def _library_origins(library: PatternLibrary | None, findings: Sequence[Finding]) -> dict[Finding, Origin]:
@@ -363,25 +367,41 @@ def _file_modules(
 
 def _module_origins(
     modules: Sequence[Module], graph: Graph, findings: Sequence[Finding], sarif: bool
-) -> tuple[dict[Finding, Origin], dict[Finding, Location], str | None]:
+) -> tuple[dict[Finding, Origin], dict[Finding, Location], str | None, dict[Finding, int]]:
     """Attribute each finding of an import closure to the file it belongs to (``modules[0]`` is the root).
 
     A finding belongs to the first file that declares its focus (gives it an ``rdf:type``), else to the
     first file whose text mentions it, else to the root.  Its region, for SARIF, comes from that file.
+    Also returns the position in ``modules`` of each finding's file.
     """
     located = [module.source_index.for_findings(graph, findings) for module in modules]
     origins: dict[Finding, Origin] = {}
     locations: dict[Finding, Location] = {}
+    owners: dict[Finding, int] = {}
     for finding in findings:
         owner = next((i for i, module in enumerate(modules) if finding.focus in module.declared), None)
         if owner is None:
             owner = next((i for i, found in enumerate(located) if finding in found), 0)
+        owners[finding] = owner
         if owner:
             origins[finding] = Origin(modules[owner].display, modules[owner].uri)
         if sarif and finding in located[owner]:
             locations[finding] = located[owner][finding]
     problems = [f"{m.display}: {m.source_index.problem}" for m in modules if sarif and m.source_index.problem]
-    return origins, locations, "; ".join(problems) or None
+    return origins, locations, "; ".join(problems) or None, owners
+
+
+def _closure_graphs(
+    modules: Sequence[Module], graph: Graph, findings: Sequence[Finding], owners: Mapping[Finding, int]
+) -> dict[Finding, tuple[str, ...]]:
+    """The named graphs of each closure finding, in the file it belongs to (another file's graphs are not its)."""
+    owned: dict[int, list[Finding]] = {}
+    for finding in findings:
+        owned.setdefault(owners[finding], []).append(finding)
+    graphs: dict[Finding, tuple[str, ...]] = {}
+    for owner, group in owned.items():
+        graphs.update(finding_graphs(graph, modules[owner].graphs, group))
+    return graphs
 
 
 def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:

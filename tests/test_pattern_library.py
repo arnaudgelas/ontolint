@@ -212,3 +212,21 @@ def test_a_name_that_is_only_pattern_stays_a_name() -> None:
 def test_the_library_namespace(iris: tuple[str, ...], namespace: str | None) -> None:
     members = [LibraryMember("f", "u", iri, frozenset({iri})) for iri in iris]
     assert library_namespace(members) == namespace
+
+
+def test_a_member_finding_names_no_graph_of_the_index(library: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # The index as a dataset whose named graph mentions the member <…/agentrole>: LIB003 on that member belongs
+    # to the member's file, so the index's graphs are not its own.
+    prefixes, body = INDEX.split("<https://example.test/purl/lib> a owl:Ontology .")
+    (library / "index.ttl").unlink()
+    dataset = library / "index.trig"
+    dataset.write_text(
+        f"{prefixes}<https://example.test/purl/lib> a owl:Ontology .\n"
+        f"<https://example.test/g> {{ {body} :Events rdfs:seeAlso <{DOMAIN}agentrole> . }}\n",
+        encoding="utf-8",
+    )
+    _, document, _ = _run(capsys, str(dataset), "--pattern-library", str(library))
+    assert document is not None
+    graphs = {(f["rule"], f["focus"]): f.get("graphs", "none") for f in document["findings"]}
+    assert graphs[("LIB003", DOMAIN + "agentrole")] == "none"
+    assert graphs[("LIB001", INDEX_NS + "Ghost")] == ["https://example.test/g"]
