@@ -270,6 +270,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
                 _declared(root_document.graph),
                 root_document.source_index,
                 _directory(root_path),
+                graphs=root_document.graphs,
             )
         ],
         set(),
@@ -313,6 +314,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         frozenset(walk.imported),
         tuple(walk.modules),
         root_document.source,
+        root_document.graphs,
     )
     return Closure(
         loaded,
@@ -345,6 +347,7 @@ def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
             document.source_index,
             _directory(path),
             document.graph,
+            document.graphs,
         )
     )
     walk.imported |= _ontologies(document.graph)

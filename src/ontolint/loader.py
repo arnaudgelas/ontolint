@@ -43,7 +43,8 @@ from rdflib.plugins.stores.memory import Memory
 from rdflib.term import Node
 from rdflib.util import guess_format
 
-from . import syntax
+from . import datasets, syntax
+from .datasets import EMPTY_INDEX, GraphIndex
 from .models import SourceFacts
 from .paths import InputFile
 from .policy import Policy
@@ -104,6 +105,8 @@ class Module:
     """The file's directory as a ``file:`` URI ending in ``/``: relative references resolve under it."""
     graph: Graph | None = None
     """The file's own triples (imported files only; the root's are the input graph)."""
+    graphs: GraphIndex = field(default=EMPTY_INDEX, compare=False)
+    """The named graphs that state each of the file's triples (empty unless it is a dataset with one)."""
 
 
 @dataclass(frozen=True)
@@ -119,6 +122,8 @@ class LoadedGraph:
     """With --follow-imports: the root file first, then every imported file in load order."""
     source: SourceFacts = SourceFacts()
     """What the file's text says that the graph does not keep (an SPDX licence comment, its prefixes)."""
+    graphs: GraphIndex = field(default=EMPTY_INDEX, compare=False)
+    """The named graphs that state each triple of the (root) file; empty unless it is a dataset with one."""
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.
@@ -411,8 +416,11 @@ spell JSON-LD ``json-ld`` (for ``.jsonld``, ``.json-ld`` and ``.json`` alike, an
 """
 
 
-def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triples: int) -> Graph:
-    """Parse ``data`` under the network guard and the triple bound; shared by the in-process and worker paths."""
+def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triples: int) -> tuple[Graph, GraphIndex]:
+    """Parse ``data`` under the network guard and the triple bound; shared by the in-process and worker paths.
+
+    Returns the graph and, for a dataset syntax, the named graphs that state each of its triples.
+    """
     store = _BoundedStore(max_triples)
     graph = Graph(store=store)
     failure: Exception | None = None
@@ -435,7 +443,10 @@ def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triple
         raise failure
     if failure is not None:
         raise ParseFailure(type(failure).__name__, _describe(failure)) from failure
+    index = EMPTY_INDEX
     if fmt in DATASET_FORMATS:
+        # Record which graph states each triple first: once merged, the default graph holds them all.
+        index = datasets.build_graph_index(store, graph.identifier, public_id)
         # The parser put each named graph in its own context; ``graph`` sees only the default one. An ontology
         # author means the whole file, so lint the union (adding a triple in another context adds no new one).
         for triple, _contexts in list(store.triples((None, None, None), None)):
@@ -443,7 +454,7 @@ def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triple
     store.limit = None  # a plain graph: pySHACL and other consumers copy it and must not hit the bound
     if len(graph) > max_triples:  # pragma: no cover - the store bound fires first; defence in depth
         raise InputRejected("SEC002", f"graph has more than {max_triples} triples (max_triples)")
-    return graph
+    return graph, index
 
 
 def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Graph:
@@ -456,13 +467,20 @@ def load_graph(item: InputFile, policy: Policy, root: Path | None = None) -> Gra
     # Keep the established Graph-returning API while letting the CLI retain loader metadata.
     setattr(loaded.graph, "_ontolint_source_index", loaded.source_index)  # noqa: B010 -- Graph has no metadata slot.
     setattr(loaded.graph, "_ontolint_source_facts", loaded.source)  # noqa: B010 -- likewise.
+    setattr(loaded.graph, "_ontolint_graph_index", loaded.graphs)  # noqa: B010 -- likewise.
     return loaded.graph
 
 
 def loaded_graph(graph: Graph) -> LoadedGraph:
     """The :class:`LoadedGraph` for a graph returned by :func:`load_graph` (its metadata travels with it)."""
     facts = getattr(graph, "_ontolint_source_facts", None)
-    return LoadedGraph(graph, source_index(graph), source=facts if isinstance(facts, SourceFacts) else SourceFacts())
+    index = getattr(graph, "_ontolint_graph_index", None)
+    return LoadedGraph(
+        graph,
+        source_index(graph),
+        source=facts if isinstance(facts, SourceFacts) else SourceFacts(),
+        graphs=index if isinstance(index, GraphIndex) else EMPTY_INDEX,
+    )
 
 
 def source_index(graph: Graph) -> SourceIndex:
@@ -489,14 +507,16 @@ def load_document(item: InputFile, policy: Policy, root: Path | None = None) -> 
     if fmt in syntax.NON_RDF_SYNTAXES:
         return _load_converted(item, data, fmt, public_id, policy)
     try:
-        graph = _parse_document(data, fmt, public_id, item.display, policy)
+        graph, index = _parse_document(data, fmt, public_id, item.display, policy)
     except ParseFailure as failure:
         line = syntax.html_start(data)
         if line is None:
             raise
         hint = f"; an HTML page starts at line {line} (a web page or server error saved in place of RDF?)"
         raise ParseFailure(failure.cause_type, failure.detail + hint) from failure
-    return LoadedGraph(graph, build_source_index(data, fmt, public_id, graph), source=source_facts(data, fmt, graph))
+    return LoadedGraph(
+        graph, build_source_index(data, fmt, public_id, graph), source=source_facts(data, fmt, graph), graphs=index
+    )
 
 
 def _load_converted(item: InputFile, data: bytes, fmt: str, public_id: str, policy: Policy) -> LoadedGraph:
@@ -517,7 +537,7 @@ def _load_converted(item: InputFile, data: bytes, fmt: str, public_id: str, poli
         turtle = policy.owl_converter(item.path, data, fmt)
     except Exception as exc:  # noqa: BLE001 -- any converter failure is this input's parse failure.
         raise ParseFailure("ConversionFailed", f"{item.display} is written in {name}; {exc}") from exc
-    graph = _parse_document(turtle, "turtle", public_id, item.display, policy)
+    graph, _index = _parse_document(turtle, "turtle", public_id, item.display, policy)  # Turtle: no named graph
     return LoadedGraph(graph, SourceIndex({}), source=source_facts(data, "turtle", graph))
 
 
@@ -542,7 +562,7 @@ def source_facts(data: bytes, fmt: str, graph: Graph) -> SourceFacts:
     return SourceFacts(license_comment, declared)
 
 
-def _parse_document(data: bytes, fmt: str, public_id: str, display: str, policy: Policy) -> Graph:
+def _parse_document(data: bytes, fmt: str, public_id: str, display: str, policy: Policy) -> tuple[Graph, GraphIndex]:
     """Choose the in-process or time-bounded parsing path for one already-validated document."""
     if policy.max_parse_seconds is None:
         return _parse_bytes(data, fmt, public_id, display, policy.max_triples)
@@ -581,18 +601,37 @@ def _decode_term(raw: _Term) -> Node:
     return Literal(raw[1], lang=raw[2], datatype=None if raw[3] is None else URIRef(raw[3]), normalize=False)
 
 
-def _encode_graph(graph: Graph) -> bytes:
-    triples = [[_encode_term(t) for t in triple] for triple in graph]
-    namespaces = [[prefix, str(uri)] for prefix, uri in graph.namespaces()]
-    return json.dumps({"triples": triples, "namespaces": namespaces}, separators=(",", ":")).encode()
+def _encode_graph(graph: Graph, index: GraphIndex = EMPTY_INDEX) -> bytes:
+    """The worker's reply: triples and prefixes, plus ``graphs`` only for a dataset with a named graph.
+
+    Every other file's reply is the same as before the index existed.
+    """
+    triples = list(graph)
+    document: dict[str, Any] = {
+        "triples": [[_encode_term(t) for t in triple] for triple in triples],
+        "namespaces": [[prefix, str(uri)] for prefix, uri in graph.namespaces()],
+    }
+    if index.triples:
+        document["graphs"] = datasets.encode_index(index, triples)
+    return json.dumps(document, separators=(",", ":")).encode()
 
 
 def _decode_graph(payload: dict[str, Any]) -> Graph:
+    return _decode_document(payload)[0]
+
+
+def _decode_document(payload: dict[str, Any]) -> tuple[Graph, GraphIndex]:
+    """The graph and graph index of a worker reply; a reply without ``graphs`` has the empty index."""
     graph = Graph()
     for prefix, uri in payload["namespaces"]:
         graph.bind(prefix, URIRef(uri), override=True, replace=True)
-    graph.addN((_decode_term(s), _decode_term(p), _decode_term(o), graph) for s, p, o in payload["triples"])
-    return graph
+    triples = [(_decode_term(s), _decode_term(p), _decode_term(o)) for s, p, o in payload["triples"]]
+    graph.addN((s, p, o, graph) for s, p, o in triples)
+    try:
+        index = datasets.decode_index(payload.get("graphs"), triples)
+    except ValueError as exc:
+        raise ParseFailure("WorkerError", f"the parse worker sent a malformed graph index: {exc}") from exc
+    return graph, index
 
 
 # gremlin: pardon[equivalent] nothing mutates a job; frozen only guards against it
@@ -611,7 +650,7 @@ def _worker_main(connection: Any, job: _ParseJob) -> None:
     """Entry point of the worker: announce readiness, parse, send one JSON document, exit."""
     connection.send_bytes(b"ready")
     try:
-        reply = _encode_graph(_parse_bytes(job.data, job.fmt, job.public_id, job.display, job.max_triples))
+        reply = _encode_graph(*_parse_bytes(job.data, job.fmt, job.public_id, job.display, job.max_triples))
     except InputRejected as exc:
         reply = json.dumps({"rejected": [exc.rule_id, exc.message]}).encode()
     except ParseFailure as exc:
@@ -634,7 +673,7 @@ def _stop(process: Any) -> None:
     process.close()
 
 
-def _parse_in_worker(job: _ParseJob, seconds: float) -> Graph:
+def _parse_in_worker(job: _ParseJob, seconds: float) -> tuple[Graph, GraphIndex]:
     """Parse in a ``spawn`` worker and give it ``seconds`` of wall-clock time from the moment it is ready.
 
     Interpreter start-up and the import of rdflib are excluded from the budget (they are the tool's cost, not the
@@ -666,10 +705,10 @@ def _parse_in_worker(job: _ParseJob, seconds: float) -> Graph:
         raise InputRejected(*reply["rejected"])
     if "parse_failure" in reply:
         raise ParseFailure(*reply["parse_failure"])
-    graph = _decode_graph(reply)
+    graph, index = _decode_document(reply)
     if len(graph) > job.max_triples:  # pragma: no cover - the worker enforces it; defence in depth
         raise InputRejected("SEC002", f"graph has more than {job.max_triples} triples (max_triples)")
-    return graph
+    return graph, index
 
 
 def _ready(receiver: Any, timeout: float) -> bool:
