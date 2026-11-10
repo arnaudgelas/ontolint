@@ -20,6 +20,45 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **SHACL-TIMEOUT** (P1): SHACL validation can be bounded in time and never reaches the
+    network. `max_validation_seconds` (and `--max-validation-seconds`; same range and checks as
+    `max_parse_seconds`, unset by default, never inherited from it) runs each file's validation
+    in a worker process and stops it at the budget: `SHACL001` is `failed` with
+    `ValidationTimeout: SHACL validation did not finish within the time budget of <s> seconds
+    (max_validation_seconds)`, the report is written, `TOOL001` names the file, exit 2, as for a
+    ROBOT timeout. The budget starts once the worker has imported pySHACL and includes decoding
+    the graphs there; it covers shapes from `--shapes-from-profile` and imported shape libraries,
+    since they join the shapes graph. pySHACL now runs inside `network_disabled()` on both paths:
+    any socket or DNS attempt, even one pySHACL swallows, fails the rule (pySHACL refuses
+    `SERVICE` only with a regular expression). The worker is built once, as
+    `ontolint.worker.run_bounded` (`WorkerTask`: `prepare` before ready, `run` returning one JSON
+    object; `WorkerTimeout`, `WorkerGone`, `WorkerFailed`; the JSON graph codec); the parse budget
+    runs on it with byte-identical `SEC003` and `INPUT001` messages, and the CQ gate's runner can
+    be a third task. The README's "Input safety" lists the bounded phases (sizes always, ROBOT,
+    and with a budget parsing and SHACL) and the unbounded one (rule families, measured by
+    `tests/test_scaling.py`), `inference="none"` and what `advanced=True` admits.
+    Verified: the TODO reproduction (100 `ex:Thing`, about 400 triples, a four-pattern `sh:sparql`
+    join; still running after 30 s on 0.10.2) with `--max-parse-seconds 2
+    --max-validation-seconds 2` ends in 2.6 s wall clock with exit 2 and a `failed` execution,
+    and runs as the regression test (in a subprocess, budget 0.5 s); the SARIF run is
+    `executionSuccessful: false` with an `error` notification; two files give two `TOOL001` lines;
+    no worker survives. Findings, `details`, `related`, `subject` and `evidence` (`sh:node`
+    detail, complex path, ill-typed and non-ASCII literals, a rebound `schema:` prefix, blank
+    shapes and foci, the background filter) are equal with and without the budget, and JSON, SARIF
+    and text reports are byte-identical with a generous budget; a Hypothesis property checks the
+    worker task against `shacl_issues` without a process, and the Finding codec field by field.
+    A refused shapes graph starts no worker and reads the same. Golden files, `differential.json`,
+    fingerprints and baselines did not move; `docs/rules.md` changed only by the new field in the
+    `Policy` reprs; each commit passed Ruff, Pyright and the tests on its own in a clean worktree.
+    Targeted mutation run (`worker.py`, `adapters/shacl.py`, `engine.py`): 117 mutants, 108
+    killed, 5 pardoned (the moved parse-worker pardons and the frozen validation job), none
+    surviving, 3 timeouts and 1 error (not named by the console report).
+    Left open: no default budget (turning one on would make today's long but successful runs
+    exit 2: the maintainer's call); the worker's memory is not capped (as the parse worker's
+    is not); Windows and Linux behaviour of the worker is checked only by `mypy --platform win32`
+    until the P2 cross-OS smoke tests exist; a pySHACL `ValidationFailure` (for example its
+    `SERVICE` refusal) still reads `RuntimeError: pySHACL returned an unexpected report type`;
+    whether POLICY-SILENT should note the key without shapes, where it has no effect.
   - **BASELINE-V2** (P1): baselines match a finding by its identity (rule, focus and a structured
     `Finding.subject`, never the message) as well as by its version 1 fingerprint, so a reworded
     message, a pySHACL upgrade or a measurement that moves keeps an accepted finding accepted and
@@ -344,20 +383,6 @@ Validation corpus (public; licences per repository):
 | KnowledgeCaptureAndDiscovery/SoftwareDescriptionOntology | single curated file, versioned `release/1.9.0/` | control case: 8 findings, ownership right |
 
 ## P1 — reporting, policy and supply-chain correctness
-
-- [ ] **Bound SHACL validation in time, as parsing is.** Reproduced on 0.10.2 (2026-11-10): a
-  shapes file whose `sh:sparql` constraint joins four triple patterns, on a 300-triple data file,
-  was still running after 30 s with `--max-parse-seconds 2`. Nothing stops it: pySHACL runs in
-  process after the parse budget has ended, and `advanced=True` also admits SHACL-AF rules and
-  functions. Shapes are input too, and since 0.10.0 and 0.10.2 they also come from a PROF profile or
-  from a shape library a shapes file imports, not only from the user's own file. Run validation in
-  the killable worker the parse budget already uses (`loader._parse_in_worker`), with the network
-  guard inside it, under a `max_validation_seconds` policy key and flag; a timeout is a `failed`
-  SHACL001 execution and exit 2, as for ROBOT. Say in the README's "Input safety" which phases are
-  bounded (sizes, parsing, ROBOT, then SHACL) and which are not (the rule families: measured by
-  `tests/test_scaling.py`, not bounded), that validation runs with `inference="none"`, and what
-  `advanced=True` admits. The CQ gate's SPARQL runner needs the same worker; build it once.
-  *Done when:* the reproduction above ends within its budget with exit 2 and a `failed` execution.
 
 - [ ] **Source regions for TriG.** SARIF results for a `.trig` file have no region:
   `source_locations._TEXT_FORMATS` lists Turtle, N3, N-Triples and N-Quads but not TriG (README
@@ -731,8 +756,8 @@ moves from `proposed` merely because it has an attractive title.
   sets. An empty expected set is a legitimate answer, and a question with no expectation is CQ007
   (no oracle), never CQ003 (unexpected empty result). Compare answers after normalising literals
   (`"01"^^xsd:integer` and `"1"^^xsd:integer` are one value) and blank nodes; order matters only
-  under `ORDER BY`. Queries run in the bounded worker of the P1 SHACL item, since rdflib's SPARQL
-  has no timeout of its own. *Gate:* accepted format and at least one public corpus that justifies
+  under `ORDER BY`. Queries run as a task of the bounded worker (`ontolint.worker.run_bounded`,
+  built for SHACL validation), since rdflib's SPARQL has no timeout of its own. *Gate:* accepted format and at least one public corpus that justifies
   maintaining it.
 - [ ] **Reasoner-backed semantics (`SEM*`).** Define supported reasoners/profiles, Docker versus
   local dependency model, reproducibility, timeout/failure behavior, and CI image ownership.
