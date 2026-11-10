@@ -3385,7 +3385,7 @@ Reported: `No versionIRI/versionInfo.`
 <https://example.test/onto> a owl:Ontology .
 ```
 
-Reported: `Missing creator or dcterms:created provenance.`
+Reported: `Missing creator and dcterms:created provenance.`
 
 *Clean:* creator and created
 
@@ -3681,7 +3681,7 @@ ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 ex:p a owl:ObjectProperty . ex:i ex:p "text" .
 ```
 
-Reported: `Object property https://example.test/onto#p points to literal rdflib.term.Literal('text').`
+Reported: `Object property https://example.test/onto#p points to literal "text".`
 
 *Clean:* object property with resource value
 

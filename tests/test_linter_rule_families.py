@@ -104,6 +104,38 @@ def test_metadata_requires_both_creator_and_creation_date() -> None:
     assert "ONT005" not in rules_with_both
 
 
+def test_ont005_names_the_provenance_that_is_missing() -> None:
+    """The message says which of the two is absent, or both (0.10.0; earlier: "creator or dcterms:created")."""
+    graph = Graph()
+    ontology = EX.provenance
+    graph.add((ontology, RDF.type, OWL.Ontology))
+
+    def message() -> str | None:
+        return next((f.message for f in Linter(graph).run() if f.rule == "ONT005"), None)
+
+    assert message() == "Missing creator and dcterms:created provenance."
+    graph.add((ontology, DCTERMS.created, Literal("2026-01-01")))
+    assert message() == "Missing creator provenance."
+    graph.remove((ontology, DCTERMS.created, None))
+    graph.add((ontology, URIRef("http://purl.org/pav/createdBy"), Literal("maintainer")))
+    assert message() == "Missing dcterms:created provenance."
+    graph.add((ontology, DCTERMS.created, Literal("2026-01-01")))
+    assert message() is None
+
+
+def test_owl013_prints_the_literal_in_n3() -> None:
+    """Not ``rdflib.term.Literal('text', ...)``, the Python repr earlier releases printed."""
+    graph = Graph()
+    graph.add((EX.p, RDF.type, OWL.ObjectProperty))
+    graph.add((EX.i, EX.p, Literal("text", lang="en")))
+    graph.add((EX.j, EX.p, Literal(1)))
+    messages = sorted(f.message for f in Linter(graph).run() if f.rule == "OWL013")
+    assert messages == [
+        f'Object property {EX.p} points to literal "1"^^<http://www.w3.org/2001/XMLSchema#integer>.',
+        f'Object property {EX.p} points to literal "text"@en.',
+    ]
+
+
 def test_identifier_and_declaration_boundary_rules() -> None:
     graph = Graph()
     invalid, undeclared_class, undeclared_range_property = URIRef("relative"), EX.undeclared_class, EX.range_property

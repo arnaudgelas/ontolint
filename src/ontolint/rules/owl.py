@@ -540,7 +540,7 @@ def _object_property_assertions(ctx: RuleContext, object_props: set[Node]) -> No
     for p in object_props:
         for s, o in ctx.g.subject_objects(p):
             if isinstance(o, Literal):
-                ctx.add("OWL013", s, f"Object property {p} points to literal {o!r}.", confidence="certain")
+                ctx.add("OWL013", s, f"Object property {p} points to literal {o.n3()}.", confidence="certain")
 
 
 def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> None:

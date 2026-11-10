@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:9706b99e4632fc8adfa56924f9fabe31a27790147befc778a6ffec507dcdc8de (27261 chars)",
+    "file": "sha256:6889b0af58be1285e77f28a7f72a9df676e939ae6bd3b41e30f81e020bd6b3d9 (27241 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:9706b99e4632fc8adfa56924f9fabe31a27790147befc778a6ffec507dcdc8de (27261 chars)"
+    "stdout": "sha256:6889b0af58be1285e77f28a7f72a9df676e939ae6bd3b41e30f81e020bd6b3d9 (27241 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,44 +118,44 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
+   "legacy_json_view": "sha256:314d8a3547fe988eb6355d23047fe4ba3b46e8fb561e5563b62617598376f769 (44966 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)",
+    "file": "sha256:d370cb16ad98f172fa9753c641dd83cafbf49cb21baa75b7c195c508839a03ed (158620 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)"
+    "stdout": "sha256:d370cb16ad98f172fa9753c641dd83cafbf49cb21baa75b7c195c508839a03ed (158620 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:5842ae07c7a53eb55a111d3878dca7180d277846cabb1545c79d92b9778ce686 (41097 chars)",
+   "legacy_json_view": "sha256:ab9db01865c77e5255372ffd0906865baba914cc75e37b58c9b0d87c1b9a80d3 (41078 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:af99c213ac511b1599ab1f24d05198212c4d6a66e9d0d7595dfb4e658d78c305 (154580 chars)",
+    "file": "sha256:d868b4bbaee3649a5e4b2cb7ed65f5a38ea1e25bb3f3c8bc9459a43afa29169e (154561 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:af99c213ac511b1599ab1f24d05198212c4d6a66e9d0d7595dfb4e658d78c305 (154580 chars)"
+    "stdout": "sha256:d868b4bbaee3649a5e4b2cb7ed65f5a38ea1e25bb3f3c8bc9459a43afa29169e (154561 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:4f0419802efe80f98cf6b472f3ab22ef8e99cc66225f02b8d850d96d99a49e4b (28503 chars)",
+    "file": "sha256:b84270c2d68f6ab62d592f4ac53c5c198fda44614e63812d67861aa8c2424f61 (28482 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:4f0419802efe80f98cf6b472f3ab22ef8e99cc66225f02b8d850d96d99a49e4b (28503 chars)"
+    "stdout": "sha256:b84270c2d68f6ab62d592f4ac53c5c198fda44614e63812d67861aa8c2424f61 (28482 chars)"
    }
   },
   "json_clean": {
@@ -195,21 +195,21 @@
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:0c86d08c01a38760911eed3a9931ea6521c949222ea2c465cd1ef93662a80999 (62345 chars)",
+   "legacy_json_view": "sha256:448036d7e75c91ab76f5bff2f480afd763489b802687e167f90a0d7b4aec39ae (62327 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:b6aa28e9ba310f4ca4a97ed9dd1e3c1dc70012b4b92f61e69d1f9e7ea3340984 (178417 chars)",
+    "file": "sha256:595ff1f9c78da8ca142bb368ba799eeb159e9bb30a4112e7a2e3a959f4b374a8 (178399 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:b6aa28e9ba310f4ca4a97ed9dd1e3c1dc70012b4b92f61e69d1f9e7ea3340984 (178417 chars)"
+    "stdout": "sha256:595ff1f9c78da8ca142bb368ba799eeb159e9bb30a4112e7a2e3a959f4b374a8 (178399 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:0dfb3e0dad9d58852e6fa4cb27d449cedd61063109ef19019487a41e7015685a (287468 chars)"
+    "stdout": "sha256:4f8319f09ca5b96d317005a5e8053a2d6ea69831ba3195caaff715379d62f5e0 (287450 chars)"
    },
    "write_baseline": {
     "count": 207,
@@ -217,21 +217,21 @@
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
+   "legacy_json_view": "sha256:314d8a3547fe988eb6355d23047fe4ba3b46e8fb561e5563b62617598376f769 (44966 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)",
+    "file": "sha256:d370cb16ad98f172fa9753c641dd83cafbf49cb21baa75b7c195c508839a03ed (158620 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:22db59f678c18b0e1cbe83d91fc63a523193be7e984ea8bb419e74d2a538f653 (158638 chars)"
+    "stdout": "sha256:d370cb16ad98f172fa9753c641dd83cafbf49cb21baa75b7c195c508839a03ed (158620 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:4930999446e8363cf0315ae8c93491ec28e8da5f963bed7fdee553b79735f27c (267653 chars)"
+    "stdout": "sha256:c1d4f4734baccf7c124ac35e3ebed1b616f1cbd58837c4a1e8a846049c98f4e2 (267635 chars)"
    },
    "write_baseline": {
     "count": 137,
@@ -239,63 +239,63 @@
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:3a12e846aed3fe7f9433e15572fff08c76b11a8fa5d45d5c091271efc7001e8a (45304 chars)",
+   "legacy_json_view": "sha256:13745a728863fd4dadebff04a42a254c9dfd187b63795ce88b4c70b62ecef849 (45286 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d37fa65bc4b6961701a72581209588e5105ea8be53fb6d770f89b6d93faffd88 (158953 chars)",
+    "file": "sha256:b7eb90c516cf8889340ca99c36df555a94c3d5afb1064797c717a0da48802058 (158935 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d37fa65bc4b6961701a72581209588e5105ea8be53fb6d770f89b6d93faffd88 (158953 chars)"
+    "stdout": "sha256:b7eb90c516cf8889340ca99c36df555a94c3d5afb1064797c717a0da48802058 (158935 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
+   "legacy_json_view": "sha256:314d8a3547fe988eb6355d23047fe4ba3b46e8fb561e5563b62617598376f769 (44966 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:084a0fd1edc09f69868a048cc9abddd347039cc72271024cd30576fe5ce2735f (158599 chars)",
+    "file": "sha256:ebfc501aad7d7457e208f3f308c1e8f5f22fdbd028bbc89004d55368ff8bb7c0 (158581 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:084a0fd1edc09f69868a048cc9abddd347039cc72271024cd30576fe5ce2735f (158599 chars)"
+    "stdout": "sha256:ebfc501aad7d7457e208f3f308c1e8f5f22fdbd028bbc89004d55368ff8bb7c0 (158581 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
+   "legacy_json_view": "sha256:314d8a3547fe988eb6355d23047fe4ba3b46e8fb561e5563b62617598376f769 (44966 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:f206f08d6a858394e1830c44eabb90cee383c2f092f1704a448e7c0e75d42909 (158645 chars)",
+    "file": "sha256:592842614e43de9c746994084cb8645563b0fd2e79a495b2dd8614c18d42cbb3 (158627 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:f206f08d6a858394e1830c44eabb90cee383c2f092f1704a448e7c0e75d42909 (158645 chars)"
+    "stdout": "sha256:592842614e43de9c746994084cb8645563b0fd2e79a495b2dd8614c18d42cbb3 (158627 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:2de03bfd3456289ee63417138a9cb37f4a60867d396971db1703509794e6348a (48095 chars)",
+   "legacy_json_view": "sha256:c925203b87455420cbc35e034e9ad8dbfa5fe86def2833495bb47866162a1439 (48077 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:5bcb312476831cb5e222358597b950e9a7386564c6af66fd398ca89ddb23e02c (161164 chars)",
+    "file": "sha256:95cabb63e49abc7e8c6cb6141859f2c1ff0aa6c0763b1e482af1c3a5ac798c24 (161146 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:5bcb312476831cb5e222358597b950e9a7386564c6af66fd398ca89ddb23e02c (161164 chars)"
+    "stdout": "sha256:95cabb63e49abc7e8c6cb6141859f2c1ff0aa6c0763b1e482af1c3a5ac798c24 (161146 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:5fb05c8a59b6fe40465d4355ae6a9fad13169d8901e6575716481ad2abce7df2 (269253 chars)"
+    "stdout": "sha256:e491e15b548a9e9b9b56594cb478c6ed212bec3c01f2c6d4ffed60f0987e2aeb (269235 chars)"
    },
    "write_baseline": {
     "count": 147,
@@ -303,17 +303,17 @@
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:cbd117e732415df050e19cdcc6cfe88a46f78b477f0f8344293fb488f9b5cdac (51430 chars)",
+   "legacy_json_view": "sha256:74f8293961898b3f00d8f5f05f61ab639c80b3ce2083c36a9b4e0256320bfde9 (51412 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:ee0dec4033d78f947df79a97d7e5663349b2c8553324271f7002c3a99f96f447 (165833 chars)",
+    "file": "sha256:bf0bacac62f0a5dab03a4dc99c30ff5d2b7c67a847b9cf7560492871978d0d7a (165815 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ee0dec4033d78f947df79a97d7e5663349b2c8553324271f7002c3a99f96f447 (165833 chars)"
+    "stdout": "sha256:bf0bacac62f0a5dab03a4dc99c30ff5d2b7c67a847b9cf7560492871978d0d7a (165815 chars)"
    }
   },
   "list_rules_json": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:298b5b03a3ad3587e0d96e73970f195f26fe04a3a7a56ce73e670ddd22a2c17c (44984 chars)",
+   "legacy_json_view": "sha256:314d8a3547fe988eb6355d23047fe4ba3b46e8fb561e5563b62617598376f769 (44966 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:7c7884c397f0a7ba6fbdd72741ccab7d188430dfeac74c6ad17a20efe2657e4b (182375 chars)",
+    "file": "sha256:2a7d27ee509269655f1e61ff1faa42508b7211bbc03b238d15c93d9f6f43ac1c (182357 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:7c7884c397f0a7ba6fbdd72741ccab7d188430dfeac74c6ad17a20efe2657e4b (182375 chars)"
+    "stdout": "sha256:2a7d27ee509269655f1e61ff1faa42508b7211bbc03b238d15c93d9f6f43ac1c (182357 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,54 +411,54 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:dd8d70423bf3c5350a2b91832c02bd0fe10ec759cae19452cf1f06040c31c9b7 (304680 chars)",
+    "file": "sha256:e63adf4724b3ca86a8ae08920ea2482b6e2d1e5bdd83a78f458edc5a7b7368ac (304662 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:dd8d70423bf3c5350a2b91832c02bd0fe10ec759cae19452cf1f06040c31c9b7 (304680 chars)"
+    "stdout": "sha256:e63adf4724b3ca86a8ae08920ea2482b6e2d1e5bdd83a78f458edc5a7b7368ac (304662 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:7c8886d89eb20a35e6d9bf5ae86f75c38514c99a9e648919f696fca288a83f12 (27337 chars)",
+    "file": "sha256:2815a666b93806a8e4ce355b820bec2c063eec7ad9ecdd25571633ff9d1cdbcd (27317 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:7c8886d89eb20a35e6d9bf5ae86f75c38514c99a9e648919f696fca288a83f12 (27337 chars)"
+    "stdout": "sha256:2815a666b93806a8e4ce355b820bec2c063eec7ad9ecdd25571633ff9d1cdbcd (27317 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:9706b99e4632fc8adfa56924f9fabe31a27790147befc778a6ffec507dcdc8de (27261 chars)",
+    "file": "sha256:6889b0af58be1285e77f28a7f72a9df676e939ae6bd3b41e30f81e020bd6b3d9 (27241 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:9706b99e4632fc8adfa56924f9fabe31a27790147befc778a6ffec507dcdc8de (27261 chars)"
+    "stdout": "sha256:6889b0af58be1285e77f28a7f72a9df676e939ae6bd3b41e30f81e020bd6b3d9 (27241 chars)"
    }
   },
   "profile_minimal_json": {
-   "legacy_json_view": "sha256:52e51d2c84462b274a331d5d3e1eb774ec6a5501c6be7609a122a016d518a1b2 (5594 chars)",
+   "legacy_json_view": "sha256:24372b5492ac5ed4161b68c3cd0183a07791aec328f5b11225553e7571d90f31 (5595 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:f0db2ad05e3b40b56ac534f87062c7cd385fa615a467e2d11b7d0da72a75da12 (31967 chars)",
+    "file": "sha256:e64dbc96790caac805275fec652b66c65b7b276447460a23bbb128e9682c2e81 (31968 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f0db2ad05e3b40b56ac534f87062c7cd385fa615a467e2d11b7d0da72a75da12 (31967 chars)"
+    "stdout": "sha256:e64dbc96790caac805275fec652b66c65b7b276447460a23bbb128e9682c2e81 (31968 chars)"
    }
   },
   "profile_strict_text": {
@@ -477,41 +477,41 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:d2f7a8f41e23fdcceac452c9093bfba22fcf7fc201714aa888b94eea8f061805 (287357 chars)",
+    "file": "sha256:8fcdea08f9bcb4f6e6497aecddf58bdd3b3ba15f2cae2189f0da2f1e63c7351d (287339 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d2f7a8f41e23fdcceac452c9093bfba22fcf7fc201714aa888b94eea8f061805 (287357 chars)"
+    "stdout": "sha256:8fcdea08f9bcb4f6e6497aecddf58bdd3b3ba15f2cae2189f0da2f1e63c7351d (287339 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:b7e41adb51eeeb6de777519c3b5386a35bd8950b886223378152dfa1de7ae0d7 (276117 chars)",
+    "file": "sha256:9d488de3c210c622755914bbd91d3df38bd269588e357eeca6be920e7dc171d3 (276099 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:b7e41adb51eeeb6de777519c3b5386a35bd8950b886223378152dfa1de7ae0d7 (276117 chars)"
+    "stdout": "sha256:9d488de3c210c622755914bbd91d3df38bd269588e357eeca6be920e7dc171d3 (276099 chars)"
    }
   },
   "select_and_ignore_json": {
-   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 3,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator or dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n",
+   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 3,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator and dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:f0cc55240ca76b47f7eb78dab7611f4cdaf8c9c5819f43fe733846a21625e27a (5028 chars)",
+    "file": "sha256:392b6780f32431594cfc7ac2b6cad4722dbec67ab09bfef9dde38e028e08e92d (5029 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:f0cc55240ca76b47f7eb78dab7611f4cdaf8c9c5819f43fe733846a21625e27a (5028 chars)"
+    "stdout": "sha256:392b6780f32431594cfc7ac2b6cad4722dbec67ab09bfef9dde38e028e08e92d (5029 chars)"
    }
   },
   "select_empty_entry": {
@@ -528,17 +528,17 @@
    }
   },
   "select_family_json": {
-   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 7,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/second.ttl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#c3\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#camelCase\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator or dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n",
+   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 7,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/second.ttl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#c3\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#camelCase\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator and dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:2c2a92fb281daccaebeac5d68bf54daafd56e220ac8a86715d39f1b7c9044d73 (15528 chars)",
+    "file": "sha256:d63417bbbba35d768e17b8b3f090cd040096b61bfc5c11e0e5a80583c9c39a1e (15529 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:2c2a92fb281daccaebeac5d68bf54daafd56e220ac8a86715d39f1b7c9044d73 (15528 chars)"
+    "stdout": "sha256:d63417bbbba35d768e17b8b3f090cd040096b61bfc5c11e0e5a80583c9c39a1e (15529 chars)"
    }
   },
   "select_unknown": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:4b7c508f85e41722624955e9265b04da96912d08f686e22465e42798b5a7cfd9 (43661 chars)",
+    "file": "sha256:c600036f61411faa849f3fd85c6d81bb0a5f08aac91f5bab3720342e08adf303 (43641 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:4b7c508f85e41722624955e9265b04da96912d08f686e22465e42798b5a7cfd9 (43661 chars)"
+    "stdout": "sha256:c600036f61411faa849f3fd85c6d81bb0a5f08aac91f5bab3720342e08adf303 (43641 chars)"
    }
   },
   "text_clean": {
@@ -583,14 +583,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:9706b99e4632fc8adfa56924f9fabe31a27790147befc778a6ffec507dcdc8de (27261 chars)",
+    "file": "sha256:6889b0af58be1285e77f28a7f72a9df676e939ae6bd3b41e30f81e020bd6b3d9 (27241 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:9706b99e4632fc8adfa56924f9fabe31a27790147befc778a6ffec507dcdc8de (27261 chars)"
+    "stdout": "sha256:6889b0af58be1285e77f28a7f72a9df676e939ae6bd3b41e30f81e020bd6b3d9 (27241 chars)"
    }
   }
  },
@@ -981,9 +981,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -1755,9 +1755,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -2225,9 +2225,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -2999,9 +2999,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -3469,9 +3469,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -4234,9 +4234,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -4704,9 +4704,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -5514,9 +5514,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -6038,9 +6038,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -7856,9 +7856,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -8146,9 +8146,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "23879543f84d5f850378f4716be717c29494c5dd92f09801931cacb28be6ee85",
+    "fingerprint": "915febb03ce9eba545f148939ea707477666faf89f0773b8902180fa40f8a578",
     "focus": "relative-ontology.rdf",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."

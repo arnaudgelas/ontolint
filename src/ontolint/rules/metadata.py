@@ -25,6 +25,8 @@ CREATOR_PREDICATES = (
     URIRef("http://purl.org/dc/elements/1.1/contributor"),
     URIRef("http://purl.org/pav/createdBy"),
 )
+# What ONT005 requires, named the way its message names what is missing.
+_PROVENANCE = (("creator", CREATOR_PREDICATES), ("dcterms:created", (DCTERMS.created,)))
 
 
 SPECS: tuple[RuleSpec, ...] = (
@@ -116,7 +118,8 @@ def run(ctx: RuleContext) -> None:
             ctx.add("ONT003", ont, f"Ontology has no license annotation.{hint}", confidence="certain")
         if not has((OWL.versionIRI, OWL.versionInfo)):
             ctx.add("ONT004", ont, "No versionIRI/versionInfo.")
-        if not has(CREATOR_PREDICATES) or not has((DCTERMS.created,)):
-            ctx.add("ONT005", ont, "Missing creator or dcterms:created provenance.")
+        missing = [name for name, found in _PROVENANCE if not has(found)]
+        if missing:
+            ctx.add("ONT005", ont, f"Missing {' and '.join(missing)} provenance.")
         if not has(ctx.descriptions):
             ctx.add("ONT006", ont, "Missing ontology description.")

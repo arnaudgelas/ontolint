@@ -2,11 +2,11 @@
  "cli": {
   "fail_on_warning_kitchen": {
    "exit": 1,
-   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
+   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
   },
   "ignore_family_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:c0516b3f8db0d49312e6104880006b1ede3698775257bb35fee0a5b836c0cf2d (33237 chars)"
+   "legacy_json_view": "sha256:f03f9b4996f28d975fd78bc647805d8212fcd1b457d4f4200c99def8d19a2a55 (33218 chars)"
   },
   "json_clean": {
    "exit": 0,
@@ -18,47 +18,47 @@
   },
   "json_config": {
    "exit": 1,
-   "legacy_json_view": "sha256:77f2c1a9c617f60b0ecd079451262d1cae57c3ead92df1d099f4f2e5dbc7b415 (50497 chars)"
+   "legacy_json_view": "sha256:b3665dbbbc4b79a1c4874add1c0040b45593b9922aeadad277408098587c3b76 (50479 chars)"
   },
   "json_default": {
    "exit": 1,
-   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
+   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
   },
   "json_robot_fail": {
    "exit": 1,
-   "legacy_json_view": "sha256:ccf24eb0ef2aa189aee68b32175d76190efbd71eed1cc9a1c77042191721a511 (37444 chars)"
+   "legacy_json_view": "sha256:5a080939cd5620e13b03ca00b430e7d721d3295fc15820dd8bf2e4de813b3b2f (37426 chars)"
   },
   "json_robot_ok": {
    "exit": 1,
-   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
+   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
   },
   "json_robot_unsupported": {
    "exit": 2,
-   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
+   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
   },
   "json_shapes": {
    "exit": 1,
-   "legacy_json_view": "sha256:4960ee43a6f509a2dab4268736940a3eb6592f0b69656d8ee17ce159ec333100 (40234 chars)"
+   "legacy_json_view": "sha256:7ba08ecc1d45fb9caa0d9dc1e98edfc38f590d9b9c9caf22e087efa022e87641 (40216 chars)"
   },
   "json_thresholds": {
    "exit": 1,
-   "legacy_json_view": "sha256:2ccd44ff35e1528386ae863a506dd5d11192b845e2f62b8c68fe58627cbf99c4 (43570 chars)"
+   "legacy_json_view": "sha256:f625395561a9b4be4613fd2b25688e4c9636e83abbc0e18aefffdae6ef948eba (43552 chars)"
   },
   "multi_file_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:2eb87ef13922d0f11f2efad86d432779c44c2219ca50fd1fd9ff3d0969f7fee7 (37124 chars)"
+   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
   },
   "profile_minimal_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:52e51d2c84462b274a331d5d3e1eb774ec6a5501c6be7609a122a016d518a1b2 (5594 chars)"
+   "legacy_json_view": "sha256:24372b5492ac5ed4161b68c3cd0183a07791aec328f5b11225553e7571d90f31 (5595 chars)"
   },
   "select_and_ignore_json": {
    "exit": 0,
-   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 3,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator or dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n"
+   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 3,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator and dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n"
   },
   "select_family_json": {
    "exit": 0,
-   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 7,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/second.ttl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#c3\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#camelCase\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator or dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n"
+   "legacy_json_view": "{\n  \"summary\": {\n    \"warning\": 7,\n    \"info\": 2\n  },\n  \"findings\": [\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"IRI002\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/second.ttl\",\n      \"message\": \"Ontology IRI contains a serialization file extension.\",\n      \"suggestion\": \"Consider an extension-independent ontology identifier (policy-dependent).\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#c3\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"LEX001\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto#camelCase\",\n      \"message\": \"Term has no label.\",\n      \"suggestion\": \"Add rdfs:label or an accepted alternative to the declared local term.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT002\",\n      \"severity\": \"warning\",\n      \"focus\": \"(ontology)\",\n      \"message\": \"2 owl:Ontology declarations found.\",\n      \"suggestion\": \"Prefer one primary owl:Ontology declaration per standalone ontology document.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT003\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Ontology has no license annotation.\",\n      \"suggestion\": \"Add dcterms:license (or an agreed equivalent) to the ontology.\",\n      \"confidence\": \"certain\"\n    },\n    {\n      \"rule\": \"ONT006\",\n      \"severity\": \"warning\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing ontology description.\",\n      \"suggestion\": \"Describe the ontology with dcterms:description or rdfs:comment.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"No versionIRI/versionInfo.\",\n      \"suggestion\": \"Add owl:versionIRI or owl:versionInfo according to your release policy.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"ONT005\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/onto.owl\",\n      \"message\": \"Missing creator and dcterms:created provenance.\",\n      \"suggestion\": \"Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).\",\n      \"confidence\": \"heuristic\"\n    }\n  ]\n}\n"
   }
  },
  "legacy_rule_ids": [
@@ -477,9 +477,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -1089,9 +1089,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -1514,9 +1514,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -2126,9 +2126,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -2551,9 +2551,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -3154,9 +3154,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -3579,9 +3579,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -4227,9 +4227,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -4706,9 +4706,9 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b2634dd6c156b983200332f3d159690b2c231b3057d7ab276db75afe4ef13816",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
     "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal rdflib.term.Literal('lit').",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
     "rule": "OWL013",
     "severity": "warning",
     "suggestion": "An object-property assertion should point to a resource, not a literal."
@@ -6236,9 +6236,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "db83bcb14332ad4c7f53183d9b704f69ac041a77c225e008bb15d63025f10f1d",
+    "fingerprint": "de3d22370d796bffc02e8582c346cc441a3565a4a66e94f09e5e0193c38c7481",
     "focus": "https://example.test/onto.owl",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
@@ -6508,9 +6508,9 @@
    },
    {
     "confidence": "heuristic",
-    "fingerprint": "23879543f84d5f850378f4716be717c29494c5dd92f09801931cacb28be6ee85",
+    "fingerprint": "915febb03ce9eba545f148939ea707477666faf89f0773b8902180fa40f8a578",
     "focus": "relative-ontology.rdf",
-    "message": "Missing creator or dcterms:created provenance.",
+    "message": "Missing creator and dcterms:created provenance.",
     "rule": "ONT005",
     "severity": "info",
     "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
