@@ -338,7 +338,14 @@ def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
     document = load_document(item, policy, next(root for root in sandbox if inside_root(path, root)))
     walk.files.append(item.display)
     walk.modules.append(
-        Module(item.display, item.uri, _declared(document.graph), document.source_index, _directory(path))
+        Module(
+            item.display,
+            item.uri,
+            _declared(document.graph),
+            document.source_index,
+            _directory(path),
+            document.graph,
+        )
     )
     walk.imported |= _ontologies(document.graph)
     walk.known |= _identities(document.graph)

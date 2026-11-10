@@ -81,16 +81,17 @@ def test_shapes_without_imports_add_no_background(corpus: Path, capsys: pytest.C
 def test_the_background_holds_the_ontology_but_not_the_shapes(corpus: Path) -> None:
     item = resolve_inputs([str(corpus / "shapes.ttl")], corpus)[0]
     shapes = load_graph(item, Policy())
-    background = cli._shapes_background(item, shapes, Policy(), cli.ImportOptions())  # noqa: SLF001
+    library, background = cli._shapes_closure(item, shapes, Policy(), cli.ImportOptions())  # noqa: SLF001
+    assert library is None
     assert background is not None
     core = "https://example.test/onto/core#"
     assert (URIRef(core + "Authoritative"), RDF.type, URIRef(core + "Status")) in background
     assert not set(background.subjects(RDF.type, SH.NodeShape))
     shapes.remove((None, OWL.imports, None))
-    assert cli._shapes_background(item, shapes, Policy(), cli.ImportOptions()) is None  # noqa: SLF001
+    assert cli._shapes_closure(item, shapes, Policy(), cli.ImportOptions()) == (None, None)  # noqa: SLF001
 
 
-# --- what the background may hide -------------------------------------
+# --- what the background may hide, and what imported shape libraries add -------------------------------------
 
 ONTO = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
 <https://ex.test/onto> a owl:Ontology .
@@ -103,9 +104,16 @@ OBJECT_SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
 <https://ex.test/S> a sh:NodeShape ; sh:targetObjectsOf <https://ex.test/knows> ;
     sh:property [ sh:path <https://ex.test/code> ; sh:minCount 1 ] .
 """
+LIBRARY = """@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+<https://ex.test/lib> a owl:Ontology .
+<https://ex.test/L> a sh:NodeShape ; sh:targetSubjectsOf <https://ex.test/knows> ;
+    sh:property [ sh:path <https://ex.test/name> ; sh:minCount 1 ] .
+<https://ex.test/Typed> a owl:Class .
+"""
 CATALOG = (
     '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
-    '<uri name="https://ex.test/onto" uri="onto.ttl"/></catalog>'
+    '<uri name="https://ex.test/onto" uri="onto.ttl"/><uri name="https://ex.test/lib" uri="lib.ttl"/></catalog>'
 )
 
 
@@ -114,9 +122,12 @@ def project(tmp_path: Path) -> Path:
     (tmp_path / ".git").mkdir()
     for name, text in {
         "onto.ttl": ONTO,
+        "lib.ttl": LIBRARY,
         "shapes.ttl": OBJECT_SHAPES,
         "catalog-v001.xml": CATALOG,
         "data.ttl": "<https://ex.test/a> <https://ex.test/knows> <https://ex.test/b> .\n",
+        "uses-lib.ttl": "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "<https://ex.test/shapes2> a owl:Ontology ; owl:imports <https://ex.test/lib> .\n",
     }.items():
         (tmp_path / name).write_text(text, encoding="utf-8")
     return tmp_path
@@ -132,3 +143,26 @@ def test_an_object_only_focus_of_the_data_survives_the_background(
     )
     assert [f["focus"] for f in without] == ["https://ex.test/b"]
     assert [f["focus"] for f in with_background] == ["https://ex.test/b"]
+
+
+def test_shapes_imported_by_the_shapes_file_are_validated(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code, findings, err = _shacl(capsys, project / "data.ttl", project / "uses-lib.ttl", "--follow-imports")
+    assert code == 1
+    assert [f["focus"] for f in findings] == ["https://ex.test/a"]
+    assert "Less than 1 values on <https://ex.test/a>-><https://ex.test/name>" in findings[0]["message"]
+    assert "TOOL009: note: " in err
+    assert "uses-lib.ttl imports shapes from " in err
+
+
+def test_a_library_with_other_triples_is_shapes_and_background(project: Path) -> None:
+    item = resolve_inputs([str(project / "uses-lib.ttl")], project)[0]
+    shapes = load_graph(item, Policy())
+    library, background = cli._shapes_closure(item, shapes, Policy(), cli.ImportOptions())  # noqa: SLF001
+    assert library is not None
+    assert background is not None
+    typed = (URIRef("https://ex.test/Typed"), RDF.type, OWL.Class)
+    assert typed in library
+    assert typed in background
+    assert set(library.subjects(RDF.type, SH.NodeShape)) == {URIRef("https://ex.test/L")}
+    assert not set(background.subjects(RDF.type, SH.NodeShape))
+    assert not set(background.subjects(SH.path, None))  # the inline property shape stays with its shape

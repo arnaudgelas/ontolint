@@ -19,8 +19,9 @@ from dataclasses import dataclass, replace
 from functools import partial
 from pathlib import Path
 
-from rdflib import Graph, Literal, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
+from rdflib.term import Node
 
 from . import engine
 from ._version import package_version
@@ -465,15 +466,49 @@ def _closure_of(item: InputFile, root: LoadedGraph, policy: Policy, options: Imp
     return closure.loaded
 
 
-def _shapes_background(item: InputFile, shapes: Graph, policy: Policy, options: ImportOptions) -> Graph | None:
-    """The ontology a shapes file imports, without the shapes: SHACL validates the data against it too.
+def _shapes_closure(
+    item: InputFile, shapes: Graph, policy: Policy, options: ImportOptions
+) -> tuple[Graph | None, Graph | None]:
+    """What a shapes file imports, split into more shapes and the ontology background.
 
-    Shapes that check the class of a vocabulary individual need the ontology that types it; without it
-    valid data reports false violations.  ``None`` when the shapes import nothing that resolves.
+    An imported file that declares shapes (a shape library) is validated with like the shapes file
+    itself; the others are the ontology SHACL validates the data against too, since shapes that check
+    the class of a vocabulary individual need the ontology that types it (without it valid data reports
+    false violations).  A file with both shapes and other triples is used both ways.  Each part is
+    ``None`` when nothing that resolves supplies it.
     """
     closure = _closure_of(item, LoadedGraph(shapes, source_index(shapes)), policy, options)
-    background = closure.graph - shapes
-    return background if len(background) else None
+    library, background = Graph(), Graph()
+    for module in closure.modules[1:]:  # modules[0] is the shapes file itself
+        graph = module.graph if module.graph is not None else Graph()
+        if _shape_count(graph):
+            print(
+                f"TOOL009: note: {item.display} imports shapes from {module.display}; they are validated too",
+                file=sys.stderr,
+            )
+            library += graph
+            background += graph - _shape_triples(graph)
+        else:
+            background += graph
+    return (library if len(library) else None), (background if len(background) else None)
+
+
+def _shape_triples(graph: Graph) -> Graph:
+    """The triples about ``graph``'s shapes and the blank nodes they own (inline property shapes, lists)."""
+    owned = Graph()
+    pending = [s for type_ in _SHAPE_TYPES for s in graph.subjects(RDF.type, type_)]
+    pending += list(graph.subjects(SH.path, None))
+    seen: set[Node] = set()
+    while pending:
+        node = pending.pop()
+        if node in seen:
+            continue
+        seen.add(node)
+        for p, o in graph.predicate_objects(node):
+            owned.add((node, p, o))
+            if isinstance(o, BNode):
+                pending.append(o)
+    return owned
 
 
 class _ShapesParseFailure(Exception):
@@ -504,10 +539,21 @@ def _load_shapes(
     named = bool(args.shapes_from_profile)  # the historical --shapes failure line names no file
     for item in _shapes_inputs(args, policy, imports):
         graph = _parsed(item, policy, named)
-        shapes = graph if shapes is None else shapes + graph
-        more = _shapes_background(item, graph, policy, imports) if imports is not None else None
-        background = more if background is None or more is None else background + more
+        library, more = _shapes_closure(item, graph, policy, imports) if imports is not None else (None, None)
+        shapes = _union(shapes, graph, library)
+        background = _union(background, more)
     return shapes, background
+
+
+def _union(*graphs: Graph | None) -> Graph | None:
+    """The union of the graphs that are not ``None``; ``None`` when all are."""
+    present = [g for g in graphs if g is not None]
+    if not present:
+        return None
+    merged = Graph()
+    for graph in present:
+        merged += graph
+    return merged
 
 
 def _shapes_inputs(args: argparse.Namespace, policy: Policy, imports: ImportOptions | None) -> list[InputFile]:

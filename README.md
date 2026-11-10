@@ -155,8 +155,9 @@ carry an unrecognised predicate named like one, and suggests `extra_definition_p
 the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate
 already counts. `TOOL006` says when `--module-annotation` cannot group a file (its prefix is not
 declared, or no term carries the predicate), `TOOL007` names the validator `--shapes-from-profile`
-uses (or passes over, when it is not SHACL), and `TOOL008` warns that a file under
-`--pattern-library` does not parse and was skipped.
+uses (or passes over, when it is not SHACL), `TOOL008` warns that a file under
+`--pattern-library` does not parse and was skipped, and `TOOL009` names each shape library a
+shapes file imports.
 
 ### Discovering rules
 
@@ -305,7 +306,9 @@ instance data validated alone reports false violations (and can silently pass wh
 is reached through a subclass). With `--follow-imports`, a shapes file that `owl:imports` the
 ontology supplies it: SHACL validates the data merged with that closure (inference off), reports
 only results about nodes the linted file mentions (as a subject or an object, so a
-`sh:targetObjectsOf` focus counts), and the term rules still judge the data file alone.
+`sh:targetObjectsOf` focus counts), and the term rules still judge the data file alone. An imported
+file that declares shapes is a shape library: its shapes are validated with too (a `TOOL009` note
+names it), and its other triples, if any, join the ontology background.
 
 ```bash
 ontolint data.ttl --shapes shapes.ttl --follow-imports   # shapes.ttl imports the ontology

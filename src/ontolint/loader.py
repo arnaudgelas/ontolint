@@ -102,6 +102,8 @@ class Module:
     source_index: SourceIndex
     directory: str = ""
     """The file's directory as a ``file:`` URI ending in ``/``: relative references resolve under it."""
+    graph: Graph | None = None
+    """The file's own triples (imported files only; the root's are the input graph)."""
 
 
 @dataclass(frozen=True)
