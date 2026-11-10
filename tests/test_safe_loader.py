@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from rdflib import Graph, URIRef
+from rdflib import RDF, Graph, URIRef
 
 from ontolint import main
 from ontolint.loader import InputRejected, load_graph, network_disabled
@@ -430,6 +430,38 @@ def test_the_triple_bound_counts_every_named_graph(tmp_path: Path) -> None:
     trig = DATASET_HEADER + "e:g1 { e:A a owl:Class . }\ne:g2 { e:B a owl:Class . }\n"
     assert rejected(tmp_path, "a.trig", trig, Policy(max_triples=2)).rule_id == "SEC002"
     assert len(load(tmp_path, "b.trig", trig, Policy(max_triples=3))) == 3
+
+
+JSONLD_CONTEXT = '"@context": {"e": "http://e/", "owl": "http://www.w3.org/2002/07/owl#"}'
+# A named graph (top-level @id with @graph) that also describes its graph node, and one nested inside it.
+JSONLD_DATASET = (
+    "{" + JSONLD_CONTEXT + ', "@id": "e:g1", "e:note": "about the graph", "@graph": ['
+    '{"@id": "e:A", "@type": "owl:Class"}, {"@id": "e:N", "@graph": [{"@id": "e:B", "@type": "owl:Class"}]}]}'
+)
+
+
+@pytest.mark.parametrize("seconds", [None, 30.0])  # in process, and in the time-bounded worker
+def test_jsonld_named_graphs_are_linted_with_the_default_graph(tmp_path: Path, seconds: float | None) -> None:
+    graph = load(tmp_path, "a.jsonld", JSONLD_DATASET, Policy(max_parse_seconds=seconds))
+    owl_class = URIRef("http://www.w3.org/2002/07/owl#Class")
+    assert set(graph.subjects(None, owl_class)) == {URIRef("http://e/A"), URIRef("http://e/B")}
+    # The graph node's own statement is in the default graph and stays.
+    assert (URIRef("http://e/g1"), URIRef("http://e/note"), None) in graph
+    assert len(graph) == 3
+
+
+def test_a_jsonld_default_graph_loads_what_it_always_did(tmp_path: Path) -> None:
+    jsonld = "{" + JSONLD_CONTEXT + ', "@graph": [{"@id": "e:A", "@type": "owl:Class"}, {"@id": "e:o"}]}'
+    graph = load(tmp_path, "a.jsonld", jsonld)
+    assert set(graph) == {(URIRef("http://e/A"), RDF.type, URIRef("http://www.w3.org/2002/07/owl#Class"))}
+
+
+def test_a_jsonld_dataset_is_linted_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / "a.jsonld").write_text(JSONLD_DATASET, encoding="utf-8")
+    main([str(tmp_path / "a.jsonld"), "--select", "LEX001", "--fail-on", "never"])
+    out = capsys.readouterr().out
+    assert "LEX001 http://e/A: Term has no label." in out
+    assert "LEX001 http://e/B: Term has no label." in out
 
 
 def test_a_dataset_with_named_graphs_is_linted_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

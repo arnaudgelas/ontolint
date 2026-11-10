@@ -403,8 +403,12 @@ def _describe(failure: Exception) -> str:
     return str(failure)
 
 
-DATASET_FORMATS = frozenset({"trig", "nquads"})
-"""RDF dataset syntaxes: their named graphs are merged into the one graph that is linted."""
+DATASET_FORMATS = frozenset({"trig", "nquads", "json-ld"})
+"""RDF dataset syntaxes (TriG, N-Quads and JSON-LD): their named graphs are merged into the one graph that is linted.
+
+The names are the formats :func:`load_document` passes to the parser: ``guess_format`` and :func:`syntax.choose`
+spell JSON-LD ``json-ld`` (for ``.jsonld``, ``.json-ld`` and ``.json`` alike, and when the content is sniffed).
+"""
 
 
 def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triples: int) -> Graph:
