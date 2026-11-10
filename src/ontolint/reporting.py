@@ -17,6 +17,7 @@ from typing import Any
 
 from ._version import package_version
 from .models import ExecutionStatus, Finding, RuleExecution, RuleSpec
+from .modules import module_summary
 from .rules.registry import default_registry
 
 SEVERITY_ORDER = ("error", "warning", "info")
@@ -62,6 +63,8 @@ class FileReport:
     location_problem: str | None = None  # why source regions could not be computed, if they could not
     # With --follow-imports: findings about a term an imported module declares, mapped to that module.
     origins: Mapping[Finding, Origin] = field(default_factory=dict[Finding, Origin])
+    # With --module-annotation or --module-by: the modules inside the file each finding belongs to.
+    modules: Mapping[Finding, tuple[str, ...]] = field(default_factory=dict[Finding, tuple[str, ...]])
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -150,7 +153,11 @@ def to_json(report: RunReport) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "summary": _severity_summary(report.findings),
-        "findings": [{**f.to_dict(), "path": r.path_of(f)} for r in report.files for f in r.findings],
+        "findings": [
+            {**f.to_dict(), "path": r.path_of(f), **({"modules": list(r.modules[f])} if f in r.modules else {})}
+            for r in report.files
+            for f in r.findings
+        ],
         "execution_summary": summarise_executions(_all_executions(report)),
         "rules": [rule_metadata(s, report.severity_overrides) for s in report.rules],
         "files": [
@@ -159,6 +166,8 @@ def to_json(report: RunReport) -> dict[str, Any]:
                 "summary": _severity_summary(r.findings),
                 "execution_summary": summarise_executions(r.executions),
                 "executions": _execution_dicts(r.executions),
+                # Present only with module grouping, so runs without it keep their historical shape.
+                **({"module_summary": module_summary(_shown_modules(r))} if r.modules else {}),
             }
             for r in report.files
         ],
@@ -169,6 +178,11 @@ def to_json(report: RunReport) -> dict[str, Any]:
             else {}
         ),
     }
+
+
+def _shown_modules(report: FileReport) -> dict[Finding, tuple[str, ...]]:
+    """The module of each finding still in the report (a baseline may have removed some)."""
+    return {f: report.modules[f] for f in report.findings if f in report.modules}
 
 
 def stale_baseline_message(count: int) -> str:
@@ -212,8 +226,13 @@ def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -
     }
     if f.rule in rule_index:
         result["ruleIndex"] = rule_index[f.rule]
+    properties: dict[str, Any] = {}
     if f.details is not None:
-        result["properties"] = {"details": f.details}
+        properties["details"] = f.details
+    if f in file.modules:
+        properties["modules"] = list(file.modules[f])
+    if properties:
+        result["properties"] = properties
     return result
 
 
@@ -297,26 +316,39 @@ def render_sarif(report: RunReport, exit_status: int | None = None) -> str:
     return json.dumps(to_sarif_report(report, exit_status), indent=2)
 
 
-def _finding_lines(findings: Sequence[Finding], origins: Mapping[Finding, Origin] | None = None) -> list[str]:
-    origins = origins or {}
-    return [
-        f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}"
-        + (f"\n    In: {origins[f].path}" if f in origins else "")
-        for f in findings
+def _where(f: Finding, file: FileReport) -> str:
+    """The ``In:`` line: the imported module's file and/or the modules inside the file, if any."""
+    parts = [file.origins[f].path] if f in file.origins else []
+    names = file.modules.get(f, ())
+    if names:
+        parts.append(("module " if len(names) == 1 else "modules ") + ", ".join(names))
+    return f"\n    In: {', '.join(parts)}" if parts else ""
+
+
+def _finding_lines(file: FileReport) -> list[str]:
+    lines = [
+        f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}" + _where(f, file)
+        for f in file.findings
     ]
+    summary = module_summary(_shown_modules(file))
+    if summary:
+        lines.append("Findings by module:")
+        lines.extend(
+            f"    {name}: " + ", ".join(f"{counts[s]} {s}" for s in SEVERITY_ORDER if s in counts)
+            for name, counts in summary.items()
+        )
+    return lines
 
 
 def render_text(report: RunReport) -> str:
     """Render findings as text; a single file keeps the historical layout, several get per-file sections."""
     if len(report.files) == 1:
         only = report.files[0]
-        return "\n".join(
-            [f"Ontology linter: {len(only.findings)} finding(s)", *_finding_lines(only.findings, only.origins)]
-        )
+        return "\n".join([f"Ontology linter: {len(only.findings)} finding(s)", *_finding_lines(only)])
     lines = [f"Ontology linter: {len(report.findings)} finding(s) in {len(report.files)} file(s)"]
     for r in report.files:
         lines.append(f"== {r.path}: {len(r.findings)} finding(s)")
-        lines.extend(_finding_lines(r.findings, r.origins))
+        lines.extend(_finding_lines(r))
     return "\n".join(lines)
 
 

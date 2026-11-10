@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 
 from rdflib import BNode, Graph, URIRef
 from rdflib.namespace import RDFS
@@ -73,8 +74,14 @@ class RuleContext:
         """Return whether ``node`` is owned by the linted ontology (see :mod:`ontolint.ownership`)."""
         return self.context.ownership.owns(node)
 
-    def add(self, code: str, focus: object, message: str, *, confidence: str = "heuristic") -> None:
-        """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs."""
+    def add(
+        self, code: str, focus: object, message: str, *, confidence: str = "heuristic", related: Iterable[object] = ()
+    ) -> None:
+        """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs.
+
+        ``related`` names the other terms a finding is about (the rest of a collision); they place the
+        finding in every module involved (``--module-by``) and never change its identity or text.
+        """
         if confidence not in CONFIDENCES:
             raise ValueError(f"{code}: confidence must be one of {sorted(CONFIDENCES)}, not {confidence!r}")
         text = self._focus_text(focus)
@@ -82,7 +89,8 @@ class RuleContext:
         key = (code, text, message)
         if key not in self.seen:
             self.seen.add(key)
-            self.findings.append(Finding(code, SEVERITY[code], text, message, FIXES[code], confidence))
+            others = tuple(dict.fromkeys(t for t in map(self._focus_text, related) if t != text))
+            self.findings.append(Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others))
 
     def _stable_id(self, node: BNode) -> str:
         if node not in self._blank_ids:

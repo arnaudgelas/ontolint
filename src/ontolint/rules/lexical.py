@@ -224,6 +224,7 @@ def _duplicate_labels(ctx: RuleContext, label_index: LabelIndex) -> None:
                 "LEX004",
                 sorted(terms, key=str)[0],
                 f"Duplicate label {duplicate_label!r}@{lang} for " + ", ".join(map(str, sorted(terms, key=str)[:5])),
+                related=terms,
             )
 
 

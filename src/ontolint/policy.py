@@ -94,6 +94,9 @@ class Policy:
     required_annotations: tuple[tuple[str, tuple[str, ...]], ...] = ()
     alignment_namespaces: tuple[str, ...] = ()
     alignment_min_coverage: float | None = None
+    # Modules inside one file (ontolint.modules): an annotation predicate, or "namespace"; at most one is set.
+    module_annotation: str | None = None
+    module_by: str | None = None
     max_parse_seconds: float | None = None  # wall-clock budget for parsing one input (SEC003); None = no budget
     unknown_keys: tuple[str, ...] = ()  # config keys the policy file carried but ontolint does not know (GOV020)
     # Set by the loader for one file, never by a policy file: the owl:imports IRIs it resolved to local
@@ -155,6 +158,7 @@ class Policy:
         limits = _loader_limits(data)
         extra_definitions = _iri_list(data, "extra_definition_predicates")
         extra_labels = _iri_list(data, "extra_label_predicates")
+        grouping = _module_grouping(data)
         return cls(
             **metrics,
             **limits,
@@ -172,6 +176,8 @@ class Policy:
             alignment_namespaces=_iri_list(data, "alignment_namespaces"),
             alignment_min_coverage=_optional_ratio(data, "alignment_min_coverage"),
             max_parse_seconds=_parse_seconds(data),
+            module_annotation=grouping[0],
+            module_by=grouping[1],
             unknown_keys=tuple(sorted({str(key) for key in data} - _known_keys())),
             resolved_imports=frozenset(),
             imported_ontologies=frozenset(),
@@ -255,6 +261,21 @@ def _iri_list(data: Mapping[str, Any], name: str) -> tuple[str, ...]:
         if not _ABSOLUTE_IRI.fullmatch(item):
             raise ValueError(f"{name} must contain absolute IRIs without whitespace: {item!r}")
     return tuple(dict.fromkeys(value))
+
+
+MODULE_BY_VALUES = ("namespace",)
+
+
+def _module_grouping(data: Mapping[str, Any]) -> tuple[str | None, str | None]:
+    """Validate ``module_annotation`` (an absolute IRI) and ``module_by`` (``"namespace"``); at most one."""
+    annotation, by = data.get("module_annotation"), data.get("module_by")
+    if annotation is not None and not (isinstance(annotation, str) and _ABSOLUTE_IRI.fullmatch(annotation)):
+        raise ValueError("module_annotation must be an absolute predicate IRI or null")
+    if by is not None and by not in MODULE_BY_VALUES:
+        raise ValueError(f"module_by must be one of {', '.join(MODULE_BY_VALUES)} or null")
+    if annotation is not None and by is not None:
+        raise ValueError("module_annotation and module_by are alternatives; set one")
+    return annotation, by
 
 
 def _real(name: str, value: Any) -> float:

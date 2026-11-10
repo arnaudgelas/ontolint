@@ -29,6 +29,7 @@ from .catalogue import planned_rows
 from .imports import CATALOG_NAME, Catalog, index_directory, load_closure, read_catalog
 from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, loaded_graph, source_index
 from .models import ExecutionStatus, Finding, RuleBackend, RuleExecution
+from .modules import MODULE_BY, UnresolvedModulePredicate, finding_modules, resolve_predicate
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .profiles import PROFILES, Profile
@@ -90,6 +91,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory imported files must stay in (default: the enclosing git repository of the catalog or input)",
     )
     ap.add_argument("--base", help="Only lint declared terms in this namespace")
+    ap.add_argument(
+        "--module-annotation",
+        metavar="PREDICATE",
+        help="Group findings by the module each term names with this annotation (an IRI or a CURIE the file "
+        "declares, e.g. opla:isNativeTo)",
+    )
+    ap.add_argument(
+        "--module-by", choices=MODULE_BY, help="Group findings by module: 'namespace' groups them by term namespace"
+    )
     ap.add_argument("--config", help="Optional JSON policy with ignored_rules, severity_overrides and thresholds")
     ap.add_argument("--baseline", help="JSON of fingerprints to exclude from displayed and gating findings")
     ap.add_argument("--write-baseline", help="Write full set of fingerprints for future differential linting")
@@ -146,9 +156,12 @@ def _add_selection_arguments(ap: argparse.ArgumentParser) -> None:
 
 def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -> Policy:
     """Merge CLI options over the policy file; explicit CLI options take precedence."""
+    module_annotation, module_by = _module_options(args, config)
     return replace(
         config,
         base=args.base if args.base is not None else config.base,
+        module_annotation=module_annotation,
+        module_by=module_by,
         languages=tuple(x.lower() for x in args.language) if args.language else config.languages,
         depth_limit=args.depth_limit if args.depth_limit is not None else config.depth_limit,
         inheritance_limit=args.inheritance_limit if args.inheritance_limit is not None else config.inheritance_limit,
@@ -162,6 +175,13 @@ def _policy(args: argparse.Namespace, config: Policy, ignored: frozenset[str]) -
         if args.convert_with_robot
         else None,
     )
+
+
+def _module_options(args: argparse.Namespace, config: Policy) -> tuple[str | None, str | None]:
+    """``(module_annotation, module_by)``: the CLI's choice, when it made one, replaces the policy's."""
+    if args.module_annotation is None and args.module_by is None:
+        return config.module_annotation, config.module_by
+    return args.module_annotation, args.module_by
 
 
 @dataclass(frozen=True)
@@ -263,10 +283,11 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
     _definition_hint(item, graph, ctx, findings)
     # Only SARIF renders regions, and the index is computed on first use, so other formats skip it.
     sarif = args.format == "sarif"
+    modules = _file_modules(item, loaded, plan.policy, findings)
     if loaded.modules:
         origins, locations, problem = _module_origins(loaded.modules, graph, findings, sarif)
         executions_sorted = tuple(sorted(executions, key=lambda x: x.rule_id))
-        return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins)
+        return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules)
     return FileReport(
         item.display,
         item.uri,
@@ -274,7 +295,40 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         tuple(sorted(executions, key=lambda x: x.rule_id)),
         loaded.source_index.for_findings(graph, findings) if sarif else {},
         loaded.source_index.problem if sarif else None,
+        modules=modules,
     )
+
+
+def _file_modules(
+    item: InputFile, loaded: LoadedGraph, policy: Policy, findings: Sequence[Finding]
+) -> dict[Finding, tuple[str, ...]]:
+    """The modules inside the file each finding belongs to (``--module-annotation``, ``--module-by``)."""
+    if policy.module_by == "namespace":
+        return finding_modules(loaded.graph, findings, None)
+    if policy.module_annotation is None:
+        return {}
+    graph = loaded.graph
+    # The file's own declarations win over RDFLib's default bindings.
+    prefixes = [
+        *((p, str(n)) for p, n in graph.namespace_manager.namespaces()),
+        *(loaded.source.declared_prefixes or ()),
+    ]
+    try:
+        predicate = resolve_predicate(policy.module_annotation, prefixes)
+    except UnresolvedModulePredicate:
+        print(
+            f"TOOL006: warning: module annotation {policy.module_annotation!r} is not an IRI and {item.display} "
+            "declares no such prefix; findings are not grouped by module",
+            file=sys.stderr,
+        )
+        return {}
+    if (None, predicate, None) not in graph:
+        print(
+            f"TOOL006: note: no term in {item.display} carries <{predicate}>; findings are not grouped by module",
+            file=sys.stderr,
+        )
+        return {}
+    return finding_modules(graph, findings, predicate)
 
 
 def _module_origins(
@@ -539,6 +593,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("at least one ONTOLOGY path is required")
     if args.fail_on_stale_baseline and not args.baseline:
         parser.error("--fail-on-stale-baseline requires --baseline")
+    if args.module_annotation is not None and args.module_by is not None:
+        parser.error("--module-annotation and --module-by are alternatives; give one")
     stage = ["configuration"]
     try:
         outcome = _lint(args, stage)

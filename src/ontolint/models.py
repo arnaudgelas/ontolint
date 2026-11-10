@@ -75,10 +75,13 @@ class Finding:
     confidence: str = "heuristic"
     details: str | None = field(default=None, compare=False)
     """Full tool output behind a summarised message (ROBOT's profile report); JSON and SARIF only."""
+    related: tuple[str, ...] = field(default=(), compare=False)
+    """Other terms the finding is about (the rest of a collision), used to place it in modules; never rendered."""
 
     def to_dict(self) -> dict[str, str]:
         """Return a JSON-ready representation with stable field names (``details`` only when set)."""
         data = asdict(self)
+        del data["related"]
         if data["details"] is None:
             del data["details"]
         return data

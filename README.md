@@ -153,7 +153,8 @@ probably be passed with `--shapes` instead. With `--follow-imports`, `TOOL004` n
 entry that names a missing file. `TOOL005` notes when most terms without a definition (`LEX002`)
 carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
 the built-in list, any predicate the ontology declares `rdfs:subPropertyOf` a definition predicate
-already counts.
+already counts. `TOOL006` says when `--module-annotation` cannot group a file (its prefix is not
+declared, or no term carries the predicate).
 
 ### Discovering rules
 
@@ -307,6 +308,26 @@ only results about the linted file's own nodes, and the term rules still judge t
 ontolint data.ttl --shapes shapes.ttl --follow-imports   # shapes.ttl imports the ontology
 ```
 
+### Modules inside one file
+
+Some ontologies keep their modules in one file. A MOMo schema marks each term with the module it is
+native to; a merged release keeps one namespace per source ontology. Two options group the findings
+by those modules, without changing any finding:
+
+```bash
+ontolint schema.ttl --module-annotation opla:isNativeTo   # an IRI, <IRI>, or a CURIE the file declares
+ontolint release.ttl --module-by namespace                # each term's namespace is its module
+```
+
+A finding belongs to the modules of its focus; a local-name (`IRI003`) or label (`LEX004`)
+collision belongs to the modules of every term involved, so a collision *between* modules lists
+both. Text adds `In: module X` (or `In: modules A, B`) and a `Findings by module:` summary; JSON
+adds `modules` to each finding and `module_summary` (counts by severity) to each file; SARIF adds
+`properties.modules`. Findings whose focus is not an IRI, or whose term has no annotation, belong to
+no module. Fingerprints and baselines are the same with and without grouping. The policy keys
+`module_annotation` (an absolute IRI) and `module_by` (`"namespace"`) do the same; the two are
+alternatives, and a CLI option replaces the policy's choice.
+
 ### GitHub annotations
 
 `--format github` is not available yet. The escaping helpers (`%`, CR, LF and, for properties,
@@ -322,6 +343,7 @@ ontolint ontology.ttl --shapes shapes.ttl
 
 The integration uses `meta_shacl=True` and `advanced=True`. Newer SHACL draft
 features are not guaranteed to be supported.
+
 
 Each SHACL result becomes a `SHACL001` finding at the result's own severity:
 `sh:Violation` is `error`, `sh:Warning` is `warning` and `sh:Info` is `info`, so
@@ -362,7 +384,8 @@ ignored rules, and severity overrides.
   "required_annotations": {"class": ["http://www.w3.org/2004/02/skos/core#definition"]},
   "alignment_namespaces": ["http://purl.obolibrary.org/obo/"],
   "alignment_min_coverage": 0.5,
-  "max_parse_seconds": 60
+  "max_parse_seconds": 60,
+  "module_by": "namespace"
 }
 ```
 

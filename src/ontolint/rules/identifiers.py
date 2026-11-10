@@ -94,4 +94,5 @@ def run(ctx: RuleContext) -> None:
                 "IRI003",
                 sorted(map(str, iris))[0],
                 "Local-name collision across IRIs: " + ", ".join(sorted(map(str, iris))[:5]),
+                related=iris,
             )
