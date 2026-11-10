@@ -6,9 +6,9 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the next feature release (0.10.0; 0.8.0 shipped, and 0.9.0 was tagged but not published,
-while it was still open). `P1` is the next milestone after P0. `P2` is worthwhile only after the preceding work is
-complete. “Decision gate” means no implementation starts until the
+blocks the feature release after 0.10.0 (0.8.0 shipped, 0.9.0 was tagged but not published, and
+0.9.1 and 0.10.0 were tagged, while it was still open). `P1` is the next milestone after P0. `P2`
+is worthwhile only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
 record.
@@ -20,16 +20,54 @@ record.
   commit on top of the tagged one, and CodeQL scans only the head of a push. Build, Publish and
   Verify were skipped, PyPI still shows 0.8.0, and the `tags` ruleset refuses to move `v0.9.0`.
   0.9.1 is the same code from a release commit that is the head of its push;
-  `docs/releasing.md` now states that rule. *Done when:* 0.9.1 is on PyPI and its `verify` job,
-  the first to check the PEP 740 attestations, passed.
+  `docs/releasing.md` now states that rule. Tagged locally (`v0.9.1`), not pushed. Push it
+  alone first, as the head of `main`: `git push origin v0.9.1^{commit}:main && git push origin
+  v0.9.1`; wait for CodeQL on it and approve "Publish to PyPI"; only then push `v0.10.0` the
+  same way. *Done when:* 0.9.1 is on PyPI and its `verify` job, the first to check the PEP 740
+  attestations, passed.
 
 ## Recently done
+
+- 0.10.0 (tag `v0.10.0`, local, not pushed: see "Hotfix" for the push order); its changelog has
+  the upgrade note below. The gate passes (5663 tests, 99.4% coverage), and a
+  targeted mutation run of `modules.py`, `prof.py`, `library.py`, `rules/library.py` and
+  `reporting.py` killed every mutant (one equivalent `frozen=True` pardoned):
+  - **baseline break, on purpose:** `ONT005` names the provenance that is missing ("Missing
+    creator and dcterms:created provenance.", or only the one that is absent) and `OWL013` prints
+    the literal in N3 (`"lit"`), not its Python repr. Both change the fingerprints of their
+    findings, so baselines holding them must be regenerated. `legacy_rules.json` was re-pinned
+    after every legacy view of 0.9.0 was shown equal to the new one up to exactly those two
+    substitutions (see the `test_differential.py` docstring). `OWL034`, `OWL036` and `OWL040`
+    still print reprs (P1); fixing them breaks baselines again, so do it in this release too if
+    possible;
+  - `--module-annotation PREDICATE` and `--module-by namespace` (policy `module_annotation`,
+    `module_by`) group findings by modules inside one file: `In: module X`, a "Findings by
+    module" summary, JSON `modules` and `module_summary`, SARIF `properties.modules`; a collision
+    belongs to every term's module (`Finding.related`), fingerprints unchanged. Validation: the
+    food-traceability schema groups into its 13 `opla:isNativeTo` modules (findings on its 37
+    unannotated terms have none); Tractus-X `ontology.ttl` shows all 13 IRI003 collisions and 5 of
+    the 6 LEX004 collisions as cross-module (the sixth is within `behaviour#`, so the earlier count
+    of "6 between domains" was wrong);
+  - `--shapes-from-profile PROFILE` uses the SHACL validator a W3C PROF profile names, found
+    offline (catalog, `--import-dir`, or a file named after the artifact beside the profile) and
+    sandboxed (`SEC009`). Validation: MOD's own `profile.ttl` and `validator.ttl` are not valid
+    Turtle (undeclared `rdfs:` and `dcatnull:` prefixes) and fail with an INPUT001 naming the file;
+    with those two prefixes added, the profile resolves `…/dcat-profile/validator` to
+    `validator.ttl` and gives the same 14 `SHACL001` findings on `mod.ttl` as `--shapes`;
+  - `--pattern-library DIR` and rules `LIB001`-`LIB003` (opt-in by input, skipped without it;
+    catalogue: 302 rows, 247 implemented). Validation on MODL (`modl/modl.owl` with `modl/`): 12
+    of the 31 pattern files do not parse with RDFLib (unterminated strings, newlines in literals,
+    undeclared prefixes) and are skipped with `TOOL008`; none of the 29 index entries (`Sequence` is
+    declared twice) names a pattern by IRI (14 have a same-named pattern, which the message names),
+    5 patterns have no entry, and 5 headers name a related pattern that no file declares
+    (`…/agent`, twice) or that is in a skipped file (`…/provenance` twice, `…/participantrole`),
+    which the message then says.
 
 0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
 release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). 0.9.0 was tagged the same
 day (`98b82f6`) and pushed, but its release run failed before publishing; the same code ships as
-0.9.1 (see "Hotfix"). Kept only so the next audit can confirm them, then delete these entries. Leftovers from each are in the open items
-below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
+0.9.1 (see "Hotfix"). Kept only so the next audit can confirm them, then delete these entries.
+Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
 `CHANGELOG.md` keeps their record.
 
 - 0.9.0 (`98b82f6`, tag `v0.9.0`), tagged and pushed but not published; released as 0.9.1:
@@ -111,9 +149,12 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
   and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
 
-## P0 — before 0.10.0
+## P0 — before 0.11.0
 
-- [ ] **Turn Renovate on, and watch its first rebase.** The release boundary is in place and proven
+- [ ] **Turn Renovate on, and watch its first rebase.** Rechecked 2026-11-10: `.github/renovate.json`
+  passes `renovate-config-validator --strict` (Renovate 41), and the repository still has only
+  `main`, no pull request and no issue, so the app is not running here; the cause is outside the
+  repository (installation scope or the Mend portal), and the maintainer's to check. The release boundary is in place and proven
   (2026-11-09): the 0.6.0 and 0.7.0 release runs waited at "Publish to PyPI" for the maintainer's
   approval, and on a throwaway tag (`ruleset-probe-2026-11-09`, kept as a record; no `v` prefix, so
   it starts no release) GitHub refused both a force-move ("Cannot update this protected ref") and a
@@ -128,20 +169,16 @@ below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs gr
   `main`, no pull request and no dashboard issue; a token without app scope cannot list the
   installations, so this check is the maintainer's. Then watch one
   rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear history" rule means
-  nothing for tags and can go. *Done when:* both are observed once.
+  nothing for tags and can go (approved 2026-11-10; the token used here has no admin right on the
+  repository, so remove it in Settings → Rules → `tags`). *Done when:* both are observed once.
 
 ## Real-world ontologies — left open by 0.8.0
 
 Everything here comes from linting fifteen public ontologies on 2026-11-09 (sources in the corpus
 table at the end of this section). Each item names the files that show it; every fix gets a small
 synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
-What is done is under "Recently done"; what is left is optional or waits on a decision.
-
-- [ ] **ONT005 says which provenance is missing, at the next legacy-contract break.** Its message
-  ("Missing creator or dcterms:created provenance.") is one of the 63 legacy rules whose findings
-  `test_legacy_rules_unchanged_linter` keeps byte-identical, because baseline fingerprints include
-  the message. Change it ("Missing a creator and dcterms:created provenance.", or only the missing
-  one) together with any other legacy message change, with an upgrade note.
+What is done is under "Recently done"; nothing is open here as of 2026-11-10, only the decisions
+below.
 
 - Decided, recorded here so the next audit does not reopen them:
   - IRI016 on an ontology IRI ending in `#` (MODL) is not a defect: the rule's cases deliberately
@@ -153,24 +190,12 @@ What is done is under "Recently done"; what is left is optional or waits on a de
   - A literal typed `rdfs:Literal` is ill-typed in OWL 2 DL: the Structural Specification
     (Sections 4 and 5.7) gives `rdfs:Literal` no lexical space while requiring every literal's
     lexical form to be in its datatype's. Reported by DATA003.
-
-- [ ] **Modules without imports: group findings by annotation or namespace, optional.** Two
-  layouts keep modules inside one file. MOMo marks them by annotation (the food-traceability schema
-  uses `opla:isNativeTo "Container"` on 37 of 78 terms; MODL's pattern files use
-  `opla-core:isNativeTo`). Merged releases keep one namespace per source module (Tractus-X
-  `ontology.ttl` merges eight domain ontologies, `…/ontology/behaviour#`, `…/bill-of-material#`,
-  …). An option such as `--module-annotation opla:isNativeTo` or `--module-by namespace` could group
-  findings by module, reusing the stage 2 provenance (`In: module Container`), and present
-  cross-module collisions (Tractus-X: 13 IRI003 local-name and 6 LEX004 label collisions between
-  domains) as such. Only if someone asks.
-
-- [ ] **Profiles and pattern libraries, decide whether they are in scope.** Two more multi-file
-  shapes, both linked by metadata rather than `owl:imports`: a W3C PROF profile names its SHACL
-  validator (MOD's `profile.ttl`: `prof:hasArtifact …/dcat-profile/validator` with
-  `prof:hasRole role:validator`), so `--shapes` could be discovered from it; and a pattern library
-  indexes its pattern ontologies (MODL's `modl.owl` describes 31 patterns as individuals under
-  `…/purl/purl/…#`, while the pattern files declare `…/purl/domain/…` ontology IRIs, so the index
-  cannot refer to them by IRI, a consistency check could say so). Decide before building either.
+  - ONT005's message changed at the 0.10.0 baseline break (2026-11-10), not at 1.0: pre-1.0
+    minor releases may break baselines with an upgrade note.
+  - Modules inside one file, PROF profiles and pattern libraries are in scope (2026-11-10) and
+    built for 0.10.0 (see "Recently done"). Left for later, only if asked: a
+    `library_entry_classes` policy key (the entry classes are inferred today), and linking a
+    pattern library whose index names patterns by some other convention than IRI or name.
 
 Validation corpus (public; licences per repository):
 
@@ -184,9 +209,9 @@ Validation corpus (public; licences per repository):
 | emmo-repo/domain-mappings | one import of a published build | `--import-dir` |
 | StenDoipanni/ISAAC | headerless FRED knowledge graph with embedded HTML errors | ownership; parse diagnostics |
 | Data-Semantics-Laboratory/Modular-Ontology-Modeling-for-Food-Supply-Chains | MOMo modules by OPLa annotation | module annotations |
-| kastle-lab/modular-ontology-design-library (MODL) | pattern library: index plus 31 pattern ontologies, Turtle in `.owl` | syntax sniffing; trailing `#` IRI; library consistency |
+| kastle-lab/modular-ontology-design-library (MODL) | pattern library: index plus 31 pattern ontologies, Turtle in `.owl`, 12 not parseable | syntax sniffing; trailing `#` IRI; library consistency |
 | eclipse-tractusx/sldt-ontology-model | merged release of eight domain ontologies, one namespace each | modules by namespace; `xsd:anyType`; SPDX licence |
-| FAIR-IMPACT/MOD | metadata vocabulary, PROF profile, SHACL validator | metadata one hop away; ill-typed literals; profile-discovered shapes |
+| FAIR-IMPACT/MOD | metadata vocabulary, PROF profile, SHACL validator (both invalid Turtle) | metadata one hop away; ill-typed literals; profile-discovered shapes |
 | hbabaie1/Sustainable-Development-and-Climate-SDC-ontology | OWL/XML ontology on a vendored CCO 1.x copy, one flat catalog with stale entries | OWL/XML; stale catalog; definition predicates |
 | KnowledgeCaptureAndDiscovery/SoftwareDescriptionOntology | single curated file, versioned `release/1.9.0/` | control case: 8 findings, ownership right |
 
@@ -283,8 +308,10 @@ Validation corpus (public; licences per repository):
   survivors killed. `context.py`, changed in 0.5.1 and 0.7.0, is outside the mutation scope; decide
   whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. The
   first hosted run (42611542815) timed out before writing a report; its causes are fixed (see
-  "Recently done") and on `main` since 2026-11-09, but no Validation run has followed, so run the
-  workflow manually again, then have a
+  "Recently done") and on `main` since 2026-11-09. Its re-run on 2026-11-10 (attempt 2) proves
+  nothing: a re-run repeats the original commit (`7b08ff8`, 0.8.0), so the ROBOT job failed again
+  with the old "/output/profile.txt (Permission denied)". Start a new run with "Run workflow" on
+  `main` instead, then have a
   reviewer other than the change author audit
   every active pardon, then change the repository variable. *Done when:* a current hosted run meets
   all thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking`
