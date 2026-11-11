@@ -487,10 +487,10 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
   the repository could close this item, so 0.11.0 shipped with it open.* Rechecked 2026-11-11: pull
   request #1 (merged) added a second configuration, `renovate.json` at the repository root, and a
   bot commit corrected its matchers, so there are now two configurations that disagree: the root one
-  has no `"automergeStrategy": "squash"` (the linear-history rule needs it), groups the core
+  has no `"automergeStrategy": "rebase"` (the linear-history rule needs a rebase or a squash; the maintainer prefers rebase), groups the core
   dependencies differently, and runs on another schedule, and Renovate reads the first file it finds
   (its documented search order lists the repository root before `.github/`; confirm that on the
-  first run). Keep one file, and keep the squash strategy. Renovate has still opened no branch,
+  first run). Keep one file, with the rebase strategy. Renovate has still opened no branch,
   pull request or issue (the only pull request is #1). Rechecked 2026-11-10: `.github/renovate.json`
   passes `renovate-config-validator --strict` (Renovate 41), and the repository still has only
   `main`, no pull request and no issue, so the app is not running here; the cause is outside the
@@ -499,9 +499,9 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
   approval, and on a throwaway tag (`ruleset-probe-2026-11-09`, kept as a record; no `v` prefix, so
   it starts no release) GitHub refused both a force-move ("Cannot update this protected ref") and a
   deletion ("Cannot delete this tag"). The `main` ruleset targets the default branch only, so
-  Renovate's own branches are not restricted, and its automerge now squashes
-  (`"automergeStrategy": "squash"` in `.github/renovate.json`), which the linear-history rule
-  accepts. What is left: Renovate has never run here (no branch, pull request or Dependency
+  Renovate's own branches are not restricted, and its automerge rebases
+  (`"automergeStrategy": "rebase"` in `.github/renovate.json`; it was squash until 2026-11-11, and
+  the maintainer prefers rebase and merge to squashing), which the linear-history rule accepts. What is left: Renovate has never run here (no branch, pull request or Dependency
   Dashboard issue), so the Renovate GitHub app is probably not installed. The maintainer enabled
   the app on 2026-11-09; two hours later there was still no branch, pull request or dashboard
   issue, so check that the installation includes this repository ("Only select repositories")

@@ -36,7 +36,7 @@
         "minor"
       ],
       "automerge": true,
-      "automergeStrategy": "squash"
+      "automergeStrategy": "rebase"
     },
     {
       "description": "Group GitHub Actions workflow updates",
