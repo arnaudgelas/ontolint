@@ -298,6 +298,20 @@ CASES = {
                 f"{OP} [] a owl:Restriction ; owl:onProperty ex:DP ;\n"
                 "    owl:someValuesFrom [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .",
             ),
+            *(
+                ttl(
+                    f"{datatype} filler on object property",
+                    f"{OP} [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom {datatype} .",
+                )
+                for datatype in (
+                    "rdf:langString",
+                    "rdf:PlainLiteral",
+                    "rdf:XMLLiteral",
+                    "rdf:HTML",
+                    "owl:real",
+                    "owl:rational",
+                )
+            ),
         ],
         [
             ttl(
@@ -320,6 +334,14 @@ CASES = {
                 "property typed as both is not judged",
                 '[] a owl:Restriction ; owl:onProperty ex:both ; owl:hasValue "x" .\n'
                 "ex:both a owl:ObjectProperty, owl:DatatypeProperty .",
+            ),
+            ttl(
+                "owl:real filler on datatype property",
+                f"{OP} [] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom owl:real .",
+            ),
+            ttl(
+                "rdf:langString filler on datatype property",
+                f"{OP} [] a owl:Restriction ; owl:onProperty ex:DP ; owl:allValuesFrom rdf:langString .",
             ),
             ttl(
                 "custom datatype filler on datatype property",

@@ -278,3 +278,13 @@ def test_owl037_compares_the_qualified_lower_bound_with_the_unqualified_upper_bo
         ("Qualified lower cardinality bound 3 exceeds unqualified upper bound 1.", ("qualified against unqualified",)),
         ("Lower cardinality bound 3 exceeds upper bound 2.", ("qualified",)),
     }
+
+
+# --- OWL040: the OWL 2 datatype map's datatypes outside xsd: are datatypes too ---------------------------
+
+
+def test_owl040_reports_a_non_xsd_datatype_filler_on_an_object_property() -> None:
+    turtle = "ex:p a owl:ObjectProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:real ."
+    assert _messages("OWL040", turtle) == {
+        (f"Restriction on object property ex:p uses datatype filler {OWL}real.", ("ex:p", "filler", f"{OWL}real"))
+    }
