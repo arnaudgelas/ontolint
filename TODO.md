@@ -20,6 +20,31 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **LEX002-CLOSURE** (P1 audit, false positives): `RuleContext.descriptions` now holds every
+    IRI that reaches a definition predicate, built-in or from `extra_definition_predicates`,
+    through one or more asserted `rdfs:subPropertyOf` triples (the merged closure under
+    `--follow-imports`). The walk is iterative with a visited set, so cycles and self-loops end it
+    and its cost is bounded by the sub-property triples `max_triples` caps; blank nodes carry a
+    chain but are never added. Every reader inherits it: LEX002, LEX013, LEX017, LEX019, LEX020,
+    LEX023, METRIC002, METRIC003, METRIC012, ONT006 and the TOOL005 hint. Shipped as `fix!:`,
+    since METRIC002/METRIC003/METRIC012 counts (in their messages) move on ontologies with such
+    chains: v1 baseline entries for them stop matching, v2 entries (`subject=()`) keep matching.
+    Verified: the review's `ex:def2 ⊑ ex:def1 ⊑ skos:definition` example, chains of 2 and 5 links
+    below `skos:definition`, `rdfs:comment` and `obo:IAO_0000115`, a two-cycle with a self-loop
+    and a back-edge to a seed, a blank-node link, sub-properties of a configured extra, a chain
+    declared only in an import, and the consumers (LEX013, LEX017, LEX019, ONT006, METRIC002,
+    TOOL005) each went from wrong to right, and failed on the previous `runtime.py`; chains that
+    never reach, or only rise above, a definition predicate, and broken chains, still report; a
+    chain three times the recursion limit completes (rdflib's `transitive_subjects` raises
+    `RecursionError` on one of a few thousand links); a Hypothesis property checks the result
+    against a fixed-point oracle, its order (configured, then derived sorted by IRI) and
+    insertion-order independence. A LEX002 negative rule case was appended, so `docs/rules.md`
+    did not move; golden files, `differential.json`, fingerprints and baselines did not move.
+    Targeted mutation run (`rules/runtime.py`, non-slow suite, at both fix commits): 25 mutants,
+    23 killed, 2 pardoned, none surviving. Each commit passed Ruff and the tests on its own in a
+    clean worktree. The README now lists the CCO 1.x definition among the built-in
+    predicates. Follow-ups (labels, `owl:equivalentProperty`, SKOS notes) are recorded under the
+    P1 audit item.
   - **SHACL-TIMEOUT** (P1): SHACL validation can be bounded in time and never reaches the
     network. `max_validation_seconds` (and `--max-validation-seconds`; same range and checks as
     `max_parse_seconds`, unset by default, never inherited from it) runs each file's validation
@@ -465,10 +490,13 @@ Validation corpus (public; licences per repository):
     (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2); SEC014's focus
     repeats the password it reports (RFC 3986 §3.2.1 says not to show it); OWL013 (legacy), OWL034, OWL036 and OWL040 print Python
     reprs (`rdflib.term.Literal(...)`) instead of N3 (OWL013 fixed in 0.10.0);
-  - *False positives found by the 2026-11-10 review:* LEX002 (and every rule using
-    `RuleContext.descriptions`) follows `rdfs:subPropertyOf` one step only, so a definition through
-    `ex:def2 ⊑ ex:def1 ⊑ skos:definition` is reported missing (reproduced). Take the transitive
-    closure, bounded and cycle-safe.
+  - *False positives found by the 2026-11-10 review:* (LEX002 and every rule using
+    `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed, unreleased, in
+    3abbea1 and aa0bed1, see "Recently done"). Follow-ups, each with its own negative cases
+    because it changes other rules' contracts: the same closure for label predicates
+    (`ctx.labels`: LEX001, LEX018, METRIC001), `owl:equivalentProperty` to a definition predicate,
+    and sub-properties of `skos:note`/`skos:scopeNote` for LEX002 (no closure today, not even one
+    step). OBO's fixed `DEFINITION_PREDICATES` stay IAO-only by design.
   - *Policy that silently does nothing:* `--ignore`, `--select` and `severity_overrides` accept the
     pipeline rules (SEC001-SEC015, INPUT001, TOOL001) and have no effect; reject them or say so.
     A file in an `--import-dir` that the safe loader refuses is skipped without a note.
