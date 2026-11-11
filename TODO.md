@@ -15,29 +15,36 @@ record.
 
 ## Hotfix
 
-Nothing open: 0.10.2 is released (see "Recently done").
+- [ ] **Release 0.11.0.** Prepared locally (release commit and tag `v0.11.0`), not pushed. Push `main`
+  with the release commit as the head of the push, then the tag, and approve "Publish to PyPI"
+  (docs/releasing.md). Before it: the new rules were not exercised by the real-world run (see
+  "Recently done", 0.11.0, verification), so a maintainer who wants more than the tests may run
+  them on the ontologies they care about. *Done when:* 0.11.0 is on PyPI and its release run is
+  green end to end.
 
 ## Recently done
 
-- Unreleased (on `main`, not yet tagged):
+- 0.11.0 (tag `v0.11.0`, not yet pushed; see "Hotfix"; the local commits after `f7f3db4` were
+  re-dated to 2026-11-10 21:37 to 2026-11-11 07:26 at the maintainer's request, so their hashes are
+  not the ones the first drafts of this file cited):
   - **COVERAGE-GAPS** (P1 audit, "Coverage gaps"): the thirteen gaps that the 0.9.0 specification
     review wrote down as exclusions are closed with new messages in the existing rules, and every
-    pinning negative case is now a positive one. OWL010 empty and malformed chains (`ce0c7cb`);
-    OWL019 non-simplicity through sub-properties, equivalents, inverses and symmetry (`61d2a91`),
+    pinning negative case is now a positive one. OWL010 empty and malformed chains (`acc80b3`);
+    OWL019 non-simplicity through sub-properties, equivalents, inverses and symmetry (`1fe1573`),
     and non-simple properties in cardinalities, `owl:hasSelf`, `owl:propertyDisjointWith` and
-    `owl:AllDisjointProperties` (`6bbf6f5`); OWL032/OWL033 on `owl:disjointUnionOf` (`3141033`);
+    `owl:AllDisjointProperties` (`84c8d5a`); OWL032/OWL033 on `owl:disjointUnionOf` (`bfd49e4`);
     OWL034-OWL036 for both `onProperty` and `onProperties`, several constraints, `hasSelf` not
-    true and several fillers (`3c4630d`); OWL037 across the qualified and unqualified groups
-    (`db6b90f`); OWL040 with the non-XSD datatypes (`6e1af46`); SHQ008 for derived integer
-    types and for `sh:minLength`/`sh:maxLength` (`d22c316`); SHQ011 for XPath-invalid patterns
-    Python accepts (`9d5020c`); ALIGN003 `relatedMatch` in an exactMatch chain (`1c6ae45`); SKOS009
-    through the mapping sub-properties (`9a3c191`). The messages of these rules that existed before
+    true and several fillers (`de5ea5f`); OWL037 across the qualified and unqualified groups
+    (`d261d6a`); OWL040 with the non-XSD datatypes (`7db4770`); SHQ008 for derived integer
+    types and for `sh:minLength`/`sh:maxLength` (`d34f2b0`); SHQ011 for XPath-invalid patterns
+    Python accepts (`3c1c803`); ALIGN003 `relatedMatch` in an exactMatch chain (`8bcc7c0`); SKOS009
+    through the mapping sub-properties (`b06b668`). The messages of these rules that existed before
     are unchanged, so these commits move no baseline; five rules were retitled, which moves `--list-rules`, and so
-    `differential.json` and `single_graph_reports.json`, by the titles only (`b797e11`, proof in
+    `differential.json` and `single_graph_reports.json`, by the titles only (`a5ba578`, proof in
     the commit body and the `test_differential` docstring); `legacy_rules.json` did not move.
-    Verified: the pinned positives were captured before the change (`83f8797`) and still pass; a
-    CLI test shows `--fail-on error` exiting 1 on small fixtures that exit 0 before (`df121ca`);
-    the full gate passes. Outside the gap list, `1962cde` (`fix!:`, a BREAKING CHANGE that
+    Verified: the pinned positives were captured before the change (`86a33b9`) and still pass; a
+    CLI test shows `--fail-on error` exiting 1 on small fixtures that exit 0 before (`3d2fec5`);
+    the full gate passes. Outside the gap list, `04a7664` (`fix!:`, a BREAKING CHANGE that
     originates in the subject contract) reports SEC005 and SEC012 once per subject and predicate:
     where one predicate carries several literals, the message and so the fingerprint change, and
     0.10.x baseline entries for them go stale once. Whether it ships in this release is the
@@ -51,19 +58,19 @@ Nothing open: 0.10.2 is released (see "Recently done").
     pipeline rules (`SEC001`, `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011`,
     `SEC013`, `SEC015`, `INPUT001`, `TOOL001`, or the `INPUT` or `TOOL` family; the set is the
     registry's `backend` `cli`) is `TOOL001: configuration failed: PipelineSelectorError: ...`
-    and exit 2, checked before any input is read and after the unknown-selector check (`8762af3`);
+    and exit 2, checked before any input is read and after the unknown-selector check (`fb48837`);
     the mixed `SEC` family still selects or ignores the six graph SEC rules. The same ids in the
     policy's `ignored_rules` or `severity_overrides` are `GOV020`, exit 2, in one line with any
-    unknown ids (`486f50b`). Both are `fix!:` with BREAKING CHANGE trailers; rejecting rather
+    unknown ids (`c9e5eb1`). Both are `fix!:` with BREAKING CHANGE trailers; rejecting rather
     than warning was chosen, and a deprecation release would need only the raise in `cli._lint`
     turned into a warning. A file under `--import-dir` that the safe loader refuses is named on
     stderr once, as `TOOL010: warning: --import-dir <dir>: <file> is skipped, so no owl:imports
     resolves to it: <SEC rule>: <message>`, with the exit code and report unchanged; a file that
-    does not parse and a `catalog-v001.xml` stay silent (`edd48c7`). Verified: the item's
+    does not parse and a `catalog-v001.xml` stay silent (`a68b321`). Verified: the item's
     reproductions (`--select SEC001` and `--select TOOL` exited 0 with no execution, `--ignore
     SEC001` and the policy entries were accepted, a refused mirror file left only an
     unexplained `SEC007`) now exit 2 with the line, or print `TOOL010` above the `SEC007`; the new
-    tests fail on `83648d4` (32 CLI selector cases, 6 policy cases, 4 `TOOL010` cases, the flipped
+    tests fail on `fe10fb2` (32 CLI selector cases, 6 policy cases, 4 `TOOL010` cases, the flipped
     empty-run test) and pass after. Every pipeline id is rejected by both options, and an ignore of
     every other spec is accepted (parametrized over `RULE_SPECS`); a Hypothesis property checks
     that the guard rejects exactly the pipeline-only tokens and that every accepted token names an
@@ -73,7 +80,7 @@ Nothing open: 0.10.2 is released (see "Recently done").
     `docs/rules.md` did not move. Targeted mutation run (`cli.py`, `imports.py`; non-slow suite):
     189 mutants, 178 killed, 4 pardoned (older), 1 error (a vanished pytest temp directory, in
     older `_import_options` code), 10 survivors: one in `index_directory`'s file filter, killed
-    afterwards by a new test (`30928d4`), and nine in older code (the TOOL005 hint, TOOL006,
+    afterwards by a new test (`5038cb0`), and nine in older code (the TOOL005 hint, TOOL006,
     declared prefixes, `_library`, catalog parsing), left for the mutation-baseline item; none in
     the changed lines. `selection.py` is outside the mutation scope, so its helper is pinned by
     exact-message and property tests instead.
@@ -278,6 +285,41 @@ Nothing open: 0.10.2 is released (see "Recently done").
     Left open: TriG has no SARIF regions (see the P1 source-regions item). By design, `(ontology)`
     foci (ONT001, ONT002) name no graph.
 
+  - **METRIC-SPEC** (P1 audit and calibration items, 2026-11-11, `786662f`..`3fc5fb2`,
+    follow-ups `8ad78a0` and `a91cf72`): METRIC001-METRIC013 are specified in the format
+    of the OWL family in the `rules/metrics.py` docstring (scope, condition, exclusions, severity and
+    confidence rationale, fixtures), and both catalogue CSVs name their fixtures. The code was corrected where it
+    contradicted its own contract: METRIC001, METRIC005 and METRIC008 count what LEX001, CLS001,
+    OWL005 and OWL006 report (shared helpers, pinned by hypothesis properties); METRIC006 and
+    METRIC007 count only relation properties; METRIC010 ignores the ontology's own namespaces;
+    METRIC013 treats SHACL shapes and reification as structure; a metric policy whose
+    property-to-class minimum exceeds its maximum is rejected (TOOL001, exit 2); a message prints
+    enough digits to tell its value from its limit. Thresholds, overrides and offline measurements
+    are in `docs/metric-thresholds.md`. Verified: the review of an independent agent (no blocking
+    defect; its should-fix items are fixed, one was a misreading: METRIC005 and CLS001 both exclude
+    deprecated classes), every behaviour change probed on the CLI, no crash on an empty IRI, a blank
+    node or an empty graph, and a clean full run at four intermediate commits. Left to the
+    maintainer, and open in the items above: approve the specifications; decide severities and
+    categories (METRIC001 and METRIC002 are warnings and fail `--profile ci`, `obo` and `fair`;
+    METRIC011 reports `certain` with a `heuristic` category); calibrate the defaults on a licensed,
+    pinned, labelled corpus (they are still first estimates, and the figures in the page are
+    unpinned); decide whether CLS001 should read `dcam:domainIncludes`.
+  - **Tests and verification of 0.11.0.** Thirteen `tests/test_coverage_*.py` files close every
+    uncovered line outside `rules/owl.py` that can be reached (three branches are dead code:
+    `graph/algorithms.py` 58-64, `shacl_authoring.py` 537-538 and `rules/literals.py` 122, which
+    only a direct call reaches). The scaling tests take the best of five timings, because under load
+    they failed once in about four runs. Two METRIC tests were repaired: a helper passed its base
+    IRI as the shapes graph, and a property test compared an empty IRI with `str(term)` where a
+    finding says `<>`. Full gate at the release commit, then: 0.10.2 and this code were run on 7
+    public repositories (about 2,150 files, five profiles, `--follow-imports`, a SHACL pass of an
+    own shapes file): exit codes identical on every file, no traceback, no timeout, no run over 1.5
+    times slower, and only METRIC005, METRIC006 and METRIC008 moved, all as documented above.
+    *Not verified:* OWL010, OWL019, OWL032/OWL033, SHQ008, SHQ011, SHQ015, LEX002, SEC005/SEC012,
+    ALIGN003, SKOS009 and the SHACL evidence never fired on that corpus (it holds none of the
+    constructs), so their fixes are proven by their tests only. `--owl-profile DL` fails on the
+    modules whose imports cannot be loaded, in 0.10.2 and in this code alike. A full-corpus DL pass
+    was too slow and was not run.
+
 - 0.10.2 (`f7f3db4`, tag `v0.10.2`), released 2026-11-10: `main` was pushed with the release
   commit as its head, then the tag. CodeQL (run 42785068415) and CI (42785069613) passed on
   `f7f3db4`, and the release run 42785082184 passed every job: CodeQL gate, tests, build, publish
@@ -442,7 +484,9 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
 
 ## P0 — before 0.11.0
 
-- [ ] **Turn Renovate on, and watch its first rebase.** Rechecked 2026-11-10: `.github/renovate.json`
+- [ ] **Turn Renovate on, and watch its first rebase.** *Flag (2026-11-11): P0 blocks 0.11.0, but nothing in
+  the repository can close this item, so 0.11.0 was prepared with it open; the maintainer decides
+  whether it still blocks the push.* Rechecked 2026-11-10: `.github/renovate.json`
   passes `renovate-config-validator --strict` (Renovate 41), and the repository still has only
   `main`, no pull request and no issue, so the app is not running here; the cause is outside the
   repository (installation scope or the Mend portal), and the maintainer's to check. The release boundary is in place and proven
@@ -525,6 +569,9 @@ Validation corpus (public; licences per repository):
   ratio defaults are first estimates, even where configuration already exists. Assemble a small,
   licensed corpus of ontologies with known-good and known-poor outcomes; measure false positives and
   false negatives before changing defaults or exposing additional knobs.
+  The rationale and override behaviour of every threshold are recorded in `docs/metric-thresholds.md`
+  (0.11.0); what is left is the labelled, pinned corpus and its false-positive and false-negative
+  counts, which needs the maintainer's labelling.
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
 
@@ -550,7 +597,7 @@ Validation corpus (public; licences per repository):
     ship v2 in release N, with the upgrade note "regenerate the baseline once", and the message
     fixes (OWL034, OWL036, OWL040, SEC014's focus, METRIC rounding) in N+1. Bundling them, as the
     0.10.0 entry hoped, is the maintainer's call. The OWL and SEC014 fixes are now on `main`
-    (AUDIT-DEFECTS, from `0ef117b`), after LEX002-CLOSURE's METRIC change; splitting means
+    (AUDIT-DEFECTS, from `77b8f84`), after LEX002-CLOSURE's METRIC change; splitting means
     releasing v2 from a commit before those. SEC014's focus change breaks both hashes by design
     (the focus is part of the identity); its `fix!:` commit's BREAKING CHANGE trailer says so.
   - *The upgrade note* goes into the release's CHANGELOG by hand (docs/releasing.md step 1); the
@@ -577,7 +624,7 @@ Validation corpus (public; licences per repository):
   *Done when:* each implemented rule has an approved, testable specification and its catalogue,
   user documentation, and fixtures state the same contract.
   Done for 0.9.0: every error-severity rule and the whole OWL family (see "Recently
-  done"); the specifications await the maintainer's approval. Next: the METRIC family. Left open
+  done"); the specifications await the maintainer's approval. Done for 0.11.0: the METRIC family (see "Recently done", METRIC-SPEC). Next: the SKOS, SHQ, CLS, LEX and IRI families. Left open
   by that review:
   - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
     `--fail-on` results): OWL009 warning → error, and OWL010 info → warning or error (both
@@ -595,9 +642,9 @@ Validation corpus (public; licences per repository):
     OWL010 and OWL032 stay info although their new conditions are outside OWL 2 DL too.
   - *Defects that change an exit code, a focus or a message:* all fixed, unreleased (see
     "Recently done", AUDIT-DEFECTS): an unwritable or unencodable report is TOOL001 and exit 2
-    (`f494dc2`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`0ef117b`), and so does
-    OWL013 for a literal with a line break (`3b31da9`); SEC014 masks the password in its focus
-    (`49fccc7`). (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2.)
+    (`db56b3f`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`77b8f84`), and so does
+    OWL013 for a literal with a line break (`85562dc`); SEC014 masks the password in its focus
+    (`c205df2`). (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2.)
     Follow-ups, each its own contract change:
     - *Credentials in every other rule's output.* Only SEC014 masks. On a file whose ontology and
       term IRIs carry `user:pw@`, CLS001, GOV004, LEX001, LEX002, ONT003, ONT004, ONT005, ONT006
@@ -617,7 +664,7 @@ Validation corpus (public; licences per repository):
       back into reports, so this is accepted until a finding can name its module directly.
   - *False positives found by the 2026-11-10 review:* (LEX002 and every rule using
     `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed, unreleased, in
-    3abbea1 and aa0bed1, see "Recently done"). Follow-ups, each with its own negative cases
+    6dc2285 and 19d9667, see "Recently done"). Follow-ups, each with its own negative cases
     because it changes other rules' contracts: the same closure for label predicates
     (`ctx.labels`: LEX001, LEX018, METRIC001), `owl:equivalentProperty` to a definition predicate,
     and sub-properties of `skos:note`/`skos:scopeNote` for LEX002 (no closure today, not even one
