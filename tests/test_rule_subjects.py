@@ -336,9 +336,10 @@ def test_shq019_and_shq008_name_the_predicate_and_the_value() -> None:
         ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount -1 ; sh:maxCount [ ] .
     """
     assert _sh(subjects("SHQ019", "", shapes)) == {("S", ("sh:node", "Missing")), ("S", ("sh:property", "Gone"))}
+    # The blank value is named by its content in the shapes graph (owner ex:P, reached by sh:maxCount, empty).
     assert _sh(subjects("SHQ008", "", shapes)) == {
         ("P", ("sh:minCount", '"-1"^^<xsd:integer>')),
-        ("P", ("sh:maxCount", "(blank node)")),
+        ("P", ("sh:maxCount", "_:ab656d9a3f75")),
     }
 
 
