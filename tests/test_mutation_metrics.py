@@ -108,7 +108,8 @@ def test_metric008_counts_what_owl005_and_owl006_report() -> None:
         p = _ex(f"p{i}")
         g.add((p, RDF.type, OWL.ObjectProperty))
         if i in substitutes:
-            g.add((p, *substitutes[i]))
+            predicate, obj = substitutes[i]
+            g.add((p, predicate, obj))
     (finding,) = _run(g, "METRIC008", metric_max_unsigned_property_ratio=0.0)
     assert finding.message.startswith("8 of 12 object/datatype properties")
 
@@ -159,8 +160,8 @@ def _own_namespaces(n: int, *, header: bool) -> Graph:
 
 
 def _run_owned(g: Graph, base: str | None, **thresholds: Any) -> list[Finding]:
-    policy = replace(Policy(), metric_min_sample=1, **thresholds)
-    ctx = engine.build_context(g, base, policy)
+    policy = replace(Policy(), base=base, metric_min_sample=1, **thresholds)
+    ctx = engine.build_context(g, None, policy)
     metrics.run(ctx)
     return [f for f in ctx.findings if f.rule == "METRIC010"]
 
