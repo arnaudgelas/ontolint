@@ -543,3 +543,13 @@ def test_a_folder_over_max_imported_files_is_sec015_and_names_no_file(
     (tmp_path / "o.ttl").write_text(ONTOLOGY.format(iri="https://e.test/o"), encoding="utf-8")
     code, _report_, err = _report(capsys, "o.ttl", "--import-dir", "mirror", "--config", "policy.json")
     assert (code, err) == (TOOL_FAILURE, "SEC015: --import-dir mirror holds more than 1 files (max_imported_files)\n")
+
+
+def test_only_rdf_files_count_towards_max_imported_files(tmp_path: Path) -> None:
+    mirror = tmp_path / "mirror"
+    mirror.mkdir()
+    (mirror / "m.ttl").write_text(ONTOLOGY.format(iri="https://e.test/m"), encoding="utf-8")
+    (mirror / "README.md").write_text("# downloaded imports\n", encoding="utf-8")
+    (mirror / "folder.ttl").mkdir()  # a directory with an RDF suffix is not a file
+    catalog = index_directory(mirror, Policy(max_imported_files=1))
+    assert (set(catalog.entries), catalog.refused) == ({"https://e.test/m"}, ())
