@@ -213,6 +213,27 @@ it is `info`, so it fails no run by default. But its observed precision on the o
 fires is about 0%, which is evidence for the #11 audit rather than a reason for comfort. On CCO and RO the same BFO axioms are not reported, because their owning class is a
 foreign (BFO) IRI there. That is OWL011's ownership exclusion working as specified.
 
+## OWL011's datatype test (#12, second part)
+
+OWL011 used to spare only `xsd:` IRIs and nodes typed `rdfs:Datatype`, while OWL022 and OWL040 also
+knew `rdfs:Literal`, `owl:real`, `owl:rational`, `rdf:PlainLiteral`, `rdf:XMLLiteral`,
+`rdf:langString` and `rdf:HTML`. All three now read one list, to which `rdf:JSON` was added.
+The same command, rerun on the same files after the change, gives the counts above unchanged,
+OWL011 included. None of these files uses one of the newly recognised datatypes as an
+`owl:allValuesFrom` filler. In the positive controls, the `rdf:JSON` filler and range now add one
+OWL040 and one OWL022 finding, on both files.
+
+The three rules share the name test, not every graph test. Known differences and limits:
+
+- OWL011 also spares an untyped `owl:onDatatype` or `owl:datatypeComplementOf` filler; the two
+  error rules need MAP's `rdfs:Datatype` typing (pinned by rule cases). An untyped `owl:unionOf`,
+  `owl:intersectionOf` or `owl:oneOf` filler is reported by OWL011 even when its members are
+  datatypes or literals.
+- OWL022 drops a range typed both `owl:Class` and `rdfs:Datatype` (OWL030 reports the punning);
+  OWL040 still reports such a filler (pinned by `tests/test_datatype_knowledge.py`).
+- Any `xsd:` IRI is a datatype by name, including `xsd:anyType`, `xsd:anySimpleType`, facet names
+  and misspellings. DATA004 reports each of those where it is used as a datatype.
+
 ## Implications for the severity decisions (#11)
 
 The corpus gives no evidence of a false positive in any of the 13 rules, and no count to weigh.

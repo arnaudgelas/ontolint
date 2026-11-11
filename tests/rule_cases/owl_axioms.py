@@ -276,6 +276,7 @@ CASES = {
                 "object property with rdf:PlainLiteral range",
                 "ex:o a owl:ObjectProperty ; rdfs:range rdf:PlainLiteral .",
             ),
+            ttl("object property with rdf:JSON range", "ex:o a owl:ObjectProperty ; rdfs:range rdf:JSON ."),
         ],
         [
             ttl("object property with class range", "ex:o a owl:ObjectProperty ; rdfs:range ex:C . ex:C a owl:Class ."),

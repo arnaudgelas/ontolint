@@ -87,8 +87,10 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   and ``owl:onProperties`` are not judged).  On an object property: a literal ``owl:hasValue``; a
   ``owl:someValuesFrom``/``owl:allValuesFrom`` filler that is datatype-like (an IRI in the XSD
   namespace; ``rdfs:Literal``, ``rdf:langString``, ``rdf:PlainLiteral``, ``rdf:XMLLiteral``,
-  ``rdf:HTML``, ``owl:real`` or ``owl:rational``, the OWL 2 datatype map's and RDF 1.1's datatypes
-  outside it, as OWL022 reads them; or a node typed ``rdfs:Datatype``); any ``owl:onDataRange``.  On a
+  ``rdf:HTML``, ``rdf:JSON``, ``owl:real`` or ``owl:rational``, the OWL 2 datatype map's, RDF 1.1's and
+  JSON-LD 1.1's datatypes outside it, as OWL011 and OWL022 read them; or a node typed
+  ``rdfs:Datatype``; an untyped ``owl:onDatatype`` node is not, as MAP types every data range
+  ``rdfs:Datatype``); any ``owl:onDataRange``.  On a
   datatype property: a non-literal ``owl:hasValue``; a filler that is class-like (``owl:Thing``,
   ``owl:Nothing``, an owned declared class, or a node typed ``owl:Class`` or ``owl:Restriction``) and
   not datatype-like; any ``owl:onClass``.  One finding per offending value; fillers of unknown kind
@@ -145,7 +147,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import LITERAL_RANGES, list_items, owning_term, term_text
+from .support import is_datatype_iri, list_items, owning_term, term_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -623,7 +625,7 @@ def _vacuous(ctx: RuleContext, restriction: Node) -> None:
 
 
 def _datatype_like(ctx: RuleContext, node: Node) -> bool:
-    if isinstance(node, URIRef) and (str(node).startswith(str(XSD)) or node in LITERAL_RANGES):
+    if is_datatype_iri(node):
         return True
     return RDFS.Datatype in ctx.context.types_by_subject.get(node, frozenset())
 

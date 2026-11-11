@@ -56,7 +56,8 @@ restricted to owned terms: every subject of the graph is checked, imported or no
   *Error:* sub- and equivalent-property axioms relate properties of one kind; not OWL 2 DL.
 * **OWL022.** An ``rdfs:range`` IRI that conflicts with the kind of a property typed one kind only.  For
   an object property: a datatype, that is an ``xsd:`` IRI, ``rdfs:Literal``, ``rdf:langString``,
-  ``rdf:XMLLiteral``, ``rdf:HTML``, ``rdf:PlainLiteral``, ``owl:real``, ``owl:rational`` or any node typed
+  ``rdf:XMLLiteral``, ``rdf:HTML``, ``rdf:JSON``, ``rdf:PlainLiteral``, ``owl:real``, ``owl:rational``
+  (:data:`~.support.LITERAL_RANGES`, shared with OWL011 and OWL040) or any node typed
   ``rdfs:Datatype``.  For a datatype property: ``owl:Thing`` or a node typed ``owl:Class``.  A range
   typed both ``owl:Class`` and ``rdfs:Datatype`` (OWL030's) and a blank-node range are not reported.
   *Error:* an object property's range is a class expression and a datatype property's a data range;
@@ -99,12 +100,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import OWL, RDF, RDFS, XSD
+from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import LITERAL_RANGES, list_items, owning_term
+from .support import is_datatype_iri, list_items, owning_term
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -614,7 +615,7 @@ def _property_kind_mismatches(ctx: RuleContext) -> None:
 def _is_datatype_term(ctx: RuleContext, node: Node) -> bool:
     return (
         isinstance(node, URIRef)
-        and (node in LITERAL_RANGES or str(node).startswith(str(XSD)) or RDFS.Datatype in _types_of(ctx, node))
+        and (is_datatype_iri(node) or RDFS.Datatype in _types_of(ctx, node))
         and OWL.Class not in _types_of(ctx, node)
     )
 
