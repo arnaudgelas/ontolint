@@ -187,3 +187,18 @@ def test_owl019_reports_each_non_simple_member_of_owl_all_disjoint_properties() 
             ("ex:c",),
         ),
     }
+
+
+# --- OWL032 / OWL033: owl:disjointUnionOf needs two distinct operands (SS 9.1.4) ------------------------
+
+
+def test_owl032_reports_a_single_member_disjoint_union() -> None:
+    assert found("OWL032", "ex:C owl:disjointUnionOf ( ex:A ) .") == {
+        ("ex:C", "owl:disjointUnionOf has a single operand (ex:A).", (f"{OWL}disjointUnionOf", "ex:A"))
+    }
+
+
+def test_owl033_reports_a_disjoint_union_that_repeats_a_member() -> None:
+    assert found("OWL033", "ex:C owl:disjointUnionOf ( ex:A ex:B ex:A ) .") == {
+        ("ex:C", "owl:disjointUnionOf list repeats a member.", (f"{OWL}disjointUnionOf",))
+    }

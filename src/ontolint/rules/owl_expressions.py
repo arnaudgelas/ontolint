@@ -20,16 +20,18 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   OWL 2 requires at least two operands for unions, intersections and disjoint unions and at least one
   for enumerations (Structural Specification sections 8, 7 and 9.1.4), so the triple does not map to
   an OWL 2 DL expression or axiom.  A one-member list is OWL032's.
-* **OWL032.** An ``owl:unionOf`` or ``owl:intersectionOf`` whose well-formed list has exactly one
-  member, focused on the subject; the message names the operand.  ``owl:oneOf`` with one member is a
-  valid enumeration and is not reported; a one-member ``owl:disjointUnionOf`` is not judged.  Info:
-  the expression means its operand, so it is redundant rather than wrong (it is, however, outside the
-  OWL 2 DL grammar, which requires two operands).
-* **OWL033.** An ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:oneOf`` whose well-formed, non-empty
-  list holds the same RDF term twice (RDF term equality: ``"1"`` and ``"1"^^xsd:integer`` differ;
-  structurally equal blank-node expressions are not compared), one finding per list, focused on the
-  subject.  ``owl:disjointUnionOf`` is not judged.  Warning: the repeat is semantically harmless but
-  usually a copy-paste slip where another operand was meant.
+* **OWL032.** An ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:disjointUnionOf`` whose well-formed
+  list has exactly one member, focused on the subject; the message names the operand.  ``owl:oneOf``
+  with one member is a valid enumeration and is not reported.  Info: the expression means its operand
+  (a one-member disjoint union only makes the class equivalent to it), so it is redundant rather than
+  wrong (it is, however, outside the OWL 2 DL grammar, which requires two operands, SS 8.1 and 9.1.4).
+* **OWL033.** An ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` whose
+  well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and
+  ``"1"^^xsd:integer`` differ; structurally equal blank-node expressions are not compared), one
+  finding per list, focused on the subject.  Warning: in a union, intersection or enumeration the
+  repeat is semantically harmless but usually a copy-paste slip where another operand was meant; in a
+  disjoint union it is a defect either way, as read as a set it may leave one operand (SS 9.1.4 needs
+  two) and read as a list it makes the repeated class disjoint with itself, so empty.
 * **OWL034.** A restriction with neither ``owl:onProperty`` nor ``owl:onProperties``; with more than
   one ``owl:onProperty`` value; or (one finding per value) whose ``owl:onProperty`` is a literal.
   A blank-node property (an ``owl:inverseOf`` expression) is accepted, ``owl:onProperties`` alone
@@ -299,7 +301,7 @@ def _operator_lists(ctx: RuleContext) -> None:
                     "OWL031", subject, f"{label} list is empty.", confidence="certain", subject=(predicate, "empty")
                 )
                 continue
-            if predicate in (OWL.unionOf, OWL.intersectionOf) and len(items) == 1:
+            if predicate != OWL.oneOf and len(items) == 1:
                 ctx.add(
                     "OWL032",
                     subject,
@@ -307,7 +309,7 @@ def _operator_lists(ctx: RuleContext) -> None:
                     confidence="certain",
                     subject=(predicate, items[0]),
                 )
-            if predicate != OWL.disjointUnionOf and len(set(items)) != len(items):
+            if len(set(items)) != len(items):
                 ctx.add(
                     "OWL033", subject, f"{label} list repeats a member.", confidence="certain", subject=(predicate,)
                 )
