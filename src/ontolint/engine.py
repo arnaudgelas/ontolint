@@ -24,6 +24,7 @@ from .models import (
 )
 from .policy import Policy
 from .profiles import is_opt_in
+from .redaction import redact_userinfo
 from .reporting import SEVERITY_ORDER
 from .rules.builtin import RULE_MODULES, module_name, module_runners, module_specs
 from .rules.registry import RuleRegistry, default_registry
@@ -127,7 +128,8 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
     The background (the ontology the shapes import) only supplies context, such as the classes of
     vocabulary individuals: results about nodes that only the background mentions are not findings of
     the linted file.  A node the linted file mentions anywhere is its own, as an object too: a shape
-    with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.
+    with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.  A finding's focus
+    is masked (:mod:`ontolint.redaction`), so the file's nodes are compared masked too.
     """
     assert ctx.shapes is not None  # noqa: S101 -- _not_run rules out SHACL without shapes.
     seconds = ctx.policy.max_validation_seconds
@@ -135,7 +137,7 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
         return _validate(ctx.g, ctx.shapes, seconds)
     data = ctx.g | ctx.shacl_background
     nodes = {node for s, _p, o in ctx.g for node in (s, o)}
-    own = {stable_blank_id(data, n) if isinstance(n, BNode) else str(n) for n in nodes}
+    own = {stable_blank_id(data, n) if isinstance(n, BNode) else redact_userinfo(str(n)) for n in nodes}
     return [finding for finding in _validate(data, ctx.shapes, seconds) if finding.focus in own]
 
 

@@ -7,6 +7,8 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum
 from typing import Any
 
+from .redaction import redact_userinfo
+
 type EvidenceValue = str | tuple[str, ...] | tuple[Evidence, ...]
 """One value of a finding's evidence: a term or text, several of them, or nested evidence."""
 type Evidence = Mapping[str, EvidenceValue]
@@ -73,7 +75,11 @@ CONFIDENCES: frozenset[str] = frozenset({"certain", "heuristic"})
 
 @dataclass(frozen=True)
 class Finding:
-    """A deterministic, actionable observation made by one linter rule."""
+    """A deterministic, actionable observation made by one linter rule.
+
+    A finding holds no IRI userinfo: every text field, related term, subject part and evidence value is masked
+    (:func:`ontolint.redaction.redact_userinfo`) when the finding is made, before anything renders or hashes it.
+    """
 
     rule: str
     severity: str
@@ -91,6 +97,16 @@ class Finding:
     """What the finding is about beyond its rule and focus (terms, predicate, literal, axiom key): its baseline
     identity with them, independent of the message wording; never rendered."""
 
+    def __post_init__(self) -> None:
+        for name in ("focus", "message", "suggestion"):
+            object.__setattr__(self, name, redact_userinfo(getattr(self, name)))
+        if self.details is not None:
+            object.__setattr__(self, "details", redact_userinfo(self.details))
+        object.__setattr__(self, "related", tuple(map(redact_userinfo, self.related)))
+        object.__setattr__(self, "subject", tuple(map(redact_userinfo, self.subject)))
+        if self.evidence is not None:
+            object.__setattr__(self, "evidence", redacted_evidence(self.evidence))
+
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-ready representation with stable field names (``details`` and ``evidence`` only when set)."""
         data: dict[str, Any] = {f.name: getattr(self, f.name) for f in fields(self)}
@@ -103,6 +119,19 @@ class Finding:
         else:
             data["evidence"] = plain_evidence(self.evidence)
         return data
+
+
+def redacted_evidence(evidence: Evidence) -> Evidence:
+    """``evidence`` with every userinfo masked, in the same key order and shape."""
+    return {key: _redacted(value) for key, value in evidence.items()}
+
+
+def _redacted(value: EvidenceValue) -> EvidenceValue:
+    if isinstance(value, str):
+        return redact_userinfo(value)
+    if all(isinstance(item, str) for item in value):
+        return tuple(redact_userinfo(item) for item in value if isinstance(item, str))
+    return tuple(redacted_evidence(item) for item in value if not isinstance(item, str))
 
 
 def plain_evidence(evidence: Evidence) -> dict[str, Any]:
@@ -147,12 +176,16 @@ class RuleSpec:
 class RuleExecution:
     """The outcome of attempting one rule, including non-execution states.
 
-    ``detail`` is the reason for every non-executed status and is never empty for them.
+    ``detail`` is the reason for every non-executed status and is never empty for them; it holds no userinfo.
     """
 
     rule_id: str
     status: ExecutionStatus
     detail: str = ""
+
+    def __post_init__(self) -> None:
+        # A failed rule's detail is an exception's text, which may quote an IRI (see :mod:`ontolint.redaction`).
+        object.__setattr__(self, "detail", redact_userinfo(self.detail))
 
 
 @dataclass(frozen=True)

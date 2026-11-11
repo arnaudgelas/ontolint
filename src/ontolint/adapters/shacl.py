@@ -23,6 +23,7 @@ from rdflib.term import Node
 
 from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
+from ontolint.redaction import clip
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import ntriples_literal, stable_blank_id
 from ontolint.worker import WorkerFailed, WorkerGone, WorkerTimeout, decode_graph, encode_graph, run_bounded
@@ -85,7 +86,7 @@ def _first_unserialisable_iri(graph: Graph) -> str | None:
 def _check_iris(graph: Graph, name: str) -> None:
     bad = _first_unserialisable_iri(graph)
     if bad is not None:
-        raise ShapesRejected(f"{name} contains an IRI that cannot be serialised: {bad[:80]!r}")
+        raise ShapesRejected(f"{name} contains an IRI that cannot be serialised: {clip(bad, 80)!r}")
 
 
 @dataclass
@@ -318,7 +319,8 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
             evidence=evidence,
             subject=shacl_result_key(evidence),
         )
-        keyed.append(((focus, message, _canonical(evidence)), finding))
+        # Sorted by what the finding holds, masked (ontolint.redaction): the order never depends on a password.
+        keyed.append(((finding.focus, finding.message, _canonical(finding.evidence or {})), finding))
     # pySHACL's result order depends on the hash seed; findings tied on their message differ in evidence.
     results = [finding for _key, finding in sorted(keyed, key=lambda pair: pair[0])]
     if not results:

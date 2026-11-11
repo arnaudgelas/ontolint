@@ -56,6 +56,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import clip
 
 from .owl import namespace_of, owned_checker
 
@@ -377,7 +378,7 @@ def _labels(ctx: RuleContext) -> None:
                 ctx.add(
                     "SKOS013",
                     s,
-                    f"skos:{name} value {str(label)[:60]!r} is not a string literal.",
+                    f"skos:{name} value {clip(str(label), 60)!r} is not a string literal.",
                     confidence="certain",
                     subject=(p, label),
                 )
@@ -512,10 +513,10 @@ def _uniqueness(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
                 if isinstance(label, Literal) and str(label).strip():
                     labels[scheme, (label.language or "").lower(), str(label).strip().casefold()].add(concept)
     for (scheme, notation), owners in sorted(notations.items()):
-        what = f"skos:notation {notation.split('^^')[0][:60]!r}"
+        what = f"skos:notation {clip(notation.split('^^')[0], 60)!r}"
         _report_shared(ctx, "SKOS020", owners, what, scheme, key=(notation,))
     for (scheme, language, text), owners in sorted(labels.items()):
-        what = f"skos:prefLabel {text[:60]!r} ({language or 'no language'})"
+        what = f"skos:prefLabel {clip(text, 60)!r} ({language or 'no language'})"
         _report_shared(ctx, "SKOS021", owners, what, scheme, key=(language, text))
 
 

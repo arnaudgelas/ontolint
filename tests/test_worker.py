@@ -219,6 +219,25 @@ def test_worker_main_always_answers_even_on_an_interrupt() -> None:
     assert json.loads(pipe.sent[1]) == {"worker_error": ["ValueError", "bad input"]}
 
 
+@dataclass(frozen=True)
+class NoisyTask:
+    """Writes a credentialed IRI to stderr, as rdflib's warnings about a term do, then answers."""
+
+    def prepare(self) -> None:
+        pass
+
+    def run(self) -> bytes:
+        print("https://alice:WorkerSecret@example.test/x does not look like a valid URI", file=sys.stderr)
+        return b"{}"
+
+
+def test_worker_main_masks_what_it_writes_to_stderr_and_restores_it(capsys: pytest.CaptureFixture[str]) -> None:
+    stderr = sys.stderr
+    worker._worker_main(Pipe(), NoisyTask())
+    assert sys.stderr is stderr
+    assert capsys.readouterr().err == "https://****@example.test/x does not look like a valid URI\n"
+
+
 class FakeProcess:
     """A worker that ignores SIGTERM: only ``kill`` ends it."""
 

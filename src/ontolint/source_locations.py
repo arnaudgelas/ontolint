@@ -26,8 +26,9 @@ from rdflib import BNode, Graph, URIRef
 from rdflib.term import Node
 
 from .models import Finding
+from .redaction import redact_userinfo
 from .reporting import Location
-from .rules.support import redact_password, stable_blank_id
+from .rules.support import stable_blank_id
 
 _TEXT_FORMATS = frozenset({"turtle", "n3", "trig", "nt", "nquads"})
 # Turtle and its supersets have prefixed names and directives; N-Triples and N-Quads spell every IRI in full.
@@ -73,7 +74,7 @@ class SourceIndex:
                 self._locations = self._build() if self._build is not None else {}
             except Exception as exc:  # noqa: BLE001 -- a locator bug costs SARIF regions, never the run.
                 _LOG.debug("source locations unavailable", exc_info=True)
-                self._problem = f"{type(exc).__name__}: {exc}"
+                self._problem = redact_userinfo(f"{type(exc).__name__}: {exc}")
                 self._locations = {}
             self._build = None
         return self._locations
@@ -87,7 +88,7 @@ class SourceIndex:
     def for_findings(self, graph: Graph, findings: Sequence[Finding]) -> dict[Finding, Location]:
         """Return locations keyed by finding, including stable identities used for blank-node focuses.
 
-        An IRI with a password is also keyed by its masked spelling (SEC014's focus), at its first occurrence;
+        An IRI with a userinfo is also keyed by its masked spelling (what a finding holds), at its first occurrence;
         an IRI that is itself spelled with the mask keeps its own position.
         """
         by_focus = {str(node): location for node, location in self.locations.items()}
@@ -100,7 +101,7 @@ class SourceIndex:
         )
         for node, location in self.locations.items():
             if isinstance(node, URIRef):
-                by_focus.setdefault(redact_password(str(node)), location)
+                by_focus.setdefault(redact_userinfo(str(node)), location)
         return {finding: by_focus[finding.focus] for finding in findings if finding.focus in by_focus}
 
 

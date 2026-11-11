@@ -106,6 +106,18 @@ CASES = {
             ttl("other scheme", "ex:a ex:p <ftp://alice:fake-pw@example.test/file> ."),
             ttl("colon inside the password", "ex:a ex:p <https://alice:fake:pw@example.test/x> ."),
             ttl("with a port", "ex:a ex:p <https://alice:fake-pw@example.test:8443/x> ."),
+            ttl(
+                "token as user name, placeholder password",
+                "ex:a ex:p <https://fake-token:x-oauth-basic@github.com/x> .",
+            ),
+            # The parser that masks a userinfo finds it: any character up to the first "/ ? #", the last "@".
+            ttl("white space in the password", "ex:a ex:p <https://alice:fake\\u0020pw@example.test/x> ."),
+            ttl("brace in the password", "ex:a ex:p <https://alice:fake\\u007Bpw@example.test/x> ."),
+            ttl("line break in the password", "ex:a ex:p <https://alice:fake\\u000Apw@example.test/x> ."),
+            ttl("password after an at sign of the user", "ex:a ex:p <https://u@x:fake-pw@example.test/x> ."),
+            ttl("special scheme with one slash", "ex:a ex:p <https:/alice:fake-pw@example.test/x> ."),
+            ttl("special scheme without slashes", "ex:a ex:p <https:alice:fake-pw@example.test/x> ."),
+            ttl("nested in a query", "ex:a ex:p <https://example.test/r?to=https://alice:fake-pw@h.test/> ."),
         ],
         [
             ttl("user without password", "ex:a ex:p <https://alice@example.test/x> ."),
@@ -115,6 +127,7 @@ CASES = {
             ttl("at sign in path", "ex:a ex:p <https://example.test/a:b@c> ."),
             ttl("at sign in query", "ex:a ex:p <https://example.test/x?u=a:b@c> ."),
             ttl("mailto", "ex:a ex:p <mailto:a:b@example.test> ."),
+            ttl("no authority for a scheme that is not special", "ex:a ex:p <git+https:/a:b@example.test/x> ."),
             ttl("empty authority", "ex:a ex:p <file:///a:b@c> ."),
             ttl("plain", "ex:a ex:p <https://example.test:8080/x> ."),
             ttl("anyURI literal is not an IRI", 'ex:a ex:p "https://alice:fake-pw@example.test/"^^xsd:anyURI .'),

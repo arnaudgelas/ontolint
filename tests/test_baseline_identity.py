@@ -312,7 +312,7 @@ def test_a_baseline_written_before_the_term_message_fix_still_matches(tmp_path: 
     argv = (TERM_MESSAGES.name, "--fail-on", "info", "--fail-on-stale-baseline")
     code, document = run(*argv, "--baseline", str(TERM_MESSAGES_BASELINE))
     # Version 2 identities survive the rewording; SEC014's focus changed, so its entry is stale and it reopens.
-    assert [(f["rule"], f["focus"]) for f in document["findings"]] == [("SEC014", "https://alice:****@example.test/x")]
+    assert [(f["rule"], f["focus"]) for f in document["findings"]] == [("SEC014", "https://****@example.test/x")]
     assert len(document["baseline"]["stale_fingerprints"]) == 1
     assert code == 1
     # A version 1 baseline (0.10.x) matches by message, so the reworded findings reopen and their entries go stale.

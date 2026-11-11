@@ -31,6 +31,7 @@ from rdflib.namespace import OWL, RDF
 from .loader import InputRejected, LoadedGraph, LoadError, Module, dtd_problem, load_document
 from .paths import InputFile, resolve_inputs
 from .policy import Policy
+from .redaction import redact_userinfo
 
 CATALOG_NAME = "catalog-v001.xml"
 _CATALOG_NS = "{urn:oasis:names:tc:entity:xmlns:xml:catalog}"
@@ -98,19 +99,27 @@ def read_catalog(path: Path, max_bytes: int) -> Catalog:
 
     def walk(element: ET.Element, directory: Path) -> None:
         xml_base = element.get("{http://www.w3.org/XML/1998/namespace}base")
-        here = Path(os.path.normpath(directory / xml_base)) if xml_base else directory
+        here = _local(directory, xml_base) if xml_base else directory
         for child in element:
             if child.tag == f"{_CATALOG_NS}uri" and child.get("name") and child.get("uri"):
-                entries.setdefault(child.get("name", ""), Path(os.path.normpath(here / child.get("uri", ""))))
+                entries.setdefault(child.get("name", ""), _local(here, child.get("uri", "")))
             elif child.tag == f"{_CATALOG_NS}rewriteURI" and child.get("uriStartString") and child.get("rewritePrefix"):
-                rewrites.append(
-                    (child.get("uriStartString", ""), Path(os.path.normpath(here / child.get("rewritePrefix", ""))))
-                )
+                rewrites.append((child.get("uriStartString", ""), _local(here, child.get("rewritePrefix", ""))))
             elif child.tag == f"{_CATALOG_NS}group":
                 walk(child, here)
 
     walk(root, base)
     return Catalog(base, entries, tuple(sorted(rewrites, key=lambda pair: -len(pair[0]))))
+
+
+def _local(directory: Path, reference: str) -> Path:
+    """The catalog's ``reference`` as a local path under ``directory``; a userinfo in it is masked first.
+
+    A catalog may map an import to a URL, which is no local file and is reported as missing (TOOL004) with
+    this path: ``os.path.normpath`` turns its ``scheme://`` into ``scheme:/``, which no mask reads as an
+    authority, so the userinfo is masked before the path is formed (:mod:`ontolint.redaction`).
+    """
+    return Path(os.path.normpath(directory / redact_userinfo(reference)))
 
 
 # gremlin: pardon[equivalent] nothing mutates a closure; frozen only guards against it

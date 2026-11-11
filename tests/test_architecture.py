@@ -1,9 +1,10 @@
 """The package's layering, checked on its direct imports (pytest-archon).
 
-The layers, lowest first: foundations (``models``, ``paths``, ``syntax``, ``ownership``, ``worker``,
-``profiles``, ``graph``), then ``policy`` and ``context``, the rule modules, the adapters, the engine and
-the output modules, and last the command line. A module may import downwards; these rules fail when
-one imports upwards, which is how a rule family would come to depend on the CLI or on a report format.
+The layers, lowest first: foundations (``redaction``, then ``models``, which masks every finding with it,
+and ``worker``, which masks its stderr with it, ``paths``, ``syntax``, ``ownership``, ``profiles``,
+``graph``), then ``policy`` and ``context``, the rule modules, the adapters, the engine and the output
+modules, and last the command line. A module may import downwards; these rules fail when one imports
+upwards, which is how a rule family would come to depend on the CLI or on a report format.
 """
 
 from __future__ import annotations
@@ -36,17 +37,36 @@ def test_foundations_import_no_other_module_of_the_package() -> None:
     (
         archrule("foundations import nothing of the package", comment="models, paths, syntax and friends are leaves")
         .match(
-            "ontolint.models",
+            "ontolint.redaction",
             "ontolint.paths",
             "ontolint.syntax",
             "ontolint.ownership",
-            "ontolint.worker",
             "ontolint.profiles",
             "ontolint._version",
             "ontolint.graph.*",
         )
         .exclude("ontolint.graph")
         .should_not_import("ontolint.*")
+        .check(PACKAGE, only_direct_imports=True, skip_type_checking=True)
+    )
+
+
+def test_models_import_only_the_redaction_foundation() -> None:
+    (
+        archrule("a finding masks its userinfo", comment="ontolint.redaction is the leaf every finding is masked by")
+        .match("ontolint.models")
+        .should_not_import("ontolint.*")
+        .may_import("ontolint.redaction")
+        .check(PACKAGE, only_direct_imports=True, skip_type_checking=True)
+    )
+
+
+def test_the_worker_imports_only_the_redaction_foundation() -> None:
+    (
+        archrule("a worker masks its stderr", comment="a spawned worker writes to the process's own stderr")
+        .match("ontolint.worker")
+        .should_not_import("ontolint.*")
+        .may_import("ontolint.redaction")
         .check(PACKAGE, only_direct_imports=True, skip_type_checking=True)
     )
 

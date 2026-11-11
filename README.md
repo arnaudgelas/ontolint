@@ -919,11 +919,31 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   like a parse failure. Post-parse hygiene checks (`SEC004`, `SEC005`,
   `SEC007`, `SEC008`, `SEC012`, `SEC014`) are ordinary findings; `SEC007` is an
   info note naming the `owl:imports` that were not followed. `SEC014` reports an
-  IRI that embeds a password with the password masked
-  (`https://alice:****@example.test/x`), so its report and baseline entries never
-  repeat the password; the user name is still printed, so a token used as the
-  user name (`https://<token>:x-oauth-basic@...`) is not masked. Other rules
-  that report such an IRI still print it whole.
+  IRI that embeds a password.
+- No output ontolint writes repeats an IRI's userinfo, the `user:password@` or
+  `token@` part of its authority. Every IRI ontolint prints, in any rule's focus
+  or message, in text, JSON and SARIF reports, baselines and their hashes, blank
+  node identities, module and named graph names and on stderr (its bounded
+  workers' too), has its whole userinfo, user name included, replaced by `****`
+  (`https://****@example.test/x`): a token sent as the user name
+  (`https://<token>:x-oauth-basic@github.com/...`, `https://<token>@...`) cannot
+  be told from a name. A userinfo is found by the authority's structure, up to
+  the first `/ ? #`, whatever characters it holds (rdflib accepts white space,
+  braces or a line break in an IRI), and `SEC014` reports exactly the passwords
+  the mask hides. A message that quotes the start of a long value masks it
+  before cutting it. A parser error about a file that holds a userinfo keeps its
+  line number but withholds the parser's excerpt, which may quote part of one.
+  The specification is in [`src/ontolint/redaction.py`](src/ontolint/redaction.py).
+- Limits. IRIs that differ only in their userinfo give one finding and one
+  baseline entry, so a baseline cannot tell one credential from another: a new
+  credential that replaces a baselined one at the same IRI is not reported. No
+  output may hold a function of a secret that lets its reader test guesses of it
+  offline, and only a key kept out of the repository could avoid that, so
+  review a change to a baselined `SEC014` finding's IRI in the source. Text
+  that free prose mixes with an IRI may be over-masked (`https://h has 'a'@en`
+  becomes `https://****@en`). Not masked: writes straight to the stderr file
+  descriptor (a crash of the interpreter itself), and a library caller's own
+  logging handlers.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

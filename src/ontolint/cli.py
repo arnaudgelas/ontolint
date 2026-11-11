@@ -9,17 +9,19 @@ Rules skipped for an optional input that was not supplied, or by an ignore, neve
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import math
 import os
 import sys
+import traceback
 from collections.abc import Mapping, Sequence
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from functools import partial
 from pathlib import Path
-from typing import TextIO
+from typing import TextIO, cast
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
@@ -47,6 +49,7 @@ from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
+from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
 from .reporting import TOOL_FAILURE_EXIT, FileReport, Location, Origin, RunReport, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
@@ -272,9 +275,14 @@ DEFINITION_HINT_MINIMUM = 10
 
 def _definition_hint(item: InputFile, graph: Graph, ctx: RuleContext, findings: Sequence[Finding]) -> None:
     """Say once when most LEX002 terms carry an unrecognised predicate named like a definition."""
-    undefined = [URIRef(f.focus) for f in findings if f.rule == "LEX002" and f.focus.startswith(("http", "urn"))]
-    if len(undefined) < DEFINITION_HINT_MINIMUM:
+    foci = [f.focus for f in findings if f.rule == "LEX002" and f.focus.startswith(("http", "urn"))]
+    if len(foci) < DEFINITION_HINT_MINIMUM:
         return
+    masked = {focus for focus in foci if REDACTED_USERINFO in focus}
+    undefined = [URIRef(focus) for focus in foci if focus not in masked]
+    if masked:  # a masked focus (ontolint.redaction) stands for every term that masks to it
+        subjects = {s for s in graph.subjects(unique=True) if isinstance(s, URIRef)}
+        undefined += sorted(s for s in subjects if redact_userinfo(str(s)) in masked)
     counts: dict[URIRef, int] = {}
     for term in undefined:
         for predicate in {p for p, o in graph.predicate_objects(term) if isinstance(o, Literal)}:
@@ -354,7 +362,7 @@ def _library_origins(library: PatternLibrary | None, findings: Sequence[Finding]
     """With ``--pattern-library``: the member file of each finding whose focus is a member ontology."""
     if library is None:
         return {}
-    files = {m.ontology: Origin(m.display, m.uri) for m in library.members}
+    files = {redact_userinfo(m.ontology): Origin(m.display, m.uri) for m in library.members}
     return {f: files[f.focus] for f in findings if f.focus in files}
 
 
@@ -400,11 +408,12 @@ def _module_origins(
     Also returns the position in ``modules`` of each finding's file.
     """
     located = [module.source_index.for_findings(graph, findings) for module in modules]
+    declared = [frozenset(map(redact_userinfo, module.declared)) for module in modules]  # foci are masked
     origins: dict[Finding, Origin] = {}
     locations: dict[Finding, Location] = {}
     owners: dict[Finding, int] = {}
     for finding in findings:
-        owner = next((i for i, module in enumerate(modules) if finding.focus in module.declared), None)
+        owner = next((i for i, names in enumerate(declared) if finding.focus in names), None)
         if owner is None:
             owner = next((i for i, found in enumerate(located) if finding in found), 0)
         owners[finding] = owner
@@ -843,9 +852,11 @@ def _write_text(path: str | Path, text: str, *, what: str) -> str | None:
 def _emit(output: str, args: argparse.Namespace) -> str | None:
     """Write the report to ``--output`` or stdout; return the TOOL001 line when it could not be written.
 
-    Raises ``_StdoutClosed`` when the reader of stdout has gone, which is not a failure to report.
+    Raises ``_StdoutClosed`` when the reader of stdout has gone, which is not a failure to report.  Every finding
+    is masked where it is made; the report is masked again here, so no text of it (a rule's failure, a locator's
+    problem) can print an IRI userinfo (:mod:`ontolint.redaction`).
     """
-    text = output + "\n"
+    text = redact_rendered(output) + "\n"
     if args.output:
         return _write_text(args.output, text, what="report")
     try:
@@ -906,14 +917,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     exception into TOOL001, so a ``BrokenPipeError`` that gets this far was raised by a write to stderr before the
     report existed: with nobody to read diagnostics, the run stops (``ontolint ... 2>&1 | head``). Once the report is
     out, a closed stderr no longer changes the exit status (see ``_finish``).
+
+    Stderr is written through a :class:`~ontolint.redaction.RedactingStream` while the command runs, so no note,
+    refusal, parser message or library warning prints an IRI userinfo; the caller's stream is restored after.  An
+    exception that escapes the command (an ontolint bug) is printed through it too, as a traceback, with the
+    status of a tool failure: once the stream is restored, the interpreter would print its message unmasked.
     """
+    stderr = sys.stderr
+    redacting = None if stderr is None else RedactingStream(stderr)  # None under pythonw: nothing is written
+    if redacting is not None:
+        sys.stderr = cast("TextIO", redacting)
     try:
         return _main(argv)
     except BrokenPipeError:
         _release(sys.stderr)
         return EXIT_PIPE_CLOSED
+    except Exception:  # noqa: BLE001 -- printed masked, see above
+        traceback.print_exc()
+        return TOOL_FAILURE_EXIT
     finally:
+        if redacting is not None:
+            with contextlib.suppress(OSError, ValueError):  # a closed stderr: the flush below releases it
+                redacting.drain()
         _flush_standard_streams()
+        sys.stderr = stderr
 
 
 def _main(argv: Sequence[str] | None) -> int:

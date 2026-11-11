@@ -13,6 +13,7 @@ from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Identifier, Node
 
 from ontolint.ownership import base_matches
+from ontolint.redaction import redact_userinfo
 
 OBO = "http://purl.obolibrary.org/obo/"
 PROV = "http://www.w3.org/ns/prov#"
@@ -119,7 +120,7 @@ def owning_term(g: Graph, node: Node) -> Node:
     for _ in range(OWNER_DEPTH):
         parents = sorted(
             {s for n in frontier for s in g.subjects(None, n) if s not in seen},
-            key=str,
+            key=lambda s: redact_userinfo(str(s)),  # masked: the choice never depends on a userinfo
         )
         if not parents:
             return node
@@ -132,15 +133,21 @@ def owning_term(g: Graph, node: Node) -> Node:
 
 
 def _content_digest(g: Graph, node: Node, depth: int, path: frozenset[Node]) -> str:
-    """Label-free description of ``node``: IRIs and literals verbatim, blank nodes by their own content."""
+    """Label-free description of ``node``: IRIs and literals masked, blank nodes by their own content.
+
+    Masked (:func:`~ontolint.redaction.redact_userinfo`): a published hash over a password lets anyone test
+    guesses of it offline, and IRIs that differ only in their userinfo are one term in every finding.
+    """
     if isinstance(node, Literal):
-        return "L" + node.n3()
+        return "L" + redact_userinfo(node.n3())
     if not isinstance(node, BNode):
-        return "I" + str(node)
+        return "I" + redact_userinfo(str(node))
     if node in path or depth <= 0:
         return "B"
     inner = path | {node}
-    edges = sorted(f"{p}>{_content_digest(g, o, depth - 1, inner)}" for p, o in g.predicate_objects(node))
+    edges = sorted(
+        f"{redact_userinfo(str(p))}>{_content_digest(g, o, depth - 1, inner)}" for p, o in g.predicate_objects(node)
+    )
     return "B(" + ";".join(edges) + ")"
 
 
@@ -149,11 +156,12 @@ def stable_blank_id(g: Graph, node: Node) -> str:
 
     The identity hashes the nearest named owner (see :func:`owning_term`), the predicates through which the
     node is referenced and the blank node's own reachable content, so the same file always yields the
-    same identity however the parser labelled its blank nodes.
+    same identity however the parser labelled its blank nodes.  Every IRI and literal is hashed masked, so the
+    identity holds no function of a userinfo.
     """
     owner = owning_term(g, node)
-    owner_text = "" if owner == node else str(owner)
-    incoming = sorted({str(p) for _s, p in g.subject_predicates(node)})
+    owner_text = "" if owner == node else redact_userinfo(str(owner))
+    incoming = sorted({redact_userinfo(str(p)) for _s, p in g.subject_predicates(node)})
     payload = "\x00".join([owner_text, ",".join(incoming), _content_digest(g, node, DIGEST_DEPTH, frozenset())])
     return "_:" + hashlib.sha256(payload.encode("utf-8", "surrogatepass")).hexdigest()[:STABLE_ID_LENGTH]
 
@@ -229,39 +237,3 @@ def value_text(node: Node) -> str:
     nothing else, so a shape rule that put a bare label in its message would depend on the parser's labels.
     """
     return f"_:{node}" if isinstance(node, BNode) else str(node)
-
-
-# An authority's userinfo, after ``scheme://`` and before the first ``@`` of the authority (RFC 3986 3.2.1).
-_USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*://([^/?#@]*)@")
-# Named "redacted": CodeQL takes any other "password" name for a secret, and the mask reaches the SHA-256 of a
-# finding's fingerprint (py/weak-sensitive-data-hashing).
-REDACTED_PASSWORD = "****"  # noqa: S105 -- what replaces a password, not one
-
-
-def _credentials(iri: str) -> tuple[re.Match[str], str] | None:
-    """The userinfo match and user of an IRI whose userinfo has a non-empty part after its first ``:``."""
-    match = _USERINFO.match(iri)
-    if match is None:
-        return None
-    user, separator, password = match.group(1).partition(":")
-    return (match, user) if separator and password else None
-
-
-def password_user(iri: str) -> str | None:
-    """The user name of ``iri`` when its authority embeds a password (``https://user:pw@...``), else ``None``."""
-    found = _credentials(iri)
-    return None if found is None else found[1]
-
-
-def redact_password(iri: str) -> str:
-    """``iri`` with everything after the first ``:`` of its userinfo replaced by :data:`REDACTED_PASSWORD`.
-
-    RFC 3986 section 3.2.1 says not to render that data.  The user, host, port, path, query and fragment are
-    kept, and ``*`` is a userinfo sub-delimiter, so the result is still an IRI; an IRI without a password is
-    returned unchanged, so the function is idempotent.
-    """
-    found = _credentials(iri)
-    if found is None:
-        return iri
-    match, user = found
-    return f"{iri[: match.start(1)]}{user}:{REDACTED_PASSWORD}{iri[match.end(1) :]}"

@@ -16,6 +16,7 @@ from rdflib.namespace import OWL, RDF, RDFS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import clip
 
 from .support import owning_term
 
@@ -147,7 +148,7 @@ def _ill_typed(ctx: RuleContext) -> None:
         owner = owning_term(g, s)
         if _foreign(ctx, owner):
             continue
-        shown = str(o) if len(str(o)) <= LEXICAL_FORM_SHOWN else str(o)[:LEXICAL_FORM_SHOWN] + "..."
+        shown = clip(str(o), LEXICAL_FORM_SHOWN, "...")
         ctx.add("DATA003", owner, f"Value {shown!r} of {p} is typed {datatype}, but {problem}.", subject=(p, o))
 
 
