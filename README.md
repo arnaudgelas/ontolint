@@ -102,7 +102,7 @@ package and its test tools:
 
 ```bash
 python -m pip install -e .
-python -m pip install pytest hypothesis pytest-gremlins pytest-xdist
+python -m pip install pytest hypothesis pytest-gremlins pytest-xdist pytest-randomly pytest-archon
 ```
 
 ## Run the linter
@@ -603,11 +603,16 @@ uv run pytest -q -n auto
 # Skip the slow Hypothesis and fuzz tests
 uv run pytest -q -n auto -m 'not slow'
 
+# The order is shuffled on every run (pytest-randomly); the seed is in the header. Replay a failing
+# order with it, or switch shuffling off
+uv run pytest -q -p randomly --randomly-seed=12345
+uv run pytest -q -p no:randomly
+
 # Type checks
 uv run pyright && uv run mypy && uv run mypy --platform win32
 
-# Mutation testing (opt-in)
-uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
+# Mutation testing (opt-in; the order stays fixed)
+uv run pytest -p no:randomly -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
 
 # Lint and format the project
 uv run ruff check . && uv run ruff format --check .

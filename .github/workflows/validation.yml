@@ -129,7 +129,7 @@ jobs:
         # pytest's own status is evaluated by the policy gate below.
         run: |
           set +e
-          uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache \
+          uv run pytest -p no:randomly -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache \
             --gremlin-report=console,json,html --gremlin-max-pardons-pct=5 \
             --gremlin-audit-pardons 2>&1 | tee mutation.log
           echo "PYTEST_STATUS=${PIPESTATUS[0]}" >> "$GITHUB_ENV"

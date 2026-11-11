@@ -8,8 +8,11 @@ in `.github/workflows/validation.yml`.
 ## Tooling and command
 
 ```bash
-uv run pytest -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
+uv run pytest -p no:randomly -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache
 ```
+
+`-p no:randomly` keeps the test order fixed: the normal suite shuffles it (pytest-randomly), and a
+mutation run should be repeatable.
 
 On a large suite the coverage pre-scan can exceed its default 120 s limit, which
 disables coverage-guided test selection: every mutant then runs the whole suite, and

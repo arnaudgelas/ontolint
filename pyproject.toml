@@ -178,8 +178,10 @@ dev = [
     "pip-audit>=2.10.1",
     "pyright>=1.1.414",
     "pytest>=8.0",
+    "pytest-archon>=0.0.7",
     "pytest-cov>=7.1.0",
     "pytest-gremlins>=1.13.2",
+    "pytest-randomly>=5.1.0",
     "pytest-xdist>=3.8.0",
     "ruff>=0.17.4",
 ]
