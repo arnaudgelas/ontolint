@@ -144,3 +144,39 @@ def test_metric006_and_007_count_relation_properties_only() -> None:
     g.add((_ex("r"), RDF.type, RDF.Property))
     (still,) = _run(g, "METRIC006", metric_min_property_class_ratio=0.3)
     assert still.message.startswith("2 properties for 10 classes")
+
+
+def _own_namespaces(n: int, *, header: bool) -> Graph:
+    g = Graph()
+    if header:
+        g.add((URIRef("https://example.test/"), RDF.type, OWL.Ontology))
+    for i in range(n):
+        child, parent = URIRef(f"https://example.test/a#C{i}"), URIRef(f"https://example.test/b#D{i}")
+        g.add((child, RDF.type, OWL.Class))
+        g.add((parent, RDF.type, OWL.Class))
+        g.add((child, RDFS.subClassOf, parent))
+    return g
+
+
+def _run_owned(g: Graph, base: str | None, **thresholds: Any) -> list[Finding]:
+    policy = replace(Policy(), metric_min_sample=1, **thresholds)
+    ctx = engine.build_context(g, base, policy)
+    metrics.run(ctx)
+    return [f for f in ctx.findings if f.rule == "METRIC010"]
+
+
+def test_metric010_owned_namespaces_are_not_foreign() -> None:
+    assert _run_owned(_own_namespaces(10, header=True), "https://example.test/") == []
+
+
+def test_metric010_without_ownership_information_the_namespace_decides() -> None:
+    (finding,) = _run_owned(_own_namespaces(10, header=False), None)
+    assert finding.message.startswith("10 of 10 structural references")
+
+
+def test_metric010_foreign_target_still_counts_when_ownership_is_known() -> None:
+    g = _own_namespaces(10, header=True)
+    for i in range(10):
+        g.add((URIRef(f"https://example.test/a#C{i}"), RDFS.subClassOf, URIRef(f"https://elsewhere.test/x#E{i}")))
+    (finding,) = _run_owned(g, "https://example.test/", metric_max_foreign_reference_ratio=0.4)
+    assert finding.message.startswith("10 of 20 structural references")

@@ -21,6 +21,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.ownership import OwnershipMode
 
 from .classes import orphan_classes
 from .lexical import is_unlabelled
@@ -321,6 +322,18 @@ def _definition_rule(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
             )
 
 
+def _foreign(ctx: RuleContext, subject: URIRef, target: URIRef) -> bool:
+    """Return whether ``target`` lies outside the subject's namespace and is not owned by the ontology.
+
+    An ontology that owns several namespaces (a header or base covering them) refers to itself across
+    them.  Without any ownership information (``OwnershipMode.ALL``) every IRI counts as owned, so the
+    namespace comparison alone decides.
+    """
+    if _namespace(target) == _namespace(subject):
+        return False
+    return ctx.context.ownership.mode is OwnershipMode.ALL or not ctx.local(target)
+
+
 def _reference_rule(ctx: RuleContext, classes: frozenset[URIRef], properties: frozenset[URIRef]) -> None:
     """Share of structural references (subClassOf, domain, range) pointing outside the subject's namespace."""
     total = foreign = 0
@@ -328,7 +341,7 @@ def _reference_rule(ctx: RuleContext, classes: frozenset[URIRef], properties: fr
         for subject, target in ctx.g.subject_objects(predicate):
             if subject in subjects and isinstance(target, URIRef) and not str(target).startswith(W3C_NAMESPACES):
                 total += 1
-                foreign += _namespace(target) != _namespace(subject)  # type: ignore[arg-type]
+                foreign += _foreign(ctx, subject, target)  # type: ignore[arg-type]
     limit = ctx.policy.metric_max_foreign_reference_ratio
     ratio = _ratio(foreign, total)
     if total >= ctx.policy.metric_min_sample and ratio > limit:

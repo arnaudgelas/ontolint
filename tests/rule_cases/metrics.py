@@ -205,6 +205,29 @@ CASES = {
             ttl("all superclasses local", _external(10, 0)),
             ttl("well-known W3C superclasses", _classes(12, lambda i: "; rdfs:subClassOf owl:Thing")),
             ttl("below the minimum sample", _external(9, 9)),
+            ttl(
+                "namespaces of one ontology are not foreign",
+                "<https://example.test/> a owl:Ontology .\n"
+                + _each(
+                    10,
+                    lambda i: (
+                        f"<https://example.test/a#C{i}> a owl:Class ; rdfs:subClassOf <https://example.test/b#D{i}> .\n"
+                        f"<https://example.test/b#D{i}> a owl:Class ."
+                    ),
+                ),
+                base="https://example.test/",
+            ),
+            ttl(
+                "OBO reuse of one namespace is not foreign",
+                _each(
+                    10,
+                    lambda i: (
+                        f"<http://purl.obolibrary.org/obo/XAO_{i}> a owl:Class ; "
+                        "rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> ."
+                    ),
+                ),
+                base="http://purl.obolibrary.org/obo/XAO_",
+            ),
         ],
     ),
     "METRIC011": rule_cases(
