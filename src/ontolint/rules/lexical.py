@@ -26,10 +26,13 @@ type LabelIndex = defaultdict[tuple[str, str, str], set[URIRef]]
 MINIMUM_CAPITALIZATION_SAMPLE = 10
 MAJORITY_PERCENT = 80
 LABEL_LIKE = ("label", "name", "title")
-# LEX002 also accepts SKOS documentation notes; other rules keep ``ctx.descriptions`` (definitions only).
-# ``ctx.descriptions`` holds the definition predicates and every predicate below one of them through
-# rdfs:subPropertyOf and owl:equivalentProperty (``RuleContext.closure``).
+# LEX002 also accepts SKOS documentation notes and the predicates below them (``RuleContext.closure``);
+# other rules keep ``ctx.descriptions`` (definitions only).  Both closures follow rdfs:subPropertyOf and
+# owl:equivalentProperty.  The SKOS schema puts its change, editorial and history notes and
+# skos:example below skos:note too; they and the predicates below them document no term, as in 0.12.0,
+# where only skos:note and skos:scopeNote did.
 DOCUMENTATION_NOTES = (SKOS.scopeNote, SKOS.note)
+RECORD_NOTES = frozenset({SKOS.changeNote, SKOS.editorialNote, SKOS.historyNote, SKOS.example})
 # Collections (microthesauri) and schemes are named like the concepts they group, so LEX004 skips them.
 GROUPING_TYPES = frozenset({SKOS.Collection, SKOS.ConceptScheme})
 
@@ -155,12 +158,13 @@ def _term_labels(ctx: RuleContext) -> LabelIndex:
     """Check per-term labels and descriptions; return an index of normalized labels."""
     g = ctx.g
     label_index: LabelIndex = defaultdict(set)
+    documentation = dict.fromkeys((*ctx.descriptions, *ctx.closure.below(DOCUMENTATION_NOTES, RECORD_NOTES)))
     for term in sorted(ctx.terms, key=str):
         labels = {o for p in ctx.labels for o in g.objects(term, p) if isinstance(o, Literal)}
         main = {o for p in ctx.main_label_predicates(term) for o in g.objects(term, p) if isinstance(o, Literal)}
         if is_unlabelled(ctx, term):
             ctx.add("LEX001", term, "Term has no label.", confidence=_missing_label_confidence(ctx, term))
-        if not any((term, p, None) in g for p in (*ctx.descriptions, *DOCUMENTATION_NOTES)):
+        if not any((term, p, None) in g for p in documentation):
             ctx.add("LEX002", term, "Term has no description or definition.", confidence="certain")
         _language_checks(ctx, term, labels, main, label_index)
     return label_index

@@ -85,6 +85,10 @@ CASES = {
         [
             ttl("only 4 of 10 defined", _commented(10, 4)),
             ttl("skos:scopeNote is not a definition", _classes(10, lambda i: '; skos:scopeNote "n"')),
+            ttl(
+                "a sub-property of skos:note is not a definition",
+                "ex:n rdfs:subPropertyOf skos:note . " + _classes(10, lambda i: '; ex:n "n"'),
+            ),
         ],
         [
             ttl("all defined", _commented(10, 10)),

@@ -51,6 +51,11 @@ CASES = {
             ttl(
                 "equivalent to a non-definition", "ex:d owl:equivalentProperty ex:q . ex:A a owl:Class ; ex:d 'An A.' ."
             ),
+            ttl(
+                "sub-property of an editorial note",
+                "skos:editorialNote rdfs:subPropertyOf skos:note . ex:n rdfs:subPropertyOf skos:editorialNote . "
+                "ex:A a owl:Class ; ex:n 'To do.' .",
+            ),
         ],
         [
             ttl("skos:definition", 'ex:A a owl:Class ; skos:definition "An A." .'),
@@ -65,6 +70,9 @@ CASES = {
                 "definition through an equivalent",
                 "ex:d owl:equivalentProperty ex:q . ex:q rdfs:subPropertyOf skos:definition . "
                 "ex:A a owl:Class ; ex:d 'An A.' .",
+            ),
+            ttl(
+                "sub-property of skos:note", "ex:n rdfs:subPropertyOf skos:note . ex:A a owl:Class ; ex:n 'About A.' ."
             ),
         ],
     ),
