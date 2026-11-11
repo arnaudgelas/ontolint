@@ -666,7 +666,9 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
   without `#`/`/`/`.owl`, and for OBO ontologies the `.../obo/<NAME>_` ID space); RDF/RDFS/OWL/XSD terms
   are never owned, and if no declared term matches, every declared term is treated as owned.
 - Definitions are read from `rdfs:comment`, `skos:definition`, `dcterms:description`, `dc:description`,
-  `obo:IAO_0000115`, `obo:IAO_0000600` and `prov:definition`; labels from `rdfs:label` and `skos:prefLabel`.
+  `obo:IAO_0000115`, `obo:IAO_0000600`, `prov:definition` and the Common Core Ontologies 1.x
+  `<http://www.ontologyrepository.com/CommonCoreOntologies/definition>`; labels from `rdfs:label` and
+  `skos:prefLabel`.
   Add more with the policy lists `extra_definition_predicates` and `extra_label_predicates` (absolute IRIs).
   A predicate the ontology declares `rdfs:subPropertyOf` a definition predicate, built-in or extra,
   directly or through a chain, is a definition predicate too.
