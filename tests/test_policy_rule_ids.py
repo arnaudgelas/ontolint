@@ -56,3 +56,51 @@ def test_known_rule_ids_are_accepted(tmp_path: Path, capsys: pytest.CaptureFixtu
     code, err = _lint(tmp_path, {"ignored_rules": ["LEX001"], "severity_overrides": {"ONT001": "info"}}, capsys)
     assert code == 0
     assert "GOV020" not in err
+
+
+# --- pipeline rules: they always apply, so the policy cannot ignore or re-grade them ----------------------------
+
+PIPELINE_PART = (
+    " (safe-loader refusals and front-end diagnostics, never findings), "
+    "which always apply and the policy cannot change; remove them\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("policy", "named"),
+    [
+        ({"ignored_rules": ["SEC001"]}, "ignored_rules: SEC001"),
+        ({"ignored_rules": ["INPUT001"]}, "ignored_rules: INPUT001"),
+        ({"severity_overrides": {"TOOL001": "info"}}, "severity_overrides: TOOL001"),
+        ({"severity_overrides": {"SEC011": "warning"}}, "severity_overrides: SEC011"),
+        (
+            {"ignored_rules": ["SEC015", "SEC010"], "severity_overrides": {"INPUT001": "warning"}},
+            "ignored_rules: SEC010, SEC015; severity_overrides: INPUT001",
+        ),
+    ],
+)
+def test_a_pipeline_rule_in_the_policy_is_a_configuration_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], policy: dict[str, object], named: str
+) -> None:
+    code, err = _lint(tmp_path, policy, capsys)
+    assert code == TOOL_FAILURE
+    assert err == f"GOV020: policy file rejected: pipeline rule(s) in {named}{PIPELINE_PART}"
+
+
+def test_unknown_and_pipeline_ids_are_reported_in_one_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code, err = _lint(tmp_path, {"ignored_rules": ["NOPE999", "SEC001"]}, capsys)
+    assert code == TOOL_FAILURE
+    assert err == (
+        "GOV020: policy file rejected: unknown rule identifier(s) in ignored_rules: NOPE999; "
+        f"use --list-rules to see valid identifiers; pipeline rule(s) in ignored_rules: SEC001{PIPELINE_PART}"
+    )
+
+
+def test_graph_sec_and_adapter_rules_are_accepted(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    policy: dict[str, object] = {
+        "ignored_rules": ["SEC007", "SHACL001"],
+        "severity_overrides": {"SEC014": "info", "SEM001": "warning"},
+    }
+    code, err = _lint(tmp_path, policy, capsys)
+    assert code == 0
+    assert "GOV020" not in err

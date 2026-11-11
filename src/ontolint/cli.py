@@ -51,10 +51,12 @@ from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
 from .rules.support import local_name
 from .selection import (
+    PIPELINE_HELP,
     PipelineSelectorError,
     Selection,
     SelectorSyntaxError,
     check_selectors,
+    is_pipeline,
     resolve_selection,
     split_selectors,
     unknown_selector_help,
@@ -690,30 +692,47 @@ def _plan(args: argparse.Namespace, config: Policy, shapes: Graph | None, regist
 
 
 class UnknownPolicyRuleError(ValueError):
-    """The policy file names a rule that does not exist, so its ignore or override would do nothing."""
+    """The policy file names a rule its ignore or override cannot act on: an unknown or a pipeline rule."""
 
 
 def _check_policy_rules(config: Policy, registry: RuleRegistry) -> None:
-    """Reject unknown rule IDs in ``ignored_rules`` and ``severity_overrides``, as ``--ignore`` does (OPS009).
+    """Reject rule IDs in ``ignored_rules`` and ``severity_overrides`` that cannot change the run (OPS009).
 
     A typo there would otherwise be silent: the rule it meant to silence keeps running, and an
     override changes nothing.  Proposed (catalogue-only) rules are rejected too, with a hint, because
-    they never run; IDs are matched exactly, like the engine does.
+    they never run; IDs are matched exactly, like the engine does.  So are pipeline rules (the
+    safe-loader refusals, ``INPUT001``, ``TOOL001``): they always apply and never produce a finding to
+    ignore or re-grade.  Every problem goes into one message, unknown IDs first.
     """
     named = {
         "ignored_rules": sorted(config.ignored_rules),
         "severity_overrides": [r for r, _ in config.severity_overrides],
     }
     unknown = {key: [rule for rule in rules if rule not in registry] for key, rules in named.items()}
-    problems = [f"{key}: {', '.join(rules)}" for key, rules in unknown.items() if rules]
-    if not problems:
-        return
-    message = f"unknown rule identifier(s) in {'; '.join(problems)}"
-    proposed = frozenset(row.rule_id for row in planned_rows())
-    planned = sorted({rule for rules in unknown.values() for rule in rules} & proposed)
-    if planned:
-        message += f"; {', '.join(planned)} exist in the catalogue as proposed rules and are not implemented"
-    raise UnknownPolicyRuleError(message + "; use --list-rules to see valid identifiers")
+    pipeline = {
+        key: [rule for rule in rules if rule in registry and is_pipeline(registry.get(rule))]
+        for key, rules in named.items()
+    }
+    parts = []
+    if problems := _policy_problems(unknown):
+        message = f"unknown rule identifier(s) in {problems}"
+        proposed = frozenset(row.rule_id for row in planned_rows())
+        planned = sorted({rule for rules in unknown.values() for rule in rules} & proposed)
+        if planned:
+            message += f"; {', '.join(planned)} exist in the catalogue as proposed rules and are not implemented"
+        parts.append(message + "; use --list-rules to see valid identifiers")
+    if problems := _policy_problems(pipeline):
+        parts.append(
+            f"pipeline rule(s) in {problems} ({PIPELINE_HELP}), which always apply and the policy cannot change; "
+            "remove them"
+        )
+    if parts:
+        raise UnknownPolicyRuleError("; ".join(parts))
+
+
+def _policy_problems(by_key: dict[str, list[str]]) -> str:
+    """``key: A, B; other: C`` for the keys that name any rule, else the empty string."""
+    return "; ".join(f"{key}: {', '.join(rules)}" for key, rules in by_key.items() if rules)
 
 
 def _output_failure(what: str, exc: Exception) -> str:

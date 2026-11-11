@@ -16,7 +16,8 @@ What every one of them does to the run (``cli._lint``):
 * ``--select``, ``--ignore``, profiles, ``ignored_rules`` and ``severity_overrides`` do not affect them: the loader
   never consults the selection.  Naming one in ``--select`` or ``--ignore`` (by id; the mixed ``SEC`` family
   applies to the graph SEC rules only) is therefore a configuration error, ``TOOL001`` and exit ``2`` before any
-  input is read.  The limits are per document: each ontology argument, the shapes file, each file
+  input is read, and naming one in ``ignored_rules`` or ``severity_overrides`` is ``GOV020``, exit ``2``.  The
+  limits are per document: each ontology argument, the shapes file, each file
   of an ``owl:imports`` closure and each file of an ``--import-dir`` (a refused ``--import-dir`` file is skipped
   silently, like a file that does not parse, since the folder may hold non-RDF files).
 * Messages name the file by its report path (relative to the working directory, else absolute) and, for a limit,

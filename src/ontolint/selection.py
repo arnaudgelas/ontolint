@@ -10,7 +10,8 @@ Precedence, from the broadest to the strongest word:
    are unioned and removed from the chosen set, whatever selected the rule.
 3. Severity overrides apply to what remains: profile first, then the policy file (policy wins).
    Selectors are validated strictly (typos are errors, never an empty run); the policy file's
-   ``ignored_rules`` keep their historical exact-identifier, unvalidated behaviour.
+   ``ignored_rules`` and ``severity_overrides`` are exact identifiers, validated by the CLI (``GOV020``
+   for an unknown or a pipeline rule).
 
 Pipeline rules (``backend`` ``cli``: the safe-loader refusals ``SEC001``, ``SEC002``, ``SEC003``,
 ``SEC006``, ``SEC009``, ``SEC010``, ``SEC011``, ``SEC013`` and ``SEC015``, and the front-end diagnostics

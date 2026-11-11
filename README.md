@@ -212,7 +212,8 @@ Precedence when options combine:
 2. Ignores always win over selection: `--ignore`, the profile's ignores and the policy file's
    `ignored_rules` are unioned and removed. Policy `ignored_rules` remain exact identifiers,
    and an identifier there or in `severity_overrides` that names no implemented rule is an error
-   (`GOV020`, exit 2), so a typo cannot silently leave a rule running.
+   (`GOV020`, exit 2), so a typo cannot silently leave a rule running. So is one that names a
+   pipeline rule (see above): it always applies, so the entry could not change anything.
 3. Severity overrides: profile first, then the policy file's `severity_overrides` (policy wins).
 4. `--fail-on`: the command line, else the profile's value, else `error`.
 
