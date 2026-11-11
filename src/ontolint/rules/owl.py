@@ -70,7 +70,8 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
 * **OWL012.** (in :mod:`ontolint.rules.classes`) Every class in ``ctx.classes`` that is the subject and
   the object of one ``owl:equivalentClass`` triple.  Info, heuristic: a tautology, harmless but noise.
 * **OWL013.** Every subject of a triple whose predicate is typed ``owl:ObjectProperty`` (owned or not)
-  and whose object is a literal; one finding per subject, property and literal.  Warning, certain: an
+  and whose object is a literal; one finding per subject, property and literal, which the message prints
+  in one-line N-Triples (a line break escaped).  Warning, certain: an
   object property assertion needs an individual (DS 2.2: literals are not in the object domain), so the
   graph is not OWL 2 DL.
 * **OWL014.** Every subject of a triple whose predicate is typed ``owl:DatatypeProperty`` (owned or
@@ -93,7 +94,7 @@ from ontolint.context import PROPERTY_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.ownership import OwnershipMode
 
-from .support import list_items, owning_term, stable_blank_id
+from .support import list_items, owning_term, stable_blank_id, term_text
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -552,7 +553,7 @@ def _object_property_assertions(ctx: RuleContext, object_props: set[Node]) -> No
                 ctx.add(
                     "OWL013",
                     s,
-                    f"Object property {p} points to literal {o.n3()}.",
+                    f"Object property {p} points to literal {term_text(o)}.",
                     confidence="certain",
                     subject=(p, o),
                 )

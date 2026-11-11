@@ -136,6 +136,15 @@ def test_owl013_prints_the_literal_in_n3() -> None:
     ]
 
 
+def test_owl013_keeps_a_literal_with_a_line_break_on_one_line() -> None:
+    """``n3()`` triple-quotes such a literal, which split the text report's finding line."""
+    graph = Graph()
+    graph.add((EX.p, RDF.type, OWL.ObjectProperty))
+    graph.add((EX.i, EX.p, Literal("a\nb\r")))
+    [message] = [f.message for f in Linter(graph).run() if f.rule == "OWL013"]
+    assert message == rf'Object property {EX.p} points to literal "a\nb\r".'
+
+
 def test_identifier_and_declaration_boundary_rules() -> None:
     graph = Graph()
     invalid, undeclared_class, undeclared_range_property = URIRef("relative"), EX.undeclared_class, EX.range_property
