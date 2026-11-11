@@ -4,7 +4,8 @@ Published ontologies often carry an extension that does not match their content:
 (the MODL pattern library), or OWL Functional Syntax, Manchester Syntax or OWL/XML under ``.owl`` (ODK edit
 files, Protege exports).  :func:`sniff` returns the RDFLib format for the RDF syntaxes it recognises with
 confidence, one of :data:`NON_RDF_SYNTAXES` for the OWL syntaxes RDFLib cannot read, and ``None`` when it is
-unsure; the loader then keeps the extension's format.
+unsure; the loader then keeps the extension's format, and keeps it too when the content reads in both
+(``{}`` is an empty JSON-LD object and an empty TriG default graph).
 """
 
 from __future__ import annotations
@@ -28,7 +29,24 @@ _OWL_NAMESPACE = "http://www.w3.org/2002/07/owl#"
 _FIRST_ELEMENT = re.compile(r"<(?![?!])(?:[A-Za-z_][\w.-]*:)?([A-Za-z_][\w.-]*)([^>]*)>?", re.S)
 _FUNCTIONAL = re.compile(r"(?:Prefix|Ontology|Import|Declaration)\s*\(")
 _MANCHESTER = re.compile(r"(?:Prefix|Ontology|Import|Class|ObjectProperty|DataProperty|AnnotationProperty|Individual):")
+# A JSON-LD object has a quoted key next (``@`` too: a keyword whose quotes were lost is still meant as JSON-LD).
+# ``{}`` reads as JSON-LD here, the commoner meaning; under ``.trig`` or ``.n3`` :func:`choose` keeps the extension.
+# A JSON-LD array holds node objects (or nothing); ``[] a ex:K .`` is a Turtle anonymous blank node.
+_JSON_LD = re.compile(r'\{\s*(?:["@]|\})|\[\s*(?:\{|\]\s*$)')
+# A TriG (or N3) graph block has a term next, past whitespace and comments: an IRI, a blank node, a prefixed
+# name, or the ``}`` of an empty block.
+_GRAPH_BLOCK = re.compile(r"\{(?:\s|#[^\n]*)*(?:<|_:|\[|\}|(?:[A-Za-z][\w.-]*)?:)")
+GRAPH_BLOCK_FORMATS = ("trig", "n3")
+"""Text syntaxes in which ``{`` opens a graph block."""
 _TURTLE = re.compile(r"(?:@prefix|@base|(?i:prefix|base)\s)|<[^\s<>\"{}|^`\\]*>|_:|\[|[A-Za-z][\w.-]*:\S")
+_OPENINGS = (
+    (_JSON_LD, "json-ld"),
+    (_GRAPH_BLOCK, "trig"),
+    (_FUNCTIONAL, "owl-functional"),
+    (_MANCHESTER, "owl-manchester"),
+    (_TURTLE, "turtle"),
+)
+"""How each non-XML syntax opens, tried in order."""
 
 
 def _head(data: bytes) -> str:
@@ -61,16 +79,7 @@ def sniff(data: bytes) -> str | None:
         r"<(?:[A-Za-z_][\w.-]*:)?(?:RDF|Ontology)[\s>]", text
     ):
         return _xml_root(text)
-    # A JSON-LD array holds node objects (or nothing); ``[] a ex:K .`` is a Turtle anonymous blank node.
-    if text.startswith("{") or re.match(r"\[\s*(?:\{|\]\s*$)", text):
-        return "json-ld"
-    if _FUNCTIONAL.match(text):
-        return "owl-functional"
-    if _MANCHESTER.match(text):
-        return "owl-manchester"
-    if _TURTLE.match(text):
-        return "turtle"
-    return None
+    return next((syntax for opening, syntax in _OPENINGS if opening.match(text)), None)
 
 
 def family(fmt: str) -> str:
@@ -81,16 +90,22 @@ def family(fmt: str) -> str:
 def choose(extension_format: str, data: bytes) -> str:
     """The format to parse ``data`` with: the sniffed one when it is a different family than the extension's.
 
-    Within the text family the extension decides (``.nt``, ``.nq`` and ``.trig`` look like Turtle), and an
-    unsure sniff keeps the extension's format.  A non-RDF OWL syntax is returned as such for the caller to
-    report.
+    Within the text family the extension decides (``.nt``, ``.nq`` and ``.trig`` look like Turtle), as it does
+    for content that reads in the extension's syntax too, and an unsure sniff keeps the extension's format.  A
+    non-RDF OWL syntax is returned as such for the caller to report.
     """
     sniffed = sniff(data)
     if sniffed is None:
         return extension_format
     if sniffed in NON_RDF_SYNTAXES:
         return sniffed
-    return sniffed if family(sniffed) != family(extension_format) else extension_format
+    if family(sniffed) == family(extension_format):
+        return extension_format
+    # XML and JSON-LD are tested before the text syntaxes, so the one overlap is a ``{`` that opens both a
+    # JSON-LD object and a graph block.
+    if extension_format in GRAPH_BLOCK_FORMATS and _GRAPH_BLOCK.match(_head(data)):
+        return extension_format
+    return sniffed
 
 
 def html_start(data: bytes) -> int | None:

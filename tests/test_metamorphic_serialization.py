@@ -38,9 +38,6 @@ def write(graph: Graph, root: Path, fmt: str) -> Path:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)  # rdflib's own quad writers use deprecated Dataset API.
         text = source.serialize(format=fmt)
-    if fmt == "trig":
-        # A prefix line keeps the syntax sniffer from reading a leading ``{`` as JSON-LD; see the xfail test below.
-        text = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" + text
     path.write_text(text, encoding="utf-8")
     return path
 
@@ -94,15 +91,6 @@ def test_the_cli_reports_the_same_findings_for_every_serialisation(triples: list
     assert document["summary"] == reference["summary"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "REAL DEFECT: ontolint.syntax.sniff reads any text that starts with '{' as JSON-LD, so a TriG file whose "
-        "default graph is the unlabelled block '{ ... }' (what rdflib's TriG writer emits when no prefix is used) "
-        "fails with INPUT001 instead of loading.  Reproduction: a file x.trig holding "
-        "'{ <https://example.test/onto#A> a <https://example.test/onto#B> . }' ; ontolint x.trig exits 2."
-    ),
-)
 def test_trig_default_graph_block_loads_like_the_same_triple_in_turtle() -> None:
     """RELATION (serialisation invariance, TriG): ``{ s p o . }`` is TriG for the default graph, so it gives the
     findings of the equivalent Turtle triple."""
