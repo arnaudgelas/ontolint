@@ -19,6 +19,27 @@ Nothing open: 0.11.0 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, after 0.11.0):
+  - **Broken pipe** (P1 audit; issue 14): `ontolint ... | head` no longer ends in a traceback and
+    exit 1 (a write that fails) or in the interpreter's shutdown warning and exit 120 (a short
+    output left in the buffer). The report, `--version`, `--list-rules` and `--explain` write and
+    flush through one function that notices the closed reader. A closed stdout ends the run
+    quietly with exit 141 (128 plus SIGPIPE, as `cat`, `grep` and `git` end under a shell), after
+    pointing the descriptor at the null device so the last flush has nothing to fail on.
+    - Exit 2 keeps its place and its `TOOL001` lines, also when stderr closes after the report; a
+      stderr that closes before the report ends the run with 141; a report that cannot be flushed
+      for another reason (a full disk) is TOOL001 and exit 2; `--help` and usage errors keep
+      argparse's codes; a `BrokenPipeError` raised inside the lint (a subprocess pipe) is still
+      TOOL001 and exit 2.
+    - Verified: 36 tests (real pipes with the reader closed before the run, a reader that stops
+      after one line, and in-process streams of every awkward kind). The first 25 were written
+      before the fix and 22 of them failed on 0.11.0; the other 3 guard what must not change.
+      Real `| head -1` pipelines against the old and the new code: traceback and 1, or noise and
+      120, before; 141 and an empty stderr after.
+    - An independent review found three regressions in the first version (no stdout, a stdout
+      without a working `flush`, the final flush replacing the outcome) and a gap in the
+      exit-code precedence. All are fixed, and each is pinned by a test that fails without it.
+    - Not verified: Windows, which reports a closed pipe as `OSError` (EINVAL); the tests skip
+      there and the README says it is not handled.
   - **Test tooling and the metamorphic suite.** `pytest-randomly` shuffles the test order on every
     run and prints its seed (`-p randomly --randomly-seed=N` replays an order); the suite passed
     under three seeds with `-n auto`, and the mutation runs turn it off (`-p no:randomly`).
@@ -132,8 +153,8 @@ Nothing open: 0.11.0 is released (see "Recently done").
     mutants, 377 killed, 7 pardoned (older), 2 timeouts and 1 error (not named by the console
     report), 7 survivors, all in older `cli.py` code (the TOOL005 hint, `_file_modules`, declared
     prefixes, `_library`), left for the mutation-baseline item; none in the changed code.
-    Left open, under the P1 audit item: credentials in other rules' output, a broken pipe on
-    stdout, and SEC014's module placement.
+    Left open, under the P1 audit item: credentials in other rules' output and SEC014's module
+    placement (a broken pipe on stdout is fixed, see the first entry above).
   - **LEX002-CLOSURE** (P1 audit, false positives): `RuleContext.descriptions` now holds every
     IRI that reaches a definition predicate, built-in or from `extra_definition_predicates`,
     through one or more asserted `rdfs:subPropertyOf` triples (the merged closure under
@@ -554,8 +575,6 @@ Validation corpus (public; licences per repository):
       (`https://<token>:x-oauth-basic@github.com/...`): SEC014 masks only what follows the first
       `:` (RFC 3986 section 3.2.1), so a secret sent as the user name is still printed in its focus
       and in its message ("for user ...").
-    - *A broken pipe on stdout* (`ontolint ... | head`) still ends in a traceback and exit 1;
-      SIGPIPE conventions (exit 141, the interpreter's shutdown flush warning) need a decision.
     - *SEC014 and modules.* The masked focus is not a graph node, so under
       `--module-annotation` a SEC014 finding has no module, and under `--module-by namespace` its
       module is the masked namespace. Carrying the raw IRI in `related` would put the secret
@@ -799,6 +818,8 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   multiply the full expensive matrix until a smoke suite gives it value.
   *Done when:* pull requests run parsing, timeout-worker, CLI, and packaging smoke tests on Linux,
   Windows, and macOS; platform-specific tests are explicitly marked rather than silently skipped.
+  Include the closed-pipe behaviour (`tests/test_cli_broken_pipe.py` skips on Windows, which
+  reports `OSError` EINVAL for it).
 
 - [ ] **Schedule the tests deliberately excluded from the fast suite.** Fuzz targets and benchmarks
   are guarded by environment switches; they are not evidence if never run. Add a scheduled/manual
