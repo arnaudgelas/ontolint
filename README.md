@@ -608,6 +608,9 @@ uv run pytest -q -n auto -m 'not slow'
 uv run pytest -q -p randomly --randomly-seed=12345
 uv run pytest -q -p no:randomly
 
+# The package's layering (pytest-archon): rule modules never import the CLI, and so on
+uv run pytest -q --no-cov tests/test_architecture.py
+
 # Type checks
 uv run pyright && uv run mypy && uv run mypy --platform win32
 
