@@ -1,4 +1,69 @@
-"""Quality rules for a user-supplied SHACL shapes graph: SHQ001-SHQ006."""
+"""Quality rules for a user-supplied SHACL shapes graph: SHQ001-SHQ006.
+
+The rules read the asserted shapes graph (``--shapes``) and, for SHQ006 only, the data graph (the
+linted ontology, the whole closure under ``--follow-imports``).  No SHACL engine runs, nothing is
+entailed, ``rdfs:subClassOf`` in the shapes graph is not followed (so a shape typed by a subclass of
+``sh:NodeShape`` is not one) and ``owl:imports`` of the shapes graph are not loaded.  The rules are
+skipped when no shapes graph is supplied.  References are to the SHACL Recommendation (2017-07-20).
+In this module a *node shape* is a node typed ``sh:NodeShape``; a *property shape* is a node typed
+``sh:PropertyShape`` or an IRI or blank node that is a value of ``sh:property``.  That is narrower than
+SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the property shapes a form
+shows, not a property shape used as a condition inside ``sh:or``.  Every finding is ``heuristic``: the
+documentation rules are conventions, and SHQ005 and SHQ006 read "should" statements.  Specifications:
+
+* **SHQ001.** Every property shape without an ``sh:name`` triple (any object: an IRI or an untagged
+  literal counts).  Excluded: a literal value of ``sh:property`` (SHACL 2.1: a shape is an IRI or a
+  blank node), and a property shape reached only through ``sh:or``, ``sh:and``, ``sh:xone``,
+  ``sh:not``, ``sh:node`` or ``sh:qualifiedValueShape`` or only targeted directly.  Info: ``sh:name``
+  is non-validating (2.3.2.1) and only helps forms and documentation.
+* **SHQ002.** The same for ``sh:description``.  Info, for the same reason.
+* **SHQ003.** Every node or property shape that declares a constraint able to produce a validation
+  result and has no ``sh:message`` triple: 2.1.5 copies a shape's messages into its validation results
+  and has no other use for them.  A shape declares a constraint when it has values for all mandatory
+  parameters of a constraint component (2.1.1).  The components are those of SHACL Core section 4 whose
+  validation results name the shape itself as ``sh:sourceShape``, and SHACL-SPARQL's (section 5).  Each
+  of these parameters counts with any value: ``sh:class``, ``sh:datatype``, ``sh:nodeKind``,
+  ``sh:minCount``, ``sh:maxCount``, ``sh:minExclusive``, ``sh:minInclusive``, ``sh:maxExclusive``,
+  ``sh:maxInclusive``, ``sh:minLength``, ``sh:maxLength``, ``sh:pattern``, ``sh:languageIn``,
+  ``sh:equals``, ``sh:disjoint``, ``sh:lessThan``, ``sh:lessThanOrEquals``, ``sh:not``, ``sh:and``,
+  ``sh:or``, ``sh:xone``, ``sh:node``, ``sh:hasValue``, ``sh:in`` and ``sh:sparql``.
+  ``sh:qualifiedValueShape`` counts only with an ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount``
+  (4.7.3 makes both of a pair mandatory).  ``sh:closed`` and ``sh:uniqueLang`` count unless they are
+  false (an ``xsd:boolean`` literal: ``false`` or ``"0"^^xsd:boolean``), as 4.8.1 and 4.4.5 produce a
+  validation result only "if $closed is true" and "if $uniqueLang is true"; any other value is true,
+  the ``sh:ByTypes`` of the SHACL 1.2 draft, or ill-formed (3.4.2: the results are undefined).
+  Excluded: a shape with ``sh:deactivated`` true (``true`` or ``"1"^^xsd:boolean``; 2.1.6: all RDF
+  terms conform to it, and 3.4: its validation results are empty); ``sh:property`` (its results are
+  the property shape's, 4.7.2); a parameter without its mandatory partner (``sh:qualifiedValueShape``
+  alone, ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` alone); the optional parameters alone
+  (``sh:flags``, ``sh:ignoredProperties``, ``sh:qualifiedValueShapesDisjoint``); ``sh:closed false``
+  and ``sh:uniqueLang false``; targets, ``sh:severity`` and the non-validating properties; a message
+  on another shape.  Known gap: other values that make a constraint vacuous (``sh:minCount 0``, an
+  empty ``sh:and`` list) still count, as the values are not evaluated.  Info: without ``sh:message`` a
+  processor still reports the violation with its own text (2.1.5).
+* **SHQ004.** Every node shape without an ``rdfs:label`` triple or without an ``rdfs:comment`` triple
+  (both are needed).  Excluded: untyped node shapes; ``skos:prefLabel``, ``sh:name`` and
+  ``dcterms:description`` do not count, as a shape is not an ontology term.  Info: documentation only.
+* **SHQ005.** For each node or property shape and each of ``sh:name``, ``sh:description`` and
+  ``sh:message``, one finding when two literal values share a language tag, compared case-insensitively
+  (BCP 47); untagged literals share one tag.  IRI values are not counted.  Warning: 2.1.5 says a shape
+  "should not have more than one value for sh:message with the same language tag" and 2.3.2.1 says
+  the same of ``sh:name`` and ``sh:description``; a tool showing one of them picks arbitrarily.
+* **SHQ006.** Every class of ``ctx.classes`` (owned, typed ``owl:Class`` or ``rdfs:Class``) with a
+  directly typed instance in the data graph that no class target reaches: neither the class nor one of
+  its superclasses (``rdfs:subClassOf``, transitively, in the data graph, as SHACL 1.1 defines a SHACL
+  instance and 2.1.3.2 requires) is a value of ``sh:targetClass`` on any node, or is itself typed
+  ``sh:NodeShape`` or ``sh:PropertyShape`` and ``rdfs:Class`` or ``owl:Class`` in the shapes graph
+  (an implicit class target, 2.1.3.3; SHACL requires ``rdfs:Class``, ``owl:Class`` is accepted).
+  Excluded: ``sh:targetNode``, ``sh:targetSubjectsOf``, ``sh:targetObjectsOf`` and SHACL-AF targets,
+  which may also reach the instances; instances only through a subclass; foreign classes.  Known gap: the
+  target of a deactivated shape still covers its class, though 2.1.6 validates nothing there.  The message
+  still says "no direct sh:targetClass" (unchanged, so that baselines keep matching).  Warning: such
+  instances are never validated, which is usually an oversight, but validation coverage may be partial
+  by design.
+
+Fixtures: ``tests/rule_cases/shapes.py`` and ``tests/test_shq_specification.py``.
+"""
 
 from __future__ import annotations
 

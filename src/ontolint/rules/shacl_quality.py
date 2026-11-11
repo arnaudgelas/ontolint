@@ -8,7 +8,63 @@ shape without exactly one ``sh:path``).
 
 Every check is a structural lint of the asserted shapes graph (no SHACL engine, no entailment, no network) that
 complements, and never repeats, the checks of ``shapes`` (SHQ001-006) and ``shacl_authoring`` (SHQ007-027).  The
-rules are skipped when no shapes graph is supplied; ``run`` is also a no-op then.
+rules are skipped when no shapes graph is supplied; ``run`` is also a no-op then.  The data graph is never read.
+
+A *shape* here is a node typed ``sh:NodeShape`` or ``sh:PropertyShape``, an IRI or blank node value of
+``sh:property``, or an IRI or blank node subject of any ``sh:`` predicate.  A *list* is a well-formed RDF list as
+:func:`~.support.list_items` reads it (at most 500 members, no cycle); a value that is no list is not judged by
+SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-20).  Every finding is recorded
+``heuristic``, the default confidence, although most conditions are exact.  Specifications:
+
+* **SHQ009.** Every value of ``sh:in`` on a shape that is a list with no member ("empty"), or with a member
+  repeated, compared as RDF terms ("repeats n member(s)": the number of surplus members); one finding of each
+  kind per shape.  ``"4"^^xsd:byte``, ``4`` and ``"4"`` are distinct (4.8.3: "matching of literals needs to be
+  exact"); rdflib's normalisation of lexical forms (``"01"^^xsd:integer`` is read as ``1``) is kept.
+  Excluded: a literal value or a malformed list.  Warning: an empty list fails every value node; a repeated
+  member is harmless but usually a copy error.
+* **SHQ010.** Every member of an ``sh:languageIn`` list on a shape that is not a basic language range (4.4.4,
+  RFC 4647 2.1: ``1*8ALPHA *("-" 1*8alphanum)`` or ``*``), or that is a literal with a language tag or a
+  datatype other than ``xsd:string`` (4.4.4: "each member ... is a literal with datatype xsd:string"); one
+  finding per member, an IRI or blank member is "not a well-formed language tag".  Excluded: an empty list,
+  a malformed list, a literal value; the registry of BCP 47 subtags is not consulted (``xx-YY`` passes).
+  Warning: a malformed range matches no tag, so every value node fails.
+* **SHQ012.** Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an
+  IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang``
+  ``"true"`` (a string), no ``sh:datatype``, a literal datatype; ``sh:uniqueLang`` on a node shape, which 4.4.5
+  forbids, is not reported.  Info: the constraint only sees value nodes that already violate ``sh:datatype``,
+  so it is vacuous for conforming data.
+* **SHQ014.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity
+  ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and
+  ``sh:Violation``.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); several values,
+  which 2.1.4 allows only one of, are each judged alone.  Warning: a literal makes the shape ill-formed; an
+  unknown ``sh:`` IRI is most likely a typo, but processors accept it.
+* **SHQ015.** Every value of ``sh:flags`` on a shape that is not a literal made only of ``s``, ``m``, ``i``,
+  ``x`` and ``q`` (F&O 3.1 5.6.2; ``q`` is XPath 3.0, ``s``, ``m``, ``i`` and ``x`` XPath 2.0, which SPARQL
+  1.1 REGEX cites), and every shape with ``sh:flags`` but no ``sh:pattern`` (4.4.3: an optional parameter of
+  ``sh:PatternConstraintComponent``).  The empty string and repeated letters are valid.  Excluded: the
+  datatype of the flags literal.  Warning: an unknown letter is an error in XPath (FORX0001), but SHQ011
+  compiles the pattern without it and Python- or Java-based engines may accept it; flags without a pattern
+  are ignored.
+* **SHQ016.** Every shape on a cycle of the "refers to" relation of 3.4.3: ``sh:node``, ``sh:property``,
+  ``sh:not`` and ``sh:qualifiedValueShape`` values and ``sh:and``, ``sh:or`` and ``sh:xone`` list members that
+  are IRIs or blank nodes; a self-reference counts.  One finding per shape, naming the size of its strongly
+  connected component.  Excluded: targets and ``sh:in`` or ``sh:languageIn`` lists.  Info: "the validation
+  with recursive shapes is not defined in SHACL", so the result depends on the processor; recursion may be
+  intended.
+* **SHQ022.** Every value of ``sh:targetClass``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf`` that is not
+  an IRI (2.1.3.2, 2.1.3.4, 2.1.3.5 require IRIs; a literal ``sh:targetClass`` is ill-formed, 2.1).  Excluded:
+  ``sh:targetNode``, which may be a literal.  Warning: the target selects nothing.
+* **SHQ023.** Every property shape that has no ``sh:path`` ("none") or more than one distinct value
+  ("several").  A property shape is a node typed ``sh:PropertyShape`` or an IRI or blank node value of
+  ``sh:property``, which must have exactly one path (2.3: "SHACL instances of sh:PropertyShape have one value
+  for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of
+  ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path)
+  or a blank path is one value.  Excluded: a node typed ``sh:NodeShape`` with a path, which 2.2 forbids, is
+  not reported; the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a
+  processor may reject the shapes graph or validate either path.
+
+Fixtures: ``tests/rule_cases/shacl_quality.py``, ``tests/test_mutation_shacl_quality.py`` and
+``tests/test_shq_specification.py``.
 """
 
 from __future__ import annotations

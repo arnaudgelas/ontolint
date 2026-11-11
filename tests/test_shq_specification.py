@@ -396,6 +396,11 @@ def test_shq011_known_gap_hyphen_after_a_class_escape_is_left_to_python() -> Non
     assert message.startswith(r"sh:pattern does not compile: bad character range \d-z"), message
 
 
+def test_shq011_known_gap_an_empty_group_before_a_subtraction() -> None:
+    # XSD 1.0 [16] and 1.1 [77] need a non-empty group before "-[": [-[a]] is invalid in both, not reported.
+    assert _shq011("[-[a]]") == []
+
+
 def test_shq011_known_gap_xpath_3_constructs_are_accepted() -> None:
     # SPARQL 1.1 REGEX cites F&O 1.0 (XPath 2.0), which has neither (?: nor the q flag.
     assert _shq011("(?:ab)+") == []
