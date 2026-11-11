@@ -62,3 +62,25 @@ def test_align003_broad_and_inverse_narrow_on_one_pair_is_one_finding() -> None:
 def test_skos001_mixed_spellings_of_a_subtag_are_reported_in_lower_case() -> None:
     body = 'ex:c a skos:Concept ; skos:prefLabel "a"@en-US, "b"@EN-us .'
     assert run("SKOS001", body) == [("c", "2 prefLabels in language en-us.")]
+
+
+def test_align003_reports_related_match_in_an_exact_match_chain_once_on_the_smaller_iri() -> None:
+    body = (
+        "ex:x skos:exactMatch ex:y . ex:z skos:exactMatch ex:y . "
+        "ex:z skos:relatedMatch ex:x . ex:x skos:relatedMatch ex:z ."
+    )
+    assert run("ALIGN003", body) == [
+        ("x", f"{BASE}x and {BASE}z are exactMatch-equivalent through a chain but also linked by relatedMatch."),
+    ]
+    (finding,) = Linter(graph(body)).execute(["ALIGN003"]).findings
+    assert finding.subject == ("http://www.w3.org/2004/02/skos/core#relatedMatch", f"{BASE}z")
+
+
+def test_align003_reports_a_broad_and_a_related_match_on_one_pair_apart() -> None:
+    body = (
+        "ex:x skos:exactMatch ex:y . ex:y skos:exactMatch ex:z . ex:x skos:broadMatch ex:z ; skos:relatedMatch ex:z ."
+    )
+    assert [message.split(" but also linked by ")[1] for _focus, message in run("ALIGN003", body)] == [
+        "broadMatch/narrowMatch.",
+        "relatedMatch.",
+    ]

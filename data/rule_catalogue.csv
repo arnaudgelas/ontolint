@@ -216,7 +216,7 @@ rule_id,family,title,status,category,backend,test_requirement
 "SEM014","SEM","Semantic reasoning candidate SEM014","proposed","deterministic","OWL reasoner","reasoner integration fixture"
 "ALIGN001","ALIGN","Interoperability and alignment candidate ALIGN001","proposed","context-dependent","mapping registry or reasoner","mapping fixture and review expectation"
 "ALIGN002","ALIGN","Misspelt SKOS or OWL mapping predicate","implemented","heuristic","RDFLib graph","mapping fixture and review expectation"
-"ALIGN003","ALIGN","exactMatch chain conflicting with broadMatch or narrowMatch","implemented","deterministic","RDFLib graph","mapping fixtures: exactMatch chains with broadMatch or narrowMatch; a direct conflict, no chain, sameAs or closeMatch links, relatedMatch, no owned end"
+"ALIGN003","ALIGN","exactMatch chain conflicting with broadMatch or narrowMatch","implemented","deterministic","RDFLib graph","mapping fixtures: exactMatch chains with broadMatch, narrowMatch or relatedMatch (either direction, reported once); a direct conflict, no chain, sameAs or closeMatch links, relatedMatch outside a chain, no owned end"
 "ALIGN004","ALIGN","Contradictory hierarchical or associative mapping strengths","implemented","deterministic","RDFLib graph","mapping fixture and review expectation"
 "ALIGN005","ALIGN","Term with several distinct exactMatch targets in one namespace","implemented","context-dependent","RDFLib graph","mapping fixture and review expectation"
 "ALIGN006","ALIGN","Interoperability and alignment candidate ALIGN006","proposed","context-dependent","mapping registry or reasoner","mapping fixture and review expectation"

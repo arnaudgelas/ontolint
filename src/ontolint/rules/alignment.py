@@ -13,11 +13,12 @@ Specification of the error rule:
   the SKOS Reference).  A finding for each ``skos:broadMatch`` triple, or inverted ``skos:narrowMatch``
   triple, between two IRIs of one component that are not themselves linked by a direct exactMatch
   (that pair is SKOS012), when either end is owned.  It is focused on the narrower term; a pair
-  asserted by both broadMatch and the inverse narrowMatch is reported once.  Exclusions: owl:sameAs and
-  owl:equivalentClass/equivalentProperty, skos:closeMatch (not transitive) and blank nodes do not join
-  components; ``skos:relatedMatch`` inside a component is not checked although S46 forbids it too.
-  Error, certain: with S45 the chain entails an exactMatch that integrity condition S46 makes
-  disjoint with the broadMatch.
+  asserted by both broadMatch and the inverse narrowMatch is reported once.  Likewise a finding for
+  each pair of distinct IRIs of one component linked by ``skos:relatedMatch`` in either direction (once
+  per pair, focused on the lexically smaller IRI) and not by a direct exactMatch.  Exclusions:
+  owl:sameAs and owl:equivalentClass/equivalentProperty, skos:closeMatch (not transitive) and blank
+  nodes do not join components.  Error, certain: with S45 the chain entails an exactMatch that
+  integrity condition S46 makes disjoint with the broadMatch and with the relatedMatch.
 """
 
 from __future__ import annotations
@@ -242,6 +243,18 @@ def _exact_chain_conflicts(ctx: RuleContext) -> None:
                 "broadMatch/narrowMatch.",
                 confidence="certain",
                 subject=(broad,),
+            )
+    pairs = {frozenset((s, o)) for s, _, o in _edges(ctx.g, (SKOS.relatedMatch,))}
+    for first, second in sorted(
+        (sorted(pair, key=str) for pair in pairs - direct), key=lambda p: (str(p[0]), str(p[1]))
+    ):
+        if _find(parent, first) == _find(parent, second) and (ctx.local(first) or ctx.local(second)):
+            ctx.add(
+                "ALIGN003",
+                first,
+                f"{first} and {second} are exactMatch-equivalent through a chain but also linked by relatedMatch.",
+                confidence="certain",
+                subject=(SKOS.relatedMatch, second),
             )
 
 

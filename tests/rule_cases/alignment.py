@@ -38,6 +38,16 @@ CASES = {
                 EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . c:Z skos:exactMatch ex:W . "
                 "ex:W skos:broadMatch a:X .",
             ),
+            # S46 makes skos:exactMatch disjoint with skos:relatedMatch too.
+            ttl(
+                "relatedMatch in an exactMatch chain",
+                EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:relatedMatch c:Z .",
+            ),
+            ttl(
+                "relatedMatch both ways in an exactMatch chain",
+                EXT + "a:X skos:exactMatch b:Y . c:Z skos:exactMatch b:Y . c:Z skos:relatedMatch a:X ."
+                " a:X skos:relatedMatch c:Z .",
+            ),
         ],
         [
             ttl("direct conflict is SKOS012", EXT + "a:X skos:exactMatch b:Y ; skos:broadMatch b:Y ."),
@@ -52,8 +62,18 @@ CASES = {
                 EXT + "a:X skos:closeMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .",
             ),
             ttl(
-                "relatedMatch is not checked",
+                "direct exactMatch and relatedMatch is SKOS012",
+                EXT + "a:X skos:exactMatch b:Y ; skos:relatedMatch b:Y .",
+            ),
+            ttl("relatedMatch outside a chain", EXT + "a:X skos:exactMatch b:Y . c:Z skos:relatedMatch a:X ."),
+            ttl(
+                "closeMatch chain with relatedMatch",
+                EXT + "a:X skos:closeMatch b:Y . b:Y skos:closeMatch c:Z . a:X skos:relatedMatch c:Z .",
+            ),
+            ttl(
+                "relatedMatch in a chain with no end owned",
                 EXT + "a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:relatedMatch c:Z .",
+                base=BASE,
             ),
             ttl(
                 "no end owned",
