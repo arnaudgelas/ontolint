@@ -72,7 +72,10 @@ CASES = {
         ],
     ),
     "METRIC002": rule_cases(
-        [ttl("only 4 of 10 defined", _commented(10, 4))],
+        [
+            ttl("only 4 of 10 defined", _commented(10, 4)),
+            ttl("skos:scopeNote is not a definition", _classes(10, lambda i: '; skos:scopeNote "n"')),
+        ],
         [
             ttl("all defined", _commented(10, 10)),
             ttl("at the limit", _commented(10, 5)),
@@ -94,10 +97,17 @@ CASES = {
             ttl("one parent with 8 children (mean at the limit)", _fanout(8, 1)),
             ttl("no hierarchy", _classes(10)),
             ttl("below the minimum sample", _fanout(8)),
+            ttl(
+                "an external parent is not counted",
+                _each(10, lambda i: f"ex:C{i} a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> ."),
+            ),
         ],
     ),
     "METRIC005": rule_cases(
-        [ttl("ten isolated classes", _classes(10))],
+        [
+            ttl("ten isolated classes", _classes(10)),
+            ttl("disjointness does not connect", _classes(10, lambda i: f"; owl:disjointWith ex:C{(i + 1) % 10}")),
+        ],
         [
             ttl(
                 "a chain",
@@ -191,16 +201,23 @@ CASES = {
         ],
     ),
     "METRIC009": rule_cases(
-        [ttl("untagged labels", _classes(10, lambda i: '; rdfs:label "c"'))],
+        [
+            ttl("untagged labels", _classes(10, lambda i: '; rdfs:label "c"')),
+            ttl("xsd:string is untagged", _classes(10, lambda i: '; rdfs:label "c"^^xsd:string')),
+        ],
         [
             ttl("tagged labels", _labelled(10, 10)),
             ttl("at the limit", _classes(10, lambda i: '; rdfs:label "c"@en' if i < 5 else '; rdfs:label "c"')),
             ttl("below the minimum sample", _classes(9, lambda i: '; rdfs:label "c"')),
             ttl("no labels at all", _classes(10)),
+            ttl("one tagged label is enough", _classes(10, lambda i: '; rdfs:label "c"@en, "c"')),
         ],
     ),
     "METRIC010": rule_cases(
-        [ttl("all superclasses external", _external(10, 10))],
+        [
+            ttl("all superclasses external", _external(10, 10)),
+            ttl("well-known vocabularies are foreign", _classes(12, lambda i: "; rdfs:subClassOf skos:Concept")),
+        ],
         [
             ttl("all superclasses local", _external(10, 0)),
             ttl("well-known W3C superclasses", _classes(12, lambda i: "; rdfs:subClassOf owl:Thing")),
@@ -231,7 +248,17 @@ CASES = {
         ],
     ),
     "METRIC011": rule_cases(
-        [ttl("11 imports", _imports(11))],
+        [
+            ttl("11 imports", _imports(11)),
+            ttl(
+                "the imports of every header are counted",
+                "ex:o a owl:Ontology ; owl:imports "
+                + ", ".join(f"<https://o{i}.test/>" for i in range(6))
+                + " .\nex:q a owl:Ontology ; owl:imports "
+                + ", ".join(f"<https://q{i}.test/>" for i in range(6))
+                + " .",
+            ),
+        ],
         [ttl("10 imports (at the limit)", _imports(10)), ttl("no imports", _imports(0))],
     ),
     "METRIC012": rule_cases(
@@ -240,6 +267,10 @@ CASES = {
             ttl("full definitions", _commented(10, 10)),
             ttl("below the minimum sample", _commented(9, 9, "Thing")),
             ttl("undefined classes are not measured", _classes(10)),
+            ttl(
+                "the longest description counts",
+                _classes(10, lambda i: f'; skos:definition "Thing" ; rdfs:comment "{LONG}"'),
+            ),
         ],
     ),
     "METRIC013": rule_cases(
