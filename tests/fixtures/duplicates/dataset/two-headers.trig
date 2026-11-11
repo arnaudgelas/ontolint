@@ -1,0 +1,14 @@
+# Two named graphs each carry a header for the same ontology, with different content.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.test/menu/draft> {
+    <https://example.test/menu> a owl:Ontology ;
+        rdfs:label "menu (draft)"@en .
+}
+
+<https://example.test/menu/published> {
+    <https://example.test/menu> a owl:Ontology ;
+        rdfs:label "menu"@en .
+    <https://example.test/menu#Dish> a owl:Class .
+}

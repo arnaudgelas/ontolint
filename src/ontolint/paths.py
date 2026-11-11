@@ -58,7 +58,7 @@ def artifact_uri(path: PurePath, root: PurePath) -> str:
     return quote(relative.as_posix(), safe="/")
 
 
-def _identity(path: Path) -> tuple[object, ...]:
+def file_identity(path: Path) -> tuple[object, ...]:
     """Identify the underlying file so aliases (case, symlinks, hard links) de-duplicate."""
     try:
         stat = path.stat()
@@ -83,7 +83,7 @@ def resolve_inputs(raw: list[str], cwd: Path) -> list[InputFile]:
             raise IsADirectoryError(f"{text} is a directory; pass explicit files (shell globbing is not performed)")
         escapes = not Path(text).is_absolute() and _relative(path, cwd) is None
         item = InputFile(path, display_path(path, cwd), artifact_uri(path, cwd), escapes)
-        key = _identity(path)
+        key = file_identity(path)
         if key not in unique or item.display < unique[key].display:
             unique[key] = item
     return sorted(unique.values(), key=lambda x: x.display)

@@ -26,6 +26,7 @@ from . import (
     alignment,
     class_heuristics,
     classes,
+    duplicate_ids,
     external,
     fair_offline,
     governance,
@@ -101,6 +102,7 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     fair_offline,
     literals,
     library,
+    duplicate_ids,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).

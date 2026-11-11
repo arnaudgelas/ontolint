@@ -42,6 +42,8 @@ class RuleScope(StrEnum):
     SHAPES = "shapes"
     INPUT = "input"
     TOOL = "tool"
+    SET = "set"
+    """A finding about several documents of one run together: files, or the named graphs of one file."""
 
 
 class Requirement(StrEnum):
@@ -216,6 +218,38 @@ class LibraryMember:
     """The names its header gives it (``opla-core:hasPatternName``, ``rdfs:label``, ``dcterms:title`` ...)."""
     references: tuple[tuple[str, str], ...] = ()
     """``(predicate, IRI)`` for every IRI its header names, as an IRI or as a literal spelling one."""
+
+
+SHARED_SCOPES = ("inputs", "closure", "import-dir", "graphs")
+"""Where a :class:`SharedIdentity` was found: among the inputs of one run, the files of one import closure, the
+candidates of one ``--import-dir`` for an import, or the named graphs of one dataset file."""
+
+
+# gremlin: pardon[equivalent] nothing mutates a shared identity; frozen only guards against it
+@dataclass(frozen=True)
+class SharedIdentity:
+    """An ontology or version IRI that several documents of one run declare (rules ``ONT007`` and ``ONT008``).
+
+    The CLI finds these across the set of documents of a run (:mod:`ontolint.declarations`) and hands each
+    linted file the ones reported on it, as ``Policy.shared_identities``.
+    """
+
+    iri: str
+    kind: str
+    """``ontology`` (an ``owl:Ontology`` subject) or ``version`` (an ``owl:versionIRI`` of one)."""
+    scope: str
+    """One of :data:`SHARED_SCOPES`."""
+    members: tuple[str, ...]
+    """The documents that declare it, in the order ontolint reads them (report paths, or graph names for
+    ``graphs``); there are at least two.  For ``import-dir`` the first is the file the import resolved to."""
+    identical: bool
+    """Whether every member is the same RDF graph (:func:`ontolint.datasets.same_content`)."""
+    where: str = ""
+    """The dataset file (``graphs``) or the ``--import-dir`` options (``import-dir``) holding the members; else
+    empty.  Only the message names it: like the members, it is a path, so it is not part of the identity."""
+    unloaded: tuple[tuple[str, str], ...] = ()
+    """For ``closure``: ``(import IRI, member)`` for each member the closure did not load, because a file it had
+    already loaded declares the IRI the member is imported by."""
 
 
 @dataclass(frozen=True)

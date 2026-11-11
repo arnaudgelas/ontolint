@@ -67,6 +67,16 @@ reject, and the ``--list-rules`` table's last line counts them.  Only ``list_rul
 ``list_rules_text`` changed.  Before regenerating, the new outputs were shown to hash to the previous
 golden values once those 11 values were set back to ``true`` and the last line of the table was restored;
 no finding, report, exit code or ``legacy_rules.json`` entry moved.
+
+Deliberate golden update (issue #25, ONT007 and ONT008): two set-level rules joined the ONT family, so every
+JSON and SARIF report lists two more rules and executions (in SARIF, the ``ruleIndex`` of every rule after
+ONT006 moves by two), ``--list-rules`` lists two more rows, and the text reports that print executions count
+two more (``ignore_text_reports_skips``: two more skipped).  No fixture of the snapshot declares an ontology
+IRI twice, so neither rule has a finding.  Before regenerating, every changed CLI output was rendered unhashed
+with the 0.12.0 sources and with the new ones: they were equal once the ONT007 and ONT008 rule entries,
+executions and notifications, the execution counts and ``ruleIndex`` were left out, and every exit code,
+stderr line, legacy view, baseline count, text report without executions and linter snapshot is unchanged.
+``legacy_rules.json`` did not move.
 """
 
 from __future__ import annotations

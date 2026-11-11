@@ -29,17 +29,20 @@ so a finding is reported once, however many graphs it names.  A focus that is no
 (``(ontology)``, a literal, a name no triple holds) names no graph.  An IRI with a userinfo counts under
 its masked spelling, which is what every finding holds, so a finding names the graphs of the credentialed
 IRI it reports.  Like modules, graphs are presentation only: they never change a finding, its
-fingerprint or the exit code.
+fingerprint or the exit code.  The one exception is the set-level pair ONT007 and ONT008
+(:mod:`ontolint.declarations`), which compare the graphs themselves: an ontology header that two graphs
+state, compared through :func:`same_content`.
 """
 
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, cast
 
 from rdflib import BNode, Graph, URIRef
+from rdflib.compare import isomorphic
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.store import Store
 from rdflib.term import Identifier, Node
@@ -131,6 +134,68 @@ def graph_name(identifier: Node, triples: Sequence[Triple], base: str) -> str:
         return "_:" + digest[:STABLE_ID_LENGTH]
     text = str(identifier)
     return relative_reference(text, base) or redact_userinfo(text)
+
+
+@dataclass(frozen=True)
+class Content:
+    """What :func:`same_content` compares: a digest of a graph's triples, and whether the digest decides alone."""
+
+    digest: str
+    exact: bool
+    """Whether every blank node of the graph has its own :func:`stable_blank_id`; then two graphs with equal
+    digests are isomorphic, and otherwise only :func:`rdflib.compare.isomorphic` can tell."""
+
+
+def content_of(triples: Iterable[Triple]) -> Content:
+    """The :class:`Content` of ``triples`` (a graph): the SHA-256 of its sorted triples, blank nodes by stable identity.
+
+    Each triple is written in N-Triples terms, every IRI absolute (as parsed) and every blank node as its
+    :func:`stable_blank_id`, which isomorphic graphs share; so prefixes, syntax, triple order and blank-node
+    labels change nothing, and two graphs with different digests are never isomorphic.  When two blank nodes
+    of the graph share an identity (structures alike to the depth the identity looks at), equal digests do
+    not prove the graphs isomorphic, which ``exact`` says.  A graph is built only when there are blank nodes.
+    """
+    rows = list(triples)
+    graph: Graph | None = None
+    blank_ids: dict[BNode, str] = {}
+
+    def text(node: Node) -> str:
+        nonlocal graph
+        if isinstance(node, BNode):
+            if node not in blank_ids:
+                if graph is None:
+                    graph = rows_graph(rows)
+                blank_ids[node] = stable_blank_id(graph, node)
+            return blank_ids[node]
+        return cast(Identifier, node).n3()
+
+    lines = sorted(" ".join(text(term) for term in triple) for triple in rows)
+    digest = hashlib.sha256("\n".join(lines).encode("utf-8", "surrogatepass")).hexdigest()
+    return Content(digest, len(set(blank_ids.values())) == len(blank_ids))
+
+
+def rows_graph(triples: Iterable[Triple]) -> Graph:
+    """``triples`` as an rdflib graph (itself, when it is one)."""
+    if isinstance(triples, Graph):
+        return triples
+    graph = Graph()
+    for triple in triples:
+        graph.add(triple)
+    return graph
+
+
+def same_content(contents: Sequence[Content], graphs: Callable[[], Sequence[Iterable[Triple]]]) -> bool:
+    """Whether the graphs whose :class:`Content` are ``contents`` are all isomorphic (the same RDF graph).
+
+    The digests decide, except when they are equal and one is not exact: then ``graphs`` is called and the
+    graphs are compared with :func:`rdflib.compare.isomorphic`.
+    """
+    if len({content.digest for content in contents}) > 1:
+        return False
+    if all(content.exact for content in contents):
+        return True
+    first, *rest = map(rows_graph, graphs())
+    return all(isomorphic(first, other) for other in rest)
 
 
 def build_graph_index(store: Store, default: Node, base: str) -> GraphIndex:

@@ -275,7 +275,8 @@ def test_multi_file_baseline_keeps_identical_findings_in_two_files_distinct(run:
     twin = tmp_path / "twin.ttl"
     twin.write_text(Path(KITCHEN).read_text(encoding="utf-8"), encoding="utf-8")
     baseline = tmp_path / "baseline.json"
-    args = (KITCHEN, str(twin), "--fail-on", "never")
+    # The twin is an identical copy, which ONT008 notes once for the pair; this test is about per-file findings.
+    args = (KITCHEN, str(twin), "--fail-on", "never", "--ignore", "ONT008")
     assert run(*args, "--write-baseline", str(baseline))[0] == 0
     fingerprints = json.loads(baseline.read_text(encoding="utf-8"))["fingerprints"]
     _, single = _json(run, KITCHEN)
@@ -287,6 +288,10 @@ def test_multi_file_baseline_keeps_identical_findings_in_two_files_distinct(run:
     run(KITCHEN, "--write-baseline", str(single_baseline))
     _, document = _json(run, KITCHEN, str(twin), "--baseline", str(single_baseline))
     assert document["findings"]
+    _, together = _json(run, KITCHEN, str(twin), "--fail-on", "never")
+    notes = [(f["rule"], f["path"]) for f in together["findings"] if f["rule"] in {"ONT007", "ONT008"}]
+    assert [rule for rule, _path in notes] == ["ONT008"] * 2  # its two ontology IRIs,
+    assert len({path for _rule, path in notes}) == 1  # on the first file in report-path order only
 
 
 def test_multi_file_text_has_sections(run: Run) -> None:

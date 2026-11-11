@@ -1,0 +1,9 @@
+# A copy-pasted header: its own ontology IRI, but the version IRI of pasta.ttl.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.test/sauce> a owl:Ontology ;
+    owl:versionIRI <https://example.test/pasta/1.0> .
+
+<https://example.test/sauce#Sauce> a owl:Class ;
+    rdfs:label "sauce"@en .

@@ -1,0 +1,13 @@
+# The source the release is built from (an ODK -edit file): the ontology IRI, but no version IRI yet.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://example.test/pizza> a owl:Ontology ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+<https://example.test/pizza#Pizza> a owl:Class ;
+    rdfs:label "pizza"@en .
+
+<https://example.test/pizza#Topping> a owl:Class ;
+    rdfs:label "topping"@en .

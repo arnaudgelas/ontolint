@@ -18,7 +18,7 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget, roundtrip_triple_lists
 from hypothesis_strategies import build_graph as build
-from metamorphic_support import cli_json, serialisable, workdir
+from metamorphic_support import INDEPENDENT, cli_json, serialisable, workdir
 from rdflib import BNode, Graph
 
 pytestmark = pytest.mark.slow
@@ -103,17 +103,18 @@ def test_a_one_file_baseline_matches_its_file_in_a_multi_file_run_and_the_revers
     in a run of ``a.ttl`` and ``b.ttl`` whose identity is not shared by another finding of that file, leaves the
     shared ones (matched by hash only, and a multi-file hash includes the path) and every finding of ``b.ttl``
     untouched; the baseline of both files accepts the unshared findings of ``a.ttl`` linted alone, and every entry
-    it holds for any other finding is stale."""
+    it holds for any other finding is stale.  The set-level rules (ONT007, ONT008), which compare the two files, are
+    ignored, as in the file-independence relation of ``test_metamorphic_multifile``."""
     graphs = [graph_of(first), graph_of(second)]
 
     with workdir() as root:
         for name, graph in zip(("a.ttl", "b.ttl"), graphs, strict=True):
             (root / name).write_text(graph.serialize(format="turtle"), encoding="utf-8")
-        _, alone = cli_json("a.ttl", "--write-baseline", "alone.json")
-        _, together = cli_json("a.ttl", "b.ttl", "--write-baseline", "together.json")
+        _, alone = cli_json("a.ttl", *INDEPENDENT, "--write-baseline", "alone.json")
+        _, together = cli_json("a.ttl", "b.ttl", *INDEPENDENT, "--write-baseline", "together.json")
         assume(together["findings"])
-        _, forward = cli_json("a.ttl", "b.ttl", "--baseline", "alone.json")
-        _, backward = cli_json("a.ttl", "--baseline", "together.json")
+        _, forward = cli_json("a.ttl", "b.ttl", *INDEPENDENT, "--baseline", "alone.json")
+        _, backward = cli_json("a.ttl", *INDEPENDENT, "--baseline", "together.json")
         one, many = baseline_of("alone.json"), baseline_of("together.json")
 
     shared = len(one["fingerprints"]) - len(one["identities"].get("a.ttl", {}))  # Findings of a.ttl sharing an identity
