@@ -589,7 +589,12 @@ def valid_policy_mappings(draw: st.DrawFn) -> dict[str, Any]:
             st.sampled_from(RULE_IDS), st.sampled_from(("error", "warning", "info")), max_size=4
         ),
     }
-    return {key: draw(strategy) for key, strategy in optional.items() if draw(st.booleans())}
+    mapping = {key: draw(strategy) for key, strategy in optional.items() if draw(st.booleans())}
+    # A property-to-class minimum above the maximum is a contradictory policy, which is rejected.
+    low = mapping.get("metric_min_property_class_ratio", Policy().metric_min_property_class_ratio)
+    if low > mapping.get("metric_max_property_class_ratio", Policy().metric_max_property_class_ratio):
+        mapping["metric_max_property_class_ratio"] = low
+    return mapping
 
 
 @st.composite

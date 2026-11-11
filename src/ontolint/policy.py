@@ -321,6 +321,9 @@ def _metric_values(data: Mapping[str, Any]) -> dict[str, Any]:
         if quantity < 0:
             raise ValueError(f"{name} must be non-negative")
         values[name] = quantity
+    low, high = values["metric_min_property_class_ratio"], values["metric_max_property_class_ratio"]
+    if low > high:  # every ratio between them would fire both METRIC006 and METRIC007
+        raise ValueError("metric_min_property_class_ratio must not exceed metric_max_property_class_ratio")
     return values
 
 
