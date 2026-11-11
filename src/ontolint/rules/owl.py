@@ -278,7 +278,7 @@ SPECS: tuple[RuleSpec, ...] = (
     RuleSpec(
         "OWL010",
         "OWL",
-        "Single-operand property chain",
+        "Property chain with fewer than two operands",
         Severity.INFO,
         "Review an owl:propertyChainAxiom whose RDF list has only one element.",
         "heuristic",

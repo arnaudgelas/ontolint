@@ -43,6 +43,16 @@ legacy view drops both and ``legacy_rules.json`` did not move; neither did any m
 severity, fingerprint, text report or exit code.  The only SHACL001 finding in this snapshot is
 ``json_clean_shacl_violation``'s, and only that case's two full-output hashes (``to_file.file`` and
 ``to_stdout.stdout``) changed; a JSON diff of the two snapshots showed nothing else.
+
+Deliberate golden update (coverage gaps): five rules that now report more conditions were retitled to
+say so: OWL010 "Property chain with fewer than two operands", OWL032 "Single-operand union, intersection
+or disjoint union", OWL035 "Restriction without exactly one valid constraint", SHQ008 "Cardinality or
+length value is not a non-negative xsd:integer" and ALIGN003 "exactMatch chain conflicting with
+broadMatch, narrowMatch or relatedMatch".  Titles appear in the rule metadata of every JSON and SARIF
+report and in ``--list-rules --format json``, so those 36 pinned outputs changed.  Before regenerating,
+every CLI output of the snapshot was rendered unhashed on the commit before the retitles and after them:
+the two were equal once each old title was replaced by its new one, the linter snapshots were equal, and
+no finding, message, fingerprint, exit code or text report moved.  ``legacy_rules.json`` did not move.
 """
 
 from __future__ import annotations

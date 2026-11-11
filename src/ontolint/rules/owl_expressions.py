@@ -174,7 +174,7 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
     _spec(
         "OWL032",
-        "Single-operand union or intersection",
+        "Single-operand union, intersection or disjoint union",
         Severity.INFO,
         "Replace an owl:unionOf or owl:intersectionOf with one operand by that operand.",
     ),
@@ -192,7 +192,7 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
     _spec(
         "OWL035",
-        "Restriction without a constraint",
+        "Restriction without exactly one valid constraint",
         Severity.ERROR,
         "Add an owl:someValuesFrom, owl:allValuesFrom, owl:hasValue, owl:hasSelf or cardinality constraint.",
     ),

@@ -74,7 +74,7 @@ Reported: `http://www.w3.org/2004/02/skos/core#exactmatch is not a SKOS or OWL m
 ex:A skos:exactMatch a:A .
 ```
 
-#### ALIGN003: exactMatch chain conflicting with broadMatch or narrowMatch
+#### ALIGN003: exactMatch chain conflicting with broadMatch, narrowMatch or relatedMatch
 
 - **Severity:** error
 - **Scope:** term
@@ -3687,7 +3687,7 @@ Reported: `owl:inverseOf involves a datatype property.`
 ex:o a owl:ObjectProperty, owl:TransitiveProperty .
 ```
 
-#### OWL010: Single-operand property chain
+#### OWL010: Property chain with fewer than two operands
 
 - **Severity:** info
 - **Scope:** axiom
@@ -4153,7 +4153,7 @@ Reported: `owl:unionOf list is empty.`
 ex:C owl:unionOf ( ex:A ex:B ) .
 ```
 
-#### OWL032: Single-operand union or intersection
+#### OWL032: Single-operand union, intersection or disjoint union
 
 - **Severity:** info
 - **Scope:** axiom
@@ -4216,7 +4216,7 @@ Reported: `Restriction has no owl:onProperty.`
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A .
 ```
 
-#### OWL035: Restriction without a constraint
+#### OWL035: Restriction without exactly one valid constraint
 
 - **Severity:** error
 - **Scope:** axiom
@@ -4942,7 +4942,7 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
-#### SHQ008: Cardinality value is not a non-negative integer
+#### SHQ008: Cardinality or length value is not a non-negative xsd:integer
 
 - **Severity:** error
 - **Scope:** shapes

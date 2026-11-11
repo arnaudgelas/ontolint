@@ -173,7 +173,10 @@ SPECS: tuple[RuleSpec, ...] = (
         "SHQ007", "Shape with sh:minCount greater than sh:maxCount", Severity.ERROR, "Make sh:minCount <= sh:maxCount."
     ),
     _spec(
-        "SHQ008", "Cardinality value is not a non-negative integer", Severity.ERROR, "Use a non-negative xsd:integer."
+        "SHQ008",
+        "Cardinality or length value is not a non-negative xsd:integer",
+        Severity.ERROR,
+        "Use a non-negative xsd:integer.",
     ),
     _spec(
         "SHQ011",

@@ -85,7 +85,7 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
     _spec(
         "ALIGN003",
-        "exactMatch chain conflicting with broadMatch or narrowMatch",
+        "exactMatch chain conflicting with broadMatch, narrowMatch or relatedMatch",
         Severity.ERROR,
         "skos:exactMatch is transitive and disjoint with broad/narrowMatch; drop one mapping of the chain.",
         "deterministic",
