@@ -29,14 +29,22 @@ restricted to owned terms: every subject of the graph is checked, imported or no
   stands for ``x`` (``owl:SymmetricProperty`` adds nothing, as a property and its inverse are
   composite together).  A node itself typed transitive or chain-defined keeps the message "Property
   is transitive (non-simple) ..." (or "defined by a property chain"); a property non-simple through
-  another names the first composite, in IRI order, that reaches it.  Excluded: a property typed
+  another names the first composite, in IRI order, that reaches it.  The other axioms SS 11.2 restricts
+  to simple properties are reported too: on a node typed ``owl:Restriction`` without ``owl:onDataRange``,
+  one finding per ``owl:onProperty`` value (an IRI or a blank inverse expression, printed
+  ``ObjectInverseOf(x)``) that is non-simple and per predicate it carries among the six (qualified)
+  cardinalities and ``owl:hasSelf``, focused on the restriction and naming its owning IRI when it has
+  one; for ``p owl:propertyDisjointWith q``, one finding on each non-simple side, naming the other;
+  for a node typed ``owl:AllDisjointProperties``, one finding per non-simple member of each well-formed
+  ``owl:members`` list of at most 200 members, focused on the axiom.  Excluded: a property typed
   ``owl:DatatypeProperty`` and not ``owl:ObjectProperty`` reached only through the hierarchy (a kind
-  mismatch, OWL021's); a characteristic typed on an anonymous inverse expression (judged only when
-  the expression is itself transitive or chain-defined); a sub-property of a composite property,
-  which may be simple; non-simple properties in cardinality, ``owl:hasSelf`` or property-disjointness
-  axioms; and the other global restriction of SS 11.2, the regularity of the property hierarchy.  A
-  one-operand chain is OWL010's and makes nothing composite.  *Error:* violates the OWL 2 DL global
-  restriction on simple properties (SS 11.2).
+  mismatch, OWL021's), and in a restriction or disjointness axiom whatever its type; a characteristic
+  typed on an anonymous inverse expression (judged only when the expression is itself transitive or
+  chain-defined); a sub-property of a composite property, which may be simple; ``owl:onProperties``
+  (data properties only); a restriction-shaped node not typed ``owl:Restriction``; and the other
+  global restriction of SS 11.2, the regularity of the property hierarchy.  A one-operand chain is
+  OWL010's and makes nothing composite.  *Error:* violates the OWL 2 DL global restriction on simple
+  properties (SS 11.2).
 * **OWL020.** A strongly connected component of two or more IRIs in the asserted
   ``rdfs:subPropertyOf`` graph; one finding per component, on its lexically first member, naming all of
   them.  Self-loops, edges to or from blank nodes, and ``owl:equivalentProperty`` are ignored.
@@ -96,9 +104,11 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import LITERAL_RANGES, list_items
+from .support import LITERAL_RANGES, list_items, owning_term
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from .runtime import RuleContext
 
 
@@ -276,6 +286,16 @@ SPECS: tuple[RuleSpec, ...] = (
 # Empty by definition: disjointness with them, or subsumption by them, is no conflict (OWL024/OWL025).
 BOTTOM_PROPERTIES = frozenset({OWL.bottomObjectProperty, OWL.bottomDataProperty})
 BOTTOM_CLASSES = frozenset({OWL.Nothing})
+# The class expressions SS 11.2 allows on simple object properties only (with the four characteristics below).
+SIMPLE_ONLY_RESTRICTIONS = (
+    OWL.minCardinality,
+    OWL.maxCardinality,
+    OWL.cardinality,
+    OWL.minQualifiedCardinality,
+    OWL.maxQualifiedCardinality,
+    OWL.qualifiedCardinality,
+    OWL.hasSelf,
+)
 SIMPLE_ONLY_CHARACTERISTICS = (
     ("functional", OWL.FunctionalProperty),
     ("inverse-functional", OWL.InverseFunctionalProperty),
@@ -436,6 +456,74 @@ def _non_simple_properties(ctx: RuleContext) -> None:
             else:
                 continue
             ctx.add("OWL019", p, message, confidence="certain", subject=(type_,))
+    _non_simple_uses(ctx, non_simple, data_only)
+
+
+def _expression_text(g: Graph, node: Node) -> str:
+    """A restricted or disjoint property for a message: its IRI, or ``ObjectInverseOf(x)`` for an inverse."""
+    return str(node) if isinstance(node, URIRef) else f"ObjectInverseOf({_property_iri(g, node)})"
+
+
+def _non_simple_uses(
+    ctx: RuleContext, non_simple: dict[URIRef, tuple[URIRef, str]], data_only: frozenset[Node]
+) -> None:
+    """OWL019 on the other axioms SS 11.2 restricts to simple properties: cardinalities, self and disjointness."""
+    g = ctx.g
+
+    def why(node: Node) -> str | None:
+        """How ``node`` is non-simple ("transitive", "through ex:t, which is transitive"), or ``None``."""
+        iri = _property_iri(g, node)
+        if iri is None or iri not in non_simple or iri in data_only:
+            return None
+        witness, kind = non_simple[iri]
+        return kind if witness == iri else f"through {witness}, which is {kind}"
+
+    _non_simple_restrictions(ctx, why)
+    for a, b in sorted(g.subject_objects(OWL.propertyDisjointWith), key=lambda pair: (str(pair[0]), str(pair[1]))):
+        for side, other in ((a, b), (b, a)):
+            if (reason := why(side)) is not None:
+                ctx.add(
+                    "OWL019",
+                    side,
+                    f"Property is non-simple ({reason}) but declared disjoint with {_expression_text(g, other)}.",
+                    confidence="certain",
+                    subject=(OWL.propertyDisjointWith, other),
+                )
+    for group in _ordered(_typed(ctx, OWL.AllDisjointProperties)):
+        for head in g.objects(group, OWL.members):
+            for member in list_items(g, head, limit=MAX_GROUP_MEMBERS) or ():
+                if (reason := why(member)) is not None:
+                    ctx.add(
+                        "OWL019",
+                        group,
+                        f"owl:AllDisjointProperties contains non-simple property {_expression_text(g, member)}"
+                        f" ({reason}).",
+                        confidence="certain",
+                        subject=(member,),
+                    )
+
+
+def _non_simple_restrictions(ctx: RuleContext, why: Callable[[Node], str | None]) -> None:
+    """One finding per cardinality or ``owl:hasSelf`` of an object restriction on a non-simple property."""
+    g = ctx.g
+    for restriction in _ordered(_typed(ctx, OWL.Restriction)):
+        if (restriction, OWL.onDataRange, None) in g:
+            continue  # a qualified data cardinality restricts a data property
+        owner = owning_term(g, restriction)
+        prefix = f"{owner}: restriction" if isinstance(owner, URIRef) else "Restriction"
+        for prop in _ordered(set(g.objects(restriction, OWL.onProperty))):
+            if (reason := why(prop)) is None:
+                continue
+            text = f"{prefix} on non-simple property {_expression_text(g, prop)} ({reason}) uses"
+            for predicate in SIMPLE_ONLY_RESTRICTIONS:
+                if (restriction, predicate, None) in g:
+                    ctx.add(
+                        "OWL019",
+                        restriction,
+                        f"{text} owl:{str(predicate).removeprefix(str(OWL))}.",
+                        confidence="certain",
+                        subject=(prop, predicate),
+                    )
 
 
 def _pop_component(stack: list[Node], on_stack: set[Node], root: Node) -> list[Node]:

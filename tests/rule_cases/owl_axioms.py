@@ -102,6 +102,40 @@ CASES = {
                 "property equivalent to the top object property",
                 "ex:p owl:equivalentProperty owl:topObjectProperty ; a owl:FunctionalProperty .",
             ),
+            # SS 11.2: cardinality restrictions, owl:hasSelf and disjointness take simple properties only.
+            ttl(
+                "max cardinality on a transitive property",
+                "ex:t a owl:ObjectProperty, owl:TransitiveProperty . ex:A rdfs:subClassOf [ a owl:Restriction ;"
+                " owl:onProperty ex:t ; owl:maxCardinality 1 ] .",
+            ),
+            ttl(
+                "qualified min cardinality on a super-property of a transitive property",
+                "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . [ a owl:Restriction ; owl:onProperty ex:p ;"
+                " owl:minQualifiedCardinality 2 ; owl:onClass ex:A ] .",
+            ),
+            ttl(
+                "hasSelf on a chain-defined property",
+                "ex:c owl:propertyChainAxiom ( ex:a ex:b ) . [ a owl:Restriction ; owl:onProperty ex:c ;"
+                " owl:hasSelf true ] .",
+            ),
+            ttl(
+                "cardinality on the inverse of a transitive property",
+                "ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty [ owl:inverseOf ex:t ] ;"
+                " owl:cardinality 1 ] .",
+            ),
+            ttl(
+                "transitive property declared disjoint",
+                "ex:t a owl:TransitiveProperty ; owl:propertyDisjointWith ex:q .",
+            ),
+            ttl(
+                "simple property declared disjoint with a transitive one",
+                "ex:q owl:propertyDisjointWith ex:t . ex:t a owl:TransitiveProperty .",
+            ),
+            ttl(
+                "chain-defined member of owl:AllDisjointProperties",
+                "ex:c owl:propertyChainAxiom ( ex:a ex:b ) ."
+                " [ a owl:AllDisjointProperties ; owl:members ( ex:p ex:c ) ] .",
+            ),
         ],
         [
             ttl("transitive alone", "ex:p a owl:ObjectProperty, owl:TransitiveProperty ."),
@@ -135,6 +169,35 @@ CASES = {
                 "functional datatype super-property is OWL021's",
                 "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty,"
                 " owl:FunctionalProperty .",
+            ),
+            ttl(
+                "existential restriction on a transitive property",
+                "ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty ex:t ;"
+                " owl:someValuesFrom ex:A ] .",
+            ),
+            ttl(
+                "cardinality on a simple sub-property of a transitive property",
+                "ex:p rdfs:subPropertyOf ex:t . ex:t a owl:TransitiveProperty . [ a owl:Restriction ;"
+                " owl:onProperty ex:p ; owl:maxCardinality 1 ] .",
+            ),
+            ttl(
+                "cardinality on a datatype property",
+                "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty ."
+                " [ a owl:Restriction ; owl:onProperty ex:d ; owl:maxCardinality 1 ] .",
+            ),
+            ttl(
+                "qualified data cardinality is a data restriction",
+                "ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty ex:t ;"
+                " owl:maxQualifiedCardinality 1 ; owl:onDataRange xsd:string ] .",
+            ),
+            ttl(
+                "untyped restriction-shaped node is not judged",
+                "ex:t a owl:TransitiveProperty . [ owl:onProperty ex:t ; owl:maxCardinality 1 ] .",
+            ),
+            ttl("simple properties declared disjoint", "ex:p owl:propertyDisjointWith ex:q ."),
+            ttl(
+                "simple members of owl:AllDisjointProperties",
+                "ex:t a owl:TransitiveProperty . [ a owl:AllDisjointProperties ; owl:members ( ex:p ex:q ) ] .",
             ),
             ttl(
                 "characteristic on an anonymous inverse expression is not judged",

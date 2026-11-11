@@ -127,3 +127,63 @@ def test_owl019_witness_is_the_first_composite_in_iri_order() -> None:
     turtle += " rdfs:subPropertyOf ex:p . ex:p a owl:FunctionalProperty ."
     ((_focus, message, _subject),) = found("OWL019", turtle)
     assert "through ex:a," in message
+
+
+def test_owl019_reports_each_simple_only_restriction_on_a_non_simple_property() -> None:
+    turtle = "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . ex:A rdfs:subClassOf [ a owl:Restriction ;"
+    turtle += " owl:onProperty ex:p ; owl:maxCardinality 1 ; owl:hasSelf true ] ."
+    ((focus, _message, _subject), *_others) = sorted(found("OWL019", turtle))
+    owner = "ex:A: restriction on non-simple property ex:p (through ex:t, which is transitive) uses"
+    assert {(m, s) for _f, m, s in found("OWL019", turtle)} == {
+        (f"{owner} owl:maxCardinality.", ("ex:p", f"{OWL}maxCardinality")),
+        (f"{owner} owl:hasSelf.", ("ex:p", f"{OWL}hasSelf")),
+    }
+    assert focus.startswith("_:")  # the restriction, by its stable identity
+
+
+def test_owl019_names_an_inverse_expression_and_a_composite_restricted_property() -> None:
+    inverse = "ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty [ owl:inverseOf ex:t ] ;"
+    inverse += " owl:cardinality 1 ] ."
+    ((_focus, message, (restricted, predicate)),) = found("OWL019", inverse)
+    assert message == "Restriction on non-simple property ObjectInverseOf(ex:t) (transitive) uses owl:cardinality."
+    assert restricted.startswith("_:")
+    assert predicate == f"{OWL}cardinality"
+
+
+def test_owl019_reports_each_non_simple_side_of_a_property_disjointness() -> None:
+    turtle = (
+        "ex:t a owl:TransitiveProperty ; owl:propertyDisjointWith ex:c . ex:c owl:propertyChainAxiom ( ex:a ex:b ) ."
+    )
+    assert found("OWL019", turtle) == {
+        (
+            "ex:t",
+            "Property is non-simple (transitive) but declared disjoint with ex:c.",
+            (f"{OWL}propertyDisjointWith", "ex:c"),
+        ),
+        (
+            "ex:c",
+            "Property is non-simple (defined by a property chain) but declared disjoint with ex:t.",
+            (f"{OWL}propertyDisjointWith", "ex:t"),
+        ),
+    }
+    reached = "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . ex:q owl:propertyDisjointWith ex:p ."
+    assert found("OWL019", reached) == {
+        (
+            "ex:p",
+            "Property is non-simple (through ex:t, which is transitive) but declared disjoint with ex:q.",
+            (f"{OWL}propertyDisjointWith", "ex:q"),
+        )
+    }
+
+
+def test_owl019_reports_each_non_simple_member_of_owl_all_disjoint_properties() -> None:
+    turtle = "ex:t a owl:TransitiveProperty . ex:c owl:propertyChainAxiom ( ex:a ex:b ) ."
+    turtle += " ex:G a owl:AllDisjointProperties ; owl:members ( ex:p ex:t ex:c ) ."
+    assert found("OWL019", turtle) == {
+        ("ex:G", "owl:AllDisjointProperties contains non-simple property ex:t (transitive).", ("ex:t",)),
+        (
+            "ex:G",
+            "owl:AllDisjointProperties contains non-simple property ex:c (defined by a property chain).",
+            ("ex:c",),
+        ),
+    }

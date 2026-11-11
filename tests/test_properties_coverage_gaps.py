@@ -2,19 +2,21 @@
 
 * OWL019: the non-simple properties are those OWL 2 Structural Specification section 11.1 defines, computed
   here over property expressions and their inverses exactly as the specification states the relation ``→``;
-  the rule's walk over IRIs must agree on every random property hierarchy.
+  the rule's walk over IRIs must agree on every random property hierarchy, for the characteristics and for
+  the cardinality restrictions of SS 11.2.
 """
 
 from __future__ import annotations
 
 import random
+import re
 from collections.abc import Iterable
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget
-from rdflib import BNode, Graph, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.term import Node
@@ -138,6 +140,27 @@ def test_owl019_does_not_depend_on_the_order_of_the_triples(
         return {(f.focus, f.message) for f in Linter(g).execute(["OWL019"]).findings}
 
     assert messages(shuffled) == messages(graph)
+
+
+@budget(0.3)
+@given(st.lists(AXIOMS, max_size=8), st.lists(_expression(), min_size=1, max_size=4))
+def test_owl019_reports_the_restrictions_on_exactly_the_properties_ss_11_1_makes_non_simple(
+    axioms: list[Axiom], restricted: list[Expression]
+) -> None:
+    graph = build(axioms, ())
+    for expression in restricted:
+        restriction = BNode()
+        graph.add((restriction, RDF.type, OWL.Restriction))
+        graph.add((restriction, OWL.onProperty, _term(graph, expression)))
+        graph.add((restriction, OWL.maxCardinality, Literal(1)))
+    messages = [f.message for f in Linter(graph).execute(["OWL019"]).findings]
+    on_restrictions = {
+        m.group(1).removeprefix("ObjectInverseOf(").removesuffix(")")
+        for message in messages
+        if (m := re.fullmatch(r"Restriction on non-simple property (\S+) \(.*\) uses owl:maxCardinality\.", message))
+    }
+    non_simple = {str(iri) for iri in specified_non_simple(axioms)}
+    assert on_restrictions == {str(iri) for iri, _inverted in restricted} & non_simple
 
 
 def test_the_oracle_reads_the_specification_as_intended() -> None:
