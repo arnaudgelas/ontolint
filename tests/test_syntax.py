@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 import pytest
@@ -56,6 +57,15 @@ MANCHESTER = b"Prefix: : <https://e.test/o#>\nOntology: <https://e.test/o>\nClas
 )
 def test_sniff_recognises_each_syntax(data: bytes, expected: str | None) -> None:
     assert sniff(data) == expected
+
+
+def test_sniff_is_linear_on_a_run_of_hashes_after_a_brace() -> None:
+    # CodeQL py/redos: a ``{`` followed by many ``#`` and no newline backtracked exponentially in the graph-block
+    # pattern (about 40 ms at 20 ``#``, four times longer for every two more).
+    data = b"{" + b"#" * 5000
+    started = time.perf_counter()
+    assert sniff(data) is None
+    assert time.perf_counter() - started < 1
 
 
 def test_choose_keeps_the_extension_within_the_text_family() -> None:
