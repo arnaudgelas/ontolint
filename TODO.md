@@ -487,7 +487,7 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
   the repository could close this item, so 0.11.0 shipped with it open.* Rechecked 2026-11-11: pull
   request #1 (merged) added a second configuration, `renovate.json` at the repository root, and a
   bot commit corrected its matchers, so there are now two configurations that disagree: the root one
-  has no `"automergeStrategy": "rebase"` (the linear-history rule needs a rebase or a squash; the maintainer prefers rebase), groups the core
+  sets `"automergeStrategy": "rebase"` at the top level since 2026-11-11 (the linear-history rule needs a rebase or a squash; the maintainer prefers rebase) but never enables automerge, so the strategy has no effect yet, groups the core
   dependencies differently, and runs on another schedule, and Renovate reads the first file it finds
   (its documented search order lists the repository root before `.github/`; confirm that on the
   first run). Keep one file, with the rebase strategy. Renovate has still opened no branch,
