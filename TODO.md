@@ -18,6 +18,52 @@ Nothing open: 0.11.0 is released (see "Recently done").
 
 ## Recently done
 
+- Unreleased (after 0.12.0):
+  - **PREDICATE-CLOSURE** (P1 audit, issue 15; the LEX002-CLOSURE follow-ups): one cached
+    `PropertyClosure` (`rules/runtime.py`) indexes the graph's `rdfs:subPropertyOf` and
+    `owl:equivalentProperty` triples once; `below(seeds, stop)` is the seeds, then every IRI with a
+    path to a seed whose steps are sub-to-super or equivalence (either way), through no stop node,
+    sorted. Asserted triples of the linted graph only (the merged closure under
+    `--follow-imports`, so an imported vocabulary's axioms count; the SHACL background is not read);
+    a seed is never stopped; deprecation changes nothing; blank nodes carry a path but are never
+    returned; each walk expands each node once, so cycles end it and its cost is linear (a scaling
+    test).
+    - *Labels:* `ctx.labels` is the closure of `rdfs:label`, `skos:prefLabel` and
+      `extra_label_predicates`, stopping at `skos:altLabel` and `skos:hiddenLabel` (the SKOS schema
+      puts them below `rdfs:label`). It decides whether a term has a label (LEX001 and METRIC001,
+      still the same set; SKOS004; CLS015; an index entry's names for LIB001 and LIB002) and which
+      values are judged as labels (LEX005, LEX010-LEX014, LEX017, LEX018, LEX021, LEX022,
+      METRIC009); any label in a language satisfies LEX008. The rules comparing labels (LEX003,
+      LEX004, LEX006, LEX015, LEX016, CLS010) read `ctx.main_label_predicates(term)`: the
+      configured predicates and those below `skos:prefLabel` (`ctx.preferred_labels`, preferred
+      labels by entailment) when the term has a literal under one, else the whole closure.
+      Closing them over sub-properties of `rdfs:label` reported LEX003 and LEX006 on all 35
+      classes of BFO 2020, whose untagged OWL and CLIF specification labels (`BFO_0000179`,
+      `BFO_0000180`) are below `rdfs:label`; not closing them made LEX008 report "no preferred
+      label" on a term LEX001 called labelled, and a per-term fallback let an `@fr` `rdfs:label`
+      hide an `@en` preferred label. An IRI-valued label is still no label (LEX013 reports it).
+    - *Equivalences:* `ctx.descriptions` (and `ctx.labels`) follow `owl:equivalentProperty` both
+      ways and mixed with sub-properties (`p ≡ q ⊑ skos:definition`, `p ⊑ q ≡ obo:IAO_0000115`); an
+      equivalent of a super-property of a definition predicate, or of `rdfs:label` or
+      `rdfs:seeAlso`, is no definition.
+    - *Notes:* LEX002 accepts the closure of `skos:note` and `skos:scopeNote`, stopping at
+      `skos:changeNote`, `skos:editorialNote`, `skos:historyNote` and `skos:example`, which the SKOS
+      schema puts below `skos:note` but which did not document a term in 0.12.0 either; a note is
+      still no definition to the other rules (METRIC002, LEX017, LEX019). LEX002 does not judge
+      what a note says, so a non-descriptive sub-property of `skos:note` (a display order)
+      documents a term, as a bare `skos:note "3"` did already. A sub-property of `rdfs:comment` is
+      a definition, as since 0.11.0, and never a label. OBO's `DEFINITION_PREDICATES` stay
+      IAO-only: neither a sub-property nor an equivalent of `obo:IAO_0000115` satisfies OBO003.
+    - *Verified:* `tests/test_predicate_closure.py`, rule cases for LEX001, LEX002, LEX003,
+      LEX018, METRIC001 and METRIC002, a Hypothesis property against a fixed-point oracle over
+      mixed edges and stop sets, and a linear-scaling test. Golden files, `differential.json`, the
+      report schemas, fingerprints and `docs/rules.md` did not move. On real ontologies (CCO, MOD,
+      SDO, Tractus-X, SKOS, FOAF, DCMI terms, Getty GVP, QUDT, PROV-O, DCAT, BFO 2020, RO, IAO,
+      OMO) the findings are identical to 0.12.0: their label and definition sub-properties
+      (`foaf:name`, `schema:name`, `dcterms:title` in MOD, BFO's specification labels) sit on
+      terms the files do not own or beside an `rdfs:label`, and Getty's `gvp:prefLabelGVP` is an
+      object property to SKOS-XL labels with no `rdfs:subPropertyOf`. The label closure is driven
+      by issue 15 and by what the axioms entail, not by a false positive observed in the corpus.
 - Unreleased (on `main`, after 0.11.0):
   - **TRIG-REGIONS** (P1; issue 6): a TriG finding has the region of its focus, as its Turtle
     twin does. TriG was missing from `source_locations._TEXT_FORMATS` and from the scanner's
@@ -591,11 +637,13 @@ Validation corpus (public; licences per repository):
       back into reports, so this is accepted until a finding can name its module directly.
   - *False positives found by the 2026-11-10 review:* (LEX002 and every rule using
     `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed in 0.11.0, in
-    6dc2285 and 19d9667, see "Recently done"). Follow-ups, each with its own negative cases
-    because it changes other rules' contracts: the same closure for label predicates
-    (`ctx.labels`: LEX001, LEX018, METRIC001), `owl:equivalentProperty` to a definition predicate,
-    and sub-properties of `skos:note`/`skos:scopeNote` for LEX002 (no closure today, not even one
-    step). OBO's fixed `DEFINITION_PREDICATES` stay IAO-only by design.
+    6dc2285 and 19d9667, see "Recently done"). The follow-ups (labels, `owl:equivalentProperty`,
+    SKOS notes) are done too (issue 15, see "Recently done", PREDICATE-CLOSURE). Left open, each a
+    contract decision: SKOS001, LEX009 (`rdfs:label` only), the alternative labels of LEX015 and
+    LEX016 (`ALTERNATIVE_LABELS`), and CLS013 and CLS020 (`hierarchy_quality.LABEL_PREDICATES`)
+    read fixed predicates, so a `skos:prefLabel` sub-property is not a second prefLabel to SKOS001
+    and a `skos:altLabel` sub-property is no alternative label; the OBO rules read `rdfs:label` and
+    IAO only, by design.
   - *Policy that silently does nothing:* fixed in 0.11.0 (see "Recently done", POLICY-SILENT).
     Follow-up for RULE-DOCS, fixed (issue #16): `"selectable"` in `--list-rules --format json` and
     `--explain` is now false for the pipeline rules, which `--select` rejects, as well as for the

@@ -43,6 +43,13 @@ The conditions, populations and exclusions of each rule are in the specification
 | `metric_min_definition_words` | METRIC012 | 4.0 | mean words of the longest definition below it | defined classes | The shortest genus-differentia sentence ("An X that Y") has about four words. |
 | `metric_max_blank_node_ratio` | METRIC013 | 0.6 | share of non-structural subjects that are blank above it | subjects | Beyond structure (axioms, restrictions, lists, shapes), blank subjects are mostly anonymous individuals. |
 
+Since 0.13.0 a label or definition predicate includes the predicates below it through
+`rdfs:subPropertyOf` and `owl:equivalentProperty` (README, "Scope and limitations"), so
+`METRIC001` and `METRIC009` count labels under a sub-property of `rdfs:label` or `skos:prefLabel`,
+and `METRIC002`, `METRIC003` and `METRIC012` definitions under an equivalent of a definition
+predicate. `METRIC001` still counts exactly the classes `LEX001` reports. The thresholds did not
+change.
+
 ## Measurements
 
 Descriptive figures from six local, unpinned copies of public ontologies, each measured with every

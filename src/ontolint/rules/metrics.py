@@ -23,17 +23,20 @@ specifications:
 
 * **METRIC001.** (``metric_max_unlabelled_ratio``, 0.5.)  Owned classes (``owl:Class``,
   ``rdfs:Class``); the numerator is the classes LEX001 reports: no ``Literal`` object of a label
-  predicate (``rdfs:label``, ``skos:prefLabel``, the configured extras) and not ``owl:deprecated
-  true``.  Fires when missing / classes exceeds the limit.  Exclusions: an IRI-valued label does not
-  count, a deprecated class counts as labelled, an empty literal counts as a label (LEX005's),
-  ``skos:altLabel`` does not count and the language is ignored.
+  predicate (``ctx.labels``: ``rdfs:label``, ``skos:prefLabel``, the configured extras and the
+  predicates below them through ``rdfs:subPropertyOf`` and ``owl:equivalentProperty``) and not
+  ``owl:deprecated true``.  Fires when missing / classes exceeds the limit.  Exclusions: an IRI-valued
+  label does not count, a deprecated class counts as labelled, an empty literal counts as a label
+  (LEX005's), ``skos:altLabel`` and ``skos:hiddenLabel`` (and the predicates below them) do not count
+  and the language is ignored.
   *Warning:* labels are the primary human interface; with the 0.5 limit the finding speaks only
   when missing labels are the norm.
 * **METRIC002.** (``metric_max_undefined_ratio``, 0.5.)  Owned classes with no triple under
   ``ctx.descriptions``: ``rdfs:comment``, ``skos:definition``, ``dcterms:description`` and the other
-  built-in definition predicates, their asserted sub-properties and ``extra_definition_predicates``.
-  Exclusions: ``skos:note`` and ``skos:scopeNote`` do not count, unlike LEX002's; a definition
-  whose value is an IRI or an empty literal counts.
+  built-in definition predicates, ``extra_definition_predicates`` and the predicates below them
+  through asserted ``rdfs:subPropertyOf`` and ``owl:equivalentProperty`` triples.  Exclusions:
+  ``skos:note``, ``skos:scopeNote`` and the predicates below them do not count, unlike LEX002's; a
+  definition whose value is an IRI or an empty literal counts.
   *Warning:* a class nobody defined cannot be understood or reused.
 * **METRIC003.** (``metric_max_undocumented_property_ratio``, 0.5.)  The same for owned properties,
   annotation properties included (the property-documentation counterpart of METRIC002).
@@ -65,9 +68,9 @@ specifications:
   domain reached through an inverse or a superproperty is not looked for.
   *Info:* signatures are optional in RDFS and often left open on purpose.
 * **METRIC009.** (``metric_min_language_coverage``, 0.5.)  Owned classes and properties with at
-  least one ``Literal`` label; a term is tagged when at least one of its labels has a language
-  tag.  Fires when tagged / labelled falls below the limit.  Exclusions: unlabelled terms are not
-  in the population; ``policy.languages`` is LEX008's job; ``xsd:string`` counts as untagged.
+  least one ``Literal`` label (``ctx.labels``, as METRIC001); a term is tagged when at least one of
+  its labels has a language tag.  Fires when tagged / labelled falls below the limit.  Exclusions:
+  unlabelled terms are not in the population; ``policy.languages`` is LEX008's job; ``xsd:string`` counts as untagged.
   *Info:* untagged labels still work, they cannot be localised.
 * **METRIC010.** (``metric_max_foreign_reference_ratio``, 0.5.)  References are
   ``rdfs:subClassOf`` from owned classes and ``rdfs:domain`` and ``rdfs:range`` from owned
@@ -82,9 +85,10 @@ specifications:
   graph, of every header, minus ``policy.resolved_imports``.  Fires above the limit; no sample gate.
   *Info, certain:* the count is exact; only the limit is a convention.
 * **METRIC012.** (``metric_min_definition_words``, 4.0.)  Owned classes with a ``Literal``
-  description; each scores the ``\\w+`` token count of its longest description and the value is their
-  mean.  Fires below the limit.  Exclusions: IRI descriptions; a long ``rdfs:comment`` masks a short
-  ``skos:definition``; properties are not measured.
+  description (``ctx.descriptions``, as METRIC002); each scores the ``\\w+`` token count of its
+  longest description and the value is their mean.  Fires below the limit.  Exclusions: IRI
+  descriptions; a long ``rdfs:comment`` masks a short ``skos:definition``; properties are not
+  measured.
   *Info:* a definition shorter than "An X that Y" cannot say what distinguishes the class.
 * **METRIC013.** (``metric_max_blank_node_ratio``, 0.6.)  The distinct subjects of the graph that
   are not structural blank nodes; the value is blank / all.  Structural blank nodes encode an axiom,

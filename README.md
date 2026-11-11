@@ -226,8 +226,9 @@ linted file looks like a SHACL shapes graph (more shapes than declared terms), w
 probably be passed with `--shapes` instead. With `--follow-imports`, `TOOL004` notes a catalog
 entry that names a missing file. `TOOL005` notes when most terms without a definition (`LEX002`)
 carry an unrecognised predicate named like one, and suggests `extra_definition_predicates`; besides
-the built-in and configured lists, any predicate the ontology declares `rdfs:subPropertyOf` one of
-them, directly or through a chain of sub-properties (cycles are fine), already counts. `TOOL006` says
+the built-in and configured lists, any predicate the ontology declares `rdfs:subPropertyOf` or
+`owl:equivalentProperty` one of them, directly or through a chain of such links (cycles are fine),
+already counts. `TOOL006` says
 when `--module-annotation` cannot group a file (its prefix is not declared, or no term carries the
 predicate), `TOOL007` names the validator `--shapes-from-profile` uses (or passes over, when it is
 not SHACL), `TOOL008` warns that a file under
@@ -787,8 +788,31 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
   `<http://www.ontologyrepository.com/CommonCoreOntologies/definition>`; labels from `rdfs:label` and
   `skos:prefLabel`.
   Add more with the policy lists `extra_definition_predicates` and `extra_label_predicates` (absolute IRIs).
-  A predicate the ontology declares `rdfs:subPropertyOf` a definition predicate, built-in or extra,
-  directly or through a chain, is a definition predicate too.
+  A predicate below a definition or label predicate, built-in or extra, is one too: one the ontology
+  declares `rdfs:subPropertyOf` it or `owl:equivalentProperty` to it (either way round), directly or
+  through a chain mixing both (`ex:p ≡ ex:q ⊑ skos:definition`; cycles are fine). Only asserted
+  triples of the linted graph count (the merged closure under `--follow-imports`), and only downwards
+  and sideways: a super-property of `skos:definition` is no definition. `skos:altLabel` and
+  `skos:hiddenLabel`, which the SKOS schema puts below `rdfs:label`, and the predicates below them are
+  never labels. Such a predicate gives a term a label (`LEX001`, `METRIC001`, `SKOS004`, `CLS015`,
+  and an index entry's name for `LIB001` and `LIB002`) and its values are judged as labels
+  (`LEX005`, `LEX010`-`LEX014`, `LEX017`, `LEX018`, `LEX021`, `LEX022`, `METRIC009`), and any
+  label in a language satisfies `LEX008`. The rules that compare a term's labels (`LEX003`,
+  `LEX004`, `LEX006`, `LEX015`, `LEX016`, `CLS010`) read its main labels: its values of
+  `rdfs:label`, `skos:prefLabel`, `extra_label_predicates` and the predicates below
+  `skos:prefLabel` (preferred labels by entailment). A sub-property of `rdfs:label` or of an extra
+  beside them is a specialised label, such as BFO 2020's untagged OWL and CLIF specification labels,
+  not a second label, a plain label mixed with tagged ones or a collision; only a term with no main
+  label is named by its specialised labels, so it has main labels exactly when `LEX001` finds a
+  label. Under `--follow-imports` an imported vocabulary's
+  axioms count as well: importing MOD, which declares `mod:acronym` below `rdfs:label`, makes an
+  acronym a label of the importing file's terms (judged by `LEX005`, `LEX012` and the others). The
+  label readers `SKOS001`, `LEX009`, `CLS013` and `CLS020`, and the alternative labels of `LEX015`
+  and `LEX016`, still read fixed predicates. `LEX002` also accepts `skos:note`, `skos:scopeNote`
+  and the predicates below them, whatever their value says, except SKOS's `skos:changeNote`,
+  `skos:editorialNote`, `skos:historyNote` and `skos:example` and those below them, which did not
+  document a term before 0.13.0 either; to the other rules a note is no definition. The OBO rules
+  keep their fixed predicates (`OBO003` reads `obo:IAO_0000115` and `obo:IAO_0000600` only).
 - With `--shapes`, the SHACL step first checks the shapes graph and reports SHACL001 as failed with
   `ShapesRejected` when pySHACL would crash or stall on it: an IRI that rdflib cannot serialise (such as
   `{`, `}`, `|`, `^`, a space or a quote), a cyclic `rdf:list`, a list cell with several `rdf:rest` values,
