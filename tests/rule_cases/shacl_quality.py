@@ -62,6 +62,7 @@ CASES = {
     "SHQ015": rule_cases(
         [
             _c("unknown flag", _prop("sh:pattern 'a' ; sh:flags 'ig'")),
+            _c("unknown flag letter (SHQ011 compiles without it)", _prop("sh:pattern 'a' ; sh:flags 'z'")),
             _c("flags without pattern", _prop("sh:flags 'i'")),
         ],
         [

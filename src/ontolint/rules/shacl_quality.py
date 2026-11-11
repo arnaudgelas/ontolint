@@ -1,9 +1,10 @@
 """SHACL shape-authoring quality heuristics over the supplied shapes graph: SHQ009, 010, 012, 014-016, 022, 023.
 
 Implemented: SHQ009 (``sh:in`` list), SHQ010 (``sh:languageIn`` tags), SHQ012 (``sh:uniqueLang`` on a
-non-language-tagged datatype), SHQ014 (``sh:severity`` outside the SHACL vocabulary), SHQ015 (``sh:flags``),
-SHQ016 (recursive shape references), SHQ022 (non-IRI shape targets) and SHQ023 (property shape without exactly
-one ``sh:path``).
+non-language-tagged datatype), SHQ014 (``sh:severity`` outside the SHACL vocabulary), SHQ015 (``sh:flags``: a
+letter other than ``s``, ``m``, ``i``, ``x`` and ``q``, which SHQ011 drops when it compiles the pattern, or flags
+without a pattern), SHQ016 (recursive shape references), SHQ022 (non-IRI shape targets) and SHQ023 (property
+shape without exactly one ``sh:path``).
 
 Every check is a structural lint of the asserted shapes graph (no SHACL engine, no entailment, no network) that
 complements, and never repeats, the checks of ``shapes`` (SHQ001-006) and ``shacl_authoring`` (SHQ007-027).  The

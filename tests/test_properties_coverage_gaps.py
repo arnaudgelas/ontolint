@@ -4,6 +4,9 @@
   here over property expressions and their inverses exactly as the specification states the relation ``→``;
   the rule's walk over IRIs must agree on every random property hierarchy, for the characteristics and for
   the cardinality restrictions of SS 11.2.
+* SHQ011: a pattern drawn from the grammar of XSD Part 2 Appendix F with the XPath additions (anchors,
+  reluctant quantifiers, ``(?:``, back-references, ``\\$``) never gets the "not an XPath regular
+  expression" finding.
 """
 
 from __future__ import annotations
@@ -22,6 +25,7 @@ from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.term import Node
 
 from ontolint import Linter
+from ontolint.rules.shacl_authoring import xpath_regex_problem
 
 pytestmark = pytest.mark.slow
 
@@ -173,3 +177,48 @@ def test_the_oracle_reads_the_specification_as_intended() -> None:
     # Non-simplicity flows upwards only.
     assert specified_non_simple([("transitive", (p1, False), (p1, False)), ("sub", (p0, False), (p1, False))]) == {p1}
     assert specified_non_simple([("chain1", (p2, False), (p2, False))]) == set()
+
+
+# --- SHQ011 ---------------------------------------------------------------------------------------------
+
+PLAIN = "abcXYZ019 _/:@#%&=~,;<>'\"!-"  # Char: anything but . \\ ? * + { } ( ) | [ ] ^ $
+IN_CLASS = "abcXYZ019 _/:@#%&=~,;<>'\"!.?*+{}()|$"  # XmlChar: anything but \\ - [ ] (and ^ first)
+ESCAPES = [f"\\{c}" for c in "nrt\\|.?*+(){}-[]^$sSiIcCdDwW"] + [r"\p{L}", r"\p{IsBasicLatin}", r"\P{Nd}"]
+QUANTIFIERS = st.sampled_from(["*", "+", "?", "{2}", "{0,}", "{1,3}", "{3,3}"])
+
+
+def _class() -> st.SearchStrategy[str]:
+    member = st.one_of(st.sampled_from(IN_CLASS), st.sampled_from(ESCAPES), st.just("a-z"), st.just("0-9"))
+    group = st.builds(
+        lambda negated, members: ("^" if negated else "") + "".join(members),
+        st.booleans(),
+        st.lists(member, min_size=1, max_size=3),
+    )
+    simple = group.map(lambda g: f"[{g}]")
+    return st.one_of(simple, st.builds(lambda g, sub: f"[{g}-{sub}]", group, simple))
+
+
+def _regex(atom: st.SearchStrategy[str]) -> st.SearchStrategy[str]:
+    quantified = st.builds(
+        lambda a, q, lazy: a + (q + ("?" if lazy else "") if q else ""),
+        atom,
+        st.one_of(st.none(), QUANTIFIERS),
+        st.booleans(),
+    )
+    branch = st.lists(quantified, max_size=4).map("".join)
+    return st.lists(branch, min_size=1, max_size=3).map("|".join)
+
+
+ATOMS = st.one_of(st.sampled_from(PLAIN), st.sampled_from(ESCAPES), st.sampled_from(".^$"), _class())
+XPATH_PATTERNS = st.recursive(
+    _regex(ATOMS),
+    lambda inner: _regex(st.one_of(ATOMS, inner.map(lambda r: f"({r})"), inner.map(lambda r: f"(?:{r})"))),
+    max_leaves=12,
+)
+
+
+@budget(1)
+@given(XPATH_PATTERNS)
+def test_shq011_never_rejects_a_pattern_of_the_xpath_grammar(pattern: str) -> None:
+    assert xpath_regex_problem(pattern) is None
+    assert xpath_regex_problem(f"({pattern})\\1") is None  # a back-reference to a group

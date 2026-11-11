@@ -33,17 +33,29 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   shape is ill-formed (a SHACL processor may reject the shapes graph or ignore the constraint); the
   check is deterministic, though its findings are recorded with the default confidence
   ``heuristic``.
-* **SHQ011.** A literal value of ``sh:pattern`` that Python's ``re`` cannot compile with the shape's
-  ``sh:flags`` (all values concatenated).  SHACL regexes are XPath/XSD regexes, so the flags are
-  translated: ``i``, ``s`` and ``m`` map to the Python flags, ``x`` removes whitespace outside
-  character classes before compiling (Python's VERBOSE would also read ``#`` as a comment), and ``q``
-  (XPath 3.0: the pattern is a plain string; SPARQL 1.1 cites XPath 2.0, which lacks it) means every
-  pattern is valid.  One finding per invalid pattern, quoting Python's error.  Excluded: a pattern
-  with an XPath-only escape (``\\p{..}``, ``\\P``, ``\\i``, ``\\I``, ``\\c``, ``\\C``), which is never
-  judged, and a non-literal value.  Python accepts much that XSD rejects (lookaround, ``\\b``, ``\\A``,
-  ``(?:)``, ``a{``, possessive quantifiers, unknown flag letters), so the rule misses those; it can
-  also flag a valid XSD pattern Python rejects (a repetition count above 4294967295).  Error,
-  heuristic: an invalid pattern makes the shape ill-formed, but the judgement is Python's, not XSD's.
+* **SHQ011.** A literal value of ``sh:pattern`` that is not an XPath regular expression under the
+  shape's ``sh:flags`` (all values concatenated).  SHACL regexes are XPath regexes (F&O 5.6.1, over
+  XSD Part 2 Appendix F), so the flags are translated: ``i``, ``s`` and ``m`` map to the Python
+  flags, ``x`` removes whitespace outside character classes before anything else (Python's VERBOSE
+  would also read ``#`` as a comment), and ``q`` (XPath 3.0: the pattern is a plain string; SPARQL
+  1.1 cites XPath 2.0, which lacks it) means every pattern is valid.  Two judgements, at most one
+  finding per pattern: first, a pattern without an XPath-only escape (``\\p``, ``\\P``, ``\\i``,
+  ``\\I``, ``\\c``, ``\\C``) that Python's ``re`` cannot compile, quoting Python's error ("sh:pattern
+  does not compile: ..."); then, for every other pattern, the first construct a left-to-right scan
+  finds that XPath does not allow ("sh:pattern is not an XPath regular expression: ..."): an escape
+  outside XSD's SingleCharEsc (with XPath's ``\\$``), MultiCharEsc and ``\\p{..}``/``\\P{..}`` (``\\b``,
+  ``\\A``, ``\\x41``, ``\\0``, ``\\/``), a back-reference inside a class; ``(?`` other than XPath 3.0's
+  ``(?:`` (lookaround, inline flags, named groups); a ``+`` after a quantifier (possessive), any
+  other quantifier after one except a single reluctant ``?``, or a quantifier with nothing to repeat;
+  an unescaped ``{`` that starts no ``{n}``, ``{n,}`` or ``{n,m}``; and an unescaped ``}`` or ``]``
+  outside a class.  Excluded: a non-literal value; inside a character class everything but its
+  escapes (an unescaped ``[`` not after ``-``, a leading ``]``, and the placement of ``-``, on which XSD
+  1.0 and 1.1 disagree; Python decides those); a ``\\p{..}`` category or block name, which is not
+  checked; the XPath 2.0 / 3.0 differences beyond ``(?:`` and ``q``; and an unknown flag letter, which
+  is dropped when compiling and is SHQ015's.  It can also flag a valid pattern Python rejects (a
+  repetition count above 4294967295).  Error, heuristic: an invalid pattern makes the shape
+  ill-formed, but a SHACL engine built on Python's or Java's regex may accept it (``\\/`` in
+  particular, which JavaScript habit writes).
 * **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``, derived integer types included.
   Excluded as for SHQ007; a length that is not a natural is SHQ008's.  Error, certain: no value node has a
   string length in the range, so every value node (and every blank node) violates the shape.
@@ -131,9 +143,14 @@ XPATH_WHITESPACE = frozenset("\t\n\r ")
 # SHQ018 compares bounds after XPath numeric promotion: integer/decimal < xsd:float < xsd:double.
 EXACT, FLOAT, DOUBLE = 0, 1, 2
 NUMERIC_RANK: dict[URIRef | None, int] = {XSD.float: FLOAT, XSD.double: DOUBLE}
-# XPath-only regex escapes that Python cannot compile although they are valid SHACL patterns.
 MIN_LOGICAL_MEMBERS = 2
+# XPath-only regex escapes that Python cannot compile although they are valid SHACL patterns.
 XPATH_ONLY_ESCAPES = re.compile(r"\\[pPiIcC]")
+# XSD Part 2 Appendix F SingleCharEsc, with the ``\$`` that XPath adds, and MultiCharEsc.
+XPATH_SINGLE_ESCAPES = frozenset("nrt\\|.?*+(){}-[]^$")
+XPATH_MULTI_ESCAPES = frozenset("sSiIcCdDwW")
+XPATH_QUANTITY = re.compile(r"\{[0-9]+(?:,[0-9]*)?\}")
+_ATOM, _START, _QUANTIFIED, _RELUCTANT = range(4)  # what the scanner read last
 
 
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, category: str = "deterministic") -> RuleSpec:
@@ -344,6 +361,109 @@ def _strip_whitespace(text: str) -> str:
     return "".join(out)
 
 
+def _escape_end(text: str, i: int, *, in_class: bool) -> tuple[str | None, int]:
+    """The problem with the escape at ``text[i]`` (a backslash), and where it ends."""
+    letter = text[i + 1 : i + 2]
+    if letter and (letter in XPATH_SINGLE_ESCAPES or letter in XPATH_MULTI_ESCAPES):
+        return None, i + 2
+    if letter in ("p", "P"):
+        close = text.find("}", i + 3)
+        if text[i + 2 : i + 3] != "{" or close < 0:
+            return f"\\{letter} is not followed by a {{name}}", i + 2
+        return None, close + 1
+    if letter.isdigit() and letter != "0" and not in_class:
+        end = i + 2
+        while end < len(text) and text[end].isdigit():
+            end += 1
+        return None, end  # a back-reference
+    hint = "" if letter.isalnum() or not letter else f" (write {letter} without the backslash)"
+    return f"the escape \\{letter} is not XPath{hint}", i + 2
+
+
+def _class_end(text: str, i: int) -> tuple[str | None, int]:
+    """The problem with the escapes of the character class opening at ``text[i]``, and where it ends.
+
+    Only escapes are judged inside a class, and ``-[`` opens a subtracted class; the placement of ``-``
+    and an unescaped ``[`` elsewhere are left to Python, as XSD 1.0 and 1.1 disagree on them.
+    """
+    end = i + 1 + (text[i + 1 : i + 2] == "^")
+    end += text[end : end + 1] == "]"  # Python reads a leading ] as a member
+    depth, dash = 1, False
+    while end < len(text):
+        char = text[end]
+        if char == "\\":
+            problem, end = _escape_end(text, end, in_class=True)
+            if problem is not None:
+                return problem, end
+            dash = False
+            continue
+        if char == "]":
+            depth -= 1
+            if not depth:
+                return None, end + 1
+        depth += char == "[" and dash
+        dash = char == "-"
+        end += 1
+    return None, end
+
+
+def _quantifier_end(text: str, i: int, last: int, previous: int) -> tuple[str | None, int]:
+    """The problem with the quantifier at ``text[i]``, after a piece of kind ``last``, and where it ends.
+
+    ``previous`` is where the quantifier before it started, when ``last`` is one.
+    """
+    quantity = XPATH_QUANTITY.match(text, i) if text[i] == "{" else None
+    if text[i] == "{" and quantity is None:
+        return "an unescaped { starts no quantifier", i + 1
+    end = quantity.end() if quantity is not None else i + 1
+    if last in (_QUANTIFIED, _RELUCTANT) and text[i] == "+":
+        return f"the possessive quantifier {text[previous:end]} is not XPath", end
+    if last in (_QUANTIFIED, _RELUCTANT):
+        return f"the quantifier {text[i:end]} follows another quantifier", end
+    if last == _START:
+        return f"the quantifier {text[i:end]} has nothing to repeat", end
+    return None, end
+
+
+def xpath_regex_problem(text: str) -> str | None:
+    """The first construct of ``text`` that an XPath regular expression does not allow, or ``None``.
+
+    The language is XSD Part 2 Appendix F's with the XPath additions of F&O 5.6.1 (``^`` and ``$``,
+    reluctant quantifiers, back-references, ``\\$``) and XPath 3.0's ``(?:``.  Decided by one scan: an
+    escape outside SingleCharEsc, MultiCharEsc and ``\\p{..}``/``\\P{..}`` (a back-reference only outside a
+    class); ``(?`` not followed by ``:``; a quantifier after a quantifier (a ``+`` there is possessive)
+    other than one reluctant ``?``, or with nothing to repeat; an unescaped ``{`` that starts no ``{n}``,
+    ``{n,}`` or ``{n,m}``; and an unescaped ``}`` or ``]`` outside a class.
+    """
+    i, last, quantifier = 0, _START, 0
+    while i < len(text):
+        char = text[i]
+        problem: str | None = None
+        if char == "\\":
+            problem, i = _escape_end(text, i, in_class=False)
+            last = _ATOM
+        elif char == "[":
+            problem, i = _class_end(text, i)
+            last = _ATOM
+        elif char == "?" and last == _QUANTIFIED:
+            i, last = i + 1, _RELUCTANT
+        elif char in "*+?{":
+            problem, end = _quantifier_end(text, i, last, quantifier)
+            i, last, quantifier = end, _QUANTIFIED, i
+        elif text.startswith("(?:", i):
+            i, last = i + 3, _START
+        elif text.startswith("(?", i):
+            problem = f"the group construct {text[i : i + 3]} is not XPath"
+        elif char in "}]":
+            problem = f"an unescaped {char} outside a character class"
+        else:
+            i, last = i + 1, _START if char in "(|" else _ATOM
+            continue
+        if problem is not None:
+            return problem
+    return None
+
+
 def _regex(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     letters = "".join(str(flag) for flag in sg.objects(shape, SH.flags))
     if "q" in letters:
@@ -353,14 +473,18 @@ def _regex(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         if not isinstance(pattern, Literal):
             continue
         text = _strip_whitespace(str(pattern)) if "x" in letters else str(pattern)
-        if XPATH_ONLY_ESCAPES.search(text):
-            continue
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                re.compile(text, flags)
-        except (re.error, RecursionError, OverflowError) as exc:
-            ctx.add("SHQ011", shape, f"sh:pattern does not compile: {exc}", confidence="heuristic", subject=(pattern,))
+        if not XPATH_ONLY_ESCAPES.search(text):  # Python cannot compile those: only the scan judges them
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    re.compile(text, flags)
+            except (re.error, RecursionError, OverflowError) as exc:
+                message = f"sh:pattern does not compile: {exc}"
+                ctx.add("SHQ011", shape, message, confidence="heuristic", subject=(pattern,))
+                continue
+        if (problem := xpath_regex_problem(text)) is not None:
+            message = f"sh:pattern is not an XPath regular expression: {problem}."
+            ctx.add("SHQ011", shape, message, confidence="heuristic", subject=(pattern,))
 
 
 def _logical_members(ctx: RuleContext, sg: Graph, shape: Node) -> None:

@@ -11,6 +11,7 @@ from __future__ import annotations
 from rule_harness import BASE, graph
 
 from ontolint import Linter
+from ontolint.rules.shacl_authoring import xpath_regex_problem
 
 OWL = "http://www.w3.org/2002/07/owl#"
 
@@ -333,3 +334,90 @@ def test_shq008_keeps_the_count_message_for_a_count_that_is_no_natural() -> None
     assert _shq008("sh:minCount -1") == {
         ("sh:minCount value -1 is not a non-negative integer.", (f"{SH}minCount", f'"-1"^^<{XSD}integer>'))
     }
+
+
+# --- SHQ011: patterns Python compiles but an XPath regular expression rejects (F&O 5.6.1, XSD F) --------
+
+VALID_XPATH = [
+    r"^[a-z]+$",
+    r"\d{3}-\d{4}",
+    r"[a-z-[aeiou]]+",
+    r"(a|b)*?c",
+    r"\p{L}+",
+    r"\p{IsBasicLatin}",
+    r"\P{Nd}",
+    r"\$\^",
+    r"(a)\1",
+    r"(?:ab)+",
+    r"[\]\[]",
+    r"a{2,}",
+    r"a{2,3}?",
+    r"[{}]",
+    r"[^\s]+",
+    r"\i\c*",
+    r"^https?://.+$",
+    r"\.\-\|\{\}\(\)",
+    r"[0-9]{4}-[0-9]{2}",
+    r"^*",
+    r"[\p{L}\d-[aeiou]]",
+    r"",
+]
+INVALID_XPATH = {
+    r"a(?=b)": "the group construct (?= is not XPath",
+    r"(?!a)": "the group construct (?! is not XPath",
+    r"(?<=a)b": "the group construct (?< is not XPath",
+    r"(?i)a": "the group construct (?i is not XPath",
+    r"(?P<n>a)": "the group construct (?P is not XPath",
+    r"\bword": r"the escape \b is not XPath",
+    r"\Ax": r"the escape \A is not XPath",
+    r"x\Z": r"the escape \Z is not XPath",
+    r"\x41": r"the escape \x is not XPath",
+    r"\0": r"the escape \0 is not XPath",
+    r"[\1]": r"the escape \1 is not XPath",
+    r"[\b]": r"the escape \b is not XPath",
+    r"^https?:\/\/": r"the escape \/ is not XPath (write / without the backslash)",
+    r"\pL": r"\p is not followed by a {name}",
+    r"\p{L": r"\p is not followed by a {name}",
+    r"a{": "an unescaped { starts no quantifier",
+    r"a{,3}": "an unescaped { starts no quantifier",
+    r"{2}": "the quantifier {2} has nothing to repeat",
+    r"a|{2}": "the quantifier {2} has nothing to repeat",
+    r"({2})": "the quantifier {2} has nothing to repeat",
+    r"a}": "an unescaped } outside a character class",
+    r"a]": "an unescaped ] outside a character class",
+    r"a*+": "the possessive quantifier *+ is not XPath",
+    r"a{2}+": "the possessive quantifier {2}+ is not XPath",
+    r"a+?+": "the possessive quantifier +?+ is not XPath",
+    r"\p{L}**": "the quantifier * follows another quantifier",
+}
+
+
+def test_xpath_regex_problem_accepts_xpath_patterns() -> None:
+    assert {text: xpath_regex_problem(text) for text in VALID_XPATH} == dict.fromkeys(VALID_XPATH)
+
+
+def test_xpath_regex_problem_names_the_first_construct_xpath_rejects() -> None:
+    assert {text: xpath_regex_problem(text) for text in INVALID_XPATH} == INVALID_XPATH
+
+
+def test_xpath_regex_problem_leaves_character_class_internals_to_python() -> None:
+    # XSD wants ] and [ escaped inside a class, and XSD 1.0 and 1.1 disagree on "-": not judged.
+    assert [xpath_regex_problem(text) for text in (r"[]a]", r"[^]a]", r"[[a]", r"[a-]", r"[a-z-]")] == [None] * 5
+
+
+def _shq011(body: str) -> set[str]:
+    return {message for _focus, message, _subject in found("SHQ011", "", _shapes(body))}
+
+
+def test_shq011_reports_a_pattern_python_compiles_but_xpath_rejects() -> None:
+    assert _shq011(r'sh:pattern "^https?:\\/\\/"') == {
+        r"sh:pattern is not an XPath regular expression: the escape \/ is not XPath (write / without the backslash)."
+    }
+    assert _shq011(r'sh:pattern "a b{" ; sh:flags "x"') == {
+        "sh:pattern is not an XPath regular expression: an unescaped { starts no quantifier."
+    }
+
+
+def test_shq011_gives_a_pattern_python_rejects_only_its_compile_finding() -> None:
+    (message,) = _shq011(r'sh:pattern "(\\bword"')
+    assert message.startswith("sh:pattern does not compile: missing )")
