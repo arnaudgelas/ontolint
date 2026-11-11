@@ -18,16 +18,21 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
 ``1e0``), a string, a boolean and an IRI are not naturals.  Specifications of the error rules:
 
 * **SHQ007.** A shape with exactly one ``sh:minCount`` and exactly one ``sh:maxCount``, both naturals,
-  where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``).  Excluded: equal
-  bounds, a missing bound, several values for either parameter, and a bound that is not a natural
-  (SHQ008 reports it).  Error, certain: no set of value nodes satisfies both, so every focus node
-  violates the shape.
-* **SHQ008.** Every value of ``sh:minCount`` or ``sh:maxCount`` on a shape that is not a natural,
-  each reported on its own: negative, decimal or double, ill-typed, string, boolean or IRI.  A
-  derived integer datatype is accepted although SHACL 2017 section 4.2 requires datatype
-  ``xsd:integer``.  Error: SHACL makes such a shape ill-formed (a SHACL processor may reject the
-  shapes graph or ignore the constraint); the check is deterministic, though its findings are
-  recorded with the default confidence ``heuristic``.
+  where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``), derived integer
+  types included (SHQ008 reports their datatype).  Excluded: equal bounds, a missing bound, several
+  values for either parameter, and a bound that is not a natural (SHQ008 reports it).  Error,
+  certain: no set of value nodes satisfies both, so every focus node violates the shape.
+* **SHQ008.** Every value of ``sh:minCount``, ``sh:maxCount``, ``sh:minLength`` or ``sh:maxLength`` on
+  a shape that is not a natural, each reported on its own: negative, decimal or double, ill-typed,
+  string, boolean or IRI; and every natural whose datatype is not ``xsd:integer`` (a derived type
+  such as ``xsd:int``, ``xsd:nonNegativeInteger`` or ``xsd:unsignedByte``).  A count keeps the
+  message "sh:minCount value 1.0 is not a non-negative integer." (the predicate as the shapes graph's
+  prefixes write it, the value's lexical form); a length, and a derived type, print the value in
+  N-Triples and the predicate as ``sh:``.  Error: SHACL (sections 4.2.1, 4.2.2, 4.4.1 and 4.4.2, and
+  the syntax rules of Appendix B) requires each to be a literal with datatype ``xsd:integer``, so the
+  shape is ill-formed (a SHACL processor may reject the shapes graph or ignore the constraint); the
+  check is deterministic, though its findings are recorded with the default confidence
+  ``heuristic``.
 * **SHQ011.** A literal value of ``sh:pattern`` that Python's ``re`` cannot compile with the shape's
   ``sh:flags`` (all values concatenated).  SHACL regexes are XPath/XSD regexes, so the flags are
   translated: ``i``, ``s`` and ``m`` map to the Python flags, ``x`` removes whitespace outside
@@ -39,8 +44,8 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   ``(?:)``, ``a{``, possessive quantifiers, unknown flag letters), so the rule misses those; it can
   also flag a valid XSD pattern Python rejects (a repetition count above 4294967295).  Error,
   heuristic: an invalid pattern makes the shape ill-formed, but the judgement is Python's, not XSD's.
-* **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``.  Excluded as for SHQ007; a length
-  that is not a natural is ignored and no rule reports it.  Error, certain: no value node has a
+* **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``, derived integer types included.
+  Excluded as for SHQ007; a length that is not a natural is SHQ008's.  Error, certain: no value node has a
   string length in the range, so every value node (and every blank node) violates the shape.
 * **SHQ018.** A shape where some lower bound (``sh:minInclusive`` or ``sh:minExclusive``) and some
   upper bound (``sh:maxInclusive`` or ``sh:maxExclusive``), both numbers, admit no value: the lower
@@ -73,7 +78,7 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items, shape_term
+from .support import list_items, shape_term, term_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -300,16 +305,24 @@ def _length_order(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     _ordered_pair(ctx, sg, shape, (SH.minLength, SH.maxLength), ("SHQ017", message))
 
 
-def _cardinality_values(ctx: RuleContext, sg: Graph, shape: Node) -> None:
-    for predicate in (SH.minCount, SH.maxCount):
+def _integer_values(ctx: RuleContext, sg: Graph, shape: Node) -> None:
+    """SHQ008: every count and length is a literal of datatype ``xsd:integer`` with a value of at least 0."""
+    for predicate in (SH.minCount, SH.maxCount, SH.minLength, SH.maxLength):
+        name = "sh:" + str(predicate).removeprefix(str(SH))
         for value in sg.objects(shape, predicate):
-            if _natural(value) is None:
+            if _natural(value) is None and predicate in (SH.minCount, SH.maxCount):
                 ctx.add(
                     "SHQ008",
                     shape,
                     f"{predicate.n3(sg.namespace_manager)} value {value!s} is not a non-negative integer.",
                     subject=(predicate, shape_term(value)),
                 )
+            elif _natural(value) is None:
+                message = f"{name} value {term_text(value)} is not a non-negative integer."
+                ctx.add("SHQ008", shape, message, subject=(predicate, shape_term(value)))
+            elif isinstance(value, Literal) and value.datatype != XSD.integer:
+                message = f"{name} value {term_text(value)} is not of datatype xsd:integer."
+                ctx.add("SHQ008", shape, message, subject=(predicate, value))
 
 
 def _strip_whitespace(text: str) -> str:
@@ -483,7 +496,7 @@ def _undeclared_targets(ctx: RuleContext, sg: Graph, shape: Node) -> None:
 SHAPE_CHECKS: tuple[Check, ...] = (
     _cardinality_order,
     _length_order,
-    _cardinality_values,
+    _integer_values,
     _regex,
     _logical_members,
     _datatype_and_class,

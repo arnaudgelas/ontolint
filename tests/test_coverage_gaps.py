@@ -288,3 +288,48 @@ def test_owl040_reports_a_non_xsd_datatype_filler_on_an_object_property() -> Non
     assert _messages("OWL040", turtle) == {
         (f"Restriction on object property ex:p uses datatype filler {OWL}real.", ("ex:p", "filler", f"{OWL}real"))
     }
+
+
+# --- SHQ008: counts and lengths are literals of datatype xsd:integer (SHACL 4.2, 4.4) --------------------
+
+SH = "http://www.w3.org/ns/shacl#"
+XSD = "http://www.w3.org/2001/XMLSchema#"
+
+
+def _shapes(body: str) -> str:
+    return f"ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P . ex:P sh:path ex:p ; {body} ."
+
+
+def _shq008(body: str) -> set[tuple[str, tuple[str, ...]]]:
+    return {(message, subject) for _focus, message, subject in found("SHQ008", "", _shapes(body))}
+
+
+def test_shq008_reports_a_natural_count_of_a_derived_integer_type() -> None:
+    assert _shq008('sh:minCount "1"^^xsd:nonNegativeInteger') == {
+        (
+            f'sh:minCount value "1"^^<{XSD}nonNegativeInteger> is not of datatype xsd:integer.',
+            (f"{SH}minCount", f'"1"^^<{XSD}nonNegativeInteger>'),
+        )
+    }
+
+
+def test_shq008_reports_lengths_like_counts() -> None:
+    assert _shq008('sh:minLength 1.5 ; sh:maxLength "2"^^xsd:int') == {
+        (
+            f'sh:minLength value "1.5"^^<{XSD}decimal> is not a non-negative integer.',
+            (f"{SH}minLength", f'"1.5"^^<{XSD}decimal>'),
+        ),
+        (
+            f'sh:maxLength value "2"^^<{XSD}int> is not of datatype xsd:integer.',
+            (f"{SH}maxLength", f'"2"^^<{XSD}int>'),
+        ),
+    }
+    assert _shq008("sh:minLength ex:two") == {
+        ("sh:minLength value ex:two is not a non-negative integer.", (f"{SH}minLength", "ex:two"))
+    }
+
+
+def test_shq008_keeps_the_count_message_for_a_count_that_is_no_natural() -> None:
+    assert _shq008("sh:minCount -1") == {
+        ("sh:minCount value -1 is not a non-negative integer.", (f"{SH}minCount", f'"-1"^^<{XSD}integer>'))
+    }
