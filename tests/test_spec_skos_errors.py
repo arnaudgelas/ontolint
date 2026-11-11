@@ -84,3 +84,38 @@ def test_align003_reports_a_broad_and_a_related_match_on_one_pair_apart() -> Non
         "broadMatch/narrowMatch.",
         "relatedMatch.",
     ]
+
+
+def test_skos009_follows_broad_and_narrow_match_into_the_hierarchy() -> None:
+    via = " through skos:broadMatch or skos:narrowMatch"
+    assert run("SKOS009", "ex:a skos:related ex:b . ex:b skos:narrowMatch ex:a .") == [
+        ("a", f"skos:related and a hierarchical link{via} both connect {BASE}a and {BASE}b."),
+    ]
+    assert run("SKOS009", "ex:a skos:broader ex:b . ex:b skos:broadMatch ex:c . ex:c skos:related ex:a .") == [
+        ("a", f"skos:related and a hierarchical link{via} both connect {BASE}a and {BASE}c."),
+    ]
+
+
+def test_skos009_reads_related_match_as_associative() -> None:
+    assert run("SKOS009", "ex:a skos:relatedMatch ex:b ; skos:broader ex:b .") == [
+        ("a", f"skos:relatedMatch and a hierarchical link both connect {BASE}a and {BASE}b."),
+    ]
+    two_steps = "ex:a skos:broadMatch ex:b . ex:b skos:broadMatch ex:c . ex:a skos:relatedMatch ex:c ."
+    assert run("SKOS009", two_steps) == [
+        (
+            "a",
+            f"skos:relatedMatch and a hierarchical link through skos:broadMatch or skos:narrowMatch both connect"
+            f" {BASE}a and {BASE}c.",
+        ),
+    ]
+
+
+def test_skos009_leaves_related_match_with_a_direct_broad_match_to_align004() -> None:
+    body = "ex:a skos:relatedMatch ex:b ; skos:broadMatch ex:b ."
+    assert run("SKOS009", body) == []
+    assert [focus for focus, _ in run("ALIGN004", body)] == ["a"]
+
+
+def test_skos009_keeps_the_old_message_when_the_plain_hierarchy_already_conflicts() -> None:
+    body = "ex:a skos:related ex:b ; skos:relatedMatch ex:b ; skos:broader ex:b ; skos:broadMatch ex:b ."
+    assert run("SKOS009", body) == [("a", f"skos:related and a hierarchical link both connect {BASE}a and {BASE}b.")]

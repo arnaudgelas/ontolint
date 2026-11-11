@@ -67,11 +67,35 @@ CASES = {
                 "ex:c skos:related ex:a . ex:a skos:broaderTransitive ex:b . ex:c skos:narrower ex:b .",
             ),
             ttl("related and narrowerTransitive", "ex:a skos:related ex:b ; skos:narrowerTransitive ex:b ."),
+            # S41 puts the mapping properties under broader, narrower and related, so S27 applies to them.
+            ttl("related and broadMatch", "ex:a skos:related ex:b ; skos:broadMatch ex:b ."),
+            ttl("related and inverse narrowMatch", "ex:a skos:related ex:b . ex:b skos:narrowMatch ex:a ."),
+            ttl(
+                "related to an ancestor through broader then broadMatch",
+                "ex:a skos:broader ex:b . ex:b skos:broadMatch ex:c . ex:a skos:related ex:c .",
+            ),
+            ttl("relatedMatch and broader", "ex:a skos:relatedMatch ex:b ; skos:broader ex:b ."),
+            ttl(
+                "relatedMatch to an ancestor through broadMatch",
+                "ex:a skos:broadMatch ex:b . ex:b skos:broader ex:c . ex:c skos:relatedMatch ex:a .",
+            ),
         ],
         [
             ttl("related only", "ex:a skos:related ex:b . ex:c skos:broader ex:b ."),
             ttl("siblings", "ex:a skos:broader ex:p . ex:b skos:broader ex:p . ex:a skos:related ex:b ."),
-            ttl("broadMatch is not followed", "ex:a skos:related ex:b ; skos:broadMatch ex:b ."),
+            ttl(
+                "relatedMatch and a direct broadMatch is ALIGN004's",
+                "ex:a skos:relatedMatch ex:b ; skos:broadMatch ex:b .",
+            ),
+            ttl(
+                "relatedMatch and a direct inverse narrowMatch is ALIGN004's",
+                "ex:a skos:relatedMatch ex:b . ex:b skos:narrowMatch ex:a .",
+            ),
+            ttl(
+                "broadMatch siblings",
+                "ex:a skos:broadMatch ex:p . ex:b skos:broadMatch ex:p . ex:a skos:related ex:b .",
+            ),
+            ttl("closeMatch is not hierarchical", "ex:a skos:related ex:b ; skos:closeMatch ex:b ."),
             ttl("self related is SKOS010", "ex:a skos:related ex:a ; skos:broader ex:a ."),
             ttl("not owned", OTHER + "o:a skos:related o:b ; skos:broader o:b .", base=BASE),
         ],

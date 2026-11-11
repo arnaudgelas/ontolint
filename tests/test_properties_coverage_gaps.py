@@ -4,6 +4,9 @@
   here over property expressions and their inverses exactly as the specification states the relation ``→``;
   the rule's walk over IRIs must agree on every random property hierarchy, for the characteristics and for
   the cardinality restrictions of SS 11.2.
+* SKOS009: the pairs reported are those S27 makes conflicting once S41 puts the mapping properties under
+  ``skos:broader``, ``skos:narrower`` and ``skos:related``, less ALIGN004's direct ones, and a pair the
+  plain hierarchy already makes conflicting keeps the message it had before.
 * SHQ011: a pattern drawn from the grammar of XSD Part 2 Appendix F with the XPath additions (anchors,
   reluctant quantifiers, ``(?:``, back-references, ``\\$``) never gets the "not an XPath regular
   expression" finding.
@@ -21,7 +24,7 @@ from hypothesis import strategies as st
 from hypothesis_strategies import budget
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
-from rdflib.namespace import OWL, RDF, RDFS
+from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rdflib.term import Node
 
 from ontolint import Linter
@@ -222,3 +225,68 @@ XPATH_PATTERNS = st.recursive(
 def test_shq011_never_rejects_a_pattern_of_the_xpath_grammar(pattern: str) -> None:
     assert xpath_regex_problem(pattern) is None
     assert xpath_regex_problem(f"({pattern})\\1") is None  # a back-reference to a group
+
+
+# --- SKOS009 --------------------------------------------------------------------------------------------
+
+CONCEPTS = tuple(URIRef(f"{EX}c{i}") for i in range(5))
+UPWARD = (SKOS.broader, SKOS.broaderTransitive)
+DOWNWARD = (SKOS.narrower, SKOS.narrowerTransitive)
+SKOS_EDGES = st.lists(
+    st.tuples(
+        st.sampled_from(CONCEPTS),
+        st.sampled_from((*UPWARD, *DOWNWARD, SKOS.broadMatch, SKOS.narrowMatch, SKOS.related, SKOS.relatedMatch)),
+        st.sampled_from(CONCEPTS),
+    ),
+    max_size=10,
+)
+
+
+def _linked(edges: list[tuple[URIRef, URIRef, URIRef]], a: URIRef, b: URIRef, *, mapping: bool) -> bool:
+    """Whether one of ``a`` and ``b`` reaches the other through one or more broader steps (S22, S41)."""
+    up = {*UPWARD, SKOS.broadMatch} if mapping else set(UPWARD)
+    down = {*DOWNWARD, SKOS.narrowMatch} if mapping else set(DOWNWARD)
+    steps = {(s, o) for s, p, o in edges if p in up and s != o} | {(o, s) for s, p, o in edges if p in down and s != o}
+
+    def reaches(start: URIRef, goal: URIRef) -> bool:
+        seen, stack = set(), [start]
+        while stack:
+            here = stack.pop()
+            for child, parent in steps:
+                if child == here and parent not in seen:
+                    seen.add(parent)
+                    stack.append(parent)
+        return goal in seen
+
+    return reaches(a, b) or reaches(b, a)
+
+
+@budget(0.5)
+@given(SKOS_EDGES)
+def test_skos009_reports_the_pairs_s27_makes_conflicting(edges: list[tuple[URIRef, URIRef, URIRef]]) -> None:
+    graph = Graph()
+    for triple in edges:
+        graph.add(triple)
+    found = {
+        (f.focus, f.subject[0], "through" not in f.message and f.message.startswith("skos:related "))
+        for f in Linter(graph).execute(["SKOS009"]).findings
+    }
+
+    def linked_by(predicates: tuple[URIRef, ...], a: URIRef, b: URIRef) -> bool:
+        return any(p in predicates and {s, o} == {a, b} for s, p, o in edges)
+
+    expected = set()
+    for a in CONCEPTS:
+        for b in CONCEPTS:
+            if not str(a) < str(b):
+                continue
+            related = linked_by((SKOS.related,), a, b)
+            if not (related or linked_by((SKOS.relatedMatch,), a, b)):
+                continue
+            if _linked(edges, a, b, mapping=False):  # skos:related keeps the message it had before
+                expected.add((str(a), str(b), related))
+            elif _linked(edges, a, b, mapping=True) and (
+                related or not linked_by((SKOS.broadMatch, SKOS.narrowMatch), a, b)
+            ):
+                expected.add((str(a), str(b), False))
+    assert found == expected

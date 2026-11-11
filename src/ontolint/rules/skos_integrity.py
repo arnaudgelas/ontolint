@@ -14,15 +14,22 @@ Specifications of the error rules:
 * **SKOS008.** An owned IRI typed ``skos:Collection`` or ``skos:OrderedCollection`` (a subclass of
   Collection, S29) and also ``skos:Concept`` or ``skos:ConceptScheme``.  A Collection that merely has
   concept members is fine.  Error, certain: integrity condition S37.
-* **SKOS009.** Two distinct IRIs linked by ``skos:related`` (in either direction, S23) of which one is
-  an ancestor of the other: reachable through one or more asserted ``skos:broader`` or
-  ``skos:broaderTransitive`` edges, or inverted ``skos:narrower`` / ``skos:narrowerTransitive`` edges
-  (S22, S24-S26), so a grandparent counts as well as a parent.  Exclusions: siblings and cousins (a
-  shared ancestor is not a conflict); the mapping sub-properties ``broadMatch``, ``narrowMatch`` and
-  ``relatedMatch`` (S41) are not followed or matched (ALIGN004 judges mapping strengths); a concept
-  related to itself (SKOS010).  One finding per pair when either end is owned, focused on the
-  lexically smaller IRI.  Error, certain: integrity condition S27 makes ``skos:related`` disjoint with
-  ``skos:broaderTransitive``.
+* **SKOS009.** Two distinct IRIs linked by ``skos:related`` or ``skos:relatedMatch`` (in either
+  direction, S23) of which one is an ancestor of the other: reachable through one or more asserted
+  ``skos:broader``, ``skos:broaderTransitive`` or ``skos:broadMatch`` edges, or inverted
+  ``skos:narrower``, ``skos:narrowerTransitive`` or ``skos:narrowMatch`` edges (S22, S24-S26, and
+  S41, which makes ``broadMatch``, ``narrowMatch`` and ``relatedMatch`` sub-properties of
+  ``broader``, ``narrower`` and ``related``), so a grandparent counts as well as a parent.  The
+  message names the associative property and says when the hierarchy needs a mapping edge: a
+  ``skos:related`` pair conflicting without one keeps "skos:related and a hierarchical link both
+  connect A and B."; otherwise "skos:relatedMatch and a hierarchical link through skos:broadMatch or
+  skos:narrowMatch both connect A and B.", with either part as it applies.  Exclusions: siblings and
+  cousins (a shared ancestor is not a conflict); a pair linked only by ``skos:relatedMatch`` whose
+  conflict needs a mapping edge and that is directly linked by ``broadMatch`` or ``narrowMatch``,
+  which is ALIGN004's (mapping strengths); ``skos:closeMatch`` and ``skos:exactMatch``, which are not
+  hierarchical; a concept related to itself (SKOS010).  One finding per pair when either end is
+  owned, focused on the lexically smaller IRI.  Error, certain: integrity condition S27 makes
+  ``skos:related`` disjoint with ``skos:broaderTransitive``.
 * **SKOS012.** Two distinct IRIs linked by ``skos:exactMatch`` (either direction) and by
   ``skos:broadMatch``, ``skos:narrowMatch`` or ``skos:relatedMatch`` (either direction).  narrowMatch
   counts because it is the inverse of broadMatch (S43) and exactMatch is symmetric (S44).  Exclusions:
@@ -265,16 +272,40 @@ def _disjoint_types(ctx: RuleContext) -> None:
             )
 
 
-def _parents(g: Graph) -> dict[URIRef, set[URIRef]]:
-    """Asserted ``broader``/``broaderTransitive`` edges plus inverted ``narrower``/``narrowerTransitive``."""
+def _parents(g: Graph, *, mapping: bool = False) -> dict[URIRef, set[URIRef]]:
+    """Asserted ``broader``/``broaderTransitive`` edges plus inverted ``narrower``/``narrowerTransitive``.
+
+    With ``mapping``, also ``broadMatch`` and inverted ``narrowMatch`` (sub-properties of ``broader`` and
+    ``narrower``, S41).
+    """
     parents: defaultdict[URIRef, set[URIRef]] = defaultdict(set)
-    for upward, predicates in ((True, _UPWARD), (False, _DOWNWARD)):
+    upward, downward = (
+        (_UPWARD, _DOWNWARD) if not mapping else ((*_UPWARD, SKOS.broadMatch), (*_DOWNWARD, SKOS.narrowMatch))
+    )
+    for upward_edge, predicates in ((True, upward), (False, downward)):
         for p in predicates:
             for s, o in g.subject_objects(p):
                 if isinstance(s, URIRef) and isinstance(o, URIRef) and s != o:
-                    child, parent = (s, o) if upward else (o, s)
+                    child, parent = (s, o) if upward_edge else (o, s)
                     parents[child].add(parent)
     return parents
+
+
+class _Hierarchy:
+    """The ancestors of each concept under one set of parent edges, computed on first use."""
+
+    def __init__(self, parents: dict[URIRef, set[URIRef]]) -> None:
+        self._parents = parents
+        self._ancestors: dict[URIRef, set[URIRef]] = {}
+
+    def above(self, node: URIRef) -> set[URIRef]:
+        if node not in self._ancestors:
+            self._ancestors[node] = _ancestors(self._parents, node)
+        return self._ancestors[node]
+
+    def linked(self, first: URIRef, second: URIRef) -> bool:
+        """Whether one of the two is an ancestor of the other."""
+        return second in self.above(first) or first in self.above(second)
 
 
 def _ancestors(parents: dict[URIRef, set[URIRef]], start: URIRef) -> set[URIRef]:
@@ -291,26 +322,28 @@ def _ancestors(parents: dict[URIRef, set[URIRef]], start: URIRef) -> set[URIRef]
 
 def _related_conflicts(ctx: RuleContext) -> None:
     g = ctx.g
-    parents = _parents(g)
-    ancestors: dict[URIRef, set[URIRef]] = {}
-
-    def above(node: URIRef) -> set[URIRef]:
-        if node not in ancestors:
-            ancestors[node] = _ancestors(parents, node)
-        return ancestors[node]
-
-    for pair in sorted(_pairs(g, (SKOS.related,)), key=_ordered):
+    plain = _Hierarchy(_parents(g))
+    with_mappings = _Hierarchy(_parents(g, mapping=True))
+    related = _pairs(g, (SKOS.related,))
+    direct_mappings = _pairs(g, (SKOS.broadMatch, SKOS.narrowMatch))  # with relatedMatch alone, ALIGN004's
+    for pair in sorted(related | _pairs(g, (SKOS.relatedMatch,)), key=_ordered):
         first, second = _ordered(pair)
-        if second not in above(first) and first not in above(second):
+        if not (ctx.local(first) or ctx.local(second)):
             continue
-        if ctx.local(first) or ctx.local(second):
-            ctx.add(
-                "SKOS009",
-                first,
-                f"skos:related and a hierarchical link both connect {first} and {second}.",
-                confidence="certain",
-                subject=(second,),
-            )
+        association = "skos:related" if pair in related else "skos:relatedMatch"
+        if plain.linked(first, second):
+            via = ""
+        elif with_mappings.linked(first, second) and (pair in related or pair not in direct_mappings):
+            via = " through skos:broadMatch or skos:narrowMatch"
+        else:
+            continue
+        ctx.add(
+            "SKOS009",
+            first,
+            f"{association} and a hierarchical link{via} both connect {first} and {second}.",
+            confidence="certain",
+            subject=(second,),
+        )
     for c in _iris(g.subjects(SKOS.related, None)):
         if (c, SKOS.related, c) in g and ctx.local(c):
             ctx.add("SKOS010", c, "Concept is skos:related to itself.", confidence="certain")
