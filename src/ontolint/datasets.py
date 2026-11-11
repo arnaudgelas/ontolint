@@ -24,8 +24,10 @@ A finding names the graphs of the terms it is about (its focus and :attr:`Findin
 do): for each term, the graphs that state a triple with it as subject (where its author describes it),
 else those that mention it at all (a superclass that is only used).  Rules still run once on the union,
 so a finding is reported once, however many graphs it names.  A focus that is no node of the file
-(``(ontology)``, a literal, a name no triple holds) names no graph.  Like modules, graphs are
-presentation only: they never change a finding, its fingerprint or the exit code.
+(``(ontology)``, a literal, a name no triple holds) names no graph.  An IRI with a password also counts
+under its masked spelling (:func:`redact_password`, SEC014's focus), so SEC014 names the graphs of the
+credentialed IRI it reports.  Like modules, graphs are presentation only: they never change a finding,
+its fingerprint or the exit code.
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ from rdflib.store import Store
 from rdflib.term import Identifier, Node
 
 from .models import Finding
-from .rules.support import STABLE_ID_LENGTH, stable_blank_id
+from .rules.support import PASSWORD_MASK, STABLE_ID_LENGTH, redact_password, stable_blank_id
 
 DEFAULT_GRAPH = "(default graph)"
 """The name of a dataset's default graph (parenthesised like ``(ontology)``, so no IRI can collide with it)."""
@@ -174,16 +176,24 @@ class _TermText:
 def _term_graphs(
     index: GraphIndex, wanted: set[str], text: _TermText
 ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
-    """For each wanted term: the graphs describing it (as subject), and those mentioning it anywhere."""
+    """For each wanted term: the graphs describing it (as subject), and those mentioning it anywhere.
+
+    When a wanted term holds :data:`PASSWORD_MASK`, an IRI also counts under its masked spelling, so a
+    masked focus names the graphs of every IRI that masks to it, including one spelled with the mask.
+    """
     described: dict[str, set[str]] = {}
     mentioned: dict[str, set[str]] = {}
+    masks = any(PASSWORD_MASK in term for term in wanted)
     for triple, names in index.triples.items():
         for position, node in enumerate(triple):
             term = text(node)
-            if term in wanted:
-                mentioned.setdefault(term, set()).update(names)
+            if term is None:
+                continue
+            terms = {term, redact_password(term)} if masks and isinstance(node, URIRef) else {term}
+            for each in terms & wanted:
+                mentioned.setdefault(each, set()).update(names)
                 if position == 0:
-                    described.setdefault(term, set()).update(names)
+                    described.setdefault(each, set()).update(names)
     return described, mentioned
 
 

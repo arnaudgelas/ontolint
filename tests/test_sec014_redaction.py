@@ -96,3 +96,31 @@ def test_a_baseline_holds_no_hash_over_the_password(tmp_path: Path, run: Any) ->
     # Neither hash of the version 2 file is over the password: the identity is (rule, focus, subject).
     written = baseline.dumps(baseline.build([FileReport("a.ttl", "a.ttl", (masked,))]))
     assert json.loads(written)["identities"] == json.loads(text)["identities"]
+
+
+# The credentialed IRI is stated in the named graph G1 only; the masked focus still names it.
+GRAPH = "https://example.test/g1"
+DATASETS = {
+    "a.trig": (
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+        f"<{GRAPH}> {{\n"
+        f"    <https://example.test/onto#D> rdfs:seeAlso <{CREDENTIALED}> .\n"
+        "}\n"
+    ),
+    "a.nq": f"<https://example.test/onto#D> <{SEE_ALSO}> <{CREDENTIALED}> <{GRAPH}> .\n",
+}
+
+
+@pytest.mark.parametrize("name", sorted(DATASETS))
+def test_a_dataset_finding_names_the_graph_of_the_credentialed_iri(tmp_path: Path, run: Any, name: str) -> None:
+    (tmp_path / name).write_text(DATASETS[name], encoding="utf-8")
+    code, out, err = run(name, "--select", "SEC014", "--format", "json")
+    assert code == 1, err
+    assert PASSWORD not in out + err
+    [finding] = json.loads(out)["findings"]
+    assert finding["focus"] == MASKED
+    assert finding["graphs"] == [GRAPH]
+    _code, out, _err = run(name, "--select", "SEC014", "--format", "sarif")
+    assert PASSWORD not in out
+    [result] = json.loads(out)["runs"][0]["results"]
+    assert result["properties"]["graphs"] == [GRAPH]
