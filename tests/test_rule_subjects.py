@@ -378,3 +378,21 @@ def test_metric_findings_carry_no_subject_so_a_new_ratio_is_the_same_finding() -
     few = "".join(f"ex:C{i} a owl:Class . " for i in range(12))
     more = few + "".join(f"ex:D{i} a owl:Class . " for i in range(5))
     assert subjects("METRIC001", few) == subjects("METRIC001", more) == {("urn:ontolint:graph", ())}
+
+
+def test_sec012_reports_every_hazardous_character_of_one_predicate_in_one_finding() -> None:
+    # Two literals with different characters were two findings with one identity, so one baselined hid the other.
+    turtle = 'ex:a ex:p "x\\u202Ey", "x\\u0007y" .'
+    assert subjects("SEC012", turtle) == {("a", ("p",))}
+    (finding,) = Linter(graph(turtle)).execute(["SEC012"]).findings
+    assert finding.message.endswith("contains control or bidirectional-override characters (U+0007, U+202E).")
+
+
+def test_sec005_reports_the_longest_literal_of_one_predicate_in_one_finding() -> None:
+    from ontolint.rules.safety import MAX_LITERAL_LENGTH  # noqa: PLC0415 -- the limit the fixture exceeds
+
+    long, longer = "x" * (MAX_LITERAL_LENGTH + 1), "y" * (MAX_LITERAL_LENGTH + 2)
+    turtle = f'ex:a ex:p "{long}", "{longer}" .'
+    assert subjects("SEC005", turtle) == {("a", ("p",))}
+    (finding,) = Linter(graph(turtle)).execute(["SEC005"]).findings
+    assert f"has {MAX_LITERAL_LENGTH + 2} characters" in finding.message

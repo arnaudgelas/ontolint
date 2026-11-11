@@ -244,6 +244,10 @@ def _hazards(text: str, pattern: re.Pattern[str]) -> str:
 
 def _terms(ctx: RuleContext) -> None:
     iris: set[str] = set()
+    # One SEC005 and one SEC012 finding per subject and predicate (their identity), however many literals:
+    # the longest literal, and every hazardous character of all of them.
+    longest: dict[tuple[Node, Node], int] = {}
+    hazardous: dict[tuple[Node, Node], str] = {}
     for s, p, o in ctx.g:
         for node in (s, p, o):
             if isinstance(node, URIRef):
@@ -251,22 +255,17 @@ def _terms(ctx: RuleContext) -> None:
         if isinstance(o, Literal):
             text = str(o)
             if len(text) > MAX_LITERAL_LENGTH:
-                ctx.add(
-                    "SEC005",
-                    s,
-                    f"Literal on {p} has {len(text)} characters (limit {MAX_LITERAL_LENGTH}).",
-                    confidence="certain",
-                    subject=(p,),
-                )
-            found = _hazards(text, _LITERAL_HAZARD)
-            if found:
-                ctx.add(
-                    "SEC012",
-                    s,
-                    f"Literal on {p} contains control or bidirectional-override characters ({found}).",
-                    confidence="certain",
-                    subject=(p,),
-                )
+                longest[s, p] = max(len(text), longest.get((s, p), 0))
+            if _LITERAL_HAZARD.search(text):
+                hazardous[s, p] = hazardous.get((s, p), "") + text
+    for (s, p), length in longest.items():
+        message = f"Literal on {p} has {length} characters (limit {MAX_LITERAL_LENGTH})."
+        ctx.add("SEC005", s, message, confidence="certain", subject=(p,))
+    for (s, p), text in hazardous.items():
+        message = (
+            f"Literal on {p} contains control or bidirectional-override characters ({_hazards(text, _LITERAL_HAZARD)})."
+        )
+        ctx.add("SEC012", s, message, confidence="certain", subject=(p,))
     for iri in sorted(iris):
         _check_iri(ctx, iri)
 
