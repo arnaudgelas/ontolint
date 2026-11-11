@@ -708,11 +708,34 @@ def _check_policy_rules(config: Policy, registry: RuleRegistry) -> None:
     raise UnknownPolicyRuleError(message + "; use --list-rules to see valid identifiers")
 
 
-def _emit(output: str, args: argparse.Namespace) -> None:
+def _output_failure(what: str, exc: Exception) -> str:
+    return f"TOOL001: {what} output failed: {type(exc).__name__}: {exc}"
+
+
+def _write_text(path: str | Path, text: str, *, what: str) -> str | None:
+    """Write ``text`` to ``path`` as UTF-8; return the TOOL001 line when it cannot be written, else ``None``.
+
+    The text is encoded first, so a report that UTF-8 cannot hold (a lone surrogate) leaves an existing file as it
+    was instead of truncating it.  ``write_text`` keeps the platform's newline translation.
+    """
+    try:
+        text.encode("utf-8")
+        Path(path).write_text(text, encoding="utf-8")
+    except (OSError, UnicodeEncodeError) as exc:
+        return _output_failure(what, exc)
+    return None
+
+
+def _emit(output: str, args: argparse.Namespace) -> str | None:
+    """Write the report to ``--output`` or stdout; return the TOOL001 line when it could not be written."""
+    text = output + "\n"
     if args.output:
-        Path(args.output).write_text(output + "\n", encoding="utf-8")
-    else:
-        print(output)
+        return _write_text(args.output, text, what="report")
+    try:
+        sys.stdout.write(text)
+    except UnicodeEncodeError as exc:  # a broken pipe (OSError) is not handled here: see TODO.md
+        return _output_failure("report", exc)
+    return None
 
 
 def _secondary_input_error(exc: InputRejected | _ShapesParseFailure | ProfileError) -> str:
@@ -801,7 +824,10 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
     code = run_exit_code(report, fail_on)
     if args.fail_on_stale_baseline and report.stale_baseline and code == 0:
         code = 1
-    _emit(render_report(report, args.format, code), args)
+    failure = _emit(render_report(report, args.format, code), args)
+    if failure is not None:
+        print(failure, file=sys.stderr)
+        code = 2
     for path, x in report.broken:
         print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
     return code

@@ -256,6 +256,102 @@ def test_an_unwritable_baseline_is_a_lint_execution_failure(tmp_path: Path, run:
     assert err.startswith("TOOL001: lint execution failed: FileNotFoundError: ")
 
 
+OUTPUT_FAILED = "TOOL001: report output failed: "
+# A lone surrogate is a valid Turtle escape that no UTF-8 report can hold (JSON escapes it; text cannot).
+SURROGATE_TTL = (
+    "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+    "<https://example.test/onto> a owl:Ontology .\n"
+    "<https://example.test/onto#\\uD800x> a owl:Class .\n"
+)
+
+
+def test_an_output_in_a_missing_directory_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    code, out, err = run("a.ttl", "--output", "no/such/dir/out.txt")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith(OUTPUT_FAILED + "FileNotFoundError: ")
+    assert err.count("\n") == 1 and "Traceback" not in err
+
+
+def test_an_output_naming_a_directory_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    (tmp_path / "out").mkdir()
+    code, out, err = run("a.ttl", "--output", "out")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith(OUTPUT_FAILED)  # IsADirectoryError on POSIX, PermissionError on Windows
+
+
+if sys.platform == "win32":
+    POSIX_NON_ROOT = False
+else:
+    POSIX_NON_ROOT = os.geteuid() != 0
+
+
+@pytest.mark.skipif(not POSIX_NON_ROOT, reason="needs POSIX permissions and a non-root user")
+def test_an_output_in_a_read_only_directory_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    locked.chmod(0o500)
+    try:
+        code, out, err = run("a.ttl", "--output", "locked/out.txt")
+    finally:
+        locked.chmod(0o700)
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith(OUTPUT_FAILED + "PermissionError: ")
+
+
+def test_an_unencodable_report_keeps_the_previous_output_file(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
+    previous = tmp_path / "out.txt"
+    previous.write_bytes(b"last good report\n")
+    code, out, err = run("a.ttl", "--output", "out.txt")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith(OUTPUT_FAILED + "UnicodeEncodeError: ")
+    assert previous.read_bytes() == b"last good report\n"
+
+
+def test_an_unencodable_report_on_stdout_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
+    code, out, err = run("a.ttl")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith(OUTPUT_FAILED + "UnicodeEncodeError: ")
+    code, out, _err = run("a.ttl", "--format", "json")  # JSON escapes the surrogate: written as before
+    assert code != TOOL_FAILURE and "\\ud800" in out
+
+
+def test_an_unwritable_output_outranks_a_passing_run(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    code, _out, err = run("a.ttl", "--fail-on", "never", "--output", "no/out.txt")
+    assert code == TOOL_FAILURE
+    assert err.startswith(OUTPUT_FAILED)
+
+
+def test_an_unwritable_output_is_named_before_the_broken_rules(
+    tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = next(spec.module for spec in RULE_SPECS if spec.rule_id == "ONT001")
+
+    def boom(_ctx: object) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setitem(engine.FAMILY_RUNNERS, module, boom)
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    code, _out, err = run("a.ttl", "--select", "ONT001", "--fail-on", "never", "--output", "no/out.txt")
+    assert code == TOOL_FAILURE
+    first, second, rest = err.split("\n", 2)
+    assert first.startswith(OUTPUT_FAILED + "FileNotFoundError: ")
+    assert (second, rest) == ("TOOL001: rule ONT001 failed for a.ttl: RuntimeError: boom", "")
+
+
+def test_a_writable_output_holds_the_report_and_a_newline(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    _code, printed, _err = run("a.ttl", "--format", "json")
+    code, out, err = run("a.ttl", "--format", "json", "--output", "out.json")
+    assert (out, err) == ("", "") and code != TOOL_FAILURE
+    assert (tmp_path / "out.json").read_text(encoding="utf-8") == printed
+
+
 def test_a_failing_rule_module_still_writes_the_report_and_exits_2(
     tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:

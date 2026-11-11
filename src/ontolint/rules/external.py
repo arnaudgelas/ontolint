@@ -49,7 +49,13 @@ printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection nev
   ``--ignore`` selector (the message suggests the closest valid identifiers), a selector syntax error, an
   unreadable or invalid policy file or catalog, or any other exception raised while configuring
   (``TOOL001: configuration failed: ...``) or while linting (``TOOL001: lint execution failed: ...``, for example
-  an unwritable ``--write-baseline``); these exit ``2`` with no report.  A selected rule whose module or adapter
+  an unwritable ``--write-baseline``); these exit ``2`` with no report.  A report that cannot be written to
+  ``--output`` (a missing directory, a directory, no permission) or encoded as UTF-8 (a lone surrogate in a text
+  report, on ``--output`` or stdout) is ``TOOL001: report output failed: <ExceptionType>: <message>``, exit ``2``
+  whatever the findings, with no fallback to stdout; an existing ``--output`` file is kept when the report cannot
+  be encoded.  On stdout this depends on the stream's error handler: under UTF-8 mode or a POSIX locale it is
+  ``surrogateescape``, which writes a surrogate in U+DC80-U+DCFF as a raw byte instead of failing, so no TOOL001
+  is printed.  A selected rule whose module or adapter
   raised (``failed``) or whose backend is missing (``unsupported``) is listed in the report, which is still
   written, and then printed as ``TOOL001: rule <ID> <status> for <file>: <detail>``; the exit code is ``2`` even
   with ``--fail-on never``.  Policy files with an unknown rule or ``policy_version`` are GOV020, not TOOL001.

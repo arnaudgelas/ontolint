@@ -140,7 +140,7 @@ Supported report formats are `text`, `json`, and `sarif`.
 | --- | --- |
 | `0` | No finding meets the configured `--fail-on` threshold. |
 | `1` | At least one finding meets the threshold. |
-| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker, or a SHACL validation that exceeds `--max-validation-seconds`). |
+| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, a report that cannot be written to `--output` or encoded (`TOOL001: report output failed: ...`), or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker, or a SHACL validation that exceeds `--max-validation-seconds`). |
 
 Exit `2` outranks `1`: when a requested backend did not deliver a verdict the run cannot
 pass, even with `--fail-on never`. The report is still written so you can see why. Rules that
