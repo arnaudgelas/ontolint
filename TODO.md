@@ -6,8 +6,9 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the feature release after 0.10.0 (0.8.0, 0.9.1 and 0.10.0 shipped, and 0.9.0 was tagged but
-not published, while it was still open). `P1` is the next milestone after P0. `P2`
+blocks the feature release after 0.11.0 (0.8.0, 0.9.1, 0.10.0 and 0.11.0 shipped, and 0.9.0 was
+tagged but not published, while it was still open; 0.11.0 shipped with the Renovate item open, see
+it). `P1` is the next milestone after P0. `P2`
 is worthwhile only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
@@ -15,18 +16,16 @@ record.
 
 ## Hotfix
 
-- [ ] **Release 0.11.0.** Prepared locally (release commit and tag `v0.11.0`), not pushed. Push `main`
-  with the release commit as the head of the push, then the tag, and approve "Publish to PyPI"
-  (docs/releasing.md). Before it: the new rules were not exercised by the real-world run (see
-  "Recently done", 0.11.0, verification), so a maintainer who wants more than the tests may run
-  them on the ontologies they care about. *Done when:* 0.11.0 is on PyPI and its release run is
-  green end to end.
+Nothing open: 0.11.0 is released (see "Recently done").
 
 ## Recently done
 
-- 0.11.0 (tag `v0.11.0`, not yet pushed; see "Hotfix"; the local commits after `f7f3db4` were
-  re-dated to 2026-11-10 21:37 to 2026-11-11 07:26 at the maintainer's request, so their hashes are
-  not the ones the first drafts of this file cited):
+- 0.11.0 (`1652fa7`, tag `v0.11.0`), released 2026-11-11: release run 42973303494 passed every job
+  (the CodeQL gate, tests, build, publish to PyPI, and the install of the published release), and
+  PyPI holds the wheel and the sdist (uploaded 06:45Z). The commits after `f7f3db4` were re-dated
+  to 2026-11-10 21:37 to 2026-11-11 07:26 at the maintainer's request before they were pushed, so
+  their hashes are not the ones the first drafts of this file cited. The upgrade notes are in
+  `CHANGELOG.md`. Not checked, as said below: the rules that the real-world run never exercised.
   - **COVERAGE-GAPS** (P1 audit, "Coverage gaps"): the thirteen gaps that the 0.9.0 specification
     review wrote down as exclusions are closed with new messages in the existing rules, and every
     pinning negative case is now a positive one. OWL010 empty and malformed chains (`acc80b3`);
@@ -482,11 +481,17 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
   `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
   and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
 
-## P0 — before 0.11.0
+## P0 — before the next feature release
 
-- [ ] **Turn Renovate on, and watch its first rebase.** *Flag (2026-11-11): P0 blocks 0.11.0, but nothing in
-  the repository can close this item, so 0.11.0 was prepared with it open; the maintainer decides
-  whether it still blocks the push.* Rechecked 2026-11-10: `.github/renovate.json`
+- [ ] **Turn Renovate on, and watch its first rebase.** *Flag (2026-11-11): P0 blocked 0.11.0, but nothing in
+  the repository could close this item, so 0.11.0 shipped with it open.* Rechecked 2026-11-11: pull
+  request #1 (merged) added a second configuration, `renovate.json` at the repository root, and a
+  bot commit corrected its matchers, so there are now two configurations that disagree: the root one
+  has no `"automergeStrategy": "squash"` (the linear-history rule needs it), groups the core
+  dependencies differently, and runs on another schedule, and Renovate reads the first file it finds
+  (its documented search order lists the repository root before `.github/`; confirm that on the
+  first run). Keep one file, and keep the squash strategy. Renovate has still opened no branch,
+  pull request or issue (the only pull request is #1). Rechecked 2026-11-10: `.github/renovate.json`
   passes `renovate-config-validator --strict` (Renovate 41), and the repository still has only
   `main`, no pull request and no issue, so the app is not running here; the cause is outside the
   repository (installation scope or the Mend portal), and the maintainer's to check. The release boundary is in place and proven
