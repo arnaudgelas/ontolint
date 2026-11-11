@@ -17,7 +17,7 @@ from ontolint.engine import build_context
 from ontolint.models import Finding
 from ontolint.policy import METRIC_RATIO_DEFAULTS, Policy
 from ontolint.rules import classes, lexical, metrics, owl
-from ontolint.rules.runtime import RuleContext
+from ontolint.rules.runtime import EMPTY_FOCUS, RuleContext
 
 pytestmark = pytest.mark.slow
 
@@ -41,7 +41,7 @@ def _count(findings: list[Finding], rule: str) -> int:
 @budget()
 def test_metric001_counts_the_classes_lex001_reports(graph: Graph) -> None:
     ctx = _run(graph, metric_max_unlabelled_ratio=0.0)
-    owned = {str(c) for c in ctx.classes if ctx.local(c)}
+    owned = {str(c) or EMPTY_FOCUS for c in ctx.classes if ctx.local(c)}
     lex = {f.focus for f in ctx.findings if f.rule == "LEX001" and f.focus in owned}
     assert _count(ctx.findings, "METRIC001") == len(lex)
 
@@ -59,7 +59,12 @@ def test_metric005_counts_the_classes_cls001_reports(graph: Graph) -> None:
 def test_metric008_counts_the_properties_owl005_and_owl006_both_report(graph: Graph) -> None:
     ctx = _run(graph, metric_max_unsigned_property_ratio=0.0)
     typed = ctx.context.subjects_by_type
-    props = {str(p) for kind in (OWL.ObjectProperty, OWL.DatatypeProperty) for p in typed.get(kind, ()) if ctx.local(p)}
+    props = {
+        str(p) or EMPTY_FOCUS
+        for kind in (OWL.ObjectProperty, OWL.DatatypeProperty)
+        for p in typed.get(kind, ())
+        if ctx.local(p)
+    }
     no_domain = {f.focus for f in ctx.findings if f.rule == "OWL005"}
     no_range = {f.focus for f in ctx.findings if f.rule == "OWL006"}
     assert _count(ctx.findings, "METRIC008") == len(props & no_domain & no_range)
