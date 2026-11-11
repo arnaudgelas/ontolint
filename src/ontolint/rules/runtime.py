@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable
+from contextlib import contextmanager
 from dataclasses import replace
 
 from rdflib import BNode, Graph, Literal, URIRef
@@ -71,6 +72,48 @@ class PropertyClosure:
         return self._cache[key]
 
 
+class _BlankNames:
+    """The stable identities of one graph's blank nodes, and the rewriting of their labels inside messages."""
+
+    def __init__(self, graph: Graph) -> None:
+        self.graph = graph
+        self._ids: dict[BNode, str] = {}
+        self._nodes: dict[str, BNode] | None = None  # label -> node, built on first use
+        self._pattern: re.Pattern[str] | None = None
+
+    def identity(self, node: BNode) -> str:
+        if node not in self._ids:
+            self._ids[node] = stable_blank_id(self.graph, node)
+        return self._ids[node]
+
+    def rewrite(self, message: str) -> str:
+        """Replace the graph's parser-assigned blank-node labels inside ``message`` by their stable identity.
+
+        A label after the ``_:`` prefix is always replaced. A bare label is replaced only when it contains a
+        digit, as generated labels do, so a hand-written label such as ``a`` cannot rewrite an ordinary word
+        of the message.  A message with neither ``_:`` nor a digit holds no label, so it never builds the pattern
+        (one alternative per blank node of the graph).
+        """
+        if "_:" not in message and not any(c.isdigit() for c in message):
+            return message
+        if self._nodes is None:
+            self._nodes = {str(n): n for t in self.graph for n in (t[0], t[2]) if isinstance(n, BNode)}
+            labels = sorted(self._nodes, key=lambda label: (-len(label), label))
+            bare = [label for label in labels if any(c.isdigit() for c in label)]
+            if labels:
+                prefixed = "|".join(re.escape(label) for label in labels)
+                alone = "|".join(re.escape(label) for label in bare) or "(?!)"
+                self._pattern = re.compile(
+                    rf"(?<![\w/#:-])(?:_:(?P<prefixed>{prefixed})|(?P<bare>{alone}))(?![\w/#:-]|\.\w)"
+                )
+        if self._pattern is None:
+            return message
+        nodes = self._nodes
+        return self._pattern.sub(
+            lambda match: self.identity(nodes[match.group("prefixed") or match.group("bare")]), message
+        )
+
+
 class RuleContext:
     """Graphs, policy, indexed facts, and the de-duplicating finding emitter for one lint run."""
 
@@ -85,9 +128,11 @@ class RuleContext:
         self.findings: list[Finding] = []
         self.seen: set[tuple[str, str, str]] = set()
         self._emitted: dict[tuple[str, str, str], int] = {}  # each seen key's position in ``findings``
-        self._blank_ids: dict[BNode, str] = {}
-        self._blank_nodes: dict[str, BNode] | None = None  # label -> node, built on first use
-        self._blank_pattern: re.Pattern[str] | None = None
+        # Blank nodes are named by their content in the graph the running rules report on: the data graph,
+        # or the shapes graph inside :meth:`naming_shapes`.
+        self._data_names = _BlankNames(graph)
+        self._shape_names = _BlankNames(shapes) if shapes is not None else None
+        self._names = self._data_names
         # The configured definition and label predicates, then every IRI below one of them (sorted).
         # ``labels`` says whether a term has a label and which values are judged as labels;
         # ``main_label_predicates`` says which of them name the term (see there).
@@ -193,34 +238,26 @@ class RuleContext:
             Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about)
         )
 
+    @contextmanager
+    def naming_shapes(self) -> Generator[None]:
+        """Name blank nodes by their content in the shapes graph while the block runs (rules about shapes).
+
+        An inline shape (``sh:property [ ... ]``) has no triple in the data graph, where every such node would
+        get the identity of an empty node.  Without a shapes graph this changes nothing.
+        """
+        previous = self._names
+        self._names = self._shape_names or self._data_names
+        try:
+            yield
+        finally:
+            self._names = previous
+
     def _stable_id(self, node: BNode) -> str:
-        if node not in self._blank_ids:
-            self._blank_ids[node] = stable_blank_id(self.g, node)
-        return self._blank_ids[node]
+        return self._names.identity(node)
 
     def _message_text(self, message: str) -> str:
-        """Replace parser-assigned blank-node labels inside ``message`` by their stable identity.
-
-        A label after the ``_:`` prefix is always replaced. A bare label is replaced only when it contains a
-        digit, as generated labels do, so a hand-written label such as ``a`` cannot rewrite an ordinary word
-        of the message.
-        """
-        if self._blank_nodes is None:
-            self._blank_nodes = {str(n): n for t in self.g for n in (t[0], t[2]) if isinstance(n, BNode)}
-            labels = sorted(self._blank_nodes, key=lambda label: (-len(label), label))
-            bare = [label for label in labels if any(c.isdigit() for c in label)]
-            if labels:
-                prefixed = "|".join(re.escape(label) for label in labels)
-                alone = "|".join(re.escape(label) for label in bare) or "(?!)"
-                self._blank_pattern = re.compile(
-                    rf"(?<![\w/#:-])(?:_:(?P<prefixed>{prefixed})|(?P<bare>{alone}))(?![\w/#:-]|\.\w)"
-                )
-        if self._blank_pattern is None:
-            return message
-        nodes = self._blank_nodes
-        return self._blank_pattern.sub(
-            lambda match: self._stable_id(nodes[match.group("prefixed") or match.group("bare")]), message
-        )
+        """Replace parser-assigned blank-node labels inside ``message`` by their stable identity."""
+        return self._names.rewrite(message)
 
     def _subject_text(self, item: object) -> str:
         """Render one part of a subject: a blank node by its stable identity, a literal in N3, an IRI as is.

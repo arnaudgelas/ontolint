@@ -40,6 +40,10 @@ FAMILY_RUNNERS: dict[str, RuleFamily] = module_runners()
 OPT_IN_MODULES: frozenset[str] = frozenset(
     module_name(m) for m in RULE_MODULES if all(is_opt_in(spec.family) for spec in module_specs(m))
 )
+# Modules whose rules all need a shapes graph report on its shapes: their blank nodes are named in it.
+SHAPES_MODULES: frozenset[str] = frozenset(
+    module_name(m) for m in RULE_MODULES if all(spec.requires is Requirement.SHAPES for spec in module_specs(m))
+)
 
 
 @dataclass(frozen=True)
@@ -65,11 +69,20 @@ def sort_findings(findings: list[Finding]) -> list[Finding]:
     return sorted(findings, key=lambda x: (SEVERITY_ORDER.index(x.severity), x.rule, x.focus, x.message))
 
 
+def _run_family(module: str, family: RuleFamily, ctx: RuleContext) -> None:
+    """Run one rule module, naming blank nodes in the graph its findings are about."""
+    if module in SHAPES_MODULES:
+        with ctx.naming_shapes():
+            family(ctx)
+    else:
+        family(ctx)
+
+
 def run_rules(ctx: RuleContext) -> list[Finding]:
     """Run every rule family against ``ctx`` and return its sorted, de-duplicated findings."""
     for name, family in FAMILY_RUNNERS.items():
         if name not in OPT_IN_MODULES:
-            family(ctx)
+            _run_family(name, family, ctx)
     return sort_findings(ctx.findings)
 
 
@@ -146,7 +159,7 @@ def _run_modules(ctx: RuleContext, modules: set[str]) -> dict[str, str]:
     for module, runner in FAMILY_RUNNERS.items():
         if module in modules:
             try:
-                runner(ctx)
+                _run_family(module, runner, ctx)
             except Exception as exc:  # noqa: BLE001 -- one broken rule module must not abort the run.
                 failures[module] = _failure(exc)
     return failures

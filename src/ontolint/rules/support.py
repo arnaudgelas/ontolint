@@ -189,16 +189,13 @@ def describing_nodes(g: Graph, ontology: Node) -> list[Node]:
     return [ontology, *sorted(g.subjects(ONTOLOGY_IRI, ontology), key=str)]
 
 
-SHAPES_BLANK_NODE = "(blank node)"
+def shape_term(node: Node) -> Node:
+    """``node`` of a shapes graph as a finding subject.
 
-
-def shape_term(node: Node) -> Node | str:
-    """``node`` of a shapes graph as a finding subject: a blank node there has no stable identity, so it is a key.
-
-    A finding's blank nodes are named by their content in the data graph (:func:`stable_blank_id`), which
-    a shapes-graph node is not part of.
+    The shape rules run with blank nodes named in the shapes graph (:meth:`RuleContext.naming_shapes`), so a
+    blank node is rendered by its content there, like any other subject.
     """
-    return SHAPES_BLANK_NODE if isinstance(node, BNode) else node
+    return node
 
 
 _NT_ESCAPES = str.maketrans({"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r"})
