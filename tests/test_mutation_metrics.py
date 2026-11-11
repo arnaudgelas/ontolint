@@ -201,3 +201,27 @@ def test_metric013_blank_structure_of_shapes_and_reification() -> None:
         g.add((BNode(), RDFS.label, Literal("x")))
     (finding,) = _run(g, "METRIC013")
     assert finding.message.startswith("30 of 40 subjects are blank nodes")
+
+
+@pytest.mark.parametrize(
+    ("value", "limit", "shown"),
+    [
+        (0.5, 0.25, ("0.50", "0.25")),
+        (10 / 33, 0.3, ("0.303", "0.300")),  # 2 decimals would print "0.30 > 0.30"
+        (0.3001, 0.3, ("0.3001", "0.3000")),
+        (0.300001, 0.3, ("0.300001", "0.300000")),
+        (0.3, 0.3, ("0.300000", "0.300000")),  # equal never fires; nothing to widen
+    ],
+)
+def test_value_and_limit_are_printed_apart(value: float, limit: float, shown: tuple[str, str]) -> None:
+    assert metrics._vs(value, limit) == shown
+
+
+def test_metric005_message_tells_a_ratio_just_over_its_limit_from_the_limit() -> None:
+    g = Graph()
+    for i in range(33):
+        _cls(g, f"C{i}")
+        if i >= 10:
+            g.add((_ex(f"C{i}"), RDFS.subClassOf, _ex(f"C{(i % 23) + 10}")))
+    (finding,) = _run(g, "METRIC005", metric_max_orphan_ratio=0.3)
+    assert finding.message.endswith("(0.303 > 0.300).")

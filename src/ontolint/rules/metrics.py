@@ -139,6 +139,20 @@ def _focus(ctx: RuleContext) -> str:
     return str(min(ctx.ontologies, key=str)) if ctx.ontologies else FOCUS_FALLBACK
 
 
+def _vs(value: float, limit: float) -> tuple[str, str]:
+    """Format a value and its limit with 2 decimals, or up to 6 when 2 would print a value over its limit as equal."""
+    for digits in range(2, 6):
+        shown, shown_limit = f"{value:.{digits}f}", f"{limit:.{digits}f}"
+        if shown != shown_limit:
+            return shown, shown_limit
+    return f"{value:.6f}", f"{limit:.6f}"
+
+
+def _cmp(value: float, operator: str, limit: float) -> str:
+    shown, shown_limit = _vs(value, limit)
+    return f"{shown} {operator} {shown_limit}"
+
+
 def _ratio(part: int, whole: int) -> float:
     return part / whole if whole else 0.0
 
@@ -199,7 +213,12 @@ def _coverage_rule(ctx: RuleContext, code: str, terms: frozenset[URIRef], predic
     missing = _missing(ctx, code, terms, predicates)
     ratio = _ratio(missing, total)
     if ratio > limit:
-        ctx.add(code, _focus(ctx), f"{missing} of {total} {noun} lack {what} ({ratio:.2f} > {limit:.2f}).", subject=())
+        ctx.add(
+            code,
+            _focus(ctx),
+            f"{missing} of {total} {noun} lack {what} ({_cmp(ratio, '>', limit)}).",
+            subject=(),
+        )
 
 
 def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: frozenset[URIRef]) -> None:
@@ -216,7 +235,7 @@ def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: froze
                 "METRIC006",
                 _focus(ctx),
                 f"{relations} properties for {len(classes)} classes "
-                f"({ratio:.2f} < {policy.metric_min_property_class_ratio:.2f}).",
+                f"({_cmp(ratio, '<', policy.metric_min_property_class_ratio)}).",
                 subject=(),
             )
         if ratio > policy.metric_max_property_class_ratio:
@@ -224,7 +243,7 @@ def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: froze
                 "METRIC007",
                 _focus(ctx),
                 f"{relations} properties for {len(classes)} classes "
-                f"({ratio:.2f} > {policy.metric_max_property_class_ratio:.2f}).",
+                f"({_cmp(ratio, '>', policy.metric_max_property_class_ratio)}).",
                 subject=(),
             )
 
@@ -237,11 +256,11 @@ def _hierarchy_rules(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
     if h.children:
         mean = sum(len(kids) for kids in h.children.values()) / len(h.children)
         if mean > policy.metric_max_mean_fanout:
+            shown, limit = _vs(mean, policy.metric_max_mean_fanout)
             ctx.add(
                 "METRIC004",
                 _focus(ctx),
-                f"{len(h.children)} parent classes have {mean:.2f} direct subclasses on average "
-                f"(threshold {policy.metric_max_mean_fanout:.2f}).",
+                f"{len(h.children)} parent classes have {shown} direct subclasses on average (threshold {limit}).",
                 subject=(),
             )
     orphans = len(orphan_classes(ctx) & classes)  # exactly the owned classes CLS001 reports
@@ -251,7 +270,7 @@ def _hierarchy_rules(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
             "METRIC005",
             _focus(ctx),
             f"{orphans} of {len(classes)} classes are orphans: no asserted sub/superclass, instance, "
-            f"domain or range ({ratio:.2f} > {policy.metric_max_orphan_ratio:.2f}).",
+            f"domain or range ({_cmp(ratio, '>', policy.metric_max_orphan_ratio)}).",
             subject=(),
         )
 
@@ -277,7 +296,7 @@ def _signature_rule(ctx: RuleContext) -> None:
             "METRIC008",
             _focus(ctx),
             f"{unsigned} of {len(props)} object/datatype properties have neither domain nor range "
-            f"({ratio:.2f} > {limit:.2f}).",
+            f"({_cmp(ratio, '>', limit)}).",
             subject=(),
         )
 
@@ -299,7 +318,7 @@ def _language_rule(ctx: RuleContext, terms: frozenset[URIRef]) -> None:
                 "METRIC009",
                 _focus(ctx),
                 f"{len(tagged)} of {len(labelled)} labelled terms have a language-tagged label "
-                f"({coverage:.2f} < {policy.metric_min_language_coverage:.2f}).",
+                f"({_cmp(coverage, '<', policy.metric_min_language_coverage)}).",
                 subject=(),
             )
 
@@ -314,11 +333,11 @@ def _definition_rule(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
     if len(words) >= policy.metric_min_sample:
         mean = sum(words.values()) / len(words)
         if mean < policy.metric_min_definition_words:
+            shown, limit = _vs(mean, policy.metric_min_definition_words)
             ctx.add(
                 "METRIC012",
                 _focus(ctx),
-                f"{len(words)} defined classes average {mean:.2f} words per definition "
-                f"(threshold {policy.metric_min_definition_words:.2f}).",
+                f"{len(words)} defined classes average {shown} words per definition (threshold {limit}).",
                 subject=(),
             )
 
@@ -349,7 +368,7 @@ def _reference_rule(ctx: RuleContext, classes: frozenset[URIRef], properties: fr
         ctx.add(
             "METRIC010",
             _focus(ctx),
-            f"{foreign} of {total} structural references point to another namespace ({ratio:.2f} > {limit:.2f}).",
+            f"{foreign} of {total} structural references point to another namespace ({_cmp(ratio, '>', limit)}).",
             subject=(),
         )
 
@@ -419,7 +438,7 @@ def _graph_rules(ctx: RuleContext) -> None:
                 "METRIC013",
                 _focus(ctx),
                 f"{blanks} of {len(subjects)} subjects are blank nodes "
-                f"({ratio:.2f} > {ctx.policy.metric_max_blank_node_ratio:.2f}).",
+                f"({_cmp(ratio, '>', ctx.policy.metric_max_blank_node_ratio)}).",
                 subject=(),
             )
 
