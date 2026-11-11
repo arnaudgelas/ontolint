@@ -7,11 +7,11 @@ from dataclasses import replace
 from typing import Any
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget, rdf_graphs
 from rdflib import Graph, URIRef
-from rdflib.namespace import OWL
+from rdflib.namespace import OWL, RDF
 
 from ontolint.engine import build_context
 from ontolint.models import Finding
@@ -46,11 +46,22 @@ def test_metric001_counts_the_classes_lex001_reports(graph: Graph) -> None:
     assert _count(ctx.findings, "METRIC001") == len(lex)
 
 
+def _graph(*triples: tuple[URIRef, URIRef, URIRef]) -> Graph:
+    graph = Graph()
+    for triple in triples:
+        graph.add(triple)
+    return graph
+
+
+# The empty IRI as both the ontology and a class: the header derives the prefix "", which owns the
+# class "" but not the IRI "<>" (EMPTY_FOCUS, the focus CLS001 renders it as).
+@example(_graph((URIRef(""), RDF.type, OWL.Ontology), (URIRef(""), RDF.type, OWL.Class)))
 @given(rdf_graphs)
 @budget()
 def test_metric005_counts_the_classes_cls001_reports(graph: Graph) -> None:
     ctx = _run(graph, metric_max_orphan_ratio=0.0)
-    cls = {f.focus for f in ctx.findings if f.rule == "CLS001" and ctx.local(URIRef(f.focus))}
+    owned = {str(c) or EMPTY_FOCUS for c in ctx.classes if ctx.local(c)}
+    cls = {f.focus for f in ctx.findings if f.rule == "CLS001" and f.focus in owned}
     assert _count(ctx.findings, "METRIC005") == len(cls)
 
 
