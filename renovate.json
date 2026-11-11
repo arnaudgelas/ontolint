@@ -1,0 +1,70 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate configuration tailored for ontolint",
+  "extends": [
+    "config:recommended",
+    ":pinGitHubActionDigests",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(build)"
+  ],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Paris",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rebaseWhen": "behind-base-branch",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 4am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "Core runtime dependencies (reviewed individually for semantic/parsing changes)",
+      "matchPackageNames": ["rdflib", "pyshacl"],
+      "matchDepTypes": ["dependencies"],
+      "semanticCommitScope": "engine",
+      "automerge": false
+    },
+    {
+      "description": "Group Python dev, linting, and testing dependencies",
+      "matchDepTypes": ["dependency-groups.dev"],
+      "groupName": "development tooling",
+      "groupSlug": "dev-dependencies",
+      "semanticCommitScope": "dev-deps",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions",
+      "semanticCommitScope": "ci",
+      "matchUpdateTypes": ["minor", "patch", "digest"]
+    },
+    {
+      "description": "ROBOT Docker base images (Alpine and Distroless)",
+      "matchManagers": ["dockerfile"],
+      "groupName": "ROBOT Docker base images",
+      "groupSlug": "robot-docker",
+      "semanticCommitScope": "docker"
+    },
+    {
+      "description": "Python version pin in .python-version",
+      "matchPackageNames": ["python"],
+      "matchManagers": ["nodenv", "pyenv"],
+      "enabled": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update UV_VERSION environment variable in GitHub workflows",
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
+      "matchStrings": [
+        "UV_VERSION:\\s*[\"']?(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[\"']?",
+        "version:\\s*[\"']?(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[\"']?\\s*# renovate: datasource=github-releases depName=astral-sh/uv"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "astral-sh/uv"
+    }
+  ]
+}
