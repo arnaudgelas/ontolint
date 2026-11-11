@@ -4,32 +4,96 @@
 
 # ontolint
 
+**An offline ontology-quality linter for RDF, OWL, SKOS and SHACL.** One command reads an ontology
+file, reports what looks wrong, and exits non-zero when a finding is serious enough to fail CI.
+
 <p align="center">
   <a href="https://github.com/arnaudgelas/ontolint/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/arnaudgelas/ontolint/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="https://github.com/arnaudgelas/ontolint/actions/workflows/validation.yml"><img alt="Validation status (ROBOT image and mutation testing)" src="https://github.com/arnaudgelas/ontolint/actions/workflows/validation.yml/badge.svg?branch=main"></a>
-  <a href="https://github.com/arnaudgelas/ontolint/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/arnaudgelas/ontolint"></a>
-  <a href="https://github.com/arnaudgelas/ontolint/issues"><img alt="Open issues" src="https://img.shields.io/github/issues/arnaudgelas/ontolint"></a>
-</p>
-<p align="center">
   <a href="https://pypi.org/project/ontolint/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/ontolint"></a>
   <a href="https://pypi.org/project/ontolint/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/ontolint"></a>
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
+</p>
+<p align="center">
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 247 of 302" src="https://img.shields.io/badge/rules-247%2F302_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
-</p>
-<p align="center">
-  <a href="https://docs.astral.sh/ruff/"><img alt="Code style and lint: Ruff" src="https://img.shields.io/badge/lint%20%26%20format-ruff-D7FF64?logo=ruff&logoColor=black"></a>
-  <img alt="Types: pyright strict and mypy" src="https://img.shields.io/badge/types-pyright%20strict%20%2B%20mypy-2a6db2">
-  <img alt="Coverage gate: at least 95 percent" src="https://img.shields.io/badge/coverage%20gate-%E2%89%A595%25-brightgreen">
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md"><img alt="Mutation gate: at least 85 percent" src="https://img.shields.io/badge/mutation%20gate-%E2%89%A585%25-brightgreen"></a>
-  <a href="https://docs.astral.sh/uv/"><img alt="Managed with uv" src="https://img.shields.io/badge/managed%20with-uv-DE5FE9"></a>
 </p>
 
 `ontolint` is an offline ontology-quality linter for RDF graphs. It provides
 graph-local checks for RDF/OWL, SKOS, lexical quality, class hierarchies, and
 optional SHACL validation. It is a practical review aid—not a substitute for
 OWL 2 DL validation, a reasoner, or expert ontology review.
+
+## Quick start
+
+Python 3.13 or later. Install it, lint a file, fail a CI job on warnings:
+
+```bash
+uv tool install ontolint                  # or: pipx install ontolint
+ontolint ontology.ttl                     # text report
+ontolint ontology.ttl --fail-on warning   # exit 1 on a warning or an error
+ontolint ontology.ttl --format sarif --output ontolint.sarif   # for code scanning
+```
+
+Exit `0` means no finding reached `--fail-on`, `1` that one did, `2` that the tool could not
+finish (see [Exit codes](#run-the-linter)). Nothing is sent over the network: ontolint reads the
+file and any imports you point it at.
+
+## Contents
+
+- [Quick start](#quick-start)
+- [Machine-readable interfaces](#machine-readable-interfaces)
+- [What it checks](#what-it-checks)
+- [Requirements and installation](#requirements-and-installation)
+  - [Development setup](#development-setup)
+- [Run the linter](#run-the-linter)
+  - [Discovering rules](#discovering-rules)
+  - [Selecting rules and profiles](#selecting-rules-and-profiles)
+  - [Rule execution status](#rule-execution-status)
+  - [Several files](#several-files)
+  - [Modular ontologies: following `owl:imports`](#modular-ontologies-following-owlimports)
+  - [Modules inside one file](#modules-inside-one-file)
+  - [Datasets: named graphs](#datasets-named-graphs)
+  - [Pattern libraries](#pattern-libraries)
+  - [GitHub annotations](#github-annotations)
+  - [Optional SHACL validation](#optional-shacl-validation)
+  - [OWL profile validation with ROBOT in Docker](#owl-profile-validation-with-robot-in-docker)
+- [Policy and baselines](#policy-and-baselines)
+- [Development and quality checks](#development-and-quality-checks)
+  - [Releasing](#releasing)
+  - [CI workflows](#ci-workflows)
+- [Rule reference](#rule-reference)
+- [Interpretation principles](#interpretation-principles)
+- [Scope and limitations](#scope-and-limitations)
+- [Related tools and sources](#related-tools-and-sources)
+- [Input formats](#input-formats)
+- [Input safety](#input-safety)
+- [Roadmap](#roadmap)
+- [License](#license)
+
+## Machine-readable interfaces
+
+For scripts, CI and AI agents. Each interface is described in the section named in the last
+column. The JSON report carries `schema_version` (currently `1`), but ontolint is still Alpha and
+the report has no published JSON Schema yet, so pin the version you parse against.
+
+| You want | Run or read | Where it is described |
+| --- | --- | --- |
+| Every rule, with its id, status, severity, family, scope and backend | `ontolint --list-rules --format json` | [Discovering rules](#discovering-rules) |
+| One rule's title, severity, fix and requirements | `ontolint --explain RULE_ID` | [Discovering rules](#discovering-rules) |
+| The findings of a run | `ontolint FILE --format json` (keys `schema_version`, `summary`, `findings`, `execution_summary`, `rules`, `files`) | [Run the linter](#run-the-linter) |
+| Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub annotations](#github-annotations) |
+| Which rules ran, were skipped or failed | `execution_summary` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
+| A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
+| Accepted findings that stay quiet | `--write-baseline FILE`, then `--baseline FILE` | [Policy and baselines](#policy-and-baselines) |
+| ontolint inside a Python program | `from ontolint import Linter` | [Run the linter](#run-the-linter) |
+| The rule documentation and its source | [`docs/rules.md`](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) (generated), `src/ontolint/data/rule_catalogue.csv` | [Rule reference](#rule-reference) |
+
+A finding has a rule id, severity (`error`, `warning`, `info`), focus (the term it is about),
+message, suggestion and confidence. A finding is a review prompt, not a proof of inconsistency
+(see [Interpretation principles](#interpretation-principles)). The project map for crawlers and
+agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.txt).
 
 ## What it checks
 
@@ -589,6 +653,12 @@ Run with the same rule selection that wrote the baseline, or entries for unselec
 count as stale.
 
 ## Development and quality checks
+
+The gates CI enforces on every change: Ruff (lint and format), pyright in strict mode and mypy
+(host and Windows), tests with at least 95 % coverage, a dependency audit, and a distribution
+build; mutation testing keeps at least 85 % of mutants killed
+([policy](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md)). Dependencies
+are managed with [uv](https://docs.astral.sh/uv/).
 
 ```bash
 # The full validation gate, exactly as CI runs it (add --fix to apply Ruff fixes first)
