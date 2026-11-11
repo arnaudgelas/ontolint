@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from rdflib import Literal, URIRef
-from rdflib.namespace import RDF, RDFS, SKOS, XSD
+from rdflib.namespace import RDF, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -23,8 +23,8 @@ from .support import local_name
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
+# LEX015 and LEX016 compare these with a term's main labels (``RuleContext.main_label_predicates``).
 ALTERNATIVE_LABELS = (SKOS.altLabel, SKOS.hiddenLabel)
-PRIMARY_LABELS = (RDFS.label, SKOS.prefLabel)
 CAMEL_CASE = re.compile(r"[a-z][A-Z]")
 TERMINAL_PUNCTUATION = (".", ":", ";", ",")
 ODD_WHITESPACE = re.compile(r"[\r\n\t]|\s{2,}")
@@ -166,7 +166,7 @@ def _literals(ctx: RuleContext, term: URIRef, predicates: tuple[URIRef, ...]) ->
 def _gather(ctx: RuleContext, term: URIRef) -> TermText:
     return TermText(
         labels=_literals(ctx, term, ctx.labels),
-        primary=_literals(ctx, term, PRIMARY_LABELS),
+        primary=_literals(ctx, term, ctx.main_label_predicates(term)),
         alternatives=_literals(ctx, term, ALTERNATIVE_LABELS),
         definitions=_literals(ctx, term, ctx.descriptions),
         skos_definitions=_literals(ctx, term, (SKOS.definition,)),

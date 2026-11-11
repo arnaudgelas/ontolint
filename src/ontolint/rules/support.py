@@ -30,6 +30,9 @@ DESCRIPTIONS = (
     URIRef("http://www.ontologyrepository.com/CommonCoreOntologies/definition"),
 )
 LABELS = (RDFS.label, SKOS.prefLabel)
+# Labels that never name a term.  The SKOS schema puts them below rdfs:label, so the label closure
+# (``RuleContext.labels``) neither returns them nor walks through them.
+LABEL_STOP = frozenset({SKOS.altLabel, SKOS.hiddenLabel})
 META_LICENSE = (DCTERMS.license, URIRef("http://creativecommons.org/ns#license"))
 META_CREATOR = (DCTERMS.creator, DC.creator, URIRef("http://www.w3.org/ns/prov#wasAttributedTo"))
 # Datatypes outside the xsd: namespace: RDF's, and the OWL 2 datatype map's owl:real, owl:rational and

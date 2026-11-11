@@ -59,6 +59,11 @@ CASES = {
         [
             ttl("only 4 of 10 labelled", _labelled(10, 4)),
             ttl("IRI-valued labels do not count", _classes(10, lambda i: "; rdfs:label ex:x")),
+            ttl(
+                "sub-properties of skos:altLabel do not count",
+                "skos:altLabel rdfs:subPropertyOf rdfs:label . ex:alt rdfs:subPropertyOf skos:altLabel . "
+                + _classes(10, lambda i: '; ex:alt "c"'),
+            ),
         ],
         [
             ttl("all labelled", _labelled(10, 10)),
@@ -68,6 +73,11 @@ CASES = {
             ttl(
                 "deprecated classes count as labelled",
                 _classes(10, lambda i: '; rdfs:label "c"@en' if i < 4 else "; owl:deprecated true"),
+            ),
+            ttl(
+                "labels through a sub-property or an equivalent of rdfs:label count",
+                "ex:short rdfs:subPropertyOf ex:name . ex:name owl:equivalentProperty rdfs:label . "
+                + _classes(10, lambda i: '; ex:short "c"' if i % 2 else '; ex:name "c"'),
             ),
         ],
     ),

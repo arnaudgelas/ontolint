@@ -157,11 +157,12 @@ def _term_labels(ctx: RuleContext) -> LabelIndex:
     label_index: LabelIndex = defaultdict(set)
     for term in sorted(ctx.terms, key=str):
         labels = {o for p in ctx.labels for o in g.objects(term, p) if isinstance(o, Literal)}
+        main = {o for p in ctx.main_label_predicates(term) for o in g.objects(term, p) if isinstance(o, Literal)}
         if is_unlabelled(ctx, term):
             ctx.add("LEX001", term, "Term has no label.", confidence=_missing_label_confidence(ctx, term))
         if not any((term, p, None) in g for p in (*ctx.descriptions, *DOCUMENTATION_NOTES)):
             ctx.add("LEX002", term, "Term has no description or definition.", confidence="certain")
-        _language_checks(ctx, term, labels, label_index)
+        _language_checks(ctx, term, labels, main, label_index)
     return label_index
 
 
@@ -177,31 +178,41 @@ def _missing_label_confidence(ctx: RuleContext, term: URIRef) -> str:
     return "certain"
 
 
-def _language_checks(ctx: RuleContext, term: URIRef, labels: set[Literal], label_index: LabelIndex) -> None:
-    by_language: defaultdict[str, list[Literal]] = defaultdict(list)
-    for o in labels:
-        language = (o.language or "und").lower()
-        by_language[language].append(o)
+def _language_checks(
+    ctx: RuleContext, term: URIRef, labels: set[Literal], main: set[Literal], label_index: LabelIndex
+) -> None:
+    """LEX005 and LEX008 read every label (``ctx.labels``); LEX003, LEX004 and LEX006 the main ones.
+
+    See ``RuleContext.main_label_predicates`` for which labels are main.
+    """
+    for o in sorted(labels, key=str):
         if not str(o).strip() or str(o) != str(o).strip():
             ctx.add("LEX005", term, f"Blank or padded label: {str(o)!r}.", confidence="certain", subject=(str(o),))
+    by_language: defaultdict[str, list[Literal]] = defaultdict(list)
+    for o in main:
+        language = (o.language or "und").lower()
+        by_language[language].append(o)
         text = str(o).strip()
         if _indexable_label(ctx, term, text):
             for kind in _kinds(ctx, term):
                 label_index[(text, language, kind)].add(term)
-    _multiple_labels(ctx, term, labels)
+    _multiple_labels(ctx, term, main)
     if len(by_language) > 1 and "und" in by_language:
         ctx.add("LEX006", term, "Mixed plain and language-tagged preferred labels.")
+    present = {(o.language or "und").lower() for o in labels}
     for lang in ctx.policy.languages:
-        if lang not in by_language:
+        if lang not in present:
             ctx.add("LEX008", term, f"Missing preferred label in language {lang}.", subject=(lang,))
 
 
 def _multiple_labels(ctx: RuleContext, term: URIRef, labels: set[Literal]) -> None:
     """LEX003 counts one label family: skos:prefLabel, or the other label properties when there is none.
 
-    A notation-prefixed rdfs:label next to a prefLabel is the same label, not a second one.
+    A notation-prefixed rdfs:label next to a prefLabel is the same label, not a second one.  ``labels``
+    are the main labels (see ``_language_checks``); the preferred family is skos:prefLabel and the
+    predicates below it (``ctx.preferred_labels``).
     """
-    preferred = {o for o in ctx.g.objects(term, SKOS.prefLabel) if isinstance(o, Literal)}
+    preferred = {o for p in ctx.preferred_labels for o in ctx.g.objects(term, p) if isinstance(o, Literal)}
     family: defaultdict[str, int] = defaultdict(int)
     for o in preferred or labels:
         family[(o.language or "und").lower()] += 1
