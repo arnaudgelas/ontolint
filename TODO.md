@@ -839,7 +839,7 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   repository uses the Action at the released tag on a fixture, and its SARIF and its summary both
   appear.
 
-- [ ] **DUPLICATE-ONTOLOGY-ID: one ontology IRI declared by two files.** Nothing checks this
+- [x] **DUPLICATE-ONTOLOGY-ID: one ontology IRI declared by two files.** Nothing checked this
   across files. A multi-file run lints each file alone, and `--import-dir` maps an IRI to the first
   file in path order (`imports.index_directory`, `entries.setdefault`) with no note when another
   file declares it too, so which copy is imported depends on file names (read in the code,
@@ -854,6 +854,32 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   rule scope, since rules run per file today, and a catalogue row. An identical copy (same content
   hash) is a note, not a warning. *Done when:* each of the four cases has a fixture, and
   `--import-dir` with two candidates names both and says which it chose.
+
+  Done (issue #25): `ONT007` (warning, different content) and `ONT008` (info, identical copies), of
+  the new rule scope `set`. Before linting, `ontolint.declarations` compares the documents of the
+  run in the four places, each on its own, and hands each input the identities reported on it as
+  `Policy.shared_identities`; the rule module only turns them into findings, so selection,
+  overrides, baselines and `--fail-on` apply as to any rule. "Same content" is the RDF graph up to
+  isomorphism (`datasets.same_content`: a digest over blank nodes by `stable_blank_id`, and
+  `rdflib.compare.isomorphic` when two blank nodes share an identity). Two versions of one
+  ontology (one ontology IRI, different version IRIs: an ODK edit file and its release) coexist
+  among the inputs and the graphs of a dataset; in a closure they are reported (OWL 2 section
+  3.5). The closure also compares the file an import resolves to but did not load, because a
+  module loaded earlier declares its IRI, so the result no longer depends on the order of the
+  imports. `--import-dir` keeps only the paths of the files sharing an IRI and reads a candidate
+  again only when an import resolves to it, once per run; aliases count once; copies in two
+  directories are named with both. One fact is reported once (a finding whose documents are a
+  subset of another's on the same IRI is dropped). SARIF gives one location and relates the other
+  files. The baseline identity is the rule, the IRI, the place and the kind, never a path.
+  - Verified: `tests/test_duplicate_ids.py` with fixtures in `tests/fixtures/duplicates/`, rule
+    cases, a scaling step for the graphs of a dataset, and relations in
+    `test_metamorphic_multifile` and `test_properties_datasets` (exact sets, both kinds). File
+    independence there and in `test_metamorphic_baseline` holds with the two rules ignored. The
+    goldens moved only by the two rules' metadata and executions.
+  - Left open: `--shapes-from-profile` resolving through an `--import-dir` with two candidates;
+    an unreadable file in an `--import-dir` is still skipped silently; the message does not list
+    each member's version IRI; a catalog entry naming a file that does not declare the imported
+    IRI is not reported.
 
 ## P2 — platform reliability and useful integration
 

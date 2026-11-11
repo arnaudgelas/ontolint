@@ -1,0 +1,9 @@
+# Another ontology: no IRI in common with the pizza files.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.test/pasta> a owl:Ontology ;
+    owl:versionIRI <https://example.test/pasta/1.0> .
+
+<https://example.test/pasta#Pasta> a owl:Class ;
+    rdfs:label "pasta"@en .

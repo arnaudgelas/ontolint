@@ -1,0 +1,8 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.test/units> a owl:Ontology ;
+    owl:versionIRI <https://example.test/units/2024> .
+
+<https://example.test/units#Gram> a owl:Class ;
+    rdfs:label "gram"@en .

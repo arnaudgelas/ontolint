@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import xml.etree.ElementTree as ET  # noqa: S405 -- the catalog passes the DTD/entity preflight first.
 from collections import deque
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -28,8 +29,17 @@ from urllib.parse import unquote, urlsplit
 from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF
 
-from .loader import InputRejected, LoadedGraph, LoadError, Module, dtd_problem, load_document
-from .paths import InputFile, resolve_inputs
+from .loader import (
+    ImportChoice,
+    ImportShadow,
+    InputRejected,
+    LoadedGraph,
+    LoadError,
+    Module,
+    dtd_problem,
+    load_document,
+)
+from .paths import InputFile, display_path, file_identity, resolve_inputs
 from .policy import Policy
 from .redaction import redact_userinfo
 
@@ -51,6 +61,16 @@ class Catalog:
     rewrites: tuple[tuple[str, Path], ...] = ()
     refused: tuple[str, ...] = ()
     """For ``--import-dir``: one line per file the safe loader refused, naming the file and the refusal."""
+    display: str = ""
+    """For ``--import-dir``: the directory's report path."""
+    duplicates: Mapping[str, tuple[Path, ...]] = field(default_factory=dict[str, tuple[Path, ...]])
+    """For ``--import-dir``: each IRI that several files declare, with those files in path order (``entries``
+    maps the IRI to the first); an import that resolves to one is reported by ONT007 or ONT008.  Only the
+    paths are kept: a file is read again only when an import of the run resolves to its IRI."""
+
+    def declaring(self, iri: str) -> tuple[Path, ...]:
+        """Every file of this ``--import-dir`` that declares ``iri``, in path order."""
+        return self.duplicates.get(iri) or ((self.entries[iri],) if iri in self.entries else ())
 
     def resolve(self, iri: str) -> Path | None:
         """The local file for ``iri``: an exact entry, else the longest ``rewriteURI`` prefix, else a file IRI."""
@@ -188,15 +208,18 @@ def index_directory(directory: Path, policy: Policy) -> Catalog:
     no catalog.  Each file is read once through the safe loader; at most ``max_imported_files`` files are
     indexed (SEC015).  A file the safe loader refuses is skipped and recorded in ``refused`` (the CLI
     prints it as ``TOOL010``), except a ``catalog-v001.xml``, which is a catalog, not an import; a file
-    that does not parse is skipped silently, since it may not be RDF at all.
+    that does not parse is skipped silently, since it may not be RDF at all.  Aliases of one file (a
+    ``latest`` symlink, a hard link) are indexed once, under the first path.  An IRI that several files
+    declare maps to the first in path order; their paths are kept in ``duplicates``, so an import that
+    resolves to one can name them all (ONT007, ONT008).
     """
     root = directory.resolve()
-    candidates = sorted(p for p in root.rglob("*") if p.suffix.lower() in RDF_SUFFIXES and p.is_file())
+    candidates = _unaliased(sorted(p for p in root.rglob("*") if p.suffix.lower() in RDF_SUFFIXES and p.is_file()))
     if len(candidates) > policy.max_imported_files:
         raise InputRejected(
             "SEC015", f"--import-dir {directory} holds more than {policy.max_imported_files} files (max_imported_files)"
         )
-    entries: dict[str, Path] = {}
+    declaring: dict[str, list[Path]] = {}
     refused: list[str] = []
     for path in candidates:
         try:
@@ -211,8 +234,18 @@ def index_directory(directory: Path, policy: Policy) -> Catalog:
         except (LoadError, OSError):
             continue
         for iri in sorted(_identities(graph)):
-            entries.setdefault(iri, path)
-    return Catalog(root, entries, refused=tuple(refused))
+            declaring.setdefault(iri, []).append(path)
+    entries = {iri: paths[0] for iri, paths in declaring.items()}
+    duplicates = {iri: tuple(paths) for iri, paths in declaring.items() if len(paths) > 1}
+    return Catalog(root, entries, refused=tuple(refused), display=display_path(root, Path.cwd()), duplicates=duplicates)
+
+
+def _unaliased(paths: list[Path]) -> list[Path]:
+    """``paths`` without the later aliases of one file (symlinks, hard links), in the order given."""
+    unique: dict[tuple[object, ...], Path] = {}
+    for path in paths:
+        unique.setdefault(file_identity(path), path)
+    return list(unique.values())
 
 
 class _Resolver:
@@ -223,14 +256,34 @@ class _Resolver:
         self.policy = policy
         self.directories = directories
         self.local: dict[Path, Catalog | None] = {root.root: root}
+        self.choices: list[ImportChoice] = []
+        """Imports resolved through an import dir that holds their IRI in several files, in resolution order."""
 
     def resolve(self, iri: str, directory: Path) -> Path | None:
+        """The file ``iri`` resolves to, recording the choice when the import dirs hold it in several files."""
+        resolved, choice = self.lookup(iri, directory)
+        if choice is not None:
+            self.choices.append(choice)
+        return resolved
+
+    def lookup(self, iri: str, directory: Path) -> tuple[Path | None, ImportChoice | None]:
+        """The file ``iri`` resolves to from ``directory``, and the import-dir choice it took, if any."""
         if directory not in self.local:
             found = directory / CATALOG_NAME
             self.local[directory] = read_catalog(found, self.policy.max_input_bytes) if found.is_file() else None
         here = self.local[directory]
         resolved = (here.resolve(iri) if here is not None else None) or self.root.resolve(iri)
-        return resolved or next((d.entries[iri] for d in self.directories if iri in d.entries), None)
+        if resolved is not None:
+            return resolved, None
+        holders = [d for d in self.directories if iri in d.entries]
+        if not holders:
+            return None, None
+        # Every import dir that holds the IRI, in argument order, then each one's files in path order.
+        candidates = tuple((path, d.root) for d in holders for path in d.declaring(iri))
+        choice = None
+        if len(candidates) > 1:
+            choice = ImportChoice(iri, tuple(d.display for d in holders), candidates)
+        return holders[0].entries[iri], choice
 
 
 @dataclass
@@ -249,7 +302,9 @@ class _Walk:
     files: list[str]
     imported: set[str]
     known: set[str]
-    """Ontology and version IRIs of the files already loaded: importing one again needs no lookup."""
+    """Ontology and version IRIs of the files already loaded: importing one again loads nothing more."""
+    shadowed: list[ImportShadow] = field(default_factory=list[ImportShadow])
+    """Imports served by a loaded file that declares their IRI, although they resolve to another file."""
 
 
 def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, the policy and two lookup inputs.
@@ -291,7 +346,8 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
                 _declared(root_document.graph),
                 root_document.source_index,
                 _directory(root_path),
-                graphs=root_document.graphs,
+                root_document.graph,
+                root_document.graphs,
             )
         ],
         set(),
@@ -312,6 +368,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         walk.seen_iris.add(iri)
         if iri in walk.known:  # the root or a module already loaded, named by its ontology or version IRI
             walk.resolved.add(iri)
+            _note_shadow(walk, resolver, iri, directory)
             continue
         path = resolver.resolve(iri, directory)
         if path is None:
@@ -336,6 +393,9 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         tuple(walk.modules),
         root_document.source,
         root_document.graphs,
+        tuple(resolver.choices),
+        # A file named for a known IRI may still be loaded later, under another IRI: then it is no shadow.
+        tuple(shadow for shadow in walk.shadowed if os.path.realpath(shadow.path) not in walk.seen_files),
     )
     return Closure(
         loaded,
@@ -345,6 +405,22 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         frozenset(walk.imported),
         walk.missing,
     )
+
+
+def _note_shadow(walk: _Walk, resolver: _Resolver, iri: str, directory: Path) -> None:
+    """Record that ``iri``, served by a loaded file that declares it, resolves to a file never loaded.
+
+    Loading follows the OWL API: an ontology already in the closure is not read again under its IRI.  But
+    which file declared it first depends on the order of the imports, so the file the catalog or an import
+    dir names for the IRI is recorded (ONT007 and ONT008 compare it with the closure).  Nothing is loaded
+    here, and a file the walk would refuse (outside the import root, missing) is not recorded.
+    """
+    path, _choice = resolver.lookup(iri, directory)
+    if path is None or not path.is_file() or os.path.realpath(path) in walk.seen_files:
+        return
+    root = next((root for root in walk.sandbox if inside_root(path, root)), None)
+    if root is not None:
+        walk.shadowed.append(ImportShadow(iri, path, root))
 
 
 def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:

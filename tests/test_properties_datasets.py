@@ -21,13 +21,16 @@ from hypothesis import strategies as st
 from hypothesis_strategies import PROFILE, budget, roundtrip_triple_lists
 from rdflib import BNode, Graph, URIRef
 from rdflib.compare import isomorphic
+from rdflib.namespace import OWL, RDF
 from rdflib.term import Node
 
 from ontolint import main
 from ontolint.datasets import DEFAULT_GRAPH, GraphIndex
 from ontolint.loader import load_document
+from ontolint.models import RuleScope
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.rules.specs import RULE_SPECS
 from ontolint.rules.support import stable_blank_id
 
 pytestmark = pytest.mark.slow
@@ -42,6 +45,9 @@ GRAPHS: tuple[URIRef | BNode | None, ...] = (
 PLAIN = {"trig": ("turtle", "ttl"), "nquads": ("nt", "nt")}
 EXTENSIONS = {"trig": "trig", "nquads": "nq"}
 COLLISIONS = frozenset({"IRI003", "LEX004"})  # the rules whose findings name other terms too
+# The set-level rules compare the graphs of a dataset with each other, so they are where graphs are not only
+# presentation: they are checked against the triples below, and left out of the comparison with the plain graph.
+SET_LEVEL = frozenset(spec.rule_id for spec in RULE_SPECS if spec.scope is RuleScope.SET)
 
 
 @st.composite
@@ -118,6 +124,24 @@ def _check_attribution(report: dict[str, Any], graph: Graph, index: GraphIndex) 
             assert described <= set(names)
 
 
+def _shared_headers(spread: list[tuple[Triple, frozenset[URIRef | BNode | None]]]) -> tuple[set[str], set[str]]:
+    """What ONT007 or ONT008 report for the graphs of one dataset, which are independent documents: each version
+    IRI that two graphs give a declared ontology, and each ontology IRI that two graphs declare without giving it
+    a version IRI (two versions of one ontology may coexist)."""
+    typed = {s for (s, p, o), _graphs in spread if p == RDF.type and o == OWL.Ontology and isinstance(s, URIRef)}
+    declaring: dict[URIRef, set[URIRef | BNode | None]] = {}
+    versioning: dict[URIRef, set[URIRef | BNode | None]] = {}
+    stating: dict[str, set[URIRef | BNode | None]] = {}
+    for (s, p, o), graphs in spread:
+        if p == RDF.type and o == OWL.Ontology and isinstance(s, URIRef):
+            declaring.setdefault(s, set()).update(graphs)
+        if p == OWL.versionIRI and s in typed and isinstance(o, URIRef) and isinstance(s, URIRef):
+            versioning.setdefault(s, set()).update(graphs)
+            stating.setdefault(str(o), set()).update(graphs)
+    ontologies = {str(s) for s, graphs in declaring.items() if len(graphs - versioning.get(s, set())) > 1}
+    return ontologies, {version for version, graphs in stating.items() if len(graphs) > 1}
+
+
 @budget(0.25, floor=20)
 @given(spread_triples(), st.sampled_from(sorted(PLAIN)))
 def test_graphs_are_presentation_only_sound_and_complete(
@@ -140,8 +164,17 @@ def test_graphs_are_presentation_only_sound_and_complete(
         relabelled_path.write_text(_dataset(spread, fmt, relabel=True), encoding="utf-8")
 
         report = _lint(dataset_path)
-        # Provenance is presentation only: the same findings (so the same fingerprints) as the plain graph.
-        assert sorted(map(_key, report["findings"])) == sorted(map(_key, _lint(plain_path)["findings"]))
+        plain_report = _lint(plain_path)
+        # Provenance is presentation only: the same findings (so the same fingerprints) as the plain graph,
+        # except the set-level rules, which only a dataset can raise.
+        assert sorted(_key(f) for f in report["findings"] if f["rule"] not in SET_LEVEL) == sorted(
+            map(_key, plain_report["findings"])
+        )
+        assert not any(f["rule"] in SET_LEVEL for f in plain_report["findings"])
+        ontologies, versions = _shared_headers(spread)
+        shared = [f for f in report["findings"] if f["rule"] in SET_LEVEL]
+        assert {f["focus"] for f in shared if f["message"].startswith("Ontology IRI")} == ontologies
+        assert {f["focus"] for f in shared if f["message"].startswith("Version IRI")} == versions
         # Graph names are label-free: relabelling every blank node, graph names included, changes nothing.
         assert _lint(relabelled_path) == report
         (item,) = resolve_inputs([str(dataset_path)], directory)

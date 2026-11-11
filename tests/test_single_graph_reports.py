@@ -17,6 +17,10 @@ Two contracts guard that:
   replaced by its new one; the text reports and exit codes did not move.  Regenerated for TriG
   source regions (issue #6): only ``single_graph.trig sarif`` moved, its 11 results gaining the
   region each lacked, and rendered before and after it was equal once the regions were removed.
+  Regenerated for ONT007 and ONT008 (issue #25): the JSON and SARIF reports list the two rules and
+  their executions; rendered with the 0.12.0 sources and the new ones, they were equal once those
+  entries and the execution counts were left out, and neither rule has a finding (one file, no named
+  graph); text reports and exit codes did not move.
 """
 
 from __future__ import annotations

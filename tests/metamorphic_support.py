@@ -24,14 +24,20 @@ from rdflib.namespace import RDF
 
 from ontolint import main
 from ontolint.engine import build_context, execute
-from ontolint.models import ExecutionStatus, Finding
+from ontolint.models import ExecutionStatus, Finding, RuleScope
 from ontolint.policy import Policy
+from ontolint.rules.specs import RULE_SPECS
 
 type Key = tuple[str, str, str, str]
 type Triple = tuple[Any, Any, Any]
 
 # Blank-node foci are content-stable ids (``_:`` and twelve hex digits), so they depend on the IRIs around them.
 CONTENT_ID = re.compile(r"_:[0-9a-f]{12}")
+
+SET_LEVEL = tuple(sorted(spec.rule_id for spec in RULE_SPECS if spec.scope is RuleScope.SET))
+"""The rules that compare the documents of a run with each other (ONT007, ONT008)."""
+INDEPENDENT = ("--ignore", ",".join(SET_LEVEL))
+"""CLI arguments that leave the set-level rules out: the relations of file independence hold without them."""
 
 
 def norm(text: str) -> str:

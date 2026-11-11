@@ -15,7 +15,7 @@ file, reports what looks wrong, and exits non-zero when a finding is serious eno
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
 </p>
 <p align="center">
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 247 of 302" src="https://img.shields.io/badge/rules-247%2F302_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 249 of 304" src="https://img.shields.io/badge/rules-249%2F304_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -52,6 +52,7 @@ file and any imports you point it at.
   - [Selecting rules and profiles](#selecting-rules-and-profiles)
   - [Rule execution status](#rule-execution-status)
   - [Several files](#several-files)
+  - [One ontology in several documents](#one-ontology-in-several-documents)
   - [Modular ontologies: following `owl:imports`](#modular-ontologies-following-owlimports)
   - [Modules inside one file](#modules-inside-one-file)
   - [Datasets: named graphs](#datasets-named-graphs)
@@ -97,10 +98,10 @@ agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.tx
 
 ## What it checks
 
-247 of the 302 catalogue rules are implemented; the rest are planned. The
+249 of the 304 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
 
-- 227 Python graph checks for metadata, identifiers, IRIs, labels and lexical
+- 236 Python graph checks for metadata, identifiers, IRIs, labels and lexical
   quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
   shape quality, governance, ontology metrics, mapping quality, input-safety
   hygiene and, opt-in, OBO Foundry and FAIR publishing conventions.
@@ -344,6 +345,8 @@ ontolint ontologies/*.ttl --format sarif --output findings.sarif
   (`./a.ttl`, a symlink, another spelling on a case-insensitive file system) collapse into one.
   If any file cannot be parsed, every parse failure is reported and the run exits `2` before
   linting. `--shapes` and `--owl-profile` apply to every file; ROBOT runs once per file.
+  The one exception to independence is the set-level pair `ONT007`/`ONT008`, which compares the
+  files with each other (see "One ontology in several documents").
 * Report paths (JSON `path`, SARIF `artifactLocation.uri`, fingerprints) are POSIX-style:
   relative to the working directory when the file is beneath it (`onto/a.ttl`), otherwise
   absolute (`file:///C:/x/a.ttl` in SARIF), with backslashes converted. Run from a stable
@@ -354,6 +357,52 @@ ontolint ontologies/*.ttl --format sarif --output findings.sarif
   written from one file still applies to a one-file run whatever the file is called. The version
   1 fingerprints written next to the identities are unchanged: a single-file run hashes `(rule,
   focus, message)` and a multi-file run adds the report path (see "Policy and baselines").
+
+### One ontology in several documents
+
+An ontology IRI names one ontology, and a version IRI one release of it. When two documents of a
+run declare the same one (`<IRI> a owl:Ontology`, or `owl:versionIRI <IRI>` on such an ontology),
+which of them a tool reads decides the result. ontolint compares the documents of a run in four
+places, each on its own:
+
+* the files given on the command line, each without its imports;
+* the files of one import closure (`--follow-imports`), including a file an import resolves to but
+  does not load because a module loaded earlier already declares that IRI (which module wins then
+  depends on the order of the imports, and the other one is missing from the lint);
+* the files of the `--import-dir` options that declare an IRI an import resolved through them: the
+  import takes the first, in argument order of the directories and then path order, so the finding
+  names every candidate and the one chosen;
+* the graphs of one TriG, N-Quads or JSON-LD file.
+
+Two versions of one ontology share its ontology IRI under different version IRIs, which OWL 2
+allows: an ODK `x-edit.owl` (no version IRI) linted next to its release `x.owl` (a dated version
+IRI), or two releases, are not reported. Among the inputs and the graphs of a dataset, a version IRI
+is reported whenever two documents declare it, and an ontology IRI when two documents declare it
+without a version IRI. In an import closure, which must not hold two versions of one ontology, any
+ontology IRI two files declare is reported.
+
+`ONT007` (warning) reports an IRI declared by documents whose content differs; `ONT008` (info)
+reports identical copies. Content is the RDF graph, not the bytes: the syntax, the prefixes, the
+triple order and blank-node labels do not count. One fact is reported once, on the first input in
+report-path order (or on the input whose closure, import or dataset holds the documents), and
+belongs to the first document's file; the message lists all of them, and SARIF gives that file as
+the location and the others as related locations:
+
+```text
+$ ontolint root.ttl --import-dir mirror
+[WARNING] ONT007 https://example.test/units: owl:imports <https://example.test/units> matches 2 files in --import-dir mirror whose content differs: mirror/units-2024.ttl, mirror/units-2025.ttl; it resolved to mirror/units-2024.ttl, the first in path order.
+    Fix: Keep one document per release: remove the stale copy, give every release its own version IRI, and give a fork its own ontology IRI.
+    In: mirror/units-2024.ttl
+```
+
+These are the only rules that look at more than one file, so they are the deliberate exception to
+file independence above: adding a copy of a file to a run can add a finding to the run. A run of one
+file without imports or named graphs never has them, and when neither rule is selected nothing is
+compared. `ONT007` is a warning, so it fails a run with `--fail-on warning` (and the `ci`, `obo`,
+`fair` and `strict` profiles); `--ignore ONT007,ONT008` leaves them out. Baselines accept them like
+any finding; the identity is the rule, the IRI, the place and the kind, never the paths, so a
+baseline keeps accepting the finding on another machine, from another working directory, and when a
+copy is added, removed or renamed.
 
 ### Modular ontologies: following `owl:imports`
 
@@ -377,7 +426,9 @@ enclosing git repository of the catalog (or of the input without a catalog), so 
 at sibling directories (`../modules/x.ttl`), or the directory given with `--import-root DIR`. For
 imports of published builds without a catalog (an upper ontology by its PURL, say), put local copies
 in a folder, for example with `robot mirror`, and pass `--import-dir DIR` (repeatable): its RDF
-files are matched by the ontology or version IRI they declare. A file there that the safe loader
+files are matched by the ontology or version IRI they declare; when several declare one, the first
+directory in argument order that holds it, and its first file in path order, is used, and `ONT007` or
+`ONT008` names them all (aliases of one file, such as a `latest` symlink, count once). A file there that the safe loader
 refuses is skipped with a `TOOL010` warning (an import it would have resolved is then reported by
 `SEC007`), and one that does not parse, or a `catalog-v001.xml`, is skipped silently. Ownership is decided by the root
 file's own terms, so an import that declares more terms than the root never becomes the linted
@@ -465,8 +516,9 @@ modules inside the file; JSON adds `graphs` to each finding, between `path` and 
 adds `properties.graphs`. All three appear only for a file with at least one triple outside its
 default graph, so every other file reports exactly as before. Like modules, graphs are presentation
 only: fingerprints, baselines and exit codes do not depend on them, and moving a triple to another
-graph keeps its findings baselined. In an import closure, each finding names the graphs of the file
-it belongs to.
+graph keeps its findings baselined. The exception is `ONT007`/`ONT008`, which compare the graphs: an
+ontology header stated in two graphs is reported (see "One ontology in several documents"). In an
+import closure, each finding names the graphs of the file it belongs to.
 
 ### Pattern libraries
 
@@ -950,7 +1002,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 302 entries: 247 executable diagnostics and 55 proposed
+catalogue. It records 304 entries: 249 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an

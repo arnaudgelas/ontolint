@@ -32,6 +32,7 @@ from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
 from .datasets import finding_graphs
+from .declarations import Place, Shared, shared_identities
 from .imports import (
     CATALOG_NAME,
     Catalog,
@@ -52,6 +53,7 @@ from .profiles import PROFILES, Profile
 from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
 from .reporting import TOOL_FAILURE_EXIT, FileReport, Location, Origin, RunReport, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
+from .rules.duplicate_ids import SET_RULES, finding_key
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
 from .rules.support import local_name
@@ -300,8 +302,13 @@ def _definition_hint(item: InputFile, graph: Graph, ctx: RuleContext, findings: 
         )
 
 
-def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace) -> FileReport:
-    """Lint one parsed file and record an execution outcome for every selected rule."""
+def _lint_file(
+    item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace, shared: Sequence[Shared] = ()
+) -> FileReport:
+    """Lint one parsed file and record an execution outcome for every selected rule.
+
+    ``shared`` are the identities the run's documents share that are reported on this file (ONT007, ONT008).
+    """
     graph = loaded.graph
     bases = {module.directory for module in loaded.modules} | {item.path.resolve().parent.as_uri().rstrip("/") + "/"}
     policy = replace(
@@ -311,6 +318,7 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         document_bases=tuple(sorted(bases)),
         root_terms=loaded.modules[0].declared if loaded.modules else frozenset(),
         source=loaded.source,
+        shared_identities=tuple(found.identity for found in shared),
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background
@@ -355,7 +363,50 @@ def _lint_file(item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argpar
         origins = {**origins, **members}
         locations = {f: where for f, where in locations.items() if f not in members}
         graphs = {f: names for f, names in graphs.items() if f not in members}
-    return FileReport(item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules, graphs)
+    others = _shared_places(item, findings, shared, sarif, (origins, locations)) if shared else {}
+    return FileReport(
+        item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules, graphs, others
+    )
+
+
+def _shared_places(
+    item: InputFile,
+    findings: Sequence[Finding],
+    shared: Sequence[Shared],
+    sarif: bool,
+    shown: tuple[dict[Finding, Origin], dict[Finding, Location]],
+) -> dict[Finding, tuple[tuple[Origin, Location | None], ...]]:
+    """Place each ONT007 and ONT008 finding of ``findings`` at the files of its members; return the other files.
+
+    The finding belongs to its first member's file (``origins``, updated in place with ``locations``) and is
+    located there; for SARIF, every other member's file is a related location.  Its named graphs are found like any
+    finding's (:func:`ontolint.datasets.finding_graphs`): every graph of its file that describes the IRI.
+    """
+    origins, locations = shown
+    by_key = {finding_key(found.identity): found for found in shared}
+    others: dict[Finding, tuple[tuple[Origin, Location | None], ...]] = {}
+    for finding in findings:
+        found = by_key.get((finding.rule, finding.focus, finding.subject, finding.message))
+        if found is None:
+            continue
+        first, *rest = found.places
+        origins.pop(finding, None)
+        if first.path != item.display:
+            origins[finding] = Origin(first.path, first.uri)
+        locations.pop(finding, None)
+        if sarif and (where := _place_location(first, finding.focus)) is not None:
+            locations[finding] = where
+        if rest:
+            others[finding] = tuple(
+                (Origin(place.path, place.uri), _place_location(place, finding.focus) if sarif else None)
+                for place in rest
+            )
+    return others
+
+
+def _place_location(place: Place, iri: str) -> Location | None:
+    """Where ``iri`` first occurs in the file of ``place``, when its syntax gives positions."""
+    return place.source_index.locations.get(URIRef(iri)) if place.source_index is not None else None
 
 
 def _library_origins(library: PatternLibrary | None, findings: Sequence[Finding]) -> dict[Finding, Origin]:
@@ -904,7 +955,14 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     plan = replace(_plan(args, config, shapes, registry), shacl_background=background)
     if library is not None:
         plan = replace(plan, policy=replace(plan.policy, library=library))
-    files = [_lint_file(item, graph, plan, args) for item, graph in zip(inputs, graphs, strict=True)]
+    shared = (
+        shared_identities(inputs, graphs, limits)
+        if any(spec.rule_id in SET_RULES for spec in plan.selection.run)
+        else [()] * len(inputs)
+    )
+    files = [
+        _lint_file(item, graph, plan, args, found) for item, graph, found in zip(inputs, graphs, shared, strict=True)
+    ]
     files, stale = _apply_baselines(files, args)
     return RunReport(tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale)
 

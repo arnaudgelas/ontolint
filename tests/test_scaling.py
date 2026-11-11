@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 from rdflib import BNode, Graph, URIRef
@@ -19,7 +20,11 @@ from rdflib.plugins.stores.memory import Memory
 
 from ontolint import Linter
 from ontolint.datasets import build_graph_index, finding_graphs
+from ontolint.declarations import shared_identities
+from ontolint.loader import LoadedGraph
 from ontolint.models import Finding
+from ontolint.paths import resolve_inputs
+from ontolint.policy import Policy
 from ontolint.rules.runtime import PropertyClosure
 from ontolint.rules.support import DESCRIPTIONS, LABELS
 from ontolint.source_locations import build_source_index
@@ -103,10 +108,26 @@ def _closure(count: int) -> float:
     return _best_of(step)
 
 
+def _shared_headers(count: int) -> float:
+    """ONT007 over a dataset of ``count / 5`` named graphs that each repeat one ontology header (the first draft
+    of ONT007 built each graph by scanning every triple of the file, so the step grew with the square of the
+    graphs)."""
+    store, default = Memory(), BNode()
+    for i in range(count // 5):
+        named = Graph(store=store, identifier=URIRef(f"https://example.test/g{i}"))
+        named.add((URIRef("https://example.test/o"), RDF.type, OWL.Ontology))
+        named.add((URIRef(f"https://example.test/C{i}"), RDF.type, OWL.Class))
+    index = build_graph_index(store, default, "file:///w/")
+    (item,) = resolve_inputs(["d.trig"], Path.cwd())
+    source_index = build_source_index(b"", "nt", "file:///w/d.trig", Graph())
+    loaded = LoadedGraph(Graph(store=store, identifier=default), source_index, graphs=index)
+    return _best_of(lambda: shared_identities([item], [loaded], Policy()))
+
+
 @pytest.mark.parametrize(
     "step",
-    [_locate, _cls017, _graph_index, _finding_graphs, _closure],
-    ids=["source-locator", "CLS017", "graph-index", "finding-graphs", "property-closure"],
+    [_locate, _cls017, _graph_index, _finding_graphs, _closure, _shared_headers],
+    ids=["source-locator", "CLS017", "graph-index", "finding-graphs", "property-closure", "shared-headers"],
 )
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], float]) -> None:
     small, large = step(SMALL), step(LARGE)

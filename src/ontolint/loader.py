@@ -103,9 +103,34 @@ class Module:
     directory: str = ""
     """The file's directory as a ``file:`` URI ending in ``/``: relative references resolve under it."""
     graph: Graph | None = None
-    """The file's own triples (imported files only; the root's are the input graph)."""
+    """The file's own triples (the root's too: without them, the input graph is the whole closure)."""
     graphs: GraphIndex = field(default=EMPTY_INDEX, compare=False)
     """The named graphs that state each of the file's triples (empty unless it is a dataset with one)."""
+
+
+# gremlin: pardon[equivalent] nothing mutates a choice; frozen only guards against it
+@dataclass(frozen=True)
+class ImportChoice:
+    """An ``owl:imports`` IRI the ``--import-dir`` options hold in several files, so the import took the first."""
+
+    iri: str
+    directories: tuple[str, ...]
+    """The report paths of the ``--import-dir`` options holding ``iri``, in argument order."""
+    candidates: tuple[tuple[Path, Path], ...]
+    """Every file there that declares ``iri`` with its ``--import-dir``, by directory then path: the first is the
+    one the import resolved to.  Only paths: a candidate the closure did not load is read only to compare it."""
+
+
+# gremlin: pardon[equivalent] nothing mutates a shadow; frozen only guards against it
+@dataclass(frozen=True)
+class ImportShadow:
+    """An ``owl:imports`` IRI a loaded file already declares, although it resolves to a file that was not loaded."""
+
+    iri: str
+    path: Path
+    """The file the catalog (or an ``--import-dir``) names for ``iri``."""
+    root: Path
+    """The import root or ``--import-dir`` it lies in: the sandbox it is read in, if it is read to compare it."""
 
 
 @dataclass(frozen=True)
@@ -123,6 +148,10 @@ class LoadedGraph:
     """What the file's text says that the graph does not keep (an SPDX licence comment, its prefixes)."""
     graphs: GraphIndex = field(default=EMPTY_INDEX, compare=False)
     """The named graphs that state each triple of the (root) file; empty unless it is a dataset with one."""
+    choices: tuple[ImportChoice, ...] = ()
+    """With ``--import-dir``: the imports of the closure that the import dirs held in several files."""
+    shadowed: tuple[ImportShadow, ...] = ()
+    """The imports of the closure served by a file already loaded that declares their IRI, in walk order."""
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.

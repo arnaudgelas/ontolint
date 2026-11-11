@@ -25,6 +25,7 @@ PIPELINE = (
     "ontolint.imports",
     "ontolint.library",
     "ontolint.datasets",
+    "ontolint.declarations",
     "ontolint.source_locations",
     "ontolint.selection",
     "ontolint.rule_info",

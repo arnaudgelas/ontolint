@@ -1,0 +1,8 @@
+# Copied from tools.ttl: the header still names the tools module.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.test/kitchen/tools> a owl:Ontology .
+
+<https://example.test/kitchen#Bread> a owl:Class ;
+    rdfs:label "bread"@en .

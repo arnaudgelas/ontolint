@@ -67,6 +67,10 @@ class FileReport:
     modules: Mapping[Finding, tuple[str, ...]] = field(default_factory=dict[Finding, tuple[str, ...]])
     # For a dataset with named graphs (TriG, N-Quads, JSON-LD): the graphs each finding's terms are stated in.
     graphs: Mapping[Finding, tuple[str, ...]] = field(default_factory=dict[Finding, tuple[str, ...]])
+    # For a finding about several files (ONT007, ONT008): the files besides its own, each with its region if known.
+    others: Mapping[Finding, tuple[tuple[Origin, Location | None], ...]] = field(
+        default_factory=dict[Finding, tuple[tuple[Origin, Location | None], ...]]
+    )
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -232,20 +236,31 @@ def _sarif_rule(spec: RuleSpec, overrides: Mapping[str, str]) -> dict[str, Any]:
     }
 
 
-def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -> dict[str, Any]:
-    physical: dict[str, Any] = {"artifactLocation": {"uri": file.uri_of(f)}}
-    location = file.locations.get(f)
+def _sarif_location(uri: str, location: Location | None) -> dict[str, Any]:
+    physical: dict[str, Any] = {"artifactLocation": {"uri": uri}}
     if location is not None:
         region: dict[str, int] = {"startLine": location.line}
         if location.column is not None:
             region["startColumn"] = location.column
         physical["region"] = region
+    return {"physicalLocation": physical}
+
+
+def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -> dict[str, Any]:
     result: dict[str, Any] = {
         "ruleId": f.rule,
         "level": SARIF_LEVELS[f.severity],
         "message": {"text": f"{f.message} Focus: {f.focus}. Suggestion: {f.suggestion}"},
-        "locations": [{"physicalLocation": physical}],
+        "locations": [_sarif_location(file.uri_of(f), file.locations.get(f))],
     }
+    # A finding about several files (ONT007, ONT008) is fixed by changing one of them, so SARIF 2.1.0
+    # (section 3.27.12) gives it one location; the other files are related locations (section 3.27.22).
+    related = [
+        {"id": number, **_sarif_location(origin.uri, location), "message": {"text": "Also declared here."}}
+        for number, (origin, location) in enumerate(file.others.get(f, ()), start=1)
+    ]
+    if related:
+        result["relatedLocations"] = related
     if f.rule in rule_index:
         result["ruleIndex"] = rule_index[f.rule]
     properties: dict[str, Any] = {}

@@ -1,0 +1,7 @@
+# The triples of release.ttl, written in another order with other prefixes.
+@prefix o: <http://www.w3.org/2002/07/owl#> .
+@prefix p: <https://example.test/pizza#> .
+
+p:Pizza <http://www.w3.org/2000/01/rdf-schema#label> "pizza"@en ; a o:Class .
+<https://example.test/pizza> <http://purl.org/dc/terms/license> <https://creativecommons.org/licenses/by/4.0/> ;
+    o:versionIRI <https://example.test/pizza/1.0> ; a o:Ontology .
