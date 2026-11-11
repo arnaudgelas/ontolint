@@ -18,6 +18,7 @@ from ontolint import Linter
 from ontolint.engine import build_context
 from ontolint.policy import Policy
 from ontolint.rules.hierarchy_quality import Hierarchy
+from ontolint.rules.runtime import PropertyClosure
 from ontolint.rules.safety import MAX_BLANK_NODE_DEPTH, _condensed_depths
 from ontolint.rules.support import DESCRIPTIONS, list_items
 
@@ -198,6 +199,52 @@ def test_descriptions_are_the_subproperty_closure_of_the_seeds(edges: set[tuple[
     for triple in triples:
         shuffled.add(triple)
     assert build_context(shuffled, None, Policy()).descriptions == descriptions
+
+
+def _oracle_closure(edges: set[tuple[Node, bool, Node]], seeds: tuple[Node, ...], stop: frozenset[Node]) -> set[Node]:
+    """Fixed point: add ``s`` (not stopped) when ``s ⊑ o`` or ``s ≡ o`` or ``o ≡ s`` and ``o`` is in the set."""
+    closure: set[Node] = set(seeds)
+    changed = True
+    while changed:
+        changed = False
+        for one, equivalent, other in edges:
+            pairs = [(one, other), (other, one)] if equivalent else [(one, other)]
+            for sub, sup in pairs:
+                if sup in closure and sub not in closure and sub not in stop:
+                    closure.add(sub)
+                    changed = True
+    return {node for node in closure if isinstance(node, URIRef)}
+
+
+@budget(1)
+@given(
+    st.sets(st.tuples(st.sampled_from(PROPERTY_NODES), st.booleans(), st.sampled_from(PROPERTY_NODES)), max_size=20),
+    st.frozensets(st.sampled_from([node for node in PROPERTY_NODES if isinstance(node, URIRef)]), max_size=3),
+    st.randoms(use_true_random=False),
+)
+def test_the_property_closure_follows_subproperties_and_equivalences(
+    edges: set[tuple[Node, bool, Node]], stop: frozenset[URIRef], rng: Random
+) -> None:
+    """INVARIANT: PropertyClosure.below is the seeds, then the unstopped IRIs below them sorted, in any order."""
+    seeds = DESCRIPTIONS[:2]
+    triples = [
+        (one, OWL.equivalentProperty if equivalent else RDFS.subPropertyOf, other)
+        for one, equivalent, other in sorted(edges, key=str)
+    ]
+    graph = Graph()
+    for triple in triples:
+        graph.add(triple)
+    below = PropertyClosure(graph).below(seeds, stop)
+
+    assert set(below) == _oracle_closure(edges, seeds, stop)
+    assert below[: len(seeds)] == seeds
+    tail = below[len(seeds) :]
+    assert list(tail) == sorted(set(tail), key=str)
+    rng.shuffle(triples)
+    shuffled = Graph()
+    for triple in triples:
+        shuffled.add(triple)
+    assert PropertyClosure(shuffled).below(seeds, stop) == below
 
 
 # --- SEC004 blank-node depth -------------------------------------------------------------------------

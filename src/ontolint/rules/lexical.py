@@ -27,8 +27,8 @@ MINIMUM_CAPITALIZATION_SAMPLE = 10
 MAJORITY_PERCENT = 80
 LABEL_LIKE = ("label", "name", "title")
 # LEX002 also accepts SKOS documentation notes; other rules keep ``ctx.descriptions`` (definitions only).
-# ``ctx.descriptions`` holds the definition predicates and every predicate declared, directly or through
-# a chain, rdfs:subPropertyOf one of them.
+# ``ctx.descriptions`` holds the definition predicates and every predicate below one of them through
+# rdfs:subPropertyOf and owl:equivalentProperty (``RuleContext.closure``).
 DOCUMENTATION_NOTES = (SKOS.scopeNote, SKOS.note)
 # Collections (microthesauri) and schemes are named like the concepts they group, so LEX004 skips them.
 GROUPING_TYPES = frozenset({SKOS.Collection, SKOS.ConceptScheme})

@@ -81,6 +81,10 @@ CASES = {
             ttl("at the limit", _commented(10, 5)),
             ttl("below the minimum sample", _commented(9, 0)),
             ttl("skos:definition counts", _classes(10, lambda i: '; skos:definition "d"')),
+            ttl(
+                "an equivalent of skos:definition counts",
+                "skos:definition owl:equivalentProperty ex:d . " + _classes(10, lambda i: '; ex:d "d"'),
+            ),
         ],
     ),
     "METRIC003": rule_cases(
