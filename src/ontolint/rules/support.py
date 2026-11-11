@@ -9,7 +9,7 @@ from typing import cast
 from urllib.parse import SplitResult, urlsplit
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import DC, DCTERMS, RDF, RDFS, SKOS
+from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS
 from rdflib.term import Identifier, Node
 
 from ontolint.ownership import base_matches
@@ -32,6 +32,11 @@ DESCRIPTIONS = (
 LABELS = (RDFS.label, SKOS.prefLabel)
 META_LICENSE = (DCTERMS.license, URIRef("http://creativecommons.org/ns#license"))
 META_CREATOR = (DCTERMS.creator, DC.creator, URIRef("http://www.w3.org/ns/prov#wasAttributedTo"))
+# Datatypes outside the xsd: namespace: RDF's, and the OWL 2 datatype map's owl:real, owl:rational and
+# rdf:PlainLiteral.
+LITERAL_RANGES = frozenset(
+    {RDFS.Literal, RDF.langString, RDF.XMLLiteral, RDF.HTML, RDF.PlainLiteral, OWL.real, OWL.rational}
+)
 MINIMUM_STYLE_SAMPLE_SIZE = 4
 MINIMUM_SINGLE_CHILD_CHAIN_LENGTH = 3
 

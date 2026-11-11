@@ -84,7 +84,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items
+from .support import LITERAL_RANGES, list_items
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -261,11 +261,6 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
 )
 
-# Datatypes outside the xsd: namespace: RDF's, and the OWL 2 datatype map's owl:real, owl:rational and
-# rdf:PlainLiteral.
-LITERAL_RANGES = frozenset(
-    {RDFS.Literal, RDF.langString, RDF.XMLLiteral, RDF.HTML, RDF.PlainLiteral, OWL.real, OWL.rational}
-)
 # Empty by definition: disjointness with them, or subsumption by them, is no conflict (OWL024/OWL025).
 BOTTOM_PROPERTIES = frozenset({OWL.bottomObjectProperty, OWL.bottomDataProperty})
 BOTTOM_CLASSES = frozenset({OWL.Nothing})
