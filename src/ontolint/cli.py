@@ -12,12 +12,14 @@ import argparse
 import json
 import logging
 import math
+import os
 import sys
 from collections.abc import Mapping, Sequence
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from functools import partial
 from pathlib import Path
+from typing import TextIO
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
@@ -45,7 +47,7 @@ from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
-from .reporting import FileReport, Location, Origin, RunReport, render_report, run_exit_code
+from .reporting import TOOL_FAILURE_EXIT, FileReport, Location, Origin, RunReport, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
@@ -669,21 +671,99 @@ def _parse_error(exc: Exception, display: str | None) -> str:
     return f"INPUT001: RDF input parsing failed{where}: {name}: {detail}"
 
 
+EXIT_PIPE_CLOSED = 141
+"""Exit status when the reader of stdout or stderr closed the pipe first (``ontolint ... | head``).
+
+It is 128 plus SIGPIPE, what a shell reports for the tools a closed pipe kills (``cat``, ``grep``, ``git``). It is
+neither a verdict (0, 1) nor a tool failure (2): the report was not delivered. A run that had already failed keeps 2.
+"""
+
+
+class _StdoutClosed(Exception):
+    """The reader of stdout has gone: stop writing and say nothing."""
+
+
+def _release(stream: TextIO) -> None:
+    """Point the file descriptor of ``stream`` at the null device once its reader has gone.
+
+    Python flushes the standard streams again when it exits. With a dead pipe underneath, that flush fails after
+    ``main`` has returned (``Exception ignored ... BrokenPipeError``, status 120); what is still buffered goes to the
+    null device instead. It runs only after a genuine ``BrokenPipeError``, and it affects the whole process, which is
+    right for a command line and the reason a library caller of ``main`` should not rely on stdout afterwards.
+    """
+    try:
+        descriptor = stream.fileno()
+        null = os.open(os.devnull, os.O_WRONLY)
+    except (AttributeError, OSError, ValueError):  # no descriptor behind the stream: a capture, a custom stdout
+        return
+    try:
+        os.dup2(null, descriptor)
+    finally:
+        os.close(null)
+
+
+def _write_stdout(text: str) -> None:
+    """Write ``text`` to stdout and flush it; raise ``_StdoutClosed`` when its reader has gone.
+
+    The flush is what makes a small output fail here, where it can be handled, not at the interpreter's last flush.
+    With no stdout at all (``pythonw``, ``>&-``) there is nothing to write to, as ``print`` has always taken it.
+    """
+    stream = sys.stdout
+    if stream is None:
+        return
+    try:
+        stream.write(text)
+        flush = getattr(stream, "flush", None)
+        if flush is not None:
+            flush()
+    except BrokenPipeError:
+        _release(sys.stdout)
+        raise _StdoutClosed from None
+
+
+def _flush_standard_streams() -> None:
+    """Flush stdout and stderr; a reader that left while output was buffered is released, not reported.
+
+    This runs on the way out of ``main``, so it must never replace the outcome (a return value, or the ``SystemExit`` of
+    ``--help``): any other failure is left for the interpreter's own flush, which reports it as it always did.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        flush = getattr(stream, "flush", None)  # no stream (pythonw) or a custom one without flush
+        if flush is None:
+            continue
+        try:
+            flush()
+        except BrokenPipeError:
+            _release(stream)
+        except (OSError, ValueError):
+            continue
+
+
 def _info_command(args: argparse.Namespace) -> int | None:
     """Handle --version, --list-rules and --explain; ``None`` means a normal lint run."""
     registry = default_registry()
-    if args.version:
-        print(f"ontolint {package_version()}")
-    elif args.list_rules:
-        print(render_rule_list(rule_rows(registry), "json" if args.format != "text" else "text"))
-    elif args.explain:
-        try:
-            print(render_explanation(explain_rule(args.explain, registry), "json" if args.format != "text" else "text"))
-        except UnknownRuleError:
-            print(f"TOOL001: unknown rule {args.explain!r}; use --list-rules to see valid identifiers", file=sys.stderr)
-            return 2
-    else:
-        return None
+    kind = "json" if args.format != "text" else "text"
+    try:
+        if args.version:
+            _write_stdout(f"ontolint {package_version()}\n")
+        elif args.list_rules:
+            _write_stdout(render_rule_list(rule_rows(registry), kind) + "\n")
+        elif args.explain:
+            try:
+                _write_stdout(render_explanation(explain_rule(args.explain, registry), kind) + "\n")
+            except UnknownRuleError:
+                try:
+                    print(
+                        f"TOOL001: unknown rule {args.explain!r}; use --list-rules to see valid identifiers",
+                        file=sys.stderr,
+                    )
+                except BrokenPipeError:  # nobody reads it; the exit status still says what happened
+                    _release(sys.stderr)
+                return 2
+        else:
+            return None
+    except _StdoutClosed:
+        return EXIT_PIPE_CLOSED
     return 0
 
 
@@ -761,13 +841,16 @@ def _write_text(path: str | Path, text: str, *, what: str) -> str | None:
 
 
 def _emit(output: str, args: argparse.Namespace) -> str | None:
-    """Write the report to ``--output`` or stdout; return the TOOL001 line when it could not be written."""
+    """Write the report to ``--output`` or stdout; return the TOOL001 line when it could not be written.
+
+    Raises ``_StdoutClosed`` when the reader of stdout has gone, which is not a failure to report.
+    """
     text = output + "\n"
     if args.output:
         return _write_text(args.output, text, what="report")
     try:
-        sys.stdout.write(text)
-    except UnicodeEncodeError as exc:  # a broken pipe (OSError) is not handled here: see TODO.md
+        _write_stdout(text)
+    except (UnicodeEncodeError, OSError) as exc:  # a closed pipe is ``_StdoutClosed``, raised before this
         return _output_failure("report", exc)
     return None
 
@@ -816,7 +899,24 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the linter CLI and return its process exit code (0 clean, 1 gated findings, 2 tool failure)."""
+    """Run the linter CLI and return its process exit code.
+
+    0 is clean, 1 gated findings, 2 a tool failure, and 141 (``EXIT_PIPE_CLOSED``) that the reader of stdout or
+    stderr closed the pipe first. Stdout is handled where the report is written. The lint turns every other
+    exception into TOOL001, so a ``BrokenPipeError`` that gets this far was raised by a write to stderr before the
+    report existed: with nobody to read diagnostics, the run stops (``ontolint ... 2>&1 | head``). Once the report is
+    out, a closed stderr no longer changes the exit status (see ``_finish``).
+    """
+    try:
+        return _main(argv)
+    except BrokenPipeError:
+        _release(sys.stderr)
+        return EXIT_PIPE_CLOSED
+    finally:
+        _flush_standard_streams()
+
+
+def _main(argv: Sequence[str] | None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     # RDFLib logs its own warnings (and tracebacks) while parsing; ontolint reports input problems itself.
@@ -859,10 +959,18 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
     code = run_exit_code(report, fail_on)
     if args.fail_on_stale_baseline and report.stale_baseline and code == 0:
         code = 1
-    failure = _emit(render_report(report, args.format, code), args)
+    closed = False
+    try:
+        failure = _emit(render_report(report, args.format, code), args)
+    except _StdoutClosed:
+        failure, closed = None, True
     if failure is not None:
-        print(failure, file=sys.stderr)
-        code = 2
-    for path, x in report.broken:
-        print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
-    return code
+        code = TOOL_FAILURE_EXIT
+    try:
+        if failure is not None:
+            print(failure, file=sys.stderr)
+        for path, x in report.broken:
+            print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
+    except BrokenPipeError:  # the report is out and the exit status says what these lines would have: keep it
+        _release(sys.stderr)
+    return EXIT_PIPE_CLOSED if closed and code != TOOL_FAILURE_EXIT else code

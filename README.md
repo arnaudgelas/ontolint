@@ -205,6 +205,16 @@ Supported report formats are `text`, `json`, and `sarif`.
 | `0` | No finding meets the configured `--fail-on` threshold. |
 | `1` | At least one finding meets the threshold. |
 | `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, a report that cannot be written to `--output` or encoded (`TOOL001: report output failed: ...`), or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker, or a SHACL validation that exceeds `--max-validation-seconds`). |
+| `141` | The reader of stdout or stderr closed the pipe before the output was written, as `head` does when a long report is piped into it. This is 128 plus SIGPIPE, the status a shell reports for `cat`, `grep` or `git` in the same case. Nothing is printed, and the report and the verdict are not delivered. |
+
+Exit `141` outranks `0` and `1` but not `2`: a run that had already failed says so, and its `TOOL001`
+lines still go to stderr. It happens only when a write really fails, so a short output that
+fits in the pipe before the reader leaves is delivered and exits as usual. A closed stderr
+(`ontolint ... 2>&1 | head`) ends the run with `141` at its first diagnostic, before there is a
+report; once the report is out it changes nothing. A report that cannot be flushed for another
+reason, a full disk for example, is `TOOL001` and exit `2`, as with `--output`. `--help` and usage
+errors keep argparse's `0` and `2`. A closed pipe on Windows is reported by the operating system
+as `OSError` (EINVAL) and is not handled yet.
 
 Exit `2` outranks `1`: when a requested backend did not deliver a verdict the run cannot
 pass, even with `--fail-on never`. The report is still written so you can see why. Rules that
