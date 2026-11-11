@@ -59,11 +59,11 @@ METRIC specification work, "after" the code that describes these rules.
 | automatce | METRIC006 | 11 / 309 (fires) | 11 / 309 (fires) |
 | automatce | METRIC010 | 271 / 331 (fires) | 271 / 331 (fires) |
 
-Every other METRIC value of those files is the same before and after. An earlier
-measurement of 19 files (schema.org, Tractus-X, FOAF, PROV-O and others) was not repeated
-for this page; the figures from it that moved are
-METRIC005 (a food-traceability schema, 22 of 43 orphans before and none after) and METRIC010
-(Tractus-X, 34 of 236 references before and 6 after).
+Every other METRIC value of those files is the same before and after. An earlier measurement of
+19 files (schema.org, Tractus-X, FOAF, PROV-O and others) was not repeated for this page. Two
+figures from it are recorded here as historical and unverified, because their files are not kept:
+METRIC005 on a food-traceability schema was 22 of 43 orphans before and none after, and METRIC010 on
+Tractus-X was 34 of 236 references before and 6 after.
 
 ## What is not known
 
