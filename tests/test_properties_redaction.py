@@ -10,7 +10,7 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import RDF
 
 from ontolint import Linter
-from ontolint.rules.support import PASSWORD_MASK, redact_password
+from ontolint.rules.support import REDACTED_PASSWORD, redact_password
 
 pytestmark = pytest.mark.slow
 
@@ -34,9 +34,9 @@ def test_the_password_is_masked_and_nothing_else_changes(scheme: str, user: str,
     iri = f"{scheme}://{user}:{password}@h{rest}"
     masked = redact_password(iri)
     assert f":{password}@" not in masked
-    assert masked == f"{scheme}://{user}:{PASSWORD_MASK}@h{rest}"
+    assert masked == f"{scheme}://{user}:{REDACTED_PASSWORD}@h{rest}"
     assert redact_password(masked) == masked
-    assert masked.replace(f":{PASSWORD_MASK}@", f":{password}@", 1) == iri
+    assert masked.replace(f":{REDACTED_PASSWORD}@", f":{password}@", 1) == iri
     assert _sec014_foci(iri) == [masked]
     assert _sec014_foci(masked) == [masked]
 
