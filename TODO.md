@@ -20,6 +20,21 @@ Nothing open: 0.11.0 is released (see "Recently done").
 
 ## Recently done
 
+- Unreleased (on `main`, after 0.11.0):
+  - **Test tooling and the metamorphic suite.** `pytest-randomly` shuffles the test order on every
+    run and prints its seed (`-p randomly --randomly-seed=N` replays an order); the suite passed
+    under three seeds with `-n auto`, and the mutation runs turn it off (`-p no:randomly`).
+    `pytest-archon` pins the layering in `tests/test_architecture.py`: seven rules on direct imports,
+    each shown to fail when a violating import is planted. Eight metamorphic families in
+    `tests/test_metamorphic_*.py` assert relations whose outcome is known without an oracle:
+    serialisation formats, Turtle noise, idempotence and locality, multi-file runs, policy
+    monotonicity, baseline round trips, report-format consistency and renaming the owned namespace;
+    each was shown to fail when its transformation was made wrong. They found one real defect (the
+    TriG item in P1, pinned by a strict `xfail`). Weak spots: the baseline relation never reaches
+    the case of findings that share an identity, and the renaming test discriminates an
+    order-changing namespace only through its `@example`. Full gate: 6864 passed, 1 xfailed, 99.87%
+    coverage.
+
 - 0.11.0 (`1652fa7`, tag `v0.11.0`), released 2026-11-11: release run 42973303494 passed every job
   (the CodeQL gate, tests, build, publish to PyPI, and the install of the published release), and
   PyPI holds the wheel and the sdist (uploaded 06:45Z). The commits after `f7f3db4` were re-dated
@@ -556,6 +571,16 @@ Validation corpus (public; licences per repository):
 | KnowledgeCaptureAndDiscovery/SoftwareDescriptionOntology | single curated file, versioned `release/1.9.0/` | control case: 8 findings, ownership right |
 
 ## P1 — reporting, policy and supply-chain correctness
+
+- [ ] **TriG with an unlabelled default graph is read as JSON-LD.** Reproduced on 0.11.0
+  (2026-11-11), found by the metamorphic suite: a file `x.trig` holding
+  `{ <https://example.test/onto#A> a <https://example.test/onto#B> . }`, valid TriG (rdflib's
+  writer emits exactly this when no prefix is declared), fails with `INPUT001: RDF input parsing
+  failed: JSONDecodeError` and exit 2. `syntax.sniff` returns `json-ld` for any text that starts
+  with `{`, and the `.trig` extension does not override it. A file the extension names should be
+  parsed as that syntax, and the sniffer should look past `{` (JSON-LD has a quoted key or `@`
+  next, TriG a term or `}`). *Done when:* the reproduction lints, and the strict `xfail` in
+  `tests/test_metamorphic_serialization.py` is removed because it now passes.
 
 - [ ] **Source regions for TriG.** SARIF results for a `.trig` file have no region:
   `source_locations._TEXT_FORMATS` lists Turtle, N3, N-Triples and N-Quads but not TriG (README
