@@ -392,19 +392,34 @@ def _domains_and_ranges(ctx: RuleContext) -> None:
                 confidence="certain",
                 subject=(RDFS.range,),
             )
-        if is_deprecated(ctx.g, p) or _annotation_only(ctx.g, p):
+        if signature_exempt(ctx.g, p):
             continue
-        if not domains and not any((p, q, None) in ctx.g for q in DOMAIN_SUBSTITUTES):
+        if lacks_domain(ctx, p):
             ctx.add("OWL005", p, "Property has no asserted rdfs:domain.")
-        if not ranges and not any((p, q, None) in ctx.g for q in RANGE_SUBSTITUTES):
+        if lacks_range(ctx, p):
             ctx.add("OWL006", p, "Property has no asserted rdfs:range.")
 
 
-def _annotation_only(g: Graph, p: Node) -> bool:
+def annotation_only(g: Graph, p: Node) -> bool:
     """Annotation properties conventionally carry no domain or range."""
     return (p, RDF.type, OWL.AnnotationProperty) in g and not any(
         (p, RDF.type, t) in g for t in (OWL.ObjectProperty, OWL.DatatypeProperty)
     )
+
+
+def signature_exempt(g: Graph, p: Node) -> bool:
+    """Return whether OWL005 and OWL006 expect no domain or range of ``p`` (deprecated, or annotation-only)."""
+    return is_deprecated(g, p) or annotation_only(g, p)
+
+
+def lacks_domain(ctx: RuleContext, p: Node) -> bool:
+    """Return whether ``p`` has neither an asserted rdfs:domain nor a schema.org/dcam domainIncludes (OWL005)."""
+    return not ctx.context.domains_by_property.get(p) and not any((p, q, None) in ctx.g for q in DOMAIN_SUBSTITUTES)
+
+
+def lacks_range(ctx: RuleContext, p: Node) -> bool:
+    """Return whether ``p`` has neither an asserted rdfs:range nor a schema.org/dcam rangeIncludes (OWL006)."""
+    return not ctx.context.ranges_by_property.get(p) and not any((p, q, None) in ctx.g for q in RANGE_SUBSTITUTES)
 
 
 def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> None:

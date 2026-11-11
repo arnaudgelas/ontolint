@@ -22,6 +22,9 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .lexical import is_unlabelled
+from .owl import lacks_domain, lacks_range, signature_exempt
+
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
@@ -173,6 +176,12 @@ def _covered(ctx: RuleContext, terms: frozenset[URIRef], predicates: tuple[URIRe
     return sum(1 for term in terms if term in having)
 
 
+def _missing(ctx: RuleContext, code: str, terms: frozenset[URIRef], predicates: tuple[URIRef, ...]) -> int:
+    if code == "METRIC001":  # exactly the classes LEX001 reports
+        return sum(is_unlabelled(ctx, term) for term in terms)
+    return len(terms) - _covered(ctx, terms, predicates)
+
+
 def _coverage_rule(ctx: RuleContext, code: str, terms: frozenset[URIRef], predicates: tuple[URIRef, ...]) -> None:
     """Emit ``code`` when too many ``terms`` lack every one of ``predicates``."""
     policy = ctx.policy
@@ -184,7 +193,7 @@ def _coverage_rule(ctx: RuleContext, code: str, terms: frozenset[URIRef], predic
     total = len(terms)
     if total < policy.metric_min_sample:
         return
-    missing = total - _covered(ctx, terms, predicates)
+    missing = _missing(ctx, code, terms, predicates)
     ratio = _ratio(missing, total)
     if ratio > limit:
         ctx.add(code, _focus(ctx), f"{missing} of {total} {noun} lack {what} ({ratio:.2f} > {limit:.2f}).", subject=())
@@ -266,8 +275,8 @@ def _signature_rule(ctx: RuleContext) -> None:
     )
     if len(props) < ctx.policy.metric_min_sample:
         return
-    signed = sum(1 for p in props if p in ctx.context.domains_by_property or p in ctx.context.ranges_by_property)
-    unsigned = len(props) - signed
+    # Exactly the properties that OWL005 and OWL006 both report.
+    unsigned = sum(1 for p in props if not signature_exempt(ctx.g, p) and lacks_domain(ctx, p) and lacks_range(ctx, p))
     ratio = _ratio(unsigned, len(props))
     if ratio > ctx.policy.metric_max_unsigned_property_ratio:
         limit = ctx.policy.metric_max_unsigned_property_ratio

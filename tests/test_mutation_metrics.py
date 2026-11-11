@@ -1,6 +1,6 @@
 """Targeted tests that pin behaviour the mutation run found unobserved (metrics rules)."""
 
-# ruff: noqa: SLF001
+# ruff: noqa: SLF001, PLR2004
 
 from __future__ import annotations
 
@@ -80,3 +80,34 @@ def test_metric013_does_not_fire_when_ratio_equals_limit() -> None:
     g.add((BNode(), RDFS.label, Literal("y")))
     assert _run(g, "METRIC013", metric_max_blank_node_ratio=0.5) == []
     assert len(_run(g, "METRIC013", metric_max_blank_node_ratio=0.4)) == 1
+
+
+def test_metric001_counts_what_lex001_reports() -> None:
+    g = Graph()
+    for i in range(10):
+        c = _cls(g, f"C{i}")
+        if i < 3:
+            g.add((c, RDFS.label, _ex("x")))  # an IRI is not a label
+        elif i < 6:
+            g.add((c, OWL.deprecated, Literal(True)))  # deprecated terms are exempt
+        elif i < 8:
+            g.add((c, RDFS.label, Literal("c")))
+    (finding,) = _run(g, "METRIC001", metric_max_unlabelled_ratio=0.0)
+    assert finding.message.startswith("5 of 10 classes lack a label")
+
+
+def test_metric008_counts_what_owl005_and_owl006_report() -> None:
+    g = Graph()
+    substitutes = {
+        0: (URIRef("https://schema.org/domainIncludes"), _ex("C")),
+        1: (URIRef("http://purl.org/dc/dcam/rangeIncludes"), _ex("C")),
+        2: (OWL.deprecated, Literal(True)),
+        3: (RDFS.domain, _ex("C")),
+    }
+    for i in range(12):
+        p = _ex(f"p{i}")
+        g.add((p, RDF.type, OWL.ObjectProperty))
+        if i in substitutes:
+            g.add((p, *substitutes[i]))
+    (finding,) = _run(g, "METRIC008", metric_max_unsigned_property_ratio=0.0)
+    assert finding.message.startswith("8 of 12 object/datatype properties")

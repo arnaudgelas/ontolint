@@ -145,13 +145,19 @@ def run(ctx: RuleContext) -> None:
     _naming_styles(ctx)
 
 
+def is_unlabelled(ctx: RuleContext, term: URIRef) -> bool:
+    """Return whether LEX001 reports ``term``: no Literal label and not deprecated (METRIC001 counts the same)."""
+    has_label = any(isinstance(o, Literal) for p in ctx.labels for o in ctx.g.objects(term, p))
+    return not has_label and (term, OWL.deprecated, Literal(True)) not in ctx.g
+
+
 def _term_labels(ctx: RuleContext) -> LabelIndex:
     """Check per-term labels and descriptions; return an index of normalized labels."""
     g = ctx.g
     label_index: LabelIndex = defaultdict(set)
     for term in sorted(ctx.terms, key=str):
         labels = {o for p in ctx.labels for o in g.objects(term, p) if isinstance(o, Literal)}
-        if not labels and (term, OWL.deprecated, Literal(True)) not in g:
+        if is_unlabelled(ctx, term):
             ctx.add("LEX001", term, "Term has no label.", confidence=_missing_label_confidence(ctx, term))
         if not any((term, p, None) in g for p in (*ctx.descriptions, *DOCUMENTATION_NOTES)):
             ctx.add("LEX002", term, "Term has no description or definition.", confidence="certain")

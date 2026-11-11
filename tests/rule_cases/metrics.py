@@ -56,12 +56,19 @@ def _external(n: int, external: int) -> str:
 
 CASES = {
     "METRIC001": rule_cases(
-        [ttl("only 4 of 10 labelled", _labelled(10, 4))],
+        [
+            ttl("only 4 of 10 labelled", _labelled(10, 4)),
+            ttl("IRI-valued labels do not count", _classes(10, lambda i: "; rdfs:label ex:x")),
+        ],
         [
             ttl("all labelled", _labelled(10, 10)),
             ttl("at the limit", _labelled(10, 5)),
             ttl("below the minimum sample", _labelled(9, 0)),
             ttl("empty", ""),
+            ttl(
+                "deprecated classes count as labelled",
+                _classes(10, lambda i: '; rdfs:label "c"@en' if i < 4 else "; owl:deprecated true"),
+            ),
         ],
     ),
     "METRIC002": rule_cases(
@@ -137,6 +144,17 @@ CASES = {
             ttl("at the limit", _props(10, lambda i: "; rdfs:domain ex:C0" if i < 5 else "")),
             ttl("annotation properties are ignored", _props(10, kind="owl:AnnotationProperty")),
             ttl("below the minimum sample", _props(9)),
+            ttl("domainIncludes is a domain", _props(10, lambda i: "; <https://schema.org/domainIncludes> ex:C0")),
+            ttl(
+                "dcam domain and range includes",
+                _props(
+                    10,
+                    lambda i: (
+                        "; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0"  # noqa: E501
+                    ),
+                ),
+            ),
+            ttl("deprecated properties are exempt", _props(10, lambda i: "; owl:deprecated true")),
         ],
     ),
     "METRIC009": rule_cases(
