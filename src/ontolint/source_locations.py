@@ -1,8 +1,12 @@
 """Best-effort source positions for RDF terms retained by RDFLib parsing.
 
 RDFLib graphs deliberately contain semantic nodes, not their lexical source positions. This
-module recovers positions from Turtle/N3, N-Triples/N-Quads and RDF/XML syntax, and from explicit
+module recovers positions from Turtle/N3/TriG, N-Triples/N-Quads and RDF/XML syntax, and from explicit
 JSON-LD ``@id`` values. Nodes with no unambiguous source construct simply have no SARIF region.
+
+A node gets the first place its source spells it, whichever graph of a dataset that is: a term stated in
+two graphs is located in the first, and a graph name that is also a node is located at its graph label
+when that comes first (a TriG ``<g> {``, an N-Quads fourth term, a JSON-LD ``@id`` beside ``@graph``).
 """
 
 from __future__ import annotations
@@ -25,12 +29,16 @@ from .models import Finding
 from .reporting import Location
 from .rules.support import redact_password, stable_blank_id
 
-_TEXT_FORMATS = frozenset({"turtle", "n3", "nt", "nquads"})
+_TEXT_FORMATS = frozenset({"turtle", "n3", "trig", "nt", "nquads"})
+# Turtle and its supersets have prefixed names and directives; N-Triples and N-Quads spell every IRI in full.
+# TriG adds only graph blocks to Turtle: ``{`` and ``}`` start no term and the ``GRAPH`` keyword is no prefixed
+# name (it has no ``:``), so the scan steps over them, as it does over the braces of N3 formulae.
+_PREFIXED_FORMATS = frozenset({"turtle", "n3", "trig"})
 _XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
 _JSON_FORMATS = frozenset({"json-ld", "application/ld+json"})
 _PREFIXED_NAME = re.compile(r"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:\\.|[^\s<>\"{}|^`\\])*)")
 _BNODE = re.compile(r"_:(?P<label>[A-Za-z][A-Za-z0-9_-]*)")
-# Turtle/N3 directives declare namespaces; the IRIs they mention are not statements about a node.
+# Turtle/N3/TriG directives declare namespaces; the IRIs they mention are not statements about a node.
 _DIRECTIVE = re.compile(r"(?:@prefix|(?i:prefix))\s+[^\s:<>]*:\s*<[^>]*>\s*\.?|(?:@base|(?i:base))\s+<[^>]*>\s*\.?")
 _RDF_ABOUT = "http://www.w3.org/1999/02/22-rdf-syntax-ns#about"
 _RDF_ID = "http://www.w3.org/1999/02/22-rdf-syntax-ns#ID"
@@ -145,7 +153,7 @@ def _scan(
         if skipped is not None:
             index = skipped
             continue
-        if fmt in {"turtle", "n3"} and (directive := _directive_end(text, index)) is not None:
+        if fmt in _PREFIXED_FORMATS and (directive := _directive_end(text, index)) is not None:
             index = directive
             continue
         char = text[index]
@@ -161,7 +169,7 @@ def _scan(
         elif (match := _BNODE.match(text, index)) is not None:
             _record(locations, graph_nodes, BNode(match["label"]), lines, index)
             index = match.end()
-        elif fmt in {"turtle", "n3"} and (match := _PREFIXED_NAME.match(text, index)) is not None:
+        elif fmt in _PREFIXED_FORMATS and (match := _PREFIXED_NAME.match(text, index)) is not None:
             namespace = prefixes.get(match["prefix"])
             if namespace is not None:
                 _record(locations, graph_nodes, URIRef(namespace + _unescape_local(match["local"])), lines, index)

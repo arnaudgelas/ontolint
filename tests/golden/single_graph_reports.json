@@ -53,7 +53,7 @@
  },
  "single_graph.trig sarif": {
   "exit": 0,
-  "stdout": "sha256:87dfaf083c934302a672a815e8eb79de103da7bcc81446deda20d658c3aa5747 (203770 chars)"
+  "stdout": "sha256:7f1efa38d533fa6be997bd1f4f54e993ab768c0de134e94678faadecd8144cdb (205054 chars)"
  },
  "single_graph.trig text": {
   "exit": 0,

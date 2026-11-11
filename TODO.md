@@ -19,6 +19,22 @@ Nothing open: 0.11.0 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, after 0.11.0):
+  - **TRIG-REGIONS** (P1; issue 6): a TriG finding has the region of its focus, as its Turtle
+    twin does. TriG was missing from `source_locations._TEXT_FORMATS` and from the scanner's
+    prefixed-name and directive cases, an oversight: graph blocks need no tokenising (`{`, `}` and
+    `GRAPH` start no term, as N3's braces do not). A term in two graphs, and a graph name that is
+    also a node, is located at its first spelling, as in N-Quads and JSON-LD.
+    - Verified: unit tests, a Turtle-twin SARIF test on both TriG fixtures, and the region property
+      test, now run once per syntax so each gets its own examples (drawn from one
+      shared budget, TriG had two or three and the property missed the gap about one run in 20;
+      now 0 passes in 40 runs on the unfixed locator). It writes TriG and N-Quads datasets, with a
+      described graph name in half of them, and checks that every IRI subject of a text syntax has a
+      region.
+    - Left open (Turtle scanner, shared by TriG): prefixes come from the parsed graph's bindings,
+      not the file's directives in source order, so a file's own `schema:` loses to rdflib's
+      default binding and a prefix redefined mid-file takes its last namespace (both can give a
+      wrong region); `@base` is skipped but never applied; a prefix with an inner `.` or a
+      non-ASCII first letter is matched from its tail; `ex:B.` keeps the `.` in the name.
   - **Broken pipe** (P1 audit; issue 14): `ontolint ... | head` no longer ends in a traceback and
     exit 1 (a write that fails) or in the interpreter's shutdown warning and exit 120 (a short
     output left in the buffer). The report, `--version`, `--list-rules` and `--explain` write and
@@ -315,7 +331,7 @@ Nothing open: 0.11.0 is released (see "Recently done").
     `imports.py` and `datasets.py`, 320 mutants: none survives in the changed code; the 10
     survivors are older code (the TOOL005 hint, `_library_origins`, `_file_modules`, `_library`,
     catalog parsing in `imports.py`), left for the mutation-baseline item, and 4 timed out.
-    Left open: TriG has no SARIF regions (see the P1 source-regions item). By design, `(ontology)`
+    Left open: TriG had no SARIF regions (fixed afterwards, issue #6). By design, `(ontology)`
     foci (ONT001, ONT002) name no graph.
 
   - **METRIC-SPEC** (P1 audit and calibration items, 2026-11-11, `786662f`..`3fc5fb2`,
@@ -472,12 +488,6 @@ Validation corpus (public; licences per repository):
   parsed as that syntax, and the sniffer should look past `{` (JSON-LD has a quoted key or `@`
   next, TriG a term or `}`). *Done when:* the reproduction lints, and the strict `xfail` in
   `tests/test_metamorphic_serialization.py` is removed because it now passes.
-
-- [ ] **Source regions for TriG.** SARIF results for a `.trig` file have no region:
-  `source_locations._TEXT_FORMATS` lists Turtle, N3, N-Triples and N-Quads but not TriG (README
-  "Rule execution status"). Found while adding named-graph provenance (2026-11-10), which does not
-  need it. Locate terms inside graph blocks too, with a property test like the other formats'.
-  *Done when:* a TriG finding has the region of its focus, as its Turtle twin does.
 
 - [ ] **Source regions: confirm one real-world JSON-LD layout.** Unverified: that Java's Jackson
   pretty-printer writes `"key" : value`. Confirm it with a Jena or jsonld-java export and keep that
