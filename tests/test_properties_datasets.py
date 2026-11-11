@@ -20,6 +20,7 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from hypothesis_strategies import PROFILE, budget, roundtrip_triple_lists
 from rdflib import BNode, Graph, URIRef
+from rdflib.compare import isomorphic
 from rdflib.term import Node
 
 from ontolint import main
@@ -130,7 +131,11 @@ def test_graphs_are_presentation_only_sound_and_complete(
         for triple, _graphs in spread:
             plain.add(triple)
         plain_path = directory / f"plain.{plain_extension}"
-        plain_path.write_text(plain.serialize(format=plain_format), encoding="utf-8")
+        plain_text = plain.serialize(format=plain_format)
+        plain_path.write_text(plain_text, encoding="utf-8")
+        # rdflib's Turtle writer folds a partial list node (an rdf:first with no rdf:rest) into a collection,
+        # drops its other triples and relabels blank nodes, so the file is not the graph under test.
+        assume(isomorphic(Graph().parse(data=plain_text, format=plain_format), plain))
         relabelled_path = directory / f"b.{EXTENSIONS[fmt]}"
         relabelled_path.write_text(_dataset(spread, fmt, relabel=True), encoding="utf-8")
 

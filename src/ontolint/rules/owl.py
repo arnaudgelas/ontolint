@@ -433,6 +433,7 @@ def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> Non
 def _property_chains(ctx: RuleContext) -> None:
     for p, chain in ctx.g.subject_objects(OWL.propertyChainAxiom):
         items = list_items(ctx.g, chain)
+        about: tuple[str, ...]
         if items is None:
             message, about = "Property-chain axiom does not point to a well-formed RDF list.", ("malformed",)
         elif not items:
