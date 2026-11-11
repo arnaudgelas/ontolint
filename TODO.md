@@ -20,6 +20,42 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **AUDIT-DEFECTS** (P1 audit, "Defects that change an exit code, a focus or a message"):
+    a report that cannot be written to `--output` (missing directory, a directory, no
+    permission) or encoded as UTF-8 (a lone surrogate in a text report, on `--output` or stdout)
+    is `TOOL001: report output failed: <Type>: <message>` and exit 2, where it was a traceback and
+    exit 1; the report is encoded before the file is opened, so the last good `--output` file is
+    kept, and `cli._write_text(path, text, what=...)` is the helper later output files reuse.
+    OWL034, OWL036 and OWL040 print values in one-line N-Triples (`"-1"^^<…#integer>`), bare IRIs
+    and stable `_:` ids instead of Python reprs, through `rules.support.term_text` (rdflib's
+    `n3()` except that a line break is escaped); so do OWL032 and OWL042-OWL045 for literal
+    operands, and OWL013 for a literal with a line break. SEC014's focus masks the password
+    (`https://alice:****@example.test/x`, RFC 3986 §3.2.1), its SARIF region is still the
+    credentialed IRI's, and IRIs differing only in the password give one finding.
+    Shipped as `fix!:` (three commits) with BREAKING CHANGE trailers: version 1 entries of the
+    reworded OWL findings stop matching and version 2 entries keep matching; SEC014's v1 and v2
+    entries both stop matching, and older baselines hashed the unmasked IRI, so rotate exposed
+    credentials. Verified: every reproduction of the item (missing directory, directory,
+    read-only directory, surrogate to file and to stdout, the item's OWL restrictions, a file with
+    five credentialed IRIs) went from wrong to right and failed before the change; exit 2
+    outranks `--fail-on never` and the output line precedes the broken-rule lines; a writable
+    `--output` holds exactly what stdout prints. A static baseline written before the OWL change
+    (`tests/fixtures/baselines/term_messages.baseline.json`) still suppresses every OWL finding
+    with `--fail-on-stale-baseline`, while its version 1 list reopens them and SEC014 reopens
+    under both. A contract test runs every rule case with all rules and fails on any Python repr
+    in a focus or message (it failed on OWL034, OWL036 and OWL040 only), and a Hypothesis
+    property checks the same over generated graphs; `term_text` parses back as Turtle. No SEC014
+    text, JSON or SARIF report of Turtle, RDF/XML or JSON-LD input, and no baseline, contains the
+    password; the region is the IRI's line in all three; a Hypothesis property checks masking
+    (idempotent, reversible, identity without a password). `legacy_rules.json`,
+    `differential.json`, the report schemas and policy did not move; `docs/rules.md` changed only
+    in the OWL036 and OWL040 "Reported" lines. Targeted mutation run (`cli.py`, `rules/support.py`,
+    `rules/safety.py`, `rules/owl_expressions.py`, `source_locations.py`; non-slow suite): 394
+    mutants, 377 killed, 7 pardoned (older), 2 timeouts and 1 error (not named by the console
+    report), 7 survivors, all in older `cli.py` code (the TOOL005 hint, `_file_modules`, declared
+    prefixes, `_library`), left for the mutation-baseline item; none in the changed code.
+    Left open, under the P1 audit item: credentials in other rules' output, a broken pipe on
+    stdout, and SEC014's module placement.
   - **LEX002-CLOSURE** (P1 audit, false positives): `RuleContext.descriptions` now holds every
     IRI that reaches a definition predicate, built-in or from `extra_definition_predicates`,
     through one or more asserted `rdfs:subPropertyOf` triples (the merged closure under
@@ -124,7 +160,10 @@ Nothing open: 0.10.2 is released (see "Recently done").
     when keeping the least subject). The run was not repeated after those changes.
     Left open, under P1 "Baseline identity": release sequencing, the upgrade note to paste at
     release, the lenient version 1 match, SARIF `partialFingerprints`. Messages this release
-    changes for an unchanged input: none so far (list each later rule here as it lands).
+    changes for an unchanged input (list each later rule here as it lands): METRIC002, METRIC003
+    and METRIC012 counts (LEX002-CLOSURE); OWL034, OWL036 and OWL040, and OWL032 and
+    OWL042-OWL045 with a literal operand, OWL013 with a line break in its literal, and SEC014's
+    focus (AUDIT-DEFECTS).
   - **SHACL-EVIDENCE** (P1): each `SHACL001` finding carries every field of its SHACL validation
     result as JSON `evidence` (after `details`) and SARIF `properties.evidence` (before `graphs`),
     never in text: `focusNode`, `resultPath`, `value`, `sourceShape`, `sourceConstraintComponent`,
@@ -450,8 +489,10 @@ Validation corpus (public; licences per repository):
     fix shipped in the same release as identity v2 still breaks those entries once. Recommended:
     ship v2 in release N, with the upgrade note "regenerate the baseline once", and the message
     fixes (OWL034, OWL036, OWL040, SEC014's focus, METRIC rounding) in N+1. Bundling them, as the
-    0.10.0 entry hoped, is the maintainer's call. SEC014's planned focus change breaks both hashes
-    by design (the focus is part of the identity); its upgrade note must say so.
+    0.10.0 entry hoped, is the maintainer's call. The OWL and SEC014 fixes are now on `main`
+    (AUDIT-DEFECTS, from `0ef117b`), after LEX002-CLOSURE's METRIC change; splitting means
+    releasing v2 from a commit before those. SEC014's focus change breaks both hashes by design
+    (the focus is part of the identity); its `fix!:` commit's BREAKING CHANGE trailer says so.
   - *The upgrade note* goes into the release's CHANGELOG by hand (docs/releasing.md step 1); the
     text is in the body of the `feat:` commit that matches baselines by identity.
   - *Version 1 acceptance stays lenient.* `--baseline` accepts a finding when either hash is
@@ -485,11 +526,28 @@ Validation corpus (public; licences per repository):
     for OWL023, OWL041, SHQ008 and SHQ018 (exact checks still on the default `heuristic`, which
     changes `differential.json`); OWL004/OWL007 `heuristic`; category `deterministic` for SKOS001
     and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
-  - *Defects that change an exit code, a focus or a message:* an unwritable `--output` raises a
-    traceback and exits 1 instead of TOOL001 and exit 2 (`cli.py` `main`, README "Exit codes");
-    (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2); SEC014's focus
-    repeats the password it reports (RFC 3986 §3.2.1 says not to show it); OWL013 (legacy), OWL034, OWL036 and OWL040 print Python
-    reprs (`rdflib.term.Literal(...)`) instead of N3 (OWL013 fixed in 0.10.0);
+  - *Defects that change an exit code, a focus or a message:* all fixed, unreleased (see
+    "Recently done", AUDIT-DEFECTS): an unwritable or unencodable report is TOOL001 and exit 2
+    (`f494dc2`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`0ef117b`), and so does
+    OWL013 for a literal with a line break (`3b31da9`); SEC014 masks the password in its focus
+    (`49fccc7`). (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2.)
+    Follow-ups, each its own contract change:
+    - *Credentials in every other rule's output.* Only SEC014 masks. On a file whose ontology and
+      term IRIs carry `user:pw@`, CLS001, GOV004, LEX001, LEX002, ONT003, ONT004, ONT005, ONT006
+      and SEC007 still print a password in their focus or message (9 report lines of the
+      2026-11-10 reproduction, 14 with SEC014's five before it was fixed), as may loader and import
+      messages on stderr and the `--module-by namespace`
+      names of other rules. Masking them changes those rules' foci and fingerprints and needs a
+      specification of its own. That specification also decides the token-as-user form
+      (`https://<token>:x-oauth-basic@github.com/...`): SEC014 masks only what follows the first
+      `:` (RFC 3986 section 3.2.1), so a secret sent as the user name is still printed in its focus
+      and in its message ("for user ...").
+    - *A broken pipe on stdout* (`ontolint ... | head`) still ends in a traceback and exit 1;
+      SIGPIPE conventions (exit 141, the interpreter's shutdown flush warning) need a decision.
+    - *SEC014 and modules.* The masked focus is not a graph node, so under
+      `--module-annotation` a SEC014 finding has no module, and under `--module-by namespace` its
+      module is the masked namespace. Carrying the raw IRI in `related` would put the secret
+      back into reports, so this is accepted until a finding can name its module directly.
   - *False positives found by the 2026-11-10 review:* (LEX002 and every rule using
     `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed, unreleased, in
     3abbea1 and aa0bed1, see "Recently done"). Follow-ups, each with its own negative cases
