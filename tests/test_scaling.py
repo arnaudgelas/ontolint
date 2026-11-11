@@ -14,12 +14,14 @@ from collections.abc import Callable
 
 import pytest
 from rdflib import BNode, Graph, URIRef
-from rdflib.namespace import OWL, RDF, RDFS
+from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rdflib.plugins.stores.memory import Memory
 
 from ontolint import Linter
 from ontolint.datasets import build_graph_index, finding_graphs
 from ontolint.models import Finding
+from ontolint.rules.runtime import PropertyClosure
+from ontolint.rules.support import DESCRIPTIONS, LABELS
 from ontolint.source_locations import build_source_index
 
 pytestmark = pytest.mark.slow
@@ -81,10 +83,30 @@ def _finding_graphs(count: int) -> float:
     return _best_of(lambda: finding_graphs(Graph(), index, findings))
 
 
+def _closure(count: int) -> float:
+    """A chain of ``count`` properties below skos:definition, alternating sub-property and equivalence links,
+    each with a cycle back to the chain's head, and a star of ``count`` sub-properties of rdfs:label."""
+    graph = Graph()
+    chain = [URIRef(f"https://example.test/d{i}") for i in range(count)]
+    graph.add((chain[0], RDFS.subPropertyOf, SKOS.definition))
+    for i in range(1, count):
+        link = RDFS.subPropertyOf if i % 2 else OWL.equivalentProperty
+        graph.add((chain[i], link, chain[i - 1]))
+        graph.add((chain[0], RDFS.subPropertyOf, chain[i]))
+        graph.add((URIRef(f"https://example.test/l{i}"), RDFS.subPropertyOf, RDFS.label))
+
+    def step() -> None:
+        closure = PropertyClosure(graph)
+        assert len(closure.below(DESCRIPTIONS)) == len(DESCRIPTIONS) + count
+        closure.below(LABELS)
+
+    return _best_of(step)
+
+
 @pytest.mark.parametrize(
     "step",
-    [_locate, _cls017, _graph_index, _finding_graphs],
-    ids=["source-locator", "CLS017", "graph-index", "finding-graphs"],
+    [_locate, _cls017, _graph_index, _finding_graphs, _closure],
+    ids=["source-locator", "CLS017", "graph-index", "finding-graphs", "property-closure"],
 )
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], float]) -> None:
     small, large = step(SMALL), step(LARGE)

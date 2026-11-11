@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from dataclasses import replace
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import RDFS
+from rdflib.namespace import OWL, RDFS
 from rdflib.term import Node
 
 from ontolint.context import GraphContext
@@ -25,25 +25,50 @@ def _with_extras(defaults: tuple[URIRef, ...], extras: tuple[str, ...]) -> tuple
     return tuple(dict.fromkeys((*defaults, *(URIRef(extra) for extra in extras))))
 
 
-def _subproperties(graph: Graph, predicates: tuple[URIRef, ...]) -> tuple[URIRef, ...]:
-    """IRIs that reach one of ``predicates`` through one or more ``rdfs:subPropertyOf`` triples.
+class PropertyClosure:
+    """The predicates that entail given ones through ``rdfs:subPropertyOf`` and ``owl:equivalentProperty``.
 
-    These are the ontology's own definition annotations (``ex:def2 ⊑ ex:def1 ⊑ skos:definition``).
-    The walk is iterative and expands each node once, so a cycle or self-loop ends it and its cost is
-    bounded by the graph's ``rdfs:subPropertyOf`` triples (which ``max_triples`` caps); rdflib's
-    ``transitive_subjects`` recurses once per link instead.  Blank nodes carry the chain but are never
-    returned, as only an IRI can be used as a predicate.  The seeds themselves are left out, and the
-    result is sorted by IRI.
+    ``below(seeds, stop)`` is the seeds, then, sorted by IRI, every other IRI ``p`` with a path
+    ``p → … → s`` to a seed ``s`` in which each step is an asserted ``x rdfs:subPropertyOf y`` (from ``x``
+    to ``y``) or an asserted ``owl:equivalentProperty`` triple read either way, as OWL 2 makes it
+    symmetric.  So ``p ⊑ q ≡ r ⊑ s`` and ``p ≡ q ⊑ s`` reach ``s``, while a super-property of a seed,
+    and whatever is equivalent to such a super-property, is not reached.  A node of ``stop`` is neither
+    returned nor walked through, but a seed is never stopped: ``skos:altLabel`` is below
+    ``rdfs:label`` in the SKOS schema, yet no label.  Stop nodes are matched by identity: a predicate
+    equivalent to one is not reached through it, but is returned if another path reaches a seed.
+
+    The graph is the one being linted (the merged closure under ``--follow-imports``); nothing is
+    entailed beyond the asserted triples, and deprecation changes nothing.  The index is built once
+    from the two predicates' triples (which ``max_triples`` caps), and each walk is iterative and
+    expands each node once, so a cycle or self-loop ends it and its cost is linear in those triples;
+    rdflib's ``transitive_subjects`` recurses once per link instead.  Blank nodes carry a path but are
+    never returned, as only an IRI can be a predicate.  Each ``(seeds, stop)`` is computed once.
     """
-    seeds: set[Node] = set(predicates)
-    seen: set[Node] = set(seeds)
-    stack: list[Node] = list(predicates)
-    while stack:
-        for sub in graph.subjects(RDFS.subPropertyOf, stack.pop()):
-            if sub not in seen:
-                seen.add(sub)
-                stack.append(sub)
-    return tuple(sorted((node for node in seen - seeds if isinstance(node, URIRef)), key=str))
+
+    def __init__(self, graph: Graph) -> None:
+        below: dict[Node, list[Node]] = {}
+        for sub, sup in graph.subject_objects(RDFS.subPropertyOf):
+            below.setdefault(sup, []).append(sub)
+        for one, other in graph.subject_objects(OWL.equivalentProperty):
+            below.setdefault(one, []).append(other)
+            below.setdefault(other, []).append(one)
+        self._below = below
+        self._cache: dict[tuple[tuple[URIRef, ...], frozenset[URIRef]], tuple[URIRef, ...]] = {}
+
+    def below(self, seeds: tuple[URIRef, ...], stop: frozenset[URIRef] = frozenset()) -> tuple[URIRef, ...]:
+        """Return ``seeds`` followed by the IRIs below them, sorted (see the class)."""
+        key = (seeds, stop)
+        if key not in self._cache:
+            seen: set[Node] = set(seeds)
+            stack: list[Node] = list(seeds)
+            while stack:
+                for sub in self._below.get(stack.pop(), ()):
+                    if sub not in seen and sub not in stop:
+                        seen.add(sub)
+                        stack.append(sub)
+            derived = sorted((node for node in seen - set(seeds) if isinstance(node, URIRef)), key=str)
+            self._cache[key] = (*seeds, *derived)
+        return self._cache[key]
 
 
 class RuleContext:
@@ -64,8 +89,10 @@ class RuleContext:
         self._blank_nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._blank_pattern: re.Pattern[str] | None = None
         # The configured definition predicates, then every IRI below one of them (sorted).
-        seeds = _with_extras(DESCRIPTIONS, policy.extra_definition_predicates)
-        self.descriptions: tuple[URIRef, ...] = (*seeds, *_subproperties(graph, seeds))
+        self.closure = PropertyClosure(graph)
+        self.descriptions: tuple[URIRef, ...] = self.closure.below(
+            _with_extras(DESCRIPTIONS, policy.extra_definition_predicates)
+        )
         self.labels: tuple[URIRef, ...] = _with_extras(LABELS, policy.extra_label_predicates)
 
     @property

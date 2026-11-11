@@ -27,7 +27,12 @@ CASES = {
         ],
     ),
     "LEX002": rule_cases(
-        [ttl("no definition", "ex:A a owl:Class .")],
+        [
+            ttl("no definition", "ex:A a owl:Class ."),
+            ttl(
+                "equivalent to a non-definition", "ex:d owl:equivalentProperty ex:q . ex:A a owl:Class ; ex:d 'An A.' ."
+            ),
+        ],
         [
             ttl("skos:definition", 'ex:A a owl:Class ; skos:definition "An A." .'),
             ttl("skos:scopeNote", 'ex:A a owl:Class ; skos:scopeNote "Use for As." .'),
@@ -36,6 +41,11 @@ CASES = {
                 "definition through a chain of sub-properties",
                 "ex:d2 rdfs:subPropertyOf ex:d1 . ex:d1 rdfs:subPropertyOf skos:definition . "
                 "ex:A a owl:Class ; ex:d2 'An A.' .",
+            ),
+            ttl(
+                "definition through an equivalent",
+                "ex:d owl:equivalentProperty ex:q . ex:q rdfs:subPropertyOf skos:definition . "
+                "ex:A a owl:Class ; ex:d 'An A.' .",
             ),
         ],
     ),
