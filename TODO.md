@@ -20,6 +20,32 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **COVERAGE-GAPS** (P1 audit, "Coverage gaps"): the thirteen gaps that the 0.9.0 specification
+    review wrote down as exclusions are closed with new messages in the existing rules, and every
+    pinning negative case is now a positive one. OWL010 empty and malformed chains (`ce0c7cb`);
+    OWL019 non-simplicity through sub-properties, equivalents, inverses and symmetry (`61d2a91`),
+    and non-simple properties in cardinalities, `owl:hasSelf`, `owl:propertyDisjointWith` and
+    `owl:AllDisjointProperties` (`6bbf6f5`); OWL032/OWL033 on `owl:disjointUnionOf` (`3141033`);
+    OWL034-OWL036 for both `onProperty` and `onProperties`, several constraints, `hasSelf` not
+    true and several fillers (`3c4630d`); OWL037 across the qualified and unqualified groups
+    (`db6b90f`); OWL040 with the non-XSD datatypes (`6e1af46`); SHQ008 for derived integer
+    types and for `sh:minLength`/`sh:maxLength` (`d22c316`); SHQ011 for XPath-invalid patterns
+    Python accepts (`9d5020c`); ALIGN003 `relatedMatch` in an exactMatch chain (`1c6ae45`); SKOS009
+    through the mapping sub-properties (`9a3c191`). The messages of these rules that existed before
+    are unchanged, so these commits move no baseline; five rules were retitled, which moves `--list-rules`, and so
+    `differential.json` and `single_graph_reports.json`, by the titles only (`b797e11`, proof in
+    the commit body and the `test_differential` docstring); `legacy_rules.json` did not move.
+    Verified: the pinned positives were captured before the change (`83f8797`) and still pass; a
+    CLI test shows `--fail-on error` exiting 1 on small fixtures that exit 0 before (`df121ca`);
+    the full gate passes. Outside the gap list, `1962cde` (`fix!:`, a BREAKING CHANGE that
+    originates in the subject contract) reports SEC005 and SEC012 once per subject and predicate:
+    where one predicate carries several literals, the message and so the fingerprint change, and
+    0.10.x baseline entries for them go stale once. Whether it ships in this release is the
+    maintainer's decision. Not done: the targeted mutation run was not repeated for these rules,
+    and the real-world corpus was not available (see the open sub-bullets of the audit item).
+    Two tests were hardened in passing: the dataset presentation-only property now skips
+    examples that rdflib's Turtle writer does not serialise faithfully (a partial list node is
+    folded into a collection), and one mypy annotation in `owl._property_chains`.
   - **POLICY-SILENT** (P1 audit, "Policy that silently does nothing"): every word of
     configuration now either changes the run or is refused. `--select` or `--ignore` naming only
     pipeline rules (`SEC001`, `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011`,
@@ -560,6 +586,13 @@ Validation corpus (public; licences per repository):
     for OWL023, OWL041, SHQ008 and SHQ018 (exact checks still on the default `heuristic`, which
     changes `differential.json`); OWL004/OWL007 `heuristic`; category `deterministic` for SKOS001
     and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
+    Added by the coverage gaps (each new finding ships at its rule's current severity): SHQ011
+    for a `\/` escape (an error by XPath, but pySHACL and Jena accept it, so a warning would match
+    its practical effect); SHQ008 for a derived integer type such as `xsd:nonNegativeInteger`
+    (common in generated shapes); SHQ015 warning → error (XPath raises FORX0001 for a bad flag
+    letter); OWL035 "several constraints" (a restriction with both `minCardinality` and `maxCardinality`, a
+    common OWL 1 / Protégé idiom) ships at error and needs counting on the real-world corpus;
+    OWL010 and OWL032 stay info although their new conditions are outside OWL 2 DL too.
   - *Defects that change an exit code, a focus or a message:* all fixed, unreleased (see
     "Recently done", AUDIT-DEFECTS): an unwritable or unencodable report is TOOL001 and exit 2
     (`f494dc2`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`0ef117b`), and so does
@@ -593,16 +626,24 @@ Validation corpus (public; licences per repository):
     Follow-up for RULE-DOCS: `--list-rules --format json` still says `"selectable": true` for the
     pipeline rules, which `--select` now rejects; the field means "implemented" today, and changing
     it changes that JSON contract.
-  - *Coverage gaps, now stated as exclusions with negative cases* (each needs a new message):
-    OWL010 empty or malformed chain; OWL019 non-simplicity through sub-properties, inverses and
-    equivalents (needs a closure; no rule checks non-simple properties in cardinalities,
-    `owl:hasSelf` or disjointness); OWL032/OWL033 on `owl:disjointUnionOf`; OWL034 with both
-    `owl:onProperty` and `owl:onProperties`; OWL035/OWL036 with several constraints, `hasSelf`
-    other than true, or both `onClass` and `onDataRange`; OWL037 unqualified max 0 against a
-    qualified min; OWL040 `rdf:langString` and `owl:real`; SHQ008 derived integer datatypes
-    (SHACL requires `xsd:integer`); SHQ011 invalid flag letters and XSD-invalid patterns Python
-    accepts; no rule for a non-integer `sh:minLength`/`sh:maxLength`; ALIGN003 `relatedMatch` in
-    an exactMatch chain (S46); `skos:related` plus `skos:broadMatch` on one pair (S27 via S41).
+  - *Coverage gaps:* closed, unreleased (see "Recently done", COVERAGE-GAPS). Left open, each
+    with its reason in the rule's specification:
+    - *SHQ011 inside a character class:* an unescaped `[` not after `-`, a leading `]` and the
+      placement of `-` are left to Python, as XSD 1.0 and 1.1 disagree on them and an error rule
+      must not guess; `\p{..}` names are not checked (block names follow the Unicode version);
+      XPath 2.0-only strictness is not applied (`(?:` and the `q` flag of XPath 3.0 are accepted).
+    - *OWL019:* a characteristic typed on an anonymous inverse expression (`[ owl:inverseOf p ] a
+      owl:FunctionalProperty`) is judged only when the expression is itself transitive or
+      chain-defined; the other global restriction of SS 11.2, the regularity of the property
+      hierarchy, is not checked.
+    - *OWL035* accepts `owl:hasSelf "1"^^xsd:boolean` (its value is true; MAP writes only `"true"`).
+    - *OWL011's datatype test* (`owl._is_datatype`) still lacks the non-XSD datatypes OWL040 now
+      knows (`rdf:langString`, `owl:real` ...). It was not in this list, and fixing it turns OWL011
+      findings into negatives, so it needs its own cases.
+    - *Real-world counts:* the new findings were not counted on the reference vocabularies, CCO or
+      BFO/RO, which are not on the development machine. Likely to appear: OWL019 cardinalities on
+      transitive OBO relations, SHQ008 derived integer counts and SHQ011 `\/`. Count them before the
+      release, as the severity questions above depend on it.
   - *Documentation:* `docs/rules.md` shows only each rule's first positive and negative case, so
     the new cases and the specifications are visible only in the source. Render the module
     specifications (or all cases) in the generator.
