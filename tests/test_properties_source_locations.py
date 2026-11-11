@@ -2,7 +2,8 @@
 
 The locator degrades to "no regions" on any internal error (so a bug there cannot fail a lint), which also
 means a bug would be silent.  These properties look for it explicitly: every region must point at text that
-names its node, and :attr:`SourceIndex.problem` must stay ``None`` for valid input in any layout.
+names its node, every IRI subject of a text syntax has a region, and :attr:`SourceIndex.problem` must stay
+``None`` for valid input in any layout.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import json
 import random
 import re
 import tempfile
+import warnings
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urljoin
@@ -20,7 +22,7 @@ import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis_strategies import BASE, budget, roundtrip_triple_lists
-from rdflib import BNode, Graph, Literal
+from rdflib import RDFS, BNode, Dataset, Graph, Literal, URIRef
 from rdflib.term import Node
 
 from ontolint.cli import main
@@ -31,7 +33,12 @@ from ontolint.source_locations import SourceIndex
 
 pytestmark = pytest.mark.slow
 
-SUFFIXES = {"turtle": "ttl", "nt": "nt", "xml": "rdf", "json-ld": "jsonld"}
+SUFFIXES = {"turtle": "ttl", "nt": "nt", "xml": "rdf", "json-ld": "jsonld", "trig": "trig", "nquads": "nq"}
+# The dataset syntaxes spread the triples over the default graph and named graphs: a prefixed IRI label
+# (``ex:g1 {``), a full IRI label and a blank one, as rdflib's TriG and N-Quads writers spell them.
+DATASET_FORMATS = frozenset({"trig", "nquads"})
+GRAPH_NAMES: tuple[URIRef | BNode | None, ...] = (None, URIRef(BASE + "g1"), URIRef("https://g.test/g2"), BNode("G3"))
+DESCRIBED_GRAPH_NAME = (URIRef(BASE + "g1"), RDFS.label, Literal("g1"))  # a graph name that is also a node
 _PREFIXED = re.compile(
     r"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:\\.|[^\s<>\"{}|^`\\;,.])*(?:\.(?:\\.|[^\s<>\"{}|^`\\;,.])+)*)"
 )
@@ -41,7 +48,10 @@ _XML_REFERENCE = re.compile(r'rdf:(?:about|resource)="([^"]*)"')
 def _serialise(graph: Graph, fmt: str) -> str:
     """Serialise, skipping graphs RDFLib itself cannot write (its JSON-LD writer recurses on cyclic lists)."""
     try:
-        return graph.serialize(format=fmt)
+        with warnings.catch_warnings():
+            # rdflib's TriG and N-Quads writers call their own deprecated Dataset.contexts and default_context.
+            warnings.filterwarnings("ignore", message=r"Dataset\.\w+ is deprecated", category=DeprecationWarning)
+            return graph.serialize(format=fmt)
     except RecursionError:
         assume(False)
         raise  # pragma: no cover -- assume() has already stopped the example
@@ -92,20 +102,49 @@ def _spells(doc: _Document, at: int, node: Node) -> bool:
     return bool(match) and namespaces.get(match["prefix"], "\0") + re.sub(r"\\(.)", r"\1", match["local"]) == str(node)
 
 
-@budget(0.3)
-@given(roundtrip_triple_lists(), st.sampled_from(sorted(SUFFIXES)))
-def test_every_region_points_at_text_that_spells_its_node(triples: list, fmt: str) -> None:
-    graph = Graph()
-    graph.bind("ex", BASE)
-    for triple in triples:
-        graph.add(triple)
-    text = _serialise(graph, fmt)
+def _splittable(node: Node, public_id: str) -> bool:
+    """Whether the locator can resolve ``node``'s spelling (``urljoin`` rejects ``s://]``, costing its region)."""
+    try:
+        urljoin(public_id, str(node))
+    except ValueError:
+        return False
+    return True
+
+
+# One run per syntax, each with its own examples: drawn from one sampled_from, TriG got two or three of the
+# shared budget and the property missed the TriG locator gap of issue #6 about one run in twenty.
+@pytest.mark.parametrize("fmt", sorted(SUFFIXES))
+@budget(0.15)
+@given(roundtrip_triple_lists(), st.randoms(use_true_random=False))
+def test_every_region_points_at_text_that_spells_its_node(fmt: str, triples: list, rnd: random.Random) -> None:
+    """Sound (each region spells its node) and, for the text syntaxes, complete for the IRI subjects."""
+    if fmt in DATASET_FORMATS:
+        dataset = Dataset()
+        dataset.bind("ex", BASE)
+        for triple in triples:
+            name = rnd.choice(GRAPH_NAMES)
+            (dataset.default_graph if name is None else dataset.graph(name)).add(triple)
+        if rnd.random() < 0.5:  # noqa: PLR2004 -- half the datasets also describe a graph name, in some graph
+            name = rnd.choice(GRAPH_NAMES)
+            (dataset.default_graph if name is None else dataset.graph(name)).add(DESCRIBED_GRAPH_NAME)
+        text = _serialise(dataset, fmt)
+    else:
+        graph = Graph()
+        graph.bind("ex", BASE)
+        for triple in triples:
+            graph.add(triple)
+        text = _serialise(graph, fmt)
     index, parsed, public_id = _index(text, SUFFIXES[fmt])
     assert index.problem is None
     for node, location in index.locations.items():
         assert location.column is not None
         at = _offset(text, location.line, location.column)
         assert _spells(_Document(text, fmt, parsed, public_id), at, node), (fmt, node, location, text[at : at + 60])
+    # A text syntax spells every IRI subject as a term, so a locator that silently skips a syntax (TriG before
+    # issue #6) or a block of it leaves one out.
+    if fmt in {"turtle", "nt", *DATASET_FORMATS}:
+        subjects = {s for s in parsed.subjects() if isinstance(s, URIRef) and _splittable(s, public_id)}
+        assert subjects <= set(index.locations), (fmt, subjects - set(index.locations), text)
 
 
 def _relayout(value: object, rnd: random.Random) -> str:

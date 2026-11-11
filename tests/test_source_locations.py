@@ -388,7 +388,7 @@ def test_a_locator_failure_is_logged_with_its_traceback(
 @pytest.mark.parametrize(
     ("data", "fmt"),
     [
-        (b"<a> <b> <c> .", "trig"),  # a format without a locator
+        (b"<a> <b> <c> .", "trix"),  # a format without a locator
         (b"\xff\xfe<a> <b> <c> .", "nt"),  # not UTF-8
         (b"<rdf:RDF", "xml"),  # malformed XML
         (b"{", "json-ld"),  # malformed JSON
@@ -431,3 +431,85 @@ def test_an_iri_python_cannot_split_costs_only_its_own_region(tmp_path: Path, na
     index = _document(tmp_path, name, text).source_index
     assert index.problem is None
     assert URIRef("https://example.test/a") in index.locations
+
+
+# --- TriG (issue #6) ------------------------------------------------------------------------------
+
+DATASETS = Path(__file__).parent / "fixtures" / "datasets"
+EX = "https://example.test/"
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# Braces, "#" and "GRAPH" where they open nothing; ex:C is named in a comment and a string before its statement.
+TRIG = (
+    "# ex:C { ex:C a ex:K . }\n"
+    "PREFIX ex: <https://example.test/>\n"
+    "@prefix k: <https://example.test/k#> .\n"
+    "ex:g1 {\n"
+    '    ex:A a k:Class ; ex:note "a } { # GRAPH ex:C" .\n'
+    "}\n"
+    "GRAPH <https://example.test/g2> {\n"
+    "    ex:A ex:p ex:B .  # ex:C }\n"
+    "}\n"
+    "{ ex:B ex:p ex:C }\n"
+)
+
+
+def test_trig_terms_are_located_inside_named_and_default_graph_blocks(tmp_path: Path) -> None:
+    index = _document(tmp_path, "a.trig", TRIG).source_index
+    assert index.problem is None
+    # The graph labels ex:g1 and <g2> name no node of the merged graph; ``a`` is a keyword, not a term.
+    assert dict(index.locations) == {
+        URIRef(f"{EX}A"): Location(5, 5),  # the first of its two graphs
+        URIRef(f"{EX}k#Class"): Location(5, 12),
+        URIRef(f"{EX}note"): Location(5, 22),
+        URIRef(f"{EX}p"): Location(8, 10),
+        URIRef(f"{EX}B"): Location(8, 15),
+        URIRef(f"{EX}C"): Location(10, 13),  # in the default-graph block
+    }
+
+
+@pytest.mark.parametrize(
+    ("name", "text", "column"),
+    [
+        ("a.trig", f"<{EX}g> {{ <{EX}a> a <{EX}K> . }}\n<{EX}g> a <{EX}K> .\n", 1),
+        ("a.nq", f"<{EX}a> <{RDF_TYPE}> <{EX}K> <{EX}g> .\n<{EX}g> <{RDF_TYPE}> <{EX}K> .\n", 101),
+        ("a.jsonld", f'{{"@id": "{EX}g", "@type": "{EX}K", "@graph": [{{"@id": "{EX}a", "@type": "{EX}K"}}]}}\n', 9),
+    ],
+    ids=["trig", "nquads", "json-ld"],
+)
+def test_a_described_graph_name_is_located_at_its_first_occurrence_in_every_dataset_syntax(
+    tmp_path: Path, name: str, text: str, column: int
+) -> None:
+    """A graph name that is also a node keeps its first lexical occurrence, its graph label, in each syntax."""
+    index = _document(tmp_path, name, text).source_index
+    assert index.locations[URIRef(f"{EX}g")] == Location(1, column)
+
+
+def _turtle_twin(trig: str) -> str:
+    """``trig`` with its graph-block lines blanked: its triples as Turtle, each on the same line and column.
+
+    Only a line that opens a block (ends with ``{``) or closes one (is ``}``) is blanked, which fits both
+    fixtures; a one-line block (``ex:g { ex:A a ex:K . }``) would leave a twin that is not Turtle.
+    """
+    lines = trig.splitlines(keepends=True)
+    return "".join("\n" if line.rstrip().endswith("{") or line.strip() == "}" else line for line in lines)
+
+
+def _regions(path: Path, capsys: pytest.CaptureFixture[str]) -> list[tuple[str, str, object]]:
+    main([str(path), "--format", "sarif", "--fail-on", "never"])
+    results = json.loads(capsys.readouterr().out)["runs"][0]["results"]
+    return [(r["ruleId"], r["message"]["text"], r["locations"][0]["physicalLocation"].get("region")) for r in results]
+
+
+@pytest.mark.parametrize("fixture", ["single_graph.trig", "one_term_two_graphs.trig"])
+def test_a_trig_finding_has_the_region_of_its_turtle_twin(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], fixture: str
+) -> None:
+    trig = (DATASETS / fixture).read_text(encoding="utf-8")
+    (tmp_path / "a.trig").write_text(trig, encoding="utf-8")
+    twin = _turtle_twin(trig)
+    assert len(Graph().parse(data=twin, format="turtle")) > 0  # the twin is Turtle, not a broken file
+    (tmp_path / "a.ttl").write_text(twin, encoding="utf-8")
+    regions = _regions(tmp_path / "a.trig", capsys)
+    assert regions == _regions(tmp_path / "a.ttl", capsys)
+    assert regions
+    assert all(region is not None for _rule, _message, region in regions)
