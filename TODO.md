@@ -614,10 +614,17 @@ Validation corpus (public; licences per repository):
     - *OWL011's datatype test* (`owl._is_datatype`) still lacks the non-XSD datatypes OWL040 now
       knows (`rdf:langString`, `owl:real` ...). It was not in this list, and fixing it turns OWL011
       findings into negatives, so it needs its own cases.
-    - *Real-world counts:* the new findings were not counted on the reference vocabularies, CCO or
-      BFO/RO, which are not on the development machine. Likely to appear: OWL019 cardinalities on
-      transitive OBO relations, SHQ008 derived integer counts and SHQ011 `\/`. Count them before the
-      release, as the severity questions above depend on it.
+    - *Real-world counts:* counted on 0.12.0 (issue #12, 2026-11-11), with sources, commands and
+      checksums in `docs/validation/coverage-gaps-0.12.0.md`. All 13 rules report 0 findings on
+      pinned CCO v2.2, BFO 2020 and BFO 2.0, and RO v2026-09-04, with and without imports.
+      Ad-hoc rdflib counts find the constructs clean (RO has about 220 non-simple properties but no
+      cardinality restriction, and no simple-only axiom on them), and one injected violation per
+      rule is reported, so the zeros are real. None of the three publishes SHACL, so SHQ008 and
+      SHQ011 did not run there; on the DCAT-AP 3.0.1 shapes they report 0. The severity questions
+      above therefore have no corpus evidence either way. Still to do: count them on ontologies
+      that apply RO (Uberon, CL, OBI, GO-plus) and on tool-generated SHACL. OWL011, counted as the
+      baseline, reports 31 BFO 2020 typing axioms (`C ⊑ ∀ part of . C` and the like), all leaning
+      false positive: its precision there is about 0%.
   - *Documentation:* `docs/rules.md` shows only each rule's first positive and negative case, so
     the new cases and the specifications are visible only in the source. Render the module
     specifications (or all cases) in the generator.
