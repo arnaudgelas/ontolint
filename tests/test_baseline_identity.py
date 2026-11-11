@@ -300,6 +300,27 @@ def test_a_baseline_written_by_0_10_2_gives_the_same_results() -> None:
     assert stale  # and one entry of a finding since fixed
 
 
+TERM_MESSAGES = FIXTURES / "baselines" / "term_messages.ttl"
+# Written by ``--write-baseline`` before OWL034, OWL036 and OWL040 printed their values in N3 (they printed Python
+# reprs, ``rdflib.term.Literal('p')``); never regenerate it.
+TERM_MESSAGES_BASELINE = FIXTURES / "baselines" / "term_messages.baseline.json"
+REWORDED_RULES = ["OWL034", "OWL036", "OWL036", "OWL040"]
+
+
+def test_a_baseline_written_before_the_term_message_fix_still_matches(tmp_path: Path, run: Run) -> None:
+    (tmp_path / TERM_MESSAGES.name).write_bytes(TERM_MESSAGES.read_bytes())
+    argv = (TERM_MESSAGES.name, "--fail-on", "info", "--fail-on-stale-baseline")
+    code, document = run(*argv, "--baseline", str(TERM_MESSAGES_BASELINE))
+    assert (code, document["findings"], document["baseline"]["stale_fingerprints"]) == (0, [], [])
+    # A version 1 baseline (0.10.x) matches by message, so the reworded findings reopen and their entries go stale.
+    written = json.loads(TERM_MESSAGES_BASELINE.read_text(encoding="utf-8"))
+    (tmp_path / "v1.json").write_text(json.dumps({"fingerprints": written["fingerprints"]}), encoding="utf-8")
+    code, document = run(*argv, "--baseline", "v1.json")
+    assert sorted(f["rule"] for f in document["findings"]) == REWORDED_RULES
+    assert len(document["baseline"]["stale_fingerprints"]) == len(REWORDED_RULES)
+    assert code == 1
+
+
 def test_a_version_2_file_read_by_0_10_2_gives_the_version_1_results() -> None:
     reports = [*_kitchen_reports(), FileReport("b.ttl", "b.ttl", _kitchen_reports()[0].findings[:3])]
     text = baseline.dumps(baseline.build(reports))

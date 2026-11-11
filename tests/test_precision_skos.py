@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from rdflib import URIRef
 from rule_harness import BASE, graph
@@ -306,9 +308,67 @@ def test_owl040_message_names_owner() -> None:
     )
     [(_, message)] = _owl("OWL040", body)
     assert message == (
-        f"{BASE}C (restriction on {BASE}p): Restriction on object property {BASE}p "
-        "uses literal hasValue rdflib.term.Literal('x')."
+        f'{BASE}C (restriction on {BASE}p): Restriction on object property {BASE}p uses literal hasValue "x".'
     )
+
+
+# --- terms in OWL034, OWL036 and OWL040 messages: IRIs, stable blank ids, one-line N3 literals ----------
+
+XSD_NS = "http://www.w3.org/2001/XMLSchema#"
+ON_C = f"{BASE}C (restriction on {BASE}p): "
+
+
+def _restriction_messages(rule: str, constraint: str, extra: str = "") -> list[str]:
+    body = f"{extra}ex:C rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; {constraint} ] ."
+    return [message for _, message in _owl(rule, body)]
+
+
+def test_owl034_prints_a_literal_property_in_n3() -> None:
+    [(_, message)] = _owl("OWL034", "ex:C rdfs:subClassOf [ a owl:Restriction ; owl:onProperty 'p' ] .")
+    assert message == f'{BASE}C (restriction): owl:onProperty points to literal "p".'
+
+
+@pytest.mark.parametrize(
+    ("value", "printed"),
+    [
+        ('"-1"^^xsd:integer', f'"-1"^^<{XSD_NS}integer>'),
+        ('"one"@en', '"one"@en'),
+        (r"'say \"1\" \\ '", r'"say \"1\" \\ "'),
+        ("ex:two", f"{BASE}two"),
+        (r"'''1\n2\r'''", r'"1\n2\r"'),
+    ],
+)
+def test_owl036_prints_the_value_as_an_rdf_term(value: str, printed: str) -> None:
+    assert _restriction_messages("OWL036", f"owl:minCardinality {value}") == [
+        f"{ON_C}owl:minCardinality value {printed} is not a non-negative integer."
+    ]
+
+
+def test_owl036_prints_a_blank_value_by_its_stable_id() -> None:
+    def message(label: str) -> str:
+        [text] = _restriction_messages("OWL036", f"owl:maxCardinality _:{label}", f"_:{label} ex:q ex:r . ")
+        return text
+
+    first = message("b1")
+    assert first == message("other")
+    pattern = re.escape(ON_C) + r"owl:maxCardinality value _:[0-9a-f]{12} is not a non-negative integer\."
+    assert re.fullmatch(pattern, first)
+
+
+def test_owl040_prints_typed_literals_and_literal_data_ranges_in_n3() -> None:
+    declared = "ex:p a owl:ObjectProperty . "
+    assert _restriction_messages("OWL040", "owl:hasValue 3", declared) == [
+        f'{ON_C}Restriction on object property {BASE}p uses literal hasValue "3"^^<{XSD_NS}integer>.'
+    ]
+    assert _restriction_messages("OWL040", "owl:onDataRange 'x' ; owl:qualifiedCardinality 1", declared) == [
+        f'{ON_C}Restriction on object property {BASE}p uses owl:onDataRange "x".'
+    ]
+
+
+def test_a_literal_with_a_line_break_stays_on_one_line() -> None:
+    [message] = _restriction_messages("OWL036", "owl:minCardinality '''1\n2'''")
+    assert "\n" not in message
+    assert r'value "1\n2" is' in message
 
 
 # --- ownership ---------------------------------------------------------------------------------

@@ -4250,7 +4250,7 @@ Reported: `Restriction has no value, cardinality or self constraint.`
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "-1"^^xsd:integer .
 ```
 
-Reported: `owl:minCardinality value rdflib.term.Literal('-1', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#integer')) is not a non-negative integer.`
+Reported: `owl:minCardinality value "-1"^^<http://www.w3.org/2001/XMLSchema#integer> is not a non-negative integer.`
 
 *Clean:* valid cardinality
 
@@ -4334,7 +4334,7 @@ Reported: `owl:allValuesFrom owl:Thing holds for every individual.`
 ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue "x" .
 ```
 
-Reported: `Restriction on object property https://example.test/onto#p uses literal hasValue rdflib.term.Literal('x').`
+Reported: `Restriction on object property https://example.test/onto#p uses literal hasValue "x".`
 
 *Clean:* class filler on object property
 

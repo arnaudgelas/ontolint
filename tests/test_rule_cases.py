@@ -6,6 +6,7 @@ needs editing when a rule is added.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import pytest
@@ -19,6 +20,7 @@ from ontolint.rules.builtin import RULE_MODULES, module_name
 from ontolint.rules.registry import default_registry
 
 CASES = load_cases()
+PYTHON_REPR = re.compile(r"rdflib\.|\b(?:Literal|URIRef|BNode)\(")
 IMPLEMENTED = sorted(spec.rule_id for spec in default_registry().all())
 
 
@@ -58,13 +60,16 @@ def test_negative_case_does_not_emit_the_rule(rule_id: str, case: Case) -> None:
 @pytest.mark.parametrize(
     ("rule_id", "case"), [p for p in _params("positive") + _params("negative") if not p.values[1].probe]
 )
-def test_cases_do_not_crash_under_a_full_run(rule_id: str, case: Case) -> None:
+def test_cases_neither_crash_nor_print_python_reprs_under_a_full_run(rule_id: str, case: Case) -> None:
     data = case.build() if case.build else graph(case.turtle)
     shapes = graph(case.shapes) if case.shapes is not None else None
     result = Linter(data, shapes, **case.options).execute()
     # Shape-authoring rules inspect malformed shapes that pySHACL may reject (a recorded SHACL001 failure).
     failed = {x.rule_id for x in result.with_status(ExecutionStatus.FAILED)}
     assert failed <= {"SHACL001"}, failed
+    # Messages and foci print RDF terms (``support.term_text``), never ``rdflib.term.Literal('x')``.
+    reprs = [(f.rule, text) for f in result.findings for text in (f.focus, f.message) if PYTHON_REPR.search(text)]
+    assert not reprs, reprs
 
 
 # --- odd inputs ------------------------------------------------------------------------------

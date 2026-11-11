@@ -82,6 +82,7 @@ def test_every_rule_module_survives_any_graph_and_policy(graph: Graph, policy: P
         assert finding.message.strip(), finding
         assert finding.focus, finding
         assert finding.suggestion.strip()
+        assert "rdflib." not in finding.message, finding  # terms print as RDF (support.term_text), not reprs
     assert len(result.executions) == len(RULE_IDS)
 
 

@@ -191,3 +191,15 @@ def ntriples_literal(literal: Literal) -> str:
     if literal.language:
         return f"{quoted}@{literal.language}"
     return f"{quoted}^^<{literal.datatype}>" if literal.datatype else quoted
+
+
+def term_text(node: Node) -> str:
+    """``node`` for a message: an IRI bare, a blank node as ``_:label``, a literal by :func:`ntriples_literal`.
+
+    The literal is rdflib's ``n3()`` for every value without a line break; a line break is escaped where ``n3()``
+    would triple-quote the value, so a message stays on one line.  ``RuleContext`` rewrites ``_:label`` to the
+    blank node's stable identity.  Never a Python repr.
+    """
+    if isinstance(node, Literal):
+        return ntriples_literal(node)
+    return f"_:{node}" if isinstance(node, BNode) else str(node)

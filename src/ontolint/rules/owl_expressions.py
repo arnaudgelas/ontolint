@@ -10,7 +10,9 @@ are read with :func:`~.support.list_items`: a list is *malformed* when its head 
 ``rdf:nil`` nor a node with exactly one ``rdf:first`` and one ``rdf:rest`` (this includes literal and
 plain-IRI heads), when it is cyclic, or when it exceeds a million cells; list cells may be IRIs.
 Every finding is certain except OWL041's, which is emitted with the default (heuristic) confidence.
-A blank-node focus is printed as its stable content-based identity.  The specifications:
+A blank-node focus is printed as its stable content-based identity.  Terms in messages print as IRIs, ``_:``
+stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/XMLSchema#integer>``,
+``"x"@en``; a line break is escaped), never as Python reprs.  The specifications:
 
 * **OWL031.** For every subject of ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or
   ``owl:disjointUnionOf`` (named or anonymous, class or data range), one finding per triple whose
@@ -123,7 +125,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items, owning_term
+from .support import list_items, owning_term, term_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -248,10 +250,6 @@ _CONSTRAINTS = (OWL.allValuesFrom, OWL.someValuesFrom, OWL.hasValue, OWL.hasSelf
 _SET_OPERATORS = (OWL.unionOf, OWL.intersectionOf, OWL.oneOf, OWL.disjointUnionOf)
 
 
-def _name(node: Node) -> str:
-    return str(node) if isinstance(node, URIRef) else f"_:{node}" if isinstance(node, BNode) else repr(node)
-
-
 def _short(predicate: Node) -> str:
     return "owl:" + str(predicate).removeprefix(str(OWL))
 
@@ -305,7 +303,7 @@ def _operator_lists(ctx: RuleContext) -> None:
                 ctx.add(
                     "OWL032",
                     subject,
-                    f"{label} has a single operand ({_name(items[0])}).",
+                    f"{label} has a single operand ({term_text(items[0])}).",
                     confidence="certain",
                     subject=(predicate, items[0]),
                 )
@@ -327,7 +325,7 @@ def _use(g: Graph, expression: Node) -> tuple[URIRef, Node] | None:
 
 def _where(use: tuple[URIRef, Node] | None) -> str:
     """`` in the rdfs:range of ex:p`` for the named term that uses an anonymous expression, else ``""``."""
-    return f" in the {_curie(use[1])} of {_name(use[0])}" if use is not None else ""
+    return f" in the {_curie(use[1])} of {term_text(use[0])}" if use is not None else ""
 
 
 def _curie(predicate: Node) -> str:
@@ -357,8 +355,8 @@ def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node
         others = [*g.objects(member, OWL.complementOf), *([] if union else g.objects(member, OWL.disjointWith))]
         for other in others:
             if other in members:
-                first, second = sorted((member, other), key=_name)
-                pairs[_name(first), _name(second)] = (first, second)
+                first, second = sorted((member, other), key=term_text)
+                pairs[term_text(first), term_text(second)] = (first, second)
     effect = "is equivalent to owl:Thing" if union else "is unsatisfiable"
     for (left, right), nodes in sorted(pairs.items()):
         kind = "complementary" if union else "complementary or disjoint"
@@ -433,7 +431,7 @@ def _restriction(ctx: RuleContext, restriction: Node) -> None:
                 ctx,
                 "OWL034",
                 restriction,
-                f"owl:onProperty points to literal {value!r}.",
+                f"owl:onProperty points to literal {term_text(value)}.",
                 confidence="certain",
                 subject=(OWL.onProperty, value),
             )
@@ -461,7 +459,7 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
                     ctx,
                     "OWL036",
                     restriction,
-                    f"{_short(predicate)} value {value!r} is not a non-negative integer.",
+                    f"{_short(predicate)} value {term_text(value)} is not a non-negative integer.",
                     confidence="certain",
                     subject=(predicate, value),
                 )
@@ -561,21 +559,24 @@ def _property_kind(ctx: RuleContext, restriction: Node, on_property: list[Node])
         fillers = [o for p in (OWL.someValuesFrom, OWL.allValuesFrom) for o in g.objects(restriction, p)]
         values = list(g.objects(restriction, OWL.hasValue))
         if is_object:
-            problems += [(f"literal hasValue {v!r}", (OWL.hasValue, v)) for v in values if isinstance(v, Literal)]
-            problems += [(f"datatype filler {_name(f)}", ("filler", f)) for f in fillers if _datatype_like(ctx, f)]
             problems += [
-                (f"owl:onDataRange {_name(f)}", (OWL.onDataRange, f)) for f in g.objects(restriction, OWL.onDataRange)
+                (f"literal hasValue {term_text(v)}", (OWL.hasValue, v)) for v in values if isinstance(v, Literal)
+            ]
+            problems += [(f"datatype filler {term_text(f)}", ("filler", f)) for f in fillers if _datatype_like(ctx, f)]
+            problems += [
+                (f"owl:onDataRange {term_text(f)}", (OWL.onDataRange, f))
+                for f in g.objects(restriction, OWL.onDataRange)
             ]
         else:
             problems += [
-                (f"resource hasValue {_name(v)}", (OWL.hasValue, v)) for v in values if not isinstance(v, Literal)
+                (f"resource hasValue {term_text(v)}", (OWL.hasValue, v)) for v in values if not isinstance(v, Literal)
             ]
             problems += [
-                (f"class filler {_name(f)}", ("filler", f))
+                (f"class filler {term_text(f)}", ("filler", f))
                 for f in fillers
                 if _class_like(ctx, f) and not _datatype_like(ctx, f)
             ]
-            problems += [(f"owl:onClass {_name(f)}", (OWL.onClass, f)) for f in g.objects(restriction, OWL.onClass)]
+            problems += [(f"owl:onClass {term_text(f)}", (OWL.onClass, f)) for f in g.objects(restriction, OWL.onClass)]
         kind = "object" if is_object else "datatype"
         for problem, about in problems:
             _report(
@@ -603,7 +604,7 @@ def _complements(ctx: RuleContext) -> None:
             ctx.add(
                 "OWL042",
                 operand,
-                f"Class is a subclass of its own complement {_name(expression)}.",
+                f"Class is a subclass of its own complement {term_text(expression)}.",
                 confidence="certain",
                 subject=(RDFS.subClassOf, expression),
             )
@@ -611,7 +612,7 @@ def _complements(ctx: RuleContext) -> None:
             ctx.add(
                 "OWL042",
                 operand,
-                f"Class is equivalent to its own complement {_name(expression)}.",
+                f"Class is equivalent to its own complement {term_text(expression)}.",
                 confidence="certain",
                 subject=(OWL.equivalentClass, expression),
             )
@@ -672,7 +673,7 @@ def _identity(ctx: RuleContext) -> None:
             ctx.add(
                 "OWL044",
                 a,
-                f"Individual is asserted different from {_name(b)}, but a chain of owl:sameAs makes them the same.",
+                f"Individual is asserted different from {term_text(b)}, but a chain of owl:sameAs makes them the same.",
                 confidence="certain",
                 subject=(b,),
             )
@@ -689,7 +690,7 @@ def _all_different_conflicts(ctx: RuleContext, parent: dict[Node, Node]) -> None
                     ctx.add(
                         "OWL044",
                         axiom,
-                        f"owl:AllDifferent contains {_name(roots[root])} and {_name(item)}, asserted the same.",
+                        f"owl:AllDifferent contains {term_text(roots[root])} and {term_text(item)}, asserted the same.",
                         confidence="certain",
                         subject=(roots[root], item),
                     )

@@ -1,0 +1,14 @@
+@prefix ex: <https://example.test/onto#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.test/onto> a owl:Ontology .
+ex:p a owl:ObjectProperty .
+ex:C a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty "p" ; owl:someValuesFrom ex:C ] ,
+        [ a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "-1"^^xsd:integer ] ,
+        [ a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality ex:two ] ,
+        [ a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue "x" ] .
+ex:D a owl:Class ;
+    rdfs:seeAlso <https://alice:s3cret@example.test/x> .
