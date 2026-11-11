@@ -64,9 +64,14 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   ``owl:onDataRange`` triple).
 * **OWL037.** Within one restriction and separately for the unqualified and the qualified predicates,
   the largest of the minimum and exact values exceeds the smallest of the maximum and exact values
-  (so two different exact values also conflict); only valid values (as in OWL036) are compared, and
-  bounds on different restrictions, or between unqualified and qualified forms, are not combined.
-  Error: no individual can satisfy the bounds, which is a contradiction in the asserted triples.
+  (so two different exact values also conflict); and, across the two groups, the largest qualified
+  minimum or exact value exceeds the smallest unqualified maximum or exact value (``owl:maxCardinality
+  0`` against ``owl:minQualifiedCardinality 1``).  Only valid values (as in OWL036) are compared; an
+  unqualified minimum against a qualified maximum is no conflict, and bounds on different restrictions
+  are not combined.  One restriction carrying two bounds is also OWL035's (several constraints).
+  Error: no individual can satisfy the bounds (under the Direct Semantics the values that satisfy a
+  qualified filler are among all the values, so they are at most as many), which is a contradiction
+  in the asserted triples.
 * **OWL038.** A restriction with ``owl:someValuesFrom owl:Nothing``, or with ``owl:onClass
   owl:Nothing`` and a valid ``owl:minQualifiedCardinality`` or ``owl:qualifiedCardinality`` above 0.
   ``owl:allValuesFrom owl:Nothing``, a 0 or maximum bound, and an unqualified cardinality next to
@@ -540,10 +545,12 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
             confidence="certain",
             subject=("several fillers",),
         )
+    bounds: dict[str, tuple[int | None, int | None]] = {}
     for kind, group in (("unqualified", _UNQUALIFIED), ("qualified", _QUALIFIED)):
         minimum, maximum, exact = (_counts(ctx, restriction, p) for p in group)
         lower = max([*minimum, *exact], default=None)
         upper = min([*maximum, *exact], default=None)
+        bounds[kind] = lower, upper
         if lower is not None and upper is not None and lower > upper:
             _report(
                 ctx,
@@ -553,6 +560,17 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
                 confidence="certain",
                 subject=(kind,),
             )
+    # The values that satisfy the qualified filler are among all values, so they are at most as many.
+    lower, upper = bounds["qualified"][0], bounds["unqualified"][1]
+    if lower is not None and upper is not None and lower > upper:
+        _report(
+            ctx,
+            "OWL037",
+            restriction,
+            f"Qualified lower cardinality bound {lower} exceeds unqualified upper bound {upper}.",
+            confidence="certain",
+            subject=("qualified against unqualified",),
+        )
 
 
 def _existential_nothing(ctx: RuleContext, restriction: Node) -> None:

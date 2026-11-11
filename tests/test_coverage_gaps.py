@@ -262,3 +262,19 @@ def test_owl036_reports_a_qualified_cardinality_with_more_than_one_filler() -> N
     assert _messages("OWL036", f"{ON_P} owl:qualifiedCardinality 1 ; owl:onClass ex:A, ex:B .") == {
         ("Qualified cardinality has more than one filler (owl:onClass, owl:onClass).", ("several fillers",))
     }
+
+
+# --- OWL037: a qualified count never exceeds the unqualified one (Direct Semantics) ----------------------
+
+
+def test_owl037_compares_the_qualified_lower_bound_with_the_unqualified_upper_bound() -> None:
+    turtle = f"{ON_P} owl:maxCardinality 0, 3 ; owl:minQualifiedCardinality 1 ; owl:qualifiedCardinality 2 ;"
+    assert _messages("OWL037", turtle + " owl:onClass ex:A .") == {
+        ("Qualified lower cardinality bound 2 exceeds unqualified upper bound 0.", ("qualified against unqualified",))
+    }
+    # Within one group the existing finding stays as it was; the cross-group one comes next to it.
+    both = f"{ON_P} owl:cardinality 1 ; owl:qualifiedCardinality 2, 3 ; owl:onClass ex:A ."
+    assert _messages("OWL037", both) == {
+        ("Qualified lower cardinality bound 3 exceeds unqualified upper bound 1.", ("qualified against unqualified",)),
+        ("Lower cardinality bound 3 exceeds upper bound 2.", ("qualified",)),
+    }

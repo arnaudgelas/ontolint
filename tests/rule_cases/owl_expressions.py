@@ -179,6 +179,14 @@ CASES = {
                 "qualified exact conflicting",
                 f"{R} owl:onClass ex:A ; owl:qualifiedCardinality 1 ; owl:qualifiedCardinality 2 .",
             ),
+            ttl(
+                "unqualified max 0 against a qualified min",
+                f"{R} owl:maxCardinality 0 ; owl:minQualifiedCardinality 1 ; owl:onClass ex:A .",
+            ),
+            ttl(
+                "unqualified exact below a qualified exact",
+                f"{R} owl:cardinality 1 ; owl:qualifiedCardinality 2 ; owl:onClass ex:A .",
+            ),
         ],
         [
             ttl("min equals max", f"{R} owl:minCardinality 2 ; owl:maxCardinality 2 ."),
@@ -187,6 +195,14 @@ CASES = {
             ttl(
                 "qualified min and unqualified max are different groups",
                 f"{R} owl:onClass ex:A ; owl:minCardinality 1 ; owl:maxQualifiedCardinality 0 .",
+            ),
+            ttl(
+                "unqualified min and qualified max are no conflict",
+                f"{R} owl:minCardinality 3 ; owl:maxQualifiedCardinality 1 ; owl:onClass ex:A .",
+            ),
+            ttl(
+                "equal bounds across the groups",
+                f"{R} owl:maxCardinality 2 ; owl:minQualifiedCardinality 2 ; owl:onClass ex:A .",
             ),
             ttl(
                 "exact equals min and max",
