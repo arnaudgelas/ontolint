@@ -8,9 +8,13 @@ findings reported before stay as they were.  ``ex:`` stands for the cases' base 
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import pytest
 from rule_harness import BASE, graph
 
-from ontolint import Linter
+from ontolint import Linter, main
 from ontolint.rules.shacl_authoring import xpath_regex_problem
 
 OWL = "http://www.w3.org/2002/07/owl#"
@@ -421,3 +425,46 @@ def test_shq011_reports_a_pattern_python_compiles_but_xpath_rejects() -> None:
 def test_shq011_gives_a_pattern_python_rejects_only_its_compile_finding() -> None:
     (message,) = _shq011(r'sh:pattern "(\\bword"')
     assert message.startswith("sh:pattern does not compile: missing )")
+
+
+# --- the user-visible effect: CI now fails where the W3C specifications make the input invalid ----------
+
+GAPS_ONTOLOGY = """
+@prefix ex: <https://example.test/gaps#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+ex: a owl:Ontology .
+ex:partOf a owl:ObjectProperty, owl:TransitiveProperty .
+ex:hasPart a owl:ObjectProperty .
+ex:Wheel a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:partOf ; owl:maxCardinality 1 ] .
+ex:Car a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:hasPart ;
+    owl:someValuesFrom ex:Wheel ; owl:allValuesFrom ex:Wheel ] .
+ex:Label a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:hasPart ; owl:someValuesFrom rdf:langString ] .
+ex:engine a skos:Concept ; skos:related ex:vehicle ; skos:broadMatch ex:vehicle .
+ex:vehicle a skos:Concept .
+"""
+GAPS_SHAPES = r"""
+@prefix ex: <https://example.test/gaps#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+ex:CarShape a sh:NodeShape ; sh:targetClass ex:Car ;
+    sh:property [ sh:path ex:homepage ; sh:maxCount "1"^^xsd:nonNegativeInteger ; sh:pattern "^https?:\\/\\/" ] .
+"""
+
+
+def test_fail_on_error_now_fails_on_the_closed_gaps(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # Before the gaps closed this exits 0 with no finding (checked on the commit that pinned the old findings).
+    ontology, shapes = tmp_path / "ontology.ttl", tmp_path / "shapes.ttl"
+    ontology.write_text(GAPS_ONTOLOGY, encoding="utf-8")
+    shapes.write_text(GAPS_SHAPES, encoding="utf-8")
+    rules = "OWL019,OWL035,OWL040,SKOS009,SHQ008,SHQ011"
+    argv = [str(ontology), "--shapes", str(shapes), "--select", rules, "--fail-on", "error", "--format", "json"]
+    assert main(argv) == 1
+    findings = json.loads(capsys.readouterr().out)["findings"]
+    assert sorted((f["rule"], f["severity"]) for f in findings) == [
+        (rule, "error") for rule in sorted(rules.split(","))
+    ]
