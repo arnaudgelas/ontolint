@@ -24,7 +24,7 @@ from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
 from .classes import orphan_classes
 from .lexical import is_unlabelled
-from .owl import lacks_domain, lacks_range, signature_exempt
+from .owl import annotation_only, lacks_domain, lacks_range, signature_exempt
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -206,12 +206,14 @@ def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: froze
     _coverage_rule(ctx, "METRIC002", classes, ctx.descriptions)
     _coverage_rule(ctx, "METRIC003", properties, ctx.descriptions)
     if len(classes) >= policy.metric_min_sample:
-        ratio = len(properties) / len(classes)
+        # Annotation properties relate no classes; both suggestions are about relations.
+        relations = sum(1 for p in properties if not annotation_only(ctx.g, p))
+        ratio = relations / len(classes)
         if ratio < policy.metric_min_property_class_ratio:
             ctx.add(
                 "METRIC006",
                 _focus(ctx),
-                f"{len(properties)} properties for {len(classes)} classes "
+                f"{relations} properties for {len(classes)} classes "
                 f"({ratio:.2f} < {policy.metric_min_property_class_ratio:.2f}).",
                 subject=(),
             )
@@ -219,7 +221,7 @@ def _shape_rules(ctx: RuleContext, classes: frozenset[URIRef], properties: froze
             ctx.add(
                 "METRIC007",
                 _focus(ctx),
-                f"{len(properties)} properties for {len(classes)} classes "
+                f"{relations} properties for {len(classes)} classes "
                 f"({ratio:.2f} > {policy.metric_max_property_class_ratio:.2f}).",
                 subject=(),
             )

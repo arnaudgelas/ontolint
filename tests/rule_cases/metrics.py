@@ -145,7 +145,13 @@ CASES = {
         ],
     ),
     "METRIC006": rule_cases(
-        [ttl("a pure taxonomy", _classes(10))],
+        [
+            ttl("a pure taxonomy", _classes(10)),
+            ttl(
+                "annotation properties are not relations",
+                _classes(10) + "\n" + _props(1, kind="owl:AnnotationProperty"),
+            ),
+        ],
         [
             ttl("one property per ten classes (at the limit)", _classes(10) + _props(1)),
             ttl("below the minimum sample", _classes(9)),
@@ -157,6 +163,10 @@ CASES = {
         [
             ttl("50 properties for 10 classes (at the limit)", _classes(10) + "\n" + _props(50)),
             ttl("properties without classes", _props(60)),
+            ttl(
+                "annotation properties are not relations",
+                _classes(10) + "\n" + _props(51, kind="owl:AnnotationProperty"),
+            ),
         ],
     ),
     "METRIC008": rule_cases(

@@ -128,3 +128,19 @@ def test_metric005_counts_what_cls001_reports_on_the_kitchen_sink() -> None:
     (metric,) = [f for f in ctx.findings if f.rule == "METRIC005"]
     assert len(cls001) == 6
     assert metric.message.startswith("6 of 33 classes are orphans")
+
+
+def test_metric006_and_007_count_relation_properties_only() -> None:
+    g = Graph()
+    for i in range(10):
+        _cls(g, f"C{i}")
+    for i in range(51):
+        g.add((_ex(f"a{i}"), RDF.type, OWL.AnnotationProperty))
+    assert _run(g, "METRIC007") == []
+    (low,) = _run(g, "METRIC006")
+    assert low.message == "0 properties for 10 classes (0.00 < 0.10)."
+    # An annotation property that is also an object property is a relation; rdf:Property counts too.
+    g.add((_ex("a0"), RDF.type, OWL.ObjectProperty))
+    g.add((_ex("r"), RDF.type, RDF.Property))
+    (still,) = _run(g, "METRIC006", metric_min_property_class_ratio=0.3)
+    assert still.message.startswith("2 properties for 10 classes")
