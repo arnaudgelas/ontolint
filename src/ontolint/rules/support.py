@@ -212,7 +212,9 @@ def term_text(node: Node) -> str:
 
 # An authority's userinfo, after ``scheme://`` and before the first ``@`` of the authority (RFC 3986 3.2.1).
 _USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*://([^/?#@]*)@")
-PASSWORD_MASK = "****"  # noqa: S105 -- what replaces a password, not one
+# Named "redacted": CodeQL takes any other "password" name for a secret, and the mask reaches the SHA-256 of a
+# finding's fingerprint (py/weak-sensitive-data-hashing).
+REDACTED_PASSWORD = "****"  # noqa: S105 -- what replaces a password, not one
 
 
 def _credentials(iri: str) -> tuple[re.Match[str], str] | None:
@@ -231,7 +233,7 @@ def password_user(iri: str) -> str | None:
 
 
 def redact_password(iri: str) -> str:
-    """``iri`` with everything after the first ``:`` of its userinfo replaced by :data:`PASSWORD_MASK`.
+    """``iri`` with everything after the first ``:`` of its userinfo replaced by :data:`REDACTED_PASSWORD`.
 
     RFC 3986 section 3.2.1 says not to render that data.  The user, host, port, path, query and fragment are
     kept, and ``*`` is a userinfo sub-delimiter, so the result is still an IRI; an IRI without a password is
@@ -241,4 +243,4 @@ def redact_password(iri: str) -> str:
     if found is None:
         return iri
     match, user = found
-    return f"{iri[: match.start(1)]}{user}:{PASSWORD_MASK}{iri[match.end(1) :]}"
+    return f"{iri[: match.start(1)]}{user}:{REDACTED_PASSWORD}{iri[match.end(1) :]}"

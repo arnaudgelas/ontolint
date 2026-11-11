@@ -43,7 +43,7 @@ from rdflib.store import Store
 from rdflib.term import Identifier, Node
 
 from .models import Finding
-from .rules.support import PASSWORD_MASK, STABLE_ID_LENGTH, redact_password, stable_blank_id
+from .rules.support import REDACTED_PASSWORD, STABLE_ID_LENGTH, redact_password, stable_blank_id
 
 DEFAULT_GRAPH = "(default graph)"
 """The name of a dataset's default graph (parenthesised like ``(ontology)``, so no IRI can collide with it)."""
@@ -178,12 +178,12 @@ def _term_graphs(
 ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
     """For each wanted term: the graphs describing it (as subject), and those mentioning it anywhere.
 
-    When a wanted term holds :data:`PASSWORD_MASK`, an IRI also counts under its masked spelling, so a
+    When a wanted term holds :data:`REDACTED_PASSWORD`, an IRI also counts under its masked spelling, so a
     masked focus names the graphs of every IRI that masks to it, including one spelled with the mask.
     """
     described: dict[str, set[str]] = {}
     mentioned: dict[str, set[str]] = {}
-    masks = any(PASSWORD_MASK in term for term in wanted)
+    masks = any(REDACTED_PASSWORD in term for term in wanted)
     for triple, names in index.triples.items():
         for position, node in enumerate(triple):
             term = text(node)
