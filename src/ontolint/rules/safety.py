@@ -4,21 +4,27 @@ These rules inspect the already-parsed RDFLib graph only; parser, network and fi
 belong to the loader.  Every traversal is iterative so hostile inputs cannot exhaust the stack.
 
 * **SEC014.** An IRI in subject, predicate or object position of the data graph (not the shapes graph,
-  not an ``xsd:anyURI`` literal) whose RFC 3986 authority carries a userinfo with a password: the IRI
-  starts with a scheme (any, case-insensitive: ``https``, ``HTTP``, ``ftp``, ``x+y.z-1``) and ``//``,
-  then a userinfo of characters other than ``/ ? # @`` up to the first ``@``, and the part after the
-  first ``:`` of that userinfo is not empty (``https://alice:secret@...``, ``https://:pw@...``,
-  ``https://u:p:q@...``).  Excluded: a user without a password (``https://alice@...``) or with an empty
-  one (``https://alice:@...``), so a bare token used as the user name is not caught; a percent-encoded
-  colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in the path, query or
-  fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a relative reference
-  resolved against the document (GOV002's concern).  The focus is the IRI with everything after the first
-  ``:`` of the userinfo replaced by ``****`` (``https://alice:****@example.test/x``; RFC 3986 section 3.2.1
-  says not to render it), and the message names the user, so no report or baseline repeats the password; the
-  SARIF region is the credentialed IRI's.  One finding per distinct IRI once its password is masked, so IRIs
-  that differ only in the password give one finding.  Other rules that report such an IRI still print it
-  whole.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the
-  syntactic test has no false positive; a published credential must be rotated.
+  not an ``xsd:anyURI`` literal) that holds a userinfo with a password.  Where a userinfo is, is decided
+  by the parser that also masks it (:mod:`ontolint.redaction`, which specifies it), so SEC014 reports
+  exactly the passwords the mask hides: after a scheme (any, case-insensitive: ``https``, ``HTTP``,
+  ``ftp``, ``x+y.z-1``) and ``//`` (for ``http``, ``https``, ``ws``, ``wss`` and ``ftp``, any run of
+  ``/`` and ``\\``, none included, as a WHATWG parser reads ``https:/u:p@h``), an authority runs to the
+  first ``/ ? #``, whatever its characters (white space, braces, a line break), and its userinfo to its
+  last ``@``; the part after the first ``:`` of that userinfo is not empty (``https://alice:secret@...``,
+  ``https://:pw@...``, ``https://u:p@ss@...``, ``https://alice:pw SPACE@...``).  An IRI nested in the IRI
+  (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too.  Excluded: a user without a
+  password (``https://alice@...``) or with an empty one (``https://alice:@...``), so a bare token used as
+  the user name is not caught (it is still masked); a percent-encoded colon (``alice%3Asecret@``), which
+  is data, not the separator; an ``@`` in the path, query or fragment; a scheme without an authority
+  (``mailto:u:p@h``, ``file:///``); and a relative reference resolved against the document (GOV002's
+  concern).  The focus is the IRI with its whole userinfo, user name included, replaced by ``****``
+  (``https://****@example.test/x``), like every IRI in every finding and output of ontolint (RFC 3986
+  section 3.2.1 says not to render the password, and a token sent as the user name cannot be told from a
+  name), and the message names no part of the userinfo, so no report or baseline repeats a secret; the
+  SARIF region is the credentialed IRI's.  One finding per distinct IRI once masked, so IRIs that differ
+  only in their userinfo give one finding, located at the first of them: the finding stays until the last
+  is removed.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the syntactic
+  test has no false positive; a published credential must be rotated.
 """
 
 from __future__ import annotations
@@ -32,8 +38,9 @@ from rdflib.namespace import RDF
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import userinfo_password
 
-from .support import password_user, redact_password, relative_reference
+from .support import relative_reference
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -114,7 +121,8 @@ SPECS: tuple[RuleSpec, ...] = (
         "SEC",
         "Credentials embedded in an IRI",
         Severity.ERROR,
-        "Remove the user:password@ part of the IRI and rotate the exposed credential.",
+        "Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it "
+        "at the SARIF region or in the source.",
         "deterministic",
         RuleBackend.RDFLIB,
         RuleScope.INPUT,
@@ -287,7 +295,6 @@ def _check_iri(ctx: RuleContext, iri: str) -> None:
             confidence="certain",
             subject=(),
         )
-    user = password_user(iri)
-    if user is not None:
-        message = f"IRI embeds a password for user {user!r}."
-        ctx.add("SEC014", redact_password(iri), message, confidence="certain", subject=())
+    if userinfo_password(iri) is not None:
+        # RuleContext.add masks the userinfo of the focus (ontolint.redaction).
+        ctx.add("SEC014", iri, "IRI embeds a password in its userinfo.", confidence="certain", subject=())

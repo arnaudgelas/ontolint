@@ -46,6 +46,7 @@ from .datasets import EMPTY_INDEX, GraphIndex
 from .models import SourceFacts
 from .paths import InputFile
 from .policy import Policy
+from .redaction import withheld_parser_message
 from .source_locations import SourceIndex, build_source_index
 
 RDF_XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
@@ -440,7 +441,7 @@ def _parse_bytes(data: bytes, fmt: str, public_id: str, display: str, max_triple
     if isinstance(failure, LoadError):
         raise failure
     if failure is not None:
-        raise ParseFailure(type(failure).__name__, _describe(failure)) from failure
+        raise ParseFailure(type(failure).__name__, withheld_parser_message(_describe(failure), data)) from failure
     index = EMPTY_INDEX
     if fmt in DATASET_FORMATS:
         # Record which graph states each triple first: once merged, the default graph holds them all.

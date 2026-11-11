@@ -13,6 +13,7 @@ from pathlib import Path
 from xml.sax.saxutils import quoteattr
 
 from ontolint.models import Finding
+from ontolint.redaction import clip, redact_userinfo
 from ontolint.rules.specs import FIXES, SEVERITY
 
 # An OWL API profile violation line: ``<kind>[: <subject>] [<axiom> in <ontology>]``.
@@ -153,7 +154,7 @@ def robot_profile_issues(ontology: Path, profile: str, image: str, timeout: int)
         details = details or completed.stderr.strip() or completed.stdout.strip() or "ROBOT did not produce a report."
         summary = summarise_profile_report(details)
         if summary is None:  # no violation list: a missing image, a Docker or Java error, a permission problem
-            quoted = details[:UNPARSED_MESSAGE_LENGTH] + ("…" if len(details) > UNPARSED_MESSAGE_LENGTH else "")
+            quoted = clip(details, UNPARSED_MESSAGE_LENGTH, "…")
             raise ProfileCheckFailed(f"ROBOT exited {completed.returncode} without a profile report: {quoted}")
         return [
             Finding(
@@ -254,7 +255,7 @@ def _write_stub_catalog(output: Path, imports: set[str]) -> None:
 
 
 def _conversion_failure(message: str, syntax: str) -> str:
-    reason = message.splitlines()[0][:UNPARSED_MESSAGE_LENGTH]
+    reason = clip(redact_userinfo(message).splitlines()[0], UNPARSED_MESSAGE_LENGTH)
     if syntax == "owl-manchester":  # the usual cause: an entity whose type only an import declares
         reason += (
             "; ontolint converts each file without its imports, so a Manchester Syntax file must declare every "

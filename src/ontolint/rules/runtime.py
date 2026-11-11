@@ -14,6 +14,7 @@ from rdflib.term import Node
 from ontolint.context import GraphContext
 from ontolint.models import CONFIDENCES, Finding
 from ontolint.policy import Policy
+from ontolint.redaction import redact_userinfo
 
 from .specs import FIXES, SEVERITY
 from .support import DESCRIPTIONS, LABEL_STOP, LABELS, stable_blank_id
@@ -212,6 +213,9 @@ class RuleContext:
     ) -> None:
         """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs.
 
+        Focus, message, related terms and subject are masked (:func:`~ontolint.redaction.redact_userinfo`) before
+        duplicates are removed, so IRIs that differ only in their userinfo give one finding.
+
         ``related`` names the other terms a finding is about (the rest of a collision); they place the
         finding in every module involved (``--module-by``) and never change its identity or text.
 
@@ -264,11 +268,11 @@ class RuleContext:
         return self._names.identity(node)
 
     def _message_text(self, message: str) -> str:
-        """Replace parser-assigned blank-node labels inside ``message`` by their stable identity."""
-        return self._names.rewrite(message)
+        """Replace parser-assigned blank-node labels inside ``message`` by their stable identity; mask userinfo."""
+        return redact_userinfo(self._names.rewrite(message))
 
     def _subject_text(self, item: object) -> str:
-        """Render one part of a subject: a blank node by its stable identity, a literal in N3, an IRI as is.
+        """Render one part of a subject: a blank node by its stable identity, a literal in N3, an IRI as is (masked).
 
         A string is taken as an already rendered key; anything else (a count, say) is refused, because a
         subject names what a finding is about, never how much.
@@ -276,15 +280,15 @@ class RuleContext:
         if isinstance(item, BNode):
             return self._stable_id(item)
         if isinstance(item, Literal):
-            return item.n3()
+            return redact_userinfo(item.n3())
         if isinstance(item, URIRef):
-            return str(item) or EMPTY_FOCUS
+            return redact_userinfo(str(item)) or EMPTY_FOCUS
         if isinstance(item, str):
-            return item
+            return redact_userinfo(item)
         raise TypeError(f"a finding subject holds terms and keys, not {type(item).__name__}: {item!r}")
 
     def _focus_text(self, focus: object) -> str:
-        """Render a focus: blank nodes by stable content identity, the empty IRI as ``<>``."""
+        """Render a focus: blank nodes by stable content identity, the empty IRI as ``<>``, a userinfo masked."""
         if isinstance(focus, BNode):
             return self._stable_id(focus)
-        return str(focus) or EMPTY_FOCUS
+        return redact_userinfo(str(focus)) or EMPTY_FOCUS

@@ -4644,7 +4644,7 @@ ex:a rdfs:label "abc" .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
-- **Fix:** Remove the user:password@ part of the IRI and rotate the exposed credential.
+- **Fix:** Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it at the SARIF region or in the source.
 
 *Flagged:* user and password
 
@@ -4652,7 +4652,7 @@ ex:a rdfs:label "abc" .
 ex:a ex:p <https://alice:secret@example.test/x> .
 ```
 
-Reported: `IRI embeds a password for user 'alice'.`
+Reported: `IRI embeds a password in its userinfo.`
 
 *Clean:* user without password
 

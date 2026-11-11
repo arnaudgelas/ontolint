@@ -18,12 +18,16 @@ task hand graphs across.
 from __future__ import annotations
 
 import json
+import logging
 import multiprocessing
+import sys
 from collections.abc import Sequence
-from typing import Any, Protocol
+from typing import Any, Protocol, TextIO, cast
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.term import Node
+
+from .redaction import RedactingStream
 
 WORKER_START_TIMEOUT = 120.0
 """Seconds to wait for the worker interpreter to start (imports); not part of the caller's budget."""
@@ -61,8 +65,28 @@ class WorkerFailed(Exception):  # noqa: N818 -- an outcome: the task raised in t
         self.detail = detail
 
 
-def _worker_main(connection: Any, task: WorkerTask) -> None:
-    """Entry point of the worker: prepare, announce readiness, run the task, send one JSON object, exit."""
+def _worker_main(connection: Any, task: WorkerTask, rdflib_level: int | None = None) -> None:
+    """Entry point of the worker: prepare, announce readiness, run the task, send one JSON object, exit.
+
+    A ``spawn`` worker starts with the process's own stderr and default logging, so it takes the parent's level
+    for rdflib's logger and masks what it writes to stderr (:mod:`ontolint.redaction`): rdflib's warning about an
+    IRI it cannot serialise quotes the IRI.
+    """
+    if rdflib_level is not None:
+        logging.getLogger("rdflib").setLevel(rdflib_level)
+    stderr = sys.stderr
+    redacting = None if stderr is None else RedactingStream(stderr)  # None under pythonw
+    if redacting is not None:
+        sys.stderr = cast("TextIO", redacting)
+    try:
+        _serve(connection, task)
+    finally:
+        if redacting is not None:
+            redacting.drain()
+        sys.stderr = stderr
+
+
+def _serve(connection: Any, task: WorkerTask) -> None:
     task.prepare()
     connection.send_bytes(b"ready")
     try:
@@ -84,7 +108,8 @@ def run_bounded(task: WorkerTask, seconds: float, *, name: str) -> dict[str, Any
     # gremlin: pardon[equivalent] the parent only reads and the worker only writes; duplex adds no behaviour
     receiver, sender = context.Pipe(duplex=False)
     # gremlin: pardon[equivalent] the worker is always stopped in `finally`, so daemon only matters if the parent dies
-    process = context.Process(target=_worker_main, args=(sender, task), daemon=True)
+    rdflib_level = logging.getLogger("rdflib").level
+    process = context.Process(target=_worker_main, args=(sender, task, rdflib_level), daemon=True)
     process.start()
     sender.close()  # the parent only reads: EOF on the pipe means the worker is gone
     try:

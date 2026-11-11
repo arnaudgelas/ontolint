@@ -23,6 +23,7 @@ from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import clip
 
 from .support import META_LICENSE, list_items
 
@@ -181,7 +182,7 @@ def _ordered(nodes: Iterable[Node]) -> list[Node]:
 
 
 def _quote(text: str) -> str:
-    return repr(text if len(text) <= MAX_QUOTE else text[:MAX_QUOTE] + "...")
+    return repr(clip(text, MAX_QUOTE, "..."))
 
 
 def _texts(g: Graph, subject: Node, predicate: Node) -> list[Literal]:

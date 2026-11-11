@@ -27,6 +27,7 @@ from rdflib.namespace import DC, DCTERMS, OWL, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import clip
 
 from .support import META_LICENSE, safe_urlsplit
 
@@ -179,7 +180,7 @@ def run(ctx: RuleContext) -> None:
 
 
 def _quote(text: str) -> str:
-    return repr(text if len(text) <= MAX_QUOTE else text[:MAX_QUOTE] + "...")
+    return repr(clip(text, MAX_QUOTE, "..."))
 
 
 def _version_iris(ctx: RuleContext, ontology: Node) -> list[URIRef]:

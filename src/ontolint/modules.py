@@ -11,6 +11,10 @@ the modules of all of them, which is how a collision *between* modules shows.
 Grouping is presentation only: it never adds, removes or rewords a finding, so fingerprints and
 baselines are the same with and without it.  A finding whose focus is not an IRI (``(ontology)``, a
 blank node) or whose term carries no module annotation belongs to no module.
+
+A finding's terms hold no userinfo (:mod:`ontolint.redaction`), so neither do module names: a namespace is
+taken from the masked term, and an annotation value is masked too.  A masked term is looked up under every
+IRI of the graph that masks to it, so a credentialed term keeps its modules.
 """
 
 from __future__ import annotations
@@ -23,6 +27,7 @@ from rdflib import Graph, Literal, URIRef
 from .models import Finding
 from .ownership import namespace_of_iri
 from .policy import MODULE_BY_VALUES
+from .redaction import redact_userinfo
 
 MODULE_BY = MODULE_BY_VALUES
 """The values ``--module-by`` accepts."""
@@ -51,22 +56,41 @@ def resolve_predicate(text: str, prefixes: Iterable[tuple[str, str]]) -> URIRef:
     return URIRef(namespace + match.group("name"))
 
 
-def _module_names(graph: Graph, term: str, predicate: URIRef | None) -> list[str]:
+def _module_names(graph: Graph, term: str, predicate: URIRef | None, carriers: Mapping[str, list[URIRef]]) -> list[str]:
     if not _IRI_FOCUS.fullmatch(term):  # "(ontology)", and blank nodes ("_:" starts with no scheme)
         return []
     if predicate is None:
         namespace = namespace_of_iri(term)
         return [namespace] if namespace else []
-    return [str(value) for value in graph.objects(URIRef(term), predicate) if isinstance(value, Literal | URIRef)]
+    return [
+        redact_userinfo(str(value))
+        for node in carriers.get(term, ())
+        for value in graph.objects(node, predicate)
+        if isinstance(value, Literal | URIRef)
+    ]
+
+
+def _carriers(graph: Graph, predicate: URIRef | None) -> dict[str, list[URIRef]]:
+    """The IRIs that carry ``predicate``, keyed by their masked spelling (a finding's term)."""
+    carriers: dict[str, list[URIRef]] = {}
+    if predicate is not None:
+        for node in sorted({s for s in graph.subjects(predicate, None) if isinstance(s, URIRef)}):
+            carriers.setdefault(redact_userinfo(str(node)), []).append(node)
+    return carriers
 
 
 def finding_modules(
     graph: Graph, findings: Sequence[Finding], predicate: URIRef | None
 ) -> dict[Finding, tuple[str, ...]]:
     """The modules of each finding that has one: by ``predicate``, or by namespace when it is ``None``."""
+    carriers = _carriers(graph, predicate)
     modules: dict[Finding, tuple[str, ...]] = {}
     for finding in findings:
-        names = {name for term in (finding.focus, *finding.related) for name in _module_names(graph, term, predicate)}
+        names = {
+            name
+            for term in (finding.focus, *finding.related)
+            for name in _module_names(graph, term, predicate, carriers)
+        }
         if names:
             modules[finding] = tuple(sorted(names))
     return modules

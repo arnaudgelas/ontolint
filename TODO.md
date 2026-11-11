@@ -64,6 +64,24 @@ Nothing open: 0.11.0 is released (see "Recently done").
       terms the files do not own or beside an `rdfs:label`, and Getty's `gvp:prefLabelGVP` is an
       object property to SKOS-XL labels with no `rdfs:subPropertyOf`. The label closure is driven
       by issue 15 and by what the axioms entail, not by a false positive observed in the corpus.
+  - **USERINFO-MASK** (P1 audit; issue 13): no output repeats an IRI's userinfo. The
+    specification is `src/ontolint/redaction.py`: one structural parser finds a userinfo (an
+    authority runs to the first `/ ? #` whatever its characters, the userinfo to its last `@`, with
+    WHATWG's `https:/` and `https:` forms for special schemes) for masking and for SEC014, which
+    reports exactly the passwords the mask hides; the scan is linear. The whole userinfo, user name
+    included, becomes `****` (`https://****@host/x`). *Maintainer decision to confirm:* the user
+    name is masked too, because a token sent as the user name (`https://<token>:x-oauth-basic@...`,
+    `https://<token>@...`) cannot be told from a name. Masking happens where a finding is made
+    (`Finding.__post_init__`, and `RuleContext.add` before duplicates are removed), before a message
+    cuts a value (`redaction.clip`, enforced by a test over every slice in `rules/` and
+    `adapters/`), and in the content hash of blank nodes and blank graphs, so no output holds a
+    hash over a secret; stdout and stderr (the workers' too) are masked again at the boundary, and
+    a parser message about a file with a userinfo is withheld. Shipped as `fix!:` with a BREAKING
+    CHANGE trailer. Limits, documented in the README: a baseline cannot tell a replaced credential
+    at the same IRI from the old one (no output may hold an offline-guessable function of it), a
+    write straight to file descriptor 2, a library caller's own logging handlers. Follow-ups:
+    issue drafts for a user-only userinfo (`https://<token>@host`, masked but not reported), SEC014
+    under a baseline, and line breaks in IRIs that forge text-report lines.
 - Unreleased (on `main`, after 0.11.0):
   - **TRIG-REGIONS** (P1; issue 6): a TriG finding has the region of its focus, as its Turtle
     twin does. TriG was missing from `source_locations._TEXT_FORMATS` and from the scanner's
@@ -621,20 +639,9 @@ Validation corpus (public; licences per repository):
     OWL013 for a literal with a line break (`85562dc`); SEC014 masks the password in its focus
     (`c205df2`). (SEM001's misclassification and machine-dependent focus: fixed in 0.10.2.)
     Follow-ups, each its own contract change:
-    - *Credentials in every other rule's output.* Only SEC014 masks. On a file whose ontology and
-      term IRIs carry `user:pw@`, CLS001, GOV004, LEX001, LEX002, ONT003, ONT004, ONT005, ONT006
-      and SEC007 still print a password in their focus or message (9 report lines of the
-      2026-11-10 reproduction, 14 with SEC014's five before it was fixed), as may loader and import
-      messages on stderr and the `--module-by namespace`
-      names of other rules. Masking them changes those rules' foci and fingerprints and needs a
-      specification of its own. That specification also decides the token-as-user form
-      (`https://<token>:x-oauth-basic@github.com/...`): SEC014 masks only what follows the first
-      `:` (RFC 3986 section 3.2.1), so a secret sent as the user name is still printed in its focus
-      and in its message ("for user ...").
-    - *SEC014 and modules.* The masked focus is not a graph node, so under
-      `--module-annotation` a SEC014 finding has no module, and under `--module-by namespace` its
-      module is the masked namespace. Carrying the raw IRI in `related` would put the secret
-      back into reports, so this is accepted until a finding can name its module directly.
+    - *Credentials in every other rule's output* and *SEC014 and modules*: fixed (issue 13, see
+      "Recently done", USERINFO-MASK), pending the maintainer's confirmation of the token-as-user
+      decision recorded there.
   - *False positives found by the 2026-11-10 review:* (LEX002 and every rule using
     `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed in 0.11.0, in
     6dc2285 and 19d9667, see "Recently done"). The follow-ups (labels, `owl:equivalentProperty`,

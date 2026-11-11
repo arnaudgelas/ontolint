@@ -1,11 +1,13 @@
-"""SEC014 never repeats the password it reports: not in a report, a SARIF region lookup or a baseline.
+"""SEC014 never repeats the userinfo it reports: not in a report, a SARIF region lookup or a baseline.
 
-RFC 3986 section 3.2.1: applications should not render the data after the first ``:`` of a userinfo.  The
-focus is the IRI with that data replaced by ``****``; the SARIF region is still the credentialed IRI's.
+RFC 3986 section 3.2.1: applications should not render the data after the first ``:`` of a userinfo, and a
+token may be sent as the user name (:mod:`ontolint.redaction`).  The focus is the IRI with its whole userinfo
+replaced by ``****``; the SARIF region is still the credentialed IRI's.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -18,7 +20,8 @@ from ontolint.reporting import FileReport, fingerprint
 
 PASSWORD = "s3cret"  # noqa: S105 -- a fake credential the reports must not repeat
 CREDENTIALED = f"https://alice:{PASSWORD}@example.test/x"
-MASKED = "https://alice:****@example.test/x"
+MASKED = "https://****@example.test/x"
+MESSAGE = "IRI embeds a password in its userinfo."
 SEE_ALSO = "http://www.w3.org/2000/01/rdf-schema#seeAlso"
 # Each input states the credentialed IRI on line 3.
 INPUTS = {
@@ -59,6 +62,7 @@ def test_no_report_format_repeats_the_password(tmp_path: Path, run: Any, name: s
     code, out, err = run(name, "--select", "SEC014", "--format", output_format)
     assert code == 1, err
     assert PASSWORD not in out + err
+    assert "alice" not in out + err
     assert MASKED in out
 
 
@@ -89,10 +93,12 @@ def test_a_baseline_holds_no_hash_over_the_password(tmp_path: Path, run: Any) ->
     assert code == 1, err
     text = (tmp_path / "base.json").read_text(encoding="utf-8")
     assert PASSWORD not in text
-    masked = Finding("SEC014", "error", MASKED, "IRI embeds a password for user 'alice'.", "")
-    unmasked = Finding("SEC014", "error", CREDENTIALED, masked.message, "")
+    masked = Finding("SEC014", "error", MASKED, MESSAGE, "")
     assert fingerprint(masked) in json.loads(text)["fingerprints"]
-    assert fingerprint(unmasked) not in text
+    # A finding masks itself, so the version 1 hash over the credentialed focus is computed by hand.
+    payload = json.dumps(["SEC014", CREDENTIALED, MESSAGE], ensure_ascii=False, separators=(",", ":"))
+    assert hashlib.sha256(payload.encode()).hexdigest() not in text
+    assert Finding("SEC014", "error", CREDENTIALED, MESSAGE, "") == masked
     # Neither hash of the version 2 file is over the password: the identity is (rule, focus, subject).
     written = baseline.dumps(baseline.build([FileReport("a.ttl", "a.ttl", (masked,))]))
     assert json.loads(written)["identities"] == json.loads(text)["identities"]

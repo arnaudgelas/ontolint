@@ -11,11 +11,13 @@ that uses only the default graph) gets the empty index, so nothing about graphs 
 Graph names never depend on where or how the file was read:
 
 * the default graph is :data:`DEFAULT_GRAPH`;
-* an IRI is itself, except a ``file:`` one, such as a relative reference resolved against the file
-  (``<rel> { }``, ``<../g> { }``, ``<#g> { }``): that is the reference relative to the file (``rel``,
-  ``../g``, ``#g``), never a ``file:`` IRI holding the reader's local path;
+* an IRI is itself, its userinfo masked (``https://****@host/g``, see :mod:`ontolint.redaction`), except
+  a ``file:`` one, such as a relative reference resolved against the file (``<rel> { }``, ``<../g> { }``,
+  ``<#g> { }``): that is the reference relative to the file (``rel``, ``../g``, ``#g``), never a ``file:``
+  IRI holding the reader's local path;
 * a blank node has a fresh parser label on every parse, so it is named by its content instead:
-  ``_:`` and the start of the SHA-256 of its triples, written with every blank node as ``_:``.  Two
+  ``_:`` and the start of the SHA-256 of its triples, written with every blank node as ``_:`` and every
+  userinfo masked (a hash over a password would let anyone test guesses of it).  Two
   blank graphs with the same triples share the name.
 
 An empty named graph states no triple and so has no name anywhere.
@@ -24,10 +26,10 @@ A finding names the graphs of the terms it is about (its focus and :attr:`Findin
 do): for each term, the graphs that state a triple with it as subject (where its author describes it),
 else those that mention it at all (a superclass that is only used).  Rules still run once on the union,
 so a finding is reported once, however many graphs it names.  A focus that is no node of the file
-(``(ontology)``, a literal, a name no triple holds) names no graph.  An IRI with a password also counts
-under its masked spelling (:func:`redact_password`, SEC014's focus), so SEC014 names the graphs of the
-credentialed IRI it reports.  Like modules, graphs are presentation only: they never change a finding,
-its fingerprint or the exit code.
+(``(ontology)``, a literal, a name no triple holds) names no graph.  An IRI with a userinfo counts under
+its masked spelling, which is what every finding holds, so a finding names the graphs of the credentialed
+IRI it reports.  Like modules, graphs are presentation only: they never change a finding, its
+fingerprint or the exit code.
 """
 
 from __future__ import annotations
@@ -43,7 +45,8 @@ from rdflib.store import Store
 from rdflib.term import Identifier, Node
 
 from .models import Finding
-from .rules.support import REDACTED_PASSWORD, STABLE_ID_LENGTH, redact_password, stable_blank_id
+from .redaction import REDACTED_USERINFO, redact_userinfo
+from .rules.support import STABLE_ID_LENGTH, stable_blank_id
 
 DEFAULT_GRAPH = "(default graph)"
 """The name of a dataset's default graph (parenthesised like ``(ontology)``, so no IRI can collide with it)."""
@@ -121,12 +124,13 @@ def graph_name(identifier: Node, triples: Sequence[Triple], base: str) -> str:
     """
     if isinstance(identifier, BNode):
         lines = sorted(
-            " ".join("_:" if isinstance(t, BNode) else cast(Identifier, t).n3() for t in triple) for triple in triples
+            " ".join("_:" if isinstance(t, BNode) else redact_userinfo(cast(Identifier, t).n3()) for t in triple)
+            for triple in triples
         )
         digest = hashlib.sha256("\n".join(lines).encode("utf-8", "surrogatepass")).hexdigest()
         return "_:" + digest[:STABLE_ID_LENGTH]
     text = str(identifier)
-    return relative_reference(text, base) or text
+    return relative_reference(text, base) or redact_userinfo(text)
 
 
 def build_graph_index(store: Store, default: Node, base: str) -> GraphIndex:
@@ -178,18 +182,18 @@ def _term_graphs(
 ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
     """For each wanted term: the graphs describing it (as subject), and those mentioning it anywhere.
 
-    When a wanted term holds :data:`REDACTED_PASSWORD`, an IRI also counts under its masked spelling, so a
-    masked focus names the graphs of every IRI that masks to it, including one spelled with the mask.
+    When a wanted term holds :data:`~ontolint.redaction.REDACTED_USERINFO`, an IRI also counts under its masked
+    spelling, so a masked focus names the graphs of every IRI that masks to it, including one spelled with the mask.
     """
     described: dict[str, set[str]] = {}
     mentioned: dict[str, set[str]] = {}
-    masks = any(REDACTED_PASSWORD in term for term in wanted)
+    masks = any(REDACTED_USERINFO in term for term in wanted)
     for triple, names in index.triples.items():
         for position, node in enumerate(triple):
             term = text(node)
             if term is None:
                 continue
-            terms = {term, redact_password(term)} if masks and isinstance(node, URIRef) else {term}
+            terms = {term, redact_userinfo(term)} if masks and isinstance(node, URIRef) else {term}
             for each in terms & wanted:
                 mentioned.setdefault(each, set()).update(names)
                 if position == 0:

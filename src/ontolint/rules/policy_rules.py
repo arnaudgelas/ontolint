@@ -18,6 +18,7 @@ from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import clip
 
 from .owl import is_deprecated
 
@@ -145,7 +146,7 @@ def _required_annotations(ctx: RuleContext) -> None:
 
 def _unknown_keys(ctx: RuleContext) -> None:
     for key in ctx.policy.unknown_keys:
-        shown = key if len(key) <= MAX_KEY_CHARS else key[:MAX_KEY_CHARS] + "..."
+        shown = clip(key, MAX_KEY_CHARS, "...")
         ctx.add(
             "GOV020", POLICY_FOCUS, f"Unknown policy key {shown!r} is ignored.", confidence="certain", subject=(key,)
         )

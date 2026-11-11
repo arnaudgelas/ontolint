@@ -33,6 +33,7 @@ from rdflib.term import Node
 
 from ontolint.graph import strongly_connected_components
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
+from ontolint.redaction import clip
 
 from .support import directed_edges
 
@@ -180,7 +181,7 @@ def _label_overlaps(ctx: RuleContext) -> None:
                 ctx.add(
                     "SKOS002",
                     resource,
-                    f"Literal {str(value)[:60]!r} ({language}) appears in {' and '.join(names)}.",
+                    f"Literal {clip(str(value), 60)!r} ({language}) appears in {' and '.join(names)}.",
                     confidence="certain",
                     subject=(value,),
                 )
