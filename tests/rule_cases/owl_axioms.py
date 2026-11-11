@@ -65,6 +65,43 @@ CASES = {
                 "chain-defined functional",
                 "ex:p a owl:FunctionalProperty ; owl:propertyChainAxiom ( ex:q ex:r ex:s ) .",
             ),
+            # SS 11.1: non-simplicity flows from a composite property to every property it reaches through ->*.
+            ttl(
+                "functional super-property of a transitive property",
+                "ex:q a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . ex:p a owl:FunctionalProperty .",
+            ),
+            ttl(
+                "asymmetric property two sub-property steps above a transitive one",
+                "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:m . ex:m rdfs:subPropertyOf ex:p ."
+                " ex:p a owl:AsymmetricProperty .",
+            ),
+            ttl(
+                "inverse-functional inverse of a transitive property",
+                "ex:t a owl:TransitiveProperty ; owl:inverseOf ex:p . ex:p a owl:InverseFunctionalProperty .",
+            ),
+            ttl(
+                "functional property whose inverse is a sub-property's inverse",
+                "ex:t a owl:TransitiveProperty . ex:p owl:inverseOf ex:t . ex:q a owl:FunctionalProperty ."
+                " ex:p rdfs:subPropertyOf ex:q .",
+            ),
+            ttl(
+                "irreflexive equivalent of a chain-defined property",
+                "ex:c owl:propertyChainAxiom ( ex:a ex:b ) ; owl:equivalentProperty ex:p ."
+                " ex:p a owl:IrreflexiveProperty .",
+            ),
+            ttl(
+                "super-property of a transitive inverse expression (INV rule)",
+                "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf [ owl:inverseOf ex:p ] ."
+                " ex:p a owl:FunctionalProperty .",
+            ),
+            ttl(
+                "property whose inverse expression is transitive",
+                "[ owl:inverseOf ex:p ] a owl:TransitiveProperty . ex:p a owl:FunctionalProperty .",
+            ),
+            ttl(
+                "property equivalent to the top object property",
+                "ex:p owl:equivalentProperty owl:topObjectProperty ; a owl:FunctionalProperty .",
+            ),
         ],
         [
             ttl("transitive alone", "ex:p a owl:ObjectProperty, owl:TransitiveProperty ."),
@@ -81,10 +118,28 @@ CASES = {
                 "malformed chain list is skipped",
                 "ex:p a owl:FunctionalProperty ; owl:propertyChainAxiom ex:q .",
             ),
-            # Non-simplicity is not inherited from sub-properties: no closure over rdfs:subPropertyOf.
+            # Non-simplicity flows upwards only: a sub-property of a transitive property may be simple.
             ttl(
-                "functional super-property of a transitive property",
-                "ex:q a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . ex:p a owl:FunctionalProperty .",
+                "functional sub-property of a transitive property",
+                "ex:p a owl:FunctionalProperty ; rdfs:subPropertyOf ex:t . ex:t a owl:TransitiveProperty .",
+            ),
+            ttl(
+                "sub-property cycle without a composite member",
+                "ex:p rdfs:subPropertyOf ex:q . ex:q rdfs:subPropertyOf ex:p ; a owl:FunctionalProperty .",
+            ),
+            ttl(
+                "super-property of a one-operand chain",
+                "ex:c owl:propertyChainAxiom ( ex:a ) ; rdfs:subPropertyOf ex:p . ex:p a owl:FunctionalProperty .",
+            ),
+            ttl(
+                "functional datatype super-property is OWL021's",
+                "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty,"
+                " owl:FunctionalProperty .",
+            ),
+            ttl(
+                "characteristic on an anonymous inverse expression is not judged",
+                "ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . [ owl:inverseOf ex:p ] a"
+                " owl:FunctionalProperty .",
             ),
         ],
     ),

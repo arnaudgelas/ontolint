@@ -1,7 +1,8 @@
 """OWL axiom and property-characteristic rules: OWL016-OWL030.
 
 All rules are asserted-graph checks; nothing is entailed and no reasoner is involved.  Subproperty,
-subclass and equivalence relations are read as asserted, never closed transitively.  A property's kind
+subclass and equivalence relations are read as asserted, never closed transitively, except that OWL019
+walks the property hierarchy that the OWL 2 definition of a simple property is stated over.  A property's kind
 is read from its explicit ``rdf:type owl:ObjectProperty`` / ``owl:DatatypeProperty`` only (a
 characteristic such as ``owl:TransitiveProperty`` does not make it an object property).  No rule is
 restricted to owned terms: every subject of the graph is checked, imported or not.  Every finding is
@@ -18,13 +19,24 @@ restricted to owned terms: every subject of the graph is checked, imported or no
   finding per pair.  Reflexive with symmetric, and irreflexive with asymmetric, are compatible.
   *Error:* every individual must then relate to itself and must not, so the ontology is inconsistent.
 * **OWL019.** A node typed ``owl:FunctionalProperty``, ``owl:InverseFunctionalProperty``,
-  ``owl:IrreflexiveProperty`` or ``owl:AsymmetricProperty`` that is itself typed
-  ``owl:TransitiveProperty`` or is the subject of an ``owl:propertyChainAxiom`` whose well-formed list
-  has at least two operands; one finding per characteristic.  Non-simplicity is not inherited: a
-  property with a transitive or chain-defined sub-property, sub-property inverse or equivalent
-  (non-simple by OWL 2 Structural Specification section 11.1) is not reported, nor are non-simple
-  properties in cardinality, ``owl:hasSelf`` or property-disjointness axioms.  A one-operand chain is
-  OWL010's.  *Error:* violates the OWL 2 DL global restriction on simple properties.
+  ``owl:IrreflexiveProperty`` or ``owl:AsymmetricProperty`` that is non-simple; one finding per
+  characteristic.  Non-simple is OWL 2 Structural Specification (SS) section 11.1: a property is
+  *composite* when it or its inverse is typed ``owl:TransitiveProperty`` or is the subject of an
+  ``owl:propertyChainAxiom`` whose well-formed list has at least two operands, or when it is
+  ``owl:topObjectProperty`` or ``owl:bottomObjectProperty``; it is *non-simple* when a composite
+  property reaches it through the hierarchy ``→*``, built from ``rdfs:subPropertyOf`` (upwards only),
+  ``owl:equivalentProperty`` and ``owl:inverseOf`` (both ways), where a blank ``[ owl:inverseOf x ]``
+  stands for ``x`` (``owl:SymmetricProperty`` adds nothing, as a property and its inverse are
+  composite together).  A node itself typed transitive or chain-defined keeps the message "Property
+  is transitive (non-simple) ..." (or "defined by a property chain"); a property non-simple through
+  another names the first composite, in IRI order, that reaches it.  Excluded: a property typed
+  ``owl:DatatypeProperty`` and not ``owl:ObjectProperty`` reached only through the hierarchy (a kind
+  mismatch, OWL021's); a characteristic typed on an anonymous inverse expression (judged only when
+  the expression is itself transitive or chain-defined); a sub-property of a composite property,
+  which may be simple; non-simple properties in cardinality, ``owl:hasSelf`` or property-disjointness
+  axioms; and the other global restriction of SS 11.2, the regularity of the property hierarchy.  A
+  one-operand chain is OWL010's and makes nothing composite.  *Error:* violates the OWL 2 DL global
+  restriction on simple properties (SS 11.2).
 * **OWL020.** A strongly connected component of two or more IRIs in the asserted
   ``rdfs:subPropertyOf`` graph; one finding per component, on its lexically first member, naming all of
   them.  Self-loops, edges to or from blank nodes, and ``owl:equivalentProperty`` are ignored.
@@ -375,8 +387,9 @@ def _non_simple(ctx: RuleContext, chained: set[Node]) -> dict[URIRef, tuple[URIR
     ``→*``.  A property and its inverse are composite together, and every edge comes with its inverse edge, so
     one of them is reached exactly when the other is: the walk can drop the direction of inversion and run over
     IRIs, where the inverse axiom links its two IRIs both ways and the symmetric one adds nothing.  A blank
-    ``[ owl:inverseOf x ]`` stands for ``x``.  The walk is iterative and expands each IRI once, from the sorted
-    composites, so a cycle ends it and the witness is the first composite that reaches the property.
+    ``[ owl:inverseOf x ]`` stands for ``x``, so its own ``owl:inverseOf`` triple is a harmless loop on ``x``.
+    The walk is iterative and expands each IRI once, from the composites in IRI order, so a cycle ends it; the
+    witness is the first of them whose walk reaches the property without passing through another composite.
     """
     g = ctx.g
     edges: dict[URIRef, set[URIRef]] = {}
@@ -386,8 +399,6 @@ def _non_simple(ctx: RuleContext, chained: set[Node]) -> dict[URIRef, tuple[URIR
         (OWL.inverseOf, True),
     ):
         for s, o in g.subject_objects(predicate):
-            if predicate == OWL.inverseOf and not (isinstance(s, URIRef) and isinstance(o, URIRef)):
-                continue  # a blank subject is an inverse expression, not an InverseObjectProperties axiom
             sub, sup = _property_iri(g, s), _property_iri(g, o)
             if sub is None or sup is None:
                 continue
