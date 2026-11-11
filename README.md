@@ -157,8 +157,10 @@ them, directly or through a chain of sub-properties (cycles are fine), already c
 when `--module-annotation` cannot group a file (its prefix is not declared, or no term carries the
 predicate), `TOOL007` names the validator `--shapes-from-profile` uses (or passes over, when it is
 not SHACL), `TOOL008` warns that a file under
-`--pattern-library` does not parse and was skipped, and `TOOL009` names each shape library a
-shapes file imports.
+`--pattern-library` does not parse and was skipped, `TOOL009` names each shape library a
+shapes file imports, and `TOOL010` warns that a file under `--import-dir` was skipped because the
+safe loader refused it (too large, compressed, an external DTD; the line gives the `SEC` rule and
+its message), so no import resolves to it.
 
 ### Discovering rules
 
@@ -296,7 +298,9 @@ enclosing git repository of the catalog (or of the input without a catalog), so 
 at sibling directories (`../modules/x.ttl`), or the directory given with `--import-root DIR`. For
 imports of published builds without a catalog (an upper ontology by its PURL, say), put local copies
 in a folder, for example with `robot mirror`, and pass `--import-dir DIR` (repeatable): its RDF
-files are matched by the ontology or version IRI they declare. Ownership is decided by the root
+files are matched by the ontology or version IRI they declare. A file there that the safe loader
+refuses is skipped with a `TOOL010` warning (an import it would have resolved is then reported by
+`SEC007`), and one that does not parse, or a `catalog-v001.xml`, is skipped silently. Ownership is decided by the root
 file's own terms, so an import that declares more terms than the root never becomes the linted
 ontology. Each file passes the usual safe loader, and the closure is bounded by `max_import_depth`
 (16), `max_imported_files` (100) and `max_triples` as a whole (`SEC015`). Cycles end and a module

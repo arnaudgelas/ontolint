@@ -12,14 +12,16 @@ What every one of them does to the run (``cli._lint``):
   stdout, no ``--output`` file, no baseline) and exits ``2`` whatever ``--fail-on`` says.  Every ontology argument
   is still loaded first, so each refused or unparsable input gets its own line; with several inputs a message that
   does not already name the file ends in `` for <file>``.  The ``--shapes`` file is loaded (through the same
-  checks) only once every input loaded; a refused ``--catalog`` or ``--import-dir`` stops the run before any input.
+  checks) only once every input loaded; a refused ``--catalog`` or ``--import-dir`` folder (``SEC015``) stops the
+  run before any input.
 * ``--select``, ``--ignore``, profiles, ``ignored_rules`` and ``severity_overrides`` do not affect them: the loader
   never consults the selection.  Naming one in ``--select`` or ``--ignore`` (by id; the mixed ``SEC`` family
   applies to the graph SEC rules only) is therefore a configuration error, ``TOOL001`` and exit ``2`` before any
   input is read, and naming one in ``ignored_rules`` or ``severity_overrides`` is ``GOV020``, exit ``2``.  The
   limits are per document: each ontology argument, the shapes file, each file
   of an ``owl:imports`` closure and each file of an ``--import-dir`` (a refused ``--import-dir`` file is skipped
-  silently, like a file that does not parse, since the folder may hold non-RDF files).
+  with a ``TOOL010`` warning naming it and the refusal, and the run goes on; a ``catalog-v001.xml`` there, and a
+  file that does not parse, are skipped silently, since the folder may hold catalogs and non-RDF files).
 * Messages name the file by its report path (relative to the working directory, else absolute) and, for a limit,
   its value and policy key; they quote what was refused (a context IRI, a blocked address, an entity name) but never the
   content of a file outside the input: no external entity, context or import is ever read.

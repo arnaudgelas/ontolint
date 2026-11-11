@@ -184,6 +184,24 @@ def test_an_import_dir_matches_the_artifact_by_ontology_iri(project: Path, capsy
     assert len(document["findings"]) == 1
 
 
+def test_a_refused_import_dir_file_is_named_once_when_the_profile_reuses_the_folder(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    mirror = project / "mirror"
+    mirror.mkdir()
+    (project / "validator.ttl").unlink()
+    (mirror / "downloaded.ttl").write_text(SHAPES.replace("<https://example.test/profile> a", f"<{ARTIFACT}> a"))
+    (mirror / "zipped.ttl").write_bytes(b"\x1f\x8b\x08\x00rest")  # gzip magic: refused (SEC011)
+    onto, profile = str(project / "onto.ttl"), str(project / "profile.ttl")
+    _, document, err = _run(capsys, onto, "--shapes-from-profile", profile, "--import-dir", str(mirror))
+    assert document is not None and len(document["findings"]) == 1  # the folder still supplies the validator
+    assert [line for line in err.splitlines() if line.startswith("TOOL010")] == [
+        f"TOOL010: warning: --import-dir {mirror}: {(mirror / 'zipped.ttl').as_posix()} is skipped, so no "
+        f"owl:imports resolves to it: SEC011: {(mirror / 'zipped.ttl').as_posix()} is gzip-compressed; "
+        "compressed input is refused"
+    ]
+
+
 def test_a_validator_outside_the_import_root_is_refused(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     outside = project.parent / f"{project.name}-elsewhere.ttl"
     outside.write_text(SHAPES, encoding="utf-8")

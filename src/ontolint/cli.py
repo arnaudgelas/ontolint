@@ -468,7 +468,14 @@ def _import_options(args: argparse.Namespace, policy: Policy) -> ImportOptions |
 
 
 def _import_dirs(args: argparse.Namespace, policy: Policy) -> tuple[Catalog, ...]:
-    return tuple(index_directory(Path(directory), policy) for directory in args.import_dir)
+    """Index every ``--import-dir`` once, warning about each file the safe loader refused (TOOL010)."""
+    catalogs = []
+    for directory in args.import_dir:
+        catalog = index_directory(Path(directory), policy)
+        for line in catalog.refused:
+            print(f"TOOL010: warning: --import-dir {directory}: {line}", file=sys.stderr)
+        catalogs.append(catalog)
+    return tuple(catalogs)
 
 
 def _import_root(args: argparse.Namespace) -> Path | None:

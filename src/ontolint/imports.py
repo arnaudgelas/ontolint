@@ -48,6 +48,8 @@ class Catalog:
     root: Path
     entries: dict[str, Path]
     rewrites: tuple[tuple[str, Path], ...] = ()
+    refused: tuple[str, ...] = ()
+    """For ``--import-dir``: one line per file the safe loader refused, naming the file and the refusal."""
 
     def resolve(self, iri: str) -> Path | None:
         """The local file for ``iri``: an exact entry, else the longest ``rewriteURI`` prefix, else a file IRI."""
@@ -175,7 +177,9 @@ def index_directory(directory: Path, policy: Policy) -> Catalog:
 
     This is ``--import-dir``: a folder of downloaded imports (``robot mirror``, a release you saved) needs
     no catalog.  Each file is read once through the safe loader; at most ``max_imported_files`` files are
-    indexed (SEC015), and a file that does not parse is skipped, since it may not be RDF at all.
+    indexed (SEC015).  A file the safe loader refuses is skipped and recorded in ``refused`` (the CLI
+    prints it as ``TOOL010``), except a ``catalog-v001.xml``, which is a catalog, not an import; a file
+    that does not parse is skipped silently, since it may not be RDF at all.
     """
     root = directory.resolve()
     candidates = sorted(p for p in root.rglob("*") if p.suffix.lower() in RDF_SUFFIXES and p.is_file())
@@ -184,14 +188,22 @@ def index_directory(directory: Path, policy: Policy) -> Catalog:
             "SEC015", f"--import-dir {directory} holds more than {policy.max_imported_files} files (max_imported_files)"
         )
     entries: dict[str, Path] = {}
+    refused: list[str] = []
     for path in candidates:
         try:
-            graph = load_document(resolve_inputs([str(path)], Path.cwd())[0], policy, root).graph
+            item = resolve_inputs([str(path)], Path.cwd())[0]
+            graph = load_document(item, policy, root).graph
+        except InputRejected as exc:  # only load_document refuses, so ``item`` is bound
+            if path.name != CATALOG_NAME:
+                refused.append(
+                    f"{item.display} is skipped, so no owl:imports resolves to it: {exc.rule_id}: {exc.message}"
+                )
+            continue
         except (LoadError, OSError):
             continue
         for iri in sorted(_identities(graph)):
             entries.setdefault(iri, path)
-    return Catalog(root, entries)
+    return Catalog(root, entries, refused=tuple(refused))
 
 
 class _Resolver:

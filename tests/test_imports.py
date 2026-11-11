@@ -8,6 +8,7 @@ module nobody imports, and one external import no catalog maps.
 
 from __future__ import annotations
 
+import gzip
 import json
 import re
 import shutil
@@ -17,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from ontolint.cli import main
-from ontolint.imports import CatalogError, load_closure, read_catalog
+from ontolint.imports import CatalogError, index_directory, load_closure, read_catalog
 from ontolint.loader import InputRejected, LoadedGraph, load_document
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
@@ -433,3 +434,112 @@ def test_a_large_import_never_outweighs_the_root_file_own_terms(
     _code, report, err = _report(capsys, str(root), "--import-dir", str(mirror))
     lex001 = {f["focus"] for f in _findings(report, "LEX001")}
     assert lex001 == {f"https://p.test/mfto#C{i}" for i in range(3)}, err
+
+
+# --- --import-dir: a file the safe loader refuses is named (TOOL010) -----------------------------------------
+
+ONTOLOGY = "<{iri}> a <http://www.w3.org/2002/07/owl#Ontology> .\n"
+SKIPPED = "is skipped, so no owl:imports resolves to it"
+OASIS_CATALOG = (
+    '<?xml version="1.0"?>\n<!DOCTYPE catalog PUBLIC "-//OASIS//DTD XML Catalogs V1.1//EN"'
+    ' "http://www.oasis-open.org/committees/entity/release/1.1/catalog.dtd">\n'
+    '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog"/>\n'
+)
+
+
+def _refusing_mirror(folder: Path) -> int:
+    """``m.ttl`` declares ``https://e.test/m``; ``big.ttl`` declares ``https://e.test/big``; return big's size."""
+    folder.mkdir(parents=True)
+    (folder / "m.ttl").write_text(ONTOLOGY.format(iri="https://e.test/m"), encoding="utf-8")
+    big = ONTOLOGY.format(iri="https://e.test/big") + "# padding\n" * 40
+    (folder / "big.ttl").write_text(big, encoding="utf-8")
+    return len(big.encode())
+
+
+def test_a_refused_import_dir_file_is_named_once_above_the_import_it_leaves_unresolved(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    size = _refusing_mirror(tmp_path / "mirror")
+    config = tmp_path / "policy.json"
+    config.write_text(json.dumps({"policy_version": 1, "max_input_bytes": 300}), encoding="utf-8")
+    (tmp_path / "u.ttl").write_text(
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "<https://e.test/u> a owl:Ontology ; owl:imports <https://e.test/m>, <https://e.test/big> .\n",
+        encoding="utf-8",
+    )
+    argv = ("u.ttl", "--import-dir", "mirror", "--config", "policy.json")
+    code, report, err = _report(capsys, *argv)
+    assert err == (
+        f"TOOL010: warning: --import-dir mirror: mirror/big.ttl {SKIPPED}: "
+        f"SEC001: mirror/big.ttl is {size} bytes, more than the limit of 300 (max_input_bytes)\n"
+    )
+    sec007 = " ".join(f["message"] for f in _findings(report, "SEC007"))
+    assert "https://e.test/big" in sec007 and "https://e.test/m" not in sec007  # the line above explains it
+    (tmp_path / "mirror" / "big.ttl").write_text("# not an ontology any more\n", encoding="utf-8")
+    assert _report(capsys, *argv)[:2] == (code, report)  # the warning changes neither the exit code nor the report
+
+
+def test_each_kind_of_refusal_is_recorded_in_path_order_and_the_folder_still_indexes(tmp_path: Path) -> None:
+    mirror = tmp_path / "mirror"
+    mirror.mkdir()
+    (mirror / "zipped.ttl").write_bytes(gzip.compress(ONTOLOGY.format(iri="https://e.test/z").encode()))
+    (mirror / "dtd.rdf").write_text(
+        '<?xml version="1.0"?>\n<!DOCTYPE rdf:RDF [<!ENTITY e SYSTEM "file:///etc/passwd">]>\n'
+        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>\n',
+        encoding="utf-8",
+    )
+    (mirror / "good.ttl").write_text(ONTOLOGY.format(iri="https://e.test/good"), encoding="utf-8")
+    (mirror / "many.nt").write_text(
+        "".join(f"<https://e.test/s{i}> <https://e.test/p> <https://e.test/o> .\n" for i in range(5)), encoding="utf-8"
+    )
+    catalog = index_directory(mirror, Policy(max_triples=3))
+    assert set(catalog.entries) == {"https://e.test/good"}
+    display = {path.name: resolve_inputs([str(path)], Path.cwd())[0].display for path in mirror.iterdir()}
+    assert catalog.refused == (
+        f"{display['dtd.rdf']} {SKIPPED}: SEC010: {display['dtd.rdf']} declares an external DTD or entity "
+        "(SYSTEM/PUBLIC)",
+        f"{display['many.nt']} {SKIPPED}: SEC002: graph has more than 3 triples (max_triples)",
+        f"{display['zipped.ttl']} {SKIPPED}: SEC011: {display['zipped.ttl']} is gzip-compressed; "
+        "compressed input is refused",
+    )
+
+
+def test_a_file_that_does_not_parse_and_a_catalog_are_skipped_silently(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    mirror = tmp_path / "mirror"
+    mirror.mkdir()
+    (mirror / "m.ttl").write_text(ONTOLOGY.format(iri="https://e.test/m"), encoding="utf-8")
+    (mirror / "broken.ttl").write_text("this is not turtle", encoding="utf-8")
+    (mirror / "notes.json").write_text('{"not": "json-ld"', encoding="utf-8")
+    (mirror / "catalog-v001.xml").write_text(OASIS_CATALOG, encoding="utf-8")  # SEC010 as RDF, but a catalog
+    catalog = index_directory(mirror, Policy())
+    assert (set(catalog.entries), catalog.refused) == ({"https://e.test/m"}, ())
+    (mirror / "other-catalog.xml").write_text(OASIS_CATALOG, encoding="utf-8")  # another name is not excused
+    assert [line.split(": ")[1] for line in index_directory(mirror, Policy()).refused] == ["SEC010"]
+    ontology = tmp_path / "o.ttl"
+    ontology.write_text(ONTOLOGY.format(iri="https://e.test/o"), encoding="utf-8")
+    (mirror / "other-catalog.xml").unlink()
+    code, _report_, err = _report(capsys, str(ontology), "--import-dir", str(mirror))
+    assert (code, err) == (0, "")
+
+
+def test_a_clean_import_dir_prints_nothing(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    _bfo_like(tmp_path / "mirror")
+    ontology = tmp_path / "o.ttl"
+    ontology.write_text(ONTOLOGY.format(iri="https://e.test/o"), encoding="utf-8")
+    code, _report_, err = _report(capsys, str(ontology), "--import-dir", str(tmp_path / "mirror"))
+    assert (code, err) == (0, "")
+
+
+def test_a_folder_over_max_imported_files_is_sec015_and_names_no_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _refusing_mirror(tmp_path / "mirror")
+    config = tmp_path / "policy.json"
+    config.write_text(json.dumps({"max_input_bytes": 300, "max_imported_files": 1}), encoding="utf-8")
+    (tmp_path / "o.ttl").write_text(ONTOLOGY.format(iri="https://e.test/o"), encoding="utf-8")
+    code, _report_, err = _report(capsys, "o.ttl", "--import-dir", "mirror", "--config", "policy.json")
+    assert (code, err) == (TOOL_FAILURE, "SEC015: --import-dir mirror holds more than 1 files (max_imported_files)\n")
