@@ -71,6 +71,15 @@ CASES = {
                 "anonymous restriction of a class",
                 "ex:C rdfs:subClassOf [ a owl:Restriction ; owl:allValuesFrom ex:A ] .",
             ),
+            ttl(
+                "both onProperty and onProperties",
+                "[] a owl:Restriction ; owl:onProperty ex:p ; owl:onProperties ( ex:d ) ;"
+                " owl:someValuesFrom xsd:string .",
+            ),
+            ttl(
+                "two onProperties lists",
+                "[] a owl:Restriction ; owl:onProperties ( ex:d1 ex:d2 ), ( ex:d3 ex:d4 ) ; owl:allValuesFrom ex:R .",
+            ),
         ],
         [
             ttl("one onProperty", f"{R} owl:someValuesFrom ex:A ."),
@@ -91,10 +100,20 @@ CASES = {
             ttl("bare restriction", f"{R} a owl:Restriction ."),
             ttl("only onClass", f"{R} owl:onClass ex:A ."),
             ttl("only onDataRange", f"{R} owl:onDataRange xsd:string ."),
+            ttl("someValuesFrom and allValuesFrom", f"{R} owl:someValuesFrom ex:A ; owl:allValuesFrom ex:B ."),
+            ttl("two someValuesFrom values", f"{R} owl:someValuesFrom ex:A, ex:B ."),
+            ttl("min and max cardinality on one node", f"{R} owl:minCardinality 1 ; owl:maxCardinality 2 ."),
+            ttl("hasSelf false", f"{R} owl:hasSelf false ."),
+            ttl("hasSelf a plain string", f'{R} owl:hasSelf "true" .'),
+            ttl("hasSelf an integer", f"{R} owl:hasSelf 1 ."),
+            ttl("hasSelf false written 0", f'{R} owl:hasSelf "0"^^xsd:boolean .'),
+            ttl("hasSelf an IRI", f"{R} owl:hasSelf ex:yes ."),
         ],
         [
             ttl("someValuesFrom", f"{R} owl:someValuesFrom ex:A ."),
             ttl("hasSelf", f'{R} owl:hasSelf "true"^^xsd:boolean .'),
+            ttl("hasSelf written 1 is true", f'{R} owl:hasSelf "1"^^xsd:boolean .'),
+            ttl("the same constraint twice is one triple", f"{R} owl:someValuesFrom ex:A, ex:A ."),
             ttl("cardinality", f'{R} owl:minCardinality "1"^^xsd:nonNegativeInteger .'),
             ttl("allValuesFrom", f"{R} owl:allValuesFrom ex:A ."),
             ttl("hasValue", f"{R} owl:hasValue ex:i ."),
@@ -117,6 +136,11 @@ CASES = {
             ttl("negative qualified cardinality", f'{R} owl:onClass ex:A ; owl:maxQualifiedCardinality "-2" .'),
             ttl("exact qualified without class or data range", f"{R} owl:qualifiedCardinality 1 ."),
             ttl("language-tagged word", f'{R} owl:cardinality "one"@en .'),
+            ttl(
+                "qualified with both onClass and onDataRange",
+                f"{R} owl:minQualifiedCardinality 1 ; owl:onClass ex:A ; owl:onDataRange xsd:string .",
+            ),
+            ttl("qualified with two onClass values", f"{R} owl:maxQualifiedCardinality 1 ; owl:onClass ex:A, ex:B ."),
         ],
         [
             ttl("valid cardinality", f'{R} owl:minCardinality "2"^^xsd:nonNegativeInteger .'),
@@ -134,6 +158,10 @@ CASES = {
             ttl(
                 "onClass on an unqualified cardinality is not judged",
                 f"{R} owl:minCardinality 1 ; owl:onClass ex:A .",
+            ),
+            ttl(
+                "two fillers next to an unqualified cardinality are not judged",
+                f"{R} owl:minCardinality 1 ; owl:onClass ex:A ; owl:onDataRange xsd:string .",
             ),
         ],
     ),

@@ -202,3 +202,63 @@ def test_owl033_reports_a_disjoint_union_that_repeats_a_member() -> None:
     assert found("OWL033", "ex:C owl:disjointUnionOf ( ex:A ex:B ex:A ) .") == {
         ("ex:C", "owl:disjointUnionOf list repeats a member.", (f"{OWL}disjointUnionOf",))
     }
+
+
+# --- OWL034-OWL036: a restriction maps to an OWL 2 expression only with one property, constraint, filler --
+
+ON_P = "[] a owl:Restriction ; owl:onProperty ex:p ;"
+
+
+def _messages(rule: str, turtle: str) -> set[tuple[str, tuple[str, ...]]]:
+    return {(message, subject) for _focus, message, subject in found(rule, turtle)}
+
+
+def test_owl034_reports_both_property_forms_and_several_property_lists() -> None:
+    turtle = (
+        "[] a owl:Restriction ; owl:onProperty ex:p ; owl:onProperties ( ex:d ), ( ex:e ) ; owl:allValuesFrom ex:R ."
+    )
+    assert _messages("OWL034", turtle) == {
+        ("Restriction has both owl:onProperty and owl:onProperties.", (f"{OWL}onProperty", f"{OWL}onProperties")),
+        ("Restriction has more than one owl:onProperties.", (f"{OWL}onProperties", "several")),
+    }
+
+
+def test_owl035_reports_several_constraints_with_their_predicates() -> None:
+    assert _messages("OWL035", f"{ON_P} owl:someValuesFrom ex:A ; owl:allValuesFrom ex:B .") == {
+        ("Restriction has more than one constraint (owl:allValuesFrom, owl:someValuesFrom).", ("several",))
+    }
+    assert _messages("OWL035", f"{ON_P} owl:someValuesFrom ex:A, ex:B .") == {
+        ("Restriction has more than one constraint (owl:someValuesFrom, owl:someValuesFrom).", ("several",))
+    }
+
+
+def test_owl035_reports_an_owl_has_self_value_that_is_not_true() -> None:
+    boolean = "http://www.w3.org/2001/XMLSchema#boolean"
+    assert _messages("OWL035", f"{ON_P} owl:hasSelf false .") == {
+        (f'owl:hasSelf value "false"^^<{boolean}> is not true.', (f"{OWL}hasSelf", f'"false"^^<{boolean}>'))
+    }
+    assert _messages("OWL035", f"{ON_P} owl:hasSelf ex:yes .") == {
+        ("owl:hasSelf value ex:yes is not true.", (f"{OWL}hasSelf", "ex:yes"))
+    }
+
+
+def test_owl035_names_the_owner_of_a_restriction_with_several_constraints() -> None:
+    turtle = "ex:C rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ;"
+    turtle += " owl:minCardinality 1 ; owl:maxCardinality 2 ] ."
+    assert _messages("OWL035", turtle) == {
+        (
+            "ex:C (restriction on ex:p): Restriction has more than one constraint"
+            " (owl:maxCardinality, owl:minCardinality).",
+            ("several",),
+        )
+    }
+
+
+def test_owl036_reports_a_qualified_cardinality_with_more_than_one_filler() -> None:
+    turtle = f"{ON_P} owl:minQualifiedCardinality 1 ; owl:onClass ex:A ; owl:onDataRange xsd:string ."
+    assert _messages("OWL036", turtle) == {
+        ("Qualified cardinality has more than one filler (owl:onClass, owl:onDataRange).", ("several fillers",))
+    }
+    assert _messages("OWL036", f"{ON_P} owl:qualifiedCardinality 1 ; owl:onClass ex:A, ex:B .") == {
+        ("Qualified cardinality has more than one filler (owl:onClass, owl:onClass).", ("several fillers",))
+    }

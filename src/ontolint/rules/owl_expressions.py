@@ -33,24 +33,35 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   disjoint union it is a defect either way, as read as a set it may leave one operand (SS 9.1.4 needs
   two) and read as a list it makes the repeated class disjoint with itself, so empty.
 * **OWL034.** A restriction with neither ``owl:onProperty`` nor ``owl:onProperties``; with more than
-  one ``owl:onProperty`` value; or (one finding per value) whose ``owl:onProperty`` is a literal.
-  A blank-node property (an ``owl:inverseOf`` expression) is accepted, ``owl:onProperties`` alone
-  satisfies the rule and its list is not checked, and an IRI property is not checked against the
-  property declarations.  The focus is the restriction; when it belongs to a named term (see
+  one ``owl:onProperty`` value; with both ``owl:onProperty`` and ``owl:onProperties``; with more than
+  one ``owl:onProperties`` value; or (one finding per value) whose ``owl:onProperty`` is a literal.
+  A blank-node property (an ``owl:inverseOf`` expression) is accepted, one ``owl:onProperties``
+  alone satisfies the rule and its list is not checked, and an IRI property is not checked against
+  the property declarations.  The focus is the restriction; when it belongs to a named term (see
   :func:`~.support.owning_term`) the message starts with that term and the restricted IRIs, as for
   every restriction rule up to OWL040.  Error: the RDF mapping (section 3.2) parses a restriction
   only with exactly one property, so it is not an OWL 2 class expression.
 * **OWL035.** A restriction with none of ``owl:someValuesFrom``, ``owl:allValuesFrom``,
   ``owl:hasValue``, ``owl:hasSelf`` or the six (qualified) cardinality predicates, whatever their
-  values (``owl:onClass`` or ``owl:onDataRange`` alone does not count); invalid values are OWL036's.
-  Error: the restriction does not map to any OWL 2 class expression.
+  values (``owl:onClass`` or ``owl:onDataRange`` alone does not count); with two or more of them,
+  counted as distinct triples (two values of one predicate count twice, and the message lists the
+  predicates); and, one finding per value, an ``owl:hasSelf`` that is not an ``xsd:boolean`` literal
+  whose value is true (``"1"^^xsd:boolean`` is true and is accepted; ``false``, a string, an integer
+  and an IRI are not).  Invalid cardinality values are OWL036's; a restriction with a minimum above
+  its maximum also gets OWL037's finding, a distinct defect.  Error: every restriction pattern of MAP
+  Table 15 consumes exactly one constraint triple, and ``ObjectHasSelf`` is mapped from
+  ``owl:hasSelf "true"^^xsd:boolean``, so the restriction does not map to any OWL 2 class
+  expression.
 * **OWL036.** For each of ``owl:minCardinality``, ``owl:maxCardinality``, ``owl:cardinality`` and their
   ``Qualified`` forms, one finding per value that is not a literal whose stripped lexical form is in
   the xsd:nonNegativeInteger lexical space (digits with an optional ``+``, or ``-`` before zeros);
   the literal's datatype is not checked.  Separately, one finding when a qualified cardinality is
-  present without ``owl:onClass`` and without ``owl:onDataRange``.  ``owl:onClass`` on an unqualified
-  cardinality is not judged.  Error: a negative, fractional or non-literal cardinality, or a
-  qualified cardinality with no filler, has no OWL 2 mapping.
+  present without ``owl:onClass`` and without ``owl:onDataRange``, and one when it has more than one
+  filler value over the two (both predicates, or two values of one; the message lists them).
+  ``owl:onClass`` or ``owl:onDataRange`` next to an unqualified cardinality only is not judged.
+  Error: a negative, fractional or non-literal cardinality, or a qualified cardinality without
+  exactly one filler, has no OWL 2 mapping (MAP Table 15 consumes one ``owl:onClass`` or one
+  ``owl:onDataRange`` triple).
 * **OWL037.** Within one restriction and separately for the unqualified and the qualified predicates,
   the largest of the minimum and exact values exceeds the smallest of the maximum and exact values
   (so two different exact values also conflict); only valid values (as in OWL036) are compared, and
@@ -427,6 +438,24 @@ def _restriction(ctx: RuleContext, restriction: Node) -> None:
             confidence="certain",
             subject=(OWL.onProperty, "several"),
         )
+    if on_property and on_properties:
+        _report(
+            ctx,
+            "OWL034",
+            restriction,
+            "Restriction has both owl:onProperty and owl:onProperties.",
+            confidence="certain",
+            subject=(OWL.onProperty, OWL.onProperties),
+        )
+    if len(on_properties) > 1:
+        _report(
+            ctx,
+            "OWL034",
+            restriction,
+            "Restriction has more than one owl:onProperties.",
+            confidence="certain",
+            subject=(OWL.onProperties, "several"),
+        )
     for value in on_property:
         if isinstance(value, Literal):
             _report(
@@ -437,7 +466,18 @@ def _restriction(ctx: RuleContext, restriction: Node) -> None:
                 confidence="certain",
                 subject=(OWL.onProperty, value),
             )
-    if not any((restriction, constraint, None) in g for constraint in _CONSTRAINTS):
+    _constraints(ctx, restriction)
+    _cardinalities(ctx, restriction)
+    _existential_nothing(ctx, restriction)
+    _vacuous(ctx, restriction)
+    _property_kind(ctx, restriction, on_property)
+
+
+def _constraints(ctx: RuleContext, restriction: Node) -> None:
+    """OWL035: every restriction pattern of MAP Table 15 consumes exactly one constraint triple."""
+    g = ctx.g
+    constraints = sorted((_short(p), o) for p in _CONSTRAINTS for o in g.objects(restriction, p))
+    if not constraints:
         _report(
             ctx,
             "OWL035",
@@ -446,10 +486,25 @@ def _restriction(ctx: RuleContext, restriction: Node) -> None:
             confidence="certain",
             subject=(),
         )
-    _cardinalities(ctx, restriction)
-    _existential_nothing(ctx, restriction)
-    _vacuous(ctx, restriction)
-    _property_kind(ctx, restriction, on_property)
+    elif len(constraints) > 1:
+        _report(
+            ctx,
+            "OWL035",
+            restriction,
+            f"Restriction has more than one constraint ({', '.join(name for name, _value in constraints)}).",
+            confidence="certain",
+            subject=("several",),
+        )
+    for value in g.objects(restriction, OWL.hasSelf):
+        if not (isinstance(value, Literal) and value.datatype == XSD.boolean and value.value is True):
+            _report(
+                ctx,
+                "OWL035",
+                restriction,
+                f"owl:hasSelf value {term_text(value)} is not true.",
+                confidence="certain",
+                subject=(OWL.hasSelf, value),
+            )
 
 
 def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
@@ -466,7 +521,8 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
                     subject=(predicate, value),
                 )
     qualified = any((restriction, p, None) in g for p in _QUALIFIED)
-    if qualified and (restriction, OWL.onClass, None) not in g and (restriction, OWL.onDataRange, None) not in g:
+    fillers = sorted(_short(p) for p in (OWL.onClass, OWL.onDataRange) for _o in g.objects(restriction, p))
+    if qualified and not fillers:
         _report(
             ctx,
             "OWL036",
@@ -474,6 +530,15 @@ def _cardinalities(ctx: RuleContext, restriction: Node) -> None:
             "Qualified cardinality has neither owl:onClass nor owl:onDataRange.",
             confidence="certain",
             subject=(OWL.onClass, OWL.onDataRange),
+        )
+    elif qualified and len(fillers) > 1:
+        _report(
+            ctx,
+            "OWL036",
+            restriction,
+            f"Qualified cardinality has more than one filler ({', '.join(fillers)}).",
+            confidence="certain",
+            subject=("several fillers",),
         )
     for kind, group in (("unqualified", _UNQUALIFIED), ("qualified", _QUALIFIED)):
         minimum, maximum, exact = (_counts(ctx, restriction, p) for p in group)
