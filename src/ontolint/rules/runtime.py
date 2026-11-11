@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from dataclasses import replace
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import OWL, RDFS
+from rdflib.namespace import OWL, RDFS, SKOS
 from rdflib.term import Node
 
 from ontolint.context import GraphContext
@@ -15,7 +15,7 @@ from ontolint.models import CONFIDENCES, Finding
 from ontolint.policy import Policy
 
 from .specs import FIXES, SEVERITY
-from .support import DESCRIPTIONS, LABELS, stable_blank_id
+from .support import DESCRIPTIONS, LABEL_STOP, LABELS, stable_blank_id
 
 EMPTY_FOCUS = "<>"
 
@@ -88,12 +88,40 @@ class RuleContext:
         self._blank_ids: dict[BNode, str] = {}
         self._blank_nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._blank_pattern: re.Pattern[str] | None = None
-        # The configured definition predicates, then every IRI below one of them (sorted).
+        # The configured definition and label predicates, then every IRI below one of them (sorted).
+        # ``labels`` says whether a term has a label and which values are judged as labels;
+        # ``main_label_predicates`` says which of them name the term (see there).
         self.closure = PropertyClosure(graph)
         self.descriptions: tuple[URIRef, ...] = self.closure.below(
             _with_extras(DESCRIPTIONS, policy.extra_definition_predicates)
         )
-        self.labels: tuple[URIRef, ...] = _with_extras(LABELS, policy.extra_label_predicates)
+        self.configured_labels: tuple[URIRef, ...] = _with_extras(LABELS, policy.extra_label_predicates)
+        self.labels: tuple[URIRef, ...] = self.closure.below(self.configured_labels, LABEL_STOP)
+        # skos:prefLabel and the predicates below it: preferred labels, by entailment.
+        self.preferred_labels: tuple[URIRef, ...] = self.closure.below((SKOS.prefLabel,), LABEL_STOP)
+        self._main_labels = tuple(dict.fromkeys((*self.configured_labels, *self.preferred_labels)))
+        self._main_label_predicates: dict[Node, tuple[URIRef, ...]] = {}  # per term, several rules ask
+
+    def main_label_predicates(self, term: Node) -> tuple[URIRef, ...]:
+        """The predicates of ``term``'s main labels, which the rules comparing labels read.
+
+        They are the configured label predicates and the preferred labels (``preferred_labels``)
+        when ``term`` has a ``Literal`` under one of them, else every label predicate (``labels``).
+        LEX003, LEX004, LEX006, LEX015, LEX016 and CLS010 read them; LEX008, which asks only whether a
+        label exists in a language, reads ``labels`` as LEX001 does.
+
+        A value of a sub-property of skos:prefLabel is a skos:prefLabel by entailment, so it is always
+        a main label, also beside a configured label in another language.  A sub-property of
+        rdfs:label (or of an extra) beside a main label is a specialised label: BFO 2020 gives each
+        class an untagged OWL and CLIF specification label beside its tagged rdfs:label, and these are
+        neither second labels, nor plain labels mixed with tagged ones, nor collisions.  Only a term
+        with no main label at all is named by its specialised labels.
+        """
+        found = self._main_label_predicates.get(term)
+        if found is None:
+            named = any(isinstance(o, Literal) for p in self._main_labels for o in self.g.objects(term, p))
+            found = self._main_label_predicates[term] = self._main_labels if named else self.labels
+        return found
 
     @property
     def ontologies(self) -> frozenset[URIRef]:

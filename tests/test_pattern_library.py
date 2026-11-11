@@ -97,6 +97,22 @@ def test_the_index_and_its_members_are_compared(library: Path, capsys: pytest.Ca
     assert "TOOL008" not in err  # README.md is not an RDF file; the index is not a member
 
 
+def test_an_entry_is_named_by_a_label_subproperty(library: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # The entry names are its local name and its labels, sub-properties of rdfs:label included (issue #15).
+    index = library / "index.ttl"
+    index.write_text(
+        INDEX + ":title rdfs:subPropertyOf rdfs:label .\n:Venue a owl:NamedIndividual , :Pattern ; :title 'Place' .\n",
+        encoding="utf-8",
+    )
+    _, document, _ = _run(capsys, str(index), "--pattern-library", str(library))
+    findings = _findings(document)
+    assert ("LIB001", INDEX_NS + "Venue", "index.ttl") in findings  # same name as place.ttl, not linked
+    assert ("LIB002", DOMAIN + "place", "place.ttl") not in findings
+    index.write_text(INDEX + ":Venue a owl:NamedIndividual , :Pattern ; :title 'Place' .\n", encoding="utf-8")
+    _, document, _ = _run(capsys, str(index), "--pattern-library", str(library))
+    assert ("LIB002", DOMAIN + "place", "place.ttl") in _findings(document)
+
+
 def test_member_findings_point_at_the_member_file_in_sarif(library: Path, capsys: pytest.CaptureFixture[str]) -> None:
     main([str(library / "index.ttl"), "--pattern-library", str(library), "--format", "sarif", "--select", "LIB002"])
     sarif = json.loads(capsys.readouterr().out)

@@ -20,10 +20,29 @@ def _labelled(count: int, odd: str, *, prefix: str = "c", kind: str = "owl:Class
 
 CASES = {
     "LEX001": rule_cases(
-        [ttl("no label", "ex:A a owl:Class .")],
+        [
+            ttl("no label", "ex:A a owl:Class ."),
+            ttl(
+                "a sub-property of rdfs:comment", 'ex:c rdfs:subPropertyOf rdfs:comment . ex:A a owl:Class ; ex:c "A" .'
+            ),
+            ttl(
+                "a sub-property of skos:altLabel",
+                "skos:altLabel rdfs:subPropertyOf rdfs:label . ex:alt rdfs:subPropertyOf skos:altLabel . "
+                'ex:A a owl:Class ; ex:alt "A" .',
+            ),
+        ],
         [
             ttl("rdfs:label", 'ex:A a owl:Class ; rdfs:label "A" .'),
             ttl("deprecated terms are exempt", "ex:A a owl:Class ; owl:deprecated true ."),
+            ttl(
+                "label through a chain of sub-properties",
+                "ex:l2 rdfs:subPropertyOf ex:l1 . ex:l1 rdfs:subPropertyOf skos:prefLabel . "
+                'ex:A a owl:Class ; ex:l2 "A" .',
+            ),
+            ttl(
+                "label through an equivalent",
+                'ex:name owl:equivalentProperty rdfs:label . ex:A a owl:Class ; ex:name "A" .',
+            ),
         ],
     ),
     "LEX002": rule_cases(
@@ -54,6 +73,10 @@ CASES = {
         [
             ttl("one label per language", 'ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .'),
             ttl("prefLabel and rdfs:label", 'ex:A a owl:Class ; skos:prefLabel "A"@en ; rdfs:label "1 A"@en .'),
+            ttl(
+                "a specialised label beside rdfs:label",
+                'ex:short rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; rdfs:label "Aye"@en ; ex:short "A"@en .',
+            ),
         ],
     ),
     "LEX004": rule_cases(

@@ -33,9 +33,17 @@ CASES = {
             ttl("html tag", 'ex:A a owl:Class ; rdfs:label "<b>Thing</b>" .'),
             ttl("entity", 'ex:A a owl:Class ; skos:prefLabel "R&amp;D" .'),
             ttl("alt label numeric entity", 'ex:A a owl:Class ; skos:altLabel "a&#233;b" .'),
+            ttl(
+                "sub-property of rdfs:label",
+                'ex:l rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; ex:l "<i>A</i>"@en .',
+            ),
         ],
         [
             ttl("plain", 'ex:A a owl:Class ; rdfs:label "R&D" .'),
+            ttl(
+                "sub-property of rdfs:comment",
+                'ex:c rdfs:subPropertyOf rdfs:comment . ex:A a owl:Class ; ex:c "<i>A</i>" .',
+            ),
             ttl("comparison signs", 'ex:A a owl:Class ; rdfs:label "a < b > c" .'),
             ttl("disambiguator in angle brackets", 'ex:A a owl:Class ; rdfs:label "Gnathostomata <vertebrates>" .'),
             ttl("comment is ignored", 'ex:A a owl:Class ; rdfs:comment "<b>x</b>" .'),

@@ -97,10 +97,14 @@ def _tokens(text: str) -> tuple[str, ...]:
     return tuple(t.lower() for t in TOKEN.findall(text))
 
 
-def _label_keys(ctx: RuleContext, cls: URIRef) -> set[LabelKey]:
-    """Return ``(language, normalized text)`` for every non-blank plain label of ``cls``."""
+def _label_keys(ctx: RuleContext, cls: URIRef, predicates: tuple[URIRef, ...]) -> set[LabelKey]:
+    """Return ``(language, normalized text)`` for every non-blank plain label of ``cls`` under ``predicates``.
+
+    CLS010 compares the main labels (``ctx.main_label_predicates``), as LEX004 does; CLS015 asks
+    whether the class has any label (``ctx.labels``, the closure), as LEX001 does.
+    """
     keys: set[LabelKey] = set()
-    for predicate in ctx.labels:
+    for predicate in predicates:
         for o in ctx.g.objects(cls, predicate):
             if isinstance(o, Literal) and str(o).strip():
                 keys.add(((o.language or "").lower(), " ".join(str(o).casefold().split())))
@@ -117,13 +121,13 @@ def run(ctx: RuleContext) -> None:
 
     def keys(cls: URIRef) -> set[LabelKey]:
         if cls not in labels:
-            labels[cls] = _label_keys(ctx, cls)
+            labels[cls] = _label_keys(ctx, cls, ctx.main_label_predicates(cls))
         return labels[cls]
 
     for parent in sorted(children, key=str):
         kids = sorted(children[parent], key=str)
         _sibling_labels(ctx, parent, kids, keys)
-        _unlabelled_parent(ctx, parent, kids, keys)
+        _unlabelled_parent(ctx, parent, kids)
         _sibling_naming(ctx, parent, kids)
     plain_classes = ctx.classes - _metaclasses(ctx)  # computed once: per class it made CLS017 quadratic
     for cls in sorted(ctx.classes, key=str):
@@ -149,8 +153,8 @@ def _sibling_labels(ctx: RuleContext, parent: URIRef, kids: list[URIRef], keys: 
                 )
 
 
-def _unlabelled_parent(ctx: RuleContext, parent: URIRef, kids: list[URIRef], keys: LabelLookup) -> None:
-    if len(kids) >= MINIMUM_UNLABELLED_PARENT_SUBCLASSES and not keys(parent):
+def _unlabelled_parent(ctx: RuleContext, parent: URIRef, kids: list[URIRef]) -> None:
+    if len(kids) >= MINIMUM_UNLABELLED_PARENT_SUBCLASSES and not _label_keys(ctx, parent, ctx.labels):
         ctx.add("CLS015", parent, f"Class has {len(kids)} direct subclasses but no label.", subject=())
 
 
