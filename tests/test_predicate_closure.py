@@ -1,11 +1,12 @@
-"""One property closure for labels and definitions (issue #15).
+"""One property closure for labels, definitions and LEX002's notes (issue #15).
 
 ``closure(seeds, stop)`` is the seeds and every IRI ``p`` with a path ``p → … → seed`` whose steps are
 ``rdfs:subPropertyOf`` (sub to super) or ``owl:equivalentProperty`` (either way) and which passes through
 no node of ``stop``.  ``ctx.labels`` closes the configured label predicates (``ctx.configured_labels``;
 stop: ``skos:altLabel`` and ``skos:hiddenLabel``), ``ctx.descriptions`` the definition predicates (no
-stop).  The sub-property-only closure of the definitions (0.11.0) is covered in
-``test_definition_predicates.py``.
+stop), and LEX002 its SKOS documentation notes (stop: SKOS's change, editorial and history notes and
+``skos:example``).  The
+sub-property-only closure of the definitions (0.11.0) is covered in ``test_definition_predicates.py``.
 """
 
 from __future__ import annotations
@@ -438,3 +439,65 @@ def test_equivalent_definition_predicates_reach_every_consumer() -> None:
     assert fired(described, "ONT006") == []
     classes = "ex:A a owl:Class ; ex:def 'An A.' . ex:B a owl:Class ; ex:def 'A B.' ."
     assert fired(chain + classes, "METRIC002", metric_min_sample=1, metric_max_undefined_ratio=0.0) == []
+
+
+# --- (c) sub-properties of LEX002's SKOS documentation notes --------------------------------------------
+
+
+def _documented(links: str) -> bool:
+    term = "ex:A a owl:Class ; rdfs:label 'A' ; ex:n 'About A.' ."
+    return fired(ONTO + links + " " + term, "LEX002") == []
+
+
+@pytest.mark.parametrize(
+    "links",
+    [
+        "ex:n rdfs:subPropertyOf skos:note .",
+        "ex:n rdfs:subPropertyOf skos:scopeNote .",
+        "ex:n rdfs:subPropertyOf ex:m . ex:m rdfs:subPropertyOf skos:note .",
+        "ex:n owl:equivalentProperty skos:scopeNote .",
+        "ex:n owl:equivalentProperty ex:m . ex:m rdfs:subPropertyOf skos:note . ex:m rdfs:subPropertyOf ex:n .",
+        SKOS_SCHEMA + "ex:n rdfs:subPropertyOf skos:scopeNote .",
+    ],
+)
+def test_a_subproperty_of_a_documentation_note_satisfies_lex002(links: str) -> None:
+    assert _documented(links)
+
+
+@pytest.mark.parametrize(
+    "links",
+    [
+        "",
+        "skos:note rdfs:subPropertyOf ex:n .",  # a super-property of a note is not one
+        "ex:n owl:equivalentProperty ex:m .",
+        # SKOS's notes about the record rather than the meaning stay out, even below skos:note.
+        SKOS_SCHEMA + "ex:n rdfs:subPropertyOf skos:editorialNote .",
+        SKOS_SCHEMA + "ex:n rdfs:subPropertyOf skos:historyNote .",
+        SKOS_SCHEMA + "ex:n owl:equivalentProperty skos:changeNote .",
+        SKOS_SCHEMA + "ex:n rdfs:subPropertyOf skos:example .",
+    ],
+)
+def test_other_notes_do_not_satisfy_lex002(links: str) -> None:
+    assert not _documented(links)
+
+
+@pytest.mark.parametrize("name", ["editorialNote", "historyNote", "changeNote", "example"])
+def test_skos_record_notes_do_not_satisfy_lex002_under_the_skos_schema(name: str) -> None:
+    assert fired(ONTO + SKOS_SCHEMA + f"ex:A a owl:Class ; rdfs:label 'A' ; skos:{name} 'x' .", "LEX002") == [A]
+
+
+def test_lex002_does_not_judge_what_a_note_says() -> None:
+    # A known false negative: a vocabulary that declares a non-descriptive property below skos:note
+    # documents its terms with it, as a bare ``skos:note "3"`` does (0.12.0).
+    order = "ex:A a owl:Class ; rdfs:label 'A' ; ex:order '3' ."
+    assert fired(ONTO + "ex:order rdfs:subPropertyOf skos:note . " + order, "LEX002") == []
+    assert fired(ONTO + order.replace("ex:order", "skos:note"), "LEX002") == []
+
+
+def test_a_note_subproperty_is_not_a_definition_for_the_other_rules() -> None:
+    chain = ONTO + "ex:n rdfs:subPropertyOf skos:note . "
+    assert URIRef(NS + "n") not in _descriptions(chain)
+    assert fired(chain + "ex:A a owl:Class ; rdfs:label 'A thing' ; ex:n 'A thing' .", "LEX017") == []
+    assert fired(chain + "ex:A a owl:Class ; rdfs:label 'A' ; ex:n '' .", "LEX019") == []
+    classes = "ex:A a owl:Class ; ex:n 'An A.' . ex:B a owl:Class ; ex:n 'A B.' ."
+    assert fired(chain + classes, "METRIC002", metric_min_sample=1, metric_max_undefined_ratio=0.0) != []
