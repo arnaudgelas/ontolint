@@ -404,9 +404,10 @@ def test_xpath_regex_problem_names_the_first_construct_xpath_rejects() -> None:
     assert {text: xpath_regex_problem(text) for text in INVALID_XPATH} == INVALID_XPATH
 
 
-def test_xpath_regex_problem_leaves_character_class_internals_to_python() -> None:
-    # XSD wants ] and [ escaped inside a class, and XSD 1.0 and 1.1 disagree on "-": not judged.
-    assert [xpath_regex_problem(text) for text in (r"[]a]", r"[^]a]", r"[[a]", r"[a-]", r"[a-z-]")] == [None] * 5
+def test_xpath_regex_problem_leaves_hyphen_placement_to_python() -> None:
+    # XSD 1.0 and 1.1 disagree on "-": not judged.  (Since the SHQ specification, a [ or a leading ] inside a
+    # class, which both reject, is: see tests/test_shq_specification.py.)
+    assert [xpath_regex_problem(text) for text in (r"[a-]", r"[a-z-]", r"[-a]")] == [None] * 3
 
 
 def _shq011(body: str) -> set[str]:

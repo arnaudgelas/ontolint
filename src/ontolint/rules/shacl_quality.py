@@ -23,14 +23,15 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items, shape_term, value_text
+from .support import list_items, shape_term, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
 
 type Check = Callable[["RuleContext", Graph, Node], None]
 
-LANGUAGE_TAG = re.compile(r"[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*")
+# RFC 4647 section 2.1 basic language range, which SHACL 4.4.4 names: a BCP 47 tag shape, or the wildcard.
+LANGUAGE_TAG = re.compile(r"[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*|\*")
 XPATH_FLAGS = frozenset("smixq")
 SEVERITIES = (SH.Info, SH.Warning, SH.Violation)
 TARGET_NAMES = {SH.targetClass: "sh:targetClass", SH.targetSubjectsOf: "sh:targetSubjectsOf"}
@@ -147,7 +148,10 @@ def _language_in(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     for head in sg.objects(shape, SH.languageIn):
         items = None if isinstance(head, Literal) else list_items(sg, head)
         for item in items or ():
-            if not isinstance(item, Literal) or LANGUAGE_TAG.fullmatch(str(item)) is None:
+            if isinstance(item, Literal) and (item.language is not None or item.datatype not in (None, XSD.string)):
+                message = f"sh:languageIn member {term_text(item)} is not an xsd:string literal."
+                ctx.add("SHQ010", shape, message, subject=(item,))
+            elif not isinstance(item, Literal) or LANGUAGE_TAG.fullmatch(str(item)) is None:
                 ctx.add(
                     "SHQ010",
                     shape,
@@ -290,7 +294,8 @@ def run(ctx: RuleContext) -> None:
     if sg is None:
         return
     shapes = _shapes(sg)
-    property_shapes = set(sg.subjects(RDF.type, SH.PropertyShape))
+    # SHACL 2.3: a subject of sh:path is a property shape, and a declared one or a value of sh:property must be.
+    property_shapes = set(sg.subjects(RDF.type, SH.PropertyShape)) | set(sg.subjects(SH.path, None))
     property_shapes |= {o for o in sg.objects(None, SH.property) if isinstance(o, URIRef | BNode)}
     for shape in shapes:
         for check in SHAPE_CHECKS:
