@@ -195,9 +195,12 @@ def test_selecting_a_proposed_rule_explains_why_it_is_unknown(run: Run) -> None:
     assert "proposed" not in unknown_selector_help(UnknownSelectorError(["TYPO"]), frozenset({proposed}))
 
 
-def test_selecting_only_cli_rules_runs_nothing_and_reports_no_executions(run: Run) -> None:
-    code, document = _json(run, KITCHEN, "--select", "INPUT001")
-    assert code == 0 and document["findings"] == [] and document["files"][0]["executions"] == []
+def test_selecting_only_pipeline_rules_is_a_configuration_error(run: Run) -> None:
+    # It used to exit 0 with no execution at all: a green run that checked nothing.
+    code, out, err = run(KITCHEN, "--select", "INPUT001")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith("TOOL001: configuration failed: PipelineSelectorError: --select INPUT001: ")
+    assert "always apply" in err
 
 
 # --- profiles ----------------------------------------------------------------------------------

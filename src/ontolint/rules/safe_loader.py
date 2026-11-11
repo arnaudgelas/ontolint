@@ -14,7 +14,9 @@ What every one of them does to the run (``cli._lint``):
   does not already name the file ends in `` for <file>``.  The ``--shapes`` file is loaded (through the same
   checks) only once every input loaded; a refused ``--catalog`` or ``--import-dir`` stops the run before any input.
 * ``--select``, ``--ignore``, profiles, ``ignored_rules`` and ``severity_overrides`` do not affect them: the loader
-  never consults the selection.  The limits are per document: each ontology argument, the shapes file, each file
+  never consults the selection.  Naming one in ``--select`` or ``--ignore`` (by id; the mixed ``SEC`` family
+  applies to the graph SEC rules only) is therefore a configuration error, ``TOOL001`` and exit ``2`` before any
+  input is read.  The limits are per document: each ontology argument, the shapes file, each file
   of an ``owl:imports`` closure and each file of an ``--import-dir`` (a refused ``--import-dir`` file is skipped
   silently, like a file that does not parse, since the folder may hold non-RDF files).
 * Messages name the file by its report path (relative to the working directory, else absolute) and, for a limit,

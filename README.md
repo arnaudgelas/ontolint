@@ -179,6 +179,13 @@ identifier exits `2`.
 `--select` and `--ignore` take rule identifiers (`ONT001`) or family prefixes (`ONT`),
 case-insensitively, comma-separated and/or repeated. Unknown selectors, empty entries
 (`ONT,`) and proposed-only rules are errors (exit `2`), so a typo never becomes an empty run.
+So is a selector that names only *pipeline rules* (`TOOL001: configuration failed:
+PipelineSelectorError: ...`, before any input is read): the safe-loader refusals `SEC001`,
+`SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011`, `SEC013` and `SEC015`, the
+diagnostics `INPUT001` and `TOOL001`, and the `INPUT` and `TOOL` families. They are not findings
+and always apply, so no selection can change them (`--list-rules --format json` shows them with
+backend `cli`). The `SEC` family is accepted: it selects or ignores the graph rules `SEC004`,
+`SEC005`, `SEC007`, `SEC008`, `SEC012` and `SEC014`.
 
 `--profile` picks a bundle of defaults:
 

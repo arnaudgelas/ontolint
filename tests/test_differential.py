@@ -63,6 +63,7 @@ from rdflib.namespace import OWL, RDF, RDFS
 from ontolint import Linter, main
 from ontolint._version import package_version
 from ontolint.catalogue import planned_rows
+from ontolint.models import RuleBackend
 from ontolint.ontolint import SEVERITY
 from ontolint.rules.specs import RULE_SPECS
 
@@ -283,7 +284,12 @@ def _legacy_cli_view(
     if robot is not None:
         monkeypatch.setattr("ontolint.engine.shutil.which", lambda _: "docker" if robot >= 0 else None)
         monkeypatch.setattr("ontolint.ontolint.subprocess.run", _fake_robot(max(robot, 0)))
-    newer = sorted(spec.rule_id for spec in RULE_SPECS if spec.rule_id not in LEGACY_RULE_IDS)
+    # Pipeline rules always apply and cannot be ignored; only the newer engine rules are.
+    newer = sorted(
+        spec.rule_id
+        for spec in RULE_SPECS
+        if spec.rule_id not in LEGACY_RULE_IDS and spec.backend is not RuleBackend.CLI
+    )
     code = main([*argv, "--ignore", ",".join(newer)] if newer else argv)
     return {"exit": code, "legacy_json_view": _legacy_json_view(capsys.readouterr().out, tmp)}
 

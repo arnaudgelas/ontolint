@@ -16,7 +16,7 @@ Status values: **exists** (implemented and tested), **partial** (some of it exis
 | OPS006 | Record tool and catalogue versions in reports | partial | SARIF records the tool version; the catalogue version is not recorded. |
 | OPS007 | Deterministic output across runs | exists | Covered by the differential golden tests. |
 | OPS008 | Validate the configuration file and report unknown keys | exists | Known keys are validated; unknown keys are reported by `GOV020` and an unsupported `policy_version` is rejected (exit 2). |
-| OPS009 | Report ignores or severity overrides that name unknown rules | exists | Unknown `--select`/`--ignore` selectors are errors (`TOOL001`); unknown IDs in the policy file's `ignored_rules` or `severity_overrides` are rejected with `GOV020` (exit 2). |
+| OPS009 | Report ignores or severity overrides that name unknown rules | exists | Unknown `--select`/`--ignore` selectors are errors (`TOOL001`), and so are selectors that name only pipeline rules (the safe-loader refusals, `INPUT001`, `TOOL001`), which no selection changes; unknown IDs in the policy file's `ignored_rules` or `severity_overrides` are rejected with `GOV020` (exit 2). |
 | OPS010 | Report a run that exceeds its time or resource budget | partial | `--max-parse-seconds` and the size limits reject an input (`SEC003`, `SEC001`, `SEC002`); `--max-validation-seconds` stops SHACL validation (a `failed` `SHACL001`, exit `2`); the rule families have no time budget. |
 | OPS011 | Per-rule timing in the report | TODO | |
 | OPS012 | Additional report formats (JUnit, Markdown, HTML) | TODO | `text`, `json` and `sarif` exist. |

@@ -20,7 +20,10 @@ import pytest
 
 from ontolint import engine, main
 from ontolint.loader import NetworkAttempts, _network_problem, network_disabled
+from ontolint.models import RuleBackend, RuleSpec
+from ontolint.rules.registry import UnknownSelectorError, default_registry
 from ontolint.rules.specs import RULE_SPECS
+from ontolint.selection import PipelineSelectorError, check_selectors, pipeline_selectors
 
 TOOL_FAILURE = 2
 GATED = 1
@@ -464,3 +467,117 @@ def test_a_robot_timeout_is_a_failed_rule_and_exit_2(tmp_path: Path, run: Any, m
     code, out, err = run("a.ttl", "--select", "SEM001", "--owl-profile", "DL", "--robot-timeout", "5")
     assert code == TOOL_FAILURE and out
     assert err.startswith("TOOL001: rule SEM001 failed for a.ttl: TimeoutExpired: ")
+
+
+# --- selection cannot change the pipeline rules ---------------------------------------------------------------
+
+PIPELINE_IDS = tuple(sorted(spec.rule_id for spec in RULE_SPECS if spec.backend is RuleBackend.CLI))
+GRAPH_SEC_IDS = ["SEC004", "SEC005", "SEC007", "SEC008", "SEC012", "SEC014"]
+PIPELINE_ERROR = "TOOL001: configuration failed: PipelineSelectorError: "
+PIPELINE_REASON = (
+    ": these name only pipeline rules (safe-loader refusals and front-end diagnostics, never findings), "
+    "which always apply whatever the selection; remove them\n"
+)
+
+
+def _valid(tmp_path: Path) -> str:
+    (tmp_path / "a.ttl").write_text(TTL, encoding="utf-8")
+    return "a.ttl"
+
+
+def test_the_pipeline_rules_are_the_safe_loader_refusals_and_the_front_end_diagnostics() -> None:
+    sec = ["SEC001", "SEC002", "SEC003", "SEC006", "SEC009", "SEC010", "SEC011", "SEC013", "SEC015"]
+    expected = ("INPUT001", *sec, "TOOL001")
+    assert expected == PIPELINE_IDS
+
+
+@pytest.mark.parametrize(
+    ("argv", "named"),
+    [
+        (["--select", "SEC001"], "--select SEC001"),
+        (["--select", "TOOL001"], "--select TOOL001"),
+        (["--select", "TOOL"], "--select TOOL"),  # a family made only of pipeline rules
+        (["--select", "input"], "--select INPUT"),  # case-insensitive, like every selector
+        (["--select", "INPUT001,LEX002"], "--select INPUT001"),  # one pipeline token spoils the list
+        (["--ignore", "SEC001"], "--ignore SEC001"),
+        (["--ignore", "SEC013,SEC015"], "--ignore SEC013, SEC015"),
+        (["--select", "SEC001", "--ignore", "INPUT"], "--select SEC001; --ignore INPUT"),
+        (["--select", "LEX001", "--ignore", "LEX002,tool001"], "--ignore TOOL001"),
+    ],
+)
+def test_a_selector_naming_only_pipeline_rules_is_a_configuration_error(
+    tmp_path: Path, run: Any, argv: list[str], named: str
+) -> None:
+    code, out, err = run(_valid(tmp_path), *argv, "--format", "json")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err == PIPELINE_ERROR + named + PIPELINE_REASON
+
+
+@pytest.mark.parametrize("rule_id", PIPELINE_IDS)
+@pytest.mark.parametrize("option", ["--select", "--ignore"])
+def test_every_pipeline_rule_is_rejected_by_either_option(tmp_path: Path, run: Any, option: str, rule_id: str) -> None:
+    code, out, err = run(_valid(tmp_path), option, rule_id)
+    assert (code, out, err) == (TOOL_FAILURE, "", f"{PIPELINE_ERROR}{option} {rule_id}{PIPELINE_REASON}")
+
+
+def test_a_typo_next_to_a_pipeline_rule_is_reported_as_the_typo(tmp_path: Path, run: Any) -> None:
+    code, out, err = run(_valid(tmp_path), "--select", "SEC001,NOPE999")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err == "TOOL001: configuration failed: UnknownSelectorError: unknown rule selector(s): NOPE999\n"
+
+
+def test_the_selectors_are_checked_before_any_input_is_read(tmp_path: Path, run: Any) -> None:
+    # Without the check first, the refusal of the input (SEC001) would hide the misconfiguration.
+    code, out, err = run(_valid(tmp_path), "--max-input-bytes", "10", "--select", "SEC001")
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err == f"{PIPELINE_ERROR}--select SEC001{PIPELINE_REASON}"
+    code, _, err = run("missing.ttl", "--ignore", "NOPE999")
+    assert code == TOOL_FAILURE and err.startswith("TOOL001: configuration failed: UnknownSelectorError: ")
+
+
+def test_the_mixed_sec_family_selects_and_ignores_its_graph_rules(tmp_path: Path, run: Any) -> None:
+    source = _valid(tmp_path)
+    code, out, err = run(source, "--select", "SEC", "--format", "json", "--fail-on", "never")
+    assert (code, err) == (0, "")
+    assert [x["rule"] for x in json.loads(out)["files"][0]["executions"]] == GRAPH_SEC_IDS
+    code, out, err = run(source, "--ignore", "SEC", "--format", "json", "--fail-on", "never")
+    assert (code, err) == (0, "")
+    executions = {x["rule"]: x for x in json.loads(out)["files"][0]["executions"]}
+    skipped = {rule for rule, x in executions.items() if x.get("detail") == "ignored by --ignore or profile"}
+    assert skipped == set(GRAPH_SEC_IDS)
+    assert not set(PIPELINE_IDS) & executions.keys()
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [["--ignore", "SEC007"], ["--profile", "strict"], ["--select", "SHACL001"], ["--select", "SEM001"]],
+)
+def test_selectors_that_can_change_the_run_are_accepted(tmp_path: Path, run: Any, argv: list[str]) -> None:
+    code, out, err = run(_valid(tmp_path), *argv, "--format", "json", "--fail-on", "never")
+    assert code == 0 and "TOOL001" not in err
+    assert json.loads(out)["files"][0]["executions"]
+
+
+def test_pipeline_selectors_names_the_pipeline_only_tokens_in_order() -> None:
+    registry = default_registry()
+    tokens = ["TOOL", "SEC001", "SEC", "LEX002", "INPUT001", "NOPE"]
+    assert pipeline_selectors(registry, tokens) == ("TOOL", "SEC001", "INPUT001")
+    assert pipeline_selectors(registry, ["sec015", "input"]) == ("SEC015", "INPUT")
+    assert pipeline_selectors(registry, []) == ()
+
+
+def test_check_selectors_accepts_the_default_and_reports_typos_first() -> None:
+    registry = default_registry()
+    check_selectors(registry, (), ())  # nothing named: the default run
+    check_selectors(registry, ("SEC", "LEX"), ("SEC007",))
+    with pytest.raises(UnknownSelectorError):
+        check_selectors(registry, ("SEC001",), ("NOPE999",))
+    with pytest.raises(PipelineSelectorError) as raised:
+        check_selectors(registry, ("TOOL001", "LEX"), ("SEC002",))
+    assert raised.value.named == (("--select", ("TOOL001",)), ("--ignore", ("SEC002",)))
+
+
+@pytest.mark.parametrize("spec", RULE_SPECS, ids=lambda spec: spec.rule_id)
+def test_an_ignore_is_rejected_exactly_for_the_pipeline_rules(spec: RuleSpec) -> None:
+    rejected = pipeline_selectors(default_registry(), [spec.rule_id]) == (spec.rule_id,)
+    assert rejected is (spec.backend is RuleBackend.CLI)

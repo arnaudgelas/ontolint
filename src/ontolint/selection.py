@@ -12,13 +12,17 @@ Precedence, from the broadest to the strongest word:
    Selectors are validated strictly (typos are errors, never an empty run); the policy file's
    ``ignored_rules`` keep their historical exact-identifier, unvalidated behaviour.
 
-Rules emitted only by the command-line front end (``INPUT001``/``TOOL001``) are not engine rules,
-so they are never part of a selection or of the reported executions.
+Pipeline rules (``backend`` ``cli``: the safe-loader refusals ``SEC001``, ``SEC002``, ``SEC003``,
+``SEC006``, ``SEC009``, ``SEC010``, ``SEC011``, ``SEC013`` and ``SEC015``, and the front-end diagnostics
+``INPUT001`` and ``TOOL001``) are not engine rules: they always apply, so they are never part of a selection
+or of the reported executions.  Naming one in ``--select`` or ``--ignore``, as an id or as a family made
+only of them (``INPUT``, ``TOOL``), could change nothing, so :func:`check_selectors` rejects it.  A mixed
+family (``SEC``) is accepted and applies to its graph rules.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from .models import RuleBackend, RuleSpec
@@ -83,6 +87,58 @@ def resolve_selection(
         run=tuple(s for s in chosen if s.rule_id not in ignored_ids),
         ignored=tuple(s for s in chosen if s.rule_id in ignored_ids),
     )
+
+
+PIPELINE_HELP = "safe-loader refusals and front-end diagnostics, never findings"
+"""What a pipeline rule is, in the words of the configuration errors that name one."""
+
+
+def is_pipeline(spec: RuleSpec) -> bool:
+    """Whether ``spec`` is a pipeline rule: emitted by the loader or the CLI front end, whatever the selection."""
+    return spec.backend is RuleBackend.CLI
+
+
+def pipeline_selectors(registry: RuleRegistry, tokens: Iterable[str]) -> tuple[str, ...]:
+    """The tokens (upper-cased, de-duplicated, in order) that name only pipeline rules.
+
+    That is a pipeline rule id, or a family all of whose rules are pipeline rules.  A mixed family
+    (``SEC``) is not returned, and neither is an unknown token: :meth:`RuleRegistry.select` reports those.
+    """
+    found: dict[str, None] = {}
+    for token in tokens:
+        upper = token.strip().upper()
+        named = [s for s in registry.all() if upper in {s.rule_id, s.family.upper()}]
+        if named and all(is_pipeline(s) for s in named):
+            found[upper] = None
+    return tuple(found)
+
+
+class PipelineSelectorError(ValueError):
+    """``--select`` or ``--ignore`` names only pipeline rules, which no selection changes."""
+
+    def __init__(self, named: Sequence[tuple[str, tuple[str, ...]]]) -> None:
+        self.named = tuple(named)
+        parts = "; ".join(f"{option} {', '.join(tokens)}" for option, tokens in self.named)
+        super().__init__(
+            f"{parts}: these name only pipeline rules ({PIPELINE_HELP}), "
+            "which always apply whatever the selection; remove them"
+        )
+
+
+def check_selectors(registry: RuleRegistry, select: Sequence[str], ignore: Sequence[str]) -> None:
+    """Reject selectors that cannot change the run, before any input is read.
+
+    Raises :class:`UnknownSelectorError` for a token that names nothing (checked first, so a typo next to a
+    pipeline rule is reported as the typo), then :class:`PipelineSelectorError` for every token that names
+    only pipeline rules.  An empty list means the default and is never checked.
+    """
+    lists = (("--select", select), ("--ignore", ignore))
+    for _, tokens in lists:
+        if tokens:
+            registry.select(tokens)
+    named = [(option, found) for option, tokens in lists if (found := pipeline_selectors(registry, tokens))]
+    if named:
+        raise PipelineSelectorError(named)
 
 
 def unknown_selector_help(error: UnknownSelectorError, proposed: frozenset[str]) -> str:

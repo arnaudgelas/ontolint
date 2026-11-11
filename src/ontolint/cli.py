@@ -50,7 +50,15 @@ from .rule_info import UnknownRuleError, explain_rule, render_explanation, rende
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
 from .rules.support import local_name
-from .selection import Selection, SelectorSyntaxError, resolve_selection, split_selectors, unknown_selector_help
+from .selection import (
+    PipelineSelectorError,
+    Selection,
+    SelectorSyntaxError,
+    check_selectors,
+    resolve_selection,
+    split_selectors,
+    unknown_selector_help,
+)
 
 FORMATS = ["text", "json", "sarif"]
 
@@ -752,6 +760,7 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
     _check_policy_rules(config, registry)
+    check_selectors(registry, split_selectors(args.select), split_selectors(args.ignore))
     limits = _policy(args, config, config.ignored_rules)
     try:  # read catalogs and import dirs before parsing: a broken one is a configuration error
         imports = _import_options(args, limits)
@@ -800,7 +809,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     stage = ["configuration"]
     try:
         outcome = _lint(args, stage)
-    except (UnknownSelectorError, SelectorSyntaxError) as exc:
+    except (UnknownSelectorError, SelectorSyntaxError, PipelineSelectorError) as exc:
         proposed = frozenset(row.rule_id for row in planned_rows())
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
         print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)

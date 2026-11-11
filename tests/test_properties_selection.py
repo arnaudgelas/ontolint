@@ -10,7 +10,15 @@ from hypothesis_strategies import FAMILIES, RULE_IDS, budget, selector_lists, se
 from ontolint.models import RuleBackend
 from ontolint.profiles import OPT_IN_FAMILIES, PROFILES, Profile, is_opt_in
 from ontolint.rules.registry import UnknownSelectorError, default_registry
-from ontolint.selection import SelectorSyntaxError, default_rules, resolve_selection, split_selectors
+from ontolint.selection import (
+    PipelineSelectorError,
+    SelectorSyntaxError,
+    check_selectors,
+    default_rules,
+    pipeline_selectors,
+    resolve_selection,
+    split_selectors,
+)
 
 pytestmark = pytest.mark.slow
 
@@ -212,3 +220,37 @@ def test_builtin_profiles_resolve_to_known_rules(profile: str) -> None:
     for family in OPT_IN_FAMILIES:
         family_ids = {s.rule_id for s in SPECS if s.family == family}
         assert (run & family_ids == family_ids) if family in enabled else not run & family_ids
+
+
+# --- pipeline rules ------------------------------------------------------------------------------------------
+
+PIPELINE_IDS = frozenset(s.rule_id for s in SPECS if s.backend is RuleBackend.CLI)
+
+
+def names_only_pipeline_rules(token: str) -> bool:
+    return ids(REGISTRY.select([token])) <= PIPELINE_IDS
+
+
+@budget(1)
+@given(selector_lists, selector_lists)
+def test_the_guard_rejects_exactly_the_pipeline_only_tokens(select: list[str], ignore: list[str]) -> None:
+    """INVARIANT: pipeline_selectors returns the tokens all of whose rules are pipeline rules, in order; the guard
+    raises iff one exists, and every token it accepts names at least one engine rule."""
+    for tokens in (select, ignore):
+        expected = tuple(dict.fromkeys(t.upper() for t in tokens if names_only_pipeline_rules(t)))
+        assert pipeline_selectors(REGISTRY, tokens) == expected
+    offending = [t for t in (*select, *ignore) if names_only_pipeline_rules(t)]
+    if offending:
+        with pytest.raises(PipelineSelectorError):
+            check_selectors(REGISTRY, select, ignore)
+        return
+    check_selectors(REGISTRY, select, ignore)
+    assert all(tokens_ids([t]) & ENGINE_IDS for t in (*select, *ignore))  # every accepted token can act
+
+
+@pytest.mark.parametrize("profile", sorted(PROFILES))
+def test_no_builtin_profile_names_a_pipeline_rule(profile: str) -> None:
+    """A profile is data, not user input, so this test is its guard: the CLI checks only --select and --ignore."""
+    shipped = PROFILES[profile]
+    for tokens in (shipped.select, shipped.ignore, shipped.opt_in, [r for r, _ in shipped.severity_overrides]):
+        assert pipeline_selectors(REGISTRY, tokens) == ()

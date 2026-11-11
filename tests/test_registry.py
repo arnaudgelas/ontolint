@@ -315,6 +315,15 @@ def test_selection_limits_execution_and_findings_and_policy_ignores_are_skipped(
     assert _statuses(result)["LEX002"] is EXECUTED
 
 
+def test_the_library_api_still_records_a_pipeline_rule_as_skipped() -> None:
+    """The CLI rejects ``--select SEC001``; ``engine.execute`` keeps recording it, with the reason."""
+    graph = Graph().parse(FIXTURES / "kitchen_sink.ttl")
+    result = engine.execute(engine.build_context(graph, None, Policy(base=BASE)), ["SEC001"])
+    assert [(x.rule_id, x.status) for x in result.executions] == [("SEC001", SKIPPED)]
+    assert result.executions[0].detail.startswith("emitted by the command-line front end")
+    assert result.findings == ()
+
+
 def test_execution_report_helpers() -> None:
     executions = [
         RuleExecution("A001", EXECUTED),

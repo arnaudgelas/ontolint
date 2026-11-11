@@ -5,7 +5,9 @@ front end.  They carry ``module=""`` because no ``run(ctx)`` function emits them
 
 SHACL001 and SEM001 are findings: they appear in the report, gate the exit code through ``--fail-on`` (``1``),
 and obey ``--select``/``--ignore``, baselines and ``severity_overrides``.  INPUT001 and TOOL001 are diagnostics
-printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them.
+printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them, so naming them
+in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) is a configuration error
+(``TOOL001``, exit ``2``).
 
 * **SHACL001.** Only with ``--shapes FILE`` (the shapes file passes the safe loader) and pySHACL installed
   (``unsupported`` otherwise, which exits ``2``).  The data graph (merged, with ``--follow-imports``, with the
