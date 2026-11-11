@@ -53,6 +53,13 @@ report and in ``--list-rules --format json``, so those 36 pinned outputs changed
 every CLI output of the snapshot was rendered unhashed on the commit before the retitles and after them:
 the two were equal once each old title was replaced by its new one, the linter snapshots were equal, and
 no finding, message, fingerprint, exit code or text report moved.  ``legacy_rules.json`` did not move.
+
+Deliberate golden update (METRIC-SPEC, METRIC005): METRIC005 now counts exactly the classes CLS001
+reports, so ``kitchen_sink.ttl`` no longer has a METRIC005 finding ("10 of 33 classes are orphans ...
+(0.30 > 0.30)"; CLS001 reports 6 of them, and 6/33 is below the limit).  A diff of the two snapshots
+shows five deleted METRIC005 finding blocks, one in each linter snapshot of the kitchen sink, and
+nothing else except the hashes of the 16 CLI outputs (and their legacy views) that render those
+reports.  ``legacy_rules.json`` did not move, and holds no METRIC rule.
 """
 
 from __future__ import annotations

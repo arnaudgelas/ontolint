@@ -148,7 +148,7 @@ def run(ctx: RuleContext) -> None:
     for child, parent in edges:
         supers[child].add(parent)
         children[parent].add(child)
-    _per_class(ctx, supers, children)
+    _per_class(ctx, supers, children, orphan_classes(ctx, edges))
     components = strongly_connected_components(classes, edges)
     _cycles(ctx, components, edges)
     _redundant_edges(ctx, edges, components)
@@ -199,13 +199,30 @@ def _has_individuals(ctx: RuleContext) -> bool:
     return populated > 0 and populated * POPULATED_CLASS_SHARE_DENOMINATOR >= len(ctx.classes)
 
 
-def _per_class(ctx: RuleContext, supers: Adjacency, children: Adjacency) -> None:
-    policy = ctx.policy
+def orphan_classes(ctx: RuleContext, edges: Iterable[tuple[URIRef, URIRef]] | None = None) -> frozenset[URIRef]:
+    """Return the classes CLS001 reports (METRIC005 counts the same set).
+
+    An orphan has no asserted local super- or subclass, is not used anywhere (domain, range, filler,
+    instance, link, deprecation) and is not a ``rdfs:subClassOf owl:Thing``.  ``edges`` are the subclass
+    edges between ``ctx.classes``; they are derived when not given.
+    """
+    if edges is None:
+        edges = directed_edges(ctx.g, RDFS.subClassOf, ctx.classes)
+    linked: set[URIRef] = set()
+    for child, parent in edges:
+        linked.update((child, parent))
     used = _used_classes(ctx)
+    return frozenset(
+        c for c in ctx.classes if c not in linked and c not in used and (c, RDFS.subClassOf, OWL.Thing) not in ctx.g
+    )
+
+
+def _per_class(ctx: RuleContext, supers: Adjacency, children: Adjacency, orphans: frozenset[URIRef]) -> None:
+    policy = ctx.policy
     individuals = _has_individuals(ctx)
     # Orphan = no asserted local class-to-class hierarchy and no use anywhere, not no semantic links.
     for c in ctx.classes:
-        if not supers[c] and not children[c] and c not in used and (c, RDFS.subClassOf, OWL.Thing) not in ctx.g:
+        if c in orphans:
             ctx.add("CLS001", c, "No asserted local super-/subclass links.")
         has_instance = bool(ctx.context.subjects_by_type.get(c))
         if individuals and not has_instance and not children[c]:

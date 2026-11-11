@@ -22,6 +22,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .classes import orphan_classes
 from .lexical import is_unlabelled
 from .owl import lacks_domain, lacks_range, signature_exempt
 
@@ -239,19 +240,7 @@ def _hierarchy_rules(ctx: RuleContext, classes: frozenset[URIRef]) -> None:
                 f"(threshold {policy.metric_max_mean_fanout:.2f}).",
                 subject=(),
             )
-    used: set[object] = set(ctx.context.subjects_by_type)  # typed subjects include every instance
-    for prop in ctx.context.properties_by_domain:
-        used.add(prop)
-    for ranges in ctx.context.ranges_by_property.values():
-        used |= ranges
-    # A named superclass outside the ontology connects a class too: an ontology aligned to BFO or another
-    # upper ontology hangs most of its classes directly under external parents.
-    external_parent = {
-        c for c in classes if any(isinstance(o, URIRef) and o != OWL.Thing for o in ctx.g.objects(c, RDFS.subClassOf))
-    }
-    orphans = sum(
-        1 for c in classes if c not in h.parents and c not in h.children and c not in used and c not in external_parent
-    )
+    orphans = len(orphan_classes(ctx) & classes)  # exactly the owned classes CLS001 reports
     ratio = _ratio(orphans, len(classes))
     if ratio > policy.metric_max_orphan_ratio:
         ctx.add(

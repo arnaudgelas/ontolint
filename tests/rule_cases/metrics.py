@@ -111,6 +111,29 @@ CASES = {
                 ),
             ),
             ttl("below the minimum sample", _classes(9)),
+            ttl(
+                "restriction superclasses connect",
+                "ex:p a owl:ObjectProperty .\n"
+                + _classes(
+                    10,
+                    lambda i: (
+                        "; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ]"
+                    ),
+                ),
+            ),
+            ttl("equivalent classes connect", _classes(10, lambda i: f"; owl:equivalentClass ex:E{i}")),
+            ttl("subclasses of owl:Thing connect", _classes(10, lambda i: "; rdfs:subClassOf owl:Thing")),
+            ttl(
+                "restriction fillers are used",
+                "ex:p a owl:ObjectProperty .\n"
+                + _each(
+                    10,
+                    lambda i: (
+                        f"ex:F{i} a owl:Class .\nex:H{i} a owl:Class ; "
+                        f"rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F{i} ] ."
+                    ),
+                ),
+            ),
             # MFTO: the classes hang directly under an upper ontology the file does not declare.
             ttl(
                 "external superclasses",

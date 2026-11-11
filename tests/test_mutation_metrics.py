@@ -111,3 +111,20 @@ def test_metric008_counts_what_owl005_and_owl006_report() -> None:
             g.add((p, *substitutes[i]))
     (finding,) = _run(g, "METRIC008", metric_max_unsigned_property_ratio=0.0)
     assert finding.message.startswith("8 of 12 object/datatype properties")
+
+
+def test_metric005_counts_what_cls001_reports_on_the_kitchen_sink() -> None:
+    from pathlib import Path  # noqa: PLC0415
+
+    from ontolint.rules import classes  # noqa: PLC0415
+
+    g = Graph()
+    g.parse(Path(__file__).parent / "fixtures" / "kitchen_sink.ttl", format="turtle")
+    policy = replace(Policy(), metric_max_orphan_ratio=0.0)
+    ctx = engine.build_context(g, None, policy)
+    classes.run(ctx)
+    metrics.run(ctx)
+    cls001 = [f for f in ctx.findings if f.rule == "CLS001"]
+    (metric,) = [f for f in ctx.findings if f.rule == "METRIC005"]
+    assert len(cls001) == 6
+    assert metric.message.startswith("6 of 33 classes are orphans")
