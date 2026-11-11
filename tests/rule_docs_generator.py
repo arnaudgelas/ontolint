@@ -29,6 +29,7 @@ from ontolint import Linter
 from ontolint.catalogue import CatalogueRow, load_catalogue
 from ontolint.models import RuleSpec
 from ontolint.rules.registry import default_registry
+from ontolint.selection import PIPELINE_HELP, is_pipeline
 
 DOC = Path(__file__).resolve().parent.parent / "docs" / "rules.md"
 HEADER = """\
@@ -42,6 +43,10 @@ in Turtle together with the message the linter reports for the flagged one. Rule
 implemented are marked **TODO** with the backend they are waiting for; they cannot be selected and
 never run (see `--list-rules`). The intended behaviour of a TODO rule is a draft from
 `tests/planned_rule_intents.py`, not a final specification.
+
+Rules marked **Selectable: no** are pipeline rules, of backend `cli`
+({pipeline_help}). They are implemented and always apply, so `--select` and `--ignore` reject them,
+and `--list-rules --format json` reports them with `"selectable": false`.
 
 All examples assume these prefixes:
 
@@ -91,8 +96,12 @@ def _implemented(spec: RuleSpec, cases: RuleCases | None) -> list[str]:
         f"- **Scope:** {spec.scope.value}",
         f"- **Category:** {spec.category}",
         f"- **Fix:** {spec.suggestion}",
-        "",
     ]
+    if is_pipeline(spec):
+        lines.append(
+            "- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)"
+        )
+    lines.append("")
     if cases is None or not cases.positive:
         return lines + ["*No example available.*", ""]
     flagged = cases.positive[0]
@@ -120,7 +129,7 @@ def build() -> str:
     for row in rows:
         by_family[row.family].append(row)
     implemented = sum(1 for row in rows if row.status.value == "implemented")
-    lines = [HEADER.format(prefixes=PREFIXES), ""]
+    lines = [HEADER.format(prefixes=PREFIXES, pipeline_help=PIPELINE_HELP), ""]
     lines += [
         f"**{implemented} of {len(rows)} catalogue rules are implemented; {len(rows) - implemented} are TODO.**",
         "",

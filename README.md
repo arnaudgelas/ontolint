@@ -245,10 +245,13 @@ ontolint --list-rules --format json   # machine-readable
 ontolint --explain SHQ001             # title, severity, fix, backend, scope, requirements
 ```
 
-`--list-rules` shows the catalogue *status* of every rule: `implemented` (can be selected and
-run) or `proposed` (planned only; it has no severity or scope, cannot be selected and never
-runs). This is different from the per-run *execution status* below. `--explain` on an unknown
-identifier exits `2`.
+`--list-rules` shows the catalogue *status* of every rule: `implemented` (built and run) or
+`proposed` (planned only; it has no severity or scope, cannot be selected and never runs). This is
+different from the per-run *execution status* below. In the JSON of `--list-rules` and `--explain`,
+`selectable` says whether `--select` and `--ignore` accept the rule: it is `false` for the proposed
+rules and for the pipeline rules (backend `cli`, see below), which are implemented but always apply.
+Before 0.12.0 it was `true` for every implemented rule; read `status` to tell implemented rules
+apart. `--explain` on an unknown identifier exits `2`.
 
 ### Selecting rules and profiles
 
@@ -260,7 +263,7 @@ PipelineSelectorError: ...`, before any input is read): the safe-loader refusals
 `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011`, `SEC013` and `SEC015`, the
 diagnostics `INPUT001` and `TOOL001`, and the `INPUT` and `TOOL` families. They are not findings
 and always apply, so no selection can change them (`--list-rules --format json` shows them with
-backend `cli`). The `SEC` family is accepted: it selects or ignores the graph rules `SEC004`,
+backend `cli` and `"selectable": false`). The `SEC` family is accepted: it selects or ignores the graph rules `SEC004`,
 `SEC005`, `SEC007`, `SEC008`, `SEC012` and `SEC014`.
 
 `--profile` picks a bundle of defaults:

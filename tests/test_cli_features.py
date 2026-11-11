@@ -88,12 +88,14 @@ def test_list_rules_json_separates_implemented_from_proposed(run: Run) -> None:
     document = json.loads(out)
     rows = document["rules"]
     assert code == 0 and document["schema_version"] == 1
-    implemented = [r for r in rows if r["selectable"]]
-    proposed = [r for r in rows if not r["selectable"]]
+    implemented = [r for r in rows if r["status"] == "implemented"]
+    proposed = [r for r in rows if r["status"] == "proposed"]
     assert len(implemented) == len(implemented_rows())
     assert len(proposed) == len(planned_rows())
-    assert {r["status"] for r in implemented} == {"implemented"}
-    assert {r["status"] for r in proposed} == {"proposed"}
+    assert len(implemented) + len(proposed) == len(rows)
+    assert not any(r["selectable"] for r in proposed)
+    # An implemented rule is selectable unless it is a pipeline rule (backend cli), which --select rejects.
+    assert all(r["selectable"] is (r["backend"] != "cli") for r in implemented)
     assert all(r["severity"] and r["scope"] and r["backend"] and r["category"] for r in implemented)
     assert all(r["severity"] is None and r["scope"] is None for r in proposed)
     assert "executed" not in out and "skipped" not in out
@@ -107,6 +109,7 @@ def test_list_rules_text_is_a_table_with_status_column(run: Run) -> None:
     assert any(line.startswith("SHACL001") and "pyshacl" in line and "implemented" in line for line in lines)
     assert any(line.split()[-1] == "proposed" for line in lines[1:-1])
     assert "proposed rules cannot be selected or run" in lines[-1]
+    assert "the 11 pipeline rules of backend cli always apply and cannot be selected or ignored" in lines[-1]
 
 
 def test_explain_implemented_rule_text_and_json(run: Run) -> None:

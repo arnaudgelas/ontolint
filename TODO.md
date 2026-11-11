@@ -117,8 +117,8 @@ Nothing open: 0.11.0 is released (see "Recently done").
     declared prefixes, `_library`, catalog parsing), left for the mutation-baseline item; none in
     the changed lines. `selection.py` is outside the mutation scope, so its helper is pinned by
     exact-message and property tests instead.
-    Left open: `--list-rules` still marks pipeline rules `"selectable": true` (under the P1 audit
-    item); `max_validation_seconds` without shapes stays documented as inert, without a note.
+    Left open: `max_validation_seconds` without shapes stays documented as inert, without a note.
+    (`--list-rules` marking pipeline rules `"selectable": true` was fixed afterwards, issue #16.)
   - **AUDIT-DEFECTS** (P1 audit, "Defects that change an exit code, a focus or a message"):
     a report that cannot be written to `--output` (missing directory, a directory, no
     permission) or encoded as UTF-8 (a lone surrogate in a text report, on `--output` or stdout)
@@ -587,9 +587,9 @@ Validation corpus (public; licences per repository):
     and sub-properties of `skos:note`/`skos:scopeNote` for LEX002 (no closure today, not even one
     step). OBO's fixed `DEFINITION_PREDICATES` stay IAO-only by design.
   - *Policy that silently does nothing:* fixed in 0.11.0 (see "Recently done", POLICY-SILENT).
-    Follow-up for RULE-DOCS: `--list-rules --format json` still says `"selectable": true` for the
-    pipeline rules, which `--select` now rejects; the field means "implemented" today, and changing
-    it changes that JSON contract.
+    Follow-up for RULE-DOCS, fixed (issue #16): `"selectable"` in `--list-rules --format json` and
+    `--explain` is now false for the pipeline rules, which `--select` rejects, as well as for the
+    proposed ones; read `status` for "implemented".
   - *Coverage gaps:* closed in 0.11.0 (see "Recently done", COVERAGE-GAPS). Left open, each
     with its reason in the rule's specification:
     - *SHQ011 inside a character class:* an unescaped `[` not after `-`, a leading `]` and the

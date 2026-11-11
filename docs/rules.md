@@ -9,6 +9,10 @@ implemented are marked **TODO** with the backend they are waiting for; they cann
 never run (see `--list-rules`). The intended behaviour of a TODO rule is a draft from
 `tests/planned_rule_intents.py`, not a final specification.
 
+Rules marked **Selectable: no** are pipeline rules, of backend `cli`
+(safe-loader refusals and front-end diagnostics, never findings). They are implemented and always apply, so `--select` and `--ignore` reject them,
+and `--list-rules --format json` reports them with `"selectable": false`.
+
 All examples assume these prefixes:
 
 ```turtle
@@ -1520,6 +1524,7 @@ ex:A a owl:Class .
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Fix RDF syntax or explicitly choose the input serialization format.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `unparsable RDF` (built programmatically; see `tests/rule_cases/`)
 
@@ -4455,6 +4460,7 @@ Reported: `owl:AllDifferent has no member list.`
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Split the ontology, or raise --max-input-bytes (or max_input_bytes in the policy) if the size is expected.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `one byte over the limit` (built programmatically; see `tests/rule_cases/`)
 
@@ -4466,6 +4472,7 @@ Reported: `owl:AllDifferent has no member list.`
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Lint a smaller module, or raise --max-triples (or max_triples in the policy) if the size is expected.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `four triples with a limit of three` (built programmatically; see `tests/rule_cases/`)
 
@@ -4477,6 +4484,7 @@ Reported: `owl:AllDifferent has no member list.`
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Lint a smaller module, or raise --max-parse-seconds (or max_parse_seconds in the policy) if it is expected.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `125k triples with a 50 ms budget` (built programmatically; see `tests/rule_cases/`)
 
@@ -4514,6 +4522,7 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Inline the @context in the document; ontolint never downloads contexts.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `remote @context` (built programmatically; see `tests/rule_cases/`)
 
@@ -4567,6 +4576,7 @@ ex:a ex:p <https://example.test/x> .
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Pass a regular file inside the working directory, not a device, a '..' escape or a link leaving it.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `symlink leaving the directory` (built programmatically; see `tests/rule_cases/`)
 
@@ -4578,6 +4588,7 @@ ex:a ex:p <https://example.test/x> .
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Remove SYSTEM/PUBLIC identifiers and nested entities; plain internal entities (Protege style) are accepted.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `external entity` (built programmatically; see `tests/rule_cases/`)
 
@@ -4589,6 +4600,7 @@ ex:a ex:p <https://example.test/x> .
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Decompress the file yourself and pass the plain RDF serialization.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `gzip input` (built programmatically; see `tests/rule_cases/`)
 
@@ -4621,6 +4633,7 @@ ex:a rdfs:label "abc" .
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Make the input self-contained; ontolint runs with the network disabled and never fetches resources.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `parser dials out` (built programmatically; see `tests/rule_cases/`)
 
@@ -4653,6 +4666,7 @@ ex:a ex:p <https://alice@example.test/x> .
 - **Scope:** input
 - **Category:** deterministic
 - **Fix:** Lint a smaller closure, or raise max_import_depth, max_imported_files or max_triples in the policy if the size is expected.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `closure above max_triples` (built programmatically; see `tests/rule_cases/`)
 
@@ -6091,6 +6105,7 @@ ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos
 - **Scope:** tool
 - **Category:** deterministic
 - **Fix:** Correct the configuration or execution error and run the linter again.
+- **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
 *Flagged:* `unknown selector` (built programmatically; see `tests/rule_cases/`)
 

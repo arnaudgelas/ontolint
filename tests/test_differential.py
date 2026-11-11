@@ -60,6 +60,13 @@ reports, so ``kitchen_sink.ttl`` no longer has a METRIC005 finding ("10 of 33 cl
 shows five deleted METRIC005 finding blocks, one in each linter snapshot of the kitchen sink, and
 nothing else except the hashes of the 16 CLI outputs (and their legacy views) that render those
 reports.  ``legacy_rules.json`` did not move, and holds no METRIC rule.
+
+Deliberate golden update (issue #16, ``selectable``): ``--list-rules --format json`` reports
+``"selectable": false`` for the 11 pipeline rules (backend ``cli``), which ``--select`` and ``--ignore``
+reject, and the ``--list-rules`` table's last line counts them.  Only ``list_rules_json`` and
+``list_rules_text`` changed.  Before regenerating, the new outputs were shown to hash to the previous
+golden values once those 11 values were set back to ``true`` and the last line of the table was restored;
+no finding, report, exit code or ``legacy_rules.json`` entry moved.
 """
 
 from __future__ import annotations

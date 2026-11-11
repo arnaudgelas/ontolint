@@ -21,6 +21,7 @@ import pytest
 from ontolint import engine, main
 from ontolint.loader import NetworkAttempts, _network_problem, network_disabled
 from ontolint.models import RuleBackend, RuleSpec
+from ontolint.rule_info import explain_rule, render_explanation, rule_rows
 from ontolint.rules.registry import UnknownSelectorError, default_registry
 from ontolint.rules.specs import RULE_SPECS
 from ontolint.selection import PipelineSelectorError, check_selectors, pipeline_selectors
@@ -581,3 +582,40 @@ def test_check_selectors_accepts_the_default_and_reports_typos_first() -> None:
 def test_an_ignore_is_rejected_exactly_for_the_pipeline_rules(spec: RuleSpec) -> None:
     rejected = pipeline_selectors(default_registry(), [spec.rule_id]) == (spec.rule_id,)
     assert rejected is (spec.backend is RuleBackend.CLI)
+
+
+def _rejected(option: str, rule_id: str) -> bool:
+    """Whether ``check_selectors`` rejects ``rule_id`` named alone by ``option`` as a pipeline rule."""
+    registry = default_registry()
+    select, ignore = ((rule_id,), ()) if option == "--select" else ((), (rule_id,))
+    try:
+        check_selectors(registry, select, ignore)
+    except PipelineSelectorError:
+        return True
+    return False
+
+
+@pytest.mark.parametrize("spec", RULE_SPECS, ids=lambda spec: spec.rule_id)
+def test_selectable_is_false_exactly_for_the_rules_the_selectors_reject(spec: RuleSpec) -> None:
+    rows = {row["id"]: row for row in rule_rows(default_registry())}
+    detail = explain_rule(spec.rule_id, default_registry())
+    rejected = {_rejected(option, spec.rule_id) for option in ("--select", "--ignore")}
+    assert len(rejected) == 1  # --select and --ignore agree
+    assert rows[spec.rule_id]["selectable"] is detail["selectable"] is (not rejected.pop())
+
+
+def test_the_registry_has_both_selectable_and_pipeline_rules() -> None:
+    # Guards the parametrized test above against a registry where the predicate is trivially constant.
+    selectable = {row["id"] for row in rule_rows(default_registry()) if row["selectable"]}
+    assert set(PIPELINE_IDS).isdisjoint(selectable)
+    assert {spec.rule_id for spec in RULE_SPECS} - selectable == set(PIPELINE_IDS)
+
+
+def test_explain_says_a_pipeline_rule_cannot_be_selected() -> None:
+    text = render_explanation(explain_rule("sec001", default_registry()), "text")
+    assert text.endswith(
+        "\n  Pipeline rule (safe-loader refusals and front-end diagnostics, never findings): "
+        "it always applies, so --select and --ignore reject it."
+    )
+    assert "proposed only" not in text
+    assert "Pipeline rule" not in render_explanation(explain_rule("SEC004", default_registry()), "text")

@@ -4,6 +4,11 @@ Three different questions are kept apart on purpose: the catalogue *status* (imp
 proposed: is the rule built?), the engine's *execution status* (executed, skipped, unsupported,
 failed: did it run on this input?) and the *requirements* (what a rule needs before it can run).
 Listings only speak about the first; proposed rules cannot be selected, executed or skipped.
+
+``selectable`` says whether ``--select`` and ``--ignore`` accept the rule's id: it is false for a
+proposed rule (not implemented) and for a pipeline rule (implemented, but it always applies, so
+:func:`~ontolint.selection.check_selectors` rejects it).  Both views take the answer from
+:func:`~ontolint.selection.is_pipeline`, the predicate the selectors are checked with.
 """
 
 from __future__ import annotations
@@ -15,6 +20,7 @@ from .catalogue import CatalogueRow, load_catalogue
 from .models import CatalogueStatus, RuleSpec
 from .profiles import is_opt_in
 from .rules.registry import RuleRegistry
+from .selection import PIPELINE_HELP, is_pipeline
 
 DASH = "-"
 OPT_IN_MARK = " (opt-in)"
@@ -35,7 +41,7 @@ def _implemented(spec: RuleSpec, row: CatalogueRow | None) -> dict[str, Any]:
         "scope": spec.scope.value,
         "requires": spec.requires.value,
         "status": (row.status if row else CatalogueStatus.IMPLEMENTED).value,
-        "selectable": True,
+        "selectable": not is_pipeline(spec),
     }
     if is_opt_in(spec.family):  # Only opt-in rules carry the key, so other rows are unchanged.
         detail["opt_in"] = True
@@ -87,9 +93,11 @@ def render_rule_list(rows: list[dict[str, Any]], output_format: str) -> str:
         "  ".join(cell.ljust(width) for cell, width in zip(line, widths, strict=True)).rstrip()
         for line in [header, *body]
     ]
-    implemented = sum(row["selectable"] for row in rows)
+    implemented = sum(row["status"] != CatalogueStatus.PROPOSED.value for row in rows)
+    pipeline = sum(not row["selectable"] for row in rows if row["status"] != CatalogueStatus.PROPOSED.value)
     lines.append(
-        f"{implemented} implemented, {len(rows) - implemented} proposed (proposed rules cannot be selected or run)"
+        f"{implemented} implemented, {len(rows) - implemented} proposed (proposed rules cannot be selected or run; "
+        f"the {pipeline} pipeline rules of backend cli always apply and cannot be selected or ignored)"
     )
     return "\n".join(lines)
 
@@ -122,8 +130,10 @@ def render_explanation(detail: dict[str, Any], output_format: str) -> str:
             "  Opt-in rule: it runs only with --select (family or id) or a profile that enables it, "
             "e.g. --profile obo or --profile fair."
         )
-    if not detail["selectable"]:
+    if detail["status"] == CatalogueStatus.PROPOSED.value:
         lines.append("  This rule is proposed only: it is not implemented, so it cannot be selected or executed.")
+    elif not detail["selectable"]:
+        lines.append(f"  Pipeline rule ({PIPELINE_HELP}): it always applies, so --select and --ignore reject it.")
     return "\n".join(lines)
 
 
