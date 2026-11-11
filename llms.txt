@@ -1,0 +1,29 @@
+# ontolint
+
+> An offline ontology-quality linter for RDF, OWL, SKOS and SHACL. It reads ontology files, reports findings with a rule id, severity, focus, message, suggestion and confidence, and exits 0 (no finding reached --fail-on), 1 (findings) or 2 (tool failure). Python 3.13+, Apache-2.0, on PyPI as `ontolint`. Findings are review prompts, not proofs of inconsistency. The project is Alpha: pin a version.
+
+Install and run: `uv tool install ontolint`, then `ontolint ontology.ttl`. Machine-readable output: `--format json` (key `schema_version`, currently 1) or `--format sarif` (SARIF 2.1.0); `ontolint --list-rules --format json` lists every rule; `ontolint --explain RULE_ID` explains one.
+
+## Start here
+
+- [README](https://github.com/arnaudgelas/ontolint/blob/main/README.md): quick start, every option, policy and baselines, input formats, input safety, limitations.
+- [Rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md): every rule with severity, a failing example, a clean example and its message. Generated from the catalogue.
+- [Rule catalogue](https://github.com/arnaudgelas/ontolint/blob/main/src/ontolint/data/rule_catalogue.csv): the machine-readable source of the rule list.
+
+## Reference
+
+- [Command-line and report features](https://github.com/arnaudgelas/ontolint/blob/main/docs/cli-features.md): the reporting and execution features that are not lint rules.
+- [Metric thresholds](https://github.com/arnaudgelas/ontolint/blob/main/docs/metric-thresholds.md): the METRIC rules' defaults, rationale and how to override them.
+- [Performance](https://github.com/arnaudgelas/ontolint/blob/main/docs/performance.md): resource budgets and benchmarks.
+- [Changelog](https://github.com/arnaudgelas/ontolint/blob/main/CHANGELOG.md): releases, with upgrade notes.
+- [Security policy](https://github.com/arnaudgelas/ontolint/blob/main/SECURITY.md): supported versions and how to report a vulnerability.
+
+## Contributing
+
+- [Adding a rule](https://github.com/arnaudgelas/ontolint/blob/main/docs/adding-rules.md): specification, fixtures and the checks CI runs.
+- [Mutation testing policy](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md)
+- [Releasing](https://github.com/arnaudgelas/ontolint/blob/main/docs/releasing.md)
+
+## Optional
+
+- [Roadmap](https://github.com/arnaudgelas/ontolint/blob/main/TODO.md): open work, decisions and what shipped recently.
