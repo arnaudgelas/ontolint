@@ -84,7 +84,7 @@ the report has no published JSON Schema yet, so pin the version you parse agains
 | One rule's title, severity, fix and requirements | `ontolint --explain RULE_ID` | [Discovering rules](#discovering-rules) |
 | The findings of a run | `ontolint FILE --format json` (keys `schema_version`, `summary`, `findings`, `execution_summary`, `rules`, `files`) | [Run the linter](#run-the-linter) |
 | Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub annotations](#github-annotations) |
-| Which rules ran, were skipped or failed | `execution_summary` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
+| Which rules ran, were skipped or failed | `files[].executions` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
 | A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
 | Accepted findings that stay quiet | `--write-baseline FILE`, then `--baseline FILE` | [Policy and baselines](#policy-and-baselines) |
 | ontolint inside a Python program | `from ontolint import Linter` | [Run the linter](#run-the-linter) |
@@ -656,7 +656,7 @@ count as stale.
 
 The gates CI enforces on every change: Ruff (lint and format), pyright in strict mode and mypy
 (host and Windows), tests with at least 95 % coverage, a dependency audit, and a distribution
-build; mutation testing keeps at least 85 % of mutants killed
+build; scheduled/manual mutation testing targets at least 85 % of mutants killed
 ([policy](https://github.com/arnaudgelas/ontolint/blob/main/docs/mutation-policy.md)). Dependencies
 are managed with [uv](https://docs.astral.sh/uv/).
 
