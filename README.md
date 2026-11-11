@@ -611,6 +611,12 @@ uv run pytest -q -p no:randomly
 # The package's layering (pytest-archon): rule modules never import the CLI, and so on
 uv run pytest -q --no-cov tests/test_architecture.py
 
+# Metamorphic tests (tests/test_metamorphic_*.py, helpers in tests/metamorphic_support.py): each applies a
+# transformation whose effect is known and asserts that relation, with no expected findings to maintain.
+# Serialisation, Turtle noise, duplicate triples and islands, multi-file runs, policy knobs, baseline round
+# trips, report formats and namespace renaming each have a file
+uv run pytest -q --no-cov tests/test_metamorphic_*.py
+
 # Type checks
 uv run pyright && uv run mypy && uv run mypy --platform win32
 
