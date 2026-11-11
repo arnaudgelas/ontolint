@@ -212,6 +212,7 @@ def test_metric013_blank_structure_of_shapes_and_reification() -> None:
         (0.3001, 0.3, ("0.3001", "0.3000")),
         (0.300001, 0.3, ("0.300001", "0.300000")),
         (0.3, 0.3, ("0.300000", "0.300000")),  # equal never fires; nothing to widen
+        (0.30303030303, 0.30303030302, ("0.30303030303", "0.30303030302")),  # differs only past 6 decimals
     ],
 )
 def test_value_and_limit_are_printed_apart(value: float, limit: float, shown: tuple[str, str]) -> None:

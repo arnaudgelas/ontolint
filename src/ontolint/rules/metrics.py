@@ -73,10 +73,10 @@ specifications:
   ``rdfs:subClassOf`` from owned classes and ``rdfs:domain`` and ``rdfs:range`` from owned
   properties to IRIs outside the RDF, RDFS, OWL and XSD namespaces.  A reference is foreign when the
   target's namespace (the text up to the last ``#`` or ``/``) differs from the subject's and the
-  target is not owned; with no ownership information every IRI is owned, so the namespace
-  comparison alone decides.  Exclusions: blank targets, ``owl:equivalentClass``, restriction fillers
-  and OBO reuse of another OBO ontology (one shared namespace); SKOS, DC and similar targets are
-  foreign.
+  target is not owned.  Ownership comes from the ontology header's IRI or ``--base``; a graph with
+  neither has no owned namespace, so the namespace comparison alone decides.  Exclusions: blank
+  targets, ``owl:equivalentClass``, restriction fillers and OBO reuse of another OBO ontology (one
+  shared namespace); SKOS, DC and similar targets are foreign.
   *Info:* a mostly foreign ontology is a thin layer over others, which may be its purpose.
 * **METRIC011.** (``metric_max_imports``, 10.)  The distinct IRI objects of ``owl:imports`` in the
   graph, of every header, minus ``policy.resolved_imports``.  Fires above the limit; no sample gate.
@@ -228,11 +228,17 @@ def _focus(ctx: RuleContext) -> str:
 
 
 def _vs(value: float, limit: float) -> tuple[str, str]:
-    """Format a value and its limit with 2 decimals, or up to 6 when 2 would print a value over its limit as equal."""
-    for digits in range(2, 6):
+    """Format a value and its limit with 2 decimals, or more when fewer would print them as equal.
+
+    Up to 6 decimals; a value that still equals its limit there is printed in full, so a finding never reads
+    ``0.303030 > 0.303030``. Equal values never fire, so they only reach here as ``0.300000`` for both.
+    """
+    for digits in range(2, 7):
         shown, shown_limit = f"{value:.{digits}f}", f"{limit:.{digits}f}"
         if shown != shown_limit:
             return shown, shown_limit
+    if value != limit:
+        return repr(value), repr(limit)
     return f"{value:.6f}", f"{limit:.6f}"
 
 
