@@ -9,7 +9,7 @@ from hypothesis_strategies import budget
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
-from ontolint.adapters.shacl import ntriples_literal
+from ontolint.rules.support import ntriples_literal
 
 pytestmark = pytest.mark.slow
 

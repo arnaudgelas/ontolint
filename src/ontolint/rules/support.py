@@ -179,3 +179,15 @@ def shape_term(node: Node) -> Node | str:
     a shapes-graph node is not part of.
     """
     return SHAPES_BLANK_NODE if isinstance(node, BNode) else node
+
+
+_NT_ESCAPES = str.maketrans({"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r"})
+"""What N-Triples escapes in a quoted string (``Literal.n3()`` would write a multi-line value as a long string)."""
+
+
+def ntriples_literal(literal: Literal) -> str:
+    """``literal`` as an N-Triples term on one line: quoted, then ``@lang`` or ``^^<datatype>`` when it has one."""
+    quoted = f'"{str(literal).translate(_NT_ESCAPES)}"'
+    if literal.language:
+        return f"{quoted}@{literal.language}"
+    return f"{quoted}^^<{literal.datatype}>" if literal.datatype else quoted

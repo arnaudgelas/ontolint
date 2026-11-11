@@ -24,7 +24,7 @@ from rdflib.term import Node
 from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
 from ontolint.rules.specs import FIXES
-from ontolint.rules.support import stable_blank_id
+from ontolint.rules.support import ntriples_literal, stable_blank_id
 from ontolint.worker import WorkerFailed, WorkerGone, WorkerTimeout, decode_graph, encode_graph, run_bounded
 
 MAX_LIST_LENGTH = 400
@@ -159,18 +159,6 @@ def _name(graph: Graph, node: Node | None) -> str:
     if isinstance(node, BNode):
         return stable_blank_id(graph, node)
     return str(node)
-
-
-_NT_ESCAPES = str.maketrans({"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r"})
-"""What N-Triples escapes in a quoted string (``Literal.n3()`` would write a multi-line value as a long string)."""
-
-
-def ntriples_literal(literal: Literal) -> str:
-    """``literal`` as an N-Triples term on one line: quoted, then ``@lang`` or ``^^<datatype>`` when it has one."""
-    quoted = f'"{str(literal).translate(_NT_ESCAPES)}"'
-    if literal.language:
-        return f"{quoted}@{literal.language}"
-    return f"{quoted}^^<{literal.datatype}>" if literal.datatype else quoted
 
 
 def _term(graph: Graph, node: Node) -> str:
