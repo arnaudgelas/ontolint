@@ -23,3 +23,7 @@ fuzz-crashes/
 
 # Virtual environments
 .venv
+.env
+
+# Claude Flow state
+.claude-flow/
