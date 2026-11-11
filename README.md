@@ -877,8 +877,11 @@ implemented yet are listed as TODO. The file is generated; regenerate it with
   not calculate entailments or inspect an import closure.
 - `CLS002` can be noisy for TBox-only ontologies and is often disabled in that
   profile.
-- Shape coverage (`SHQ006`) checks direct instances and direct class targets
-  only.
+- Shape coverage (`SHQ006`) judges classes with directly typed instances, and credits a class target
+  (`sh:targetClass` or an implicit class target) on the class or on one of its superclasses
+  (`rdfs:subClassOf` asserted in the data graph). Other targets (`sh:targetNode`, `sh:targetSubjectsOf`,
+  `sh:targetObjectsOf`, SHACL-AF `sh:target`) are not credited, and a deactivated targeting shape still
+  counts.
 - SARIF source regions are available for Turtle-family (TriG included), N-Triples-family and
   RDF/XML inputs, and for JSON-LD resources with an explicit `@id` (including local compact IRI
   contexts). Generated JSON-LD nodes remain future work.

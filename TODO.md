@@ -82,6 +82,31 @@ Nothing open: 0.11.0 is released (see "Recently done").
     write straight to file descriptor 2, a library caller's own logging handlers. Follow-ups:
     issue drafts for a user-only userinfo (`https://<token>@host`, masked but not reported), SEC014
     under a baseline, and line breaks in IRIs that forge text-report lines.
+  - **SHQ-SPEC** (P1 audit item, issue #11, branch `docs/11-shq-specification-audit`): SHQ001-SHQ027 are
+    specified in the format of the OWL family in the docstrings of `rules/shapes.py`,
+    `rules/shacl_quality.py` and `rules/shacl_authoring.py` (scope, condition with the SHACL, XSD and
+    F&O sections, exclusions, severity and confidence rationale, fixtures), and the catalogue rows name
+    their fixtures (the eight "pySHACL and RDFLib graph" backends, which never used pySHACL, now say
+    "RDFLib graph"). Fixed where the code contradicted SHACL (each pinned by
+    `tests/test_shq_specification.py`, 57 cases failing on 0.12.0): SHQ001/SHQ002 judged a literal
+    `sh:property` value; SHQ003 counted 9 of the constraint parameters (it now counts every SHACL Core
+    one, `sh:qualifiedValueShape` only with a qualified count, `sh:closed` and `sh:uniqueLang` unless
+    false, and no deactivated shape); SHQ006 ignored a target on a superclass (SHACL instances follow
+    `rdfs:subClassOf`); SHQ010 rejected the `*` range and accepted non-`xsd:string` members; SHQ011
+    reported valid class subtractions and quantified anchors as compile errors, compiled no pattern with
+    `\p`, `\i` or `\c`, accepted `[[a]`, `[]a]`, `\p{Letter}` and a class left open after a subtraction
+    (`[a-z-[aeiou]`), and read every digit after a back-reference as part of it (`(a)\10` reported,
+    `\123` accepted); SHQ021 ignored SHACL-AF `sh:target`; SHQ023 ignored untyped subjects of two
+    `sh:path`s; SHQ024 ignored `rdf:type` as a property shape's path. Messages are unchanged except
+    SHQ011's on a pattern the rewrite for Python touches (`\p`, `\i`, `\c`, a subtraction, a quantified
+    anchor, a digit after a back-reference) or that also has a newly reported error: Python's error may
+    now come first, or lose its position; a v1 baseline entry for such a finding stops matching, a v2
+    one does not. Only the `--explain SHQ001` golden moved. Measured on 1,079 public shapes files (W3C
+    SHACL test suites, DCAT-AP 3, IDS, GeoSPARQL): SHQ003 +884 -3 (info: `sh:nodeKind` mostly; the 3 are
+    deactivated shapes), SHQ006 -3, SHQ021 -5, nothing else. Left to the maintainer: approve the
+    specifications, and the severity and confidence proposals of the PR (none applied: the #12 counts on
+    CCO, BFO, RO and DCAT-AP found no SHQ008 or SHQ011 finding, so they rest on the specifications
+    alone).
 - Unreleased (on `main`, after 0.11.0):
   - **TRIG-REGIONS** (P1; issue 6): a TriG finding has the region of its focus, as its Turtle
     twin does. TriG was missing from `source_locations._TEXT_FORMATS` and from the scanner's
@@ -616,9 +641,10 @@ Validation corpus (public; licences per repository):
   fixtures; correct documentation or implementation when they disagree.
   *Done when:* each implemented rule has an approved, testable specification and its catalogue,
   user documentation, and fixtures state the same contract.
-  The specifications of every error-severity rule, the whole OWL family and the METRIC family
-  (0.11.0, see "Recently done", METRIC-SPEC) await the maintainer's approval. Next: the SKOS, SHQ,
-  CLS, LEX and IRI families. Left open by those reviews:
+  The specifications of every error-severity rule, the whole OWL family, the METRIC family
+  (0.11.0, see "Recently done", METRIC-SPEC) and the SHQ family (v0.13.0, issue #11, see "Recently
+  done", SHQ-SPEC) await the maintainer's approval. Next: the SKOS, CLS, LEX and IRI families. Left
+  open by those reviews:
   - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
     `--fail-on` results): OWL009 warning → error, and OWL010 info → warning or error (both
     describe graphs outside OWL 2 DL); OWL013/OWL014 → error; OWL032 info → warning; OWL045's
@@ -657,9 +683,12 @@ Validation corpus (public; licences per repository):
     proposed ones; read `status` for "implemented".
   - *Coverage gaps:* closed in 0.11.0 (see "Recently done", COVERAGE-GAPS). Left open, each
     with its reason in the rule's specification:
-    - *SHQ011 inside a character class:* an unescaped `[` not after `-`, a leading `]` and the
-      placement of `-` are left to Python, as XSD 1.0 and 1.1 disagree on them and an error rule
-      must not guess; `\p{..}` names are not checked (block names follow the Unicode version);
+    - *SHQ011 inside a character class* (narrowed by SHQ-SPEC, which reports an unescaped `[` not
+      after `-`, a leading `]` and a `\p{..}` name that is no XSD category or `Is` block form, as
+      XSD 1.0 and 1.1 both reject them): the placement of `-` is left to Python, as XSD 1.0 and 1.1
+      disagree on it and an error rule must not guess; whether a block name exists is not checked
+      (it follows the Unicode version); an empty group before a subtraction (`[-[a]]`) passes; a
+      back-reference to group 100 or above is not judged (Python reads it as an octal escape);
       XPath 2.0-only strictness is not applied (`(?:` and the `q` flag of XPath 3.0 are accepted).
     - *OWL019:* a characteristic typed on an anonymous inverse expression (`[ owl:inverseOf p ] a
       owl:FunctionalProperty`) is judged only when the expression is itself transitive or

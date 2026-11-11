@@ -15,7 +15,8 @@ graph is never read.  A *natural* is a literal whose RDFLib value is a Python ``
 boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``xsd:nonNegativeInteger``
 ...) in any valid XSD lexical form (``"01"``, ``"+1"``, ``" 2 "``); an ill-typed literal
 (``"abc"^^xsd:integer``, ``"1.0"^^xsd:integer``), an ``xsd:decimal`` or ``xsd:double`` (``1.0``,
-``1e0``), a string, a boolean and an IRI are not naturals.  Specifications of the error rules:
+``1e0``), a string, a boolean and an IRI are not naturals.  References are to the SHACL Recommendation
+(2017-07-20).  Specifications:
 
 * **SHQ007.** A shape with exactly one ``sh:minCount`` and exactly one ``sh:maxCount``, both naturals,
   where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``), derived integer
@@ -28,34 +29,59 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   such as ``xsd:int``, ``xsd:nonNegativeInteger`` or ``xsd:unsignedByte``).  A count keeps the
   message "sh:minCount value 1.0 is not a non-negative integer." (the predicate as the shapes graph's
   prefixes write it, the value's lexical form); a length, and a derived type, print the value in
-  N-Triples and the predicate as ``sh:``.  Error: SHACL (sections 4.2.1, 4.2.2, 4.4.1 and 4.4.2, and
-  the syntax rules of Appendix B) requires each to be a literal with datatype ``xsd:integer``, so the
-  shape is ill-formed (a SHACL processor may reject the shapes graph or ignore the constraint); the
-  check is deterministic, though its findings are recorded with the default confidence
-  ``heuristic``.
+  N-Triples and the predicate as ``sh:``.  Excluded: ``sh:qualifiedMinCount`` and
+  ``sh:qualifiedMaxCount`` (4.7.3), and the range parameters.  Error: SHACL (sections 4.2.1, 4.2.2,
+  4.4.1 and 4.4.2, and the syntax rules of Appendix B) requires each to be a literal with datatype
+  ``xsd:integer``, so any other value makes the shape ill-formed (3.4.2: the result of validation is
+  undefined; a processor may reject the shapes graph or ignore the constraint).  A negative
+  ``xsd:integer`` is well formed (SHACL sets no lower bound) but meaningless: a negative minimum is
+  vacuous and a negative maximum fails every focus node (``sh:maxCount``) or value node
+  (``sh:maxLength``), so it is an authoring error all the same.  The check is deterministic, though its
+  findings are recorded with the default confidence ``heuristic``.
 * **SHQ011.** A literal value of ``sh:pattern`` that is not an XPath regular expression under the
-  shape's ``sh:flags`` (all values concatenated).  SHACL regexes are XPath regexes (F&O 5.6.1, over
-  XSD Part 2 Appendix F), so the flags are translated: ``i``, ``s`` and ``m`` map to the Python
-  flags, ``x`` removes whitespace outside character classes before anything else (Python's VERBOSE
-  would also read ``#`` as a comment), and ``q`` (XPath 3.0: the pattern is a plain string; SPARQL
-  1.1 cites XPath 2.0, which lacks it) means every pattern is valid.  Two judgements, at most one
-  finding per pattern: first, a pattern without an XPath-only escape (``\\p``, ``\\P``, ``\\i``,
-  ``\\I``, ``\\c``, ``\\C``) that Python's ``re`` cannot compile, quoting Python's error ("sh:pattern
-  does not compile: ..."); then, for every other pattern, the first construct a left-to-right scan
-  finds that XPath does not allow ("sh:pattern is not an XPath regular expression: ..."): an escape
-  outside XSD's SingleCharEsc (with XPath's ``\\$``), MultiCharEsc and ``\\p{..}``/``\\P{..}`` (``\\b``,
-  ``\\A``, ``\\x41``, ``\\0``, ``\\/``), a back-reference inside a class; ``(?`` other than XPath 3.0's
-  ``(?:`` (lookaround, inline flags, named groups); a ``+`` after a quantifier (possessive), any
-  other quantifier after one except a single reluctant ``?``, or a quantifier with nothing to repeat;
-  an unescaped ``{`` that starts no ``{n}``, ``{n,}`` or ``{n,m}``; and an unescaped ``}`` or ``]``
-  outside a class.  Excluded: a non-literal value; inside a character class everything but its
-  escapes (an unescaped ``[`` not after ``-``, a leading ``]``, and the placement of ``-``, on which XSD
-  1.0 and 1.1 disagree; Python decides those); a ``\\p{..}`` category or block name, which is not
-  checked; the XPath 2.0 / 3.0 differences beyond ``(?:`` and ``q``; and an unknown flag letter, which
-  is dropped when compiling and is SHQ015's.  It can also flag a valid pattern Python rejects (a
-  repetition count above 4294967295).  Error, heuristic: an invalid pattern makes the shape
-  ill-formed, but a SHACL engine built on Python's or Java's regex may accept it (``\\/`` in
-  particular, which JavaScript habit writes).
+  shape's ``sh:flags`` (all values concatenated).  SHACL 4.4.3 requires "valid pattern arguments for
+  the SPARQL REGEX function", which are XPath regexes (F&O 1.0 7.6.1, F&O 3.1 5.6.1, over XSD Part 2
+  Appendix F (1.0) and G (1.1)), so the flags are translated: ``i``, ``s`` and ``m`` map to the
+  Python flags, ``x`` removes whitespace outside character classes before anything else (Python's
+  VERBOSE would also read ``#`` as a comment), and ``q`` (XPath 3.0: the pattern is a plain string;
+  SPARQL 1.1 cites XPath 2.0, which lacks it) means every pattern is valid.  Two judgements, at most
+  one finding per pattern (``pattern_problem``).  First, Python's ``re`` compiles :func:`python_form`
+  of the pattern, which rewrites the three constructs Python lacks with the same structure (``\\p{..}``,
+  ``\\P{..}``, ``\\i``, ``\\I``, ``\\c`` and ``\\C`` as ``\\w``; a class subtraction ``[G-[H]]`` as
+  ``(?:[G]|[H])``; a quantified anchor ``^*`` as ``(?:^)*``), sets a back-reference apart from a following
+  digit that F&O 3.1 5.6.1.4 does not make part of it (``(a)\\10`` is ``\\1`` then ``0``, so ``(?:\\1)0``;
+  Python would read ``\\10``, or ``\\123`` as an octal escape) and keeps everything else, so that Python
+  reports a back-reference to a group that does not exist or is still open (FORX0002); its error is
+  quoted ("sh:pattern does not compile: ...", without the position when the text was rewritten).
+  Then the first construct a left-to-right scan finds that XPath does not allow ("sh:pattern is not an
+  XPath regular expression: ..."): an escape outside XSD's SingleCharEsc (with XPath's ``\\$``),
+  MultiCharEsc and ``\\p{..}``/``\\P{..}`` (``\\b``, ``\\A``, ``\\x41``, ``\\0``, ``\\/``), a back-reference
+  inside a class; a ``\\p{..}`` name that is neither one of XSD's General Categories (``L``, ``Lu`` ...
+  ``Cn``; not ``Cs``) nor of the form ``Is`` + letters, digits and hyphens (``\\p{Letter}``,
+  ``\\p{Alpha}``, ``\\p{L&}``); inside a class, an unescaped ``[`` not after ``-`` (``[[:alpha:]]``) or an
+  unescaped ``]`` first (``[]a]``), which XSD 1.0 ("the [, ], - and \\ characters are not valid
+  character ranges") and 1.1 (``SingleCharNoEsc ::= [^\\[\\]]``) both reject; a subtracted class not
+  followed by the ``]`` of its class (``[)-[a]c]``; a subtraction ends its group, 1.0 [16], 1.1 [76]) and
+  a class with a subtraction that the text ends in (``[a-z-[aeiou]``), both of which Python reads as one
+  class and a rest; ``(?`` other than XPath 3.0's ``(?:`` (lookaround, inline flags, named groups); a
+  ``+`` after a quantifier (possessive), any other quantifier after one except a single reluctant ``?``,
+  or a quantifier with nothing to repeat; an unescaped ``{`` that starts no ``{n}``, ``{n,}`` or
+  ``{n,m}``; and an unescaped ``}`` or ``]`` outside a class.  Excluded, each a known gap: a non-literal
+  value; the placement of ``-`` in a class (XSD 1.0 allows a bare ``-`` only first or last, 1.1 allows
+  ``[a-k-z]`` and ``[+--]`` and a ``-`` after a class escape: Python decides, so ``[\\d-z]`` is reported
+  and ``[a-k-z]`` is not); whether a block name exists (the Unicode version is implementation-defined, XSD
+  1.1 G.4.2.3); the XPath 2.0 / 3.0 differences (``(?:`` and ``q`` are accepted though SPARQL 1.1 cites
+  XPath 2.0); an empty group before a subtraction (``[-[a]]``); a back-reference to group 100 or above,
+  which Python reads as an octal escape; and an unknown flag letter, which is dropped when compiling and
+  is SHQ015's.  It can also flag a valid pattern Python rejects (a repetition count above 4294967295,
+  subtractions nested more than 64 deep).  Error, heuristic: an invalid pattern makes the shape ill-formed
+  (3.4.2), but a SHACL engine built on Python's or Java's regex may accept it (``\\/`` in particular,
+  which JavaScript habit writes, and ``[[a]``, a Java union).
+* **SHQ013.** Every shape with both an ``sh:datatype`` and an ``sh:class`` triple (any values).
+  Excluded: the two on different shapes of one path; ``sh:or`` alternatives.  Warning, deterministic:
+  ``sh:datatype`` needs a literal value node and ``sh:class`` an IRI or blank instance (4.1.1, 4.1.2),
+  so every value node violates one of them; the shape still holds when there is no value node.
+  Findings are recorded with the default confidence ``heuristic``.
 * **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``, derived integer types included.
   Excluded as for SHQ007; a length that is not a natural is SHQ008's.  Error, certain: no value node has a
   string length in the range, so every value node (and every blank node) violates the shape.
@@ -71,6 +97,51 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   only over the integers (``sh:minExclusive 1 ; sh:maxExclusive 2``), as the value nodes' datatype is
   not considered.  Error: no value node can satisfy both bounds; deterministic, though the findings
   are recorded with the default confidence ``heuristic``.
+* **SHQ019.** Every IRI value of ``sh:node`` or ``sh:property`` on a shape that is the subject of no
+  triple of the shapes graph; one finding per predicate and value.  Excluded: blank values; references
+  through ``sh:not``, ``sh:qualifiedValueShape`` and the ``sh:and``, ``sh:or`` and ``sh:xone`` lists (a
+  known gap: an undefined member makes ``sh:or`` always true and ``sh:not`` always false); a shape
+  defined in a shapes graph that is not supplied (``owl:imports`` is not followed).  Warning, heuristic:
+  an undefined IRI is still a shape (2.1), one with no constraint that every node conforms to, so the
+  reference is valid SHACL but most likely a typo.
+* **SHQ020.** Every shape with ``sh:deactivated`` true (an ``xsd:boolean`` literal: ``true`` or
+  ``"1"^^xsd:boolean``).  Excluded: ``false`` and a string ``"true"``.  Info, heuristic: 2.1.6 makes
+  deactivation a legitimate way to switch off an imported shape; the finding is a reminder.
+* **SHQ021.** Every node typed ``sh:NodeShape`` (and not a property shape: typed ``sh:PropertyShape``, a
+  value of ``sh:property`` or a subject of ``sh:path``) with no target (``sh:targetClass``,
+  ``sh:targetNode``, ``sh:targetSubjectsOf``, ``sh:targetObjectsOf``, or SHACL-AF's ``sh:target``), not
+  typed ``rdfs:Class`` or ``owl:Class`` (an implicit class target, 2.1.3.3), not referred to by any
+  ``sh:node``, ``sh:not``, ``sh:property`` or ``sh:qualifiedValueShape`` value or ``sh:and``, ``sh:or`` or
+  ``sh:xone`` member, and not deactivated (SHQ020's).  Excluded: untyped node shapes; references from
+  other shapes graphs, ``sh:shapesGraph`` users and SHACL-AF rules.  Warning, heuristic: a shape that
+  nothing targets or reaches never validates anything (3.4), but it may be a library shape used
+  elsewhere.
+* **SHQ024.** Every shape with ``sh:closed`` true whose allowed properties lack ``rdf:type``: neither an
+  ``sh:path`` of one of its ``sh:property`` values (4.8.1: "explicitly enumerated as a value of sh:path in
+  any of the property shapes declared via sh:property") nor a member of an ``sh:ignoredProperties``
+  list.  Only an IRI path counts (an inverse path does not allow ``rdf:type``); a malformed ignore list
+  allows nothing.  Info, heuristic: every focus node with an ``rdf:type`` triple, so every focus node of
+  an ``sh:targetClass``, violates the shape, which is rarely intended, but a closed shape over untyped
+  nodes (``sh:targetNode``) is fine.
+* **SHQ025.** Every value of ``sh:and``, ``sh:or`` or ``sh:xone`` that is a list of fewer than two
+  members; one finding per predicate.  Excluded: a malformed list or a literal.  Info, heuristic: one
+  member is redundant (the shape itself would do), an empty ``sh:and`` always holds and an empty
+  ``sh:or`` or ``sh:xone`` never does (4.6.2-4.6.4); all are valid SHACL.
+* **SHQ026.** For every shape, every IRI path that two or more of its ``sh:property`` values have as their
+  only ``sh:path``; one finding per path.  Excluded: property shapes with ``sh:qualifiedValueShape``
+  (repeating a path is how qualified counts are written, 4.7.3), complex or blank paths, and property
+  shapes with several paths (SHQ023's); different severities or messages are not considered.  Info,
+  heuristic: legal and sometimes deliberate (a warning-level and a violation-level shape for one path),
+  but usually two definitions to merge.
+* **SHQ027.** With ``--base`` (``policy.base``) set, every IRI value of ``sh:targetClass`` that the
+  linted ontology owns (``ctx.local``) and that is neither in ``ctx.classes`` nor in ``ctx.terms`` (an
+  owned term declared as a class, property, SKOS concept, scheme or collection, or named individual
+  counts).  Excluded: foreign IRIs, and every finding when no base is configured.
+  Warning, heuristic: the target selects only instances of a class the ontology does not declare, most
+  likely a typo or a renamed class, but data may use undeclared classes.
+
+Fixtures: ``tests/rule_cases/shacl_authoring.py``, ``tests/test_shacl_authoring_spec.py``,
+``tests/test_coverage_gaps.py`` and ``tests/test_shq_specification.py``.
 """
 
 from __future__ import annotations

@@ -57,12 +57,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "{\n  \"schema_version\": 1,\n  \"rule\": {\n    \"id\": \"SHQ001\",\n    \"family\": \"SHQ\",\n    \"title\": \"Property shape without sh:name\",\n    \"severity\": \"info\",\n    \"category\": \"heuristic\",\n    \"backend\": \"rdflib\",\n    \"scope\": \"shapes\",\n    \"requires\": \"shapes\",\n    \"status\": \"implemented\",\n    \"selectable\": true,\n    \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n    \"test_requirement\": \"detector fixture and expected finding\"\n  }\n}\n"
+    "stdout": "{\n  \"schema_version\": 1,\n  \"rule\": {\n    \"id\": \"SHQ001\",\n    \"family\": \"SHQ\",\n    \"title\": \"Property shape without sh:name\",\n    \"severity\": \"info\",\n    \"category\": \"heuristic\",\n    \"backend\": \"rdflib\",\n    \"scope\": \"shapes\",\n    \"requires\": \"shapes\",\n    \"status\": \"implemented\",\n    \"selectable\": true,\n    \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n    \"test_requirement\": \"shapes graph fixtures: property shapes without sh:name, declared or values of sh:property; named, IRI-named, a literal sh:property value and a property shape only inside sh:or clean\"\n  }\n}\n"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "{\n  \"schema_version\": 1,\n  \"rule\": {\n    \"id\": \"SHQ001\",\n    \"family\": \"SHQ\",\n    \"title\": \"Property shape without sh:name\",\n    \"severity\": \"info\",\n    \"category\": \"heuristic\",\n    \"backend\": \"rdflib\",\n    \"scope\": \"shapes\",\n    \"requires\": \"shapes\",\n    \"status\": \"implemented\",\n    \"selectable\": true,\n    \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n    \"test_requirement\": \"detector fixture and expected finding\"\n  }\n}\n"
+    "stdout": "{\n  \"schema_version\": 1,\n  \"rule\": {\n    \"id\": \"SHQ001\",\n    \"family\": \"SHQ\",\n    \"title\": \"Property shape without sh:name\",\n    \"severity\": \"info\",\n    \"category\": \"heuristic\",\n    \"backend\": \"rdflib\",\n    \"scope\": \"shapes\",\n    \"requires\": \"shapes\",\n    \"status\": \"implemented\",\n    \"selectable\": true,\n    \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n    \"test_requirement\": \"shapes graph fixtures: property shapes without sh:name, declared or values of sh:property; named, IRI-named, a literal sh:property value and a property shape only inside sh:or clean\"\n  }\n}\n"
    }
   },
   "explain_unknown": {

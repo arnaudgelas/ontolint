@@ -77,6 +77,12 @@ with the 0.12.0 sources and with the new ones: they were equal once the ONT007 a
 executions and notifications, the execution counts and ``ruleIndex`` were left out, and every exit code,
 stderr line, legacy view, baseline count, text report without executions and linter snapshot is unchanged.
 ``legacy_rules.json`` did not move.
+
+Deliberate golden update (issue #11, SHQ specification): the catalogue rows of SHQ001-SHQ027 name their
+fixtures, and ``--explain SHQ001 --format json`` prints the row's ``test_requirement``, so only
+``explain_shapes_rule_json`` (its two outputs) changed; a JSON diff of the two snapshots showed nothing
+else.  The SHQ behaviour fixes before it moved no finding of the snapshot: the fixtures hold none of the
+constructs they concern, and ``legacy_rules.json`` did not move.
 """
 
 from __future__ import annotations
