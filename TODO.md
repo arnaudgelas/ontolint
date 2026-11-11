@@ -392,33 +392,31 @@ Nothing open: 0.11.0 is released (see "Recently done").
 ## P0 — before the next feature release
 
 - [ ] **Turn Renovate on, and watch its first rebase.** *Flag (2026-11-11): P0 blocked 0.11.0, but nothing in
-  the repository could close this item, so 0.11.0 shipped with it open.* Rechecked 2026-11-11: pull
-  request #1 (merged) added a second configuration, `renovate.json` at the repository root, and a
-  bot commit corrected its matchers, so there are now two configurations that disagree: the root one
-  sets `"automergeStrategy": "rebase"` at the top level since 2026-11-11 (the linear-history rule needs a rebase or a squash; the maintainer prefers rebase) but never enables automerge, so the strategy has no effect yet, groups the core
-  dependencies differently, and runs on another schedule, and Renovate reads the first file it finds
-  (its documented search order lists the repository root before `.github/`; confirm that on the
-  first run). Keep one file, with the rebase strategy. Renovate has still opened no branch,
-  pull request or issue (the only pull request is #1). Rechecked 2026-11-10: `.github/renovate.json`
-  passes `renovate-config-validator --strict` (Renovate 41), and the repository still has only
-  `main`, no pull request and no issue, so the app is not running here; the cause is outside the
-  repository (installation scope or the Mend portal), and the maintainer's to check. The release boundary is in place and proven
-  (2026-11-09): the 0.6.0 and 0.7.0 release runs waited at "Publish to PyPI" for the maintainer's
-  approval, and on a throwaway tag (`ruleset-probe-2026-11-09`, kept as a record; no `v` prefix, so
-  it starts no release) GitHub refused both a force-move ("Cannot update this protected ref") and a
-  deletion ("Cannot delete this tag"). The `main` ruleset targets the default branch only, so
-  Renovate's own branches are not restricted, and its automerge rebases
-  (`"automergeStrategy": "rebase"` in `.github/renovate.json`; it was squash until 2026-11-11, and
-  the maintainer prefers rebase and merge to squashing), which the linear-history rule accepts. What is left: Renovate has never run here (no branch, pull request or Dependency
-  Dashboard issue), so the Renovate GitHub app is probably not installed. The maintainer enabled
-  the app on 2026-11-09; two hours later there was still no branch, pull request or dashboard
-  issue, so check that the installation includes this repository ("Only select repositories")
-  and that it is enabled in the Mend developer portal. Rechecked later on 2026-11-09: still only
-  `main`, no pull request and no dashboard issue; a token without app scope cannot list the
-  installations, so this check is the maintainer's. Then watch one
-  rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear history" rule means
-  nothing for tags and can go (approved 2026-11-10; the token used here has no admin right on the
-  repository, so remove it in Settings → Rules → `tags`). *Done when:* both are observed once.
+  the repository could close this item, so 0.11.0 shipped with it open.* Issue #4. In the repository
+  (done on branch `ci/4-one-renovate-config`, 2026-11-11): one configuration is left, `renovate.json`
+  at the root (Renovate reads it before `.github/renovate.json`, which is deleted). It automerges,
+  with the rebase strategy, minor and patch updates of the `dev` dependency group and minor, patch
+  and digest updates of the digest-pinned GitHub Actions, each three days after release, plus the
+  monthly `uv.lock` maintenance; majors, `[project.dependencies]` (rdflib, pyshacl), the PyPI
+  publish action, uv and the Docker images are never automerged. `"platformAutomerge": false`, because the `main` ruleset
+  requires no status check (only no deletion, linear history and no force-push), so GitHub's own
+  automerge could merge before CI ran; Renovate merges itself only when every check on the branch is
+  green. The dev-group matcher was dead: `managerData.depGroup == 'dev'` is not JSONata (`=` is its
+  equality), so the rule never matched and `renovate-config-validator` rejects it. Checked against
+  Renovate 44's published schema with `jsonschema`; Renovate itself was not run. What is left, for
+  the maintainer: run `npx --yes --package renovate@41 -- renovate-config-validator --strict
+  renovate.json`; confirm the repository allows rebase merging; check that the Renovate app
+  installation includes this repository ("Only select repositories") and that it is enabled in the
+  Mend developer portal (the maintainer enabled the app on 2026-11-09 and it has opened no branch,
+  pull request or Dependency Dashboard issue since; a token without app scope cannot list the
+  installations). The release boundary is in place and proven (2026-11-09): release runs wait at
+  "Publish to PyPI" for the maintainer's approval, and the throwaway tag `ruleset-probe-2026-11-09`
+  could be neither force-moved nor deleted. The `main` ruleset targets the default branch only, so
+  Renovate's own branches are not restricted, and a rebase automerge satisfies its linear-history
+  rule. Then watch one rebase of a Renovate branch and one automerge. The `tags` ruleset's "linear
+  history" rule means nothing for tags and can go (approved 2026-11-10; the token used here has no
+  admin right on the repository, so remove it in Settings → Rules → `tags`). *Done when:* both are
+  observed once.
 
 ## Real-world ontologies — decisions and the validation corpus
 

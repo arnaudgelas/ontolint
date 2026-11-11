@@ -1,46 +1,64 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Renovate configuration tailored for ontolint",
+  "description": "Renovate configuration for ontolint. This is the only configuration file: Renovate reads renovate.json at the root before .github/renovate.json.",
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests",
     ":dependencyDashboard",
     ":semanticCommitTypeAll(build)"
   ],
+  "labels": ["dependencies"],
   "schedule": ["before 6am on monday"],
   "timezone": "Europe/Paris",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
   "rebaseWhen": "behind-base-branch",
+  "automergeType": "pr",
   "automergeStrategy": "rebase",
+  "platformAutomerge": false,
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 4am on the first day of the month"]
+    "schedule": ["before 4am on the first day of the month"],
+    "automerge": true
   },
   "packageRules": [
     {
-      "description": "Core runtime dependencies (reviewed individually for semantic/parsing changes)",
-      "matchPackageNames": ["rdflib", "pyshacl"],
-      "matchDepTypes": ["project.dependencies"],
-      "semanticCommitScope": "engine",
-      "automerge": false
-    },
-    {
-      "description": "Group Python dev, linting, and testing dependencies",
+      "description": "Group minor and patch updates of the dev dependency group, and automerge them once every check on the pull request has passed",
       "matchDepTypes": ["dependency-groups"],
-      "matchJsonata": ["managerData.depGroup == 'dev'"],
+      "matchJsonata": ["managerData.depGroup = 'dev'"],
+      "matchUpdateTypes": ["minor", "patch"],
       "groupName": "development tooling",
       "groupSlug": "dev-dependencies",
       "semanticCommitScope": "dev-deps",
-      "matchUpdateTypes": ["minor", "patch"]
+      "minimumReleaseAge": "3 days",
+      "automerge": true
     },
     {
-      "description": "Group GitHub Actions updates",
+      "description": "Group GitHub Actions updates. They are pinned to a commit digest (helpers:pinGitHubActionDigests), so minor, patch and digest updates of actions automerge once every check has passed",
       "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
       "groupName": "GitHub Actions",
       "groupSlug": "github-actions",
       "semanticCommitScope": "ci",
-      "matchUpdateTypes": ["minor", "patch", "digest"]
+      "minimumReleaseAge": "3 days",
+      "automerge": true
+    },
+    {
+      "description": "The PyPI publish action runs with the release's OIDC token, so its updates get their own pull request, reviewed by hand (a group automerges only if every update in it does)",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["pypa/gh-action-pypi-publish"],
+      "groupName": "PyPI publish action",
+      "groupSlug": "pypi-publish-action",
+      "automerge": false
+    },
+    {
+      "description": "Move uv, wherever it is pinned (setup-uv inputs, UV_VERSION, the uv_build backend), in one pull request that is reviewed by hand",
+      "matchPackageNames": ["astral-sh/uv", "uv-build"],
+      "groupName": "uv",
+      "groupSlug": "uv",
+      "semanticCommitScope": "ci",
+      "automerge": false
     },
     {
       "description": "ROBOT Docker base images (Alpine and Distroless)",
@@ -50,21 +68,23 @@
       "semanticCommitScope": "docker"
     },
     {
-      "description": "Python version pin in .python-version",
-      "matchPackageNames": ["python"],
-      "matchManagers": ["nodenv", "pyenv"],
-      "enabled": true
+      "description": "Runtime dependencies ([project.dependencies]: rdflib, pyshacl) are reviewed individually for semantic and parsing changes, and never automerge",
+      "matchDepTypes": ["project.dependencies"],
+      "semanticCommitScope": "engine",
+      "automerge": false
+    },
+    {
+      "description": "Major updates never automerge, whatever matched them above",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Update UV_VERSION environment variable in GitHub workflows",
+      "description": "Update the UV_VERSION environment variable in GitHub workflows (the github-actions manager already reads literal setup-uv version inputs)",
       "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
-      "matchStrings": [
-        "UV_VERSION:\\s*[\"']?(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[\"']?",
-        "version:\\s*[\"']?(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[\"']?\\s*# renovate: datasource=github-releases depName=astral-sh/uv"
-      ],
+      "matchStrings": ["UV_VERSION:\\s*[\"']?(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[\"']?"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "astral-sh/uv"
     }
