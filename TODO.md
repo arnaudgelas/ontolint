@@ -6,9 +6,7 @@ ontolint safe to run in CI and trustworthy when it reports a result. The rule ca
 individual rule backlog here.
 
 **Hotfix** ships on its own, as soon as it is done, and is blocked by nothing else below. `P0`
-blocks the feature release after 0.11.0 (0.8.0, 0.9.1, 0.10.0 and 0.11.0 shipped, and 0.9.0 was
-tagged but not published, while it was still open; 0.11.0 shipped with the Renovate item open, see
-it). `P1` is the next milestone after P0. `P2`
+blocks the feature release after 0.11.0 (which shipped with the Renovate item open, see it). `P1` is the next milestone after P0. `P2`
 is worthwhile only after the preceding work is complete. “Decision gate” means no implementation starts until the
 stated decision is accepted. Re-audit external-service assertions (GitHub settings, Action history
 and PyPI state) when starting the item; they do not belong in a permanent source-controlled fact
@@ -370,132 +368,6 @@ Nothing open: 0.11.0 is released (see "Recently done").
   proven only by the local run of the step's script with stub `curl`, `uv` and `sleep` (a lagging
   API passes, an extra file or a failing attestation still fails). Same code as 0.10.0.
 
-- 0.10.0 (`d6c45c1`, tag `v0.10.0`), released 2026-11-10: run 42774442860 passed the CodeQL gate,
-  tests and build, and published both files; its `verify` job failed on PyPI's lagging JSON API
-  (fixed in 0.10.1), and the attestations were verified by hand instead. Its changelog has the upgrade
-  note below. The gate passed (5663 tests, 99.4% coverage), and a
-  targeted mutation run of `modules.py`, `prof.py`, `library.py`, `rules/library.py` and
-  `reporting.py` killed every mutant (one equivalent `frozen=True` pardoned):
-  - **baseline break, on purpose:** `ONT005` names the provenance that is missing ("Missing
-    creator and dcterms:created provenance.", or only the one that is absent) and `OWL013` prints
-    the literal in N3 (`"lit"`), not its Python repr. Both change the fingerprints of their
-    findings, so baselines holding them must be regenerated. `legacy_rules.json` was re-pinned
-    after every legacy view of 0.9.0 was shown equal to the new one up to exactly those two
-    substitutions (see the `test_differential.py` docstring). `OWL034`, `OWL036` and `OWL040`
-    still print reprs (P1); fixing them breaks baselines again, so do it in this release too if
-    possible;
-  - `--module-annotation PREDICATE` and `--module-by namespace` (policy `module_annotation`,
-    `module_by`) group findings by modules inside one file: `In: module X`, a "Findings by
-    module" summary, JSON `modules` and `module_summary`, SARIF `properties.modules`; a collision
-    belongs to every term's module (`Finding.related`), fingerprints unchanged. Validation: the
-    food-traceability schema groups into its 13 `opla:isNativeTo` modules (findings on its 37
-    unannotated terms have none); Tractus-X `ontology.ttl` shows all 13 IRI003 collisions and 5 of
-    the 6 LEX004 collisions as cross-module (the sixth is within `behaviour#`, so the earlier count
-    of "6 between domains" was wrong);
-  - `--shapes-from-profile PROFILE` uses the SHACL validator a W3C PROF profile names, found
-    offline (catalog, `--import-dir`, or a file named after the artifact beside the profile) and
-    sandboxed (`SEC009`). Validation: MOD's own `profile.ttl` and `validator.ttl` are not valid
-    Turtle (undeclared `rdfs:` and `dcatnull:` prefixes) and fail with an INPUT001 naming the file;
-    with those two prefixes added, the profile resolves `…/dcat-profile/validator` to
-    `validator.ttl` and gives the same 14 `SHACL001` findings on `mod.ttl` as `--shapes`;
-  - `--pattern-library DIR` and rules `LIB001`-`LIB003` (opt-in by input, skipped without it;
-    catalogue: 302 rows, 247 implemented). Validation on MODL (`modl/modl.owl` with `modl/`): 12
-    of the 31 pattern files do not parse with RDFLib (unterminated strings, newlines in literals,
-    undeclared prefixes) and are skipped with `TOOL008`; none of the 29 index entries (`Sequence` is
-    declared twice) names a pattern by IRI (14 have a same-named pattern, which the message names),
-    5 patterns have no entry, and 5 headers name a related pattern that no file declares
-    (`…/agent`, twice) or that is in a skipped file (`…/provenance` twice, `…/participantrole`),
-    which the message then says.
-
-0.6.0, 0.7.0 and 0.8.0 were released on 2026-11-09, each after the maintainer's approval in the
-release run (0.8.0: run 42586191689, all jobs green, 0.8.0 on PyPI). 0.9.0 was tagged the same
-day (`98b82f6`) and pushed, but its release run failed at the CodeQL gate before publishing: `main`
-was pushed with a commit on top of the tagged one, and CodeQL scans only the head of a push
-(`docs/releasing.md` now says so). The same code shipped as 0.9.1 on 2026-11-10 (`18e1343`, run
-42769298672, all jobs green, both attestations verified by its `verify` job). Kept only so the next
-audit can confirm them, then delete these entries.
-Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries were confirmed (all released, release jobs green) and removed;
-`CHANGELOG.md` keeps their record.
-
-- 0.9.0 (`98b82f6`, tag `v0.9.0`), tagged but never published; released as 0.9.1:
-  - borrowed vocabulary terms are not the ontology's own (`f31e419`): Dublin Core, SKOS, DCAT, IAO
-    and the other `WELL_KNOWN_NAMESPACES` declared for OWL 2 DL no longer draw LEX001, LEX002,
-    METRIC003, IRI005 or IRI008. A fixture with the pattern gave 16 findings on 0.8.0 and none
-    now; the corpus, twelve well-known vocabularies linted on their own and the CCO closure are
-    unchanged;
-  - SEM001 groups ROBOT's violations by kind and subject; the full report is the finding's new
-    `details` field in JSON and SARIF (`7340436`);
-  - the release `verify` job checks PyPI holds exactly the built files and verifies each one's
-    PEP 740 attestation (`7e65c06`), tried on the published 0.8.0 files and on tampered copies;
-  - specifications for every error-severity rule and the whole OWL family (OWL001-OWL045, the
-    SKOS errors, ALIGN003, the SHQ errors, SEC014 and the pipeline rules), in each module's
-    docstring with cases for each condition and exclusion and corrected catalogue rows
-    (`d0325a3` to `627ed47`). Defects fixed on the way: OWL008, OWL011 (the closure axiom it
-    recommends: 20 false positives gone on the corpus, nothing else changed), OWL022, OWL024,
-    OWL036 (`-0`), SKOS001 (tag case, `xsd:string`), SKOS002, SKOS008, SKOS009 (transitive),
-    SKOS016, SHQ011 (`x` and `q` flags), SHQ018 (a crash and numeric promotion), and in the safe
-    loader SEC001 (catalog size), SEC009 (symlinked directories) and SEC013 (C resolvers, UDP).
-  - the first `validation.yml` run (42611542815, scheduled, 2026-11-09) failed in both jobs, both
-    fixed but not yet proven by a hosted run: the ROBOT container runs as the calling user
-    (`30e5732`, `bc250fe`), as the image's `nonroot` user could not write `profile.txt` into the
-    0700 output directory on Linux (SEM001 "Permission denied"; Docker Desktop hides it); and
-    `coverage_timeout = 900` for gremlins (`d1754e9`), since the pre-scan exceeded the 120 s
-    default, test selection was disabled, and the run hit the two-hour job timeout at mutant 1446
-    of 1696.
-  - Turtle that starts with an anonymous blank node (`[] a ex:K .`, as RDFLib writes one) is no
-    longer sniffed as a JSON-LD array, which failed to parse (`a02f05b`); found by the round-trip
-    property test, whose case is now an explicit `@example`;
-  - `--convert-with-robot` (`681af62`) reads OWL Functional, Manchester and OWL/XML files, inputs
-    and imports, by converting each to Turtle with the ROBOT image, alone, read-only, offline, with
-    its imports stubbed through a generated catalog and the sniffed syntax named (without one, OWL
-    API falls back to its OBO parser and accepts almost anything). The automatce edit file and its
-    12 imports (10 components, 2 import modules) lint as a closure in 7 s: 109 findings in 8 of the
-    13 files, nothing unresolved, and the closure holds every triple of ROBOT's own `merge` (the 61
-    extra triples are the modules' headers, which `merge` drops). A Manchester file that relies on
-    an import's declarations fails with an `INPUT001` saying so. The Validation workflow runs the
-    conversion against the real image. `--owl-profile DL` on the edit file passes too (ROBOT reads
-    the `catalog-v001.xml` beside it);
-  - `--import-dir` with BFO, verified (2026-11-09): MFTO with BFO `classes-only.owl` (matched by
-    its version IRI) and RO `core.owl` in one folder resolves both, 37 findings, none on BFO or RO
-    terms; with RO alone, 38, the extra one SEC007 naming BFO.
-- 0.8.0 (`7b08ff8`, tag `v0.8.0`), released. From
-  linting fifteen public ontologies:
-  - ownership judges only an ontology's own terms (`a6eef83`): file extensions and ODK release
-    suffixes are stripped from the ontology IRI, the `<dir>/<NAME>_` ID prefix applies beyond OBO,
-    and the dominant namespace is used before "own everything". automatce-full: 695 → 114
-    findings, none foreign; CCO's closure has no finding on BFO;
-  - the import root is the enclosing repository, and each module's own catalog is read (`eb77492`);
-    a catalog entry naming a missing file leaves the import unresolved with a TOOL004 note. CCO,
-    EMMO and SDC lint with `--follow-imports` without SEC009 or INPUT001;
-  - the input syntax is sniffed (`ccebe3f`): Turtle in `.owl` (MODL) lints; OWL Functional,
-    Manchester and OWL/XML fail with a clear message; a parse failure says where an embedded
-    HTML page starts (ISAAC: line 2194);
-  - relative `owl:imports` are one GOV002 note, shown relative to the file and kept out of SEC008
-    (`0efba7a`); IDS: 84 → 5 findings, and no local path in the output;
-  - `--import-dir DIR` maps imports to local copies by ontology or version IRI, and catalogs match
-    version IRIs (`be8ea61`);
-  - rule defects (`191c9cd`, `ddbcdf5`, `6ed9131`): METRIC005 external superclasses, IRI001
-    `http:` without a host, OWL011/OWL043 named foci, LEX002 knows CCO 1.x definitions and
-    subproperties of definition predicates (SDC's `ArtifactOntology.ttl`: 576 → 21 findings) and
-    TOOL005 suggests unknown ones, header metadata via `owl:ontologyIRI` (MOD), the SPDX licence
-    hint (Tractus-X), RDFLib's stderr silenced;
-  - new rules (`7395d9f`): DATA003 ill-typed literals and `rdfs:Literal`-typed values, DATA004
-    datatypes outside the OWL 2 map (`xsd:anyType`, `xsd:date`), IRI018 Protégé placeholder IRIs,
-    IRI019 declared prefixes no IRI uses. Catalogue: 299 rows, 244 implemented.
-- 0.7.0 (`872e79c`, `283dc4e`, `9e4c28f`, `8c15b1d`), released: modular stages
-  2-4. Closure findings name the declaring module (JSON `path`, SARIF artifact and region,
-  text `In:`); header rules judge the root ontology only and ownership derives from its IRI;
-  METRIC011 ignores local modules; a shapes file that imports the ontology supplies it as SHACL-only
-  background. On a real fixture suite every declared outcome matches (13 of 13, 11 of 11 planted
-  violations; valid and warnings-only fixtures pass).
-- 0.6.0 (`0e5a2aa`, `a4e08f9`): modular stage 1, released.
-  `--follow-imports` and `--catalog` load the `owl:imports` closure from local files (catalog `uri`,
-  `group` with `xml:base`, `rewriteURI`, `file:` IRIs), never the network; sandboxed (SEC009),
-  bounded by `max_import_depth`, `max_imported_files` and `max_triples` (new SEC015); SEC007 lists
-  only unresolved imports and ONT002 ignores imported headers. Synthetic corpus in
-  `tests/fixtures/modular/`; on a real 12-module ontology the closure equals a direct catalog merge
-  and ROBOT's merge up to OWL API normalisation; targeted mutation run kills every mutant.
-
 ## P0 — before the next feature release
 
 - [ ] **Turn Renovate on, and watch its first rebase.** *Flag (2026-11-11): P0 blocked 0.11.0, but nothing in
@@ -527,13 +399,13 @@ Leftovers from each are in the open items below. The 0.4.x and 0.5.x entries wer
   nothing for tags and can go (approved 2026-11-10; the token used here has no admin right on the
   repository, so remove it in Settings → Rules → `tags`). *Done when:* both are observed once.
 
-## Real-world ontologies — left open by 0.8.0
+## Real-world ontologies — decisions and the validation corpus
 
 Everything here comes from linting fifteen public ontologies on 2026-11-09 (sources in the corpus
 table at the end of this section). Each item names the files that show it; every fix gets a small
 synthetic fixture copying the pattern, and the real repositories are only used for validation runs.
-What is done is under "Recently done"; nothing is open here as of 2026-11-10, only the decisions
-below.
+Nothing is open here as of 2026-11-10: what remains is the decisions
+below, so that the next audit does not reopen them, and the corpus.
 
 - Decided, recorded here so the next audit does not reopen them:
   - IRI016 on an ontology IRI ending in `#` (MODL) is not a defect: the rule's cases deliberately
@@ -548,7 +420,7 @@ below.
   - ONT005's message changed at the 0.10.0 baseline break (2026-11-10), not at 1.0: pre-1.0
     minor releases may break baselines with an upgrade note.
   - Modules inside one file, PROF profiles and pattern libraries are in scope (2026-11-10) and
-    built for 0.10.0 (see "Recently done"). Left for later, only if asked: a
+    built for 0.10.0. Left for later, only if asked: a
     `library_entry_classes` policy key (the entry classes are inferred today), and linking a
     pattern library whose index names patterns by some other convention than IRI or name.
 
@@ -588,11 +460,9 @@ Validation corpus (public; licences per repository):
   need it. Locate terms inside graph blocks too, with a property test like the other formats'.
   *Done when:* a TriG finding has the region of its focus, as its Turtle twin does.
 
-- [ ] **Source regions: confirm one real-world JSON-LD layout.** Everything else in this item is
-  done (0.5.0 and 0.5.2): property tests check that every region spells its node in all four
-  formats and that JSON-LD layout (whitespace, decoy duplicate keys) never changes the findings.
-  Still unverified: that Java's Jackson pretty-printer writes `"key" : value`. Confirm it with a
-  Jena or jsonld-java export and keep that file as a fixture. Needs a Java JSON-LD tool, which the
+- [ ] **Source regions: confirm one real-world JSON-LD layout.** Unverified: that Java's Jackson
+  pretty-printer writes `"key" : value`. Confirm it with a Jena or jsonld-java export and keep that
+  file as a fixture. Needs a Java JSON-LD tool, which the
   development machine does not have.
 
 - [ ] **Calibrate metric thresholds before treating them as universal policy.** Existing `METRIC*`
@@ -606,7 +476,7 @@ Validation corpus (public; licences per repository):
   any changed default has regression fixtures demonstrating the intended boundary.
 
 - [ ] **SHACL001 evidence: what is left to the maintainer.** The evidence itself is done
-  (unreleased, see "Recently done"). Three choices were left out because each changes a contract:
+  (0.11.0, see "Recently done"). Three choices were left out because each changes a contract:
   - *Nested results reported twice.* pySHACL types the `sh:detail` results of a `sh:node`
     violation as `sh:ValidationResult` too, although the report's `sh:result` does not list them,
     so each is a finding of its own as well as an entry
@@ -621,7 +491,7 @@ Validation corpus (public; licences per repository):
   *Done when:* each of the three is decided, and a decided change has its fixture.
 
 - [ ] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
-  (unreleased, see "Recently done"). Left open, each a decision rather than code:
+  (0.11.0, see "Recently done"). Left open, each a decision rather than code:
   - *Release sequencing.* Baselines written by 0.10.x hold version 1 hashes only, so a message
     fix shipped in the same release as identity v2 still breaks those entries once. Recommended:
     ship v2 in release N, with the upgrade note "regenerate the baseline once", and the message
@@ -646,16 +516,14 @@ Validation corpus (public; licences per repository):
   roughly 120 of the 244 implemented rules (tranche 1, OWL, METRIC and the leftovers) were
   specified from placeholder titles and never reviewed. The goal as written covers all 244 and will
   not finish: take one family per milestone, starting with error-severity rules and the OWL and
-  METRIC families. Done in 0.5.2 for the three rules known to have drifted (IRI015, LEX018 and
-  LEX021): their module states each condition, and their catalogue test requirements no longer
-  describe the original plans. Specify
+  METRIC families. Specify
   scope, formal condition, exclusions, confidence/severity rationale, and positive and negative
   fixtures; correct documentation or implementation when they disagree.
   *Done when:* each implemented rule has an approved, testable specification and its catalogue,
   user documentation, and fixtures state the same contract.
-  Done for 0.9.0: every error-severity rule and the whole OWL family (see "Recently
-  done"); the specifications await the maintainer's approval. Done for 0.11.0: the METRIC family (see "Recently done", METRIC-SPEC). Next: the SKOS, SHQ, CLS, LEX and IRI families. Left open
-  by that review:
+  The specifications of every error-severity rule, the whole OWL family and the METRIC family
+  (0.11.0, see "Recently done", METRIC-SPEC) await the maintainer's approval. Next: the SKOS, SHQ,
+  CLS, LEX and IRI families. Left open by those reviews:
   - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
     `--fail-on` results): OWL009 warning → error, and OWL010 info → warning or error (both
     describe graphs outside OWL 2 DL); OWL013/OWL014 → error; OWL032 info → warning; OWL045's
@@ -670,7 +538,7 @@ Validation corpus (public; licences per repository):
     letter); OWL035 "several constraints" (a restriction with both `minCardinality` and `maxCardinality`, a
     common OWL 1 / Protégé idiom) ships at error and needs counting on the real-world corpus;
     OWL010 and OWL032 stay info although their new conditions are outside OWL 2 DL too.
-  - *Defects that change an exit code, a focus or a message:* all fixed, unreleased (see
+  - *Defects that change an exit code, a focus or a message:* all fixed in 0.11.0 (see
     "Recently done", AUDIT-DEFECTS): an unwritable or unencodable report is TOOL001 and exit 2
     (`db56b3f`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`77b8f84`), and so does
     OWL013 for a literal with a line break (`85562dc`); SEC014 masks the password in its focus
@@ -693,17 +561,17 @@ Validation corpus (public; licences per repository):
       module is the masked namespace. Carrying the raw IRI in `related` would put the secret
       back into reports, so this is accepted until a finding can name its module directly.
   - *False positives found by the 2026-11-10 review:* (LEX002 and every rule using
-    `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed, unreleased, in
+    `RuleContext.descriptions` followed `rdfs:subPropertyOf` one step only: fixed in 0.11.0, in
     6dc2285 and 19d9667, see "Recently done"). Follow-ups, each with its own negative cases
     because it changes other rules' contracts: the same closure for label predicates
     (`ctx.labels`: LEX001, LEX018, METRIC001), `owl:equivalentProperty` to a definition predicate,
     and sub-properties of `skos:note`/`skos:scopeNote` for LEX002 (no closure today, not even one
     step). OBO's fixed `DEFINITION_PREDICATES` stay IAO-only by design.
-  - *Policy that silently does nothing:* fixed, unreleased (see "Recently done", POLICY-SILENT).
+  - *Policy that silently does nothing:* fixed in 0.11.0 (see "Recently done", POLICY-SILENT).
     Follow-up for RULE-DOCS: `--list-rules --format json` still says `"selectable": true` for the
     pipeline rules, which `--select` now rejects; the field means "implemented" today, and changing
     it changes that JSON contract.
-  - *Coverage gaps:* closed, unreleased (see "Recently done", COVERAGE-GAPS). Left open, each
+  - *Coverage gaps:* closed in 0.11.0 (see "Recently done", COVERAGE-GAPS). Left open, each
     with its reason in the rule's specification:
     - *SHQ011 inside a character class:* an unescaped `[` not after `-`, a leading `]` and the
       placement of `-` are left to Python, as XSD 1.0 and 1.1 disagree on them and an error rule
@@ -725,12 +593,7 @@ Validation corpus (public; licences per repository):
     the new cases and the specifications are visible only in the source. Render the module
     specifications (or all cases) in the generator.
 
-- [ ] **Close the remaining legal and provenance gaps.** Done in 0.5.0: `SECURITY.md` points
-  reporters at GitHub private vulnerability reporting and states the supported versions. Checked:
-  every PyPI release (0.1.0 to 0.6.0) already carries a PEP 740 attestation naming this repository
-  and `release.yml`, because Trusted Publishing creates one. Done in 0.9.1: the release `verify`
-  job (`7e65c06`) checks that PyPI holds exactly the built files and verifies each one's
-  attestation; the 0.9.1 run printed OK for both files. Still open:
+- [ ] **Close the remaining legal and provenance gaps.** Still open:
   - the copyright holder for the Apache-2.0 notice (`pyproject.toml` names the author; `LICENSE`
     names nobody, and there is no `NOTICE` file). The maintainer's decision, not code;
   - the crosswalk question is answered (2026-11-09, `data/README.md`): neither catalogue states a
@@ -746,16 +609,10 @@ Validation corpus (public; licences per repository):
 
 - [ ] **Approve a current mutation baseline before making it blocking.** Existing mutation-policy
   thresholds and pardon-review rules are useful only if a clean GitHub run establishes that the
-  current suite meets them. The last *full* triage predates 0.4.0. Every in-scope module changed
-  since then had a targeted run for 0.5.2 (`cli.py`, `reporting.py`, `source_locations.py`,
-  `adapters/shacl.py` and the `owl`, `owl_expressions`, `hierarchy_quality`, `metrics` and
-  `class_heuristics` rules): 596 mutants, 97% killed on the first pass, the survivors then killed by
-  new tests; and the modules changed for 0.6.0 and 0.7.0 (`imports.py`, `engine.py`, `cli.py`,
-  `reporting.py`, `rules/metrics.py`, `rules/metadata.py`) had their own targeted runs, all
-  survivors killed. `context.py`, changed in 0.5.1 and 0.7.0, is outside the mutation scope; decide
+  current suite meets them. The last *full* triage predates 0.4.0; the targeted runs since then killed every mutant in the code each release changed, and the survivors that remain are all in older code (see the 0.10.2 entry). `context.py` is outside the mutation scope; decide
   whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. The
-  first hosted run (42611542815) timed out before writing a report; its causes are fixed (see
-  "Recently done") and on `main` since 2026-11-09. Its re-run on 2026-11-10 (attempt 2) proves
+  first hosted run (42611542815) timed out before writing a report; its causes are fixed and on
+  `main` since 2026-11-09. Its re-run on 2026-11-10 (attempt 2) proves
   nothing: a re-run repeats the original commit (`7b08ff8`, 0.8.0), so the ROBOT job failed again
   with the old "/output/profile.txt (Permission denied)". Start a new run with "Run workflow" on
   `main` instead, then have a
@@ -781,7 +638,7 @@ today's reports. Every item here keeps to these rules:
 - measurements are deterministic and stay out of the default text output. They change no finding,
   fingerprint or exit code unless a budget is configured.
 
-Order: DATASET-PROVENANCE (P0; done, unreleased: `datasets.GraphIndex` gives every triple's
+Order: DATASET-PROVENANCE (P0; done in 0.11.0: `datasets.GraphIndex` gives every triple's
 graphs), then METRICS-ENGINE, then the snapshot (QUALITY-BASELINE and QUALITY-TRENDS), then
 QUALITY-BUDGET (P2). DQV-REPORT and MARKDOWN-SUMMARY render the same model and
 GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and can go first.
@@ -954,8 +811,7 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
 - [ ] **Record per-rule findings on the validation corpus at every release.** The corpus in
   "Real-world ontologies" is only used by hand, so a release can double one rule's findings on CCO
   unnoticed. Pin each repository's commit, run a fixed command per file, and keep the per-rule
-  counts in the repository; a release shows the diff and explains every change (the 0.8.0 and
-  0.9.0 entries above did this by hand). This is the cheap half of precision measurement; labelled
+  counts in the repository; a release shows the diff and explains every change. This is the cheap half of precision measurement; labelled
   true and false positives remain the metric-calibration item's job. *Done when:* a script
   reproduces the counts from pinned sources and the release instructions require reviewing their
   diff.
@@ -1039,11 +895,9 @@ moves from `proposed` merely because it has an attractive title.
   chain, status, negotiated type, time), because a DNS or HTTP failure is an observation, not proof
   that an ontology is not FAIR. Registry absence (FAIR005) is not a defect for an internal
   ontology; it belongs in an opt-in profile.
-- [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built (see "Recently
-  done"): offline resolution, per-module provenance, closure semantics and SHACL with the ontology
+- [ ] **Modular ontologies: finish what stages 1-4 left open.** Stages 1-4 are built: offline resolution, per-module provenance, closure semantics and SHACL with the ontology
   as background. Left:
-  - *Validation on a public corpus:* started on 2026-11-09, see "Real-world ontologies — left open
-    by 0.8.0". The import root and ownership (0.8.0) and Functional Syntax (`--convert-with-robot`,
+  - *Validation on a public corpus:* started on 2026-11-09, see "Real-world ontologies". The import root and ownership (0.8.0) and Functional Syntax (`--convert-with-robot`,
     0.9.0) no longer block it: CCO and EMMO lint as closures, and the automatce edit file with its
     12 imports. What is left is the maintainers' false-positive review below.
   - *Memory:* each module's source index keeps its graph alive, so a closure holds its triples
@@ -1068,8 +922,8 @@ moves from `proposed` merely because it has an attractive title.
   consumer. JSON and SARIF are the integration contracts to keep sound first. Markdown now has its
   consumer (MARKDOWN-SUMMARY, P1) and a CI test format is CTRF-REPORT (P2), which takes JUnit's
   place.
-- **Automatic fixes (`--fix`):** defer until findings carry structured evidence (SHACL001 does,
-  unreleased, and every finding names its subject for its baseline identity); only
+- **Automatic fixes (`--fix`):** defer until findings carry structured evidence (SHACL001 does
+  since 0.11.0, and every finding names its subject for its baseline identity); only
   round-trip-verified, meaning-preserving edits would ever qualify, and modelling or logical corrections (deleting an
   axiom that causes an inconsistency) never.
 - **Editor integration (a language server):** defer until source regions are exact for the
@@ -1107,9 +961,9 @@ again.
   parsing moves to a worker process with `--max-parse-seconds`. Its proposed CLI subcommands and
   evidence model are design input for the COMP ADR and the P1 SHACL item, not tasks of their own.
   Its fuller version (same date and target) was rechecked against 0.10.2 on 2026-11-10. Taken up
-  from it: SHACL validation has no time budget (reproduced; P1), named-graph provenance
-  (DATASET-PROVENANCE, P0), the single-file and multi-file fingerprint split (BASELINE-V2,
-  unreleased), a JSON Schema for the JSON report (OPS item, P2), the blank-node identity
+  from it: SHACL validation had no time budget (SHACL-TIMEOUT, 0.11.0), named-graph provenance
+  (DATASET-PROVENANCE, 0.11.0), the single-file and multi-file fingerprint split (BASELINE-V2,
+  0.11.0), a JSON Schema for the JSON report (OPS item, P2), the blank-node identity
   cost (P2), and acceptance cases for the SEM, CQ, ALIGN and policy-pack gates. Checked and not
   taken up:
   - metamorphic tests exist: `test_properties_lint.py` covers triple order, blank-node labels,
@@ -1120,24 +974,7 @@ again.
   - a language server, `--fix`, caching and changed-line filtering stay deferred, for the reasons
     under "Explicitly deferred".
 
-- **Exit code 2 with `--fail-on never`:** decided and documented in the README exit-code table.
-- **License choice:** Apache-2.0. Only the copyright-holder attribution and the OOPS!/OntoSniff
-  crosswalk terms remain, and both are in the legal item under P1.
-- **Source locations / "custom parser or second pass":** decided and shipped (second pass over the
-  source text). Its crash was fixed in 0.4.1, its wrong regions and quadratic cost in 0.5.0; what
-  remains is the source-region item under P1.
-- **CodeQL failure on `6e8ec3e` (HTTP 504 fetching the bundle):** transient; CodeQL is green on
-  later commits. The AI security scan on the same commit failed the same way. It is GitHub-managed
-  and, as of 2026-11-08, has run on no commit since, so releases gate on CodeQL only (the
-  `codeql` job in `release.yml`), never on the AI scan.
-- **Pull request / remote / first GitHub run:** a remote exists and CI and release have run; only
-  `validation.yml` first ran on 2026-11-09 and failed; its rerun is covered by the
-  mutation-baseline item.
 - **"Which rule group next?":** the question is moot. All 55 proposed rules are blocked by a missing
   backend or input contract (COMP 16, CQ 13, FAIR 13, SEM 7, ALIGN 4, GOV 1, IRI 1), so none can be
   implemented without one of the decision gates above being accepted first. (An earlier version of
   this file claimed the gates covered all of them; ALIGN had no gate until it was added.)
-- **Packaged catalogue must equal the source copy:** already enforced by
-  `tests/test_registry.py` (byte comparison), which runs in CI and in the release `test` job.
-  A separate required check would only duplicate it.
-
