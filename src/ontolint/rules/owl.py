@@ -49,10 +49,12 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   ``owl:ReflexiveProperty`` and ``owl:IrreflexiveProperty`` are OWL016's.  Ownership is not checked.
   Warning, certain: these axioms take object property expressions only (SS 9.2, DS Table 6), so the
   graph is not OWL 2 DL.
-* **OWL010.** Every subject of an ``owl:propertyChainAxiom`` whose object is a well-formed RDF list of
-  exactly one member.  A malformed list and an empty list (``rdf:nil``) are not reported.  Ownership is
-  not checked.  Info, certain: SS 9.2.1 and MAP Table 16 require at least two chain members, so the
-  axiom is not OWL 2.
+* **OWL010.** Every subject of an ``owl:propertyChainAxiom`` whose object is not a list of two or more
+  members, one finding per kind of defect: a well-formed RDF list of exactly one member; the empty list
+  (``rdf:nil``); or no well-formed RDF list at all (a literal, an IRI or blank node without exactly one
+  ``rdf:first`` and one ``rdf:rest``, a cyclic list), as :func:`~.support.list_items` reads it.
+  Ownership is not checked.  Info, certain: SS 9.2.1 and MAP Table 16 require at least two chain
+  members, so the axiom is not OWL 2.
 * **OWL011.** Every node with an ``owl:allValuesFrom`` value that does not also carry
   ``owl:someValuesFrom``, unless: the filler is a datatype (an XSD IRI, a node typed ``rdfs:Datatype``,
   or one with ``owl:onDatatype`` / ``owl:datatypeComplementOf``); one ``owl:onProperty`` value is
@@ -431,8 +433,15 @@ def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> Non
 def _property_chains(ctx: RuleContext) -> None:
     for p, chain in ctx.g.subject_objects(OWL.propertyChainAxiom):
         items = list_items(ctx.g, chain)
-        if items is not None and len(items) == 1:
-            ctx.add("OWL010", p, "Property-chain axiom has one operand.", confidence="certain")
+        if items is None:
+            message, about = "Property-chain axiom does not point to a well-formed RDF list.", ("malformed",)
+        elif not items:
+            message, about = "Property-chain axiom list is empty.", ("empty",)
+        elif len(items) == 1:
+            message, about = "Property-chain axiom has one operand.", ()
+        else:
+            continue
+        ctx.add("OWL010", p, message, confidence="certain", subject=about)
 
 
 def _universal_restrictions(ctx: RuleContext) -> None:

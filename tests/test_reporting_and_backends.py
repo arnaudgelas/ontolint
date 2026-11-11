@@ -169,9 +169,12 @@ def test_invalid_property_chain_and_datatype_exceptions_are_safe() -> None:
     graph.add((integer_property, RDFS.range, XSD_INTEGER))
     graph.add((EX.subject, integer_property, Literal(1)))
 
-    rules = {finding.rule for finding in Linter(graph).run()}
+    findings = Linter(graph).run()
+    rules = {finding.rule for finding in findings}
 
-    assert "OWL010" not in rules
+    # The chain is read safely and reported as what it is: no RDF list (it was silently skipped before).
+    chains = [(f.focus, f.message) for f in findings if f.rule == "OWL010"]
+    assert chains == [(str(property_chain), "Property-chain axiom does not point to a well-formed RDF list.")]
     assert "DATA001" not in rules
 
 

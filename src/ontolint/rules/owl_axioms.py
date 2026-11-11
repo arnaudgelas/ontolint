@@ -78,7 +78,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from rdflib import Literal, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, XSD
 from rdflib.term import Node
 
@@ -328,24 +328,103 @@ def _contradictory_characteristics(ctx: RuleContext) -> None:
         )
 
 
-def _non_simple_properties(ctx: RuleContext) -> None:
-    g = ctx.g
-    transitive = _typed(ctx, OWL.TransitiveProperty)
+def _property_iri(g: Graph, node: Node) -> URIRef | None:
+    """The IRI a property expression is about: an IRI itself, or ``x`` for a blank ``[ owl:inverseOf x ]``."""
+    if isinstance(node, URIRef):
+        return node
+    if isinstance(node, BNode):
+        inverses = list(g.objects(node, OWL.inverseOf))
+        if len(inverses) == 1 and isinstance(inverses[0], URIRef):
+            return inverses[0]
+    return None
+
+
+def _chained(g: Graph) -> set[Node]:
+    """Subjects of an ``owl:propertyChainAxiom`` whose well-formed list has two or more operands."""
     chained: set[Node] = set()
     for p, chain in g.subject_objects(OWL.propertyChainAxiom):
         items = list_items(g, chain)
         if items is not None and len(items) >= MIN_CHAIN_LENGTH:
             chained.add(p)
+    return chained
+
+
+def _composites(ctx: RuleContext, chained: set[Node]) -> dict[URIRef, str]:
+    """Composite properties (SS 11.1), by IRI, with what makes each composite, as the messages word it.
+
+    An expression is composite when it or its inverse is transitive or the super-property of a chain of two or
+    more properties, or when it is ``owl:topObjectProperty`` or ``owl:bottomObjectProperty``.
+    """
+    composite: dict[URIRef, str] = {OWL.topObjectProperty: "the top object property"}
+    composite[OWL.bottomObjectProperty] = "the bottom object property"
+    for kind, nodes in (("defined by a property chain", chained), ("transitive", _typed(ctx, OWL.TransitiveProperty))):
+        for node in nodes:
+            iri = _property_iri(ctx.g, node)
+            if iri is not None:
+                composite[iri] = kind  # transitive, written last, wins over a chain
+    return composite
+
+
+def _non_simple(ctx: RuleContext, chained: set[Node]) -> dict[URIRef, tuple[URIRef, str]]:
+    """Every non-simple property (OWL 2 SS 11.1), by IRI, with a composite property it is reached from and its kind.
+
+    SS 11.1 defines ``→`` over object property expressions: ``OPE1 → OPE2`` for ``SubObjectPropertyOf(OPE1
+    OPE2)``, both ways for ``EquivalentObjectProperties``, ``OPE1 → INV(OPE2)`` and ``INV(OPE2) → OPE1`` for
+    ``InverseObjectProperties(OPE1 OPE2)``, ``OPE → INV(OPE)`` for ``SymmetricObjectProperty``, and with every
+    ``A → B`` also ``INV(A) → INV(B)``.  A property is non-simple when a composite expression reaches it through
+    ``→*``.  A property and its inverse are composite together, and every edge comes with its inverse edge, so
+    one of them is reached exactly when the other is: the walk can drop the direction of inversion and run over
+    IRIs, where the inverse axiom links its two IRIs both ways and the symmetric one adds nothing.  A blank
+    ``[ owl:inverseOf x ]`` stands for ``x``.  The walk is iterative and expands each IRI once, from the sorted
+    composites, so a cycle ends it and the witness is the first composite that reaches the property.
+    """
+    g = ctx.g
+    edges: dict[URIRef, set[URIRef]] = {}
+    for predicate, both_ways in (
+        (RDFS.subPropertyOf, False),
+        (OWL.equivalentProperty, True),
+        (OWL.inverseOf, True),
+    ):
+        for s, o in g.subject_objects(predicate):
+            if predicate == OWL.inverseOf and not (isinstance(s, URIRef) and isinstance(o, URIRef)):
+                continue  # a blank subject is an inverse expression, not an InverseObjectProperties axiom
+            sub, sup = _property_iri(g, s), _property_iri(g, o)
+            if sub is None or sup is None:
+                continue
+            edges.setdefault(sub, set()).add(sup)
+            if both_ways:
+                edges.setdefault(sup, set()).add(sub)
+    composites = _composites(ctx, chained)
+    reached: dict[URIRef, tuple[URIRef, str]] = {iri: (iri, kind) for iri, kind in composites.items()}
+    for root in sorted(composites, key=str):
+        stack = [root]
+        while stack:
+            for nxt in sorted(edges.get(stack.pop(), ()), key=str):
+                if nxt not in reached:
+                    reached[nxt] = reached[root]
+                    stack.append(nxt)
+    return reached
+
+
+def _non_simple_properties(ctx: RuleContext) -> None:
+    transitive = _typed(ctx, OWL.TransitiveProperty)
+    chained = _chained(ctx.g)
+    non_simple = _non_simple(ctx, chained)
+    data_only = _data_only(ctx)  # outside the object property hierarchy
     for label, type_ in SIMPLE_ONLY_CHARACTERISTICS:
-        for p in _ordered(_typed(ctx, type_) & (transitive | chained)):
-            reason = "transitive" if p in transitive else "defined by a property chain"
-            ctx.add(
-                "OWL019",
-                p,
-                f"Property is {reason} (non-simple) but declared {label}.",
-                confidence="certain",
-                subject=(type_,),
-            )
+        for p in _ordered(_typed(ctx, type_)):
+            if p in transitive or p in chained:
+                reason = "transitive" if p in transitive else "defined by a property chain"
+                message = f"Property is {reason} (non-simple) but declared {label}."
+            elif isinstance(p, URIRef) and p in non_simple and p not in data_only:
+                witness, kind = non_simple[p]
+                if witness == p:
+                    message = f"Property is {kind} (non-simple) but declared {label}."
+                else:
+                    message = f"Property is non-simple through {witness}, which is {kind}, but declared {label}."
+            else:
+                continue
+            ctx.add("OWL019", p, message, confidence="certain", subject=(type_,))
 
 
 def _pop_component(stack: list[Node], on_stack: set[Node], root: Node) -> list[Node]:

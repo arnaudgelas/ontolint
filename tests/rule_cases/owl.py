@@ -183,13 +183,17 @@ CASES = {
         [
             ttl("one-operand chain", "ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ) ."),
             ttl("one-operand chain on an undeclared property", "ex:p owl:propertyChainAxiom ( ex:q ) ."),
-        ],
-        [
-            ttl("two-operand chain", "ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ex:r ) ."),
             ttl(
                 "malformed list (not an RDF list)",
                 "ex:p a owl:ObjectProperty ; owl:propertyChainAxiom _:l . _:l rdf:first ex:q .",
             ),
+            ttl("empty chain", "ex:p a owl:ObjectProperty ; owl:propertyChainAxiom () ."),
+            ttl("chain is a literal", 'ex:p a owl:ObjectProperty ; owl:propertyChainAxiom "ex:q ex:r" .'),
+            ttl("cyclic chain list", "ex:p owl:propertyChainAxiom _:l . _:l rdf:first ex:q ; rdf:rest _:l ."),
+        ],
+        [
+            ttl("two-operand chain", "ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ex:r ) ."),
+            ttl("three-operand chain", "ex:p owl:propertyChainAxiom ( ex:q ex:r ex:s ) ."),
         ],
     ),
     "OWL011": rule_cases(
