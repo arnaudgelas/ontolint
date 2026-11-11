@@ -539,6 +539,11 @@ SHACL validation: past it the validation is stopped and `SHACL001` is `failed` (
 process has imported pySHACL, once per linted file, and includes handing the data and shapes
 graphs to the worker. It has no effect without shapes. Neither key inherits the other.
 
+The `metric_*` keys set the thresholds of `METRIC001`-`METRIC013`. Each is validated (an invalid
+value is `TOOL001`, exit `2`) and has no flag or profile value;
+[docs/metric-thresholds.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/metric-thresholds.md)
+lists every key with its default, the rationale and the offline measurements.
+
 ```bash
 # Emit SARIF using a policy
 ontolint ontology.ttl \
