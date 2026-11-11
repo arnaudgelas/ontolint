@@ -56,8 +56,14 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   Ownership is not checked.  Info, certain: SS 9.2.1 and MAP Table 16 require at least two chain
   members, so the axiom is not OWL 2.
 * **OWL011.** Every node with an ``owl:allValuesFrom`` value that does not also carry
-  ``owl:someValuesFrom``, unless: the filler is a datatype (an XSD IRI, a node typed ``rdfs:Datatype``,
-  or one with ``owl:onDatatype`` / ``owl:datatypeComplementOf``); one ``owl:onProperty`` value is
+  ``owl:someValuesFrom``, unless: the filler is a datatype (an IRI in the XSD namespace or one of the
+  other datatype IRIs OWL022 and OWL040 know, :data:`~.support.LITERAL_RANGES`: ``rdfs:Literal``,
+  ``owl:real``, ``owl:rational``, ``rdf:PlainLiteral``, ``rdf:XMLLiteral``, ``rdf:langString``,
+  ``rdf:HTML``, ``rdf:JSON``; a node typed ``rdfs:Datatype``; or, unlike those two error rules, an
+  untyped node with ``owl:onDatatype`` / ``owl:datatypeComplementOf``, the two constructors that build
+  nothing but a data range, so a heuristic may spare them; an untyped ``owl:unionOf``,
+  ``owl:intersectionOf`` or ``owl:oneOf`` filler is not inspected for datatype members or literals and
+  is reported); one ``owl:onProperty`` value is
   typed ``owl:DatatypeProperty``; a *sibling* restriction on one of its ``owl:onProperty`` values
   requires a value (``owl:someValuesFrom``, ``owl:hasValue``, ``owl:hasSelf``, or ``owl:minCardinality``,
   ``owl:minQualifiedCardinality``, ``owl:cardinality`` or ``owl:qualifiedCardinality`` of at least 1); or
@@ -96,7 +102,7 @@ from ontolint.context import PROPERTY_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.ownership import OwnershipMode
 
-from .support import list_items, owning_term, stable_blank_id, term_text
+from .support import is_datatype_iri, list_items, owning_term, stable_blank_id, term_text
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -566,7 +572,7 @@ def _property_name(g: Graph, node: Node) -> str:
 
 
 def _is_datatype(g: Graph, filler: Node) -> bool:
-    if isinstance(filler, URIRef) and str(filler).startswith(str(XSD)):
+    if is_datatype_iri(filler):
         return True
     return (filler, RDF.type, RDFS.Datatype) in g or any((filler, p, None) in g for p in _DATATYPE_EXPRESSIONS)
 

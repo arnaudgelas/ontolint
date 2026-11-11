@@ -9,7 +9,7 @@ from typing import cast
 from urllib.parse import SplitResult, urlsplit
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS
+from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Identifier, Node
 
 from ontolint.ownership import base_matches
@@ -32,13 +32,25 @@ DESCRIPTIONS = (
 LABELS = (RDFS.label, SKOS.prefLabel)
 META_LICENSE = (DCTERMS.license, URIRef("http://creativecommons.org/ns#license"))
 META_CREATOR = (DCTERMS.creator, DC.creator, URIRef("http://www.w3.org/ns/prov#wasAttributedTo"))
-# Datatypes outside the xsd: namespace: RDF's, and the OWL 2 datatype map's owl:real, owl:rational and
-# rdf:PlainLiteral.
+# The datatype IRIs outside the xsd: namespace, the one list every rule that tells a datatype from a class
+# by its IRI reads (through is_datatype_iri): the OWL 2 datatype map's non-XSD datatypes (Structural
+# Specification section 4: owl:real, owl:rational, rdf:PlainLiteral, rdf:XMLLiteral), rdfs:Literal (a
+# built-in datatype of section 5.2, not in the map), RDF 1.1 Concepts' rdf:langString and rdf:HTML, and
+# JSON-LD 1.1's rdf:JSON.  RDF 1.2's rdf:dirLangString is not listed yet.
 LITERAL_RANGES = frozenset(
-    {RDFS.Literal, RDF.langString, RDF.XMLLiteral, RDF.HTML, RDF.PlainLiteral, OWL.real, OWL.rational}
+    {RDFS.Literal, RDF.langString, RDF.XMLLiteral, RDF.HTML, RDF.JSON, RDF.PlainLiteral, OWL.real, OWL.rational}
 )
 MINIMUM_STYLE_SAMPLE_SIZE = 4
 MINIMUM_SINGLE_CHILD_CHAIN_LENGTH = 3
+
+
+def is_datatype_iri(node: object) -> bool:
+    """Return whether ``node`` is a datatype by its IRI alone: any ``xsd:`` IRI, or one of :data:`LITERAL_RANGES`.
+
+    A node typed ``rdfs:Datatype`` is a datatype too, but that is the graph's statement, which each rule reads
+    itself.
+    """
+    return isinstance(node, URIRef) and (node.startswith(str(XSD)) or node in LITERAL_RANGES)
 
 
 def is_local(base: str | None, node: object) -> bool:

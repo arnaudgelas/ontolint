@@ -599,9 +599,15 @@ Validation corpus (public; licences per repository):
       chain-defined; the other global restriction of SS 11.2, the regularity of the property
       hierarchy, is not checked.
     - *OWL035* accepts `owl:hasSelf "1"^^xsd:boolean` (its value is true; MAP writes only `"true"`).
-    - *OWL011's datatype test* (`owl._is_datatype`) still lacks the non-XSD datatypes OWL040 now
-      knows (`rdf:langString`, `owl:real` ...). It was not in this list, and fixing it turns OWL011
-      findings into negatives, so it needs its own cases.
+    - *OWL011's datatype test* (`owl._is_datatype`) lacked the non-XSD datatypes OWL040 knows
+      (`rdf:langString`, `owl:real` ...): fixed for issue #12. OWL011, OWL022 and OWL040 now read
+      one list, `support.LITERAL_RANGES`, through `support.is_datatype_iri`, and `rdf:JSON` joined
+      it. OWL011 alone also spares an untyped `owl:onDatatype` node, as a heuristic may; the error
+      rules need MAP's `rdfs:Datatype` typing. `tests/test_datatype_knowledge.py` holds the three
+      rules to the list. Left open: RDF 1.2's `rdf:dirLangString`; OWL040 lacks OWL022's exclusion
+      of a term typed both `owl:Class` and `rdfs:Datatype`; OWL011 reports an untyped union or
+      `owl:oneOf` of datatypes or literals; any `xsd:` IRI counts as a datatype, `xsd:anyType` and
+      misspellings included (DATA004 reports those).
     - *Real-world counts:* counted on 0.12.0 (issue #12, 2026-11-11), with sources, commands and
       checksums in `docs/validation/coverage-gaps-0.12.0.md`. All 13 rules report 0 findings on
       pinned CCO v2.2, BFO 2020 and BFO 2.0, and RO v2026-09-04, with and without imports.

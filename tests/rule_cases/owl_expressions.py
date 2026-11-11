@@ -308,6 +308,7 @@ CASES = {
                     "rdf:PlainLiteral",
                     "rdf:XMLLiteral",
                     "rdf:HTML",
+                    "rdf:JSON",
                     "owl:real",
                     "owl:rational",
                 )
@@ -351,6 +352,11 @@ CASES = {
             ttl(
                 "unknown filler is not judged",
                 f"{OP} [] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom ex:Unknown .",
+            ),
+            ttl(
+                "untyped datatype restriction filler on object property is not judged",
+                f"{OP} [] a owl:Restriction ; owl:onProperty ex:p ;\n"
+                "    owl:someValuesFrom [ owl:onDatatype xsd:integer ] .",
             ),
             ttl(
                 "inverse property expression is not judged",

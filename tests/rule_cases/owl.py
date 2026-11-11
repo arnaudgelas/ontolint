@@ -258,6 +258,32 @@ CASES = {
                 "[ a rdfs:Datatype ; owl:onDatatype xsd:integer ; owl:withRestrictions ( [ xsd:minInclusive 0 ] ) ] .",
             ),
             ttl(
+                "untyped datatype restriction filler",
+                "[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom "
+                "[ owl:onDatatype xsd:integer ; owl:withRestrictions ( [ xsd:minInclusive 0 ] ) ] .",
+            ),
+            ttl(
+                "untyped datatype complement filler",
+                "[] a owl:Restriction ; owl:onProperty ex:p ; "
+                "owl:allValuesFrom [ owl:datatypeComplementOf xsd:integer ] .",
+            ),
+            *(
+                ttl(
+                    f"{datatype} filler",
+                    f"[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom {datatype} .",
+                )
+                for datatype in (
+                    "rdfs:Literal",
+                    "rdf:langString",
+                    "rdf:PlainLiteral",
+                    "rdf:XMLLiteral",
+                    "rdf:HTML",
+                    "rdf:JSON",
+                    "owl:real",
+                    "owl:rational",
+                )
+            ),
+            ttl(
                 "datatype property",
                 "ex:d a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:d ; owl:allValuesFrom ex:A .",
             ),
