@@ -777,7 +777,12 @@ Ontologies are untrusted input, so the loader is deliberately strict:
 - Rejected inputs are reported as `SECxxx: ...` on stderr with exit code `2`,
   like a parse failure. Post-parse hygiene checks (`SEC004`, `SEC005`,
   `SEC007`, `SEC008`, `SEC012`, `SEC014`) are ordinary findings; `SEC007` is an
-  info note naming the `owl:imports` that were not followed.
+  info note naming the `owl:imports` that were not followed. `SEC014` reports an
+  IRI that embeds a password with the password masked
+  (`https://alice:****@example.test/x`), so its report and baseline entries never
+  repeat the password; the user name is still printed, so a token used as the
+  user name (`https://<token>:x-oauth-basic@...`) is not masked. Other rules
+  that report such an IRI still print it whole.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

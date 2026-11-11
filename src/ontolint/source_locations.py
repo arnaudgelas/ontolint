@@ -23,7 +23,7 @@ from rdflib.term import Node
 
 from .models import Finding
 from .reporting import Location
-from .rules.support import stable_blank_id
+from .rules.support import redact_password, stable_blank_id
 
 _TEXT_FORMATS = frozenset({"turtle", "n3", "nt", "nquads"})
 _XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
@@ -76,7 +76,11 @@ class SourceIndex:
         return self._problem
 
     def for_findings(self, graph: Graph, findings: Sequence[Finding]) -> dict[Finding, Location]:
-        """Return locations keyed by finding, including stable identities used for blank-node focuses."""
+        """Return locations keyed by finding, including stable identities used for blank-node focuses.
+
+        An IRI with a password is also keyed by its masked spelling (SEC014's focus), at its first occurrence;
+        an IRI that is itself spelled with the mask keeps its own position.
+        """
         by_focus = {str(node): location for node, location in self.locations.items()}
         by_focus.update(
             {
@@ -85,6 +89,9 @@ class SourceIndex:
                 if isinstance(node, BNode)
             }
         )
+        for node, location in self.locations.items():
+            if isinstance(node, URIRef):
+                by_focus.setdefault(redact_password(str(node)), location)
         return {finding: by_focus[finding.focus] for finding in findings if finding.focus in by_focus}
 
 

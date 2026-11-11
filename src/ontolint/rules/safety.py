@@ -12,9 +12,12 @@ belong to the loader.  Every traversal is iterative so hostile inputs cannot exh
   one (``https://alice:@...``), so a bare token used as the user name is not caught; a percent-encoded
   colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in the path, query or
   fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a relative reference
-  resolved against the document (GOV002's concern).  One finding per distinct IRI, focused on the IRI.
-  The message names the user but never the password; the focus is the full IRI, so the report
-  repeats the secret.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the
+  resolved against the document (GOV002's concern).  The focus is the IRI with everything after the first
+  ``:`` of the userinfo replaced by ``****`` (``https://alice:****@example.test/x``; RFC 3986 section 3.2.1
+  says not to render it), and the message names the user, so no report or baseline repeats the password; the
+  SARIF region is the credentialed IRI's.  One finding per distinct IRI once its password is masked, so IRIs
+  that differ only in the password give one finding.  Other rules that report such an IRI still print it
+  whole.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the
   syntactic test has no false positive; a published credential must be rotated.
 """
 
@@ -30,7 +33,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import relative_reference
+from .support import password_user, redact_password, relative_reference
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -44,7 +47,6 @@ MAX_LITERAL_LENGTH = 100_000  # Longest literal lexical form (characters) tolera
 UNSAFE_SCHEMES = frozenset({"blob", "data", "file", "ftp", "gopher", "jar", "javascript", "vbscript"})
 
 _SCHEME = re.compile(r"([A-Za-z][A-Za-z0-9+.\-]*):")
-_USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*://([^/?#@]*)@")
 
 
 def _char_class(codepoints: Iterable[int]) -> re.Pattern[str]:
@@ -286,8 +288,7 @@ def _check_iri(ctx: RuleContext, iri: str) -> None:
             confidence="certain",
             subject=(),
         )
-    userinfo = _USERINFO.match(iri)
-    if userinfo:
-        user, separator, password = userinfo.group(1).partition(":")
-        if separator and password:
-            ctx.add("SEC014", iri, f"IRI embeds a password for user {user!r}.", confidence="certain", subject=())
+    user = password_user(iri)
+    if user is not None:
+        message = f"IRI embeds a password for user {user!r}."
+        ctx.add("SEC014", redact_password(iri), message, confidence="certain", subject=())

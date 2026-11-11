@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 from rule_cases.safety import bnode_chain, iri_graph, literal_graph, long_list
@@ -12,7 +13,7 @@ from rule_harness import BASE, graph
 from ontolint import Linter
 from ontolint.models import ExecutionStatus, Finding
 from ontolint.rules import safety
-from ontolint.rules.support import stable_blank_id
+from ontolint.rules.support import redact_password, stable_blank_id
 
 
 def _run(rule: str, data: Graph, **options: Any) -> list[Finding]:
@@ -208,14 +209,34 @@ def test_sec012_literal_and_iri_hazards_are_independent() -> None:
 # --- SEC014 ----------------------------------------------------------------------------------
 
 
-def test_sec014_message_focus_and_no_password_echo() -> None:
-    iri = "https://alice:s3cret@example.test/x"
-    (finding,) = _run("SEC014", iri_graph(iri))
-    assert finding.focus == iri
+def test_sec014_masks_the_password_in_the_focus_and_never_prints_it() -> None:
+    (finding,) = _run("SEC014", iri_graph("https://alice:s3cret@example.test/x"))
+    assert finding.focus == "https://alice:****@example.test/x"
     assert finding.message == "IRI embeds a password for user 'alice'."
-    assert "s3cret" not in finding.message
+    assert "s3cret" not in finding.focus + finding.message
     assert finding.severity == "error"
     assert finding.confidence == "certain"
+
+
+@pytest.mark.parametrize(
+    ("iri", "focus"),
+    [
+        ("https://:pw@h/", "https://:****@h/"),
+        ("x+y.z-1://u:p:q@h/", "x+y.z-1://u:****@h/"),
+        ("HTTP://u:p@h", "HTTP://u:****@h"),
+        ("https://alice:pw@example.test:8443/x?q=1#f", "https://alice:****@example.test:8443/x?q=1#f"),
+    ],
+)
+def test_sec014_masks_everything_after_the_first_colon_of_the_userinfo(iri: str, focus: str) -> None:
+    assert [f.focus for f in _run("SEC014", iri_graph(iri))] == [focus]
+    assert redact_password(iri) == focus
+    assert redact_password(focus) == focus
+
+
+def test_sec014_iris_differing_only_in_the_password_are_one_finding() -> None:
+    data = iri_graph("https://u:a@h/x")
+    data += iri_graph("https://u:b@h/x")
+    assert [f.focus for f in _run("SEC014", data)] == ["https://u:****@h/x"]
 
 
 def test_sec014_both_operands_and_forms() -> None:
@@ -229,5 +250,8 @@ def test_sec014_both_operands_and_forms() -> None:
         "https://h/p?q=u:p@h",
         "//u:p@h",
         "mailto:u:p@h",
+        "https://alice%3Afake@h/",
+        "file:///a:b@c",
     ):
         assert _run("SEC014", iri_graph(iri)) == [], iri
+        assert redact_password(iri) == iri, iri

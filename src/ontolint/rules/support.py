@@ -203,3 +203,37 @@ def term_text(node: Node) -> str:
     if isinstance(node, Literal):
         return ntriples_literal(node)
     return f"_:{node}" if isinstance(node, BNode) else str(node)
+
+
+# An authority's userinfo, after ``scheme://`` and before the first ``@`` of the authority (RFC 3986 3.2.1).
+_USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*://([^/?#@]*)@")
+PASSWORD_MASK = "****"  # noqa: S105 -- what replaces a password, not one
+
+
+def _credentials(iri: str) -> tuple[re.Match[str], str] | None:
+    """The userinfo match and user of an IRI whose userinfo has a non-empty part after its first ``:``."""
+    match = _USERINFO.match(iri)
+    if match is None:
+        return None
+    user, separator, password = match.group(1).partition(":")
+    return (match, user) if separator and password else None
+
+
+def password_user(iri: str) -> str | None:
+    """The user name of ``iri`` when its authority embeds a password (``https://user:pw@...``), else ``None``."""
+    found = _credentials(iri)
+    return None if found is None else found[1]
+
+
+def redact_password(iri: str) -> str:
+    """``iri`` with everything after the first ``:`` of its userinfo replaced by :data:`PASSWORD_MASK`.
+
+    RFC 3986 section 3.2.1 says not to render that data.  The user, host, port, path, query and fragment are
+    kept, and ``*`` is a userinfo sub-delimiter, so the result is still an IRI; an IRI without a password is
+    returned unchanged, so the function is idempotent.
+    """
+    found = _credentials(iri)
+    if found is None:
+        return iri
+    match, user = found
+    return f"{iri[: match.start(1)]}{user}:{PASSWORD_MASK}{iri[match.end(1) :]}"

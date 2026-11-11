@@ -302,7 +302,7 @@ def test_a_baseline_written_by_0_10_2_gives_the_same_results() -> None:
 
 TERM_MESSAGES = FIXTURES / "baselines" / "term_messages.ttl"
 # Written by ``--write-baseline`` before OWL034, OWL036 and OWL040 printed their values in N3 (they printed Python
-# reprs, ``rdflib.term.Literal('p')``); never regenerate it.
+# reprs, ``rdflib.term.Literal('p')``) and before SEC014 masked the password in its focus; never regenerate it.
 TERM_MESSAGES_BASELINE = FIXTURES / "baselines" / "term_messages.baseline.json"
 REWORDED_RULES = ["OWL034", "OWL036", "OWL036", "OWL040"]
 
@@ -311,13 +311,16 @@ def test_a_baseline_written_before_the_term_message_fix_still_matches(tmp_path: 
     (tmp_path / TERM_MESSAGES.name).write_bytes(TERM_MESSAGES.read_bytes())
     argv = (TERM_MESSAGES.name, "--fail-on", "info", "--fail-on-stale-baseline")
     code, document = run(*argv, "--baseline", str(TERM_MESSAGES_BASELINE))
-    assert (code, document["findings"], document["baseline"]["stale_fingerprints"]) == (0, [], [])
+    # Version 2 identities survive the rewording; SEC014's focus changed, so its entry is stale and it reopens.
+    assert [(f["rule"], f["focus"]) for f in document["findings"]] == [("SEC014", "https://alice:****@example.test/x")]
+    assert len(document["baseline"]["stale_fingerprints"]) == 1
+    assert code == 1
     # A version 1 baseline (0.10.x) matches by message, so the reworded findings reopen and their entries go stale.
     written = json.loads(TERM_MESSAGES_BASELINE.read_text(encoding="utf-8"))
     (tmp_path / "v1.json").write_text(json.dumps({"fingerprints": written["fingerprints"]}), encoding="utf-8")
     code, document = run(*argv, "--baseline", "v1.json")
-    assert sorted(f["rule"] for f in document["findings"]) == REWORDED_RULES
-    assert len(document["baseline"]["stale_fingerprints"]) == len(REWORDED_RULES)
+    assert sorted(f["rule"] for f in document["findings"]) == [*REWORDED_RULES, "SEC014"]
+    assert len(document["baseline"]["stale_fingerprints"]) == len(REWORDED_RULES) + 1
     assert code == 1
 
 
