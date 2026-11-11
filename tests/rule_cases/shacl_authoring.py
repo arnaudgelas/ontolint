@@ -88,6 +88,11 @@ CASES = {
             _c("x flag keeps a stray brace", _prop('sh:pattern "a b{" ; sh:flags "x"')),
             _c("possessive quantifier", _prop('sh:pattern "a*+"')),
             _c("category escape without braces", _prop('sh:pattern "\\\\pL"')),
+            # XSD 1.0 F.1 and 1.1 G.4.1: an unescaped [ or a leading ] is not a class member in either.
+            _c("unescaped [ inside a class", _prop('sh:pattern "[[:alpha:]]+"')),
+            _c("leading ] in a class", _prop('sh:pattern "[]a]"')),
+            _c("unknown category name", _prop('sh:pattern "\\\\p{Letter}+"')),
+            _c("unbalanced group beside an XPath-only escape", _prop('sh:pattern "\\\\p{L}("')),
         ],
         [
             GOOD,
@@ -101,6 +106,9 @@ CASES = {
             _c("q flag makes the pattern a plain string", _prop('sh:pattern "(abc" ; sh:flags "q"')),
             _c("x flag: # is a literal, not a comment", _prop('sh:pattern "(a # b)" ; sh:flags "x"')),
             _c("character class subtraction", _prop('sh:pattern "[a-z-[aeiou]]+"')),
+            _c("subtraction from a negated group", _prop('sh:pattern "[^a-[b]]"')),
+            _c("subtraction after a class escape", _prop('sh:pattern "[\\\\d-[5]]"')),
+            _c("quantified anchor", _prop('sh:pattern "^*a"')),
             _c("non-literal pattern", _prop("sh:pattern ex:regex")),
         ],
     ),
@@ -187,6 +195,7 @@ CASES = {
                 NODE + "sh:or ( ex:T ex:U ) .\nex:T a sh:NodeShape .\nex:U a sh:NodeShape .",
             ),
             _c("deactivated is reported by SHQ020 instead", "ex:S a sh:NodeShape ; sh:deactivated true ."),
+            _c("SHACL-AF custom target", "ex:S a sh:NodeShape ; sh:target [ a sh:SPARQLTarget ] ."),
         ],
     ),
     "SHQ024": rule_cases(
@@ -204,6 +213,7 @@ CASES = {
                 NODE + "sh:closed true ; sh:ignoredProperties ( rdf:type ) .",
             ),
             _c("open shape", NODE + "sh:closed false ."),
+            _c("rdf:type is a property shape's path", NODE + "sh:closed true ; sh:property [ sh:path rdf:type ] ."),
         ],
     ),
     "SHQ025": rule_cases(

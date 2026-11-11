@@ -144,8 +144,25 @@ XPATH_WHITESPACE = frozenset("\t\n\r ")
 EXACT, FLOAT, DOUBLE = 0, 1, 2
 NUMERIC_RANK: dict[URIRef | None, int] = {XSD.float: FLOAT, XSD.double: DOUBLE}
 MIN_LOGICAL_MEMBERS = 2
-# XPath-only regex escapes that Python cannot compile although they are valid SHACL patterns.
-XPATH_ONLY_ESCAPES = re.compile(r"\\[pPiIcC]")
+# XPath-only regex escapes that Python cannot compile: ``python_form`` reads each as ``\w``.
+XPATH_ONLY_ESCAPES = frozenset("pPiIcC")
+# XSD Part 2 [28]-[35] (1.0) and [88]-[95] (1.1): the General Category names, 'L' [ultmo]? ... (no Cs).
+CATEGORY_GRAMMAR = (
+    ("L", "ultmo"),
+    ("M", "nce"),
+    ("N", "dlo"),
+    ("P", "cdseifo"),
+    ("Z", "slp"),
+    ("S", "mcko"),
+    ("C", "cfon"),
+)
+XSD_CATEGORIES = frozenset(major + minor for major, minors in CATEGORY_GRAMMAR for minor in ("", *minors))
+# XSD Part 2 [36] (1.0) and [96] (1.1): IsBlock ::= 'Is' [a-zA-Z0-9#x2D]+
+BLOCK_NAME_CHARACTERS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-")
+MAX_SUBTRACTION_DEPTH = 64  # nested class subtractions that python_form rewrites; deeper ones stay as written
+QUANTIFIER_STARTS = frozenset("*+?{")
+DIGITS = frozenset("0123456789")
+BACK_REFERENCE_STARTS = frozenset("123456789")  # F&O 3.1 5.6.1.4 [9a] backReference ::= "\\" [1-9][0-9]*
 # XSD Part 2 Appendix F SingleCharEsc, with the ``\$`` that XPath adds, and MultiCharEsc.
 XPATH_SINGLE_ESCAPES = frozenset("nrt\\|.?*+(){}-[]^$")
 XPATH_MULTI_ESCAPES = frozenset("sSiIcCdDwW")
@@ -373,6 +390,9 @@ def _escape_end(text: str, i: int, *, in_class: bool) -> tuple[str | None, int]:
         close = text.find("}", i + 3)
         if text[i + 2 : i + 3] != "{" or close < 0:
             return f"\\{letter} is not followed by a {{name}}", i + 2
+        name = text[i + 3 : close]
+        if name not in XSD_CATEGORIES and not _is_block_name(name):
+            return f"\\{letter}{{{name}}} names no XSD category or block", close + 1
         return None, close + 1
     if letter.isdigit() and letter != "0" and not in_class:
         end = i + 2
@@ -383,15 +403,27 @@ def _escape_end(text: str, i: int, *, in_class: bool) -> tuple[str | None, int]:
     return f"the escape \\{letter} is not XPath{hint}", i + 2
 
 
-def _class_end(text: str, i: int) -> tuple[str | None, int]:
-    """The problem with the escapes of the character class opening at ``text[i]``, and where it ends.
+def _is_block_name(name: str) -> bool:
+    """Whether ``name`` has the form of XSD's ``IsBlock``; which blocks exist is not checked."""
+    return name.startswith("Is") and len(name) > len("Is") and set(name[2:]) <= BLOCK_NAME_CHARACTERS
 
-    Only escapes are judged inside a class, and ``-[`` opens a subtracted class; the placement of ``-``
-    and an unescaped ``[`` elsewhere are left to Python, as XSD 1.0 and 1.1 disagree on them.
+
+def _class_end(text: str, i: int) -> tuple[str | None, int]:
+    """The problem with the character class opening at ``text[i]``, and where it ends.
+
+    Judged inside a class: its escapes, an unescaped ``[`` that does not follow ``-`` (``-[`` opens a
+    subtracted class) and an unescaped ``]`` first in the class (after its ``^``).  XSD 1.0 ("The [, ], -
+    and \\ characters are not valid character ranges") and XSD 1.1 (``SingleCharNoEsc ::= [^\\[\\]]``) both
+    reject those, where Python reads them as members.  A subtraction ends its group (1.0 [16], 1.1 [76]),
+    so the ``]`` of a subtracted class must be followed by the ``]`` of the class it is subtracted from,
+    and the text must not end inside a class with a subtraction; Python reads ``[a-z-[aeiou]`` as one
+    class and accepts it.  A class left open without one is Python's to report.
+    The placement of ``-`` is left to Python, as XSD 1.0 and 1.1 disagree on it.
     """
     end = i + 1 + (text[i + 1 : i + 2] == "^")
-    end += text[end : end + 1] == "]"  # Python reads a leading ] as a member
-    depth, dash = 1, False
+    if text[end : end + 1] == "]":
+        return "an unescaped ] at the start of a character class", end + 1
+    depth, dash, subtracted = 1, False, False
     while end < len(text):
         char = text[end]
         if char == "\\":
@@ -404,10 +436,18 @@ def _class_end(text: str, i: int) -> tuple[str | None, int]:
             depth -= 1
             if not depth:
                 return None, end + 1
-        depth += char == "[" and dash
+            if end + 1 == len(text):
+                break
+            if text[end + 1] != "]":
+                return "a class subtraction does not end its character class", end + 1
+        if char == "[" and not dash:
+            return "an unescaped [ inside a character class", end + 1
+        depth += char == "["
+        subtracted |= depth > 1
         dash = char == "-"
         end += 1
-    return None, end
+    # Python reports a class left open, unless a subtracted class closed its reading of it ([a-z-[aeiou]).
+    return ("an unterminated character class" if subtracted else None), end
 
 
 def _quantifier_end(text: str, i: int, last: int, previous: int) -> tuple[str | None, int]:
@@ -467,26 +507,145 @@ def xpath_regex_problem(text: str) -> str | None:
     return None
 
 
+def _python_escape(text: str, i: int, last_close: int) -> tuple[str, int]:
+    """Python's reading of the escape at ``text[i]`` (a backslash), and where it ends.
+
+    ``last_close`` is the position of the last ``}`` of ``text``: a ``\\p{`` after it has no name, and is not
+    searched for one, so that unclosed ``\\p{`` cost no search each to the end of the text.
+    """
+    letter = text[i + 1 : i + 2]
+    if letter not in XPATH_ONLY_ESCAPES:
+        return text[i : i + 2], i + 2
+    named = letter in ("p", "P") and text[i + 2 : i + 3] == "{" and i + 3 <= last_close
+    close = text.find("}", i + 3) if named else -1
+    return "\\w", close + 1 if close >= 0 else i + 2  # a class escape that Python knows; xpath_regex_problem judges
+
+
+def _python_back_reference(text: str, i: int, groups: int) -> tuple[str, int]:
+    """Python's reading of the back-reference at ``text[i]`` (a backslash and a digit from 1), and where it ends.
+
+    F&O 3.1 5.6.1.4: a further digit belongs to the back-reference "if and only if" that many capturing groups
+    open before it, where Python reads up to two digits as a group number, or three as an octal escape.  A
+    digit after the reference is set apart with ``(?:...)``; Python then reports a group that does not exist
+    or is still open, as XPath requires.
+    """
+    number, end = int(text[i + 1]), i + 2
+    while end < len(text) and text[end] in DIGITS and number * 10 + int(text[end]) <= groups:
+        number, end = number * 10 + int(text[end]), end + 1
+    if end < len(text) and text[end] in DIGITS:
+        return f"(?:{text[i:end]})", end
+    return text[i:end], end
+
+
+def _python_class(text: str, i: int, depth: int, last_close: int) -> tuple[str, int] | None:
+    """Python's reading of the character class opening at ``text[i]``, and where it ends.
+
+    ``None`` when the class must reach Python as written: it is unterminated, a subtraction does not end
+    it, or subtractions nest deeper than ``MAX_SUBTRACTION_DEPTH``.
+    """
+    if depth > MAX_SUBTRACTION_DEPTH:
+        return None
+    start = i + 1 + (text[i + 1 : i + 2] == "^")
+    j = start + (text[start : start + 1] == "]")  # Python reads a leading ] as a member
+    out = [text[i:j]]
+    while j < len(text):
+        char = text[j]
+        if char == "\\":
+            token, j = _python_escape(text, j, last_close)
+            out.append(token)
+        elif char == "-" and text[j + 1 : j + 2] == "[":
+            inner = _python_class(text, j + 1, depth + 1, last_close)
+            if inner is None or text[inner[1] : inner[1] + 1] != "]":
+                return None
+            return f"(?:{''.join(out)}]|{inner[0]})", inner[1] + 1
+        elif char == "]":
+            return "".join(out) + "]", j + 1
+        else:
+            out.append(char)
+            j += 1
+    return None
+
+
+def python_form(text: str) -> str:
+    """``text`` rewritten so that Python's ``re`` compiles it when the XPath expression is well formed.
+
+    Python lacks three XPath constructs, which are rewritten with the same structure: ``\\p{..}``, ``\\P{..}``,
+    ``\\i``, ``\\I``, ``\\c`` and ``\\C`` become ``\\w``; a class subtraction ``[G-[H]]`` becomes ``(?:[G]|[H])``
+    (Python reads ``-[`` as a range ending at ``[``); and a quantified anchor, ``^*``, becomes ``(?:^)*``
+    (F&O 3.1 5.6.1 makes ``^`` and ``$`` atoms).  A back-reference followed by a digit that is not part of it
+    (F&O 3.1 5.6.1.4: ``(a)\\10`` is ``\\1`` then ``0``) becomes ``(?:\\1)0``.  Everything else is kept as
+    written, and from a class that cannot be rewritten (see ``_python_class``) the rest of the text is, but
+    for its XPath-only escapes: one pass, never backtracking.
+
+    Python also compiles some text that XPath rejects (an unescaped ``[`` in a class, a class that ends
+    inside a subtracted class, an escape XPath lacks ...): ``xpath_regex_problem`` judges those.  Python
+    rejects some valid XPath: a repetition count above 4294967295, subtractions nested deeper than
+    ``MAX_SUBTRACTION_DEPTH``, a hyphen that XSD 1.1 allows (``[\\d-z]``); and it reads a back-reference
+    to group 100 or above as an octal escape, so such a reference is not judged.
+    """
+    out: list[str] = []
+    last_close = text.rfind("}")
+    i, classes, groups = 0, True, 0
+    while i < len(text):
+        char = text[i]
+        read = _python_class(text, i, 0, last_close) if char == "[" and classes else None
+        if char == "\\" and classes and text[i + 1 : i + 2] in BACK_REFERENCE_STARTS:
+            token, i = _python_back_reference(text, i, groups)
+        elif char == "\\":
+            token, i = _python_escape(text, i, last_close)
+        elif read is not None:
+            token, i = read
+        elif char == "[":
+            token, i, classes = char, i + 1, False  # Python reports the class as written
+        elif char in "^$" and text[i + 1 : i + 2] in QUANTIFIER_STARTS:
+            token, i = f"(?:{char})", i + 1
+        else:
+            groups += char == "(" and text[i + 1 : i + 2] != "?"  # F&O 3.1 5.6.1.3: a capturing left parenthesis
+            token, i = char, i + 1
+        out.append(token)
+    return "".join(out)
+
+
+def pattern_problem(pattern: str, letters: str) -> str | None:
+    """The SHQ011 message for an ``sh:pattern`` value under the ``sh:flags`` letters, or ``None`` when it is valid.
+
+    Python's error first, when ``python_form`` of the pattern does not compile (its position is dropped when
+    the text was rewritten); then the first construct ``xpath_regex_problem`` finds.
+    """
+    if "q" in letters:
+        return None  # XPath 3 ``q``: the pattern is a plain string, so any pattern is valid
+    flags = sum(REGEX_FLAGS[ch] for ch in set(letters) if ch in REGEX_FLAGS)
+    text = _strip_whitespace(pattern) if "x" in letters else pattern
+    python = python_form(text)
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            re.compile(python, flags)
+    except (re.error, RecursionError, OverflowError) as exc:
+        if not isinstance(exc, re.error) or python == text:
+            return f"sh:pattern does not compile: {exc}"
+        detail = exc.msg  # its position would be in the rewritten text
+        if "\\w" in detail and any(text[k + 1 : k + 2] in XPATH_ONLY_ESCAPES for k in _escapes(text)):
+            detail += " (reading \\p{..}, \\i and \\c as \\w)"
+        return f"sh:pattern does not compile: {detail}"
+    problem = xpath_regex_problem(text)
+    return None if problem is None else f"sh:pattern is not an XPath regular expression: {problem}."
+
+
+def _escapes(text: str) -> list[int]:
+    """The positions of the backslashes of ``text`` that start an escape."""
+    found: list[int] = []
+    i = text.find("\\")
+    while i >= 0:
+        found.append(i)
+        i = text.find("\\", i + 2)
+    return found
+
+
 def _regex(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     letters = "".join(str(flag) for flag in sg.objects(shape, SH.flags))
-    if "q" in letters:
-        return  # XPath 3 ``q``: the pattern is a plain string, so any pattern is valid
-    flags = sum(REGEX_FLAGS[ch] for ch in set(letters) if ch in REGEX_FLAGS)
     for pattern in sg.objects(shape, SH.pattern):
-        if not isinstance(pattern, Literal):
-            continue
-        text = _strip_whitespace(str(pattern)) if "x" in letters else str(pattern)
-        if not XPATH_ONLY_ESCAPES.search(text):  # Python cannot compile those: only the scan judges them
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    re.compile(text, flags)
-            except (re.error, RecursionError, OverflowError) as exc:
-                message = f"sh:pattern does not compile: {exc}"
-                ctx.add("SHQ011", shape, message, confidence="heuristic", subject=(pattern,))
-                continue
-        if (problem := xpath_regex_problem(text)) is not None:
-            message = f"sh:pattern is not an XPath regular expression: {problem}."
+        if isinstance(pattern, Literal) and (message := pattern_problem(str(pattern), letters)) is not None:
             ctx.add("SHQ011", shape, message, confidence="heuristic", subject=(pattern,))
 
 
@@ -561,6 +720,9 @@ def _deactivated(ctx: RuleContext, sg: Graph, shape: Node) -> None:
 def _closed_without_type(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     if not any(_is_true(v) for v in sg.objects(shape, SH.closed)):
         return
+    # SHACL 4.8.1: the allowed properties are the IRI paths of the shape's property shapes and the ignored ones.
+    if any((prop, SH.path, RDF.type) in sg for prop in sg.objects(shape, SH.property)):
+        return
     ignored = [list_items(sg, head) for head in sg.objects(shape, SH.ignoredProperties)]
     if not any(items is not None and RDF.type in items for items in ignored):
         ctx.add("SHQ024", shape, "Closed shape does not list rdf:type in sh:ignoredProperties.")
@@ -592,7 +754,7 @@ def _undefined_references(ctx: RuleContext, sg: Graph, shape: Node) -> None:
 def _unused_node_shape(ctx: RuleContext, sg: Graph, shape: Node, referenced: set[Node]) -> None:
     if not _is_node_shape(sg, shape) or shape in referenced:
         return
-    targeted = any((shape, p, None) in sg for p in TARGET_PREDICATES)
+    targeted = any((shape, p, None) in sg for p in (*TARGET_PREDICATES, SH.target))  # sh:target: SHACL-AF 5.1
     implicit = any((shape, RDF.type, c) in sg for c in (RDFS.Class, OWL.Class))
     if not targeted and not implicit and not any(_is_true(v) for v in sg.objects(shape, SH.deactivated)):
         ctx.add("SHQ021", shape, "Node shape has no target and no other shape refers to it.")

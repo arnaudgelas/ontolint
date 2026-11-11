@@ -32,10 +32,12 @@ CASES = {
         [
             _c("underscore tag", _prop("sh:languageIn ( 'en' 'en_US' )")),
             _c("IRI member", _prop("sh:languageIn ( 'en' ex:fr )")),
+            _c("language-tagged member", _prop("sh:languageIn ( 'en'@en )")),
         ],
         [
             GOOD,
             _c("valid tags", _prop("sh:languageIn ( 'en' 'fr-CA' 'zh-Hant-TW' )")),
+            _c("wildcard language range", _prop("sh:languageIn ( '*' )")),
             _c("empty list", _prop("sh:languageIn ()")),
         ],
     ),
@@ -109,6 +111,7 @@ CASES = {
             _c("missing path", NODE + "sh:property ex:P .\nex:P sh:minCount 1 ."),
             _c("two paths", NODE + "sh:property ex:P .\nex:P sh:path ex:p, ex:q ."),
             _c("typed property shape without path", "ex:P a sh:PropertyShape ; sh:minCount 1 ."),
+            _c("untyped, unreferenced shape with two paths", "ex:P sh:path ex:p, ex:q ; sh:minCount 1 ."),
         ],
         [GOOD, EMPTY, _c("node shape needs no path", "ex:S a sh:NodeShape ; sh:closed true .")],
     ),

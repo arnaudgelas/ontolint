@@ -2,9 +2,11 @@
 
 0.4.0 shipped two quadratic steps: the source locator counted newlines from the start of the text
 for every term, and CLS017 recomputed a set difference over all classes for every class.  A
-40,000-class file took 30 s.  Each test times only its step (no parsing, which is linear and would
-hide the quadratic term) at two sizes and compares them, so it holds on slow runners: quadrupling
-the input must cost well under the sixteen-fold time of a quadratic step.
+40,000-class file took 30 s.  A draft of SHQ011's rewriting of a pattern for Python searched the rest
+of the text for the ``}`` of every ``\\p{``, so a megabyte of unclosed ``\\p{`` took seconds.  Each
+test times only its step (no parsing, which is linear and would hide the quadratic term) at two sizes
+and compares them, so it holds on slow runners: quadrupling the input must cost well under the
+sixteen-fold time of a quadratic step.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from ontolint.models import Finding
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
 from ontolint.rules.runtime import PropertyClosure
+from ontolint.rules.shacl_authoring import pattern_problem
 from ontolint.rules.support import DESCRIPTIONS, LABELS
 from ontolint.source_locations import build_source_index
 
@@ -157,3 +160,18 @@ def _distinct_shared_headers(count: int) -> float:
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], float]) -> None:
     small, large = step(SMALL), step(LARGE)
     assert large / small < MAX_RATIO, f"{SMALL} classes: {small:.3f} s, {LARGE} classes: {large:.3f} s"
+
+
+PATTERN_SMALL = 60_000  # characters of sh:pattern
+PATTERN_LARGE = 4 * PATTERN_SMALL
+
+
+@pytest.mark.parametrize("unit", ["\\p{", "\\p{a", "[\\p{", "[a-[\\p{"], ids=["escape", "name", "class", "subtraction"])
+def test_the_sh_pattern_judgement_grows_linearly_with_the_pattern(unit: str) -> None:
+    # No \\p{ has its }: searching the rest of the text for it, from each one, is quadratic.
+    def judge(size: int) -> float:
+        text = unit * (size // len(unit))
+        return _best_of(lambda: pattern_problem(text, ""))
+
+    small, large = judge(PATTERN_SMALL), judge(PATTERN_LARGE)
+    assert large / small < MAX_RATIO, f"{PATTERN_SMALL} chars: {small:.3f} s, {PATTERN_LARGE} chars: {large:.3f} s"

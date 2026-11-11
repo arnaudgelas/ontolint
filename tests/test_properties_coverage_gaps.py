@@ -9,7 +9,7 @@
   plain hierarchy already makes conflicting keeps the message it had before.
 * SHQ011: a pattern drawn from the grammar of XSD Part 2 Appendix F with the XPath additions (anchors,
   reluctant quantifiers, ``(?:``, back-references, ``\\$``) never gets the "not an XPath regular
-  expression" finding.
+  expression" finding, nor any other SHQ011 finding.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rdflib.term import Node
 
 from ontolint import Linter
-from ontolint.rules.shacl_authoring import xpath_regex_problem
+from ontolint.rules.shacl_authoring import pattern_problem, xpath_regex_problem
 
 pytestmark = pytest.mark.slow
 
@@ -198,7 +198,7 @@ def _class() -> st.SearchStrategy[str]:
         st.lists(member, min_size=1, max_size=3),
     )
     simple = group.map(lambda g: f"[{g}]")
-    return st.one_of(simple, st.builds(lambda g, sub: f"[{g}-{sub}]", group, simple))
+    return st.recursive(simple, lambda inner: st.builds(lambda g, sub: f"[{g}-{sub}]", group, inner), max_leaves=3)
 
 
 def _regex(atom: st.SearchStrategy[str]) -> st.SearchStrategy[str]:
@@ -225,6 +225,17 @@ XPATH_PATTERNS = st.recursive(
 def test_shq011_never_rejects_a_pattern_of_the_xpath_grammar(pattern: str) -> None:
     assert xpath_regex_problem(pattern) is None
     assert xpath_regex_problem(f"({pattern})\\1") is None  # a back-reference to a group
+
+
+@budget(1)
+@given(XPATH_PATTERNS)
+def test_shq011_reports_no_pattern_of_the_xpath_grammar(pattern: str) -> None:
+    # The whole judgement, Python's compilation included: class subtraction ([^a-[b]], [\\d-[5]]) and a
+    # quantified anchor (^*) are XPath that Python's re rejects as written.
+    assert pattern_problem(pattern, "") is None
+    assert pattern_problem(f"({pattern})\\1", "") is None
+    # F&O 3.1 5.6.1.4: \\10 is one back-reference only with ten groups before it, otherwise \\1 then 0.
+    assert pattern_problem(f"({pattern})\\10", "") is None
 
 
 # --- SKOS009 --------------------------------------------------------------------------------------------
