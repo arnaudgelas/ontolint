@@ -20,6 +20,39 @@ Nothing open: 0.10.2 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (on `main`, not yet tagged):
+  - **POLICY-SILENT** (P1 audit, "Policy that silently does nothing"): every word of
+    configuration now either changes the run or is refused. `--select` or `--ignore` naming only
+    pipeline rules (`SEC001`, `SEC002`, `SEC003`, `SEC006`, `SEC009`, `SEC010`, `SEC011`,
+    `SEC013`, `SEC015`, `INPUT001`, `TOOL001`, or the `INPUT` or `TOOL` family; the set is the
+    registry's `backend` `cli`) is `TOOL001: configuration failed: PipelineSelectorError: ...`
+    and exit 2, checked before any input is read and after the unknown-selector check (`8762af3`);
+    the mixed `SEC` family still selects or ignores the six graph SEC rules. The same ids in the
+    policy's `ignored_rules` or `severity_overrides` are `GOV020`, exit 2, in one line with any
+    unknown ids (`486f50b`). Both are `fix!:` with BREAKING CHANGE trailers; rejecting rather
+    than warning was chosen, and a deprecation release would need only the raise in `cli._lint`
+    turned into a warning. A file under `--import-dir` that the safe loader refuses is named on
+    stderr once, as `TOOL010: warning: --import-dir <dir>: <file> is skipped, so no owl:imports
+    resolves to it: <SEC rule>: <message>`, with the exit code and report unchanged; a file that
+    does not parse and a `catalog-v001.xml` stay silent (`edd48c7`). Verified: the item's
+    reproductions (`--select SEC001` and `--select TOOL` exited 0 with no execution, `--ignore
+    SEC001` and the policy entries were accepted, a refused mirror file left only an
+    unexplained `SEC007`) now exit 2 with the line, or print `TOOL010` above the `SEC007`; the new
+    tests fail on `83648d4` (32 CLI selector cases, 6 policy cases, 4 `TOOL010` cases, the flipped
+    empty-run test) and pass after. Every pipeline id is rejected by both options, and an ignore of
+    every other spec is accepted (parametrized over `RULE_SPECS`); a Hypothesis property checks
+    that the guard rejects exactly the pipeline-only tokens and that every accepted token names an
+    engine rule; no built-in profile names a pipeline rule; `engine.execute(ctx, ["SEC001"])`
+    still records it as skipped. The legacy differential harness now ignores only engine rules;
+    `legacy_rules.json`, `differential.json`, report schemas, fingerprints, baselines and
+    `docs/rules.md` did not move. Targeted mutation run (`cli.py`, `imports.py`; non-slow suite):
+    189 mutants, 178 killed, 4 pardoned (older), 1 error (a vanished pytest temp directory, in
+    older `_import_options` code), 10 survivors: one in `index_directory`'s file filter, killed
+    afterwards by a new test (`30928d4`), and nine in older code (the TOOL005 hint, TOOL006,
+    declared prefixes, `_library`, catalog parsing), left for the mutation-baseline item; none in
+    the changed lines. `selection.py` is outside the mutation scope, so its helper is pinned by
+    exact-message and property tests instead.
+    Left open: `--list-rules` still marks pipeline rules `"selectable": true` (under the P1 audit
+    item); `max_validation_seconds` without shapes stays documented as inert, without a note.
   - **AUDIT-DEFECTS** (P1 audit, "Defects that change an exit code, a focus or a message"):
     a report that cannot be written to `--output` (missing directory, a directory, no
     permission) or encoded as UTF-8 (a lone surrogate in a text report, on `--output` or stdout)
@@ -119,7 +152,8 @@ Nothing open: 0.10.2 is released (see "Recently done").
     is not); Windows and Linux behaviour of the worker is checked only by `mypy --platform win32`
     until the P2 cross-OS smoke tests exist; a pySHACL `ValidationFailure` (for example its
     `SERVICE` refusal) still reads `RuntimeError: pySHACL returned an unexpected report type`;
-    whether POLICY-SILENT should note the key without shapes, where it has no effect.
+    whether POLICY-SILENT should note the key without shapes, where it has no effect (decided:
+    no, it stays documented as inert, like `--robot-timeout` without `--owl-profile`).
   - **BASELINE-V2** (P1): baselines match a finding by its identity (rule, focus and a structured
     `Finding.subject`, never the message) as well as by its version 1 fingerprint, so a reworded
     message, a pySHACL upgrade or a measurement that moves keeps an accepted finding accepted and
@@ -555,9 +589,10 @@ Validation corpus (public; licences per repository):
     (`ctx.labels`: LEX001, LEX018, METRIC001), `owl:equivalentProperty` to a definition predicate,
     and sub-properties of `skos:note`/`skos:scopeNote` for LEX002 (no closure today, not even one
     step). OBO's fixed `DEFINITION_PREDICATES` stay IAO-only by design.
-  - *Policy that silently does nothing:* `--ignore`, `--select` and `severity_overrides` accept the
-    pipeline rules (SEC001-SEC015, INPUT001, TOOL001) and have no effect; reject them or say so.
-    A file in an `--import-dir` that the safe loader refuses is skipped without a note.
+  - *Policy that silently does nothing:* fixed, unreleased (see "Recently done", POLICY-SILENT).
+    Follow-up for RULE-DOCS: `--list-rules --format json` still says `"selectable": true` for the
+    pipeline rules, which `--select` now rejects; the field means "implemented" today, and changing
+    it changes that JSON contract.
   - *Coverage gaps, now stated as exclusions with negative cases* (each needs a new message):
     OWL010 empty or malformed chain; OWL019 non-simplicity through sub-properties, inverses and
     equivalents (needs a closure; no rule checks non-simple properties in cardinalities,
