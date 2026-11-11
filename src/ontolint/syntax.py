@@ -34,8 +34,9 @@ _MANCHESTER = re.compile(r"(?:Prefix|Ontology|Import|Class|ObjectProperty|DataPr
 # A JSON-LD array holds node objects (or nothing); ``[] a ex:K .`` is a Turtle anonymous blank node.
 _JSON_LD = re.compile(r'\{\s*(?:["@]|\})|\[\s*(?:\{|\]\s*$)')
 # A TriG (or N3) graph block has a term next, past whitespace and comments: an IRI, a blank node, a prefixed
-# name, or the ``}`` of an empty block.
-_GRAPH_BLOCK = re.compile(r"\{(?:\s|#[^\n]*)*(?:<|_:|\[|\}|(?:[A-Za-z][\w.-]*)?:)")
+# name, or the ``}`` of an empty block. A comment runs to its newline, so a run of ``#`` splits only one way and
+# the match stays linear (CodeQL py/redos).
+_GRAPH_BLOCK = re.compile(r"\{(?:\s|#[^\n]*\n)*(?:<|_:|\[|\}|(?:[A-Za-z][\w.-]*)?:)")
 GRAPH_BLOCK_FORMATS = ("trig", "n3")
 """Text syntaxes in which ``{`` opens a graph block."""
 _TURTLE = re.compile(r"(?:@prefix|@base|(?i:prefix|base)\s)|<[^\s<>\"{}|^`\\]*>|_:|\[|[A-Za-z][\w.-]*:\S")
