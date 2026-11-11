@@ -29,9 +29,9 @@ LARGE = 4 * SMALL
 MAX_RATIO = 8.0  # linear growth gives about 4; a quadratic step gives about 16
 
 
-def _best_of_two(step: Callable[[], object]) -> float:
+def _best_of(step: Callable[[], object]) -> float:
     best = float("inf")
-    for _attempt in range(2):  # the faster run discards one-off scheduling noise
+    for _attempt in range(5):  # the fastest run discards scheduling noise from a loaded machine
         started = time.perf_counter()
         step()
         best = min(best, time.perf_counter() - started)
@@ -49,12 +49,12 @@ def _classes(count: int) -> tuple[str, Graph]:
 def _locate(count: int) -> float:
     text, graph = _classes(count)
     data = text.encode()
-    return _best_of_two(lambda: build_source_index(data, "nt", "file:///a.nt", graph).locations)
+    return _best_of(lambda: build_source_index(data, "nt", "file:///a.nt", graph).locations)
 
 
 def _cls017(count: int) -> float:
     _text, graph = _classes(count)
-    return _best_of_two(lambda: Linter(graph).execute(["CLS017"]))
+    return _best_of(lambda: Linter(graph).execute(["CLS017"]))
 
 
 def _dataset(count: int) -> tuple[Memory, BNode]:
@@ -71,14 +71,14 @@ def _dataset(count: int) -> tuple[Memory, BNode]:
 
 def _graph_index(count: int) -> float:
     store, default = _dataset(count)
-    return _best_of_two(lambda: build_graph_index(store, default, "file:///w/"))
+    return _best_of(lambda: build_graph_index(store, default, "file:///w/"))
 
 
 def _finding_graphs(count: int) -> float:
     store, default = _dataset(count)
     index = build_graph_index(store, default, "file:///w/")
     findings = [Finding("LEX002", "info", f"https://example.test/C{i}", "m", "s") for i in range(count)]
-    return _best_of_two(lambda: finding_graphs(Graph(), index, findings))
+    return _best_of(lambda: finding_graphs(Graph(), index, findings))
 
 
 @pytest.mark.parametrize(
