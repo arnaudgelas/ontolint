@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -241,6 +242,21 @@ def test_a_prefixed_name_spelled_like_a_directive_keyword_is_still_located(tmp_p
     text = "@prefix base: <https://example.test/> .\nbase:A a base:B .\n"
     locations = _document(tmp_path, "a.ttl", text).source_index.locations
     assert locations[URIRef("https://example.test/A")] == Location(2, 1)
+
+
+@pytest.mark.parametrize("suffix", ["ttl", "trig"])
+def test_the_scan_is_linear_on_a_long_word_outside_strings(tmp_path: Path, suffix: str) -> None:
+    # A run of name characters with no ':' (here a 50 000-letter language tag) used to be retried as a prefixed
+    # name at each of its letters: about 5 s for this file, four times longer when it doubles.
+    text = '@prefix ex: <https://example.test/> .\n{ ex:A ex:p "x"@' + "a" * 50_000 + " . ex:B a ex:A . }\n"
+    if suffix == "ttl":
+        text = text.replace("{ ", "").replace(" }", "")
+    document = _document(tmp_path, f"a.{suffix}", text)
+    started = time.perf_counter()
+    locations = document.source_index.locations
+    assert time.perf_counter() - started < 1
+    column = text.split("\n")[1].index("ex:B") + 1
+    assert locations[URIRef("https://example.test/B")] == Location(2, column)
 
 
 def test_a_jsonld_context_term_definition_is_never_a_location(tmp_path: Path) -> None:

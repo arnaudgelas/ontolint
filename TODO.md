@@ -23,9 +23,11 @@ Nothing open: 0.11.0 is released (see "Recently done").
     twin does. TriG was missing from `source_locations._TEXT_FORMATS` and from the scanner's
     prefixed-name and directive cases, an oversight: graph blocks need no tokenising (`{`, `}` and
     `GRAPH` start no term, as N3's braces do not). A term in two graphs, and a graph name that is
-    also a node, is located at its first spelling, as in N-Quads and JSON-LD.
-    - Verified: unit tests, a Turtle-twin SARIF test on both TriG fixtures, and the region property
-      test, now run once per syntax so each gets its own examples (drawn from one
+    also a node, is located at its first spelling, as in N-Quads and JSON-LD. The scan now skips a
+    run of name characters whole, so a long word outside strings (a language tag) costs linear
+    time instead of quadratic, in Turtle as in TriG.
+    - Verified: unit tests, a Turtle-twin SARIF test on both TriG fixtures, a linearity test, and the
+      region property test, now run once per syntax so each gets its own examples (drawn from one
       shared budget, TriG had two or three and the property missed the gap about one run in 20;
       now 0 passes in 40 runs on the unfixed locator). It writes TriG and N-Quads datasets, with a
       described graph name in half of them, and checks that every IRI subject of a text syntax has a

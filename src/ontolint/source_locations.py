@@ -38,6 +38,7 @@ _XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
 _JSON_FORMATS = frozenset({"json-ld", "application/ld+json"})
 _PREFIXED_NAME = re.compile(r"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:\\.|[^\s<>\"{}|^`\\])*)")
 _BNODE = re.compile(r"_:(?P<label>[A-Za-z][A-Za-z0-9_-]*)")
+_NAME_RUN = re.compile(r"[A-Za-z0-9_-]+")
 # Turtle/N3/TriG directives declare namespaces; the IRIs they mention are not statements about a node.
 _DIRECTIVE = re.compile(r"(?:@prefix|(?i:prefix))\s+[^\s:<>]*:\s*<[^>]*>\s*\.?|(?:@base|(?i:base))\s+<[^>]*>\s*\.?")
 _RDF_ABOUT = "http://www.w3.org/1999/02/22-rdf-syntax-ns#about"
@@ -175,8 +176,19 @@ def _scan(
                 _record(locations, graph_nodes, URIRef(namespace + _unescape_local(match["local"])), lines, index)
             index = match.end()
         else:
-            index += 1
+            index = _past_non_term(text, index)
     return locations
+
+
+def _past_non_term(text: str, index: int) -> int:
+    """Return the index after the character at ``index``, or after the run of name characters it starts.
+
+    No term starts inside such a run: a prefixed name or blank node starting in it would have matched at its
+    first character.  Skipping it whole keeps the scan linear on a long word, such as a language tag, that the
+    prefixed-name pattern would otherwise retry at each of its letters.
+    """
+    match = _NAME_RUN.match(text, index)
+    return index + 1 if match is None else match.end()
 
 
 def _skip_ignored(text: str, index: int) -> int | None:
