@@ -36,6 +36,17 @@ MANCHESTER = b"Prefix: : <https://e.test/o#>\nOntology: <https://e.test/o>\nClas
         (b"\xef\xbb\xbf" + JSONLD, "json-ld"),  # with a byte-order mark
         (b"[]", "json-ld"),  # an empty JSON-LD document
         (b"[ ]\n", "json-ld"),
+        (b'{\n  "@context": {"ex": "https://e.test/"}\n}', "json-ld"),
+        (b"{}", "json-ld"),  # an empty JSON object; a .trig or .n3 extension still reads it as a graph block
+        (b"{ }", "json-ld"),
+        (b"{ <https://e.test/a> a <https://e.test/K> . }\n", "trig"),  # the TriG default graph, as RDFLib writes it
+        (b"{ _:b a <https://e.test/K> . }", "trig"),
+        (b"{ [ a <https://e.test/K> ] . }", "trig"),
+        (b"{ ex:a a ex:K . }", "trig"),
+        (b"{ :a a :K . }", "trig"),  # the empty prefix
+        (b"{\n  # a comment\n  <https://e.test/a> a <https://e.test/K> .\n}", "trig"),
+        (b"{ # empty\n}", "trig"),  # JSON has no comments
+        (b"{ 42 }", None),
         (OWLXML, "owl-xml"),
         (FUNCTIONAL, "owl-functional"),
         (MANCHESTER, "owl-manchester"),
@@ -54,6 +65,24 @@ def test_choose_keeps_the_extension_within_the_text_family() -> None:
     assert choose("xml", b"unknown") == "xml"
 
 
+@pytest.mark.parametrize(
+    ("extension_format", "data", "expected"),
+    [
+        ("trig", b"{}", "trig"),  # an empty JSON-LD object and an empty TriG default graph: the extension decides
+        ("n3", b"{ }\n", "n3"),
+        ("json-ld", b"{}", "json-ld"),
+        ("turtle", b"{}", "json-ld"),  # Turtle has no graph blocks, so only JSON-LD reads it
+        ("trig", b"{ <https://e.test/a> a <https://e.test/K> . }", "trig"),
+        ("xml", b"{ <https://e.test/a> a <https://e.test/K> . }", "trig"),
+        ("trig", JSONLD, "json-ld"),  # a quoted key cannot open a graph block, so the content still wins
+    ],
+)
+def test_choose_keeps_the_extension_when_the_content_reads_in_its_syntax(
+    extension_format: str, data: bytes, expected: str
+) -> None:
+    assert choose(extension_format, data) == expected
+
+
 def _lint(tmp_path: Path, name: str, data: bytes, capsys: pytest.CaptureFixture[str]) -> tuple[int, str]:
     path = tmp_path / name
     path.write_bytes(data)
@@ -63,7 +92,14 @@ def _lint(tmp_path: Path, name: str, data: bytes, capsys: pytest.CaptureFixture[
 
 @pytest.mark.parametrize(
     ("name", "data"),
-    [("modl.owl", TURTLE), ("a.ttl", RDFXML), ("a.rdf", JSONLD), ("anon.ttl", b"[] a <https://e.test/K> .\n")],
+    [
+        ("modl.owl", TURTLE),
+        ("a.ttl", RDFXML),
+        ("a.rdf", JSONLD),
+        ("anon.ttl", b"[] a <https://e.test/K> .\n"),
+        ("default.trig", b"{ <https://e.test/o> a <http://www.w3.org/2002/07/owl#Ontology> . }\n"),
+        ("empty.trig", b"{}\n"),
+    ],
 )
 def test_a_mismatched_extension_still_parses(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, data: bytes
