@@ -248,6 +248,16 @@ CASES = {
             ttl("named subjects", _each(10, lambda i: f"ex:s{i} a owl:Class .")),
             ttl("below the minimum sample", _each(9, lambda i: "[] a ex:Thing .")),
             ttl("restriction nodes are structure", _each(10, lambda i: "[] a owl:Restriction .")),
+            ttl(
+                "reified statements are structure",
+                _each(
+                    10, lambda i: f"[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b{i} ."
+                ),
+            ),
+            ttl(
+                "member shapes are structure",
+                _each(10, lambda i: f"ex:S{i} a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) ."),
+            ),
         ],
     ),
 }

@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 FOCUS_FALLBACK = "urn:ontolint:graph"
 W3C_NAMESPACES = (str(OWL), str(RDF), str(RDFS), str(XSD))
+SHACL_NS = str(SH)
 WORD = re.compile(r"\w+")
 
 
@@ -356,6 +357,7 @@ def _reference_rule(ctx: RuleContext, classes: frozenset[URIRef], properties: fr
 _STRUCTURAL_TYPES = frozenset(
     {
         OWL.Axiom,
+        RDF.Statement,  # reification is the RDF counterpart of owl:Axiom
         OWL.Annotation,
         OWL.Restriction,
         OWL.Class,
@@ -369,6 +371,7 @@ _STRUCTURAL_TYPES = frozenset(
 )
 _STRUCTURAL_PREDICATES = (
     RDF.first,
+    RDF.subject,
     # SHACL structures (inline property shapes, prefix declarations) are anonymous by design.
     SH.path,
     SH.prefix,
@@ -386,8 +389,11 @@ def _is_structural_blank(g: Graph, node: object) -> bool:
     """Return whether a blank node only encodes an axiom, restriction, class expression or list cell."""
     if not isinstance(node, BNode):
         return False
-    return any(t in _STRUCTURAL_TYPES for t in g.objects(node, RDF.type)) or any(
-        (node, p, None) in g for p in _STRUCTURAL_PREDICATES
+    return (
+        any(t in _STRUCTURAL_TYPES for t in g.objects(node, RDF.type))
+        or any((node, p, None) in g for p in _STRUCTURAL_PREDICATES)
+        # Member shapes of sh:or/sh:and/sh:not, qualified shapes and SPARQL constraints: any sh: statement.
+        or any(str(p).startswith(SHACL_NS) for p in g.predicates(node, None))
     )
 
 

@@ -180,3 +180,24 @@ def test_metric010_foreign_target_still_counts_when_ownership_is_known() -> None
         g.add((URIRef(f"https://example.test/a#C{i}"), RDFS.subClassOf, URIRef(f"https://elsewhere.test/x#E{i}")))
     (finding,) = _run_owned(g, "https://example.test/", metric_max_foreign_reference_ratio=0.4)
     assert finding.message.startswith("10 of 20 structural references")
+
+
+def test_metric013_blank_structure_of_shapes_and_reification() -> None:
+    from rdflib.namespace import SH  # noqa: PLC0415
+
+    g = Graph()
+    for i in range(10):
+        shape = _ex(f"S{i}")
+        g.add((shape, RDF.type, SH.NodeShape))
+        member = BNode()
+        g.add((member, SH["class"], _ex("A")))  # only an sh: statement marks the member
+        g.add((shape, SH["not"], member))
+        statement = BNode()
+        g.add((statement, RDF.type, RDF.Statement))
+        g.add((statement, RDF.subject, _ex("a")))
+    assert _run(g, "METRIC013") == []
+    # A blank node with a statement outside sh:/rdf: stays free.
+    for _ in range(30):
+        g.add((BNode(), RDFS.label, Literal("x")))
+    (finding,) = _run(g, "METRIC013")
+    assert finding.message.startswith("30 of 40 subjects are blank nodes")
