@@ -90,7 +90,7 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items, shape_term, term_text
+from .support import list_items, shape_term, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -334,7 +334,7 @@ def _integer_values(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 ctx.add(
                     "SHQ008",
                     shape,
-                    f"{predicate.n3(sg.namespace_manager)} value {value!s} is not a non-negative integer.",
+                    f"{predicate.n3(sg.namespace_manager)} value {value_text(value)} is not a non-negative integer.",
                     subject=(predicate, shape_term(value)),
                 )
             elif _natural(value) is None:

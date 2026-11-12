@@ -222,6 +222,15 @@ def term_text(node: Node) -> str:
     return f"_:{node}" if isinstance(node, BNode) else str(node)
 
 
+def value_text(node: Node) -> str:
+    """``node`` for a message as ``str()`` spells it, but a blank node as ``_:label``, as :func:`term_text` does.
+
+    ``RuleContext`` rewrites ``_:label`` to the blank node's stable identity; in the shapes graph it rewrites
+    nothing else, so a shape rule that put a bare label in its message would depend on the parser's labels.
+    """
+    return f"_:{node}" if isinstance(node, BNode) else str(node)
+
+
 # An authority's userinfo, after ``scheme://`` and before the first ``@`` of the authority (RFC 3986 3.2.1).
 _USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*://([^/?#@]*)@")
 # Named "redacted": CodeQL takes any other "password" name for a secret, and the mask reaches the SHA-256 of a
