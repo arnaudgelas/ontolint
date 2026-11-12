@@ -94,19 +94,37 @@ _ESCAPE = re.compile(r"\\u([0-9A-Fa-f]{4})|\\U([0-9A-Fa-f]{8})|&#[xX]([0-9A-Fa-f
 _LINE = re.compile(r"\bline (\d+)")
 
 
-def _userinfos(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[int, int]]:
-    """The ``(start, end)`` of each userinfo of ``text`` that holds data, in order; see the module specification."""
-    position = 0
-    while (start := _AUTHORITY.search(text, position)) is not None:
+def _authorities(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[int, int, int, int]]:
+    """Each authority of ``text``, in order: where its scheme starts, where its userinfo would start, where the
+    authority ends and its last ``@`` before that end (``-1`` for none).
+
+    Every authority is visited, also one that starts inside another (``https://public.test and https://u:p@h``,
+    where the first runs to the second's ``/``).  The authorities that start inside one span of ``text`` without
+    a delimiter all end where it ends, so its end and last ``@`` are found once and the scan stays linear.
+    """
+    end = at = -1
+    for start in _AUTHORITY.finditer(text):
         begin = start.end()
         # A rendered report's authority stops at "\\" (an escape there), so it starts after the whole run.
         if start.group("run") is not None and rest is _TO_END:
             begin = _special_userinfo_start(text, start.start("run"), begin)
-        end = rest.match(text, begin).end()  # type: ignore[union-attr]  # a starred class always matches
-        at = text.rfind("@", begin, end)
-        if at > begin and text[begin:at].strip(":"):
+        if begin >= end:  # a span without a delimiter that no earlier authority reached
+            end = rest.match(text, begin).end()  # type: ignore[union-attr]  # a starred class always matches
+            at = text.rfind("@", begin, end)
+        yield start.start(), begin, end, at
+
+
+def _userinfos(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[int, int]]:
+    """The ``(start, end)`` of each userinfo of ``text`` that holds data, in order; see the module specification.
+
+    An authority that starts inside a userinfo already found ends at the same ``@``: the mask of the outer one
+    covers it, so it is not yielded and the spans never overlap.
+    """
+    done = 0
+    for _, begin, _, at in _authorities(text, rest):
+        if begin >= done and at > begin and text[begin:at].strip(":"):
             yield begin, at
-        position = end
+            done = at
 
 
 def _special_userinfo_start(text: str, run: int, after: int) -> int:
@@ -192,27 +210,62 @@ def withheld_parser_message(detail: str, source: bytes) -> str:
     return f"{where}the parser's message is withheld because the input holds an IRI userinfo, which it may quote"
 
 
+_AUTHORITY_END = re.compile(r"[/?#]")
+"""What ends an authority (:data:`_TO_END`)."""
+
+_SCHEME_TAIL = re.compile(r"(?<![A-Za-z0-9+.\-])[A-Za-z][A-Za-z0-9+.\-]*:[\t\n\r]*(?:/[\t\n\r]*)?\Z")
+"""A scheme at the end of a text that a later ``//`` would give an authority (``git+https:`` then ``//u:p@h``)."""
+
+
+def _complete_lines(text: str) -> tuple[int, bool]:
+    """The length of the longest prefix of ``text`` that ends with a line break outside every authority, and
+    whether the last authority of ``text`` is still open (no ``/``, ``?`` or ``#`` ends it yet).
+
+    An authority runs over line breaks to its first ``/``, ``?`` or ``#``, so a userinfo may span lines; one with
+    no such end in ``text`` yet, or a scheme at its end, may still run into what is written next.  Before a line
+    break outside all of them, the mask of ``text`` is the mask of each side of it: its prefix can be written.
+    """
+    authorities = list(_authorities(text))
+    tail = _SCHEME_TAIL.search(text)
+    newline = text.rfind("\n", 0, len(text) if tail is None else tail.start())
+    for start, _, end, _ in reversed(authorities):
+        if newline < 0 or newline > end:  # none left, or after this authority and so after all those before it
+            break
+        if newline > start:  # inside it: the last line break before it
+            newline = text.rfind("\n", 0, start)
+    return newline + 1, bool(authorities) and authorities[-1][2] == len(text)
+
+
 class RedactingStream:
     """A text stream that writes through to ``stream`` with every userinfo masked (:func:`redact_userinfo`).
 
     The command line and its bounded workers write stderr through one, so a note, a refusal, a traceback or a
-    library's warning that quotes an IRI cannot print a secret.  Text is held until a line ends, so a userinfo
-    written in several calls is masked whole; :meth:`drain` writes a last line that has no line break.  Bytes
+    library's warning that quotes an IRI cannot print a secret.  Text is written up to the last line break that
+    no authority runs across (:func:`_complete_lines`), so what reaches ``stream`` is the mask of all the text
+    written, however it was split into calls: a userinfo written in several calls, or with a line break in it,
+    is masked whole.  An authority still open is held until a ``/``, ``?`` or ``#`` ends it, or until
+    :meth:`drain`, which also writes a last line that has no line break.  Bytes
     written to :attr:`buffer` are decoded and masked the same way.  Everything else (``fileno``, ``encoding``
     ...) is the wrapped stream's: a write to the file descriptor itself is not masked.
     """
 
     def __init__(self, stream: TextIO) -> None:
         self.stream = stream
-        self._pending = ""
+        self._pending: list[str] = []
+        self._open = False  # whether the held text ends inside an authority that no "/ ? #" has ended
         self.buffer = _RedactingBuffer(self)
 
     def write(self, text: str) -> int:
-        self._pending += text
-        head, newline, tail = self._pending.rpartition("\n")
-        if newline:
-            self._pending = tail
-            self.stream.write(redact_userinfo(head + newline))
+        self._pending.append(text)
+        # The open authority runs on through a text without "/ ? #", over every line break in it: nothing is
+        # written, and a run of lines held behind it costs no scan per line.
+        if self._open and _AUTHORITY_END.search(text) is None:
+            return len(text)
+        pending = "".join(self._pending)
+        cut, self._open = _complete_lines(pending)
+        self._pending = [pending[cut:]]
+        if cut:
+            self.stream.write(redact_userinfo(pending[:cut]))
         return len(text)
 
     def writelines(self, lines: Iterable[str]) -> None:
@@ -220,13 +273,13 @@ class RedactingStream:
             self.write(line)
 
     def drain(self) -> None:
-        """Write the text held back for want of a line break, masked."""
-        if self._pending:
-            pending, self._pending = self._pending, ""
+        """Write the text held back, masked: a last line without its break, or one an authority is still open on."""
+        pending, self._pending, self._open = "".join(self._pending), [], False
+        if pending:
             self.stream.write(redact_userinfo(pending))
 
     def flush(self) -> None:
-        """Flush the wrapped stream; a line without its break is still held (see :meth:`drain`)."""
+        """Flush the wrapped stream; text the next write could still change the mask of is held (:meth:`drain`)."""
         self.stream.flush()
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401 -- whatever the wrapped stream holds
