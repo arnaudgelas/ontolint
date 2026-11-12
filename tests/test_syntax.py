@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 import pytest
+from timing_support import LINEAR_SCAN_SECONDS
 
 from ontolint.cli import main
 from ontolint.syntax import choose, html_start, sniff
@@ -65,7 +66,7 @@ def test_sniff_is_linear_on_a_run_of_hashes_after_a_brace() -> None:
     data = b"{" + b"#" * 5000
     started = time.perf_counter()
     assert sniff(data) is None
-    assert time.perf_counter() - started < 1
+    assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
 
 
 def test_choose_keeps_the_extension_within_the_text_family() -> None:

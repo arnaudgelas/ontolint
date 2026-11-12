@@ -10,6 +10,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from rdflib import Graph, URIRef
+from timing_support import LINEAR_SCAN_SECONDS
 
 from ontolint import source_locations
 from ontolint.cli import main
@@ -246,15 +247,15 @@ def test_a_prefixed_name_spelled_like_a_directive_keyword_is_still_located(tmp_p
 
 @pytest.mark.parametrize("suffix", ["ttl", "trig"])
 def test_the_scan_is_linear_on_a_long_word_outside_strings(tmp_path: Path, suffix: str) -> None:
-    # A run of name characters with no ':' (here a 50 000-letter language tag) used to be retried as a prefixed
-    # name at each of its letters: about 5 s for this file, four times longer when it doubles.
-    text = '@prefix ex: <https://example.test/> .\n{ ex:A ex:p "x"@' + "a" * 50_000 + " . ex:B a ex:A . }\n"
+    # A run of name characters with no ':' (here a 200 000-letter language tag) used to be retried as a prefixed
+    # name at each of its letters: about 5 s at 50 000 letters, four times longer when it doubles.
+    text = '@prefix ex: <https://example.test/> .\n{ ex:A ex:p "x"@' + "a" * 200_000 + " . ex:B a ex:A . }\n"
     if suffix == "ttl":
         text = text.replace("{ ", "").replace(" }", "")
     document = _document(tmp_path, f"a.{suffix}", text)
     started = time.perf_counter()
     locations = document.source_index.locations
-    assert time.perf_counter() - started < 1
+    assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
     column = text.split("\n")[1].index("ex:B") + 1
     assert locations[URIRef("https://example.test/B")] == Location(2, column)
 
