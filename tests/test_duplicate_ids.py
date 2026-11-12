@@ -348,6 +348,19 @@ def test_an_import_dir_holding_an_identical_copy_is_a_note(work: Path, capsys: p
     assert [(rule, severity) for rule, severity, *_ in found(report)] == [("ONT008", "info")]
 
 
+def test_one_file_reached_through_two_import_dir_options_is_one_candidate(
+    work: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A repeated option, a directory inside another, and a hard link in another directory: still one file."""
+    (work / "importdir/mirror/units-2025.ttl").unlink()
+    (work / "other").mkdir()
+    os.link(work / "importdir/mirror/units-2024.ttl", work / "other/units-linked.ttl")
+    for dirs in (("importdir/mirror", "importdir/mirror"), ("importdir", "importdir/mirror"), ("importdir", "other")):
+        options = [arg for d in dirs for arg in ("--import-dir", d)]
+        _code, report, _err = run(capsys, "importdir/root.ttl", *options, "--fail-on", "info")
+        assert found(report) == [], dirs
+
+
 def _second(work: Path) -> None:
     """Another ontology that imports the units, next to ``importdir/root.ttl``."""
     root = (work / "importdir/root.ttl").read_text(encoding="utf-8")
@@ -472,6 +485,44 @@ def test_the_baseline_identity_holds_no_path(work: Path, capsys: pytest.CaptureF
     assert (code, found(report)) == (0, [])
 
 
+def test_a_baseline_follows_the_finding_to_a_copy_that_sorts_first(
+    work: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The finding is reported on its first file; adding a copy before it, or renaming that file, moves it
+    to another report path, and the baseline still accepts it (once in the run, under one recorded path)."""
+    os.chdir(work / "inputs")
+    gate = ("--select", "ONT007,ONT008", "--fail-on", "warning")
+    assert run(capsys, "release.ttl", "working.ttl", "--write-baseline", "b.json", *gate)[0] == 1
+    shutil.copy("release.ttl", "a-copy.ttl")
+    code, report, _err = run(capsys, "a-copy.ttl", "release.ttl", "working.ttl", "--baseline", "b.json", *gate)
+    assert (code, found(report)) == (0, [])
+    shutil.move("release.ttl", "z-release.ttl")
+    code, report, _err = run(capsys, "a-copy.ttl", "z-release.ttl", "working.ttl", "--baseline", "b.json", *gate)
+    assert (code, found(report)) == (0, [])
+
+
+def test_a_baseline_entry_reported_twice_in_a_run_follows_only_its_own_path(
+    work: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Two datasets whose graphs both repeat one header: one identity, reported on each file.  The entry
+    recorded for one file keeps accepting it there and never accepts the other's; recorded for both, it
+    accepts neither on a third file."""
+    header = f"<{MENU}> a <http://www.w3.org/2002/07/owl#Ontology>"
+    label = "<http://www.w3.org/2000/01/rdf-schema#label>"
+    for name in ("one", "two", "three"):
+        (work / f"{name}.trig").write_text(
+            f'<https://g.test/{name}/a> {{ {header} ; {label} "a" . }}\n'
+            f'<https://g.test/{name}/b> {{ {header} ; {label} "b" . }}\n'
+        )
+    gate = ("--select", "ONT007,ONT008")
+    run(capsys, "one.trig", "--write-baseline", "b.json", *gate)
+    _code, report, _err = run(capsys, "one.trig", "two.trig", "--baseline", "b.json", *gate)
+    assert [path for _r, _s, _f, path, message in found(report) if " graphs of " in message] == ["two.trig"]
+    run(capsys, "one.trig", "two.trig", "--write-baseline", "both.json", *gate)
+    _code, report, _err = run(capsys, "three.trig", "--baseline", "both.json", *gate)
+    assert [path for _r, _s, _f, path, _m in found(report)] == ["three.trig"]
+
+
 # --- the named graphs of a dataset -----------------------------------------------------------------------------
 
 
@@ -509,6 +560,33 @@ def test_two_graphs_with_the_same_header_and_nothing_else_are_a_note(
             "Ontology IRI declared by 2 graphs of copies.trig with identical content: https://g.test/a, https://g.test/b.",
         )
     ]
+
+
+def test_identical_blank_node_graphs_are_one_graph(work: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """A blank graph is named by its content (:mod:`ontolint.datasets`), so two with the same triples are one
+    graph of the index, and no document of their own: the limit is deliberate, and this test marks it."""
+    header = "<https://example.test/menu> a <http://www.w3.org/2002/07/owl#Ontology> ."
+    (work / "blank.trig").write_text(f"_:a {{ {header} }}\n_:b {{ {header} }}\n")
+    _code, report, _err = run(capsys, "blank.trig")
+    assert found(report) == []
+
+
+def test_a_dataset_of_a_closure_names_its_own_graphs(work: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """The root declares the IRI too, so it owns the focus; the finding on the dataset's graphs still moves to
+    the dataset and names the graphs there."""
+    owl = "<http://www.w3.org/2002/07/owl#Ontology>"
+    (work / "lib").mkdir()
+    (work / "root.ttl").write_text(
+        f"<{MENU}> a {owl} ; <http://www.w3.org/2002/07/owl#imports> <https://example.test/data> .\n"
+    )
+    (work / "lib/data.trig").write_text(
+        f"{{ <https://example.test/data> a {owl} . }}\n"
+        f'<https://g.test/a> {{ <{MENU}> a {owl} ; <http://www.w3.org/2000/01/rdf-schema#label> "a" . }}\n'
+        f'<https://g.test/b> {{ <{MENU}> a {owl} ; <http://www.w3.org/2000/01/rdf-schema#label> "b" . }}\n'
+    )
+    _code, report, _err = run(capsys, "root.ttl", "--import-dir", "lib")
+    placed = [(f["path"], f.get("graphs")) for f in report["findings"] if f["rule"] in RULES]
+    assert placed == [("root.ttl", None), ("lib/data.trig", ["https://g.test/a", "https://g.test/b"])]
 
 
 # --- what "the same content" means -----------------------------------------------------------------------------

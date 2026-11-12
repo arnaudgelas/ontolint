@@ -278,11 +278,17 @@ class _Resolver:
         holders = [d for d in self.directories if iri in d.entries]
         if not holders:
             return None, None
-        # Every import dir that holds the IRI, in argument order, then each one's files in path order.
-        candidates = tuple((path, d.root) for d in holders for path in d.declaring(iri))
+        # Every import dir that holds the IRI, in argument order, then each one's files in path order; one file
+        # reached through two options (repeated, nested, or a hard link) is one candidate, in the first of them.
+        unique: dict[tuple[object, ...], tuple[Path, Catalog]] = {}
+        for d in holders:
+            for path in d.declaring(iri):
+                unique.setdefault(file_identity(path), (path, d))
+        candidates = tuple((path, d.root) for path, d in unique.values())
         choice = None
         if len(candidates) > 1:
-            choice = ImportChoice(iri, tuple(d.display for d in holders), candidates)
+            directories = tuple(dict.fromkeys(d.display for _path, d in unique.values()))
+            choice = ImportChoice(iri, directories, candidates)
         return holders[0].entries[iri], choice
 
 
