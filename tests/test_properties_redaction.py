@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 from urllib.parse import urlsplit
 
 import pytest
@@ -12,7 +13,14 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import RDF
 
 from ontolint import Linter
-from ontolint.redaction import REDACTED_USERINFO, redact_rendered, redact_userinfo, userinfo_password
+from ontolint.redaction import (
+    REDACTED_USERINFO,
+    RedactingStream,
+    has_userinfo,
+    redact_rendered,
+    redact_userinfo,
+    userinfo_password,
+)
 
 pytestmark = pytest.mark.slow
 
@@ -114,3 +122,36 @@ def test_a_rendered_report_is_masked_less_than_a_field(text: str) -> None:
     rendered = redact_rendered(text)
     assert redact_rendered(rendered) == rendered
     assert redact_userinfo(rendered) == redact_userinfo(text)
+
+
+@budget()
+@given(texts, st.sampled_from([" ", "\n", "\t", " and "]), schemes, users, rests)
+@example("https://public.test", " and ", "https", "alice", "/x")
+@example("https://u:p@h", " ", "https", "v", "")
+def test_a_credential_after_any_text_is_masked(text: str, separator: str, scheme: str, user: str, rest: str) -> None:
+    # Whatever authority the text before it opens, the IRI's own authority is read too (PR #50 review).
+    whole = f"{text}{separator}{scheme}://{user}:QXSECRET@h{rest}"
+    assert "QXSECRET" not in redact_userinfo(whole)
+    assert "QXSECRET" not in redact_rendered(whole)
+    assert has_userinfo(whole)
+    assert userinfo_password(whole) is not None
+
+
+fragments = st.lists(
+    st.sampled_from(["https:", "git+https:", "ftp:", "//", "/", "\\", "u:p", "@", "h", " ", "\n", "\t", "?", "#"]),
+    max_size=16,
+).map("".join)
+
+
+@budget()
+@given(fragments, st.lists(st.integers(min_value=0, max_value=40), max_size=6))
+@example("https://alice:Line\nTail@h/x\n", [19])  # a write ends at the userinfo's line break
+def test_the_stream_writes_the_mask_of_all_its_text_however_it_is_split(text: str, cuts: list[int]) -> None:
+    target = io.StringIO()
+    stream = RedactingStream(target)
+    bounds = [0, *sorted(min(cut, len(text)) for cut in cuts), len(text)]
+    for begin, end in zip(bounds, bounds[1:], strict=False):
+        stream.write(text[begin:end])
+        stream.write("")
+    stream.drain()
+    assert target.getvalue() == redact_userinfo(text)

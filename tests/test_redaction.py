@@ -104,6 +104,31 @@ def test_a_rendered_report_is_masked_without_crossing_a_token() -> None:
     assert redact_rendered('"focus": "https://u:p@h/x",') == '"focus": "https://****@h/x",'
 
 
+@pytest.mark.parametrize(
+    ("text", "masked"),
+    [
+        # The first authority runs to the second's "/", so the second starts inside it (PR #50 review).
+        (
+            "See https://public.test and https://alice:QXSECRET@private.test/x",
+            f"See https://public.test and {MASKED.replace('example', 'private')}",
+        ),
+        ("https://u:p@h https://v:QXSECRET@g/x", f"https://{REDACTED_USERINFO}@h https://{REDACTED_USERINFO}@g/x"),
+        ("https://h\nhttps://alice:QXSECRET@g/x", f"https://h\nhttps://{REDACTED_USERINFO}@g/x"),
+    ],
+)
+def test_an_authority_inside_another_is_read(text: str, masked: str) -> None:
+    assert redact_userinfo(text) == masked
+    assert has_userinfo(text)
+    assert userinfo_password(text) is not None
+    assert "QXSECRET" not in redact_rendered(text)
+
+
+def test_an_authority_inside_a_userinfo_is_masked_with_it() -> None:
+    # "http:b" starts an authority inside the userinfo "a http:b:pw": one mask covers both, up to the last "@".
+    assert redact_userinfo("https://a http:b:pw@h/x") == f"https://{REDACTED_USERINFO}@h/x"
+    assert userinfo_password("https://a http:b:pw@h/x") == "b:pw"
+
+
 def test_clip_masks_before_it_cuts() -> None:
     long = "Mirror https://alice:" + "S" * 80 + "@example.test/x"
     assert clip(long, 30) == "Mirror https://****@example.te"
@@ -121,8 +146,20 @@ def test_clip_masks_before_it_cuts() -> None:
         "https:" * 100_000 + "@",
         "a:" + "\n" * 400_000 + "@",
         "a" * 400_000 + "&#64;",
+        "https://h " + "http:a " * 50_000 + "@",
+        "https://h " + "a://b " * 50_000 + "@",
     ],
-    ids=["scheme-then-authority", "scheme-run", "colons", "starts", "special", "line-breaks", "escaped-at"],
+    ids=[
+        "scheme-then-authority",
+        "scheme-run",
+        "colons",
+        "starts",
+        "special",
+        "line-breaks",
+        "escaped-at",
+        "nested-special",
+        "nested-generic",
+    ],
 )
 def test_the_scan_is_linear(text: str) -> None:
     # CodeQL py/polynomial-redos: an unanchored scheme restarted at every letter of a run (7.8 s at 80 k).
@@ -148,6 +185,52 @@ def test_the_stream_masks_a_userinfo_split_over_writes() -> None:
     assert target.getvalue() == "".join(
         f"{text}\n" for text in (f"note: {MASKED}", MASKED, MASKED, f"tail {MASKED}")
     ).removesuffix("\n")
+
+
+def test_the_stream_masks_a_userinfo_with_a_line_break() -> None:
+    # print() writes the text, then its "\n": the userinfo's own line break must not end what is written (PR #50).
+    target = io.StringIO()
+    stream = RedactingStream(target)
+    print("https://alice:LineSecret\nTailSecret@example.test/x", file=stream)
+    stream.write("https:\n")  # a special scheme whose slashes come in the next write
+    stream.write("//alice:SplitSecret@example.test/x\n")
+    stream.write("git+https:")  # a scheme that the next write gives an authority
+    stream.write("//alice:GitSecret@example.test/x\n")
+    stream.drain()
+    output = target.getvalue()
+    assert not {"LineSecret", "TailSecret", "SplitSecret", "GitSecret"} & set(output.replace("\n", " ").split())
+    assert output == redact_userinfo(
+        "https://alice:LineSecret\nTailSecret@example.test/x\n"
+        "https:\n//alice:SplitSecret@example.test/x\n"
+        "git+https://alice:GitSecret@example.test/x\n"
+    )
+    assert "Secret" not in output
+
+
+def test_the_stream_writes_a_line_as_soon_as_no_authority_is_open() -> None:
+    target = io.StringIO()
+    stream = RedactingStream(target)
+    stream.write("plain line\nsee https://example.test/x\n")
+    assert target.getvalue() == "plain line\nsee https://example.test/x\n"
+    # An authority with no "/ ? #" yet may still be given a userinfo by a later line: it is held, the line before
+    # it is written.
+    stream.write("before\nsee https://example.test\n")
+    assert target.getvalue().endswith("x\nbefore\n")
+    stream.write("and alice:pw@host/x\nafter\n")
+    assert target.getvalue().endswith(f"before\nsee https://{REDACTED_USERINFO}@host/x\nafter\n")
+
+
+def test_the_stream_holds_lines_behind_an_open_authority_in_linear_time() -> None:
+    target = io.StringIO()
+    stream = RedactingStream(target)
+    started = time.perf_counter()
+    stream.write("see https://example.test\n")
+    for _ in range(100_000):
+        stream.write("a note without an end of authority\n")
+    assert target.getvalue() == ""
+    stream.write("/x\n")  # the authority ends: everything held is written
+    assert time.perf_counter() - started < 1
+    assert target.getvalue().startswith("see https://example.test\na note") and target.getvalue().endswith("/x\n")
 
 
 def test_the_stream_still_answers_what_the_wrapped_stream_answers() -> None:
