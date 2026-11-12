@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 import pytest
+from timing_support import LINEAR_SCAN_SECONDS
 
 from ontolint.redaction import (
     REDACTED_USERINFO,
@@ -167,7 +168,7 @@ def test_the_scan_is_linear(text: str) -> None:
     redact_userinfo(text)
     redact_rendered(text)
     has_userinfo(text)
-    assert time.perf_counter() - started < 1
+    assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
 
 
 def test_the_stream_masks_a_userinfo_split_over_writes() -> None:
@@ -229,7 +230,7 @@ def test_the_stream_holds_lines_behind_an_open_authority_in_linear_time() -> Non
         stream.write("a note without an end of authority\n")
     assert target.getvalue() == ""
     stream.write("/x\n")  # the authority ends: everything held is written
-    assert time.perf_counter() - started < 1
+    assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
     assert target.getvalue().startswith("see https://example.test\na note") and target.getvalue().endswith("/x\n")
 
 
