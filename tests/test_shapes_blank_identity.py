@@ -8,6 +8,7 @@ empty node, and the de-duplicating emitter then merged them into one finding.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from random import Random
 
@@ -16,6 +17,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget
 from rdflib import BNode, Graph
+from rdflib.namespace import SH
+from rdflib.term import Node
 from rule_harness import PREFIXES, graph
 
 from ontolint import Linter
@@ -25,6 +28,7 @@ from ontolint.loader import load_graph
 from ontolint.models import Finding
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.rules.runtime import RuleContext
 from ontolint.rules.support import stable_blank_id
 
 # The identity of a blank node with no triple at all: what every shapes-graph blank node got in the data graph.
@@ -121,6 +125,135 @@ def test_a_blank_value_in_a_message_is_named_by_its_content_not_its_label() -> N
         assert value.startswith("_:")
         assert value != EMPTY
         assert finding.message == f"sh:maxCount value {value} is not a non-negative integer."
+
+
+# Every SHQ message that names a blank value of the shapes graph, and some that hold a count (SHQ009, SHQ023,
+# SHQ026): a parser label such as JSON-LD's ``_:2`` must neither stay in a message nor rewrite its counts.
+FAULTS = """
+    ex:A a sh:NodeShape ; sh:targetClass ex:K ; sh:targetSubjectsOf [ ex:v 1 ] ;
+        sh:severity [ ex:v 2 ] ;
+        sh:flags [ ex:v 3 ] ; sh:pattern "x" ;
+        sh:languageIn ( [ ex:v 4 ] "en" ) ;
+        sh:property [ sh:path ex:p , ex:q ; sh:maxCount [ ex:v 5 ] ; sh:in ( ex:x ex:x ) ] ,
+            [ sh:path ex:r ; sh:minCount 1 ] , [ sh:path ex:r ; sh:maxCount 1 ] .
+"""
+BLANK = r"_:[0-9a-f]{12}"
+FAULT_MESSAGES = {
+    "SHQ008": rf"sh:maxCount value {BLANK} is not a non-negative integer\.",
+    "SHQ009": r"sh:in list repeats 1 member\(s\)\.",
+    "SHQ010": rf"sh:languageIn member {BLANK} is not a well-formed language tag\.",
+    "SHQ014": rf"sh:severity value {BLANK} is not sh:Info, sh:Warning or sh:Violation\.",
+    "SHQ015": rf"sh:flags value {BLANK} is not made of the flags s, m, i, x and q\.",
+    "SHQ022": rf"sh:targetSubjectsOf value {BLANK} is not an IRI\.",
+    "SHQ023": r"Property shape has 2 sh:path values\.",
+    "SHQ026": r"2 property shapes constrain the same path https://example\.test/onto#r\.",
+}
+
+
+def _shq(shapes: Graph) -> list[tuple[str, str, str, tuple[str, ...]]]:
+    return sorted((f.rule, f.focus, f.message, f.subject) for f in _run(shapes, ["SHQ"]))
+
+
+def _relabelled(shapes: Graph, labels: list[str]) -> Graph:
+    """``shapes`` with its blank nodes, in label order, renamed to ``labels``, as a JSON-LD document may name them."""
+    rename: dict[Node, Node] = dict(zip(sorted(_blanks(shapes), key=str), map(BNode, labels), strict=True))
+    out = Graph()
+    for s, p, o in shapes:
+        out.add((rename.get(s, s), p, rename.get(o, o)))
+    return out
+
+
+def _blanks(shapes: Graph) -> set[BNode]:
+    return {n for t in shapes for n in (t[0], t[2]) if isinstance(n, BNode)}
+
+
+def _blank_count(shapes: Graph) -> int:
+    return len(_blanks(shapes))
+
+
+def test_every_blank_value_and_count_in_a_shape_message_is_spelled_as_expected() -> None:
+    by_rule = {rule: message for rule, _focus, message, _subject in _shq(graph(FAULTS)) if rule in FAULT_MESSAGES}
+    assert set(by_rule) == set(FAULT_MESSAGES)
+    for rule, pattern in FAULT_MESSAGES.items():
+        assert re.fullmatch(pattern, by_rule[rule]), (rule, by_rule[rule])
+
+
+@pytest.mark.parametrize("scheme", ["letters", "digits", "json-ld"])
+def test_shape_messages_do_not_depend_on_alphabetic_or_numeric_labels(scheme: str) -> None:
+    # Letters (``a``) were left raw in a message; digits (``2``) rewrote the counts of SHQ009, SHQ023 and SHQ026.
+    shapes = graph(FAULTS)
+    count = _blank_count(shapes)
+    labels = {
+        "letters": [chr(ord("a") + i) for i in range(count)],
+        "digits": [str(i) for i in range(count)],
+        "json-ld": [f"b{i}" for i in range(count)],
+    }[scheme]
+    assert _shq(_relabelled(shapes, labels)) == _shq(shapes)
+
+
+@pytest.mark.parametrize("label", ["_:a", "_:2", "_:b0"])
+def test_a_json_ld_shapes_file_reports_as_its_turtle_twin(label: str, tmp_path: Path) -> None:
+    # Through the loader, as with ``--shapes``: the label of the severity node is the one JSON-LD keeps.
+    ex, sh = "https://example.test/onto#", str(SH)
+    document = {
+        "@id": f"{ex}A",
+        "@type": f"{sh}NodeShape",
+        f"{sh}targetClass": {"@id": f"{ex}K"},
+        f"{sh}severity": {"@id": label},
+        f"{sh}property": {"@id": "_:s"},
+        "@included": [
+            {"@id": label, f"{ex}v": 1},
+            {"@id": "_:s", f"{sh}path": [{"@id": f"{ex}p"}, {"@id": f"{ex}q"}]},
+        ],
+    }
+    twin = graph(
+        "ex:A a sh:NodeShape ; sh:targetClass ex:K ; sh:severity [ ex:v 1 ] ; sh:property [ sh:path ex:p , ex:q ] ."
+    )
+    loaded = _json_ld(document, tmp_path / "shapes.jsonld")
+    assert BNode(label.removeprefix("_:")) in set(loaded.objects())
+    assert _shq(loaded) == _shq(twin)
+    messages = {rule: message for rule, _focus, message, _subject in _shq(loaded)}
+    assert messages["SHQ023"] == "Property shape has 2 sh:path values."
+    assert re.fullmatch(rf"sh:severity value {BLANK} is not sh:Info, sh:Warning or sh:Violation\.", messages["SHQ014"])
+
+
+@budget(0.5)
+@given(data=st.data())
+def test_shape_findings_do_not_depend_on_blank_node_labels(data: st.DataObject) -> None:
+    shapes = graph(FAULTS)
+    count = _blank_count(shapes)
+    # Short labels of letters and digits: words of the messages (``a``), their counts (``1``, ``2``) and both mixed.
+    label = st.text(alphabet="ab012", min_size=1, max_size=3)
+    labels = data.draw(st.lists(label, min_size=count, max_size=count, unique=True))
+    assert _shq(_relabelled(shapes, labels)) == _shq(shapes)
+
+
+def test_the_shapes_graph_rewrites_only_prefixed_labels() -> None:
+    # A bare label, digits included, is text: a shape rule spells a blank node ``_:label`` (``value_text``).
+    shapes = Graph()
+    node = BNode("2")
+    shapes.add((node, SH.path, BNode("a")))
+    ctx = Linter(DATA, shapes).rule_context
+    with ctx.naming_shapes():
+        ctx.add("SHQ023", node, "Property shape has 2 sh:path values.", subject=(SH.path, "several"))
+        ctx.add("SHQ014", node, "sh:severity value a is _:a, not _:2.", subject=(BNode("a"),))
+    identity = {label: stable_blank_id(shapes, BNode(label)) for label in ("2", "a")}
+    assert [f.message for f in ctx.findings] == [
+        "Property shape has 2 sh:path values.",
+        f"sh:severity value a is {identity['a']}, not {identity['2']}.",
+    ]
+    assert {f.focus for f in ctx.findings} == {identity["2"]}
+
+
+def test_the_data_graph_still_rewrites_bare_generated_labels() -> None:
+    # Data-graph rules still spell some blank nodes without ``_:``; only the shapes graph is prefix-only.
+    data = Graph()
+    node = BNode("N1x")
+    data.add((node, SH.path, node))
+    ctx = RuleContext(data, None, Policy(), Linter(data).rule_context.context)
+    ctx.add("CLS001", node, "Blank N1x and _:N1x.")
+    identity = stable_blank_id(data, node)
+    assert ctx.findings[0].message == f"Blank {identity} and {identity}."
 
 
 def test_shapes_with_the_same_content_and_owner_share_one_identity() -> None:

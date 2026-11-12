@@ -73,10 +73,16 @@ class PropertyClosure:
 
 
 class _BlankNames:
-    """The stable identities of one graph's blank nodes, and the rewriting of their labels inside messages."""
+    """The stable identities of one graph's blank nodes, and the rewriting of their labels inside messages.
 
-    def __init__(self, graph: Graph) -> None:
+    With ``bare``, a label is also rewritten without its ``_:`` prefix when it holds a digit (see :meth:`rewrite`);
+    the data-graph rules still spell some blank nodes that way.  Without it, only ``_:label`` is rewritten, so a
+    message never depends on the labels a parser chose.
+    """
+
+    def __init__(self, graph: Graph, *, bare: bool) -> None:
         self.graph = graph
+        self.bare = bare
         self._ids: dict[BNode, str] = {}
         self._nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._pattern: re.Pattern[str] | None = None
@@ -89,17 +95,18 @@ class _BlankNames:
     def rewrite(self, message: str) -> str:
         """Replace the graph's parser-assigned blank-node labels inside ``message`` by their stable identity.
 
-        A label after the ``_:`` prefix is always replaced. A bare label is replaced only when it contains a
-        digit, as generated labels do, so a hand-written label such as ``a`` cannot rewrite an ordinary word
-        of the message.  A message with neither ``_:`` nor a digit holds no label, so it never builds the pattern
+        A label after the ``_:`` prefix is always replaced.  With ``bare``, a label alone is replaced too when it
+        contains a digit, as generated labels do, so a hand-written label such as ``a`` cannot rewrite an ordinary
+        word of the message; JSON-LD keeps document labels, though, and one such as ``_:2`` would rewrite a count.
+        A message that cannot hold a label (no ``_:``, and with ``bare`` no digit either) never builds the pattern
         (one alternative per blank node of the graph).
         """
-        if "_:" not in message and not any(c.isdigit() for c in message):
+        if "_:" not in message and not (self.bare and any(c.isdigit() for c in message)):
             return message
         if self._nodes is None:
             self._nodes = {str(n): n for t in self.graph for n in (t[0], t[2]) if isinstance(n, BNode)}
             labels = sorted(self._nodes, key=lambda label: (-len(label), label))
-            bare = [label for label in labels if any(c.isdigit() for c in label)]
+            bare = [label for label in labels if any(c.isdigit() for c in label)] if self.bare else []
             if labels:
                 prefixed = "|".join(re.escape(label) for label in labels)
                 alone = "|".join(re.escape(label) for label in bare) or "(?!)"
@@ -129,9 +136,10 @@ class RuleContext:
         self.seen: set[tuple[str, str, str]] = set()
         self._emitted: dict[tuple[str, str, str], int] = {}  # each seen key's position in ``findings``
         # Blank nodes are named by their content in the graph the running rules report on: the data graph,
-        # or the shapes graph inside :meth:`naming_shapes`.
-        self._data_names = _BlankNames(graph)
-        self._shape_names = _BlankNames(shapes) if shapes is not None else None
+        # or the shapes graph inside :meth:`naming_shapes`.  The shape rules spell every blank node of a message
+        # ``_:label`` (:func:`~ontolint.rules.support.value_text`), so only those are rewritten there.
+        self._data_names = _BlankNames(graph, bare=True)
+        self._shape_names = _BlankNames(shapes, bare=False) if shapes is not None else None
         self._names = self._data_names
         # The configured definition and label predicates, then every IRI below one of them (sorted).
         # ``labels`` says whether a term has a label and which values are judged as labels;

@@ -23,7 +23,7 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items, shape_term
+from .support import list_items, shape_term, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -151,7 +151,7 @@ def _language_in(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 ctx.add(
                     "SHQ010",
                     shape,
-                    f"sh:languageIn member {item!s} is not a well-formed language tag.",
+                    f"sh:languageIn member {value_text(item)} is not a well-formed language tag.",
                     subject=(shape_term(item),),
                 )
 
@@ -177,7 +177,7 @@ def _severity(ctx: RuleContext, sg: Graph, shape: Node) -> None:
             ctx.add(
                 "SHQ014",
                 shape,
-                f"sh:severity value {value!s} is not sh:Info, sh:Warning or sh:Violation.",
+                f"sh:severity value {value_text(value)} is not sh:Info, sh:Warning or sh:Violation.",
                 subject=(shape_term(value),),
             )
 
@@ -189,7 +189,7 @@ def _flags(ctx: RuleContext, sg: Graph, shape: Node) -> None:
             ctx.add(
                 "SHQ015",
                 shape,
-                f"sh:flags value {flag!s} is not made of the flags s, m, i, x and q.",
+                f"sh:flags value {value_text(flag)} is not made of the flags s, m, i, x and q.",
                 subject=(shape_term(flag),),
             )
     if values and (shape, SH.pattern, None) not in sg:
@@ -201,7 +201,10 @@ def _targets(ctx: RuleContext, sg: Graph, shape: Node) -> None:
         for value in sg.objects(shape, predicate):
             if not isinstance(value, URIRef):
                 ctx.add(
-                    "SHQ022", shape, f"{name} value {value!s} is not an IRI.", subject=(predicate, shape_term(value))
+                    "SHQ022",
+                    shape,
+                    f"{name} value {value_text(value)} is not an IRI.",
+                    subject=(predicate, shape_term(value)),
                 )
 
 
