@@ -402,7 +402,8 @@ compared. `ONT007` is a warning, so it fails a run with `--fail-on warning` (and
 `fair` and `strict` profiles); `--ignore ONT007,ONT008` leaves them out. Baselines accept them like
 any finding; the identity is the rule, the IRI, the place and the kind, never the paths, so a
 baseline keeps accepting the finding on another machine, from another working directory, and when a
-copy is added, removed or renamed.
+copy is added, removed or renamed, even when that moves the finding to another file of the run (as long
+as the run reports it once and the baseline recorded it for one file).
 
 ### Modular ontologies: following `owl:imports`
 

@@ -124,10 +124,35 @@ def _shared_headers(count: int) -> float:
     return _best_of(lambda: shared_identities([item], [loaded], Policy()))
 
 
+def _distinct_shared_headers(count: int) -> float:
+    """ONT007 over a dataset of ``count / 5`` pairs of named graphs, each pair repeating its own ontology header
+    (the first draft of ONT007 checked each finding against the findings of every other IRI, so the step grew
+    with the square of the shared IRIs)."""
+    store, default = Memory(), BNode()
+    for i in range(count // 5):
+        for side in "ab":
+            named = Graph(store=store, identifier=URIRef(f"https://example.test/g{i}{side}"))
+            named.add((URIRef(f"https://example.test/o{i}"), RDF.type, OWL.Ontology))
+            named.add((URIRef(f"https://example.test/C{i}{side}"), RDF.type, OWL.Class))
+    index = build_graph_index(store, default, "file:///w/")
+    (item,) = resolve_inputs(["d.trig"], Path.cwd())
+    source_index = build_source_index(b"", "nt", "file:///w/d.trig", Graph())
+    loaded = LoadedGraph(Graph(store=store, identifier=default), source_index, graphs=index)
+    return _best_of(lambda: shared_identities([item], [loaded], Policy()))
+
+
 @pytest.mark.parametrize(
     "step",
-    [_locate, _cls017, _graph_index, _finding_graphs, _closure, _shared_headers],
-    ids=["source-locator", "CLS017", "graph-index", "finding-graphs", "property-closure", "shared-headers"],
+    [_locate, _cls017, _graph_index, _finding_graphs, _closure, _shared_headers, _distinct_shared_headers],
+    ids=[
+        "source-locator",
+        "CLS017",
+        "graph-index",
+        "finding-graphs",
+        "property-closure",
+        "shared-headers",
+        "distinct-shared-headers",
+    ],
 )
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], float]) -> None:
     small, large = step(SMALL), step(LARGE)

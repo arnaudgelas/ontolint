@@ -8,7 +8,9 @@ compared separately (see :mod:`ontolint.rules.duplicate_ids` for the rule contra
 * the files of each input's import closure, with the files an import resolves to but was not loaded from
   because a loaded file already declares its IRI;
 * the files of the ``--import-dir`` options that an import of a closure had to choose between;
-* the named graphs of each dataset file (an input, or a file of its closure).
+* the named graphs of each dataset file (an input, or a file of its closure).  A blank graph is named by its
+  content (:mod:`ontolint.datasets`), so two blank graphs with the same triples are one graph here, and their
+  header is no duplicate: no stable name would tell the two apart in a report.
 
 One fact is reported once: of the findings that name one IRI, a finding whose documents are all documents of
 another is dropped, and of two with the same documents the first is kept (in report-path order of the
@@ -303,13 +305,14 @@ def _unique(
 ) -> list[tuple[int, SharedIdentity, list[_Document]]]:
     """``found`` without the findings another one states: same IRI and kind, and a subset of its documents."""
     members = [frozenset(document.key for document in documents) for _input, _identity, documents in found]
+    named: dict[tuple[str, str], list[int]] = {}  # compare only findings on one IRI: linear in distinct IRIs
+    for position, (_number, identity, _documents) in enumerate(found):
+        named.setdefault((identity.iri, identity.kind), []).append(position)
     kept = []
     for position, (number, identity, documents) in enumerate(found):
-        name = (identity.iri, identity.kind)
         if not any(
-            (other[1].iri, other[1].kind) == name
-            and (members[position] < members[index] or (members[position] == members[index] and index < position))
-            for index, other in enumerate(found)
+            members[position] < members[index] or (members[position] == members[index] and index < position)
+            for index in named[(identity.iri, identity.kind)]
         ):
             kept.append((number, identity, documents))
     return kept

@@ -363,26 +363,29 @@ def _lint_file(
         origins = {**origins, **members}
         locations = {f: where for f, where in locations.items() if f not in members}
         graphs = {f: names for f, names in graphs.items() if f not in members}
-    others = _shared_places(item, findings, shared, sarif, (origins, locations)) if shared else {}
+    others = _shared_places((item, loaded), findings, shared, sarif, (origins, locations, graphs)) if shared else {}
     return FileReport(
         item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules, graphs, others
     )
 
 
 def _shared_places(
-    item: InputFile,
+    source: tuple[InputFile, LoadedGraph],
     findings: Sequence[Finding],
     shared: Sequence[Shared],
     sarif: bool,
-    shown: tuple[dict[Finding, Origin], dict[Finding, Location]],
+    shown: tuple[dict[Finding, Origin], dict[Finding, Location], dict[Finding, tuple[str, ...]]],
 ) -> dict[Finding, tuple[tuple[Origin, Location | None], ...]]:
     """Place each ONT007 and ONT008 finding of ``findings`` at the files of its members; return the other files.
 
-    The finding belongs to its first member's file (``origins``, updated in place with ``locations``) and is
-    located there; for SARIF, every other member's file is a related location.  Its named graphs are found like any
-    finding's (:func:`ontolint.datasets.finding_graphs`): every graph of its file that describes the IRI.
+    The finding belongs to its first member's file (``origins``, updated in place with ``locations`` and
+    ``graphs``) and is located there; for SARIF, every other member's file is a related location.  Its named
+    graphs are found like any finding's (:func:`ontolint.datasets.finding_graphs`), in that file: every graph of
+    it that describes the IRI (none for a file the closure did not load, which has no index).
     """
-    origins, locations = shown
+    item, loaded = source
+    origins, locations, graphs = shown
+    indexes = {module.display: module.graphs for module in loaded.modules} or {item.display: loaded.graphs}
     by_key = {finding_key(found.identity): found for found in shared}
     others: dict[Finding, tuple[tuple[Origin, Location | None], ...]] = {}
     for finding in findings:
@@ -394,6 +397,9 @@ def _shared_places(
         if first.path != item.display:
             origins[finding] = Origin(first.path, first.uri)
         locations.pop(finding, None)
+        graphs.pop(finding, None)
+        if (index := indexes.get(first.path)) is not None and (names := finding_graphs(loaded.graph, index, [finding])):
+            graphs[finding] = names[finding]
         if sarif and (where := _place_location(first, finding.focus)) is not None:
             locations[finding] = where
         if rest:
@@ -503,7 +509,7 @@ def _apply_baselines(
     if args.write_baseline:
         Path(args.write_baseline).write_text(baseline.dumps(baseline.build(files)), encoding="utf-8")
     if args.baseline:
-        applied = baseline.apply(baseline.loads(Path(args.baseline).read_text(encoding="utf-8")), files)
+        applied = baseline.apply(baseline.loads(Path(args.baseline).read_text(encoding="utf-8")), files, SET_RULES)
         return applied.files, applied.stale
     return files, None
 

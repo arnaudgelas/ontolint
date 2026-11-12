@@ -15,6 +15,11 @@ one-file baseline applies to that file in a multi-file run (and the reverse).  A
 findings of one report means a rule's subject is incomplete: such findings are recorded and matched by
 version 1 only, so a missing subject never hides a new problem.
 
+A finding of a rule that compares the files of a run (``roaming``: ONT007, ONT008) is reported on one of
+the files it names, which another file of the run can displace (a copy added that sorts first).  Its identity
+is therefore also accepted under another report path, when it is unambiguous: the run reports it once, and the
+baseline records it under one path.
+
 A recorded entry (a version 1 hash and its identity) is stale when neither matched a finding of the run.
 ``fingerprints`` stays the list of entries: an identity whose version 1 hash is not listed is ignored, so
 deleting a line from that list still withdraws the finding's acceptance, and ontolint 0.10, which reads
@@ -140,11 +145,19 @@ def loads(text: str) -> Baseline:
     return Baseline(fingerprints, files, identities)
 
 
-def apply(baseline: Baseline, reports: Sequence[FileReport]) -> Applied:
-    """Remove the findings ``baseline`` accepts from ``reports`` (the reports of one run)."""
+def apply(baseline: Baseline, reports: Sequence[FileReport], roaming: frozenset[str] = frozenset()) -> Applied:
+    """Remove the findings ``baseline`` accepts from ``reports`` (the reports of one run).
+
+    A finding of a ``roaming`` rule may be accepted under another report path than its own (see above).
+    """
     multi = len(reports) > 1
     path_free = len(baseline.files) == 1 and len(reports) == 1
     everywhere = {ident: v1 for pairs in baseline.identities.values() for ident, v1 in pairs.items()}
+    recorded: dict[str, list[str]] = {}  # identity -> the report paths the baseline records it under
+    for path, pairs in baseline.identities.items():
+        for ident in pairs:
+            recorded.setdefault(ident, []).append(path)
+    roamers = Counter(identity(f) for report in reports for f in report.findings if f.rule in roaming)
     current: set[str] = set()  # version 1 hashes of the run
     seen: set[tuple[str | None, str]] = set()  # (report path, or None when path-free; identity), unambiguous only
     files: list[FileReport] = []
@@ -159,6 +172,9 @@ def apply(baseline: Baseline, reports: Sequence[FileReport]) -> Applied:
             if unique:
                 seen.add((None if path_free else report.path, ident))
             accepted = v1 in baseline.fingerprints or (unique and ident in candidates)
+            if not (accepted or path_free) and roamers[ident] == 1 and len(elsewhere := recorded.get(ident, [])) == 1:
+                accepted = True
+                seen.add((elsewhere[0], ident))
             (dropped if accepted else kept).append(finding)
         files.append(replace(report, findings=tuple(kept)))
         removed.append(tuple(dropped))
