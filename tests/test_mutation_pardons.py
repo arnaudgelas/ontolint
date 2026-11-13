@@ -8,12 +8,14 @@ source the way pytest-gremlins does (its own instrumentation, with the operators
 
 from __future__ import annotations
 
+import importlib
 import re
 import tomllib
 from pathlib import Path
 
 from pytest_gremlins.instrumentation.gremlin import Gremlin
 from pytest_gremlins.instrumentation.transformer import get_default_registry, transform_source
+from test_mutation_pardon_audit import FROZEN
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "src"
@@ -99,3 +101,36 @@ def test_every_pragma_pardons_exactly_one_mutant() -> None:
 def test_the_audit_lists_exactly_the_active_pardons() -> None:
     # A new pragma, or an edit to a pardoned line, needs a reviewed row in docs/mutation-pardons.md.
     assert _audited() == _pardoned()
+
+
+REASON = re.compile(r"#\s*gremlin:\s*pardon\[(?P<reason>[^\]]*)\]")
+
+
+def _pragmas() -> list[tuple[Path, int, str]]:
+    """``(file, line number, reason)`` of every pragma in the mutation scope."""
+    return [
+        (path, number, match["reason"])
+        for path in sorted(_scope() & set(_pragma_files()))
+        for number, line in enumerate(path.read_text().splitlines(), start=1)
+        if (match := REASON.search(line))
+    ]
+
+
+def test_every_pragma_has_a_reason_the_policy_allows() -> None:
+    # docs/mutation-policy.md, survivor triage item 3.
+    assert sorted({reason for _, _, reason in _pragmas()} - {"equivalent", "untestable"}) == []
+
+
+def test_every_untestable_pardon_is_a_frozen_dataclass_the_normal_suite_kills() -> None:
+    """The policy allows `untestable` only on a frozen decorator whose mutant a normal-suite test kills (#71)."""
+    unbacked: list[str] = []
+    for path, number, reason in _pragmas():
+        if reason != "untestable":
+            continue
+        lines = path.read_text().splitlines()
+        decorator, header = lines[number].strip(), lines[number + 1].strip()
+        name = re.fullmatch(r"class (\w+)[(:].*", header)
+        module = importlib.import_module(".".join(path.relative_to(SOURCE).with_suffix("").parts))
+        if decorator != "@dataclass(frozen=True)" or name is None or getattr(module, name[1], None) not in FROZEN:
+            unbacked.append(f"{path.relative_to(ROOT).as_posix()}:{number}")
+    assert unbacked == []
