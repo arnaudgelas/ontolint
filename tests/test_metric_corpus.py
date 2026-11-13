@@ -453,3 +453,18 @@ def test_a_complete_report_is_accepted(tmp_path: Path, monkeypatch: pytest.Monke
     done = metric_corpus.subprocess.CompletedProcess([], 0, json.dumps(_report(ALL_RAN, ["METRIC002"])), "")
     monkeypatch.setattr(metric_corpus.subprocess, "run", lambda *_args, **_kwargs: done)
     assert metric_corpus._lint(tmp_path / "x.ttl", None) == {"METRIC002": "m"}
+
+
+@pytest.mark.parametrize("status", [None, "Approved", "draft", "", 1])
+def test_a_manifest_with_an_unknown_label_status_is_refused(tmp_path: Path, status: object) -> None:
+    """The status is printed in the page's headings as the standing of the labels, so only two values pass."""
+    data = _manifest()
+    data["label_status"] = status
+    path = _write_manifest(tmp_path, data)
+    with pytest.raises(ValueError, match="label_status"):
+        metric_corpus.load_manifest(path)
+    with pytest.raises(ValueError, match="label_status"):
+        metric_corpus.label_status(path)
+    del data["label_status"]
+    with pytest.raises(ValueError, match="label_status"):
+        metric_corpus.load_manifest(_write_manifest(tmp_path, data))

@@ -8,8 +8,9 @@
 No corpus file is committed: ``docs/validation/metric-corpus.json`` names each one by URL, commit and checksum,
 and ``fetch`` refuses a file whose checksum differs.  ``load_manifest`` refuses a manifest that could make the
 script read or write outside DIR (an id that is not a plain file name), an entry that is not pinned or licensed,
-and an id given twice, so a custom manifest is held to the rules the committed one follows.  A corpus file
-that is a symbolic link or not a regular file is refused, so neither command reads or writes through one;
+an id given twice and a ``label_status`` other than ``proposed`` or ``approved``, so a custom manifest is held
+to the rules the committed one follows.  A corpus file that is a symbolic link or not a regular file is
+refused, so neither command reads or writes through one;
 ``fetch`` writes by renaming a new file into place, which replaces a link instead of following it, and
 ``measure`` lints a private copy of the bytes it verified.
 
@@ -197,9 +198,20 @@ def _check_source(item: Mapping[str, Any]) -> None:
         raise ValueError(f"{name}: name the licence")
 
 
+LABEL_STATUSES = ("proposed", "approved")
+
+
+def _label_status(data: Mapping[str, Any]) -> str:
+    status = data.get("label_status")
+    if status not in LABEL_STATUSES:
+        raise ValueError(f"label_status must be one of {LABEL_STATUSES}, not {status!r}")
+    return str(status)
+
+
 def load_manifest(path: Path = MANIFEST) -> list[Entry]:
-    """Read and validate the manifest: safe, unique ids, pinned and licensed sources, and complete labels."""
+    """Read and validate the manifest: its label status, safe unique ids, pinned licensed sources, full labels."""
     data = json.loads(path.read_text(encoding="utf-8"))
+    _label_status(data)
     entries: list[Entry] = []
     seen: set[str] = set()
     for item in data["entries"]:
@@ -215,7 +227,7 @@ def load_manifest(path: Path = MANIFEST) -> list[Entry]:
 
 
 def label_status(path: Path = MANIFEST) -> str:
-    return str(json.loads(path.read_text(encoding="utf-8"))["label_status"])
+    return _label_status(json.loads(path.read_text(encoding="utf-8")))
 
 
 def _read(directory: Path, entry: Entry) -> bytes | None:
