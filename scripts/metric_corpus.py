@@ -21,8 +21,9 @@ Each file is linted twice with ``--select METRIC``:
   population reports and its message gives the measured value.  A rule that still stays silent has measured
   the boundary itself (0 for an upper limit, full coverage for METRIC009), or an empty population.
 
-A run is used only if its report is of the one file and every METRIC rule executed in it once, with at most
-one finding each: a rule that did not run reports nothing, which either run would read as a measurement.
+A run is used only if its report is of the file it was asked to lint, alone, and every METRIC rule executed
+in it once, with at most one finding each: a rule that did not run reports nothing, which either run would
+read as a measurement.
 
 METRIC007 is never forced: it reads the same ratio as METRIC006, whose forced message gives it.  The labels in
 the manifest are proposals until the maintainer approves them (``"label_status": "approved"``).  Every rule of
@@ -282,25 +283,30 @@ def _lint(path: Path, config: Path | None) -> dict[str, str]:
     if done.returncode != 0:
         raise SystemExit(f"{path.name}: ontolint exited {done.returncode}: {done.stderr.strip()}")
     report = json.loads(done.stdout)
-    check_report(path.name, report)
+    check_report(path, report)
     return {finding["rule"]: finding["message"] for finding in report["findings"]}
 
 
-def check_report(name: str, report: Mapping[str, Any]) -> None:
-    """Refuse a report that is not of one file on which every METRIC rule ran once and reported at most once.
+def check_report(path: Path, report: Mapping[str, Any]) -> None:
+    """Refuse a report that is not of ``path`` alone, or in which a METRIC rule did not run once or reported twice.
 
     A rule that did not run reports nothing, which both runs would read as a measurement: silence at the
     default, the boundary or an empty population when forced.
     """
+    name = path.name
     if len(report["files"]) != 1:
         raise SystemExit(f"{name}: the report holds {len(report['files'])} files, not one")
+    # The CLI writes the path relative to the working directory when it can, so both sides are resolved.
+    reported = report["files"][0]["path"]
+    if not isinstance(reported, str) or (Path.cwd() / reported).resolve() != path.resolve():
+        raise SystemExit(f"{name}: the report is of {reported!r}, not of {path}")
     executions = report["files"][0]["executions"]
     ran = sorted(e["rule"] for e in executions if e["status"] == "executed")
     if ran != list(RULES) or len(executions) != len(RULES):
         raise SystemExit(f"{name}: every METRIC rule must execute once; the report has {executions}")
-    reported = [finding["rule"] for finding in report["findings"]]
-    if len(reported) != len(set(reported)) or not set(reported) <= set(RULES):
-        raise SystemExit(f"{name}: expected at most one finding per METRIC rule, got {sorted(reported)}")
+    rules = [finding["rule"] for finding in report["findings"]]
+    if len(rules) != len(set(rules)) or not set(rules) <= set(RULES):
+        raise SystemExit(f"{name}: expected at most one finding per METRIC rule, got {sorted(rules)}")
 
 
 def parse_forced(messages: Mapping[str, str]) -> dict[str, dict[str, Any]]:
