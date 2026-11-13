@@ -268,6 +268,14 @@ def _code(text: str) -> str:
     return f"{ticks}{pad}{text}{pad}{ticks}"
 
 
+def _prose(text: str) -> str:
+    """Return catalogue or spec text for a Markdown line, escaping ``\\`` and ``<``.
+
+    Unescaped, a placeholder such as ``.../obo/<id>.owl`` is an HTML tag, which github.com drops.
+    """
+    return text.replace("\\", "\\\\").replace("<", "\\<")
+
+
 def _fence(text: str) -> list[str]:
     """Return ``text`` as a fenced Turtle block whose fence is longer than any backtick run inside."""
     fence = "`" * max(3, max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
@@ -357,13 +365,13 @@ def _implemented(spec: RuleSpec, sources: _Sources) -> list[str]:
     """Render the full entry of an implemented rule."""
     home = sources.home(spec.rule_id)
     lines = [
-        f"#### {spec.rule_id}: {spec.title}",
+        f"#### {spec.rule_id}: {_prose(spec.title)}",
         "",
         f"- **Severity:** {spec.severity.value}",
         f"- **Scope:** {spec.scope.value}",
         f"- **Category:** {spec.category}",
         f"- **Module:** [{_code(home)}](#module-{home})",
-        f"- **Fix:** {spec.suggestion}",
+        f"- **Fix:** {_prose(spec.suggestion)}",
     ]
     if is_pipeline(spec):
         lines.append(
@@ -389,8 +397,8 @@ def _implemented(spec: RuleSpec, sources: _Sources) -> list[str]:
 
 def _proposed(row: CatalogueRow) -> str:
     """Render one TODO table row for a rule that is not implemented yet."""
-    intent = INTENTS[row.rule_id].replace("|", "\\|")
-    return f"| {row.rule_id} | TODO | {intent} | {row.backend} | {row.test_requirement} |"
+    intent = _prose(INTENTS[row.rule_id]).replace("|", "\\|")
+    return f"| {row.rule_id} | TODO | {intent} | {_prose(row.backend)} | {_prose(row.test_requirement)} |"
 
 
 def _page_name(family: str) -> str:
@@ -432,7 +440,7 @@ def _family_page(family: str, rows: Sequence[CatalogueRow], sources: _Sources) -
 def _index_row(row: CatalogueRow, registry: RuleRegistry) -> str:
     """Render one index table row: the rule linked to its family page, its title and its severity."""
     severity = registry.get(row.rule_id).severity.value if row.status.value == "implemented" else "TODO"
-    title = row.title.replace("|", "\\|")
+    title = _prose(row.title).replace("|", "\\|")
     return f"| [{row.rule_id}]({_page_name(row.family)}) | {title} | {severity} |"
 
 

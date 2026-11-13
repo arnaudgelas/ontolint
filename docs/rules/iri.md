@@ -250,7 +250,7 @@ Reported: `Terms mix http and https IRIs.`
 - **Scope:** term
 - **Category:** heuristic
 - **Module:** [`iri_quality`](#module-iri_quality)
-- **Fix:** Remove or percent-encode characters such as < > " { } | \ ^ and backtick.
+- **Fix:** Remove or percent-encode characters such as \< > " { } | \\ ^ and backtick.
 
 *No rule-level specification yet; see the module notes above.*
 
