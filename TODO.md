@@ -476,8 +476,9 @@ Nothing open: 0.11.0 is released (see "Recently done").
     renamed-and-reworded test (each of the four shifts checked by hand to fail a test), and two
     equivalents are pardoned (`zip(strict=True)` over lists built from one another; `<` or `<=`
     when keeping the least subject). The run was not repeated after those changes.
-    Left open, under P1 "Baseline identity": release sequencing, the upgrade note to paste at
-    release, the lenient version 1 match, SARIF `partialFingerprints`. Messages this release
+    Left open, under P1 "Baseline identity": release sequencing and the upgrade note to paste at
+    release (both since settled by this release itself, issue #10), the lenient version 1 match,
+    SARIF `partialFingerprints`. Messages this release
     changes for an unchanged input (list each later rule here as it lands): METRIC002, METRIC003
     and METRIC012 counts (LEX002-CLOSURE); OWL034, OWL036 and OWL040, and OWL032 and
     OWL042-OWL045 with a literal operand, OWL013 with a line break in its literal, and SEC014's
@@ -719,16 +720,22 @@ Validation corpus (public; licences per repository):
 
 - [ ] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
   (0.11.0, see "Recently done"). Left open, each a decision rather than code:
-  - *Release sequencing.* Baselines written by 0.10.x hold version 1 hashes only, so a message
-    fix shipped in the same release as identity v2 still breaks those entries once. Recommended:
-    ship v2 in release N, with the upgrade note "regenerate the baseline once", and the message
-    fixes (OWL034, OWL036, OWL040, SEC014's focus, METRIC rounding) in N+1. Bundling them, as the
-    0.10.0 entry hoped, is the maintainer's call. The OWL and SEC014 fixes are now on `main`
-    (AUDIT-DEFECTS, from `77b8f84`), after LEX002-CLOSURE's METRIC change; splitting means
-    releasing v2 from a commit before those. SEC014's focus change breaks both hashes by design
-    (the focus is part of the identity); its `fix!:` commit's BREAKING CHANGE trailer says so.
-  - *The upgrade note* goes into the release's CHANGELOG by hand (docs/releasing.md step 1); the
-    text is in the body of the `feat:` commit that matches baselines by identity.
+  - *Release sequencing* (decided by 0.11.0, issue #10). Identity v2 shipped together with the
+    OWL034, OWL036 and OWL040, SEC014-focus and METRIC message fixes (`77b8f84` is an ancestor of
+    `v0.11.0`), under the CHANGELOG's 0.11.0 upgrade note "Regenerate your baseline once". A
+    baseline written by 0.10.x (version 1 hashes only) therefore breaks once on the rules that note
+    lists, whichever release it is upgraded to; 0.12.0, 0.13.0 and 0.13.1 are published, so a
+    split release can no longer be cut. SEC014's focus change breaks both hashes by design (the
+    focus is part of the identity); its `fix!:` commit's BREAKING CHANGE trailer says so.
+  - *The upgrade note* (done in 0.11.0, issue #10). The note in the body of the `feat:` commit
+    that matches baselines by identity (`46447c7`) said "existing baselines keep working
+    unchanged", which the bundled fixes made wrong; the CHANGELOG's 0.11.0 note was written by
+    hand from it and lists the rules whose entries stop matching once. The three points it leaves
+    out (an identity shared within a file is matched by fingerprint only, ontolint 0.10 drops
+    `identities` when it rewrites the file, deleting a fingerprint withdraws its identity) are in
+    README "Policy and baselines". 0.14.0 needs no note for them. Before tagging any release,
+    re-check `git diff --stat vPREV..HEAD -- src/` and `tests/golden/identities.json`, not only
+    `baseline.py` and `reporting.py`: a change to any rule's message, focus or subject moves a hash.
   - *Version 1 acceptance stays lenient.* `--baseline` accepts a finding when either hash is
     recorded, so a new SHACL001 result whose message equals an accepted one's is still accepted
     by its fingerprint. Refusing version 1 matches for paths a version 2 file covers would close
