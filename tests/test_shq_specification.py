@@ -11,9 +11,12 @@ import pytest
 from rule_harness import graph
 
 from ontolint import Linter
+from ontolint.engine import build_context
 from ontolint.models import ExecutionStatus
+from ontolint.policy import Policy
 from ontolint.rules import shacl_authoring
 from ontolint.rules.shacl_authoring import xpath_regex_problem
+from ontolint.rules.shapes import class_target_reach
 
 NS = "https://example.test/onto#"
 SH = "http://www.w3.org/ns/shacl#"
@@ -194,6 +197,27 @@ def test_shq006_a_subclass_cycle_terminates() -> None:
     data = "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A . ex:i a ex:A ."
     assert _foci("SHQ006", "ex:S a sh:NodeShape ; sh:targetClass ex:X .", data) == ["A"]
     assert _findings("SHQ006", "ex:S a sh:NodeShape ; sh:targetClass ex:B .", data) == []
+
+
+def _reach(shapes: str, data: str) -> list[str]:
+    ctx = build_context(graph(data), graph(shapes), Policy())
+    return sorted(str(node).removeprefix(NS) for node in class_target_reach(ctx, graph(shapes)))
+
+
+def test_class_target_reach_is_the_targets_and_their_subclasses_in_the_data_graph() -> None:
+    # The set SHQ006 and shacl_class_target_coverage share: targets, implicit targets, subclasses (any depth).
+    assert _reach("ex:S a sh:NodeShape ; sh:targetClass ex:A .", HIERARCHY) == ["A", "B", "C"]
+    assert _reach("ex:S a sh:NodeShape ; sh:targetClass ex:B .", HIERARCHY) == ["B", "C"]
+    assert _reach("ex:B a sh:NodeShape, owl:Class .", HIERARCHY) == ["B", "C"]
+    # A class that is not a shape is no implicit target, and a shape that is no class neither.
+    assert _reach("ex:A a rdfs:Class . ex:B a sh:NodeShape .", HIERARCHY) == []
+    # A target that is no class of the data graph is reached all the same (it has no subclass there).
+    assert _reach("ex:S sh:targetClass ex:X .", HIERARCHY) == ["X"]
+
+
+def test_class_target_reach_ends_on_a_subclass_cycle() -> None:
+    data = "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A ."
+    assert _reach("ex:S a sh:NodeShape ; sh:targetClass ex:A .", data) == ["A", "B"]
 
 
 def test_shq006_a_subclass_axiom_in_the_shapes_graph_is_not_followed() -> None:

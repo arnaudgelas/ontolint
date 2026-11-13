@@ -244,12 +244,14 @@ def _messages_and_languages(ctx: RuleContext, sg: Graph, shapes: set[Node]) -> N
                 ctx.add("SHQ005", shape, f"Multiple {p} values in the same language.", subject=(p,))
 
 
-def _class_targets(ctx: RuleContext, sg: Graph) -> None:
-    """SHQ006: a class with direct instances that no class target reaches, through its superclasses too.
+def class_target_reach(ctx: RuleContext, sg: Graph) -> frozenset[Node]:
+    """The nodes a class target of ``sg`` reaches: SHQ006's set, which ``shacl_class_target_coverage`` counts.
 
     SHACL 2.1.3.2: a class target holds every SHACL instance of the class, and SHACL 1.1 makes an instance of a
     subclass one, through the ``rdfs:subClassOf`` triples of the data graph.  2.1.3.3: a shape typed
     ``sh:NodeShape`` or ``sh:PropertyShape`` that is also a class in the shapes graph targets its instances.
+    So the set is every value of ``sh:targetClass``, every such implicit target, and every subclass of one in
+    ``ctx.g``, transitively; the walk is iterative and expands each node once, so a cycle ends it.
     """
     shapes = set(sg.subjects(RDF.type, SH.NodeShape)) | set(sg.subjects(RDF.type, SH.PropertyShape))
     covered = set(sg.objects(None, SH.targetClass))
@@ -260,6 +262,12 @@ def _class_targets(ctx: RuleContext, sg: Graph) -> None:
             if sub not in covered:
                 covered.add(sub)
                 stack.append(sub)
+    return frozenset(covered)
+
+
+def _class_targets(ctx: RuleContext, sg: Graph) -> None:
+    """SHQ006: a class with direct instances that no class target reaches, through its superclasses too."""
+    covered = class_target_reach(ctx, sg)
     for c in ctx.classes:
         if ctx.context.subjects_by_type.get(c) and c not in covered:
             ctx.add(
