@@ -59,6 +59,7 @@ from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.redaction import clip
 
 from .owl import namespace_of, owned_checker
+from .support import quoted_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -378,7 +379,7 @@ def _labels(ctx: RuleContext) -> None:
                 ctx.add(
                     "SKOS013",
                     s,
-                    f"skos:{name} value {clip(str(label), 60)!r} is not a string literal.",
+                    f"skos:{name} value {quoted_text(label, 60)} is not a string literal.",
                     confidence="certain",
                     subject=(p, label),
                 )

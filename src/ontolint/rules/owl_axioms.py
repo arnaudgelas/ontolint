@@ -105,7 +105,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import is_datatype_iri, list_items, owning_term
+from .support import is_datatype_iri, list_items, owning_term, value_text
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -606,7 +606,7 @@ def _property_kind_mismatches(ctx: RuleContext) -> None:
                 ctx.add(
                     "OWL021",
                     p,
-                    f"{kind.capitalize()} property is related by {predicate} to {other} property {q}.",
+                    f"{kind.capitalize()} property is related by {predicate} to {other} property {value_text(q)}.",
                     confidence="certain",
                     subject=(predicate, q),
                 )
@@ -674,7 +674,7 @@ def _disjoint_conflicts(ctx: RuleContext, code: str, pair_predicate: Node, group
         if a == b:
             relation = "is declared disjoint with itself"
         elif any((x, predicate, y) in g for predicate in (sub_predicate, equiv_predicate) for x, y in ((a, b), (b, a))):
-            relation = f"is disjoint with {b} but also asserted a sub{kind} of or equivalent to it"
+            relation = f"is disjoint with {value_text(b)} but also asserted a sub{kind} of or equivalent to it"
         else:
             continue
         ctx.add(code, a, f"The {kind} {relation}.", confidence="certain", subject=(b,))
@@ -694,7 +694,7 @@ def _same_and_different(ctx: RuleContext) -> None:
             ctx.add(
                 "OWL026",
                 a,
-                f"Individual is both owl:sameAs and owl:differentFrom {b}.",
+                f"Individual is both owl:sameAs and owl:differentFrom {value_text(b)}.",
                 confidence="certain",
                 subject=(b,),
             )
@@ -711,7 +711,8 @@ def _negative_assertions(ctx: RuleContext) -> None:
                         ctx.add(
                             "OWL027",
                             s,
-                            f"Negative assertion on {p} with {target} contradicts an asserted triple.",
+                            f"Negative assertion on {value_text(p)} with {value_text(target)} contradicts an "
+                            "asserted triple.",
                             confidence="certain",
                             subject=(p, target),
                         )
@@ -724,7 +725,7 @@ def _irreflexive_usage(ctx: RuleContext) -> None:
                 ctx.add(
                     "OWL028",
                     s,
-                    f"Irreflexive property {p} relates the individual to itself.",
+                    f"Irreflexive property {value_text(p)} relates the individual to itself.",
                     confidence="certain",
                     subject=(p,),
                 )
@@ -740,7 +741,7 @@ def _asymmetric_usage(ctx: RuleContext) -> None:
                 ctx.add(
                     "OWL029",
                     s,
-                    f"Asymmetric property {p} relates the individual to itself.",
+                    f"Asymmetric property {value_text(p)} relates the individual to itself.",
                     confidence="certain",
                     subject=(p,),
                 )
@@ -748,7 +749,7 @@ def _asymmetric_usage(ctx: RuleContext) -> None:
                 ctx.add(
                     "OWL029",
                     s,
-                    f"Asymmetric property {p} is asserted in both directions with {o}.",
+                    f"Asymmetric property {value_text(p)} is asserted in both directions with {value_text(o)}.",
                     confidence="certain",
                     subject=(p, o),
                 )

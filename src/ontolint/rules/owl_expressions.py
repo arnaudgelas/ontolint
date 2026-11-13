@@ -147,7 +147,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import is_datatype_iri, list_items, owning_term, term_text
+from .support import is_datatype_iri, list_items, owning_term, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -351,11 +351,14 @@ def _where(use: tuple[URIRef, Node] | None) -> str:
 
 
 def _curie(predicate: Node) -> str:
-    """``rdfs:range``, ``owl:equivalentClass``, ... for the predicates that use class expressions, else the IRI."""
+    """``rdfs:range``, ``owl:equivalentClass``, ... for the predicates that use class expressions, else the IRI.
+
+    A blank predicate, which only a graph built through the API can hold, is ``_:label`` (:func:`value_text`).
+    """
     for prefix, namespace in (("owl", OWL), ("rdfs", RDFS)):
         if str(predicate).startswith(str(namespace)):
             return prefix + ":" + str(predicate).removeprefix(str(namespace))
-    return str(predicate)
+    return value_text(predicate)
 
 
 def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node]) -> None:

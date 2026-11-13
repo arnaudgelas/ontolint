@@ -33,9 +33,8 @@ from rdflib.term import Node
 
 from ontolint.graph import strongly_connected_components
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
-from ontolint.redaction import clip
 
-from .support import directed_edges
+from .support import directed_edges, quoted_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -181,7 +180,7 @@ def _label_overlaps(ctx: RuleContext) -> None:
                 ctx.add(
                     "SKOS002",
                     resource,
-                    f"Literal {clip(str(value), 60)!r} ({language}) appears in {' and '.join(names)}.",
+                    f"Literal {quoted_text(value, 60)} ({language}) appears in {' and '.join(names)}.",
                     confidence="certain",
                     subject=(value,),
                 )
@@ -203,5 +202,8 @@ def _top_concepts(ctx: RuleContext) -> None:
     for concept, scheme in ctx.g.subject_objects(SKOS.topConceptOf):
         if (concept, SKOS.broader, None) in ctx.g:
             ctx.add(
-                "SKOS006", concept, f"Top concept of {scheme} also has an asserted broader concept.", subject=(scheme,)
+                "SKOS006",
+                concept,
+                f"Top concept of {value_text(scheme)} also has an asserted broader concept.",
+                subject=(scheme,),
             )

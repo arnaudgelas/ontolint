@@ -102,7 +102,7 @@ from ontolint.context import PROPERTY_TYPES
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.ownership import OwnershipMode
 
-from .support import is_datatype_iri, list_items, owning_term, stable_blank_id, term_text
+from .support import is_datatype_iri, list_items, owning_term, stable_blank_id, term_text, value_text
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -436,7 +436,12 @@ def _inverse_and_characteristics(ctx: RuleContext, data_props: set[Node]) -> Non
         # InverseObjectProperties is symmetric: "q owl:inverseOf p" gives the symmetric p an inverse too.
         for symmetric, other in ((p, q), (q, p)):
             if p != q and (symmetric, RDF.type, OWL.SymmetricProperty) in g:
-                ctx.add("OWL008", symmetric, f"Symmetric property also declared inverse of {other}.", subject=(other,))
+                ctx.add(
+                    "OWL008",
+                    symmetric,
+                    f"Symmetric property also declared inverse of {value_text(other)}.",
+                    subject=(other,),
+                )
         if p in data_props or q in data_props:
             ctx.add(
                 "OWL009",
@@ -584,7 +589,7 @@ def _object_property_assertions(ctx: RuleContext, object_props: set[Node]) -> No
                 ctx.add(
                     "OWL013",
                     s,
-                    f"Object property {p} points to literal {term_text(o)}.",
+                    f"Object property {value_text(p)} points to literal {term_text(o)}.",
                     confidence="certain",
                     subject=(p, o),
                 )
@@ -596,7 +601,11 @@ def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> No
         for s, o in ctx.g.subject_objects(p):
             if not isinstance(o, Literal):
                 ctx.add(
-                    "OWL014", s, f"Datatype property {p} points to resource {o}.", confidence="certain", subject=(p, o)
+                    "OWL014",
+                    s,
+                    f"Datatype property {value_text(p)} points to resource {value_text(o)}.",
+                    confidence="certain",
+                    subject=(p, o),
                 )
             elif len(expected) == 1:
                 datatype = next(iter(expected))
@@ -609,7 +618,7 @@ def _datatype_property_assertions(ctx: RuleContext, data_props: set[Node]) -> No
                     ctx.add(
                         "DATA001",
                         s,
-                        f"{p} has range {datatype} but value has datatype {o.datatype}.",
+                        f"{value_text(p)} has range {value_text(datatype)} but value has datatype {o.datatype}.",
                         subject=(p, o.datatype or ""),
                     )
 
@@ -644,8 +653,8 @@ def _domain_disjointness(ctx: RuleContext) -> None:
                         ctx.add(
                             "DATA002",
                             s,
-                            f"Usage of {p} infers {domain} but subject is explicitly typed {actual}, "
-                            "declared disjoint.",
+                            f"Usage of {p} infers {value_text(domain)} but subject is explicitly typed "
+                            f"{value_text(actual)}, declared disjoint.",
                             subject=(p, domain, actual),
                         )
 

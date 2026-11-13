@@ -43,7 +43,7 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.redaction import userinfo_password
 
-from .support import relative_reference
+from .support import relative_reference, value_text
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -270,11 +270,12 @@ def _terms(ctx: RuleContext) -> None:
             if _LITERAL_HAZARD.search(text):
                 hazardous[s, p] = hazardous.get((s, p), "") + text
     for (s, p), length in longest.items():
-        message = f"Literal on {p} has {length} characters (limit {MAX_LITERAL_LENGTH})."
+        message = f"Literal on {value_text(p)} has {length} characters (limit {MAX_LITERAL_LENGTH})."
         ctx.add("SEC005", s, message, confidence="certain", subject=(p,))
     for (s, p), text in hazardous.items():
         message = (
-            f"Literal on {p} contains control or bidirectional-override characters ({_hazards(text, _LITERAL_HAZARD)})."
+            f"Literal on {value_text(p)} contains control or bidirectional-override characters "
+            f"({_hazards(text, _LITERAL_HAZARD)})."
         )
         ctx.add("SEC012", s, message, confidence="certain", subject=(p,))
     for iri in sorted(iris):
