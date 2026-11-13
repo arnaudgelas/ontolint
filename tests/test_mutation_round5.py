@@ -9,7 +9,7 @@ from rule_harness import BASE, graph
 from ontolint import Linter
 from ontolint.engine import build_context
 from ontolint.policy import Policy
-from ontolint.rules import class_heuristics, classes, governance, metrics, owl, support
+from ontolint.rules import class_heuristics, classes, governance, measurements, owl, support
 
 EX = "http://example.org/ns#"
 
@@ -83,7 +83,7 @@ def test_list_owners_skip_first_and_revisited_rest() -> None:
 
 
 def test_structural_blank_is_false_for_non_blank() -> None:
-    assert metrics._is_structural_blank(Graph(), URIRef(EX + "a")) is False
+    assert measurements._is_structural_blank(Graph(), URIRef(EX + "a")) is False
 
 
 def test_namespace_of_boundaries() -> None:

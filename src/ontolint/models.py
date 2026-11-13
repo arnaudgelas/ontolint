@@ -71,6 +71,17 @@ class ExecutionStatus(StrEnum):
     FAILED = "failed"
 
 
+class MeasurementKind(StrEnum):
+    """What a measurement publishes (:mod:`ontolint.rules.measurements`)."""
+
+    RATIO = "ratio"
+    """A numerator and a denominator, never the quotient alone; a mean is the sum over the count."""
+    COUNT = "count"
+    """One integer."""
+    HISTOGRAM = "histogram"
+    """How many terms of the population have each value."""
+
+
 # The only values a rule may report as the confidence of a finding.
 CONFIDENCES: frozenset[str] = frozenset({"certain", "heuristic"})
 

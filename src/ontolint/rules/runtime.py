@@ -6,6 +6,7 @@ import re
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDFS, SKOS
@@ -18,6 +19,9 @@ from ontolint.redaction import redact_userinfo
 
 from .specs import FIXES, SEVERITY
 from .support import DESCRIPTIONS, LABEL_STOP, LABELS, stable_blank_id
+
+if TYPE_CHECKING:
+    from .measurements import Absent, Value
 
 EMPTY_FOCUS = "<>"
 
@@ -172,6 +176,9 @@ class RuleContext:
         self.preferred_labels: tuple[URIRef, ...] = self.closure.below((SKOS.prefLabel,), LABEL_STOP)
         self._main_labels = tuple(dict.fromkeys((*self.configured_labels, *self.preferred_labels)))
         self._main_label_predicates: dict[Node, tuple[URIRef, ...]] = {}  # per term, several rules ask
+        # Each measurement taken on this context, by ID (see :mod:`ontolint.rules.measurements`): the METRIC
+        # rules and the published vector read one value.
+        self.measured: dict[str, Value | Absent] = {}
 
     def main_label_predicates(self, term: Node) -> tuple[URIRef, ...]:
         """The predicates of ``term``'s main labels, which the rules comparing labels read.
