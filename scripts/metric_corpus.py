@@ -10,9 +10,10 @@ and ``fetch`` refuses a file whose checksum differs.  ``load_manifest`` refuses 
 script read or write outside DIR (an id that is not a plain file name), an entry that is not pinned or licensed,
 an id given twice and a ``label_status`` other than ``proposed`` or ``approved``, so a custom manifest is held
 to the rules the committed one follows.  A corpus file that is a symbolic link or not a regular file is
-refused, so neither command reads or writes through one;
-``fetch`` writes by renaming a new file into place, which replaces a link instead of following it, and
-``measure`` lints a private copy of the bytes it verified.
+refused; one with a second hard link is treated as missing; one that changes between the check and the open
+is refused before a byte is read (``O_NOFOLLOW`` where it exists, and on every platform a comparison of the
+opened file with the checked one).  ``fetch`` writes by renaming a new file into place, which replaces a link
+instead of following it, and ``measure`` lints a private copy of the bytes it verified.
 
 Each file is linted twice with ``--select METRIC``:
 
@@ -232,17 +233,30 @@ def label_status(path: Path = MANIFEST) -> str:
 
 
 def _read(directory: Path, entry: Entry) -> bytes | None:
-    """Return the bytes of ``entry``'s file in ``directory``, ``None`` if there is none; refuse a link or a non-file."""
+    """Return the bytes of ``entry``'s file in ``directory``, or ``None``; refuse a link or a non-file.
+
+    ``None`` stands for a missing file and for a hard-linked one, which is also a file elsewhere: ``fetch``
+    then replaces it, and ``measure`` refuses it.
+    """
     target = directory / safe_name(entry.id)
     try:
-        mode = target.lstat().st_mode
+        checked = target.lstat()
     except FileNotFoundError:
         return None
-    if not stat.S_ISREG(mode):
+    if not stat.S_ISREG(checked.st_mode):
         raise SystemExit(f"{entry.id}: {target} is a symbolic link or not a regular file; remove it")
-    # O_NOFOLLOW (POSIX) also refuses a link swapped in after the check above.
-    descriptor = os.open(target, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0))
+    if checked.st_nlink != 1:
+        return None
+    # A link swapped in after the check: O_NOFOLLOW (POSIX) refuses to open it; where there is no O_NOFOLLOW
+    # (Windows), the file opened is not the one checked, which the comparison below refuses before a read.
+    try:
+        descriptor = os.open(target, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0))
+    except OSError as error:
+        raise SystemExit(f"{entry.id}: {target} changed while it was opened ({error})") from None
     with os.fdopen(descriptor, "rb") as handle:
+        opened = os.fstat(handle.fileno())
+        if (opened.st_dev, opened.st_ino) != (checked.st_dev, checked.st_ino) or opened.st_nlink != 1:
+            raise SystemExit(f"{entry.id}: {target} changed while it was opened")
         return handle.read()
 
 

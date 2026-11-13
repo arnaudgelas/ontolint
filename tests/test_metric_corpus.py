@@ -405,6 +405,16 @@ def test_measure_never_reads_through_a_symbolic_link(tmp_path: Path) -> None:
         metric_corpus.measure(tmp_path / "corpus", [entry])
 
 
+def test_measure_never_reads_through_a_hard_link(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.ttl"
+    outside.write_text(FIXTURE, encoding="utf-8")
+    (tmp_path / "corpus").mkdir()
+    _link(tmp_path / "corpus" / "x.ttl", outside, hard=True)
+    entry = metric_corpus.Entry("x.ttl", "https://example.test/x", metric_corpus._sha256(outside.read_bytes()), {})
+    with pytest.raises(SystemExit, match="missing or changed"):
+        metric_corpus.measure(tmp_path / "corpus", [entry])
+
+
 def test_measure_refuses_a_directory_under_an_entrys_name(tmp_path: Path) -> None:
     (tmp_path / "x.ttl").mkdir()
     entry = metric_corpus.Entry("x.ttl", "https://example.test/x", "0" * 64, {})
@@ -472,6 +482,35 @@ def test_a_complete_report_is_accepted(tmp_path: Path, monkeypatch: pytest.Monke
     monkeypatch.chdir(tmp_path)  # the CLI writes a path under the working directory relative to it
     report = _report(ALL_RAN, ["METRIC002"], path="x.ttl")
     assert _lint_reporting(monkeypatch, report, tmp_path / "x.ttl") == {"METRIC002": "m"}
+
+
+@pytest.mark.parametrize("nofollow", [True, False], ids=["with-O_NOFOLLOW", "without-O_NOFOLLOW"])
+def test_a_link_swapped_in_after_the_check_is_never_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, nofollow: bool
+) -> None:
+    """The race between lstat and open: refused where O_NOFOLLOW exists, and also where it does not (Windows)."""
+    outside = tmp_path / "outside.ttl"
+    outside.write_bytes(b"secret")
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    (corpus / "x.ttl").write_bytes(b"pinned")
+    _link(tmp_path / "probe", outside)  # skips where links cannot be made
+    if nofollow and not hasattr(metric_corpus.os, "O_NOFOLLOW"):
+        pytest.skip("this platform has no O_NOFOLLOW")
+    if not nofollow:
+        monkeypatch.delattr(metric_corpus.os, "O_NOFOLLOW", raising=False)
+    real_open = metric_corpus.os.open
+
+    def swap_then_open(path: Any, flags: int, *args: Any, **kwargs: Any) -> int:
+        if path == corpus / "x.ttl":
+            Path(path).unlink()
+            Path(path).symlink_to(outside)
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(metric_corpus.os, "open", swap_then_open)
+    entry = metric_corpus.Entry("x.ttl", "https://example.test/x", metric_corpus._sha256(b"secret"), {})
+    with pytest.raises(SystemExit, match="changed while it was opened"):
+        metric_corpus.measure(corpus, [entry])
 
 
 @pytest.mark.parametrize("status", [None, "Approved", "draft", "", 1])
