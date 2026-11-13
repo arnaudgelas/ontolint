@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Add rdfs:label or an accepted alternative to the declared local term.
 
-*Flagged:* no label
+*Flagged:* `no label`
 
 ```turtle
 ex:A a owl:Class .
@@ -34,10 +34,44 @@ ex:A a owl:Class .
 
 Reported: `Term has no label.`
 
-*Clean:* rdfs:label
+*Flagged:* `a sub-property of rdfs:comment`
+
+```turtle
+ex:c rdfs:subPropertyOf rdfs:comment . ex:A a owl:Class ; ex:c "A" .
+```
+
+Reported: `Term has no label.`
+
+*Flagged:* `a sub-property of skos:altLabel`
+
+```turtle
+skos:altLabel rdfs:subPropertyOf rdfs:label . ex:alt rdfs:subPropertyOf skos:altLabel . ex:A a owl:Class ; ex:alt "A" .
+```
+
+Reported: `Term has no label.`
+
+*Clean:* `rdfs:label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A" .
+```
+
+*Clean:* `deprecated terms are exempt`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true .
+```
+
+*Clean:* `label through a chain of sub-properties`
+
+```turtle
+ex:l2 rdfs:subPropertyOf ex:l1 . ex:l1 rdfs:subPropertyOf skos:prefLabel . ex:A a owl:Class ; ex:l2 "A" .
+```
+
+*Clean:* `label through an equivalent`
+
+```turtle
+ex:name owl:equivalentProperty rdfs:label . ex:A a owl:Class ; ex:name "A" .
 ```
 
 #### LEX002: Term without definition
@@ -47,7 +81,7 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Category:** heuristic
 - **Fix:** Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).
 
-*Flagged:* no definition
+*Flagged:* `no definition`
 
 ```turtle
 ex:A a owl:Class .
@@ -55,10 +89,56 @@ ex:A a owl:Class .
 
 Reported: `Term has no description or definition.`
 
-*Clean:* skos:definition
+*Flagged:* `equivalent to a non-definition`
+
+```turtle
+ex:d owl:equivalentProperty ex:q . ex:A a owl:Class ; ex:d 'An A.' .
+```
+
+Reported: `Term has no description or definition.`
+
+*Flagged:* `sub-property of an editorial note`
+
+```turtle
+skos:editorialNote rdfs:subPropertyOf skos:note . ex:n rdfs:subPropertyOf skos:editorialNote . ex:A a owl:Class ; ex:n 'To do.' .
+```
+
+Reported: `Term has no description or definition.`
+
+*Clean:* `skos:definition`
 
 ```turtle
 ex:A a owl:Class ; skos:definition "An A." .
+```
+
+*Clean:* `skos:scopeNote`
+
+```turtle
+ex:A a owl:Class ; skos:scopeNote "Use for As." .
+```
+
+*Clean:* `skos:note`
+
+```turtle
+ex:A a owl:Class ; skos:note "About A." .
+```
+
+*Clean:* `definition through a chain of sub-properties`
+
+```turtle
+ex:d2 rdfs:subPropertyOf ex:d1 . ex:d1 rdfs:subPropertyOf skos:definition . ex:A a owl:Class ; ex:d2 'An A.' .
+```
+
+*Clean:* `definition through an equivalent`
+
+```turtle
+ex:d owl:equivalentProperty ex:q . ex:q rdfs:subPropertyOf skos:definition . ex:A a owl:Class ; ex:d 'An A.' .
+```
+
+*Clean:* `sub-property of skos:note`
+
+```turtle
+ex:n rdfs:subPropertyOf skos:note . ex:A a owl:Class ; ex:n 'About A.' .
 ```
 
 #### LEX003: Multiple labels in one language
@@ -68,7 +148,7 @@ ex:A a owl:Class ; skos:definition "An A." .
 - **Category:** heuristic
 - **Fix:** Use one language-specific primary label per term and language.
 
-*Flagged:* two labels in one language
+*Flagged:* `two labels in one language`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@en, "Aye"@en .
@@ -76,10 +156,22 @@ ex:A a owl:Class ; rdfs:label "A"@en, "Aye"@en .
 
 Reported: `2 labels for language en.`
 
-*Clean:* one label per language
+*Clean:* `one label per language`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .
+```
+
+*Clean:* `prefLabel and rdfs:label`
+
+```turtle
+ex:A a owl:Class ; skos:prefLabel "A"@en ; rdfs:label "1 A"@en .
+```
+
+*Clean:* `a specialised label beside rdfs:label`
+
+```turtle
+ex:short rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; rdfs:label "Aye"@en ; ex:short "A"@en .
 ```
 
 #### LEX004: Duplicate label across terms
@@ -89,7 +181,7 @@ ex:A a owl:Class ; rdfs:label "A"@en, "A"@fr .
 - **Category:** heuristic
 - **Fix:** Differentiate labels or formally document and link genuinely equivalent concepts.
 
-*Flagged:* same label on two terms
+*Flagged:* `same label on two terms`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "Same" .
@@ -97,10 +189,52 @@ ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "Same" .
 
 Reported: `Duplicate label 'Same'@und for https://example.test/onto#A, https://example.test/onto#B`
 
-*Clean:* collection and concept share a label
+*Clean:* `collection and concept share a label`
 
 ```turtle
 ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:Collection ; skos:prefLabel "Same" .
+```
+
+*Clean:* `scheme and concept share a label`
+
+```turtle
+ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:ConceptScheme ; skos:prefLabel "Same" .
+```
+
+*Clean:* `case-only difference`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .
+```
+
+*Clean:* `class and property share a label`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "agent" . ex:p a owl:ObjectProperty ; rdfs:label "agent" .
+```
+
+*Clean:* `deprecated term`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "S" . ex:B a owl:Class ; owl:deprecated true ; rdfs:label "S" .
+```
+
+*Clean:* `obsolete label`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "obsolete S" . ex:B a owl:Class ; rdfs:label "obsolete S" .
+```
+
+*Clean:* `different labels`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "One" . ex:B a owl:Class ; rdfs:label "Two" .
+```
+
+*Clean:* `same text, other language`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "S"@en . ex:B a owl:Class ; rdfs:label "S"@fr .
 ```
 
 #### LEX005: Blank or whitespace-padded label
@@ -110,7 +244,7 @@ ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:Collection ; skos:pref
 - **Category:** heuristic
 - **Fix:** Trim whitespace or replace empty labels.
 
-*Flagged:* padded label
+*Flagged:* `padded label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label " padded " .
@@ -118,7 +252,15 @@ ex:A a owl:Class ; rdfs:label " padded " .
 
 Reported: `Blank or padded label: ' padded '.`
 
-*Clean:* trimmed label
+*Flagged:* `blank label`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "" .
+```
+
+Reported: `Blank or padded label: ''.`
+
+*Clean:* `trimmed label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A" .
@@ -131,7 +273,7 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Category:** heuristic
 - **Fix:** Use a consistent label language-tag policy.
 
-*Flagged:* plain and tagged
+*Flagged:* `plain and tagged`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A", "A"@en .
@@ -139,10 +281,16 @@ ex:A a owl:Class ; rdfs:label "A", "A"@en .
 
 Reported: `Mixed plain and language-tagged preferred labels.`
 
-*Clean:* only tagged
+*Clean:* `only tagged`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@en .
+```
+
+*Clean:* `only plain`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A" .
 ```
 
 #### LEX007: Mixed identifier naming styles
@@ -152,7 +300,7 @@ ex:A a owl:Class ; rdfs:label "A"@en .
 - **Category:** heuristic
 - **Fix:** Use one configured naming convention for comparable term identifiers.
 
-*Flagged:* four terms, two styles (sample size)
+*Flagged:* `four terms, two styles (sample size)`
 
 ```turtle
 ex:a_b a owl:Class . ex:c_d a owl:Class . ex:eF a owl:Class . ex:gH a owl:Class .
@@ -160,10 +308,22 @@ ex:a_b a owl:Class . ex:c_d a owl:Class . ex:eF a owl:Class . ex:gH a owl:Class 
 
 Reported: `Mixed identifier styles: {'camel': 2, 'underscore': 2}.`
 
-*Clean:* three terms (below sample size)
+*Clean:* `three terms (below sample size)`
 
 ```turtle
 ex:a_b a owl:Class . ex:c_d a owl:Class . ex:eF a owl:Class .
+```
+
+*Clean:* `four terms, one style`
+
+```turtle
+ex:a_b a owl:Class . ex:c_d a owl:Class . ex:e_f a owl:Class . ex:g_h a owl:Class .
+```
+
+*Clean:* `opaque numeric identifiers do not count as underscore style`
+
+```turtle
+ex:X_0000001 a owl:Class . ex:X_0000002 a owl:Class . ex:eF a owl:Class . ex:gH a owl:Class .
 ```
 
 #### LEX008: Missing label in a required language
@@ -173,7 +333,7 @@ ex:a_b a owl:Class . ex:c_d a owl:Class . ex:eF a owl:Class .
 - **Category:** heuristic
 - **Fix:** Add the required preferred language label.
 
-*Flagged:* required language missing
+*Flagged:* `required language missing`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@en .
@@ -183,13 +343,19 @@ Linter options: `languages=('fr',)`.
 
 Reported: `Missing preferred label in language fr.`
 
-*Clean:* required language present
+*Clean:* `required language present`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@fr .
 ```
 
 Linter options: `languages=('fr',)`.
+
+*Clean:* `no languages required`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A"@en .
+```
 
 #### LEX009: Label capitalization inconsistent with term kind
 
@@ -198,7 +364,7 @@ Linter options: `languages=('fr',)`.
 - **Category:** heuristic
 - **Fix:** Review capitalization and wording relative to the namespace policy.
 
-*Flagged:* one upper-case class among ten lower-case
+*Flagged:* `one upper-case class among ten lower-case`
 
 ```turtle
 ex:c0 a owl:Class ; rdfs:label "term 0" .
@@ -215,7 +381,24 @@ ex:codd a owl:Class ; rdfs:label "Thing" .
 
 Reported: `Class label begins with upper case, but 9 of 10 class labels begin with lower case (style review).`
 
-*Clean:* nine labels are too few
+*Flagged:* `one upper-case property among ten lower-case`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; rdfs:label "term 0" .
+ex:p1 a owl:ObjectProperty ; rdfs:label "term 1" .
+ex:p2 a owl:ObjectProperty ; rdfs:label "term 2" .
+ex:p3 a owl:ObjectProperty ; rdfs:label "term 3" .
+ex:p4 a owl:ObjectProperty ; rdfs:label "term 4" .
+ex:p5 a owl:ObjectProperty ; rdfs:label "term 5" .
+ex:p6 a owl:ObjectProperty ; rdfs:label "term 6" .
+ex:p7 a owl:ObjectProperty ; rdfs:label "term 7" .
+ex:p8 a owl:ObjectProperty ; rdfs:label "term 8" .
+ex:podd a owl:ObjectProperty ; rdfs:label "Relates" .
+```
+
+Reported: `Property label begins with upper case, but 9 of 10 property labels begin with lower case (style review).`
+
+*Clean:* `nine labels are too few`
 
 ```turtle
 ex:c0 a owl:Class ; rdfs:label "term 0" .
@@ -229,6 +412,34 @@ ex:c7 a owl:Class ; rdfs:label "term 7" .
 ex:codd a owl:Class ; rdfs:label "Thing" .
 ```
 
+*Clean:* `lower-case class alone`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "thing" .
+```
+
+*Clean:* `non-alphabetic first character`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "3d thing" .
+```
+
+*Clean:* `balanced conventions`
+
+```turtle
+ex:c0 a owl:Class ; rdfs:label "term 0" .
+ex:c1 a owl:Class ; rdfs:label "term 1" .
+ex:c2 a owl:Class ; rdfs:label "term 2" .
+ex:c3 a owl:Class ; rdfs:label "term 3" .
+ex:c4 a owl:Class ; rdfs:label "term 4" .
+ex:u0 a owl:Class ; rdfs:label "Up 0" .
+ex:u1 a owl:Class ; rdfs:label "Up 1" .
+ex:u2 a owl:Class ; rdfs:label "Up 2" .
+ex:u3 a owl:Class ; rdfs:label "Up 3" .
+ex:u4 a owl:Class ; rdfs:label "Up 4" .
+ex:u5 a owl:Class ; rdfs:label "Up 5" .
+```
+
 #### LEX010: Label is a verbatim identifier
 
 - **Severity:** info
@@ -236,7 +447,7 @@ ex:codd a owl:Class ; rdfs:label "Thing" .
 - **Category:** heuristic
 - **Fix:** Write a human-readable label (words separated by spaces) instead of repeating the identifier.
 
-*Flagged:* camelCase label equals local name
+*Flagged:* `camelCase label equals local name`
 
 ```turtle
 ex:hasPart a owl:ObjectProperty ; rdfs:label "hasPart" .
@@ -244,10 +455,24 @@ ex:hasPart a owl:ObjectProperty ; rdfs:label "hasPart" .
 
 Reported: `Label 'hasPart' repeats the identifier.`
 
-*Clean:* spaced label
+*Flagged:* `underscore label equals local name`
+
+```turtle
+ex:has_part a owl:ObjectProperty ; rdfs:label "has_part" .
+```
+
+Reported: `Label 'has_part' repeats the identifier.`
+
+*Clean:* `spaced label`
 
 ```turtle
 ex:hasPart a owl:ObjectProperty ; rdfs:label "has part" .
+```
+
+*Clean:* `single word equal to local name`
+
+```turtle
+ex:Person a owl:Class ; rdfs:label "Person" .
 ```
 
 #### LEX011: Label contains line breaks, tabs or repeated whitespace
@@ -257,7 +482,7 @@ ex:hasPart a owl:ObjectProperty ; rdfs:label "has part" .
 - **Category:** heuristic
 - **Fix:** Use single spaces inside labels.
 
-*Flagged:* newline
+*Flagged:* `newline`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "a\nb" .
@@ -265,10 +490,32 @@ ex:A a owl:Class ; rdfs:label "a\nb" .
 
 Reported: `Label contains line breaks, tabs or repeated whitespace.`
 
-*Clean:* single spaces
+*Flagged:* `double space`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "a  b" .
+```
+
+Reported: `Label contains line breaks, tabs or repeated whitespace.`
+
+*Flagged:* `tab`
+
+```turtle
+ex:A a owl:Class ; skos:prefLabel "a\tb" .
+```
+
+Reported: `Label contains line breaks, tabs or repeated whitespace.`
+
+*Clean:* `single spaces`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "a b" .
+```
+
+*Clean:* `padding is LEX005`
+
+```turtle
+ex:A a owl:Class ; rdfs:label " a " .
 ```
 
 #### LEX012: Label ends with punctuation
@@ -278,7 +525,7 @@ ex:A a owl:Class ; rdfs:label "a b" .
 - **Category:** heuristic
 - **Fix:** Remove trailing punctuation such as '.', ':', ';' or ',' from labels.
 
-*Flagged:* period
+*Flagged:* `period`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Thing." .
@@ -286,10 +533,24 @@ ex:A a owl:Class ; rdfs:label "Thing." .
 
 Reported: `Label 'Thing.' ends with punctuation.`
 
-*Clean:* clean
+*Flagged:* `colon`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Thing:"@en .
+```
+
+Reported: `Label 'Thing:' ends with punctuation.`
+
+*Clean:* `clean`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Thing" .
+```
+
+*Clean:* `inner punctuation`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "a.b" .
 ```
 
 #### LEX013: Label or definition is not a literal
@@ -299,7 +560,7 @@ ex:A a owl:Class ; rdfs:label "Thing" .
 - **Category:** heuristic
 - **Fix:** Use a literal value for labels and definitions; link resources with a different property.
 
-*Flagged:* IRI label
+*Flagged:* `IRI label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label ex:B .
@@ -307,10 +568,30 @@ ex:A a owl:Class ; rdfs:label ex:B .
 
 Reported: `http://www.w3.org/2000/01/rdf-schema#label value is not a literal.`
 
-*Clean:* literals
+*Flagged:* `blank-node definition`
+
+```turtle
+ex:A a owl:Class ; skos:definition [] .
+```
+
+Reported: `http://www.w3.org/2004/02/skos/core#definition value is not a literal.`
+
+*Clean:* `literals`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A" ; rdfs:comment "An A." .
+```
+
+*Clean:* `rdf:value node`
+
+```turtle
+ex:A a owl:Class ; skos:definition [ rdf:value "An A." ] .
+```
+
+*Clean:* `rdf:value IRI`
+
+```turtle
+ex:A a owl:Class ; skos:definition ex:d . ex:d rdf:value "An A." .
 ```
 
 #### LEX014: Label literal has a non-string datatype
@@ -320,7 +601,7 @@ ex:A a owl:Class ; rdfs:label "A" ; rdfs:comment "An A." .
 - **Category:** heuristic
 - **Fix:** Use plain or language-tagged string literals for labels.
 
-*Flagged:* integer label
+*Flagged:* `integer label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label 5 .
@@ -328,10 +609,30 @@ ex:A a owl:Class ; rdfs:label 5 .
 
 Reported: `Label '5' has datatype http://www.w3.org/2001/XMLSchema#integer.`
 
-*Clean:* plain
+*Flagged:* `custom datatype`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "x"^^ex:custom .
+```
+
+Reported: `Label 'x' has datatype https://example.test/onto#custom.`
+
+*Clean:* `plain`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A" .
+```
+
+*Clean:* `tagged`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A"@en .
+```
+
+*Clean:* `explicit xsd:string`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A"^^xsd:string .
 ```
 
 #### LEX015: Alternative label repeats the preferred label
@@ -341,7 +642,7 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Category:** heuristic
 - **Fix:** Remove alternative labels that equal the term's own label in the same language.
 
-*Flagged:* altLabel equals prefLabel
+*Flagged:* `altLabel equals prefLabel`
 
 ```turtle
 ex:A a owl:Class ; skos:prefLabel "Car"@en ; skos:altLabel "car"@en .
@@ -349,10 +650,16 @@ ex:A a owl:Class ; skos:prefLabel "Car"@en ; skos:altLabel "car"@en .
 
 Reported: `Alternative label 'car' repeats the term's own label.`
 
-*Clean:* different text
+*Clean:* `different text`
 
 ```turtle
 ex:A a owl:Class ; skos:prefLabel "Car" ; skos:altLabel "Auto" .
+```
+
+*Clean:* `other language`
+
+```turtle
+ex:A a owl:Class ; skos:prefLabel "Car"@en ; skos:altLabel "Car"@fr .
 ```
 
 #### LEX016: Alternative label is another term's label
@@ -362,7 +669,7 @@ ex:A a owl:Class ; skos:prefLabel "Car" ; skos:altLabel "Auto" .
 - **Category:** heuristic
 - **Fix:** Resolve the overlap: relate the terms or remove the conflicting synonym.
 
-*Flagged:* synonym is another term's label
+*Flagged:* `synonym is another term's label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Car" . ex:B a owl:Class ; skos:altLabel "Car" .
@@ -370,10 +677,22 @@ ex:A a owl:Class ; rdfs:label "Car" . ex:B a owl:Class ; skos:altLabel "Car" .
 
 Reported: `Alternative label 'Car' is the label of https://example.test/onto#A.`
 
-*Clean:* distinct
+*Clean:* `distinct`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Car" . ex:B a owl:Class ; skos:altLabel "Auto" .
+```
+
+*Clean:* `other language`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Car"@en . ex:B a owl:Class ; skos:altLabel "Car"@fr .
+```
+
+*Clean:* `empty alt label`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "" . ex:B a owl:Class ; skos:altLabel "" .
 ```
 
 #### LEX017: Definition repeats the label
@@ -383,7 +702,7 @@ ex:A a owl:Class ; rdfs:label "Car" . ex:B a owl:Class ; skos:altLabel "Auto" .
 - **Category:** heuristic
 - **Fix:** Write a definition that says more than the label.
 
-*Flagged:* definition equals label
+*Flagged:* `definition equals label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Car" ; rdfs:comment "car" .
@@ -391,7 +710,7 @@ ex:A a owl:Class ; rdfs:label "Car" ; rdfs:comment "car" .
 
 Reported: `Definition 'car' repeats the label.`
 
-*Clean:* real definition
+*Clean:* `real definition`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Car" ; rdfs:comment "A wheeled vehicle." .
@@ -404,7 +723,7 @@ ex:A a owl:Class ; rdfs:label "Car" ; rdfs:comment "A wheeled vehicle." .
 - **Category:** heuristic
 - **Fix:** Store labels as plain text; remove HTML/XML tags and character entities.
 
-*Flagged:* html tag
+*Flagged:* `html tag`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "<b>Thing</b>" .
@@ -412,10 +731,58 @@ ex:A a owl:Class ; rdfs:label "<b>Thing</b>" .
 
 Reported: `Label '<b>Thing</b>' contains markup or a character entity.`
 
-*Clean:* plain
+*Flagged:* `entity`
+
+```turtle
+ex:A a owl:Class ; skos:prefLabel "R&amp;D" .
+```
+
+Reported: `Label 'R&amp;D' contains markup or a character entity.`
+
+*Flagged:* `alt label numeric entity`
+
+```turtle
+ex:A a owl:Class ; skos:altLabel "a&#233;b" .
+```
+
+Reported: `Label 'a&#233;b' contains markup or a character entity.`
+
+*Flagged:* `sub-property of rdfs:label`
+
+```turtle
+ex:l rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; ex:l "<i>A</i>"@en .
+```
+
+Reported: `Label '<i>A</i>' contains markup or a character entity.`
+
+*Clean:* `plain`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "R&D" .
+```
+
+*Clean:* `sub-property of rdfs:comment`
+
+```turtle
+ex:c rdfs:subPropertyOf rdfs:comment . ex:A a owl:Class ; ex:c "<i>A</i>" .
+```
+
+*Clean:* `comparison signs`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "a < b > c" .
+```
+
+*Clean:* `disambiguator in angle brackets`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Gnathostomata <vertebrates>" .
+```
+
+*Clean:* `comment is ignored`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "<b>x</b>" .
 ```
 
 #### LEX019: Blank definition
@@ -425,7 +792,7 @@ ex:A a owl:Class ; rdfs:label "R&D" .
 - **Category:** heuristic
 - **Fix:** Provide definition text or remove the empty annotation.
 
-*Flagged:* empty
+*Flagged:* `empty`
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "" .
@@ -433,10 +800,24 @@ ex:A a owl:Class ; rdfs:comment "" .
 
 Reported: `Definition is blank.`
 
-*Clean:* text
+*Flagged:* `whitespace`
+
+```turtle
+ex:A a owl:Class ; skos:definition "  " .
+```
+
+Reported: `Definition is blank.`
+
+*Clean:* `text`
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "text" .
+```
+
+*Clean:* `absent`
+
+```turtle
+ex:A a owl:Class .
 ```
 
 #### LEX020: Identical definition on several terms
@@ -446,7 +827,7 @@ ex:A a owl:Class ; rdfs:comment "text" .
 - **Category:** heuristic
 - **Fix:** Write a distinguishing definition for each term.
 
-*Flagged:* same definition twice
+*Flagged:* `same definition twice`
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "A thing." . ex:B a owl:Class ; rdfs:comment "a  thing." .
@@ -454,10 +835,22 @@ ex:A a owl:Class ; rdfs:comment "A thing." . ex:B a owl:Class ; rdfs:comment "a 
 
 Reported: `Identical definition 'a thing.'@und on https://example.test/onto#A, https://example.test/onto#B.`
 
-*Clean:* different
+*Clean:* `different`
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "One." . ex:B a owl:Class ; rdfs:comment "Two." .
+```
+
+*Clean:* `same term repeated`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "One." ; skos:definition "One." .
+```
+
+*Clean:* `blank definitions are LEX019`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "" . ex:B a owl:Class ; rdfs:comment "" .
 ```
 
 #### LEX021: Label is not Unicode NFC-normalized
@@ -467,7 +860,7 @@ ex:A a owl:Class ; rdfs:comment "One." . ex:B a owl:Class ; rdfs:comment "Two." 
 - **Category:** heuristic
 - **Fix:** Normalize labels to Unicode NFC so equal-looking labels compare equal.
 
-*Flagged:* decomposed e-acute
+*Flagged:* `decomposed e-acute`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Cafe\u0301" .
@@ -475,10 +868,24 @@ ex:A a owl:Class ; rdfs:label "Cafe\u0301" .
 
 Reported: `Label 'Café' is not Unicode NFC-normalized.`
 
-*Clean:* composed
+*Flagged:* `alt label`
+
+```turtle
+ex:A a owl:Class ; skos:altLabel "Cafe\u0301"@fr .
+```
+
+Reported: `Label 'Café' is not Unicode NFC-normalized.`
+
+*Clean:* `composed`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Caf\u00e9" .
+```
+
+*Clean:* `ascii`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Cafe" .
 ```
 
 #### LEX022: Label in a language outside the configured languages
@@ -488,7 +895,7 @@ ex:A a owl:Class ; rdfs:label "Caf\u00e9" .
 - **Category:** heuristic
 - **Fix:** Use a configured language tag or extend the language policy.
 
-*Flagged:* German label with en policy
+*Flagged:* `German label with en policy`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@de .
@@ -498,10 +905,32 @@ Linter options: `languages=('en',)`.
 
 Reported: `Label language de is not among the configured languages.`
 
-*Clean:* allowed
+*Clean:* `allowed`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A"@en .
+```
+
+Linter options: `languages=('en',)`.
+
+*Clean:* `regional variant`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A"@en-GB .
+```
+
+Linter options: `languages=('en',)`.
+
+*Clean:* `no policy`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A"@de .
+```
+
+*Clean:* `untagged`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A" .
 ```
 
 Linter options: `languages=('en',)`.
@@ -513,7 +942,7 @@ Linter options: `languages=('en',)`.
 - **Category:** heuristic
 - **Fix:** Add the definition in every configured language, or none.
 
-*Flagged:* definition only in English
+*Flagged:* `definition only in English`
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "An A."@en .
@@ -523,13 +952,27 @@ Linter options: `languages=('en', 'fr')`.
 
 Reported: `Missing definition in language fr.`
 
-*Clean:* both
+*Clean:* `both`
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "An A."@en, "Un A."@fr .
 ```
 
 Linter options: `languages=('en', 'fr')`.
+
+*Clean:* `no definition at all`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Linter options: `languages=('en', 'fr')`.
+
+*Clean:* `no policy`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "An A."@en .
+```
 
 #### LEX024: Several skos:definition values in one language
 
@@ -538,7 +981,7 @@ Linter options: `languages=('en', 'fr')`.
 - **Category:** heuristic
 - **Fix:** Keep one skos:definition per language and term.
 
-*Flagged:* two definitions
+*Flagged:* `two definitions`
 
 ```turtle
 ex:A a owl:Class ; skos:definition "One."@en, "Two."@en .
@@ -546,8 +989,14 @@ ex:A a owl:Class ; skos:definition "One."@en, "Two."@en .
 
 Reported: `2 skos:definition values for language en.`
 
-*Clean:* one per language
+*Clean:* `one per language`
 
 ```turtle
 ex:A a owl:Class ; skos:definition "One."@en, "Un."@fr .
+```
+
+*Clean:* `multiple rdfs:comment is fine`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "One."@en, "Two."@en .
 ```

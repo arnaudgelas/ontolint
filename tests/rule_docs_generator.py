@@ -4,9 +4,9 @@ The reference is built, never hand-edited.  It is one index, ``docs/rules.md``, 
 catalogue family, ``docs/rules/<family>.md``, so that no page grows past what github.com renders:
 
 * every catalogue row appears in the index, grouped by family and linked to its family page;
-* on the family page, implemented rules get their metadata, the fix suggestion, a flagged example and
-  a clean example taken from the first positive and negative case in ``tests/rule_cases/``, and the
-  real message the linter emits for the flagged example;
+* on the family page, implemented rules get their metadata, the fix suggestion and every positive and
+  negative case in ``tests/rule_cases/``, in order, with its options and, for each positive graph
+  case, the first real message the linter emits;
 * proposed rules are listed as TODO with the backend they are waiting for.
 
 Regenerate with ``uv run python tests/rule_docs_generator.py``, which also deletes any other Markdown
@@ -46,10 +46,12 @@ edit them by hand. Regenerate them with `uv run python tests/rule_docs_generator
 
 This index lists every catalogue rule by family. Each family has its own page,
 `docs/rules/<family>.md`, linked below. There each implemented rule lists its severity, scope and fix,
-then a flagged example and a clean example in Turtle together with the message the linter reports for
-the flagged one. Rules that are not yet implemented are marked **TODO** with the backend they are
-waiting for; they cannot be selected and never run (see `--list-rules`). The intended behaviour of a
-TODO rule is a draft from `tests/planned_rule_intents.py`, not a final specification.
+then every case of `tests/rule_cases/`, in order: each flagged case, with the first message the linter
+reports for it, then each clean case. A case shows its Turtle (or says that its graph is built
+programmatically, is the empty graph, or is run through the command line or an adapter), its shapes
+graph and its linter options. Rules that are not yet implemented are marked **TODO** with the backend
+they are waiting for; they cannot be selected and never run (see `--list-rules`). The intended
+behaviour of a TODO rule is a draft from `tests/planned_rule_intents.py`, not a final specification.
 
 Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 ({pipeline_help}). They are implemented and always apply, so `--select` and `--ignore` reject them,
@@ -70,8 +72,34 @@ All examples assume these prefixes:
 
 
 def _turtle(case: Case) -> str | None:
-    """Return the Turtle of a case, or ``None`` when it is built programmatically."""
+    """Return the Turtle of a case, or ``None`` when it has none (built, probed or the empty graph)."""
     return case.turtle.strip() if case.turtle.strip() else None
+
+
+def _one_line(text: str, what: str) -> str:
+    """Return ``text``, refusing a line break: a code span cannot hold one without changing the page."""
+    if "\n" in text or "\r" in text:
+        raise ValueError(f"a rule case's {what} must fit on one line: {text!r}")
+    return text
+
+
+def _code(text: str) -> str:
+    """Return ``text`` as a Markdown code span that nothing in it can close.
+
+    The backtick run is one longer than the longest run inside; a space pads both ends when the text
+    starts or ends with a backtick, or starts and ends with a space, since CommonMark strips one there.
+    """
+    if not text:
+        raise ValueError("an empty text has no code span")
+    ticks = "`" * (max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
+    pad = " " if text[0] == "`" or text[-1] == "`" or (text[0] == text[-1] == " " and text.strip()) else ""
+    return f"{ticks}{pad}{text}{pad}{ticks}"
+
+
+def _fence(text: str) -> list[str]:
+    """Return ``text`` as a fenced Turtle block whose fence is longer than any backtick run inside."""
+    fence = "`" * max(3, max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
+    return [f"{fence}turtle", text, fence, ""]
 
 
 def _first_message(rule_id: str, case: Case) -> str | None:
@@ -134,17 +162,21 @@ def _items(obj: tuple[object, ...] | list[object] | dict[object, object]) -> str
 
 
 def _block(label: str, case: Case) -> list[str]:
-    """Render one example (data and optional shapes) as fenced Turtle."""
+    """Render one case: its name, how its graph is made (Turtle, built, probed or empty), shapes and options."""
+    name = _code(_one_line(case.name, "case name"))
+    if case.probe is not None:
+        return [f"*{label}:* {name} (run through the command line or an adapter; see `tests/rule_cases/`)", ""]
     turtle = _turtle(case)
-    if turtle is None and case.shapes is None:
-        return [f"*{label}:* `{case.name}` (built programmatically; see `tests/rule_cases/`)", ""]
-    lines = [f"*{label}:* {case.name}", ""]
-    if turtle is not None:
-        lines += ["```turtle", turtle, "```", ""]
+    if case.build is not None:
+        lines = [f"*{label}:* {name} (built programmatically; see `tests/rule_cases/`)", ""]
+    elif turtle is None:
+        lines = [f"*{label}:* {name} (the empty data graph)", ""]
+    else:
+        lines = [f"*{label}:* {name}", "", *_fence(turtle)]
     if case.shapes is not None:
-        lines += ["Shapes graph:", "", "```turtle", case.shapes.strip(), "```", ""]
+        lines += ["Shapes graph:", "", *_fence(case.shapes.strip())]
     if case.options:
-        options = ", ".join(f"`{key}={_value(value)}`" for key, value in sorted(case.options.items()))
+        options = ", ".join(_code(f"{key}={_value(value)}") for key, value in sorted(case.options.items()))
         lines += [f"Linter options: {options}.", ""]
     return lines
 
@@ -166,13 +198,13 @@ def _implemented(spec: RuleSpec, cases: RuleCases | None) -> list[str]:
     lines.append("")
     if cases is None or not cases.positive:
         return lines + ["*No example available.*", ""]
-    flagged = cases.positive[0]
-    lines += _block("Flagged", flagged)
-    message = _first_message(spec.rule_id, flagged)
-    if message is not None:
-        lines += [f"Reported: `{message}`", ""]
-    if cases.negative:
-        lines += _block("Clean", cases.negative[0])
+    for case in cases.positive:
+        lines += _block("Flagged", case)
+        message = _first_message(spec.rule_id, case)
+        if message is not None:
+            lines += [f"Reported: {_code(_one_line(message, 'message'))}", ""]
+    for case in cases.negative:
+        lines += _block("Clean", case)
     return lines
 
 
@@ -244,10 +276,9 @@ def _index(by_family: Mapping[str, Sequence[CatalogueRow]], registry: RuleRegist
     return "\n".join(lines).rstrip() + "\n"
 
 
-def build() -> dict[str, str]:
-    """Return every page of the reference, keyed by its path relative to ``docs/``."""
+def render(cases: Mapping[str, RuleCases]) -> dict[str, str]:
+    """Return every page of the reference for these cases, keyed by its path relative to ``docs/``."""
     registry = default_registry()
-    cases = load_cases()
     by_family: dict[str, list[CatalogueRow]] = defaultdict(list)
     for row in load_catalogue():
         by_family[row.family].append(row)
@@ -255,6 +286,11 @@ def build() -> dict[str, str]:
     for family in sorted(by_family):
         pages[_page_name(family)] = _family_page(family, by_family[family], registry, cases)
     return pages
+
+
+def build() -> dict[str, str]:
+    """Return every page of the reference, keyed by its path relative to ``docs/``."""
+    return render(load_cases())
 
 
 def stale_pages(pages: Mapping[str, str], root: Path = DOCS) -> list[str]:

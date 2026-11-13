@@ -27,6 +27,6 @@ All examples assume these prefixes:
 - **Fix:** Correct the configuration or execution error and run the linter again.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `unknown selector` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `unknown selector` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `valid selector` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `valid selector` (run through the command line or an adapter; see `tests/rule_cases/`)

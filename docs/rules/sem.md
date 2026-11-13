@@ -26,9 +26,9 @@ All examples assume these prefixes:
 - **Category:** deterministic
 - **Fix:** Correct the reported OWL profile violations, or select the intended OWL profile.
 
-*Flagged:* `ROBOT reports a violation` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `ROBOT reports a violation` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `ROBOT accepts the ontology` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `ROBOT accepts the ontology` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 ### SEM: TODO (to be implemented)
 

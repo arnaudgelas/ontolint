@@ -27,9 +27,9 @@ All examples assume these prefixes:
 - **Fix:** Split the ontology, or raise --max-input-bytes (or max_input_bytes in the policy) if the size is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `one byte over the limit` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `one byte over the limit` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `exactly at the limit` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `exactly at the limit` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC002: Input exceeds the triple limit
 
@@ -39,9 +39,9 @@ All examples assume these prefixes:
 - **Fix:** Lint a smaller module, or raise --max-triples (or max_triples in the policy) if the size is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `four triples with a limit of three` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `four triples with a limit of three` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `four triples with a limit of four` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `four triples with a limit of four` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC003: Parsing exceeds the time budget
 
@@ -51,9 +51,11 @@ All examples assume these prefixes:
 - **Fix:** Lint a smaller module, or raise --max-parse-seconds (or max_parse_seconds in the policy) if it is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `125k triples with a 50 ms budget` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `125k triples with a 50 ms budget` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `small input with a generous budget` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `small input with a generous budget` (run through the command line or an adapter; see `tests/rule_cases/`)
+
+*Clean:* `no budget configured` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC004: Deeply nested or very long blank-node structure
 
@@ -66,7 +68,25 @@ All examples assume these prefixes:
 
 Reported: `Blank-node structure is nested 101 levels deep (limit 100).`
 
+*Flagged:* `list of 5001 members` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `RDF list has 5001 members (limit 5000).`
+
 *Clean:* `100 nested blank nodes` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `list of 5000 members` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `small list`
+
+```turtle
+ex:a ex:p ( 1 2 3 ) .
+```
+
+*Clean:* `blank-node cycle`
+
+```turtle
+_:a ex:p _:b . _:b ex:p _:a .
+```
 
 #### SEC005: Unreasonably large literal value
 
@@ -81,6 +101,12 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 
 *Clean:* `literal of 100000 characters` (built programmatically; see `tests/rule_cases/`)
 
+*Clean:* `short literal`
+
+```turtle
+ex:a rdfs:label "A" .
+```
+
 #### SEC006: Remote JSON-LD context refused
 
 - **Severity:** error
@@ -89,9 +115,9 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 - **Fix:** Inline the @context in the document; ontolint never downloads contexts.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `remote @context` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `remote @context` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `inline @context` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `inline @context` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC007: owl:imports not followed
 
@@ -100,7 +126,7 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 - **Category:** deterministic
 - **Fix:** Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or put local copies in a folder (for example with robot mirror) and pass --import-dir; ontolint never fetches imports from the network. Use --ignore SEC007 to silence this note.
 
-*Flagged:* one IRI import
+*Flagged:* `one IRI import`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/other> .
@@ -108,11 +134,35 @@ Reported: `Literal on https://example.test/onto#p has 100001 characters (limit 1
 
 Reported: `1 owl:import was not followed: https://example.test/other.`
 
-*Clean:* no imports
+*Flagged:* `imports declared on a second ontology`
+
+```turtle
+<https://example.test/onto> a owl:Ontology . <https://example.test/b> owl:imports ex:other .
+```
+
+Reported: `1 owl:import was not followed: https://example.test/onto#other.`
+
+*Flagged:* `literal import target`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports "not an iri" .
+```
+
+Reported: `1 owl:import was not followed: not an iri.`
+
+*Clean:* `no imports`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
 ```
+
+*Clean:* `import-like predicate only`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; ex:imports <https://example.test/other> .
+```
+
+*Clean:* `empty graph` (the empty data graph)
 
 #### SEC008: IRI with an unsafe scheme
 
@@ -121,7 +171,7 @@ Reported: `1 owl:import was not followed: https://example.test/other.`
 - **Category:** deterministic
 - **Fix:** Use http(s), urn or another resolvable-by-design scheme instead of file:, javascript:, data: or similar.
 
-*Flagged:* file IRI
+*Flagged:* `file IRI`
 
 ```turtle
 ex:a ex:p <file:///etc/passwd> .
@@ -129,11 +179,57 @@ ex:a ex:p <file:///etc/passwd> .
 
 Reported: `IRI uses the unsafe scheme file:.`
 
-*Clean:* https IRI
+*Flagged:* `javascript IRI`
+
+```turtle
+ex:a ex:p <javascript:alert(1)> .
+```
+
+Reported: `IRI uses the unsafe scheme javascript:.`
+
+*Flagged:* `data IRI in subject`
+
+```turtle
+<data:text/plain;base64,AAAA> a owl:Class .
+```
+
+Reported: `IRI uses the unsafe scheme data:.`
+
+*Flagged:* `ftp IRI uppercase`
+
+```turtle
+ex:a ex:p <FTP://example.test/x> .
+```
+
+Reported: `IRI uses the unsafe scheme ftp:.`
+
+*Flagged:* `obfuscated scheme` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `IRI uses the unsafe scheme javascript:.`
+
+*Flagged:* `leading space` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `IRI uses the unsafe scheme javascript:.`
+
+*Clean:* `https IRI`
 
 ```turtle
 ex:a ex:p <https://example.test/x> .
 ```
+
+*Clean:* `urn IRI`
+
+```turtle
+ex:a ex:p <urn:isbn:0451450523> .
+```
+
+*Clean:* `unsafe word in path`
+
+```turtle
+ex:a ex:p <https://example.test/file:/x> .
+```
+
+*Clean:* `relative IRI` (built programmatically; see `tests/rule_cases/`)
 
 #### SEC009: Unsafe input path
 
@@ -143,9 +239,13 @@ ex:a ex:p <https://example.test/x> .
 - **Fix:** Pass a regular file inside the working directory, not a device, a '..' escape or a link leaving it.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `symlink leaving the directory` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `symlink leaving the directory` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `symlink inside the directory` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `relative path climbing out` (run through the command line or an adapter; see `tests/rule_cases/`)
+
+*Clean:* `symlink inside the directory` (run through the command line or an adapter; see `tests/rule_cases/`)
+
+*Clean:* `relative path staying inside` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC010: RDF/XML unsafe DTD or entity refused
 
@@ -155,9 +255,13 @@ ex:a ex:p <https://example.test/x> .
 - **Fix:** Remove SYSTEM/PUBLIC identifiers and nested entities; plain internal entities (Protege style) are accepted.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `external entity` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `external entity` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `no DOCTYPE` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `external DTD` (run through the command line or an adapter; see `tests/rule_cases/`)
+
+*Clean:* `no DOCTYPE` (run through the command line or an adapter; see `tests/rule_cases/`)
+
+*Clean:* `internal entity only` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC011: Compressed input refused
 
@@ -167,9 +271,9 @@ ex:a ex:p <https://example.test/x> .
 - **Fix:** Decompress the file yourself and pass the plain RDF serialization.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `gzip input` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `gzip input` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `plain input` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `plain input` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC012: Control or bidirectional-override characters
 
@@ -178,7 +282,7 @@ ex:a ex:p <https://example.test/x> .
 - **Category:** deterministic
 - **Fix:** Remove control and bidirectional-override characters; they can disguise the text a reader sees.
 
-*Flagged:* bidi override in label
+*Flagged:* `bidi override in label`
 
 ```turtle
 ex:a rdfs:label "abc\u202Edef" .
@@ -186,10 +290,74 @@ ex:a rdfs:label "abc\u202Edef" .
 
 Reported: `Literal on http://www.w3.org/2000/01/rdf-schema#label contains control or bidirectional-override characters (U+202E).`
 
-*Clean:* plain label
+*Flagged:* `bidi isolate in label`
+
+```turtle
+ex:a rdfs:label "abc\u2066def" .
+```
+
+Reported: `Literal on http://www.w3.org/2000/01/rdf-schema#label contains control or bidirectional-override characters (U+2066).`
+
+*Flagged:* `NUL in label`
+
+```turtle
+ex:a rdfs:label "abc\u0000def" .
+```
+
+Reported: `Literal on http://www.w3.org/2000/01/rdf-schema#label contains control or bidirectional-override characters (U+0000).`
+
+*Flagged:* `escape in label`
+
+```turtle
+ex:a rdfs:label "abc\u001Bdef" .
+```
+
+Reported: `Literal on http://www.w3.org/2000/01/rdf-schema#label contains control or bidirectional-override characters (U+001B).`
+
+*Flagged:* `C1 control in label`
+
+```turtle
+ex:a rdfs:label "abc\u0085def" .
+```
+
+Reported: `Literal on http://www.w3.org/2000/01/rdf-schema#label contains control or bidirectional-override characters (U+0085).`
+
+*Flagged:* `bidi in IRI` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `IRI contains control or bidirectional-override characters (U+202E).`
+
+*Flagged:* `tab in IRI` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `IRI contains control or bidirectional-override characters (U+0009).`
+
+*Clean:* `plain label`
 
 ```turtle
 ex:a rdfs:label "abc" .
+```
+
+*Clean:* `tab and newline in literal`
+
+```turtle
+ex:a rdfs:comment "a\tb\nc\rd" .
+```
+
+*Clean:* `right-to-left text`
+
+```turtle
+ex:a rdfs:label "שלום مرحبا" .
+```
+
+*Clean:* `directional mark`
+
+```turtle
+ex:a rdfs:label "abc\u200Fdef" .
+```
+
+*Clean:* `last bidi code point not isolate`
+
+```turtle
+ex:a rdfs:label "abc\u206Adef" .
 ```
 
 #### SEC013: Network access attempted while disabled
@@ -200,9 +368,11 @@ ex:a rdfs:label "abc" .
 - **Fix:** Make the input self-contained; ontolint runs with the network disabled and never fetches resources.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `parser dials out` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `parser dials out` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `ordinary parse` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `failure is swallowed` (run through the command line or an adapter; see `tests/rule_cases/`)
+
+*Clean:* `ordinary parse` (run through the command line or an adapter; see `tests/rule_cases/`)
 
 #### SEC014: Credentials embedded in an IRI
 
@@ -211,7 +381,7 @@ ex:a rdfs:label "abc" .
 - **Category:** deterministic
 - **Fix:** Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it at the SARIF region or in the source.
 
-*Flagged:* user and password
+*Flagged:* `user and password`
 
 ```turtle
 ex:a ex:p <https://alice:secret@example.test/x> .
@@ -219,10 +389,190 @@ ex:a ex:p <https://alice:secret@example.test/x> .
 
 Reported: `IRI embeds a password in its userinfo.`
 
-*Clean:* user without password
+*Flagged:* `subject IRI`
+
+```turtle
+<https://bob:pw@example.test/> a owl:Class .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `predicate IRI`
+
+```turtle
+ex:a <https://bob:pw@example.test/p> ex:b .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `empty user name`
+
+```turtle
+ex:a ex:p <https://:fake-pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `upper-case scheme`
+
+```turtle
+ex:a ex:p <HTTP://alice:fake-pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `other scheme`
+
+```turtle
+ex:a ex:p <ftp://alice:fake-pw@example.test/file> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `colon inside the password`
+
+```turtle
+ex:a ex:p <https://alice:fake:pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `with a port`
+
+```turtle
+ex:a ex:p <https://alice:fake-pw@example.test:8443/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `token as user name, placeholder password`
+
+```turtle
+ex:a ex:p <https://fake-token:x-oauth-basic@github.com/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `white space in the password`
+
+```turtle
+ex:a ex:p <https://alice:fake\u0020pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `brace in the password`
+
+```turtle
+ex:a ex:p <https://alice:fake\u007Bpw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `line break in the password`
+
+```turtle
+ex:a ex:p <https://alice:fake\u000Apw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `password after an at sign of the user`
+
+```turtle
+ex:a ex:p <https://u@x:fake-pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `special scheme with one slash`
+
+```turtle
+ex:a ex:p <https:/alice:fake-pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `special scheme without slashes`
+
+```turtle
+ex:a ex:p <https:alice:fake-pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `nested in a query`
+
+```turtle
+ex:a ex:p <https://example.test/r?to=https://alice:fake-pw@h.test/> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Clean:* `user without password`
 
 ```turtle
 ex:a ex:p <https://alice@example.test/x> .
+```
+
+*Clean:* `token as user name`
+
+```turtle
+ex:a ex:p <https://fake-token@example.test/x> .
+```
+
+*Clean:* `empty password`
+
+```turtle
+ex:a ex:p <https://alice:@example.test/x> .
+```
+
+*Clean:* `percent-encoded colon`
+
+```turtle
+ex:a ex:p <https://alice%3Afake@example.test/x> .
+```
+
+*Clean:* `at sign in path`
+
+```turtle
+ex:a ex:p <https://example.test/a:b@c> .
+```
+
+*Clean:* `at sign in query`
+
+```turtle
+ex:a ex:p <https://example.test/x?u=a:b@c> .
+```
+
+*Clean:* `mailto`
+
+```turtle
+ex:a ex:p <mailto:a:b@example.test> .
+```
+
+*Clean:* `no authority for a scheme that is not special`
+
+```turtle
+ex:a ex:p <git+https:/a:b@example.test/x> .
+```
+
+*Clean:* `empty authority`
+
+```turtle
+ex:a ex:p <file:///a:b@c> .
+```
+
+*Clean:* `plain`
+
+```turtle
+ex:a ex:p <https://example.test:8080/x> .
+```
+
+*Clean:* `anyURI literal is not an IRI`
+
+```turtle
+ex:a ex:p "https://alice:fake-pw@example.test/"^^xsd:anyURI .
 ```
 
 #### SEC015: Import closure exceeds its limits
@@ -233,6 +583,6 @@ ex:a ex:p <https://alice@example.test/x> .
 - **Fix:** Lint a smaller closure, or raise max_import_depth, max_imported_files or max_triples in the policy if the size is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `closure above max_triples` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `closure above max_triples` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `closure within max_triples` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `closure within max_triples` (run through the command line or an adapter; see `tests/rule_cases/`)

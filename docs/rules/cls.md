@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type.
 
-*Flagged:* isolated class
+*Flagged:* `isolated class`
 
 ```turtle
 ex:A a owl:Class .
@@ -34,10 +34,40 @@ ex:A a owl:Class .
 
 Reported: `No asserted local super-/subclass links.`
 
-*Clean:* linked classes
+*Clean:* `linked classes`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
+```
+
+*Clean:* `explicit owl:Thing parent`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+*Clean:* `used as a domain`
+
+```turtle
+ex:A a owl:Class . ex:p a owl:ObjectProperty ; rdfs:domain ex:A .
+```
+
+*Clean:* `used as a range`
+
+```turtle
+ex:A a owl:Class . ex:p a owl:ObjectProperty ; rdfs:range ex:A .
+```
+
+*Clean:* `used as a restriction filler`
+
+```turtle
+ex:A a owl:Class . [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A ] .
+```
+
+*Clean:* `has an instance`
+
+```turtle
+ex:A a owl:Class . ex:i a ex:A .
 ```
 
 #### CLS002: Class without instances or subclasses
@@ -47,7 +77,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
 - **Category:** heuristic
 - **Fix:** Check whether this class is intentionally uninstantiated, abstract, or imported.
 
-*Flagged:* leaf next to a populated class
+*Flagged:* `leaf next to a populated class`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:i a ex:B .
@@ -55,10 +85,22 @@ ex:A a owl:Class . ex:B a owl:Class . ex:i a ex:B .
 
 Reported: `Class has no directly typed instance or subclass in this graph.`
 
-*Clean:* pure vocabulary without individuals
+*Clean:* `pure vocabulary without individuals`
 
 ```turtle
 ex:A a owl:Class .
+```
+
+*Clean:* `typed instance`
+
+```turtle
+ex:A a owl:Class . ex:i a ex:A .
+```
+
+*Clean:* `has a subclass and a leaf instance`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:i a ex:A .
 ```
 
 #### CLS003: Asserted subclass cycle
@@ -68,7 +110,7 @@ ex:A a owl:Class .
 - **Category:** heuristic
 - **Fix:** Review the asserted subclass cycle; an OWL subclass cycle is not by itself inconsistent.
 
-*Flagged:* two-class cycle
+*Flagged:* `two-class cycle`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:B rdfs:subClassOf ex:A .
@@ -76,7 +118,15 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:B rdfs:subC
 
 Reported: `Asserted subclass cycle: https://example.test/onto#A, https://example.test/onto#B`
 
-*Clean:* acyclic hierarchy
+*Flagged:* `self subclass`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+Reported: `Asserted subclass cycle: https://example.test/onto#A`
+
+*Clean:* `acyclic hierarchy`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
@@ -89,7 +139,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
 - **Category:** heuristic
 - **Fix:** Remove a redundant asserted subclass axiom if it adds no documentation value.
 
-*Flagged:* shortcut edge
+*Flagged:* `shortcut edge`
 
 ```turtle
 ex:n0 a owl:Class .
@@ -101,7 +151,7 @@ ex:n1 rdfs:subClassOf ex:n2 . ex:n0 rdfs:subClassOf ex:n2 .
 
 Reported: `Asserted subclass edge to https://example.test/onto#n2 is transitively redundant.`
 
-*Clean:* plain chain
+*Clean:* `plain chain`
 
 ```turtle
 ex:n0 a owl:Class .
@@ -111,6 +161,12 @@ ex:n0 rdfs:subClassOf ex:n1 .
 ex:n1 rdfs:subClassOf ex:n2 .
 ```
 
+*Clean:* `diamond is not redundant`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A rdfs:subClassOf ex:B, ex:C . ex:B rdfs:subClassOf ex:D .
+```
+
 #### CLS005: Excessive hierarchy depth
 
 - **Severity:** info
@@ -118,7 +174,7 @@ ex:n1 rdfs:subClassOf ex:n2 .
 - **Category:** heuristic
 - **Fix:** Review unusually deep asserted hierarchy and possible re-modeling.
 
-*Flagged:* depth_limit=3 with 4
+*Flagged:* `depth_limit=3 with 4`
 
 ```turtle
 ex:n0 a owl:Class .
@@ -134,7 +190,7 @@ Linter options: `depth_limit=3`.
 
 Reported: `Asserted subtree depth 4 exceeds 3.`
 
-*Clean:* depth_limit=3 with 3
+*Clean:* `depth_limit=3 with 3`
 
 ```turtle
 ex:n0 a owl:Class .
@@ -153,7 +209,7 @@ Linter options: `depth_limit=3`.
 - **Category:** heuristic
 - **Fix:** Review the intended meaning of multiple direct superclasses.
 
-*Flagged:* inheritance_limit=2 with 3
+*Flagged:* `inheritance_limit=2 with 3`
 
 ```turtle
 ex:A a owl:Class . ex:P0 a owl:Class . ex:A rdfs:subClassOf ex:P0 . ex:P1 a owl:Class . ex:A rdfs:subClassOf ex:P1 . ex:P2 a owl:Class . ex:A rdfs:subClassOf ex:P2 .
@@ -163,7 +219,7 @@ Linter options: `inheritance_limit=2`.
 
 Reported: `3 direct superclasses (threshold 2).`
 
-*Clean:* inheritance_limit=2 with 2
+*Clean:* `inheritance_limit=2 with 2`
 
 ```turtle
 ex:A a owl:Class . ex:P0 a owl:Class . ex:A rdfs:subClassOf ex:P0 . ex:P1 a owl:Class . ex:A rdfs:subClassOf ex:P1 .
@@ -178,7 +234,7 @@ Linter options: `inheritance_limit=2`.
 - **Category:** heuristic
 - **Fix:** Check long single-child taxonomic chains for needless subdivisions.
 
-*Flagged:* four-class single-child chain
+*Flagged:* `four-class single-child chain`
 
 ```turtle
 ex:n0 a owl:Class .
@@ -192,7 +248,7 @@ ex:n2 rdfs:subClassOf ex:n3 .
 
 Reported: `Single-child hierarchy extends 3 edges below class.`
 
-*Clean:* three-class chain
+*Clean:* `three-class chain`
 
 ```turtle
 ex:n0 a owl:Class .
@@ -209,7 +265,7 @@ ex:n1 rdfs:subClassOf ex:n2 .
 - **Category:** heuristic
 - **Fix:** Consider splitting classes or using property groups/shapes where appropriate.
 
-*Flagged:* soup_limit=2 with 3
+*Flagged:* `soup_limit=2 with 3`
 
 ```turtle
 ex:A a owl:Class . ex:p0 a owl:ObjectProperty ; rdfs:domain ex:A . ex:p1 a owl:ObjectProperty ; rdfs:domain ex:A . ex:p2 a owl:ObjectProperty ; rdfs:domain ex:A .
@@ -219,7 +275,7 @@ Linter options: `soup_limit=2`.
 
 Reported: `3 properties with asserted domain https://example.test/onto#A.`
 
-*Clean:* soup_limit=2 with 2
+*Clean:* `soup_limit=2 with 2`
 
 ```turtle
 ex:A a owl:Class . ex:p0 a owl:ObjectProperty ; rdfs:domain ex:A . ex:p1 a owl:ObjectProperty ; rdfs:domain ex:A .
@@ -234,7 +290,7 @@ Linter options: `soup_limit=2`.
 - **Category:** heuristic
 - **Fix:** Check whether class equivalence is purposeful and not merely a duplicate name.
 
-*Flagged:* equivalent with same label
+*Flagged:* `equivalent with same label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Same" ; owl:equivalentClass ex:B . ex:B a owl:Class ; rdfs:label "same" .
@@ -242,7 +298,7 @@ ex:A a owl:Class ; rdfs:label "Same" ; owl:equivalentClass ex:B . ex:B a owl:Cla
 
 Reported: `Equivalent class https://example.test/onto#B has an identical label (review duplication).`
 
-*Clean:* equivalent with different labels
+*Clean:* `equivalent with different labels`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "One" ; owl:equivalentClass ex:B . ex:B a owl:Class ; rdfs:label "Two" .
@@ -255,7 +311,7 @@ ex:A a owl:Class ; rdfs:label "One" ; owl:equivalentClass ex:B . ex:B a owl:Clas
 - **Category:** heuristic
 - **Fix:** Give each sibling class a distinct label, or merge the classes if they mean the same thing.
 
-*Flagged:* same label, different case
+*Flagged:* `same label, different case`
 
 ```turtle
 ex:P a owl:Class ; rdfs:label 'P' . ex:A a owl:Class ; rdfs:subClassOf ex:P ; rdfs:label 'Thing' . ex:B a owl:Class ; rdfs:subClassOf ex:P ; skos:prefLabel ' thing ' .
@@ -263,10 +319,22 @@ ex:P a owl:Class ; rdfs:label 'P' . ex:A a owl:Class ; rdfs:subClassOf ex:P ; rd
 
 Reported: `Shares label 'thing' with sibling https://example.test/onto#B under https://example.test/onto#P.`
 
-*Clean:* distinct labels
+*Clean:* `distinct labels`
 
 ```turtle
 ex:P a owl:Class ; rdfs:label 'P' . ex:A a owl:Class ; rdfs:subClassOf ex:P ; rdfs:label 'A' . ex:B a owl:Class ; rdfs:subClassOf ex:P ; rdfs:label 'B' .
+```
+
+*Clean:* `same label, different language`
+
+```turtle
+ex:P a owl:Class ; rdfs:label 'P' . ex:A a owl:Class ; rdfs:subClassOf ex:P ; rdfs:label 'Pain'@en . ex:B a owl:Class ; rdfs:subClassOf ex:P ; rdfs:label 'Pain'@fr .
+```
+
+*Clean:* `same label, different parents`
+
+```turtle
+ex:P a owl:Class . ex:Q a owl:Class . ex:A a owl:Class ; rdfs:subClassOf ex:P ; rdfs:label 'A' . ex:B a owl:Class ; rdfs:subClassOf ex:Q ; rdfs:label 'A' .
 ```
 
 #### CLS011: Excessive direct subclasses
@@ -280,7 +348,25 @@ ex:P a owl:Class ; rdfs:label 'P' . ex:A a owl:Class ; rdfs:subClassOf ex:P ; rd
 
 Reported: `51 direct subclasses (threshold 50).`
 
+*Flagged:* `subclass_limit=3 with 4`
+
+```turtle
+ex:P a owl:Class . ex:K0 a owl:Class ; rdfs:subClassOf ex:P . ex:K1 a owl:Class ; rdfs:subClassOf ex:P . ex:K2 a owl:Class ; rdfs:subClassOf ex:P . ex:K3 a owl:Class ; rdfs:subClassOf ex:P .
+```
+
+Linter options: `policy=Policy(subclass_limit=3)`.
+
+Reported: `4 direct subclasses (threshold 3).`
+
 *Clean:* `50 direct subclasses` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `subclass_limit=3 with 3`
+
+```turtle
+ex:P a owl:Class . ex:K0 a owl:Class ; rdfs:subClassOf ex:P . ex:K1 a owl:Class ; rdfs:subClassOf ex:P . ex:K2 a owl:Class ; rdfs:subClassOf ex:P .
+```
+
+Linter options: `policy=Policy(subclass_limit=3)`.
 
 #### CLS012: Instantiated class with only unused leaf subclasses
 
@@ -289,7 +375,7 @@ Reported: `51 direct subclasses (threshold 50).`
 - **Category:** heuristic
 - **Fix:** Check whether the unused leaf subclasses are needed or whether instances should use them.
 
-*Flagged:* instantiated parent, unused leaves
+*Flagged:* `instantiated parent, unused leaves`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:i a ex:A .
@@ -297,10 +383,22 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 
 Reported: `Class has instances but its 1 subclass(es) are unused leaves.`
 
-*Clean:* child used
+*Clean:* `child used`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:i a ex:A . ex:j a ex:B .
+```
+
+*Clean:* `child has subclass`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:C rdfs:subClassOf ex:B . ex:i a ex:A .
+```
+
+*Clean:* `parent uninstantiated`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A .
 ```
 
 #### CLS013: Miscellaneous remainder class
@@ -310,7 +408,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 - **Category:** heuristic
 - **Fix:** Replace the catch-all 'Other' subclass with specific classes or an open-world note on its parent.
 
-*Flagged:* Other under parent
+*Flagged:* `Other under parent`
 
 ```turtle
 ex:Dairy a owl:Class . ex:OtherDairy a owl:Class ; rdfs:subClassOf ex:Dairy .
@@ -318,10 +416,44 @@ ex:Dairy a owl:Class . ex:OtherDairy a owl:Class ; rdfs:subClassOf ex:Dairy .
 
 Reported: `Catch-all subclass of https://example.test/onto#Dairy.`
 
-*Clean:* root Other
+*Flagged:* `Misc by label`
+
+```turtle
+ex:Z a owl:Class . ex:K a owl:Class ; rdfs:label "Miscellaneous" ; rdfs:subClassOf ex:Z .
+```
+
+Reported: `Catch-all subclass of https://example.test/onto#Z.`
+
+*Flagged:* `snake case`
+
+```turtle
+ex:Dairy a owl:Class . ex:other_dairy a owl:Class ; rdfs:subClassOf ex:Dairy .
+```
+
+Reported: `Catch-all subclass of https://example.test/onto#Dairy.`
+
+*Clean:* `root Other`
 
 ```turtle
 ex:Other a owl:Class .
+```
+
+*Clean:* `Other unrelated word`
+
+```turtle
+ex:Party a owl:Class . ex:OtherCounterparty a owl:Class ; rdfs:subClassOf ex:Party .
+```
+
+*Clean:* `no marker`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+*Clean:* `marker as substring`
+
+```turtle
+ex:A a owl:Class . ex:Mother a owl:Class ; rdfs:subClassOf ex:A .
 ```
 
 #### CLS014: Class below two asserted-disjoint classes
@@ -331,7 +463,7 @@ ex:Other a owl:Class .
 - **Category:** heuristic
 - **Fix:** Remove one of the superclass assertions or the disjointness; the class cannot have instances.
 
-*Flagged:* direct
+*Flagged:* `direct`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A owl:disjointWith ex:B . ex:C rdfs:subClassOf ex:A, ex:B .
@@ -339,10 +471,62 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 
 Reported: `Below disjoint classes https://example.test/onto#A and https://example.test/onto#B.`
 
-*Clean:* siblings only
+*Flagged:* `through ancestors`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A owl:disjointWith ex:B . ex:A2 a owl:Class . ex:B2 a owl:Class . ex:A2 rdfs:subClassOf ex:A . ex:B2 rdfs:subClassOf ex:B . ex:C rdfs:subClassOf ex:A2, ex:B2 .
+```
+
+Reported: `Below disjoint classes https://example.test/onto#A and https://example.test/onto#B.`
+
+*Flagged:* `subclass of its disjoint`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A owl:disjointWith ex:B . ex:A rdfs:subClassOf ex:B .
+```
+
+Reported: `Below disjoint classes https://example.test/onto#A and https://example.test/onto#B.`
+
+*Flagged:* `all disjoint list`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . [ a owl:AllDisjointClasses ; owl:members ( ex:A ex:B ex:D ) ] . ex:C rdfs:subClassOf ex:A, ex:D .
+```
+
+Reported: `Below disjoint classes https://example.test/onto#A and https://example.test/onto#D.`
+
+*Flagged:* `scale: deep chain` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Below disjoint classes https://example.test/onto#n19998 and https://example.test/onto#n19999.`
+
+*Clean:* `siblings only`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A owl:disjointWith ex:B . ex:C rdfs:subClassOf ex:A . ex:D rdfs:subClassOf ex:B .
+```
+
+*Clean:* `no disjointness`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:C rdfs:subClassOf ex:A, ex:B .
+```
+
+*Clean:* `malformed members list`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . [ a owl:AllDisjointClasses ; owl:members _:x ] . ex:C rdfs:subClassOf ex:A, ex:B .
+```
+
+*Clean:* `self disjoint`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A owl:disjointWith ex:A .
+```
+
+*Clean:* `cycle without disjointness`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A rdfs:subClassOf ex:B . ex:B rdfs:subClassOf ex:A .
 ```
 
 #### CLS015: Unlabelled class with several subclasses
@@ -352,7 +536,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Category:** heuristic
 - **Fix:** Add an rdfs:label or skos:prefLabel to the class that heads a subtree.
 
-*Flagged:* three subclasses, no label
+*Flagged:* `three subclasses, no label`
 
 ```turtle
 ex:P a owl:Class . ex:C1 rdfs:subClassOf ex:P . ex:C2 rdfs:subClassOf ex:P . ex:C3 rdfs:subClassOf ex:P . ex:C1 a owl:Class . ex:C2 a owl:Class . ex:C3 a owl:Class .
@@ -360,10 +544,22 @@ ex:P a owl:Class . ex:C1 rdfs:subClassOf ex:P . ex:C2 rdfs:subClassOf ex:P . ex:
 
 Reported: `Class has 3 direct subclasses but no label.`
 
-*Clean:* two subclasses, no label
+*Clean:* `two subclasses, no label`
 
 ```turtle
 ex:P a owl:Class . ex:C1 a owl:Class ; rdfs:subClassOf ex:P . ex:C2 a owl:Class ; rdfs:subClassOf ex:P .
+```
+
+*Clean:* `labelled parent`
+
+```turtle
+ex:P a owl:Class ; rdfs:label 'P' . ex:C1 a owl:Class ; rdfs:subClassOf ex:P . ex:C2 a owl:Class ; rdfs:subClassOf ex:P . ex:C3 a owl:Class ; rdfs:subClassOf ex:P .
+```
+
+*Clean:* `prefLabel counts`
+
+```turtle
+ex:P a owl:Class ; skos:prefLabel 'P' . ex:C1 a owl:Class ; rdfs:subClassOf ex:P . ex:C2 a owl:Class ; rdfs:subClassOf ex:P . ex:C3 a owl:Class ; rdfs:subClassOf ex:P .
 ```
 
 #### CLS016: Generic is-a style property
@@ -373,7 +569,7 @@ ex:P a owl:Class . ex:C1 a owl:Class ; rdfs:subClassOf ex:P . ex:C2 a owl:Class 
 - **Category:** heuristic
 - **Fix:** Use rdfs:subClassOf or rdf:type, or a semantically specific property, instead of a generic 'is' property.
 
-*Flagged:* isA
+*Flagged:* `isA`
 
 ```turtle
 ex:isA a owl:ObjectProperty .
@@ -381,11 +577,47 @@ ex:isA a owl:ObjectProperty .
 
 Reported: `Generic 'is' property; prefer rdf:type, rdfs:subClassOf or a specific relation.`
 
-*Clean:* specific
+*Flagged:* `is`
+
+```turtle
+ex:is a rdf:Property .
+```
+
+Reported: `Generic 'is' property; prefer rdf:type, rdfs:subClassOf or a specific relation.`
+
+*Flagged:* `snake kind of`
+
+```turtle
+ex:is_kind_of a owl:ObjectProperty .
+```
+
+Reported: `Generic 'is' property; prefer rdf:type, rdfs:subClassOf or a specific relation.`
+
+*Clean:* `specific`
 
 ```turtle
 ex:isPartOf a owl:ObjectProperty .
 ```
+
+*Clean:* `island`
+
+```turtle
+ex:island a owl:ObjectProperty .
+```
+
+*Clean:* `only a class named is`
+
+```turtle
+ex:IsA a owl:Class .
+```
+
+*Clean:* `foreign namespace`
+
+```turtle
+<http://other.example/isA> a owl:ObjectProperty .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### CLS017: Class also used as an individual
 
@@ -394,7 +626,7 @@ ex:isPartOf a owl:ObjectProperty .
 - **Category:** heuristic
 - **Fix:** Check whether the class/individual punning is intended; otherwise model the individual separately.
 
-*Flagged:* named individual
+*Flagged:* `named individual`
 
 ```turtle
 ex:A a owl:Class, owl:NamedIndividual .
@@ -402,10 +634,36 @@ ex:A a owl:Class, owl:NamedIndividual .
 
 Reported: `Class is also typed as an individual (punning).`
 
-*Clean:* plain class
+*Flagged:* `instance of a declared class`
+
+```turtle
+ex:M a owl:Class . ex:A a owl:Class, ex:M .
+```
+
+Reported: `Class is also typed as an individual (punning).`
+
+*Clean:* `plain class`
 
 ```turtle
 ex:A a owl:Class .
+```
+
+*Clean:* `class and concept`
+
+```turtle
+ex:A a owl:Class, skos:Concept .
+```
+
+*Clean:* `rdfs class and owl class`
+
+```turtle
+ex:A a rdfs:Class, owl:Class .
+```
+
+*Clean:* `metaclass pattern (schema:DataType style)`
+
+```turtle
+ex:DataType a owl:Class ; rdfs:subClassOf rdfs:Class . ex:Text a owl:Class, ex:DataType .
 ```
 
 #### CLS018: Redundant owl:Thing superclass
@@ -415,7 +673,7 @@ ex:A a owl:Class .
 - **Category:** heuristic
 - **Fix:** Drop the explicit owl:Thing or rdfs:Resource superclass; the class already has another superclass.
 
-*Flagged:* Thing plus parent
+*Flagged:* `Thing plus parent`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A rdfs:subClassOf owl:Thing, ex:B .
@@ -423,10 +681,30 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 
 Reported: `Explicit owl:Thing/rdfs:Resource superclass next to another superclass.`
 
-*Clean:* Thing alone
+*Flagged:* `Resource plus restriction`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf rdfs:Resource, [ a owl:Restriction ] .
+```
+
+Reported: `Explicit owl:Thing/rdfs:Resource superclass next to another superclass.`
+
+*Clean:* `Thing alone`
 
 ```turtle
 ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+*Clean:* `Thing and self`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf owl:Thing, ex:A .
+```
+
+*Clean:* `no top`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A rdfs:subClassOf ex:B .
 ```
 
 #### CLS019: Class asserted equal to or below owl:Nothing
@@ -436,7 +714,7 @@ ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
 - **Category:** heuristic
 - **Fix:** Remove the owl:Nothing assertion or the class if it is not meant to be unsatisfiable.
 
-*Flagged:* below Nothing
+*Flagged:* `below Nothing`
 
 ```turtle
 ex:A a owl:Class ; rdfs:subClassOf owl:Nothing .
@@ -444,10 +722,24 @@ ex:A a owl:Class ; rdfs:subClassOf owl:Nothing .
 
 Reported: `Class is asserted below or equivalent to owl:Nothing.`
 
-*Clean:* below Thing
+*Flagged:* `equivalent to Nothing`
+
+```turtle
+ex:A a owl:Class ; owl:equivalentClass owl:Nothing .
+```
+
+Reported: `Class is asserted below or equivalent to owl:Nothing.`
+
+*Clean:* `below Thing`
 
 ```turtle
 ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+*Clean:* `plain`
+
+```turtle
+ex:A a owl:Class .
 ```
 
 #### CLS020: Subclass labelled like its superclass
@@ -457,7 +749,7 @@ ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
 - **Category:** heuristic
 - **Fix:** Give the subclass a label that says how it specializes its superclass.
 
-*Flagged:* same label
+*Flagged:* `same label`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Wine" . ex:B a owl:Class ; rdfs:label " wine "; rdfs:subClassOf ex:A .
@@ -465,10 +757,36 @@ ex:A a owl:Class ; rdfs:label "Wine" . ex:B a owl:Class ; rdfs:label " wine "; r
 
 Reported: `Same label as its superclass https://example.test/onto#A.`
 
-*Clean:* different
+*Flagged:* `same tagged label`
+
+```turtle
+ex:A a owl:Class ; skos:prefLabel "Vin"@fr . ex:B a owl:Class ; rdfs:label "VIN"@FR ; rdfs:subClassOf ex:A .
+```
+
+Reported: `Same label as its superclass https://example.test/onto#A.`
+
+*Clean:* `different`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "Wine" . ex:B a owl:Class ; rdfs:label "Red wine" ; rdfs:subClassOf ex:A .
+```
+
+*Clean:* `different languages`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Pizza"@en . ex:B a owl:Class ; rdfs:label "Pizza"@it ; rdfs:subClassOf ex:A .
+```
+
+*Clean:* `siblings sharing a label`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class ; rdfs:label "X" ; rdfs:subClassOf ex:A . ex:C a owl:Class ; rdfs:label "X" ; rdfs:subClassOf ex:A .
+```
+
+*Clean:* `blank labels`
+
+```turtle
+ex:A a owl:Class ; rdfs:label " " . ex:B a owl:Class ; rdfs:label " " ; rdfs:subClassOf ex:A .
 ```
 
 #### CLS021: Equivalent class that is also an asserted ancestor
@@ -478,7 +796,7 @@ ex:A a owl:Class ; rdfs:label "Wine" . ex:B a owl:Class ; rdfs:label "Red wine" 
 - **Category:** heuristic
 - **Fix:** Check whether the subclass chain between equivalent classes is intended; it collapses the chain.
 
-*Flagged:* direct parent
+*Flagged:* `direct parent`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:A owl:equivalentClass ex:B .
@@ -486,10 +804,40 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 
 Reported: `Equivalent to its asserted ancestor https://example.test/onto#A.`
 
-*Clean:* siblings
+*Flagged:* `grandparent`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:C rdfs:subClassOf ex:B . ex:B rdfs:subClassOf ex:A . ex:C owl:equivalentClass ex:A .
+```
+
+Reported: `Equivalent to its asserted ancestor https://example.test/onto#A.`
+
+*Flagged:* `scale: deep chain` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Equivalent to its asserted ancestor https://example.test/onto#n19999.`
+
+*Clean:* `siblings`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:C rdfs:subClassOf ex:A . ex:B owl:equivalentClass ex:C .
+```
+
+*Clean:* `unrelated`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A owl:equivalentClass ex:B .
+```
+
+*Clean:* `self equivalence`
+
+```turtle
+ex:A a owl:Class ; owl:equivalentClass ex:A .
+```
+
+*Clean:* `equivalent to restriction`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:B owl:equivalentClass [ a owl:Restriction ] .
 ```
 
 #### CLS022: Class named like a property
@@ -499,7 +847,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 - **Category:** heuristic
 - **Fix:** Name classes with nouns; a has/is-style name usually denotes a property.
 
-*Flagged:* hasPart
+*Flagged:* `hasPart`
 
 ```turtle
 ex:hasPart a owl:Class .
@@ -507,10 +855,38 @@ ex:hasPart a owl:Class .
 
 Reported: `Local name 'hasPart' looks like a property name.`
 
-*Clean:* noun
+*Flagged:* `isPartOf`
+
+```turtle
+ex:isPartOf a owl:Class .
+```
+
+Reported: `Local name 'isPartOf' looks like a property name.`
+
+*Flagged:* `snake case`
+
+```turtle
+ex:has_part a owl:Class .
+```
+
+Reported: `Local name 'has_part' looks like a property name.`
+
+*Clean:* `noun`
 
 ```turtle
 ex:Part a owl:Class .
+```
+
+*Clean:* `capitalised Has`
+
+```turtle
+ex:HasPart a owl:Class .
+```
+
+*Clean:* `word starting with is`
+
+```turtle
+ex:isolate a owl:Class . ex:hash a owl:Class . ex:has a owl:Class .
 ```
 
 #### CLS023: Class name encodes a conjunction
@@ -520,7 +896,7 @@ ex:Part a owl:Class .
 - **Category:** heuristic
 - **Fix:** Split the class, or use owl:unionOf / owl:intersectionOf instead of 'And'/'Or' in the name.
 
-*Flagged:* And
+*Flagged:* `And`
 
 ```turtle
 ex:DogAndCat a owl:Class .
@@ -528,10 +904,24 @@ ex:DogAndCat a owl:Class .
 
 Reported: `Local name 'DogAndCat' joins concepts with a conjunction.`
 
-*Clean:* no conjunction
+*Flagged:* `Or`
+
+```turtle
+ex:CarOrBoat a owl:Class .
+```
+
+Reported: `Local name 'CarOrBoat' joins concepts with a conjunction.`
+
+*Clean:* `no conjunction`
 
 ```turtle
 ex:Dog a owl:Class . ex:Android a owl:Class . ex:Brand a owl:Class .
+```
+
+*Clean:* `leading or trailing conjunction`
+
+```turtle
+ex:AndGate a owl:Class . ex:Rock_And a owl:Class .
 ```
 
 #### CLS024: Sibling class breaking the naming pattern
@@ -541,7 +931,7 @@ ex:Dog a owl:Class . ex:Android a owl:Class . ex:Brand a owl:Class .
 - **Category:** heuristic
 - **Fix:** Check whether the class belongs under this parent or should follow its siblings' naming pattern.
 
-*Flagged:* one outlier among four
+*Flagged:* `one outlier among four`
 
 ```turtle
 ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:AirVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:WaterVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:Bicycle a owl:Class ; rdfs:subClassOf ex:Vehicle .
@@ -549,10 +939,22 @@ ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdf
 
 Reported: `Name does not end in 'vehicle' like its 3 siblings under https://example.test/onto#Vehicle.`
 
-*Clean:* all follow pattern
+*Clean:* `all follow pattern`
 
 ```turtle
 ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:AirVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:WaterVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:RailVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle .
+```
+
+*Clean:* `only three siblings`
+
+```turtle
+ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:AirVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:Bicycle a owl:Class ; rdfs:subClassOf ex:Vehicle .
+```
+
+*Clean:* `two outliers`
+
+```turtle
+ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:AirVehicle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:Bicycle a owl:Class ; rdfs:subClassOf ex:Vehicle . ex:Boat a owl:Class ; rdfs:subClassOf ex:Vehicle .
 ```
 
 #### CLS025: Instance typed with a class and its ancestor
@@ -562,7 +964,7 @@ ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdf
 - **Category:** heuristic
 - **Fix:** Remove the redundant type assertion for the ancestor class.
 
-*Flagged:* class and parent
+*Flagged:* `class and parent`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:i a ex:A, ex:B .
@@ -570,8 +972,38 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 
 Reported: `Typed https://example.test/onto#B and its ancestor https://example.test/onto#A.`
 
-*Clean:* siblings
+*Flagged:* `class and grandparent`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:C rdfs:subClassOf ex:B . ex:B rdfs:subClassOf ex:A . ex:i a ex:A, ex:C .
+```
+
+Reported: `Typed https://example.test/onto#C and its ancestor https://example.test/onto#A.`
+
+*Flagged:* `scale: deep chain` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Typed https://example.test/onto#n0 and its ancestor https://example.test/onto#n19999.`
+
+*Clean:* `siblings`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:C rdfs:subClassOf ex:A . ex:i a ex:B, ex:C .
+```
+
+*Clean:* `single type`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . ex:i a ex:B .
+```
+
+*Clean:* `owl:Thing is not a declared class`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:i a ex:A, owl:Thing .
+```
+
+*Clean:* `blank instance`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B rdfs:subClassOf ex:A . [] a ex:A, ex:B .
 ```

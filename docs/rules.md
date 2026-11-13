@@ -5,10 +5,12 @@ edit them by hand. Regenerate them with `uv run python tests/rule_docs_generator
 
 This index lists every catalogue rule by family. Each family has its own page,
 `docs/rules/<family>.md`, linked below. There each implemented rule lists its severity, scope and fix,
-then a flagged example and a clean example in Turtle together with the message the linter reports for
-the flagged one. Rules that are not yet implemented are marked **TODO** with the backend they are
-waiting for; they cannot be selected and never run (see `--list-rules`). The intended behaviour of a
-TODO rule is a draft from `tests/planned_rule_intents.py`, not a final specification.
+then every case of `tests/rule_cases/`, in order: each flagged case, with the first message the linter
+reports for it, then each clean case. A case shows its Turtle (or says that its graph is built
+programmatically, is the empty graph, or is run through the command line or an adapter), its shapes
+graph and its linter options. Rules that are not yet implemented are marked **TODO** with the backend
+they are waiting for; they cannot be selected and never run (see `--list-rules`). The intended
+behaviour of a TODO rule is a draft from `tests/planned_rule_intents.py`, not a final specification.
 
 Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 (safe-loader refusals and front-end diagnostics, never findings). They are implemented and always apply, so `--select` and `--ignore` reject them,

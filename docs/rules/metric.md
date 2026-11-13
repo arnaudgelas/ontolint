@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Add an rdfs:label or skos:prefLabel to the unlabelled classes.
 
-*Flagged:* only 4 of 10 labelled
+*Flagged:* `only 4 of 10 labelled`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:label "c"@en .
@@ -43,7 +43,41 @@ ex:C9 a owl:Class  .
 
 Reported: `6 of 10 classes lack a label (0.60 > 0.50).`
 
-*Clean:* all labelled
+*Flagged:* `IRI-valued labels do not count`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label ex:x .
+ex:C1 a owl:Class ; rdfs:label ex:x .
+ex:C2 a owl:Class ; rdfs:label ex:x .
+ex:C3 a owl:Class ; rdfs:label ex:x .
+ex:C4 a owl:Class ; rdfs:label ex:x .
+ex:C5 a owl:Class ; rdfs:label ex:x .
+ex:C6 a owl:Class ; rdfs:label ex:x .
+ex:C7 a owl:Class ; rdfs:label ex:x .
+ex:C8 a owl:Class ; rdfs:label ex:x .
+ex:C9 a owl:Class ; rdfs:label ex:x .
+```
+
+Reported: `10 of 10 classes lack a label (1.00 > 0.50).`
+
+*Flagged:* `sub-properties of skos:altLabel do not count`
+
+```turtle
+skos:altLabel rdfs:subPropertyOf rdfs:label . ex:alt rdfs:subPropertyOf skos:altLabel . ex:C0 a owl:Class ; ex:alt "c" .
+ex:C1 a owl:Class ; ex:alt "c" .
+ex:C2 a owl:Class ; ex:alt "c" .
+ex:C3 a owl:Class ; ex:alt "c" .
+ex:C4 a owl:Class ; ex:alt "c" .
+ex:C5 a owl:Class ; ex:alt "c" .
+ex:C6 a owl:Class ; ex:alt "c" .
+ex:C7 a owl:Class ; ex:alt "c" .
+ex:C8 a owl:Class ; ex:alt "c" .
+ex:C9 a owl:Class ; ex:alt "c" .
+```
+
+Reported: `10 of 10 classes lack a label (1.00 > 0.50).`
+
+*Clean:* `all labelled`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:label "c"@en .
@@ -58,6 +92,67 @@ ex:C8 a owl:Class ; rdfs:label "c"@en .
 ex:C9 a owl:Class ; rdfs:label "c"@en .
 ```
 
+*Clean:* `at the limit`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class ; rdfs:label "c"@en .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+```
+
+*Clean:* `empty` (the empty data graph)
+
+*Clean:* `deprecated classes count as labelled`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class ; owl:deprecated true .
+ex:C5 a owl:Class ; owl:deprecated true .
+ex:C6 a owl:Class ; owl:deprecated true .
+ex:C7 a owl:Class ; owl:deprecated true .
+ex:C8 a owl:Class ; owl:deprecated true .
+ex:C9 a owl:Class ; owl:deprecated true .
+```
+
+*Clean:* `labels through a sub-property or an equivalent of rdfs:label count`
+
+```turtle
+ex:short rdfs:subPropertyOf ex:name . ex:name owl:equivalentProperty rdfs:label . ex:C0 a owl:Class ; ex:name "c" .
+ex:C1 a owl:Class ; ex:short "c" .
+ex:C2 a owl:Class ; ex:name "c" .
+ex:C3 a owl:Class ; ex:short "c" .
+ex:C4 a owl:Class ; ex:name "c" .
+ex:C5 a owl:Class ; ex:short "c" .
+ex:C6 a owl:Class ; ex:name "c" .
+ex:C7 a owl:Class ; ex:short "c" .
+ex:C8 a owl:Class ; ex:name "c" .
+ex:C9 a owl:Class ; ex:short "c" .
+```
+
 #### METRIC002: Low class definition coverage
 
 - **Severity:** warning
@@ -65,7 +160,7 @@ ex:C9 a owl:Class ; rdfs:label "c"@en .
 - **Category:** heuristic
 - **Fix:** Add rdfs:comment, skos:definition or dcterms:description to the undefined classes.
 
-*Flagged:* only 4 of 10 defined
+*Flagged:* `only 4 of 10 defined`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
@@ -82,7 +177,41 @@ ex:C9 a owl:Class  .
 
 Reported: `6 of 10 classes lack a definition (0.60 > 0.50).`
 
-*Clean:* all defined
+*Flagged:* `skos:scopeNote is not a definition`
+
+```turtle
+ex:C0 a owl:Class ; skos:scopeNote "n" .
+ex:C1 a owl:Class ; skos:scopeNote "n" .
+ex:C2 a owl:Class ; skos:scopeNote "n" .
+ex:C3 a owl:Class ; skos:scopeNote "n" .
+ex:C4 a owl:Class ; skos:scopeNote "n" .
+ex:C5 a owl:Class ; skos:scopeNote "n" .
+ex:C6 a owl:Class ; skos:scopeNote "n" .
+ex:C7 a owl:Class ; skos:scopeNote "n" .
+ex:C8 a owl:Class ; skos:scopeNote "n" .
+ex:C9 a owl:Class ; skos:scopeNote "n" .
+```
+
+Reported: `10 of 10 classes lack a definition (1.00 > 0.50).`
+
+*Flagged:* `a sub-property of skos:note is not a definition`
+
+```turtle
+ex:n rdfs:subPropertyOf skos:note . ex:C0 a owl:Class ; ex:n "n" .
+ex:C1 a owl:Class ; ex:n "n" .
+ex:C2 a owl:Class ; ex:n "n" .
+ex:C3 a owl:Class ; ex:n "n" .
+ex:C4 a owl:Class ; ex:n "n" .
+ex:C5 a owl:Class ; ex:n "n" .
+ex:C6 a owl:Class ; ex:n "n" .
+ex:C7 a owl:Class ; ex:n "n" .
+ex:C8 a owl:Class ; ex:n "n" .
+ex:C9 a owl:Class ; ex:n "n" .
+```
+
+Reported: `10 of 10 classes lack a definition (1.00 > 0.50).`
+
+*Clean:* `all defined`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
@@ -97,6 +226,65 @@ ex:C8 a owl:Class ; rdfs:comment "A long enough definition that states what dist
 ex:C9 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
 ```
 
+*Clean:* `at the limit`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C1 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C2 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C3 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C4 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+```
+
+*Clean:* `skos:definition counts`
+
+```turtle
+ex:C0 a owl:Class ; skos:definition "d" .
+ex:C1 a owl:Class ; skos:definition "d" .
+ex:C2 a owl:Class ; skos:definition "d" .
+ex:C3 a owl:Class ; skos:definition "d" .
+ex:C4 a owl:Class ; skos:definition "d" .
+ex:C5 a owl:Class ; skos:definition "d" .
+ex:C6 a owl:Class ; skos:definition "d" .
+ex:C7 a owl:Class ; skos:definition "d" .
+ex:C8 a owl:Class ; skos:definition "d" .
+ex:C9 a owl:Class ; skos:definition "d" .
+```
+
+*Clean:* `an equivalent of skos:definition counts`
+
+```turtle
+skos:definition owl:equivalentProperty ex:d . ex:C0 a owl:Class ; ex:d "d" .
+ex:C1 a owl:Class ; ex:d "d" .
+ex:C2 a owl:Class ; ex:d "d" .
+ex:C3 a owl:Class ; ex:d "d" .
+ex:C4 a owl:Class ; ex:d "d" .
+ex:C5 a owl:Class ; ex:d "d" .
+ex:C6 a owl:Class ; ex:d "d" .
+ex:C7 a owl:Class ; ex:d "d" .
+ex:C8 a owl:Class ; ex:d "d" .
+ex:C9 a owl:Class ; ex:d "d" .
+```
+
 #### METRIC003: Low property documentation coverage
 
 - **Severity:** info
@@ -104,7 +292,7 @@ ex:C9 a owl:Class ; rdfs:comment "A long enough definition that states what dist
 - **Category:** heuristic
 - **Fix:** Document properties with rdfs:comment, skos:definition or dcterms:description.
 
-*Flagged:* undocumented properties
+*Flagged:* `undocumented properties`
 
 ```turtle
 ex:p0 a owl:ObjectProperty  .
@@ -121,7 +309,7 @@ ex:p9 a owl:ObjectProperty  .
 
 Reported: `10 of 10 properties lack documentation (1.00 > 0.50).`
 
-*Clean:* documented
+*Clean:* `documented`
 
 ```turtle
 ex:p0 a owl:ObjectProperty ; rdfs:comment "d" .
@@ -136,6 +324,35 @@ ex:p8 a owl:ObjectProperty ; rdfs:comment "d" .
 ex:p9 a owl:ObjectProperty ; rdfs:comment "d" .
 ```
 
+*Clean:* `at the limit`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; rdfs:comment "d" .
+ex:p1 a owl:ObjectProperty ; rdfs:comment "d" .
+ex:p2 a owl:ObjectProperty ; rdfs:comment "d" .
+ex:p3 a owl:ObjectProperty ; rdfs:comment "d" .
+ex:p4 a owl:ObjectProperty ; rdfs:comment "d" .
+ex:p5 a owl:ObjectProperty  .
+ex:p6 a owl:ObjectProperty  .
+ex:p7 a owl:ObjectProperty  .
+ex:p8 a owl:ObjectProperty  .
+ex:p9 a owl:ObjectProperty  .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:p0 a owl:ObjectProperty  .
+ex:p1 a owl:ObjectProperty  .
+ex:p2 a owl:ObjectProperty  .
+ex:p3 a owl:ObjectProperty  .
+ex:p4 a owl:ObjectProperty  .
+ex:p5 a owl:ObjectProperty  .
+ex:p6 a owl:ObjectProperty  .
+ex:p7 a owl:ObjectProperty  .
+ex:p8 a owl:ObjectProperty  .
+```
+
 #### METRIC004: High mean class fan-out
 
 - **Severity:** info
@@ -143,7 +360,7 @@ ex:p9 a owl:ObjectProperty ; rdfs:comment "d" .
 - **Category:** heuristic
 - **Fix:** Introduce intermediate classes where parents have many direct subclasses on average.
 
-*Flagged:* one parent with 9 children
+*Flagged:* `one parent with 9 children`
 
 ```turtle
 ex:P a owl:Class .
@@ -160,7 +377,7 @@ ex:K8 a owl:Class ; rdfs:subClassOf ex:P .
 
 Reported: `1 parent classes have 9.00 direct subclasses on average (threshold 8.00).`
 
-*Clean:* one parent with 8 children (mean at the limit)
+*Clean:* `one parent with 8 children (mean at the limit)`
 
 ```turtle
 ex:P a owl:Class .
@@ -175,6 +392,50 @@ ex:K7 a owl:Class ; rdfs:subClassOf ex:P .
 ex:X0 a owl:Class  .
 ```
 
+*Clean:* `no hierarchy`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:P a owl:Class .
+ex:K0 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K1 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K2 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K3 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K4 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K5 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K6 a owl:Class ; rdfs:subClassOf ex:P .
+ex:K7 a owl:Class ; rdfs:subClassOf ex:P .
+```
+
+*Clean:* `an external parent is not counted`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C1 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C2 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C3 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C4 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C5 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C6 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C7 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C8 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+ex:C9 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_1> .
+```
+
 #### METRIC005: High orphan class ratio
 
 - **Severity:** info
@@ -182,7 +443,7 @@ ex:X0 a owl:Class  .
 - **Category:** heuristic
 - **Fix:** Connect orphan classes to the hierarchy, properties or instances, or remove them.
 
-*Flagged:* ten isolated classes
+*Flagged:* `ten isolated classes`
 
 ```turtle
 ex:C0 a owl:Class  .
@@ -199,7 +460,24 @@ ex:C9 a owl:Class  .
 
 Reported: `10 of 10 classes are orphans: no asserted sub/superclass, instance, domain or range (1.00 > 0.30).`
 
-*Clean:* a chain
+*Flagged:* `disjointness does not connect`
+
+```turtle
+ex:C0 a owl:Class ; owl:disjointWith ex:C1 .
+ex:C1 a owl:Class ; owl:disjointWith ex:C2 .
+ex:C2 a owl:Class ; owl:disjointWith ex:C3 .
+ex:C3 a owl:Class ; owl:disjointWith ex:C4 .
+ex:C4 a owl:Class ; owl:disjointWith ex:C5 .
+ex:C5 a owl:Class ; owl:disjointWith ex:C6 .
+ex:C6 a owl:Class ; owl:disjointWith ex:C7 .
+ex:C7 a owl:Class ; owl:disjointWith ex:C8 .
+ex:C8 a owl:Class ; owl:disjointWith ex:C9 .
+ex:C9 a owl:Class ; owl:disjointWith ex:C0 .
+```
+
+Reported: `10 of 10 classes are orphans: no asserted sub/superclass, instance, domain or range (1.00 > 0.30).`
+
+*Clean:* `a chain`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:subClassOf ex:C1 .
@@ -214,6 +492,147 @@ ex:C8 a owl:Class ; rdfs:subClassOf ex:C9 .
 ex:C9 a owl:Class ; rdfs:subClassOf ex:C0 .
 ```
 
+*Clean:* `instances use the classes`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+ex:i0 a ex:C0 .
+ex:i1 a ex:C1 .
+ex:i2 a ex:C2 .
+ex:i3 a ex:C3 .
+ex:i4 a ex:C4 .
+ex:i5 a ex:C5 .
+ex:i6 a ex:C6 .
+ex:i7 a ex:C7 .
+ex:i8 a ex:C8 .
+ex:i9 a ex:C9 .
+```
+
+*Clean:* `3 of 10 orphans (at the limit)`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class ; rdfs:subClassOf ex:C4 .
+ex:C4 a owl:Class ; rdfs:subClassOf ex:C3 .
+ex:C5 a owl:Class ; rdfs:subClassOf ex:C4 .
+ex:C6 a owl:Class ; rdfs:subClassOf ex:C3 .
+ex:C7 a owl:Class ; rdfs:subClassOf ex:C4 .
+ex:C8 a owl:Class ; rdfs:subClassOf ex:C3 .
+ex:C9 a owl:Class ; rdfs:subClassOf ex:C4 .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+```
+
+*Clean:* `restriction superclasses connect`
+
+```turtle
+ex:p a owl:ObjectProperty .
+ex:C0 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C1 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C2 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C3 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C4 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C5 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C6 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C7 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C8 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+ex:C9 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+```
+
+*Clean:* `equivalent classes connect`
+
+```turtle
+ex:C0 a owl:Class ; owl:equivalentClass ex:E0 .
+ex:C1 a owl:Class ; owl:equivalentClass ex:E1 .
+ex:C2 a owl:Class ; owl:equivalentClass ex:E2 .
+ex:C3 a owl:Class ; owl:equivalentClass ex:E3 .
+ex:C4 a owl:Class ; owl:equivalentClass ex:E4 .
+ex:C5 a owl:Class ; owl:equivalentClass ex:E5 .
+ex:C6 a owl:Class ; owl:equivalentClass ex:E6 .
+ex:C7 a owl:Class ; owl:equivalentClass ex:E7 .
+ex:C8 a owl:Class ; owl:equivalentClass ex:E8 .
+ex:C9 a owl:Class ; owl:equivalentClass ex:E9 .
+```
+
+*Clean:* `subclasses of owl:Thing connect`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C1 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C2 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C3 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C4 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C5 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C6 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C7 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C8 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C9 a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+*Clean:* `restriction fillers are used`
+
+```turtle
+ex:p a owl:ObjectProperty .
+ex:F0 a owl:Class .
+ex:H0 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F0 ] .
+ex:F1 a owl:Class .
+ex:H1 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F1 ] .
+ex:F2 a owl:Class .
+ex:H2 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F2 ] .
+ex:F3 a owl:Class .
+ex:H3 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F3 ] .
+ex:F4 a owl:Class .
+ex:H4 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F4 ] .
+ex:F5 a owl:Class .
+ex:H5 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F5 ] .
+ex:F6 a owl:Class .
+ex:H6 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F6 ] .
+ex:F7 a owl:Class .
+ex:H7 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F7 ] .
+ex:F8 a owl:Class .
+ex:H8 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F8 ] .
+ex:F9 a owl:Class .
+ex:H9 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:F9 ] .
+```
+
+*Clean:* `external superclasses`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C1 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C2 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C3 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C4 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C5 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C6 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C7 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C8 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+ex:C9 a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+```
+
 #### METRIC006: Low property-to-class ratio
 
 - **Severity:** info
@@ -221,7 +640,7 @@ ex:C9 a owl:Class ; rdfs:subClassOf ex:C0 .
 - **Category:** heuristic
 - **Fix:** Check whether relations between the classes are missing; the ontology may be only a taxonomy.
 
-*Flagged:* a pure taxonomy
+*Flagged:* `a pure taxonomy`
 
 ```turtle
 ex:C0 a owl:Class  .
@@ -238,7 +657,25 @@ ex:C9 a owl:Class  .
 
 Reported: `0 properties for 10 classes (0.00 < 0.10).`
 
-*Clean:* one property per ten classes (at the limit)
+*Flagged:* `annotation properties are not relations`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+ex:p0 a owl:AnnotationProperty  .
+```
+
+Reported: `0 properties for 10 classes (0.00 < 0.10).`
+
+*Clean:* `one property per ten classes (at the limit)`
 
 ```turtle
 ex:C0 a owl:Class  .
@@ -253,6 +690,22 @@ ex:C8 a owl:Class  .
 ex:C9 a owl:Class  .ex:p0 a owl:ObjectProperty  .
 ```
 
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+```
+
+*Clean:* `empty` (the empty data graph)
+
 #### METRIC007: High property-to-class ratio
 
 - **Severity:** info
@@ -260,7 +713,7 @@ ex:C9 a owl:Class  .ex:p0 a owl:ObjectProperty  .
 - **Category:** heuristic
 - **Fix:** Check for property proliferation: generalise properties or add the classes they should describe.
 
-*Flagged:* 51 properties for 10 classes
+*Flagged:* `51 properties for 10 classes`
 
 ```turtle
 ex:C0 a owl:Class  .
@@ -328,7 +781,7 @@ ex:p50 a owl:ObjectProperty  .
 
 Reported: `51 properties for 10 classes (5.10 > 5.00).`
 
-*Clean:* 50 properties for 10 classes (at the limit)
+*Clean:* `50 properties for 10 classes (at the limit)`
 
 ```turtle
 ex:C0 a owl:Class  .
@@ -393,6 +846,137 @@ ex:p48 a owl:ObjectProperty  .
 ex:p49 a owl:ObjectProperty  .
 ```
 
+*Clean:* `properties without classes`
+
+```turtle
+ex:p0 a owl:ObjectProperty  .
+ex:p1 a owl:ObjectProperty  .
+ex:p2 a owl:ObjectProperty  .
+ex:p3 a owl:ObjectProperty  .
+ex:p4 a owl:ObjectProperty  .
+ex:p5 a owl:ObjectProperty  .
+ex:p6 a owl:ObjectProperty  .
+ex:p7 a owl:ObjectProperty  .
+ex:p8 a owl:ObjectProperty  .
+ex:p9 a owl:ObjectProperty  .
+ex:p10 a owl:ObjectProperty  .
+ex:p11 a owl:ObjectProperty  .
+ex:p12 a owl:ObjectProperty  .
+ex:p13 a owl:ObjectProperty  .
+ex:p14 a owl:ObjectProperty  .
+ex:p15 a owl:ObjectProperty  .
+ex:p16 a owl:ObjectProperty  .
+ex:p17 a owl:ObjectProperty  .
+ex:p18 a owl:ObjectProperty  .
+ex:p19 a owl:ObjectProperty  .
+ex:p20 a owl:ObjectProperty  .
+ex:p21 a owl:ObjectProperty  .
+ex:p22 a owl:ObjectProperty  .
+ex:p23 a owl:ObjectProperty  .
+ex:p24 a owl:ObjectProperty  .
+ex:p25 a owl:ObjectProperty  .
+ex:p26 a owl:ObjectProperty  .
+ex:p27 a owl:ObjectProperty  .
+ex:p28 a owl:ObjectProperty  .
+ex:p29 a owl:ObjectProperty  .
+ex:p30 a owl:ObjectProperty  .
+ex:p31 a owl:ObjectProperty  .
+ex:p32 a owl:ObjectProperty  .
+ex:p33 a owl:ObjectProperty  .
+ex:p34 a owl:ObjectProperty  .
+ex:p35 a owl:ObjectProperty  .
+ex:p36 a owl:ObjectProperty  .
+ex:p37 a owl:ObjectProperty  .
+ex:p38 a owl:ObjectProperty  .
+ex:p39 a owl:ObjectProperty  .
+ex:p40 a owl:ObjectProperty  .
+ex:p41 a owl:ObjectProperty  .
+ex:p42 a owl:ObjectProperty  .
+ex:p43 a owl:ObjectProperty  .
+ex:p44 a owl:ObjectProperty  .
+ex:p45 a owl:ObjectProperty  .
+ex:p46 a owl:ObjectProperty  .
+ex:p47 a owl:ObjectProperty  .
+ex:p48 a owl:ObjectProperty  .
+ex:p49 a owl:ObjectProperty  .
+ex:p50 a owl:ObjectProperty  .
+ex:p51 a owl:ObjectProperty  .
+ex:p52 a owl:ObjectProperty  .
+ex:p53 a owl:ObjectProperty  .
+ex:p54 a owl:ObjectProperty  .
+ex:p55 a owl:ObjectProperty  .
+ex:p56 a owl:ObjectProperty  .
+ex:p57 a owl:ObjectProperty  .
+ex:p58 a owl:ObjectProperty  .
+ex:p59 a owl:ObjectProperty  .
+```
+
+*Clean:* `annotation properties are not relations`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+ex:p0 a owl:AnnotationProperty  .
+ex:p1 a owl:AnnotationProperty  .
+ex:p2 a owl:AnnotationProperty  .
+ex:p3 a owl:AnnotationProperty  .
+ex:p4 a owl:AnnotationProperty  .
+ex:p5 a owl:AnnotationProperty  .
+ex:p6 a owl:AnnotationProperty  .
+ex:p7 a owl:AnnotationProperty  .
+ex:p8 a owl:AnnotationProperty  .
+ex:p9 a owl:AnnotationProperty  .
+ex:p10 a owl:AnnotationProperty  .
+ex:p11 a owl:AnnotationProperty  .
+ex:p12 a owl:AnnotationProperty  .
+ex:p13 a owl:AnnotationProperty  .
+ex:p14 a owl:AnnotationProperty  .
+ex:p15 a owl:AnnotationProperty  .
+ex:p16 a owl:AnnotationProperty  .
+ex:p17 a owl:AnnotationProperty  .
+ex:p18 a owl:AnnotationProperty  .
+ex:p19 a owl:AnnotationProperty  .
+ex:p20 a owl:AnnotationProperty  .
+ex:p21 a owl:AnnotationProperty  .
+ex:p22 a owl:AnnotationProperty  .
+ex:p23 a owl:AnnotationProperty  .
+ex:p24 a owl:AnnotationProperty  .
+ex:p25 a owl:AnnotationProperty  .
+ex:p26 a owl:AnnotationProperty  .
+ex:p27 a owl:AnnotationProperty  .
+ex:p28 a owl:AnnotationProperty  .
+ex:p29 a owl:AnnotationProperty  .
+ex:p30 a owl:AnnotationProperty  .
+ex:p31 a owl:AnnotationProperty  .
+ex:p32 a owl:AnnotationProperty  .
+ex:p33 a owl:AnnotationProperty  .
+ex:p34 a owl:AnnotationProperty  .
+ex:p35 a owl:AnnotationProperty  .
+ex:p36 a owl:AnnotationProperty  .
+ex:p37 a owl:AnnotationProperty  .
+ex:p38 a owl:AnnotationProperty  .
+ex:p39 a owl:AnnotationProperty  .
+ex:p40 a owl:AnnotationProperty  .
+ex:p41 a owl:AnnotationProperty  .
+ex:p42 a owl:AnnotationProperty  .
+ex:p43 a owl:AnnotationProperty  .
+ex:p44 a owl:AnnotationProperty  .
+ex:p45 a owl:AnnotationProperty  .
+ex:p46 a owl:AnnotationProperty  .
+ex:p47 a owl:AnnotationProperty  .
+ex:p48 a owl:AnnotationProperty  .
+ex:p49 a owl:AnnotationProperty  .
+ex:p50 a owl:AnnotationProperty  .
+```
+
 #### METRIC008: Low property signature coverage
 
 - **Severity:** info
@@ -400,7 +984,7 @@ ex:p49 a owl:ObjectProperty  .
 - **Category:** heuristic
 - **Fix:** Declare rdfs:domain or rdfs:range on object and datatype properties where the intent is clear.
 
-*Flagged:* no signatures
+*Flagged:* `no signatures`
 
 ```turtle
 ex:p0 a owl:ObjectProperty  .
@@ -417,7 +1001,24 @@ ex:p9 a owl:ObjectProperty  .
 
 Reported: `10 of 10 object/datatype properties have neither domain nor range (1.00 > 0.50).`
 
-*Clean:* all with a domain
+*Flagged:* `datatype properties`
+
+```turtle
+ex:p0 a owl:DatatypeProperty  .
+ex:p1 a owl:DatatypeProperty  .
+ex:p2 a owl:DatatypeProperty  .
+ex:p3 a owl:DatatypeProperty  .
+ex:p4 a owl:DatatypeProperty  .
+ex:p5 a owl:DatatypeProperty  .
+ex:p6 a owl:DatatypeProperty  .
+ex:p7 a owl:DatatypeProperty  .
+ex:p8 a owl:DatatypeProperty  .
+ex:p9 a owl:DatatypeProperty  .
+```
+
+Reported: `10 of 10 object/datatype properties have neither domain nor range (1.00 > 0.50).`
+
+*Clean:* `all with a domain`
 
 ```turtle
 ex:p0 a owl:ObjectProperty ; rdfs:domain ex:C0 .
@@ -432,6 +1033,110 @@ ex:p8 a owl:ObjectProperty ; rdfs:domain ex:C0 .
 ex:p9 a owl:ObjectProperty ; rdfs:domain ex:C0 .
 ```
 
+*Clean:* `all with a range`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p1 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p2 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p3 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p4 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p5 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p6 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p7 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p8 a owl:ObjectProperty ; rdfs:range ex:C0 .
+ex:p9 a owl:ObjectProperty ; rdfs:range ex:C0 .
+```
+
+*Clean:* `at the limit`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; rdfs:domain ex:C0 .
+ex:p1 a owl:ObjectProperty ; rdfs:domain ex:C0 .
+ex:p2 a owl:ObjectProperty ; rdfs:domain ex:C0 .
+ex:p3 a owl:ObjectProperty ; rdfs:domain ex:C0 .
+ex:p4 a owl:ObjectProperty ; rdfs:domain ex:C0 .
+ex:p5 a owl:ObjectProperty  .
+ex:p6 a owl:ObjectProperty  .
+ex:p7 a owl:ObjectProperty  .
+ex:p8 a owl:ObjectProperty  .
+ex:p9 a owl:ObjectProperty  .
+```
+
+*Clean:* `annotation properties are ignored`
+
+```turtle
+ex:p0 a owl:AnnotationProperty  .
+ex:p1 a owl:AnnotationProperty  .
+ex:p2 a owl:AnnotationProperty  .
+ex:p3 a owl:AnnotationProperty  .
+ex:p4 a owl:AnnotationProperty  .
+ex:p5 a owl:AnnotationProperty  .
+ex:p6 a owl:AnnotationProperty  .
+ex:p7 a owl:AnnotationProperty  .
+ex:p8 a owl:AnnotationProperty  .
+ex:p9 a owl:AnnotationProperty  .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:p0 a owl:ObjectProperty  .
+ex:p1 a owl:ObjectProperty  .
+ex:p2 a owl:ObjectProperty  .
+ex:p3 a owl:ObjectProperty  .
+ex:p4 a owl:ObjectProperty  .
+ex:p5 a owl:ObjectProperty  .
+ex:p6 a owl:ObjectProperty  .
+ex:p7 a owl:ObjectProperty  .
+ex:p8 a owl:ObjectProperty  .
+```
+
+*Clean:* `domainIncludes is a domain`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p1 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p2 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p3 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p4 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p5 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p6 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p7 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p8 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+ex:p9 a owl:ObjectProperty ; <https://schema.org/domainIncludes> ex:C0 .
+```
+
+*Clean:* `dcam domain and range includes`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p1 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p2 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p3 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p4 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p5 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p6 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p7 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p8 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+ex:p9 a owl:ObjectProperty ; <http://purl.org/dc/dcam/domainIncludes> ex:C0 ; <http://purl.org/dc/dcam/rangeIncludes> ex:C0 .
+```
+
+*Clean:* `deprecated properties are exempt`
+
+```turtle
+ex:p0 a owl:ObjectProperty ; owl:deprecated true .
+ex:p1 a owl:ObjectProperty ; owl:deprecated true .
+ex:p2 a owl:ObjectProperty ; owl:deprecated true .
+ex:p3 a owl:ObjectProperty ; owl:deprecated true .
+ex:p4 a owl:ObjectProperty ; owl:deprecated true .
+ex:p5 a owl:ObjectProperty ; owl:deprecated true .
+ex:p6 a owl:ObjectProperty ; owl:deprecated true .
+ex:p7 a owl:ObjectProperty ; owl:deprecated true .
+ex:p8 a owl:ObjectProperty ; owl:deprecated true .
+ex:p9 a owl:ObjectProperty ; owl:deprecated true .
+```
+
 #### METRIC009: Low label language-tag coverage
 
 - **Severity:** info
@@ -439,7 +1144,7 @@ ex:p9 a owl:ObjectProperty ; rdfs:domain ex:C0 .
 - **Category:** heuristic
 - **Fix:** Tag labels with their language (for example rdfs:label "x"@en).
 
-*Flagged:* untagged labels
+*Flagged:* `untagged labels`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:label "c" .
@@ -456,7 +1161,24 @@ ex:C9 a owl:Class ; rdfs:label "c" .
 
 Reported: `0 of 10 labelled terms have a language-tagged label (0.00 < 0.50).`
 
-*Clean:* tagged labels
+*Flagged:* `xsd:string is untagged`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C1 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C2 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C3 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C4 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C5 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C6 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C7 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C8 a owl:Class ; rdfs:label "c"^^xsd:string .
+ex:C9 a owl:Class ; rdfs:label "c"^^xsd:string .
+```
+
+Reported: `0 of 10 labelled terms have a language-tagged label (0.00 < 0.50).`
+
+*Clean:* `tagged labels`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:label "c"@en .
@@ -471,6 +1193,65 @@ ex:C8 a owl:Class ; rdfs:label "c"@en .
 ex:C9 a owl:Class ; rdfs:label "c"@en .
 ```
 
+*Clean:* `at the limit`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class ; rdfs:label "c"@en .
+ex:C5 a owl:Class ; rdfs:label "c" .
+ex:C6 a owl:Class ; rdfs:label "c" .
+ex:C7 a owl:Class ; rdfs:label "c" .
+ex:C8 a owl:Class ; rdfs:label "c" .
+ex:C9 a owl:Class ; rdfs:label "c" .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c" .
+ex:C1 a owl:Class ; rdfs:label "c" .
+ex:C2 a owl:Class ; rdfs:label "c" .
+ex:C3 a owl:Class ; rdfs:label "c" .
+ex:C4 a owl:Class ; rdfs:label "c" .
+ex:C5 a owl:Class ; rdfs:label "c" .
+ex:C6 a owl:Class ; rdfs:label "c" .
+ex:C7 a owl:Class ; rdfs:label "c" .
+ex:C8 a owl:Class ; rdfs:label "c" .
+```
+
+*Clean:* `no labels at all`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+*Clean:* `one tagged label is enough`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C1 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C2 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C3 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C4 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C5 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C6 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C7 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C8 a owl:Class ; rdfs:label "c"@en, "c" .
+ex:C9 a owl:Class ; rdfs:label "c"@en, "c" .
+```
+
 #### METRIC010: High cross-namespace reference ratio
 
 - **Severity:** info
@@ -478,7 +1259,7 @@ ex:C9 a owl:Class ; rdfs:label "c"@en .
 - **Category:** heuristic
 - **Fix:** Check that the ontology is not mostly a thin layer over external vocabularies; consider importing instead.
 
-*Flagged:* all superclasses external
+*Flagged:* `all superclasses external`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:subClassOf <https://other.test/v#P0> .
@@ -506,7 +1287,26 @@ ex:Q0 a owl:Class .
 
 Reported: `10 of 10 structural references point to another namespace (1.00 > 0.50).`
 
-*Clean:* all superclasses local
+*Flagged:* `well-known vocabularies are foreign`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C1 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C2 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C3 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C4 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C5 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C6 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C7 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C8 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C9 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C10 a owl:Class ; rdfs:subClassOf skos:Concept .
+ex:C11 a owl:Class ; rdfs:subClassOf skos:Concept .
+```
+
+Reported: `12 of 12 structural references point to another namespace (1.00 > 0.50).`
+
+*Clean:* `all superclasses local`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:subClassOf ex:Q0 .
@@ -532,6 +1332,92 @@ ex:Q9 a owl:Class .
 ex:Q0 a owl:Class .
 ```
 
+*Clean:* `well-known W3C superclasses`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C1 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C2 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C3 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C4 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C5 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C6 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C7 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C8 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C9 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C10 a owl:Class ; rdfs:subClassOf owl:Thing .
+ex:C11 a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:subClassOf <https://other.test/v#P0> .
+ex:C1 a owl:Class ; rdfs:subClassOf <https://other.test/v#P1> .
+ex:C2 a owl:Class ; rdfs:subClassOf <https://other.test/v#P2> .
+ex:C3 a owl:Class ; rdfs:subClassOf <https://other.test/v#P3> .
+ex:C4 a owl:Class ; rdfs:subClassOf <https://other.test/v#P4> .
+ex:C5 a owl:Class ; rdfs:subClassOf <https://other.test/v#P5> .
+ex:C6 a owl:Class ; rdfs:subClassOf <https://other.test/v#P6> .
+ex:C7 a owl:Class ; rdfs:subClassOf <https://other.test/v#P7> .
+ex:C8 a owl:Class ; rdfs:subClassOf <https://other.test/v#P8> .
+ex:Q0 a owl:Class .
+ex:Q1 a owl:Class .
+ex:Q2 a owl:Class .
+ex:Q3 a owl:Class .
+ex:Q4 a owl:Class .
+ex:Q5 a owl:Class .
+ex:Q6 a owl:Class .
+ex:Q7 a owl:Class .
+ex:Q8 a owl:Class .
+ex:Q0 a owl:Class .
+```
+
+*Clean:* `namespaces of one ontology are not foreign`
+
+```turtle
+<https://example.test/> a owl:Ontology .
+<https://example.test/a#C0> a owl:Class ; rdfs:subClassOf <https://example.test/b#D0> .
+<https://example.test/b#D0> a owl:Class .
+<https://example.test/a#C1> a owl:Class ; rdfs:subClassOf <https://example.test/b#D1> .
+<https://example.test/b#D1> a owl:Class .
+<https://example.test/a#C2> a owl:Class ; rdfs:subClassOf <https://example.test/b#D2> .
+<https://example.test/b#D2> a owl:Class .
+<https://example.test/a#C3> a owl:Class ; rdfs:subClassOf <https://example.test/b#D3> .
+<https://example.test/b#D3> a owl:Class .
+<https://example.test/a#C4> a owl:Class ; rdfs:subClassOf <https://example.test/b#D4> .
+<https://example.test/b#D4> a owl:Class .
+<https://example.test/a#C5> a owl:Class ; rdfs:subClassOf <https://example.test/b#D5> .
+<https://example.test/b#D5> a owl:Class .
+<https://example.test/a#C6> a owl:Class ; rdfs:subClassOf <https://example.test/b#D6> .
+<https://example.test/b#D6> a owl:Class .
+<https://example.test/a#C7> a owl:Class ; rdfs:subClassOf <https://example.test/b#D7> .
+<https://example.test/b#D7> a owl:Class .
+<https://example.test/a#C8> a owl:Class ; rdfs:subClassOf <https://example.test/b#D8> .
+<https://example.test/b#D8> a owl:Class .
+<https://example.test/a#C9> a owl:Class ; rdfs:subClassOf <https://example.test/b#D9> .
+<https://example.test/b#D9> a owl:Class .
+```
+
+Linter options: `base='https://example.test/'`.
+
+*Clean:* `OBO reuse of one namespace is not foreign`
+
+```turtle
+<http://purl.obolibrary.org/obo/XAO_0> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_1> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_2> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_3> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_4> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_5> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_6> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_7> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_8> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+<http://purl.obolibrary.org/obo/XAO_9> a owl:Class ; rdfs:subClassOf <http://purl.obolibrary.org/obo/BFO_0000030> .
+```
+
+Linter options: `base='http://purl.obolibrary.org/obo/XAO_'`.
+
 #### METRIC011: Excessive number of imports
 
 - **Severity:** info
@@ -539,7 +1425,7 @@ ex:Q0 a owl:Class .
 - **Category:** heuristic
 - **Fix:** Reduce owl:imports to the ontologies actually needed, or use import modules.
 
-*Flagged:* 11 imports
+*Flagged:* `11 imports`
 
 ```turtle
 ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/>, <https://o2.test/>, <https://o3.test/>, <https://o4.test/>, <https://o5.test/>, <https://o6.test/>, <https://o7.test/>, <https://o8.test/>, <https://o9.test/>, <https://o10.test/> .
@@ -547,11 +1433,22 @@ ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/>, <https
 
 Reported: `11 distinct owl:imports (threshold 10).`
 
-*Clean:* 10 imports (at the limit)
+*Flagged:* `the imports of every header are counted`
+
+```turtle
+ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/>, <https://o2.test/>, <https://o3.test/>, <https://o4.test/>, <https://o5.test/> .
+ex:q a owl:Ontology ; owl:imports <https://q0.test/>, <https://q1.test/>, <https://q2.test/>, <https://q3.test/>, <https://q4.test/>, <https://q5.test/> .
+```
+
+Reported: `12 distinct owl:imports (threshold 10).`
+
+*Clean:* `10 imports (at the limit)`
 
 ```turtle
 ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/>, <https://o2.test/>, <https://o3.test/>, <https://o4.test/>, <https://o5.test/>, <https://o6.test/>, <https://o7.test/>, <https://o8.test/>, <https://o9.test/> .
 ```
+
+*Clean:* `no imports` (the empty data graph)
 
 #### METRIC012: Terse class definitions
 
@@ -560,7 +1457,7 @@ ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/>, <https
 - **Category:** heuristic
 - **Fix:** Expand very short class definitions so that they state what distinguishes the class.
 
-*Flagged:* one-word definitions
+*Flagged:* `one-word definitions`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:comment "Thing" .
@@ -577,7 +1474,7 @@ ex:C9 a owl:Class ; rdfs:comment "Thing" .
 
 Reported: `10 defined classes average 1.00 words per definition (threshold 4.00).`
 
-*Clean:* full definitions
+*Clean:* `full definitions`
 
 ```turtle
 ex:C0 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
@@ -592,6 +1489,50 @@ ex:C8 a owl:Class ; rdfs:comment "A long enough definition that states what dist
 ex:C9 a owl:Class ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
 ```
 
+*Clean:* `below the minimum sample`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:comment "Thing" .
+ex:C1 a owl:Class ; rdfs:comment "Thing" .
+ex:C2 a owl:Class ; rdfs:comment "Thing" .
+ex:C3 a owl:Class ; rdfs:comment "Thing" .
+ex:C4 a owl:Class ; rdfs:comment "Thing" .
+ex:C5 a owl:Class ; rdfs:comment "Thing" .
+ex:C6 a owl:Class ; rdfs:comment "Thing" .
+ex:C7 a owl:Class ; rdfs:comment "Thing" .
+ex:C8 a owl:Class ; rdfs:comment "Thing" .
+```
+
+*Clean:* `undefined classes are not measured`
+
+```turtle
+ex:C0 a owl:Class  .
+ex:C1 a owl:Class  .
+ex:C2 a owl:Class  .
+ex:C3 a owl:Class  .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+*Clean:* `the longest description counts`
+
+```turtle
+ex:C0 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C1 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C2 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C3 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C4 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C5 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C6 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C7 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C8 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+ex:C9 a owl:Class ; skos:definition "Thing" ; rdfs:comment "A long enough definition that states what distinguishes this class from its siblings" .
+```
+
 #### METRIC013: High blank node ratio
 
 - **Severity:** info
@@ -599,7 +1540,7 @@ ex:C9 a owl:Class ; rdfs:comment "A long enough definition that states what dist
 - **Category:** heuristic
 - **Fix:** Check whether anonymous resources could be named, or are restrictions that should be reviewed.
 
-*Flagged:* ten free blank subjects
+*Flagged:* `ten free blank subjects`
 
 ```turtle
 [] a ex:Thing .
@@ -616,7 +1557,7 @@ ex:C9 a owl:Class ; rdfs:comment "A long enough definition that states what dist
 
 Reported: `10 of 10 subjects are blank nodes (1.00 > 0.60).`
 
-*Clean:* named subjects
+*Clean:* `named subjects`
 
 ```turtle
 ex:s0 a owl:Class .
@@ -629,4 +1570,63 @@ ex:s6 a owl:Class .
 ex:s7 a owl:Class .
 ex:s8 a owl:Class .
 ex:s9 a owl:Class .
+```
+
+*Clean:* `below the minimum sample`
+
+```turtle
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+[] a ex:Thing .
+```
+
+*Clean:* `restriction nodes are structure`
+
+```turtle
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+[] a owl:Restriction .
+```
+
+*Clean:* `reified statements are structure`
+
+```turtle
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b0 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b1 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b2 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b3 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b4 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b5 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b6 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b7 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b8 .
+[] a rdf:Statement ; rdf:subject ex:a ; rdf:predicate ex:p ; rdf:object ex:b9 .
+```
+
+*Clean:* `member shapes are structure`
+
+```turtle
+ex:S0 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S1 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S2 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S3 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S4 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S5 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S6 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S7 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S8 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
+ex:S9 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
 ```

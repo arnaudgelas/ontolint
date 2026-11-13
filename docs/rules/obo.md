@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** context-dependent
 - **Fix:** Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN (optionally PREFIX_SUBSPACE_NNNNNNN).
 
-*Flagged:* letters in the number
+*Flagged:* `letters in the number`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -36,12 +36,134 @@ obo:XYZ_12a a owl:Class .
 
 Reported: `OBO identifier 'XYZ_12a' does not follow the PREFIX_0000000 pattern.`
 
-*Clean:* canonical identifier
+*Flagged:* `no prefix separator`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:xyz a owl:Class .
+```
+
+Reported: `OBO identifier 'xyz' does not follow the PREFIX_0000000 pattern.`
+
+*Flagged:* `no number`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:XYZ_ a owl:Class .
+```
+
+Reported: `OBO identifier 'XYZ_' does not follow the PREFIX_0000000 pattern.`
+
+*Flagged:* `hash local name`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/uberon#part_of> a owl:ObjectProperty .
+```
+
+Reported: `OBO identifier 'uberon#part_of' does not follow the PREFIX_0000000 pattern.`
+
+*Flagged:* `letters without digits`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:FOO_abc a owl:Class .
+```
+
+Reported: `OBO identifier 'FOO_abc' does not follow the PREFIX_0000000 pattern.`
+
+*Flagged:* `hash class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/foo#bar> a owl:Class .
+```
+
+Reported: `OBO identifier 'foo#bar' does not follow the PREFIX_0000000 pattern.`
+
+*Clean:* `canonical identifier`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 obo:XYZ_0000001 a owl:Class .
+```
+
+*Clean:* `short number`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:XYZ_1 a owl:Class .
+```
+
+*Clean:* `alphanumeric prefix`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:NCBITaxon_9606 a owl:Class .
+```
+
+*Clean:* `sub-prefix`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:NCBITaxon_Union_0000001 a owl:Class .
+```
+
+*Clean:* `foreign namespace is out of scope`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:Thing a owl:Class .
+```
+
+*Clean:* `ontology IRI is not a term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:xyz.owl a owl:Ontology .
+```
+
+*Clean:* `individuals are out of scope`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:thing a owl:NamedIndividual .
+```
+
+*Clean:* `annotation property with hash`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/envo#envoAstro> a owl:AnnotationProperty .
+```
+
+*Clean:* `sub-ID space with letters`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:RO_HOM0000001 a owl:ObjectProperty .
+```
+
+*Clean:* `obsolete term with odd IRI`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/pato#x> a owl:ObjectProperty ; owl:deprecated true .
 ```
 
 #### OBO002: Ontology header missing OBO-required title, description or license
@@ -51,7 +173,7 @@ obo:XYZ_0000001 a owl:Class .
 - **Category:** context-dependent
 - **Fix:** Add dc:title or dcterms:title, dc:description or dcterms:description, and dcterms:license to the header.
 
-*Flagged:* no title
+*Flagged:* `no title`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -61,12 +183,76 @@ ex:o a owl:Ontology ; dcterms:description "d" ; dcterms:license ex:L .
 
 Reported: `Ontology header has no title (dcterms:title).`
 
-*Clean:* complete header
+*Flagged:* `no description`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; dcterms:title "t" ; dcterms:license ex:L .
+```
+
+Reported: `Ontology header has no description (dcterms:description).`
+
+*Flagged:* `no license`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; dcterms:title "t" ; dcterms:description "d" .
+```
+
+Reported: `Ontology header has no license (dcterms:license).`
+
+*Flagged:* `blank title`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; dcterms:title " " ; dcterms:description "d" ; dcterms:license ex:L .
+```
+
+Reported: `Ontology header has no title (dcterms:title).`
+
+*Flagged:* `bare header`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology .
+```
+
+Reported: `Ontology header has no description (dcterms:description).`
+
+*Clean:* `complete header`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:o a owl:Ontology ; dcterms:title "t" ; dcterms:description "d" ; dcterms:license ex:L .
+```
+
+*Clean:* `Dublin Core elements`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; <http://purl.org/dc/elements/1.1/title> "t" ; <http://purl.org/dc/elements/1.1/description> "d" ; dcterms:license ex:L .
+```
+
+*Clean:* `no ontology header at all`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
+```
+
+*Clean:* `dc title and description with dcterms license`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; <http://purl.org/dc/elements/1.1/title> "t" ; <http://purl.org/dc/elements/1.1/description> "d" ; dcterms:license ex:L .
 ```
 
 #### OBO003: Term without an IAO textual definition
@@ -76,7 +262,7 @@ ex:o a owl:Ontology ; dcterms:title "t" ; dcterms:description "d" ; dcterms:lice
 - **Category:** context-dependent
 - **Fix:** Add an obo:IAO_0000115 (definition) or obo:IAO_0000600 (elucidation) annotation with a non-empty text.
 
-*Flagged:* class without definition
+*Flagged:* `class without definition`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -86,12 +272,94 @@ ex:A a owl:Class .
 
 Reported: `Term has no textual definition (obo:IAO_0000115).`
 
-*Clean:* defined class
+*Flagged:* `blank definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "  " .
+```
+
+Reported: `Term has no textual definition (obo:IAO_0000115).`
+
+*Flagged:* `rdfs:comment is not a definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:comment "A thing." .
+```
+
+Reported: `Term has no textual definition (obo:IAO_0000115).`
+
+*Flagged:* `object property without definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty .
+```
+
+Reported: `Term has no textual definition (obo:IAO_0000115).`
+
+*Flagged:* `comment only class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:comment "x" .
+```
+
+Reported: `Term has no textual definition (obo:IAO_0000115).`
+
+*Flagged:* `false deprecated flag`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "false"^^xsd:boolean .
+```
+
+Reported: `Term has no textual definition (obo:IAO_0000115).`
+
+*Clean:* `defined class`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
+```
+
+*Clean:* `defined property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:DatatypeProperty ; obo:IAO_0000115 "A relation." .
+```
+
+*Clean:* `obsolete class needs no definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "true"^^xsd:boolean .
+```
+
+*Clean:* `annotation properties are out of scope`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:a a owl:AnnotationProperty .
+```
+
+*Clean:* `elucidation only`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:BFO_0000001 a owl:Class ; obo:IAO_0000600 "An elucidation." .
 ```
 
 #### OBO004: Term without an rdfs:label, or with a label shared by another term
@@ -101,7 +369,7 @@ ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
 - **Category:** context-dependent
 - **Fix:** Give every term exactly one rdfs:label and make labels unique within each language.
 
-*Flagged:* class without label
+*Flagged:* `class without label`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -111,12 +379,92 @@ ex:A a owl:Class .
 
 Reported: `Term has no rdfs:label.`
 
-*Clean:* unique labels
+*Flagged:* `blank label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label " " .
+```
+
+Reported: `Term has no rdfs:label.`
+
+*Flagged:* `property without label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty .
+```
+
+Reported: `Term has no rdfs:label.`
+
+*Flagged:* `shared label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell" . ex:B a owl:Class ; rdfs:label "cell" .
+```
+
+Reported: `Label 'cell' is also used by https://example.test/onto#B.`
+
+*Flagged:* `class and property share a label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell" . ex:p a owl:ObjectProperty ; rdfs:label "cell" .
+```
+
+Reported: `Label 'cell' is also used by https://example.test/onto#p.`
+
+*Clean:* `unique labels`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; rdfs:label "a" . ex:B a owl:Class ; rdfs:label "b" .
+```
+
+*Clean:* `same text in different languages`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell"@en . ex:B a owl:Class ; rdfs:label "cell"@fr .
+```
+
+*Clean:* `one term with two labels`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "a", "b" .
+```
+
+*Clean:* `annotation property needs no label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:a a owl:AnnotationProperty .
+```
+
+*Clean:* `obsolete unlabeled class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true .
+```
+
+*Clean:* `obsolete terms share a label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; rdfs:label "obsolete x" . ex:B a owl:Class ; owl:deprecated true ; rdfs:label "obsolete x" .
 ```
 
 #### OBO005: Object property duplicating a well-known RO or BFO relation
@@ -126,7 +474,7 @@ ex:A a owl:Class ; rdfs:label "a" . ex:B a owl:Class ; rdfs:label "b" .
 - **Category:** context-dependent
 - **Fix:** Reuse the RO/BFO relation, or assert rdfs:subPropertyOf or owl:equivalentProperty to it.
 
-*Flagged:* ad hoc part of
+*Flagged:* `ad hoc part of`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -136,12 +484,106 @@ ex:partOf a owl:ObjectProperty ; rdfs:label "part of" .
 
 Reported: `Object property labelled 'part of' duplicates the existing relation http://purl.obolibrary.org/obo/BFO_0000050.`
 
-*Clean:* sub-property of the RO relation
+*Flagged:* `case and spacing are ignored`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "Develops  FROM" .
+```
+
+Reported: `Object property labelled 'Develops  FROM' duplicates the existing relation http://purl.obolibrary.org/obo/RO_0002202.`
+
+*Flagged:* `unrelated sub-property does not count`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "has part" ; rdfs:subPropertyOf ex:q .
+```
+
+Reported: `Object property labelled 'has part' duplicates the existing relation http://purl.obolibrary.org/obo/BFO_0000051.`
+
+*Flagged:* `sub-property of the wrong relation`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "has part" ; rdfs:subPropertyOf obo:BFO_0000050 .
+```
+
+Reported: `Object property labelled 'has part' duplicates the existing relation http://purl.obolibrary.org/obo/BFO_0000051.`
+
+*Clean:* `sub-property of the RO relation`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:p a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:subPropertyOf obo:BFO_0000050 .
+```
+
+*Clean:* `equivalent to the RO relation`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "part of" ; owl:equivalentProperty obo:BFO_0000050 .
+```
+
+*Clean:* `RO relation declares the equivalence`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "part of" . obo:BFO_0000050 owl:equivalentProperty ex:p .
+```
+
+*Clean:* `the RO relation itself`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:BFO_0000050 a owl:ObjectProperty ; rdfs:label "part of" .
+```
+
+*Clean:* `datatype property is out of scope`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:DatatypeProperty ; rdfs:label "part of" .
+```
+
+*Clean:* `different label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "is component of" .
+```
+
+*Clean:* `equivalent to the current RO term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "regulates" ; owl:equivalentProperty obo:RO_0002211 .
+```
+
+*Clean:* `retired relation label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "inheres in" .
+```
+
+*Clean:* `obsolete property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "part of" ; owl:deprecated "true"^^xsd:boolean .
 ```
 
 #### OBO006: Definition without provenance
@@ -151,7 +593,7 @@ ex:p a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:subPropertyOf obo:BFO_00
 - **Category:** context-dependent
 - **Fix:** Annotate the definition axiom with oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source.
 
-*Flagged:* definition without source
+*Flagged:* `definition without source`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -161,12 +603,118 @@ ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
 
 Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
 
-*Clean:* definition axiom with xref
+*Flagged:* `axiom annotation about another definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "Another." ; oio:hasDbXref "PMID:1" .
+```
+
+Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
+
+*Flagged:* `axiom without provenance`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; rdfs:comment "x" .
+```
+
+Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
+
+*Flagged:* `BFO-style axiom with only IAO_0010000`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; obo:IAO_0010000 "x" .
+```
+
+Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
+
+*Flagged:* `xref on an axiom about another property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty rdfs:comment ; owl:annotatedTarget "A thing." ; oio:hasDbXref "PMID:1" .
+```
+
+Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
+
+*Flagged:* `second definition lacks a source`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One.", "Two." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "One." ; oio:hasDbXref "PMID:1" .
+```
+
+Reported: `Definition has no source (oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source).`
+
+*Clean:* `definition axiom with xref`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; oio:hasDbXref "PMID:1" .
+```
+
+*Clean:* `definition axiom with dcterms:source`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; dcterms:source "x" .
+```
+
+*Clean:* `definition axiom with <http://purl.org/dc/elements/1.1/source>`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; <http://purl.org/dc/elements/1.1/source> "x" .
+```
+
+*Clean:* `term-level dcterms:source`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." ; dcterms:source "x" .
+```
+
+*Clean:* `term-level <http://purl.org/dc/elements/1.1/source>`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." ; <http://purl.org/dc/elements/1.1/source> "x" .
+```
+
+*Clean:* `term-level definition source`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." ; obo:IAO_0000119 "x" .
+```
+
+*Clean:* `no definition is OBO003's business`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
+```
+
+*Clean:* `obsolete term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." ; owl:deprecated "true"^^xsd:boolean .
 ```
 
 #### OBO007: Obsolete term without a reason or replacement annotation
@@ -176,7 +724,7 @@ ex:A a owl:Class ; obo:IAO_0000115 "A thing." . [] a owl:Axiom ; owl:annotatedSo
 - **Category:** context-dependent
 - **Fix:** Add obo:IAO_0000231 (reason), IAO_0000233 (tracker item), IAO_0100001 (replaced by) or oboInOwl:consider.
 
-*Flagged:* obsolete class bare
+*Flagged:* `obsolete class bare`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -186,12 +734,134 @@ ex:A a owl:Class ; owl:deprecated "true"^^xsd:boolean .
 
 Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
 
-*Clean:* with reason
+*Flagged:* `plain true literal`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "true" .
+```
+
+Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
+
+*Flagged:* `lexical 1`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "1"^^xsd:boolean .
+```
+
+Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
+
+*Flagged:* `blank reason`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 " " .
+```
+
+Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
+
+*Flagged:* `obsolete property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; owl:deprecated true .
+```
+
+Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
+
+*Flagged:* `deprecated datatype property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:DatatypeProperty ; owl:deprecated true .
+```
+
+Reported: `Obsolete term has no obsolescence reason, replacement or consider annotation.`
+
+*Clean:* `with reason`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 obo:OMO_0000001 .
+```
+
+*Clean:* `with replacement`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0100001 ex:B .
+```
+
+*Clean:* `with consider`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; oio:consider "ex:B" .
+```
+
+*Clean:* `not obsolete`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
+```
+
+*Clean:* `deprecated false`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "false"^^xsd:boolean .
+```
+
+*Clean:* `plain 1 is not a boolean`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated "1" .
+```
+
+*Clean:* `deprecated individual`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:NamedIndividual ; owl:deprecated true .
+```
+
+*Clean:* `deprecated annotation property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:a a owl:AnnotationProperty ; owl:deprecated true .
+```
+
+*Clean:* `undeclared deprecated term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A owl:deprecated true .
+```
+
+*Clean:* `with term tracker item`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000233 <https://x.org/1> .
 ```
 
 #### OBO008: Class with no asserted path to a BFO class
@@ -201,7 +871,7 @@ ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 obo:OMO_0000001 .
 - **Category:** context-dependent
 - **Fix:** Give the root class an asserted rdfs:subClassOf to a BFO class, or a named BFO genus.
 
-*Flagged:* class with no parent
+*Flagged:* `class with no parent`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -211,12 +881,132 @@ ex:A a owl:Class .
 
 Reported: `Class has no asserted superclass and no path to a BFO class.`
 
-*Clean:* subclass cycle is covered by no root
+*Flagged:* `parent chain ends at a declared root`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class .
+```
+
+Reported: `Class has no asserted superclass and no path to a BFO class.`
+
+*Flagged:* `under owl:Thing only`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+Reported: `Class has no asserted superclass and no path to a BFO class.`
+
+*Flagged:* `only restriction parents`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ] .
+```
+
+Reported: `Class has no asserted superclass and no path to a BFO class.`
+
+*Flagged:* `BFO-like IRI in another namespace`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf obo:BFX_0000001 . obo:BFX_0000001 a owl:Class .
+```
+
+Reported: `Class has no asserted superclass and no path to a BFO class.`
+
+*Clean:* `subclass cycle is covered by no root`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+*Clean:* `direct BFO parent`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf obo:BFO_0000002 .
+```
+
+*Clean:* `transitive BFO parent`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:C . ex:C a owl:Class ; rdfs:subClassOf obo:BFO_0000001 .
+```
+
+*Clean:* `BFO genus of a defined class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( obo:BFO_0000004 [ a owl:Restriction ] ) ] .
+```
+
+*Clean:* `equivalent to a BFO class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:equivalentClass obo:BFO_0000002 .
+```
+
+*Clean:* `BFO class equivalent to the class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:BFO_0000002 owl:equivalentClass ex:A . ex:A a owl:Class .
+```
+
+*Clean:* `parent declared elsewhere (imported)`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf obo:CL_0000000 .
+```
+
+*Clean:* `chain leaves the graph`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf obo:CL_0000000 .
+```
+
+*Clean:* `obsolete class`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true .
+```
+
+*Clean:* `the BFO class itself`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:BFO_0000001 a owl:Class .
+```
+
+*Clean:* `properties are out of scope`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty .
 ```
 
 #### OBO009: Synonym annotation without scope
@@ -226,7 +1016,7 @@ ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:
 - **Category:** context-dependent
 - **Fix:** Use oboInOwl:hasExactSynonym, hasBroadSynonym, hasNarrowSynonym or hasRelatedSynonym.
 
-*Flagged:* oboInOwl:hasSynonym
+*Flagged:* `oboInOwl:hasSynonym`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -236,12 +1026,70 @@ ex:A oio:hasSynonym "alias" .
 
 Reported: `Synonym 'alias' (http://www.geneontology.org/formats/oboInOwl#hasSynonym) has no scope.`
 
-*Clean:* exact
+*Flagged:* `skos:altLabel`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A skos:altLabel "alias" .
+```
+
+Reported: `Synonym 'alias' (http://www.w3.org/2004/02/skos/core#altLabel) has no scope.`
+
+*Clean:* `exact`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A oio:hasExactSynonym "alias" .
+```
+
+*Clean:* `alternative term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A obo:IAO_0000118 "alias" .
+```
+
+*Clean:* `broad`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A oio:hasBroadSynonym "alias" .
+```
+
+*Clean:* `narrow`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A oio:hasNarrowSynonym "alias" .
+```
+
+*Clean:* `related`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A oio:hasRelatedSynonym "alias" .
+```
+
+*Clean:* `blank synonym`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A oio:hasSynonym " " .
+```
+
+*Clean:* `non-literal synonym`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A skos:altLabel ex:B .
 ```
 
 #### OBO010: Whole OBO ontology imported instead of a module
@@ -251,7 +1099,7 @@ ex:A oio:hasExactSynonym "alias" .
 - **Category:** context-dependent
 - **Fix:** Import an ODK-style module (.../obo/<id>/imports/<term>_import.owl); bfo, omo and ro may be imported whole.
 
-*Flagged:* whole ontology
+*Flagged:* `whole ontology`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -261,12 +1109,80 @@ ex:o a owl:Ontology ; owl:imports obo:uberon.owl .
 
 Reported: `Import http://purl.obolibrary.org/obo/uberon.owl is a whole ontology, not an import module.`
 
-*Clean:* ODK module
+*Flagged:* `whole chebi`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports obo:chebi.owl .
+```
+
+Reported: `Import http://purl.obolibrary.org/obo/chebi.owl is a whole ontology, not an import module.`
+
+*Flagged:* `released whole ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports <http://purl.obolibrary.org/obo/uberon/releases/2020-01-01/uberon.owl> .
+```
+
+Reported: `Import http://purl.obolibrary.org/obo/uberon/releases/2020-01-01/uberon.owl is a whole ontology, not an import module.`
+
+*Clean:* `ODK module`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:o a owl:Ontology ; owl:imports <http://purl.obolibrary.org/obo/uberon/imports/ro_import.owl> .
+```
+
+*Clean:* `released other file`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports <http://purl.obolibrary.org/obo/uberon/releases/2020-01-01/uberon-base.owl> .
+```
+
+*Clean:* `non-OBO import`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports <https://example.org/other.owl> .
+```
+
+*Clean:* `no imports`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology .
+```
+
+*Clean:* `foundational bfo`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports obo:bfo.owl .
+```
+
+*Clean:* `foundational omo and ro`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports obo:omo.owl, obo:ro.owl .
+```
+
+*Clean:* `literal import`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:imports "http://purl.obolibrary.org/obo/uberon.owl" .
 ```
 
 #### OBO011: Ontology or version IRI that does not follow the OBO PURL pattern
@@ -276,7 +1192,7 @@ ex:o a owl:Ontology ; owl:imports <http://purl.obolibrary.org/obo/uberon/imports
 - **Category:** context-dependent
 - **Fix:** Use .../obo/<id>.owl and a version IRI such as .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.
 
-*Flagged:* non-OBO ontology IRI
+*Flagged:* `non-OBO ontology IRI`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -286,12 +1202,174 @@ ex:o a owl:Ontology .
 
 Reported: `Ontology IRI https://example.test/onto#o does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
 
-*Clean:* plain ontology
+*Flagged:* `missing .owl`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:xyz a owl:Ontology .
+```
+
+Reported: `Ontology IRI http://purl.obolibrary.org/obo/xyz does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
+
+*Flagged:* `upper-case id`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:XYZ.owl a owl:Ontology .
+```
+
+Reported: `Ontology IRI http://purl.obolibrary.org/obo/XYZ.owl does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
+
+*Flagged:* `empty id`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/.owl> a owl:Ontology .
+```
+
+Reported: `Ontology IRI http://purl.obolibrary.org/obo/.owl does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
+
+*Flagged:* `version IRI naming another ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/foo.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/bar/releases/2020-01-01/bar.owl> .
+```
+
+Reported: `Version IRI http://purl.obolibrary.org/obo/bar/releases/2020-01-01/bar.owl does not follow http://purl.obolibrary.org/obo/<id>/releases/YYYY-MM-DD/<id>.owl.`
+
+*Flagged:* `example.org ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://example.org/x.owl> a owl:Ontology .
+```
+
+Reported: `Ontology IRI http://example.org/x.owl does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
+
+*Flagged:* `version IRI with a bad date`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/releases/2020-1-1/xyz.owl> .
+```
+
+Reported: `Version IRI http://purl.obolibrary.org/obo/xyz/releases/2020-1-1/xyz.owl does not follow http://purl.obolibrary.org/obo/<id>/releases/YYYY-MM-DD/<id>.owl.`
+
+*Flagged:* `version IRI of another ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/abc/releases/2020-01-01/abc.owl> .
+```
+
+Reported: `Version IRI http://purl.obolibrary.org/obo/abc/releases/2020-01-01/abc.owl does not follow http://purl.obolibrary.org/obo/<id>/releases/YYYY-MM-DD/<id>.owl.`
+
+*Flagged:* `version IRI that is not an OBO PURL`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://example.org/v/1> .
+```
+
+Reported: `Version IRI http://example.org/v/1 does not follow http://purl.obolibrary.org/obo/<id>/releases/YYYY-MM-DD/<id>.owl.`
+
+*Flagged:* `version IRI for a non-OBO ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:o a owl:Ontology ; owl:versionIRI <http://example.org/v/1> .
+```
+
+Reported: `Ontology IRI https://example.test/onto#o does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
+
+*Clean:* `plain ontology`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 obo:xyz.owl a owl:Ontology .
+```
+
+*Clean:* `version without releases`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/2019-08-26/xyz.owl> .
+```
+
+*Clean:* `numeric release`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/257/xyz.owl> .
+```
+
+*Clean:* `dotted release`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/1.2.3/xyz.owl> .
+```
+
+*Clean:* `release of core file`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/releases/2026-09-04/core.owl> .
+```
+
+*Clean:* `id with digits and underscore`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:xyz_2.owl a owl:Ontology .
+```
+
+*Clean:* `sub-ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz/imports/ro_import.owl> a owl:Ontology .
+```
+
+*Clean:* `released version`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/releases/2020-01-01/xyz.owl> .
+```
+
+*Clean:* `released version of a sub-ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz/extensions/xyz-plus.owl> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/releases/2020-01-01/extensions/xyz-plus.owl> .
+```
+
+*Clean:* `no ontology`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class .
 ```
 
 #### OBO012: Label that breaks OBO naming conventions
@@ -301,7 +1379,7 @@ obo:xyz.owl a owl:Ontology .
 - **Category:** context-dependent
 - **Fix:** Use labels without leading, trailing or repeated whitespace and without underscores.
 
-*Flagged:* leading whitespace
+*Flagged:* `leading whitespace`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -311,10 +1389,150 @@ ex:A a owl:Class ; rdfs:label " cell" .
 
 Reported: `Label ' cell' has leading, trailing or repeated whitespace.`
 
-*Clean:* lowercase
+*Flagged:* `trailing whitespace`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell " .
+```
+
+Reported: `Label 'cell ' has leading, trailing or repeated whitespace.`
+
+*Flagged:* `repeated whitespace`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell  membrane" .
+```
+
+Reported: `Label 'cell  membrane' has leading, trailing or repeated whitespace.`
+
+*Flagged:* `underscore`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "cell_membrane" .
+```
+
+Reported: `Label 'cell_membrane' contains an underscore.`
+
+*Flagged:* `two spaces`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "two  spaces" .
+```
+
+Reported: `Label 'two  spaces' has leading, trailing or repeated whitespace.`
+
+*Flagged:* `underscore in a short label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "a_b" .
+```
+
+Reported: `Label 'a_b' contains an underscore.`
+
+*Flagged:* `property label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; rdfs:label "part_of" .
+```
+
+Reported: `Label 'part_of' contains an underscore.`
+
+*Clean:* `lowercase`
 
 ```turtle
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; rdfs:label "cell membrane" .
+```
+
+*Clean:* `proper noun`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "Kupffer cell" .
+```
+
+*Clean:* `capital with English tag`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "Cell"@en-GB .
+```
+
+*Clean:* `obsolete label`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; rdfs:label "obsolete_x" .
+```
+
+*Clean:* `acronym first`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "DNA binding" .
+```
+
+*Clean:* `single letter`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "T cell" .
+```
+
+*Clean:* `capital in another language`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "Cellule"@fr .
+```
+
+*Clean:* `English-looking tag prefix only`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "Cell"@enx .
+```
+
+*Clean:* `hyphen is fine`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label "t-cell receptor" .
+```
+
+*Clean:* `blank labels are OBO004's business`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; rdfs:label " " .
+```
+
+*Clean:* `annotation properties are out of scope`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:a a owl:AnnotationProperty ; rdfs:label "A_b" .
 ```

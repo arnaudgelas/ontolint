@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Keep only one skos:prefLabel per language tag for a given resource.
 
-*Flagged:* two prefLabels in a language
+*Flagged:* `two prefLabels in a language`
 
 ```turtle
 ex:c a skos:Concept ; skos:prefLabel "a"@en, "b"@en .
@@ -34,11 +34,66 @@ ex:c a skos:Concept ; skos:prefLabel "a"@en, "b"@en .
 
 Reported: `2 prefLabels in language en.`
 
-*Clean:* one prefLabel per language
+*Flagged:* `tags differ only in case`
+
+```turtle
+ex:c a skos:Concept ; skos:prefLabel "a"@en, "b"@EN .
+```
+
+Reported: `2 prefLabels in language en.`
+
+*Flagged:* `two untagged prefLabels`
+
+```turtle
+ex:c a skos:Concept ; skos:prefLabel "a", "b"^^xsd:string .
+```
+
+Reported: `2 prefLabels in language und.`
+
+*Clean:* `one prefLabel per language`
 
 ```turtle
 ex:c a skos:Concept ; skos:prefLabel "a"@en, "a"@fr .
 ```
+
+*Clean:* `same label, tag case differs`
+
+```turtle
+ex:c a skos:Concept ; skos:prefLabel "a"@en, "a"@EN .
+```
+
+*Clean:* `same label, plain and xsd:string`
+
+```turtle
+ex:c a skos:Concept ; skos:prefLabel "a", "a"^^xsd:string .
+```
+
+*Clean:* `one untagged and one tagged`
+
+```turtle
+ex:c a skos:Concept ; skos:prefLabel "a", "b"@en .
+```
+
+*Clean:* `IRI value is not a label`
+
+```turtle
+ex:c a skos:Concept ; skos:prefLabel ex:x, "a"@en .
+```
+
+*Clean:* `not a concept`
+
+```turtle
+ex:c a owl:Class ; skos:prefLabel "a"@en, "b"@en .
+```
+
+*Clean:* `concept not owned`
+
+```turtle
+@prefix o: <http://other.test/> .
+o:c a skos:Concept ; skos:prefLabel "a"@en, "b"@en .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS002: Same literal in disjoint SKOS label properties
 
@@ -47,7 +102,7 @@ ex:c a skos:Concept ; skos:prefLabel "a"@en, "a"@fr .
 - **Category:** heuristic
 - **Fix:** Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource.
 
-*Flagged:* same literal as pref and alt label
+*Flagged:* `same literal as pref and alt label`
 
 ```turtle
 ex:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "a"@en .
@@ -55,11 +110,78 @@ ex:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "a"@en .
 
 Reported: `Literal 'a' (en) appears in skos:prefLabel and skos:altLabel.`
 
-*Clean:* distinct literals
+*Flagged:* `untagged pref and hidden label`
+
+```turtle
+ex:c skos:prefLabel "a" ; skos:hiddenLabel "a" .
+```
+
+Reported: `Literal 'a' (no language) appears in skos:prefLabel and skos:hiddenLabel.`
+
+*Flagged:* `alt and hidden label of a non-concept`
+
+```turtle
+ex:x skos:altLabel "a"@en ; skos:hiddenLabel "a"@en .
+```
+
+Reported: `Literal 'a' (en) appears in skos:altLabel and skos:hiddenLabel.`
+
+*Flagged:* `tag case differs`
+
+```turtle
+ex:c skos:prefLabel "a"@en ; skos:altLabel "a"@EN .
+```
+
+Reported: `Literal 'a' (en) appears in skos:prefLabel and skos:altLabel.`
+
+*Flagged:* `plain and xsd:string`
+
+```turtle
+ex:c skos:prefLabel "a" ; skos:altLabel "a"^^xsd:string .
+```
+
+Reported: `Literal 'a' (no language) appears in skos:prefLabel and skos:altLabel.`
+
+*Flagged:* `blank node`
+
+```turtle
+[] skos:prefLabel "a" ; skos:altLabel "a" .
+```
+
+Reported: `Literal 'a' (no language) appears in skos:prefLabel and skos:altLabel.`
+
+*Clean:* `distinct literals`
 
 ```turtle
 ex:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "b"@en .
 ```
+
+*Clean:* `same text, other language`
+
+```turtle
+ex:c skos:prefLabel "a"@en ; skos:altLabel "a"@fr .
+```
+
+*Clean:* `same text, untagged and tagged`
+
+```turtle
+ex:c skos:prefLabel "a" ; skos:altLabel "a"@en .
+```
+
+*Clean:* `repeated in one property`
+
+```turtle
+ex:c skos:altLabel "a"@en, "a"@EN .
+```
+
+*Clean:* `resource not owned`
+
+```turtle
+@prefix o: <http://other.test/> .
+o:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "a"@en .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS003: Cycle in skos:broader hierarchy
 
@@ -68,7 +190,7 @@ ex:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "b"@en .
 - **Category:** heuristic
 - **Fix:** Inspect hierarchical cycles; SKOS does not universally prohibit them.
 
-*Flagged:* broader cycle
+*Flagged:* `broader cycle`
 
 ```turtle
 ex:a a skos:Concept ; skos:broader ex:b . ex:b a skos:Concept ; skos:broader ex:a .
@@ -76,7 +198,15 @@ ex:a a skos:Concept ; skos:broader ex:b . ex:b a skos:Concept ; skos:broader ex:
 
 Reported: `SKOS broader cycle: https://example.test/onto#a, https://example.test/onto#b`
 
-*Clean:* acyclic broader
+*Flagged:* `self broader`
+
+```turtle
+ex:a a skos:Concept ; skos:broader ex:a .
+```
+
+Reported: `SKOS broader cycle: https://example.test/onto#a`
+
+*Clean:* `acyclic broader`
 
 ```turtle
 ex:a a skos:Concept ; skos:broader ex:b . ex:b a skos:Concept .
@@ -89,7 +219,7 @@ ex:a a skos:Concept ; skos:broader ex:b . ex:b a skos:Concept .
 - **Category:** heuristic
 - **Fix:** Give a concept a preferred label in your supported language(s).
 
-*Flagged:* no prefLabel
+*Flagged:* `no prefLabel`
 
 ```turtle
 ex:c a skos:Concept .
@@ -97,10 +227,28 @@ ex:c a skos:Concept .
 
 Reported: `Concept has no skos:prefLabel.`
 
-*Clean:* prefLabel present
+*Clean:* `prefLabel present`
 
 ```turtle
 ex:c a skos:Concept ; skos:prefLabel "c"@en .
+```
+
+*Clean:* `rdfs:label fallback`
+
+```turtle
+ex:c a skos:Concept ; rdfs:label "c" .
+```
+
+*Clean:* `deprecated`
+
+```turtle
+ex:c a skos:Concept ; owl:deprecated true .
+```
+
+*Clean:* `history note`
+
+```turtle
+ex:c a skos:Concept ; skos:historyNote "Moved." .
 ```
 
 #### SKOS005: Concept not in a concept scheme
@@ -110,7 +258,7 @@ ex:c a skos:Concept ; skos:prefLabel "c"@en .
 - **Category:** heuristic
 - **Fix:** Use skos:Concept with skos:inScheme and an appropriate scheme policy.
 
-*Flagged:* not in a scheme
+*Flagged:* `not in a scheme`
 
 ```turtle
 ex:c a skos:Concept .
@@ -118,7 +266,7 @@ ex:c a skos:Concept .
 
 Reported: `Concept is not explicitly in a scheme.`
 
-*Clean:* inScheme
+*Clean:* `inScheme`
 
 ```turtle
 ex:c a skos:Concept ; skos:inScheme ex:s . ex:s a skos:ConceptScheme .
@@ -131,7 +279,7 @@ ex:c a skos:Concept ; skos:inScheme ex:s . ex:s a skos:ConceptScheme .
 - **Category:** heuristic
 - **Fix:** Review whether a scheme top concept should also have a broader concept.
 
-*Flagged:* top concept with broader
+*Flagged:* `top concept with broader`
 
 ```turtle
 ex:c a skos:Concept ; skos:topConceptOf ex:s ; skos:broader ex:d . ex:d a skos:Concept .
@@ -139,7 +287,7 @@ ex:c a skos:Concept ; skos:topConceptOf ex:s ; skos:broader ex:d . ex:d a skos:C
 
 Reported: `Top concept of https://example.test/onto#s also has an asserted broader concept.`
 
-*Clean:* top concept without broader
+*Clean:* `top concept without broader`
 
 ```turtle
 ex:c a skos:Concept ; skos:topConceptOf ex:s .
@@ -152,7 +300,7 @@ ex:c a skos:Concept ; skos:topConceptOf ex:s .
 - **Category:** deterministic
 - **Fix:** Split the resource: skos:Concept and skos:ConceptScheme are disjoint classes.
 
-*Flagged:* concept and scheme
+*Flagged:* `concept and scheme`
 
 ```turtle
 ex:x a skos:Concept, skos:ConceptScheme .
@@ -160,11 +308,32 @@ ex:x a skos:Concept, skos:ConceptScheme .
 
 Reported: `Resource is typed as both skos:Concept and skos:ConceptScheme.`
 
-*Clean:* only a concept
+*Clean:* `only a concept`
 
 ```turtle
 ex:x a skos:Concept .
 ```
+
+*Clean:* `scheme subclass is not entailed`
+
+```turtle
+ex:Sub rdfs:subClassOf skos:ConceptScheme . ex:x a skos:Concept, ex:Sub .
+```
+
+*Clean:* `blank node`
+
+```turtle
+[] a skos:Concept, skos:ConceptScheme .
+```
+
+*Clean:* `not owned`
+
+```turtle
+@prefix o: <http://other.test/> .
+o:x a skos:Concept, skos:ConceptScheme .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS008: skos:Collection typed as concept or concept scheme
 
@@ -173,7 +342,7 @@ ex:x a skos:Concept .
 - **Category:** deterministic
 - **Fix:** Do not type a skos:Collection as skos:Concept or skos:ConceptScheme; the classes are disjoint.
 
-*Flagged:* collection and concept
+*Flagged:* `collection and concept`
 
 ```turtle
 ex:x a skos:Collection, skos:Concept .
@@ -181,11 +350,42 @@ ex:x a skos:Collection, skos:Concept .
 
 Reported: `skos:Collection is also typed as skos:Concept or skos:ConceptScheme.`
 
-*Clean:* plain collection
+*Flagged:* `collection and scheme`
+
+```turtle
+ex:x a skos:Collection, skos:ConceptScheme .
+```
+
+Reported: `skos:Collection is also typed as skos:Concept or skos:ConceptScheme.`
+
+*Flagged:* `ordered collection and concept`
+
+```turtle
+ex:x a skos:OrderedCollection, skos:Concept .
+```
+
+Reported: `skos:Collection is also typed as skos:Concept or skos:ConceptScheme.`
+
+*Clean:* `plain collection`
 
 ```turtle
 ex:x a skos:Collection ; skos:member ex:c . ex:c a skos:Concept .
 ```
+
+*Clean:* `blank node`
+
+```turtle
+[] a skos:Collection, skos:Concept .
+```
+
+*Clean:* `not owned`
+
+```turtle
+@prefix o: <http://other.test/> .
+o:x a skos:Collection, skos:Concept .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS009: skos:related between concepts that are also hierarchically linked
 
@@ -194,7 +394,7 @@ ex:x a skos:Collection ; skos:member ex:c . ex:c a skos:Concept .
 - **Category:** deterministic
 - **Fix:** Remove skos:related or the broader/narrower link: associative and hierarchical relations are disjoint.
 
-*Flagged:* related and broader
+*Flagged:* `related and broader`
 
 ```turtle
 ex:a skos:related ex:b ; skos:broader ex:b .
@@ -202,11 +402,128 @@ ex:a skos:related ex:b ; skos:broader ex:b .
 
 Reported: `skos:related and a hierarchical link both connect https://example.test/onto#a and https://example.test/onto#b.`
 
-*Clean:* related only
+*Flagged:* `related and inverse narrower`
+
+```turtle
+ex:a skos:related ex:b . ex:b skos:narrower ex:a .
+```
+
+Reported: `skos:related and a hierarchical link both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `related to a grandparent`
+
+```turtle
+ex:a skos:broader ex:b . ex:b skos:broader ex:c . ex:a skos:related ex:c .
+```
+
+Reported: `skos:related and a hierarchical link both connect https://example.test/onto#a and https://example.test/onto#c.`
+
+*Flagged:* `related to a grandchild, mixed predicates`
+
+```turtle
+ex:c skos:related ex:a . ex:a skos:broaderTransitive ex:b . ex:c skos:narrower ex:b .
+```
+
+Reported: `skos:related and a hierarchical link both connect https://example.test/onto#a and https://example.test/onto#c.`
+
+*Flagged:* `related and narrowerTransitive`
+
+```turtle
+ex:a skos:related ex:b ; skos:narrowerTransitive ex:b .
+```
+
+Reported: `skos:related and a hierarchical link both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `related and broadMatch`
+
+```turtle
+ex:a skos:related ex:b ; skos:broadMatch ex:b .
+```
+
+Reported: `skos:related and a hierarchical link through skos:broadMatch or skos:narrowMatch both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `related and inverse narrowMatch`
+
+```turtle
+ex:a skos:related ex:b . ex:b skos:narrowMatch ex:a .
+```
+
+Reported: `skos:related and a hierarchical link through skos:broadMatch or skos:narrowMatch both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `related to an ancestor through broader then broadMatch`
+
+```turtle
+ex:a skos:broader ex:b . ex:b skos:broadMatch ex:c . ex:a skos:related ex:c .
+```
+
+Reported: `skos:related and a hierarchical link through skos:broadMatch or skos:narrowMatch both connect https://example.test/onto#a and https://example.test/onto#c.`
+
+*Flagged:* `relatedMatch and broader`
+
+```turtle
+ex:a skos:relatedMatch ex:b ; skos:broader ex:b .
+```
+
+Reported: `skos:relatedMatch and a hierarchical link both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `relatedMatch to an ancestor through broadMatch`
+
+```turtle
+ex:a skos:broadMatch ex:b . ex:b skos:broader ex:c . ex:c skos:relatedMatch ex:a .
+```
+
+Reported: `skos:relatedMatch and a hierarchical link through skos:broadMatch or skos:narrowMatch both connect https://example.test/onto#a and https://example.test/onto#c.`
+
+*Clean:* `related only`
 
 ```turtle
 ex:a skos:related ex:b . ex:c skos:broader ex:b .
 ```
+
+*Clean:* `siblings`
+
+```turtle
+ex:a skos:broader ex:p . ex:b skos:broader ex:p . ex:a skos:related ex:b .
+```
+
+*Clean:* `relatedMatch and a direct broadMatch is ALIGN004's`
+
+```turtle
+ex:a skos:relatedMatch ex:b ; skos:broadMatch ex:b .
+```
+
+*Clean:* `relatedMatch and a direct inverse narrowMatch is ALIGN004's`
+
+```turtle
+ex:a skos:relatedMatch ex:b . ex:b skos:narrowMatch ex:a .
+```
+
+*Clean:* `broadMatch siblings`
+
+```turtle
+ex:a skos:broadMatch ex:p . ex:b skos:broadMatch ex:p . ex:a skos:related ex:b .
+```
+
+*Clean:* `closeMatch is not hierarchical`
+
+```turtle
+ex:a skos:related ex:b ; skos:closeMatch ex:b .
+```
+
+*Clean:* `self related is SKOS010`
+
+```turtle
+ex:a skos:related ex:a ; skos:broader ex:a .
+```
+
+*Clean:* `not owned`
+
+```turtle
+@prefix o: <http://other.test/> .
+o:a skos:related o:b ; skos:broader o:b .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS010: Concept related to itself
 
@@ -215,7 +532,7 @@ ex:a skos:related ex:b . ex:c skos:broader ex:b .
 - **Category:** deterministic
 - **Fix:** Remove the reflexive skos:related statement.
 
-*Flagged:* self related
+*Flagged:* `self related`
 
 ```turtle
 ex:a a skos:Concept ; skos:related ex:a .
@@ -223,7 +540,7 @@ ex:a a skos:Concept ; skos:related ex:a .
 
 Reported: `Concept is skos:related to itself.`
 
-*Clean:* related to another
+*Clean:* `related to another`
 
 ```turtle
 ex:a a skos:Concept ; skos:related ex:b .
@@ -236,7 +553,7 @@ ex:a a skos:Concept ; skos:related ex:b .
 - **Category:** deterministic
 - **Fix:** Use skos:broader/narrower/related inside a scheme; reserve mapping properties for cross-scheme links.
 
-*Flagged:* exactMatch inside a scheme
+*Flagged:* `exactMatch inside a scheme`
 
 ```turtle
 ex:a skos:inScheme ex:s ; skos:exactMatch ex:b . ex:b skos:inScheme ex:s .
@@ -244,10 +561,16 @@ ex:a skos:inScheme ex:s ; skos:exactMatch ex:b . ex:b skos:inScheme ex:s .
 
 Reported: `Mapping property links https://example.test/onto#a and https://example.test/onto#b, which share a concept scheme.`
 
-*Clean:* exactMatch across schemes
+*Clean:* `exactMatch across schemes`
 
 ```turtle
 ex:a skos:inScheme ex:s ; skos:exactMatch ex:b . ex:b skos:inScheme ex:t .
+```
+
+*Clean:* `scheme unknown`
+
+```turtle
+ex:a skos:exactMatch ex:b .
 ```
 
 #### SKOS012: skos:exactMatch combined with broadMatch, narrowMatch or relatedMatch
@@ -257,7 +580,7 @@ ex:a skos:inScheme ex:s ; skos:exactMatch ex:b . ex:b skos:inScheme ex:t .
 - **Category:** deterministic
 - **Fix:** Keep one mapping type per concept pair: skos:exactMatch is disjoint with broad/narrow/relatedMatch.
 
-*Flagged:* exact and broad
+*Flagged:* `exact and broad`
 
 ```turtle
 ex:a skos:exactMatch ex:b ; skos:broadMatch ex:b .
@@ -265,11 +588,56 @@ ex:a skos:exactMatch ex:b ; skos:broadMatch ex:b .
 
 Reported: `skos:exactMatch and another mapping type both connect https://example.test/onto#a and https://example.test/onto#b.`
 
-*Clean:* exact and close
+*Flagged:* `exact and inverse related`
+
+```turtle
+ex:a skos:exactMatch ex:b . ex:b skos:relatedMatch ex:a .
+```
+
+Reported: `skos:exactMatch and another mapping type both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `exact and narrow`
+
+```turtle
+ex:a skos:exactMatch ex:b ; skos:narrowMatch ex:b .
+```
+
+Reported: `skos:exactMatch and another mapping type both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Flagged:* `inverse exact and broad`
+
+```turtle
+ex:b skos:exactMatch ex:a . ex:a skos:broadMatch ex:b .
+```
+
+Reported: `skos:exactMatch and another mapping type both connect https://example.test/onto#a and https://example.test/onto#b.`
+
+*Clean:* `exact and close`
 
 ```turtle
 ex:a skos:exactMatch ex:b ; skos:closeMatch ex:b .
 ```
+
+*Clean:* `exact and mappingRelation`
+
+```turtle
+ex:a skos:exactMatch ex:b ; skos:mappingRelation ex:b .
+```
+
+*Clean:* `chain conflict is ALIGN003`
+
+```turtle
+ex:a skos:exactMatch ex:b . ex:b skos:exactMatch ex:c . ex:a skos:broadMatch ex:c .
+```
+
+*Clean:* `not owned`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:x skos:exactMatch b:y ; skos:broadMatch b:y .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS013: SKOS label that is not a plain or language-tagged string literal
 
@@ -278,7 +646,7 @@ ex:a skos:exactMatch ex:b ; skos:closeMatch ex:b .
 - **Category:** deterministic
 - **Fix:** Use a plain or language-tagged string literal for skos:prefLabel, altLabel and hiddenLabel.
 
-*Flagged:* integer label
+*Flagged:* `integer label`
 
 ```turtle
 ex:c a skos:Concept ; skos:prefLabel 42 .
@@ -286,7 +654,23 @@ ex:c a skos:Concept ; skos:prefLabel 42 .
 
 Reported: `skos:prefLabel value '42' is not a string literal.`
 
-*Clean:* string labels
+*Flagged:* `IRI label`
+
+```turtle
+ex:c a skos:Concept ; skos:altLabel ex:other .
+```
+
+Reported: `skos:altLabel value 'https://example.test/onto#other' is not a string literal.`
+
+*Flagged:* `custom datatype`
+
+```turtle
+ex:c skos:hiddenLabel "x"^^ex:custom .
+```
+
+Reported: `skos:hiddenLabel value 'x' is not a string literal.`
+
+*Clean:* `string labels`
 
 ```turtle
 ex:c skos:prefLabel "a"@en, "b"^^xsd:string ; skos:altLabel "c" .
@@ -299,7 +683,7 @@ ex:c skos:prefLabel "a"@en, "b"^^xsd:string ; skos:altLabel "c" .
 - **Category:** deterministic
 - **Fix:** Trim the label and do not leave it empty.
 
-*Flagged:* padded label
+*Flagged:* `padded label`
 
 ```turtle
 ex:c skos:prefLabel " a "@en .
@@ -307,7 +691,19 @@ ex:c skos:prefLabel " a "@en .
 
 Reported: `skos:prefLabel is empty or has leading/trailing whitespace.`
 
-*Clean:* clean label
+*Flagged:* `empty label`
+
+```turtle
+ex:c skos:altLabel "" .
+```
+
+Reported: `skos:altLabel is empty or has leading/trailing whitespace.`
+
+*Flagged:* `whitespace-only huge label` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `skos:prefLabel is empty or has leading/trailing whitespace.`
+
+*Clean:* `clean label`
 
 ```turtle
 ex:c skos:prefLabel "a b"@en .
@@ -320,7 +716,7 @@ ex:c skos:prefLabel "a b"@en .
 - **Category:** deterministic
 - **Fix:** Declare entry points with skos:hasTopConcept or skos:topConceptOf.
 
-*Flagged:* scheme without top
+*Flagged:* `scheme without top`
 
 ```turtle
 ex:s a skos:ConceptScheme . ex:c skos:inScheme ex:s .
@@ -328,10 +724,22 @@ ex:s a skos:ConceptScheme . ex:c skos:inScheme ex:s .
 
 Reported: `Concept scheme has 1 concept(s) but no top concept.`
 
-*Clean:* scheme with top
+*Clean:* `scheme with top`
 
 ```turtle
 ex:s a skos:ConceptScheme ; skos:hasTopConcept ex:top . ex:top a skos:Concept ; skos:inScheme ex:s .
+```
+
+*Clean:* `empty scheme`
+
+```turtle
+ex:s a skos:ConceptScheme .
+```
+
+*Clean:* `topConceptOf`
+
+```turtle
+ex:s a skos:ConceptScheme . ex:c skos:topConceptOf ex:s .
 ```
 
 #### SKOS016: SKOS relation with a literal value
@@ -341,7 +749,7 @@ ex:s a skos:ConceptScheme ; skos:hasTopConcept ex:top . ex:top a skos:Concept ; 
 - **Category:** deterministic
 - **Fix:** SKOS semantic, mapping and scheme relations link resources; replace the literal with an IRI.
 
-*Flagged:* literal broader
+*Flagged:* `literal broader`
 
 ```turtle
 ex:c skos:broader "parent" .
@@ -349,11 +757,76 @@ ex:c skos:broader "parent" .
 
 Reported: `skos:broader has a literal value.`
 
-*Clean:* IRI values
+*Flagged:* `literal inScheme`
+
+```turtle
+ex:c skos:inScheme "scheme" .
+```
+
+Reported: `skos:inScheme has a literal value.`
+
+*Flagged:* `literal relations` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `skos:broader has a literal value.`
+
+*Flagged:* `literal exactMatch`
+
+```turtle
+ex:c skos:exactMatch "x" .
+```
+
+Reported: `skos:exactMatch has a literal value.`
+
+*Flagged:* `literal semanticRelation`
+
+```turtle
+ex:c skos:semanticRelation "x" .
+```
+
+Reported: `skos:semanticRelation has a literal value.`
+
+*Flagged:* `literal mappingRelation`
+
+```turtle
+ex:c skos:mappingRelation "x" .
+```
+
+Reported: `skos:mappingRelation has a literal value.`
+
+*Flagged:* `literal topConceptOf`
+
+```turtle
+ex:c skos:topConceptOf "scheme" .
+```
+
+Reported: `skos:topConceptOf has a literal value.`
+
+*Clean:* `IRI values`
 
 ```turtle
 ex:c skos:broader ex:p ; skos:inScheme ex:s .
 ```
+
+*Clean:* `blank-node subject`
+
+```turtle
+[] skos:broader "x" .
+```
+
+*Clean:* `member is not checked`
+
+```turtle
+ex:k a skos:Collection ; skos:member "x" .
+```
+
+*Clean:* `not owned`
+
+```turtle
+@prefix o: <http://other.test/> .
+o:c skos:broader "x" .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS017: SKOS relation to an undescribed local resource
 
@@ -362,7 +835,7 @@ ex:c skos:broader ex:p ; skos:inScheme ex:s .
 - **Category:** deterministic
 - **Fix:** Describe the target concept in the vocabulary or correct the link.
 
-*Flagged:* dangling broader
+*Flagged:* `dangling broader`
 
 ```turtle
 ex:c a skos:Concept ; skos:broader ex:missing .
@@ -370,11 +843,19 @@ ex:c a skos:Concept ; skos:broader ex:missing .
 
 Reported: `skos:broader target https://example.test/onto#missing is not described in the graph.`
 
-*Clean:* described target
+*Clean:* `described target`
 
 ```turtle
 ex:c skos:broader ex:p . ex:p a skos:Concept .
 ```
+
+*Clean:* `external target`
+
+```turtle
+ex:c skos:exactMatch <http://elsewhere.test/x> .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### SKOS018: Redundant skos:broader shortcut
 
@@ -383,7 +864,7 @@ ex:c skos:broader ex:p . ex:p a skos:Concept .
 - **Category:** deterministic
 - **Fix:** Remove the direct broader link that is already implied through an asserted intermediate concept (vocabularies with a parallel classification keep such shortcuts on purpose: use --ignore SKOS018).
 
-*Flagged:* shortcut
+*Flagged:* `shortcut`
 
 ```turtle
 ex:a skos:broader ex:b, ex:c . ex:b skos:broader ex:c .
@@ -391,10 +872,22 @@ ex:a skos:broader ex:b, ex:c . ex:b skos:broader ex:c .
 
 Reported: `skos:broader https://example.test/onto#c is redundant: already reachable through https://example.test/onto#b.`
 
-*Clean:* chain
+*Clean:* `chain`
 
 ```turtle
 ex:a skos:broader ex:b . ex:b skos:broader ex:c .
+```
+
+*Clean:* `two-cycle`
+
+```turtle
+ex:a skos:broader ex:b . ex:b skos:broader ex:a .
+```
+
+*Clean:* `diamond`
+
+```turtle
+ex:a skos:broader ex:b, ex:c . ex:b skos:broader ex:d . ex:c skos:broader ex:d .
 ```
 
 #### SKOS019: Hierarchical link between concepts of different schemes
@@ -404,7 +897,7 @@ ex:a skos:broader ex:b . ex:b skos:broader ex:c .
 - **Category:** deterministic
 - **Fix:** Keep broader/narrower inside one scheme and use mapping properties across schemes.
 
-*Flagged:* cross-scheme broader
+*Flagged:* `cross-scheme broader`
 
 ```turtle
 ex:a skos:inScheme ex:s ; skos:broader ex:b . ex:b skos:inScheme ex:t .
@@ -412,10 +905,30 @@ ex:a skos:inScheme ex:s ; skos:broader ex:b . ex:b skos:inScheme ex:t .
 
 Reported: `Hierarchical link between https://example.test/onto#a and https://example.test/onto#b crosses concept schemes.`
 
-*Clean:* same scheme
+*Flagged:* `cross-scheme narrower`
+
+```turtle
+ex:b skos:inScheme ex:t ; skos:narrower ex:a . ex:a skos:inScheme ex:s .
+```
+
+Reported: `Hierarchical link between https://example.test/onto#a and https://example.test/onto#b crosses concept schemes.`
+
+*Clean:* `same scheme`
 
 ```turtle
 ex:a skos:inScheme ex:s ; skos:broader ex:b . ex:b skos:inScheme ex:s .
+```
+
+*Clean:* `shared among several`
+
+```turtle
+ex:a skos:inScheme ex:s, ex:t ; skos:broader ex:b . ex:b skos:inScheme ex:t .
+```
+
+*Clean:* `scheme unknown`
+
+```turtle
+ex:a skos:broader ex:b .
 ```
 
 #### SKOS020: Same skos:notation on several concepts of one scheme
@@ -425,7 +938,7 @@ ex:a skos:inScheme ex:s ; skos:broader ex:b . ex:b skos:inScheme ex:s .
 - **Category:** deterministic
 - **Fix:** Make notations unique within a concept scheme.
 
-*Flagged:* duplicate notation
+*Flagged:* `duplicate notation`
 
 ```turtle
 ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" .
@@ -433,10 +946,28 @@ ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Conce
 
 Reported: `skos:notation '1' is shared by 2 concepts of https://example.test/onto#s.`
 
-*Clean:* distinct notation
+*Clean:* `distinct notation`
 
 ```turtle
 ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:notation "2" .
+```
+
+*Clean:* `different schemes`
+
+```turtle
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Concept ; skos:inScheme ex:t ; skos:notation "1" .
+```
+
+*Clean:* `no scheme`
+
+```turtle
+ex:a skos:notation "1" . ex:b skos:notation "1" .
+```
+
+*Clean:* `collection shares the notation`
+
+```turtle
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Collection ; skos:inScheme ex:s ; skos:notation "1" .
 ```
 
 #### SKOS021: Same preferred label on several concepts of one scheme
@@ -446,7 +977,7 @@ ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Conce
 - **Category:** deterministic
 - **Fix:** Give concepts of one scheme distinguishable preferred labels per language.
 
-*Flagged:* duplicate prefLabel
+*Flagged:* `duplicate prefLabel`
 
 ```turtle
 ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "cat"@EN .
@@ -454,8 +985,32 @@ ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos
 
 Reported: `skos:prefLabel 'cat' (en) is shared by 2 concepts of https://example.test/onto#s.`
 
-*Clean:* different languages
+*Clean:* `different languages`
 
 ```turtle
 ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@fr .
+```
+
+*Clean:* `different schemes`
+
+```turtle
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Concept ; skos:inScheme ex:t ; skos:prefLabel "Cat"@en .
+```
+
+*Clean:* `collection shares the label`
+
+```turtle
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Collection ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en .
+```
+
+*Clean:* `deprecated concept shares the label`
+
+```turtle
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en . ex:b a skos:Concept ; owl:deprecated true ; skos:inScheme ex:s ; skos:prefLabel "Cat"@en .
+```
+
+*Clean:* `empty labels`
+
+```turtle
+ex:a a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel ""@en . ex:b a skos:Concept ; skos:inScheme ex:s ; skos:prefLabel ""@en .
 ```

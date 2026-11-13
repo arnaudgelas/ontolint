@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Add sh:name to property shapes to support generated forms and documentation.
 
-*Flagged:* no sh:name
+*Flagged:* `no sh:name`
 
 ```turtle
 ex:A a owl:Class .
@@ -41,7 +41,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:description "d" ; sh
 
 Reported: `Property shape lacks sh:name.`
 
-*Clean:* fully documented shapes
+*Clean:* `fully documented shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -54,6 +54,19 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; 
 ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" .
 ```
 
+*Clean:* `a literal sh:property value is not a shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; rdfs:comment "c" .
+ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" . ex:S sh:property "x" .
+```
+
 #### SHQ002: Property shape without sh:description
 
 - **Severity:** info
@@ -61,7 +74,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Category:** heuristic
 - **Fix:** Add sh:description to non-trivial property shapes.
 
-*Flagged:* no sh:description
+*Flagged:* `no sh:description`
 
 ```turtle
 ex:A a owl:Class .
@@ -76,7 +89,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:messag
 
 Reported: `Property shape lacks sh:description.`
 
-*Clean:* fully documented shapes
+*Clean:* `fully documented shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -96,7 +109,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Category:** heuristic
 - **Fix:** Add sh:message to constraint-bearing shapes for better diagnostics.
 
-*Flagged:* constraint without sh:message
+*Flagged:* `constraint without sh:message`
 
 ```turtle
 ex:A a owl:Class .
@@ -111,7 +124,35 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 
 Reported: `Constraint-bearing shape lacks sh:message.`
 
-*Clean:* fully documented shapes
+*Flagged:* `sh:maxLength is a constraint`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:P a sh:PropertyShape ; sh:path ex:p ; sh:maxLength 9 .
+```
+
+Reported: `Constraint-bearing shape lacks sh:message.`
+
+*Flagged:* `sh:closed is a constraint`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:closed true .
+```
+
+Reported: `Constraint-bearing shape lacks sh:message.`
+
+*Clean:* `fully documented shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -124,6 +165,18 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; 
 ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" .
 ```
 
+*Clean:* `sh:property is the property shape's constraint`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:property ex:P .
+```
+
 #### SHQ004: Node shape without label or comment
 
 - **Severity:** info
@@ -131,7 +184,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Category:** heuristic
 - **Fix:** Add label and comment to published node shapes.
 
-*Flagged:* node shape without label/comment
+*Flagged:* `node shape without label/comment`
 
 ```turtle
 ex:A a owl:Class .
@@ -146,7 +199,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 
 Reported: `Node shape lacks rdfs:label or rdfs:comment.`
 
-*Clean:* fully documented shapes
+*Clean:* `fully documented shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -166,7 +219,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Category:** heuristic
 - **Fix:** Use one annotation per language for each SHACL name/description/message.
 
-*Flagged:* two names in one language
+*Flagged:* `two names in one language`
 
 ```turtle
 ex:A a owl:Class .
@@ -181,7 +234,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 
 Reported: `Multiple http://www.w3.org/ns/shacl#name values in the same language.`
 
-*Clean:* fully documented shapes
+*Clean:* `fully documented shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -194,6 +247,19 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; 
 ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" .
 ```
 
+*Clean:* `names in different languages`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; rdfs:comment "c" .
+ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" . ex:P sh:name "q"@fr .
+```
+
 #### SHQ006: Instantiated class without shape target
 
 - **Severity:** warning
@@ -201,7 +267,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Category:** heuristic
 - **Fix:** Add a shape targeting this class, or exempt it from data-quality validation.
 
-*Flagged:* class with instances but no target
+*Flagged:* `class with instances but no target`
 
 ```turtle
 ex:A a owl:Class . ex:i a ex:A .
@@ -215,10 +281,23 @@ ex:S a sh:NodeShape ; rdfs:label "S" ; rdfs:comment "c" .
 
 Reported: `Class has directly typed instances, but no direct sh:targetClass or implicit class target.`
 
-*Clean:* targeted class
+*Clean:* `targeted class`
 
 ```turtle
 ex:A a owl:Class . ex:i a ex:A .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; rdfs:comment "c" .
+ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" .
+```
+
+*Clean:* `a target on a superclass covers its subclasses`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class ; rdfs:subClassOf ex:A . ex:i a ex:B .
 ```
 
 Shapes graph:
@@ -235,7 +314,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Category:** deterministic
 - **Fix:** Make sh:minCount <= sh:maxCount.
 
-*Flagged:* min above max
+*Flagged:* `min above max`
 
 ```turtle
 ex:A a owl:Class .
@@ -250,7 +329,66 @@ ex:P sh:path ex:p ; sh:minCount 3 ; sh:maxCount 2 .
 
 Reported: `sh:minCount 3 exceeds sh:maxCount 2.`
 
-*Clean:* well-formed shapes
+*Flagged:* `max zero`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 0 .
+```
+
+Reported: `sh:minCount 1 exceeds sh:maxCount 0.`
+
+*Flagged:* `leading-zero lexical form`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "03"^^xsd:integer ; sh:maxCount 2 .
+```
+
+Reported: `sh:minCount 3 exceeds sh:maxCount 2.`
+
+*Flagged:* `derived integer types`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "3"^^xsd:int ; sh:maxCount "2"^^xsd:nonNegativeInteger .
+```
+
+Reported: `sh:minCount 3 exceeds sh:maxCount 2.`
+
+*Flagged:* `on a node shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:minCount 3 ; sh:maxCount 2 .
+```
+
+Reported: `sh:minCount 3 exceeds sh:maxCount 2.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -263,6 +401,84 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `min equals max`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 2 ; sh:maxCount 2 .
+```
+
+*Clean:* `only min`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 5 .
+```
+
+*Clean:* `only max`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxCount 0 .
+```
+
+*Clean:* `several min values are not compared`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 3, 4 ; sh:maxCount 2 .
+```
+
+*Clean:* `decimal bound is left to SHQ008`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 3.0 ; sh:maxCount 2 .
+```
+
+*Clean:* `ill-typed bound is left to SHQ008`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "x3"^^xsd:integer ; sh:maxCount 2 .
+```
+
 #### SHQ008: Cardinality or length value is not a non-negative xsd:integer
 
 - **Severity:** error
@@ -270,7 +486,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** deterministic
 - **Fix:** Use a non-negative xsd:integer.
 
-*Flagged:* negative
+*Flagged:* `negative`
 
 ```turtle
 ex:A a owl:Class .
@@ -285,7 +501,262 @@ ex:P sh:path ex:p ; sh:minCount -1 .
 
 Reported: `sh:minCount value -1 is not a non-negative integer.`
 
-*Clean:* well-formed shapes
+*Flagged:* `negative max`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxCount -2 .
+```
+
+Reported: `sh:maxCount value -2 is not a non-negative integer.`
+
+*Flagged:* `decimal`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 1.0 .
+```
+
+Reported: `sh:minCount value 1.0 is not a non-negative integer.`
+
+*Flagged:* `double`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxCount 1e0 .
+```
+
+Reported: `sh:maxCount value 1.0 is not a non-negative integer.`
+
+*Flagged:* `string`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "1" .
+```
+
+Reported: `sh:minCount value 1 is not a non-negative integer.`
+
+*Flagged:* `boolean`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount true .
+```
+
+Reported: `sh:minCount value true is not a non-negative integer.`
+
+*Flagged:* `IRI`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxCount ex:one .
+```
+
+Reported: `sh:maxCount value https://example.test/onto#one is not a non-negative integer.`
+
+*Flagged:* `ill-typed integer`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "one"^^xsd:integer .
+```
+
+Reported: `sh:minCount value one is not a non-negative integer.`
+
+*Flagged:* `ill-typed derived integer`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "-1"^^xsd:nonNegativeInteger .
+```
+
+Reported: `sh:minCount value -1 is not a non-negative integer.`
+
+*Flagged:* `one bad value among good ones`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxCount 1, -1 .
+```
+
+Reported: `sh:maxCount value -1 is not a non-negative integer.`
+
+*Flagged:* `derived integer type`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "1"^^xsd:nonNegativeInteger .
+```
+
+Reported: `sh:minCount value "1"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> is not of datatype xsd:integer.`
+
+*Flagged:* `xsd:int count`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxCount "1"^^xsd:int .
+```
+
+Reported: `sh:maxCount value "1"^^<http://www.w3.org/2001/XMLSchema#int> is not of datatype xsd:integer.`
+
+*Flagged:* `xsd:unsignedByte count`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "0"^^xsd:unsignedByte .
+```
+
+Reported: `sh:minCount value "0"^^<http://www.w3.org/2001/XMLSchema#unsignedByte> is not of datatype xsd:integer.`
+
+*Flagged:* `negative length`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength -1 .
+```
+
+Reported: `sh:minLength value "-1"^^<http://www.w3.org/2001/XMLSchema#integer> is not a non-negative integer.`
+
+*Flagged:* `decimal length`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength 1.5 .
+```
+
+Reported: `sh:minLength value "1.5"^^<http://www.w3.org/2001/XMLSchema#decimal> is not a non-negative integer.`
+
+*Flagged:* `string length`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxLength "2" .
+```
+
+Reported: `sh:maxLength value "2" is not a non-negative integer.`
+
+*Flagged:* `IRI length`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength ex:two .
+```
+
+Reported: `sh:minLength value https://example.test/onto#two is not a non-negative integer.`
+
+*Flagged:* `derived integer length`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxLength "2"^^xsd:int .
+```
+
+Reported: `sh:maxLength value "2"^^<http://www.w3.org/2001/XMLSchema#int> is not of datatype xsd:integer.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -298,6 +769,58 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `zero`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount 0 .
+```
+
+*Clean:* `leading zero and plus sign`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minCount "01"^^xsd:integer ; sh:maxCount "+2"^^xsd:integer .
+```
+
+*Clean:* `lengths`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength 0 ; sh:maxLength 10 .
+```
+
+*Clean:* `other numeric parameters are not judged`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive -1 ; sh:maxExclusive 1.5 .
+```
+
 #### SHQ009: sh:in list that is empty or repeats members
 
 - **Severity:** warning
@@ -305,7 +828,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Remove duplicate members; an empty sh:in list can never be satisfied.
 
-*Flagged:* empty list
+*Flagged:* `empty list`
 
 ```turtle
 ex:A a owl:Class .
@@ -320,7 +843,22 @@ ex:P sh:path ex:p ; sh:in () .
 
 Reported: `sh:in list is empty; no value can satisfy it.`
 
-*Clean:* well-formed shapes
+*Flagged:* `duplicate member`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:in ( 'a' 'b' 'a' ) .
+```
+
+Reported: `sh:in list repeats 1 member(s).`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -333,6 +871,44 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `empty shapes graph`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+
+```
+
+*Clean:* `distinct members`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:in ( 'a' 'A' 1 ) .
+```
+
+*Clean:* `malformed list`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:in _:x .
+```
+
 #### SHQ010: sh:languageIn with a malformed language tag
 
 - **Severity:** warning
@@ -340,7 +916,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** heuristic
 - **Fix:** List well-formed BCP 47 language tags as plain literals, for example "en" or "fr-CA".
 
-*Flagged:* underscore tag
+*Flagged:* `underscore tag`
 
 ```turtle
 ex:A a owl:Class .
@@ -355,7 +931,37 @@ ex:P sh:path ex:p ; sh:languageIn ( 'en' 'en_US' ) .
 
 Reported: `sh:languageIn member en_US is not a well-formed language tag.`
 
-*Clean:* well-formed shapes
+*Flagged:* `IRI member`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:languageIn ( 'en' ex:fr ) .
+```
+
+Reported: `sh:languageIn member https://example.test/onto#fr is not a well-formed language tag.`
+
+*Flagged:* `language-tagged member`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:languageIn ( 'en'@en ) .
+```
+
+Reported: `sh:languageIn member "en"@en is not an xsd:string literal.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -368,6 +974,45 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `valid tags`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:languageIn ( 'en' 'fr-CA' 'zh-Hant-TW' ) .
+```
+
+*Clean:* `wildcard language range`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:languageIn ( '*' ) .
+```
+
+*Clean:* `empty list`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:languageIn () .
+```
+
 #### SHQ011: Invalid sh:pattern regular expression
 
 - **Severity:** error
@@ -375,7 +1020,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** heuristic
 - **Fix:** Fix the sh:pattern expression (and sh:flags) so it compiles.
 
-*Flagged:* unbalanced paren
+*Flagged:* `unbalanced paren`
 
 ```turtle
 ex:A a owl:Class .
@@ -390,7 +1035,217 @@ ex:P sh:path ex:p ; sh:pattern "(abc" .
 
 Reported: `sh:pattern does not compile: missing ), unterminated subpattern at position 0`
 
-*Clean:* well-formed shapes
+*Flagged:* `inverted repetition`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "a{2,1}" .
+```
+
+Reported: `sh:pattern does not compile: min repeat greater than max repeat at position 2`
+
+*Flagged:* `unbalanced with flags`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "[a-z" ; sh:flags "im" .
+```
+
+Reported: `sh:pattern does not compile: unterminated character set at position 0`
+
+*Flagged:* `x flag keeps the error`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "a b (" ; sh:flags "x" .
+```
+
+Reported: `sh:pattern does not compile: missing ), unterminated subpattern at position 2`
+
+*Flagged:* `one bad pattern among good ones`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "^a$", "(b" .
+```
+
+Reported: `sh:pattern does not compile: missing ), unterminated subpattern at position 0`
+
+*Flagged:* `word-boundary escape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "\\bword" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: the escape \b is not XPath.`
+
+*Flagged:* `lookahead`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "a(?=b)" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: the group construct (?= is not XPath.`
+
+*Flagged:* `escaped slash`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "^https?:\\/\\/" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: the escape \/ is not XPath (write / without the backslash).`
+
+*Flagged:* `x flag keeps a stray brace`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "a b{" ; sh:flags "x" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: an unescaped { starts no quantifier.`
+
+*Flagged:* `possessive quantifier`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "a*+" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: the possessive quantifier *+ is not XPath.`
+
+*Flagged:* `category escape without braces`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "\\pL" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: \p is not followed by a {name}.`
+
+*Flagged:* `unescaped [ inside a class`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "[[:alpha:]]+" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: an unescaped [ inside a character class.`
+
+*Flagged:* `leading ] in a class`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "[]a]" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: an unescaped ] at the start of a character class.`
+
+*Flagged:* `unknown category name`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "\\p{Letter}+" .
+```
+
+Reported: `sh:pattern is not an XPath regular expression: \p{Letter} names no XSD category or block.`
+
+*Flagged:* `unbalanced group beside an XPath-only escape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "\\p{L}(" .
+```
+
+Reported: `sh:pattern does not compile: missing ), unterminated subpattern`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -403,6 +1258,175 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `valid pattern`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:flags "i" .
+```
+
+*Clean:* `xpath-only escape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "^\\p{L}+$" .
+```
+
+*Clean:* `xpath-only escapes for name characters`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "\\i\\c*" .
+```
+
+*Clean:* `non-capturing group, reluctant quantifier, back-reference`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "(?:(a)b)*?\\1" .
+```
+
+*Clean:* `q flag accepts what XPath would not`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "\\bword" ; sh:flags "q" .
+```
+
+*Clean:* `unknown flag letter is SHQ015's`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "a" ; sh:flags "z" .
+```
+
+*Clean:* `q flag makes the pattern a plain string`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "(abc" ; sh:flags "q" .
+```
+
+*Clean:* `x flag: # is a literal, not a comment`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "(a # b)" ; sh:flags "x" .
+```
+
+*Clean:* `character class subtraction`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "[a-z-[aeiou]]+" .
+```
+
+*Clean:* `subtraction from a negated group`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "[^a-[b]]" .
+```
+
+*Clean:* `subtraction after a class escape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "[\\d-[5]]" .
+```
+
+*Clean:* `quantified anchor`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern "^*a" .
+```
+
+*Clean:* `non-literal pattern`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern ex:regex .
+```
+
 #### SHQ012: sh:uniqueLang on a shape with a non-language-tagged datatype
 
 - **Severity:** info
@@ -410,7 +1434,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag.
 
-*Flagged:* unique lang on string
+*Flagged:* `unique lang on string`
 
 ```turtle
 ex:A a owl:Class .
@@ -425,7 +1449,7 @@ ex:P sh:path ex:p ; sh:datatype xsd:string ; sh:uniqueLang true .
 
 Reported: `sh:uniqueLang is vacuous with sh:datatype http://www.w3.org/2001/XMLSchema#string; only rdf:langString values have a language.`
 
-*Clean:* well-formed shapes
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -438,6 +1462,45 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `unique lang on langString`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:datatype rdf:langString ; sh:uniqueLang true .
+```
+
+*Clean:* `unique lang false`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:datatype xsd:string ; sh:uniqueLang false .
+```
+
+*Clean:* `unique lang without datatype`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:uniqueLang true .
+```
+
 #### SHQ013: Shape combining sh:datatype and sh:class
 
 - **Severity:** warning
@@ -445,7 +1508,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** deterministic
 - **Fix:** Remove one: a literal cannot be an instance of a class, so the shape cannot be satisfied.
 
-*Flagged:* datatype and class
+*Flagged:* `datatype and class`
 
 ```turtle
 ex:A a owl:Class .
@@ -460,7 +1523,7 @@ ex:P sh:path ex:p ; sh:datatype xsd:string ; sh:class ex:A .
 
 Reported: `Shape has both sh:datatype and sh:class; no value can satisfy both.`
 
-*Clean:* well-formed shapes
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -473,6 +1536,19 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `class only`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:class ex:A .
+```
+
 #### SHQ014: sh:severity outside the SHACL severity vocabulary
 
 - **Severity:** warning
@@ -480,7 +1556,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Use sh:Info, sh:Warning or sh:Violation, or a custom severity IRI outside the sh: namespace.
 
-*Flagged:* typo severity
+*Flagged:* `typo severity`
 
 ```turtle
 ex:A a owl:Class .
@@ -495,7 +1571,22 @@ ex:P sh:path ex:p ; sh:severity sh:Warn .
 
 Reported: `sh:severity value http://www.w3.org/ns/shacl#Warn is not sh:Info, sh:Warning or sh:Violation.`
 
-*Clean:* well-formed shapes
+*Flagged:* `literal severity`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:severity 'warning' .
+```
+
+Reported: `sh:severity value warning is not sh:Info, sh:Warning or sh:Violation.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -508,6 +1599,33 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `standard severities`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:severity sh:Info .
+ex:Q sh:severity sh:Violation, sh:Warning .
+```
+
+*Clean:* `custom severity IRI`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:severity ex:Critical .
+```
+
 #### SHQ015: Invalid sh:flags value or sh:flags without sh:pattern
 
 - **Severity:** warning
@@ -515,7 +1633,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** heuristic
 - **Fix:** Use only the flags s, m, i, x and q, and put sh:flags next to the sh:pattern it modifies.
 
-*Flagged:* unknown flag
+*Flagged:* `unknown flag`
 
 ```turtle
 ex:A a owl:Class .
@@ -530,7 +1648,37 @@ ex:P sh:path ex:p ; sh:pattern 'a' ; sh:flags 'ig' .
 
 Reported: `sh:flags value ig is not made of the flags s, m, i, x and q.`
 
-*Clean:* well-formed shapes
+*Flagged:* `unknown flag letter (SHQ011 compiles without it)`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern 'a' ; sh:flags 'z' .
+```
+
+Reported: `sh:flags value z is not made of the flags s, m, i, x and q.`
+
+*Flagged:* `flags without pattern`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:flags 'i' .
+```
+
+Reported: `sh:flags is used without an sh:pattern.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -543,6 +1691,32 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `pattern with flags`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern 'a' ; sh:flags 'smixq' .
+```
+
+*Clean:* `empty flags`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:pattern 'a' ; sh:flags '' .
+```
+
 #### SHQ016: Shape that is part of a recursive reference cycle
 
 - **Severity:** info
@@ -550,7 +1724,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** heuristic
 - **Fix:** Break the cycle: recursive shape references have implementation-defined validation behaviour.
 
-*Flagged:* self reference
+*Flagged:* `self reference`
 
 ```turtle
 ex:A a owl:Class .
@@ -564,7 +1738,37 @@ ex:S a sh:NodeShape ; sh:node ex:S .
 
 Reported: `Shape is part of a reference cycle of 1 shape(s).`
 
-*Clean:* well-formed shapes
+*Flagged:* `two shapes referencing each other`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:node ex:T .
+ex:T a sh:NodeShape ; sh:node ex:S .
+```
+
+Reported: `Shape is part of a reference cycle of 2 shape(s).`
+
+*Flagged:* `cycle through a property shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:node ex:S .
+```
+
+Reported: `Shape is part of a reference cycle of 2 shape(s).`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -577,6 +1781,46 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `empty shapes graph`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+
+```
+
+*Clean:* `chain`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:node ex:T .
+ex:T a sh:NodeShape ; sh:node ex:U .
+ex:U a sh:NodeShape .
+```
+
+*Clean:* `diamond`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:node ex:T, ex:U .
+ex:T sh:node ex:V .
+ex:U sh:node ex:V .
+```
+
 #### SHQ017: Shape with sh:minLength greater than sh:maxLength
 
 - **Severity:** error
@@ -584,7 +1828,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** deterministic
 - **Fix:** Make sh:minLength <= sh:maxLength.
 
-*Flagged:* min length above max
+*Flagged:* `min length above max`
 
 ```turtle
 ex:A a owl:Class .
@@ -599,7 +1843,37 @@ ex:P sh:path ex:p ; sh:minLength 5 ; sh:maxLength 2 .
 
 Reported: `sh:minLength 5 exceeds sh:maxLength 2.`
 
-*Clean:* well-formed shapes
+*Flagged:* `max length zero`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength 1 ; sh:maxLength 0 .
+```
+
+Reported: `sh:minLength 1 exceeds sh:maxLength 0.`
+
+*Flagged:* `derived integer types`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength "3"^^xsd:int ; sh:maxLength "2"^^xsd:unsignedByte .
+```
+
+Reported: `sh:minLength 3 exceeds sh:maxLength 2.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -612,6 +1886,71 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `equal lengths`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength 2 ; sh:maxLength 2 .
+```
+
+*Clean:* `only max length`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:maxLength 0 .
+```
+
+*Clean:* `several min lengths are not compared`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength 5, 6 ; sh:maxLength 2 .
+```
+
+*Clean:* `negative lengths are left to SHQ008`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength -1 ; sh:maxLength -3 .
+```
+
+*Clean:* `decimal length is left to SHQ008`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minLength 3.0 ; sh:maxLength 2 .
+```
+
 #### SHQ018: Shape with an empty numeric range
 
 - **Severity:** error
@@ -619,7 +1958,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** deterministic
 - **Fix:** Make the lower bound smaller than the upper bound (min/max Inclusive/Exclusive).
 
-*Flagged:* inclusive inverted
+*Flagged:* `inclusive inverted`
 
 ```turtle
 ex:A a owl:Class .
@@ -634,7 +1973,111 @@ ex:P sh:path ex:p ; sh:minInclusive 10 ; sh:maxInclusive 1 .
 
 Reported: `Numeric bounds 10 and 1 admit no value.`
 
-*Clean:* well-formed shapes
+*Flagged:* `equal but exclusive`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minExclusive 3 ; sh:maxInclusive 3 .
+```
+
+Reported: `Numeric bounds 3 and 3 admit no value.`
+
+*Flagged:* `equal, both exclusive`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minExclusive 3 ; sh:maxExclusive 3.0 .
+```
+
+Reported: `Numeric bounds 3 and 3.0 admit no value.`
+
+*Flagged:* `decimal vs integer`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive 2.5 ; sh:maxExclusive 2 .
+```
+
+Reported: `Numeric bounds 2.5 and 2 admit no value.`
+
+*Flagged:* `double vs integer`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive 1e1 ; sh:maxInclusive 2 .
+```
+
+Reported: `Numeric bounds 10.0 and 2 admit no value.`
+
+*Flagged:* `one lower bound conflicts`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive 1, 5 ; sh:maxInclusive 3 .
+```
+
+Reported: `Numeric bounds 5 and 3 admit no value.`
+
+*Flagged:* `minus infinity, exclusive`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "-INF"^^xsd:double ; sh:maxExclusive "-INF"^^xsd:float .
+```
+
+Reported: `Numeric bounds -inf and -inf admit no value.`
+
+*Flagged:* `on a node shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:minInclusive 10 ; sh:maxInclusive 1 .
+```
+
+Reported: `Numeric bounds 10 and 1 admit no value.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -647,6 +2090,149 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `single point`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive 3 ; sh:maxInclusive 3 .
+```
+
+*Clean:* `non-numeric bounds are not compared`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "b" ; sh:maxInclusive "a" .
+```
+
+*Clean:* `dates are not compared`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "2020-02-01"^^xsd:date ; sh:maxInclusive "2020-01-01"^^xsd:date .
+```
+
+*Clean:* `booleans are not compared`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive true ; sh:maxInclusive false .
+```
+
+*Clean:* `ill-typed bound is ignored`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "ten"^^xsd:integer ; sh:maxInclusive 1 .
+```
+
+*Clean:* `NaN bound is ignored`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "NaN"^^xsd:double ; sh:maxInclusive 1 .
+```
+
+*Clean:* `decimal promoted to double`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "0.1"^^xsd:double ; sh:maxInclusive 0.1 .
+```
+
+*Clean:* `integer promoted to double`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive 9007199254740993 ; sh:maxInclusive "9007199254740992"^^xsd:double .
+```
+
+*Clean:* `decimal promoted to float`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive 0.1000000001 ; sh:maxInclusive "0.1"^^xsd:float .
+```
+
+*Clean:* `infinite single point`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minInclusive "INF"^^xsd:double ; sh:maxInclusive "INF"^^xsd:double .
+```
+
+*Clean:* `empty only over the integers`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:minExclusive 1 ; sh:maxExclusive 2 .
+```
+
 #### SHQ019: sh:node or sh:property refers to an undefined shape
 
 - **Severity:** warning
@@ -654,7 +2240,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Define the referenced shape in the shapes graph or correct the IRI.
 
-*Flagged:* undefined sh:node
+*Flagged:* `undefined sh:node`
 
 ```turtle
 ex:A a owl:Class .
@@ -669,7 +2255,7 @@ ex:P sh:path ex:p ; sh:node ex:Missing .
 
 Reported: `sh:node refers to undefined shape https://example.test/onto#Missing.`
 
-*Clean:* well-formed shapes
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -682,6 +2268,33 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `blank node reference`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:node [ sh:nodeKind sh:IRI ] .
+```
+
+*Clean:* `defined reference`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:node ex:T .
+ex:T a sh:NodeShape ; sh:nodeKind sh:IRI .
+```
+
 #### SHQ020: Deactivated shape left in the shapes graph
 
 - **Severity:** info
@@ -689,7 +2302,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Remove the shape or re-enable it; sh:deactivated true silently disables validation.
 
-*Flagged:* deactivated
+*Flagged:* `deactivated`
 
 ```turtle
 ex:A a owl:Class .
@@ -703,7 +2316,7 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:deactivated true .
 
 Reported: `Shape is deactivated with sh:deactivated true.`
 
-*Clean:* well-formed shapes
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -716,6 +2329,18 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `explicitly active`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:deactivated false .
+```
+
 #### SHQ021: Node shape that is neither targeted nor referenced
 
 - **Severity:** warning
@@ -723,7 +2348,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Add a target (for example sh:targetClass) or reference the shape from another shape.
 
-*Flagged:* floating node shape
+*Flagged:* `floating node shape`
 
 ```turtle
 ex:A a owl:Class .
@@ -737,7 +2362,22 @@ ex:S a sh:NodeShape .
 
 Reported: `Node shape has no target and no other shape refers to it.`
 
-*Clean:* well-formed shapes
+*Flagged:* `untargeted shape beside a targeted one`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape .
+ex:T a sh:NodeShape ; sh:targetClass ex:A .
+```
+
+Reported: `Node shape has no target and no other shape refers to it.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -750,6 +2390,69 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `referenced shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:node ex:T .
+ex:T a sh:NodeShape .
+```
+
+*Clean:* `implicit class target`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape, rdfs:Class .
+```
+
+*Clean:* `referenced from a list`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:or ( ex:T ex:U ) .
+ex:T a sh:NodeShape .
+ex:U a sh:NodeShape .
+```
+
+*Clean:* `deactivated is reported by SHQ020 instead`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:deactivated true .
+```
+
+*Clean:* `SHACL-AF custom target`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:target [ a sh:SPARQLTarget ] .
+```
+
 #### SHQ022: Shape target value that is not an IRI
 
 - **Severity:** warning
@@ -757,7 +2460,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Use an IRI for sh:targetClass, sh:targetSubjectsOf and sh:targetObjectsOf.
 
-*Flagged:* literal target class
+*Flagged:* `literal target class`
 
 ```turtle
 ex:A a owl:Class .
@@ -771,7 +2474,35 @@ ex:S a sh:NodeShape ; sh:targetClass 'A' .
 
 Reported: `sh:targetClass value A is not an IRI.`
 
-*Clean:* well-formed shapes
+*Flagged:* `blank target subjects-of`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetSubjectsOf [] .
+```
+
+Reported: `sh:targetSubjectsOf value _:4acc4af6d71d is not an IRI.`
+
+*Flagged:* `literal target objects-of`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetObjectsOf 1 .
+```
+
+Reported: `sh:targetObjectsOf value 1 is not an IRI.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -784,6 +2515,30 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `empty shapes graph`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+
+```
+
+*Clean:* `target node literal is allowed`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetNode 'x' ; sh:targetSubjectsOf ex:p .
+```
+
 #### SHQ023: Property shape without exactly one sh:path
 
 - **Severity:** warning
@@ -791,7 +2546,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** heuristic
 - **Fix:** Give every property shape exactly one sh:path.
 
-*Flagged:* missing path
+*Flagged:* `missing path`
 
 ```turtle
 ex:A a owl:Class .
@@ -806,7 +2561,50 @@ ex:P sh:minCount 1 .
 
 Reported: `Property shape has no sh:path.`
 
-*Clean:* well-formed shapes
+*Flagged:* `two paths`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p, ex:q .
+```
+
+Reported: `Property shape has 2 sh:path values.`
+
+*Flagged:* `typed property shape without path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:P a sh:PropertyShape ; sh:minCount 1 .
+```
+
+Reported: `Property shape has no sh:path.`
+
+*Flagged:* `untyped, unreferenced shape with two paths`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:P sh:path ex:p, ex:q ; sh:minCount 1 .
+```
+
+Reported: `Property shape has 2 sh:path values.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -819,6 +2617,30 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 ```
 
+*Clean:* `empty shapes graph`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+
+```
+
+*Clean:* `node shape needs no path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:closed true .
+```
+
 #### SHQ024: Closed shape that does not ignore rdf:type
 
 - **Severity:** info
@@ -826,7 +2648,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:datatype xsd:string ; sh:in ( 'a' 'b' ) .
 - **Category:** heuristic
 - **Fix:** Add rdf:type to sh:ignoredProperties, otherwise every typed focus node violates the closed shape.
 
-*Flagged:* closed without ignore
+*Flagged:* `closed without ignore`
 
 ```turtle
 ex:A a owl:Class .
@@ -840,7 +2662,21 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:closed true .
 
 Reported: `Closed shape does not list rdf:type in sh:ignoredProperties.`
 
-*Clean:* well-formed shapes
+*Flagged:* `ignore list lacks rdf:type`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:closed true ; sh:ignoredProperties ( ex:q ) .
+```
+
+Reported: `Closed shape does not list rdf:type in sh:ignoredProperties.`
+
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -853,6 +2689,42 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `closed and ignoring type`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:closed true ; sh:ignoredProperties ( rdf:type ) .
+```
+
+*Clean:* `open shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:closed false .
+```
+
+*Clean:* `rdf:type is a property shape's path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:closed true ; sh:property [ sh:path rdf:type ] .
+```
+
 #### SHQ025: sh:and, sh:or or sh:xone with fewer than two members
 
 - **Severity:** info
@@ -860,7 +2732,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Inline the single member or add the missing alternatives; an empty sh:or can never hold.
 
-*Flagged:* single-member or
+*Flagged:* `single-member or`
 
 ```turtle
 ex:A a owl:Class .
@@ -875,7 +2747,7 @@ ex:T a sh:NodeShape .
 
 Reported: `sh:or has 1 member(s).`
 
-*Clean:* well-formed shapes
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -888,6 +2760,20 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `two members`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:and ( ex:T ex:U ) .
+ex:T a sh:NodeShape .
+ex:U a sh:NodeShape .
+```
+
 #### SHQ026: Node shape with several property shapes for the same path
 
 - **Severity:** info
@@ -895,7 +2781,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Merge the property shapes that constrain the same sh:path.
 
-*Flagged:* same path twice
+*Flagged:* `same path twice`
 
 ```turtle
 ex:A a owl:Class .
@@ -911,7 +2797,7 @@ ex:P2 sh:path ex:p ; sh:datatype xsd:string .
 
 Reported: `2 property shapes constrain the same path https://example.test/onto#p.`
 
-*Clean:* well-formed shapes
+*Clean:* `well-formed shapes`
 
 ```turtle
 ex:A a owl:Class .
@@ -924,6 +2810,35 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 ```
 
+*Clean:* `different paths`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P1, ex:P2 .
+ex:P1 sh:path ex:p ; sh:minCount 1 .
+ex:P2 sh:path ex:q ; sh:minCount 1 .
+```
+
+*Clean:* `qualified shapes may repeat a path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P1, ex:P2 .
+ex:P1 sh:path ex:p ; sh:qualifiedValueShape ex:Q ; sh:qualifiedMinCount 1 .
+ex:P2 sh:path ex:p ; sh:qualifiedValueShape ex:Q ; sh:qualifiedMinCount 1 .
+ex:Q a sh:NodeShape .
+```
+
 #### SHQ027: Shape targets a local class the ontology does not declare
 
 - **Severity:** warning
@@ -931,7 +2846,7 @@ ex:P sh:path ex:p ; sh:minCount 1 ; sh:maxCount 2 ; sh:datatype xsd:string .
 - **Category:** heuristic
 - **Fix:** Fix the sh:targetClass IRI or declare the class in the ontology.
 
-*Flagged:* typo in target class
+*Flagged:* `typo in target class`
 
 ```turtle
 ex:A a owl:Class .
@@ -947,7 +2862,7 @@ Linter options: `base='https://example.test/onto#'`.
 
 Reported: `sh:targetClass https://example.test/onto#Typo is not declared as a class in the ontology.`
 
-*Clean:* declared class
+*Clean:* `declared class`
 
 ```turtle
 ex:A a owl:Class .
@@ -960,3 +2875,29 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A .
 ```
 
 Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `external class`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass <http://other.test/X> .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `no base configured`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:Typo .
+```

@@ -27,6 +27,6 @@ All examples assume these prefixes:
 - **Fix:** Fix RDF syntax or explicitly choose the input serialization format.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
 
-*Flagged:* `unparsable RDF` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `unparsable RDF` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `parsable RDF` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `parsable RDF` (run through the command line or an adapter; see `tests/rule_cases/`)
