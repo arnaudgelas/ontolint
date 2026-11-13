@@ -12,12 +12,15 @@ belong to the loader.  Every traversal is iterative so hostile inputs cannot exh
   first ``/ ? #``, whatever its characters (white space, braces, a line break), and its userinfo to its
   last ``@``; the part after the first ``:`` of that userinfo is not empty (``https://alice:secret@...``,
   ``https://:pw@...``, ``https://u:p@ss@...``, ``https://alice:pw SPACE@...``).  An IRI nested in the IRI
-  (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too.  Excluded: a user without a
-  password (``https://alice@...``) or with an empty one (``https://alice:@...``), so a bare token used as
-  the user name is not caught (it is still masked); a percent-encoded colon (``alice%3Asecret@``), which
-  is data, not the separator; an ``@`` in the path, query or fragment; a scheme without an authority
-  (``mailto:u:p@h``, ``file:///``); and a relative reference resolved against the document (GOV002's
-  concern).  The focus is the IRI with its whole userinfo, user name included, replaced by ``****``
+  (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too, and so does a scheme read after
+  the digits or signs that start its run of scheme characters (``1https://u:p@h``,
+  ``urn:x:1https://u:p@h``).  Excluded: a user without a password (``https://alice@...``) or with an
+  empty one (``https://alice:@...``), so a bare token used as the user name is not caught (it is still
+  masked); a percent-encoded colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in
+  the path, query or fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a
+  relative reference resolved against the document (GOV002's concern), such as ``1https://u:p@h`` in
+  RDF/XML, which resolves it as a relative path because a scheme starts with a letter (it is still
+  masked).  The focus is the IRI with its whole userinfo, user name included, replaced by ``****``
   (``https://****@example.test/x``), like every IRI in every finding and output of ontolint (RFC 3986
   section 3.2.1 says not to render the password, and a token sent as the user name cannot be told from a
   name), and the message names no part of the userinfo, so no report or baseline repeats a secret; the

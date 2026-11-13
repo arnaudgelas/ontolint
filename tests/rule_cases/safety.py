@@ -118,6 +118,13 @@ CASES = {
             ttl("special scheme with one slash", "ex:a ex:p <https:/alice:fake-pw@example.test/x> ."),
             ttl("special scheme without slashes", "ex:a ex:p <https:alice:fake-pw@example.test/x> ."),
             ttl("nested in a query", "ex:a ex:p <https://example.test/r?to=https://alice:fake-pw@h.test/> ."),
+            # A scheme is read from the first letter of its run of scheme characters (#55).
+            ttl("scheme after a digit", "ex:a ex:p <1https://alice:fake-pw@example.test/x> ."),
+            ttl("nested after a digit", "ex:a ex:p <urn:x:1https://alice:fake-pw@h.test/> ."),
+            ttl(
+                "nested after a sign in a query",
+                "ex:a ex:p <https://example.test/r?to=-https://alice:fake-pw@h.test/> .",
+            ),
         ],
         [
             ttl("user without password", "ex:a ex:p <https://alice@example.test/x> ."),
@@ -131,6 +138,8 @@ CASES = {
             ttl("empty authority", "ex:a ex:p <file:///a:b@c> ."),
             ttl("plain", "ex:a ex:p <https://example.test:8080/x> ."),
             ttl("anyURI literal is not an IRI", 'ex:a ex:p "https://alice:fake-pw@example.test/"^^xsd:anyURI .'),
+            ttl("no letter, no scheme", "ex:a ex:p <urn:x:123://a:b@h.test/> ."),
+            ttl("a scheme with a digit that is not special", "ex:a ex:p <urn:x:x1https:a:b@h.test/> ."),
         ],
     ),
 }

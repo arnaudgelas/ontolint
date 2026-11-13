@@ -13,7 +13,8 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import RDF
 
 from ontolint import Linter
-from ontolint.redaction import (
+from ontolint.redaction import (  # noqa: PLC2701 -- _ESCAPE is how has_userinfo decodes, which a property names.
+    _ESCAPE,
     REDACTED_USERINFO,
     RedactingStream,
     has_userinfo,
@@ -126,16 +127,39 @@ def test_a_rendered_report_is_masked_less_than_a_field(text: str) -> None:
 
 
 @budget()
-@given(texts, st.sampled_from([" ", "\n", "\t", " and "]), schemes, users, rests)
+@given(texts, st.sampled_from(["", " ", "\n", "\t", " and "]), schemes, users, rests)
 @example("https://public.test", " and ", "https", "alice", "/x")
 @example("https://u:p@h", " ", "https", "v", "")
+# Digits and signs right before the scheme start its run: the scheme is still read (#55).
+@example("1", "", "https", "alice", "/x")
+@example(".", "", "ws", "alice", "/x")
+@example("v1.", "", "https", "alice", "/x")
+@example("-", "", "git+https", "alice", "/x")
+# An escape the text leaves open takes the scheme's first letters: has_userinfo decodes U+ABCD, then "://".
+@example("\\u", "", "abcd", "alice", "/x")
 def test_a_credential_after_any_text_is_masked(text: str, separator: str, scheme: str, user: str, rest: str) -> None:
     # Whatever authority the text before it opens, the IRI's own authority is read too (PR #50 review).
     whole = f"{text}{separator}{scheme}://{user}:QXSECRET@h{rest}"
     assert "QXSECRET" not in redact_userinfo(whole)
     assert "QXSECRET" not in redact_rendered(whole)
-    assert has_userinfo(whole)
     assert userinfo_password(whole) is not None
+    # has_userinfo reads the text its escapes spell, where an escape across the join leaves no scheme.
+    start = len(text) + len(separator)
+    if not any(escape.start() < start < escape.end() for escape in _ESCAPE.finditer(whole)):
+        assert has_userinfo(whole)
+
+
+@budget()
+@given(st.text("0123456789+.-", min_size=1, max_size=4), texts)
+@example("1", "https://u:p@h/x")
+@example("-", "git+https://u:p@h/x")
+@example(".", "ws:u:p@h")
+def test_digits_and_signs_before_a_text_change_nothing_in_its_mask(lead: str, text: str) -> None:
+    # They start the text's first run of scheme characters, or are a run of their own: no part of a scheme.
+    assert redact_userinfo(lead + text) == lead + redact_userinfo(text)
+    assert redact_rendered(lead + text) == lead + redact_rendered(text)
+    assert userinfo_password(lead + text) == userinfo_password(text)
+    assert has_userinfo(lead + text) == has_userinfo(text)
 
 
 fragments = st.lists(

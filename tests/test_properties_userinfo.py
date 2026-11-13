@@ -43,7 +43,8 @@ userinfos = st.one_of(
     st.builds(lambda u, p: f"{u}%3A{p}", users, secrets),
     st.builds(lambda u, p: f"{u}:{p}%40", users, secrets),
 )
-schemes = st.sampled_from(["https", "HTTP", "ftp", "x+y.z-1"])
+# A nested IRI whose scheme follows a digit or a sign in its run of scheme characters (#55).
+schemes = st.sampled_from(["https", "HTTP", "ftp", "x+y.z-1", "urn:x:1https", "urn:x:-ftp"])
 
 
 def _ontology(scheme: str, userinfo: str) -> Graph:

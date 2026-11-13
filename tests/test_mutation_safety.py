@@ -229,6 +229,8 @@ def test_sec014_masks_the_userinfo_in_the_focus_and_never_prints_it() -> None:
         ("https://alice:pw@example.test:8443/x?q=1#f", "https://****@example.test:8443/x?q=1#f"),
         ("https://fake-token:x-oauth-basic@github.com/o/r", "https://****@github.com/o/r"),
         ("https://u:p@ss@h/x", "https://****@h/x"),
+        ("urn:x:1https://u:p@h/x", "urn:x:1https://****@h/x"),
+        ("https://h/r?next=-https://u:p@g/x", "https://h/r?next=-https://****@g/x"),
     ],
 )
 def test_sec014_masks_the_whole_userinfo(iri: str, focus: str) -> None:
