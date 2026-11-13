@@ -88,6 +88,16 @@ guarantees that proposed rules are never reported as executed.
    `pip-audit` and `uv build`. Without `--fix` it only checks, as CI does.
    If your rules change the kitchen-sink/golden output, review `tests/golden/differential.json` with
    the maintainer; do not regenerate it casually.
+   A new positive case also needs `tests/golden/identities.json`, the baseline identity of every
+   positive case: regenerate it with `ONTOLINT_UPDATE_GOLDEN=1 uv run pytest tests/test_identity_golden.py`
+   and check that the diff only adds your cases. A changed or removed entry means a finding's
+   focus or subject changed, so baselines stop accepting it by identity: say why in that test's
+   docstring ("Deliberate identity change") and give the release an upgrade note naming the rule.
+   A pySHACL or rdflib upgrade that changes a `SHACL001` subject brings the same duty: SHACL001's
+   own cases are probes, so the file pins it through the shape and data pairs of `SHACL_CASES` in
+   that test (one per constraint family, `sh:message`, a blank shape, a nested `sh:node`). Probe
+   cases of the other adapters and of the CLI front end (SEM001, INPUT001, TOOL001) are not pinned:
+   check a change to their subject by hand.
 
 ## What the tests enforce
 
@@ -98,6 +108,7 @@ guarantees that proposed rules are never reported as executed.
 | `test_registry.py` | reachability of every graph rule, spec/catalogue field agreement, execution-status semantics |
 | `test_subject_contract.py` | every add site that needs a `subject=` passes one, and no two findings of a corpus or random run share rule, focus and subject |
 | `test_rule_docs.py` | the rule reference is current, lists every catalogue rule, and shows every case and every specification bullet under each rule it names; no page exceeds 500,000 bytes |
+| `test_identity_golden.py` | the rule, focus, subject and baseline identity of each finding of every positive graph case and of the SHACL001 cases of `SHACL_CASES` equal `tests/golden/identities.json`, so a change to a rule's subject shows in review (probe cases are not covered) |
 
 A `proposed` rule must not appear in `CASES` or the registry; `execute()` reports a rule as
 `executed` only when its module or adapter actually ran.
