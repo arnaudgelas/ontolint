@@ -28,13 +28,24 @@ them stale. Running the corpus at every release belongs to issue #31.
   switches the rule off would remove them. METRIC005's one false positive would go with a limit
   above 0.45, but its cause is that CLS001 does not read `dcam:rangeIncludes`.
 
-No default is changed here; the choices are in "For the maintainer" below.
+No default is changed here, and **this snapshot must not, on its own, justify changing any METRIC
+threshold, severity or confidence.** That needs two things it lacks: labels approved or redone
+independently (issue #8), and measurements that are rerun at release (issue #31). The choices are
+in "For the maintainer" below.
 
 ## Corpus
 
 [`metric-corpus.json`](metric-corpus.json) names every file by URL, commit, path, licence and
 SHA-256. No corpus file is committed. Twenty files are fixed by a commit in their URL; SKOS Core
-is the W3C namespace document and is fixed by its checksum only. The corpus mixes:
+is the W3C namespace document and is fixed by its checksum only. The script reads the manifest
+through `load_manifest`, which refuses:
+- an id that is not a plain file name, so `fetch` and `measure` never write or read outside DIR;
+- a source that is not pinned: no 64-hex SHA-256, no https URL, or a commit that is malformed or
+  missing from the URL;
+- a missing licence, or an id given twice;
+- a label whose expectation and basis disagree.
+
+The corpus mixes:
 
 - *known-good*: W3C and DCMI Recommendations (SOSA, SSN, PROV-O, SKOS, DCMI Terms), OBO Foundry
   ontologies (RO core, IAO, PATO base), BFO 2020, CCO 2.2, schema.org 30.1 and curated domain
@@ -228,7 +239,9 @@ A value below the sample gate (`metric_min_sample`, 10 terms) is left out.
    METRIC003, but 1 or 2 true positives each, against mostly presumed negatives, cannot confirm
    their limits either. For the six rules with false positives, a limit cannot fix the cause; each
    would need a scope change (reading restrictions, `dcam:` or inherited signatures,
-   upper-ontology alignment, own-module imports), a product decision for its own issue.
+   upper-ontology alignment, own-module imports), a product decision for its own issue. No
+   threshold, severity or confidence should change on this snapshot alone: first approve or
+   independently redo the labels (#8), and rerun the corpus at release (#31).
 4. **Known-poor files are missing** for METRIC004 to METRIC013. Recall needs one per rule; a
    synthetic fixture shows a boundary, not a real ontology.
 5. **Rerun or retire the snapshot.** Nothing keeps these results current; issue #31 is where a
