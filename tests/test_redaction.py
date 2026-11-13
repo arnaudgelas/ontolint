@@ -24,6 +24,7 @@ from ontolint.redaction import (
     redact_rendered,
     redact_userinfo,
     userinfo_password,
+    withheld_parser_message,
 )
 
 MASKED = f"https://{REDACTED_USERINFO}@example.test/x"
@@ -132,6 +133,51 @@ def test_an_authority_inside_another_is_read(text: str, masked: str) -> None:
     assert "QXSECRET" not in redact_rendered(text)
 
 
+@pytest.mark.parametrize(
+    ("text", "masked"),
+    [
+        # A scheme starts at the first letter of its run: a reader takes it after a list number or a bullet (#55).
+        ("0https://bob:pw@h/x", f"0https://{REDACTED_USERINFO}@h/x"),
+        ("1https://bob:pw@h/x", f"1https://{REDACTED_USERINFO}@h/x"),
+        (".https://bob:pw@h/x", f".https://{REDACTED_USERINFO}@h/x"),
+        ("-https://bob:pw@h/x", f"-https://{REDACTED_USERINFO}@h/x"),
+        ("+https://bob:pw@h/x", f"+https://{REDACTED_USERINFO}@h/x"),
+        ("see -.+1https://bob:pw@h/x", f"see -.+1https://{REDACTED_USERINFO}@h/x"),
+        ("1HTTPS:bob:pw@h/x", f"1HTTPS:{REDACTED_USERINFO}@h/x"),
+        ("2ws:\n//bob:pw@h/x", f"2ws:\n//{REDACTED_USERINFO}@h/x"),
+        ("9git+https://bob:pw@h/x", f"9git+https://{REDACTED_USERINFO}@h/x"),
+        ("1x.y://bob:pw@h/x", f"1x.y://{REDACTED_USERINFO}@h/x"),
+        ("urn:x:1https://bob:pw@h/y", f"urn:x:1https://{REDACTED_USERINFO}@h/y"),
+        ("https://h/r?next=-https://bob:pw@g/y", f"https://h/r?next=-https://{REDACTED_USERINFO}@g/y"),
+        ("https://h/p/1.https://bob:pw@g/y", f"https://h/p/1.https://{REDACTED_USERINFO}@g/y"),
+    ],
+)
+def test_a_scheme_after_a_digit_or_a_sign_is_read(text: str, masked: str) -> None:
+    assert redact_userinfo(text) == masked
+    assert redact_rendered(text) == masked
+    assert has_userinfo(text)
+    assert userinfo_password(text) == "pw"
+
+
+def test_a_scheme_is_read_from_the_first_letter_of_its_run() -> None:
+    # The digits and signs that start a run are no part of its scheme; those after its first letter are.
+    assert redact_userinfo("x1https://bob:pw@h/x") == f"x1https://{REDACTED_USERINFO}@h/x"
+    assert userinfo_password("1https:bob:pw@h/x") == "pw"  # the special scheme https
+    assert userinfo_password("x1https:bob:pw@h/x") is None  # the scheme x1https, which is not special
+    # No URL parser reads this as a URL, but a reader may: the over-masking of free text (module specification).
+    assert redact_userinfo("1http:a@b") == f"1http:{REDACTED_USERINFO}@b"
+
+
+def test_a_parser_message_near_a_scheme_after_a_digit_is_withheld() -> None:
+    source = b"<1https://alice:s3cret@example.test/x> a ; ; ] .\n"
+    detail = "at line 1 of <>:\nBad syntax (expected directive or statement) at ^ in:\n'lice:s3cret@exa'"
+    assert withheld_parser_message(detail, source).startswith("at line 1; the parser's message is withheld")
+    assert withheld_parser_message(detail, b"<https://example.test/x> a ; ; ] .\n") == detail
+    # Spelled with a Turtle escape or an XML character reference, it is still a userinfo.
+    assert has_userinfo("<\\u002Dhttps://alice:s3cret@example.test/x>")
+    assert has_userinfo('rdf:about="&#49;https://alice:s3cret@example.test/x"')
+
+
 def test_an_authority_inside_a_userinfo_is_masked_with_it() -> None:
     # "http:b" starts an authority inside the userinfo "a http:b:pw": one mask covers both, up to the last "@".
     assert redact_userinfo("https://a http:b:pw@h/x") == f"https://{REDACTED_USERINFO}@h/x"
@@ -157,6 +203,11 @@ def test_clip_masks_before_it_cuts() -> None:
         "a" * 400_000 + "&#64;",
         "https://h " + "http:a " * 50_000 + "@",
         "https://h " + "a://b " * 50_000 + "@",
+        "1" * 400_000 + "@",
+        "-.+1" * 100_000 + "://@",
+        "1a://" * 100_000 + " @",
+        "1a:" + "\n" * 400_000 + "@",
+        "https://h " + "1http:a " * 50_000 + "@",
     ],
     ids=[
         "scheme-then-authority",
@@ -168,14 +219,21 @@ def test_clip_masks_before_it_cuts() -> None:
         "escaped-at",
         "nested-special",
         "nested-generic",
+        "digit-run",
+        "sign-run",
+        "prefixed-starts",
+        "prefixed-line-breaks",
+        "nested-prefixed",
     ],
 )
 def test_the_scan_is_linear(text: str) -> None:
-    # CodeQL py/polynomial-redos: an unanchored scheme restarted at every letter of a run (7.8 s at 80 k).
+    # CodeQL py/polynomial-redos: an unanchored scheme restarted at every letter of a run (7.8 s at 80 k), or
+    # one read after the digits and signs that start a run, restarted at each of them.
     started = time.perf_counter()
     redact_userinfo(text)
     redact_rendered(text)
     has_userinfo(text)
+    userinfo_password(text)
     assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
 
 
@@ -214,6 +272,18 @@ def test_the_stream_masks_a_userinfo_with_a_line_break() -> None:
         "git+https://alice:GitSecret@example.test/x\n"
     )
     assert "Secret" not in output
+
+
+@pytest.mark.parametrize("lead", ["1", ".", "+", "-"])
+def test_the_stream_holds_a_scheme_after_a_digit_or_a_sign(lead: str) -> None:
+    # The scheme at the end of a write is read as an authority reads it, from the first letter of its run.
+    target = io.StringIO()
+    stream = RedactingStream(target)
+    stream.write(f"{lead}git+https:\n")
+    assert target.getvalue() == ""
+    stream.write("//alice:GitSecret@example.test/x\n")
+    stream.drain()
+    assert target.getvalue() == f"{lead}git+https:\n//{REDACTED_USERINFO}@example.test/x\n"
 
 
 def test_the_stream_writes_a_line_as_soon_as_no_authority_is_open() -> None:

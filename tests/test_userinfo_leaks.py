@@ -5,6 +5,8 @@ annotation value used as a module name, a literal and every userinfo form: ``use
 as the user name with a placeholder password (``x-oauth-basic``) or with none, a password holding ``@``
 (which a URL parser reads up to the last ``@``) and a percent-encoded ``:``.  The command line runs over it
 in every format and mode, and over datasets, shapes and inputs it refuses; no secret may appear anywhere.
+Other inputs hold a scheme that follows a digit or a sign in its run of scheme characters
+(``urn:x:1https://``, ``?next=-https://``), which a reader takes for an IRI.
 """
 
 from __future__ import annotations
@@ -80,6 +82,24 @@ BROKEN_TTL = (
     "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
     f"<https://alice:{PASSWORD}@example.test/onto#A> a owl:Class ; ; ] .\n"
 )
+# A scheme that follows a digit or a sign in its run of scheme characters: no URL parser reads one, but a reader
+# does (#55).  Without an owl:Ontology every term is local, so the rules name each of them.
+PREFIXED_TTL = f"""@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+<urn:x:1https://dave:{PASSWORD}@example.test/z#Thing> a owl:Class .
+<https://example.test/r?next=-https://eve:{PASSWORD}@example.test/w#Other> a owl:Class ;
+    rdfs:subClassOf <urn:x:1https://dave:{PASSWORD}@example.test/z#Thing> .
+"""
+PREFIXED_TRIG = f"""@prefix owl: <http://www.w3.org/2002/07/owl#> .
+<urn:x:1https://carol:{PASSWORD}@example.test/graph1> {{
+  <https://example.test/onto> a owl:Ontology .
+  <https://example.test/onto#Thing> a owl:Class .
+}}
+"""
+# The parser quotes the whole line, which starts with the scheme.
+BROKEN_PREFIXED_TTL = (
+    f"@prefix owl: <http://www.w3.org/2002/07/owl#> .\n<1https://alice:{PASSWORD}@example.test/A> a owl:Class ; ; ] .\n"
+)
 BROKEN_NT = f"<https://alice:{PASSWORD}@example.test/a> <http://x.test/p> <bad\n"
 REMOTE_CONTEXT = f'{{"@context": "https://alice:{PASSWORD}@example.test/ctx.jsonld", "@id": "https://x.test/y"}}\n'
 FORMATS = ("text", "json", "sarif", "markdown")
@@ -95,6 +115,9 @@ def run(tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.
         "data.trig": TRIG,
         "data.nq": NQUADS,
         "broken.ttl": BROKEN_TTL,
+        "prefixed.ttl": PREFIXED_TTL,
+        "prefixed.trig": PREFIXED_TRIG,
+        "broken-prefixed.ttl": BROKEN_PREFIXED_TTL,
         "broken.nt": BROKEN_NT,
         "remote.jsonld": REMOTE_CONTEXT,
     }.items():
@@ -164,7 +187,26 @@ def test_no_baseline_and_no_output_file_holds_a_userinfo(tmp_path: Path, run: An
     assert json.loads(again)["findings"] == []
 
 
-@pytest.mark.parametrize("name", ["broken.ttl", "broken.nt", "remote.jsonld"])
+@pytest.mark.parametrize("output_format", FORMATS)
+def test_a_scheme_after_a_digit_or_a_sign_is_masked_in_every_output(
+    tmp_path: Path, run: Any, output_format: str
+) -> None:
+    code, out = run("prefixed.ttl", "--format", output_format)
+    assert code == 1, out
+    assert _leaks(out) == []
+    assert "urn:x:1https://****@example.test/z#Thing" in out
+    assert "https://example.test/r?next=-https://****@example.test/w#Other" in out
+    assert "SEC014" in out
+    _code, out = run("prefixed.ttl", "--write-baseline", "base.json", "--format", output_format, "--output", "out")
+    files = [(tmp_path / name).read_text(encoding="utf-8") for name in ("base.json", "out")]
+    for text in (out, *files):
+        assert _leaks(text) == []
+    _code, out = run("prefixed.trig", "--format", output_format, "--module-by", "namespace")
+    assert _leaks(out) == []
+    assert "urn:x:1https://****@example.test/graph1" in out
+
+
+@pytest.mark.parametrize("name", ["broken.ttl", "broken-prefixed.ttl", "broken.nt", "remote.jsonld"])
 def test_a_refused_or_unparsable_input_repeats_no_userinfo_on_stderr(run: Any, name: str) -> None:
     code, out = run(name)
     assert code == 2, out  # noqa: PLR2004 -- a tool failure
@@ -292,6 +334,23 @@ def test_a_truncated_value_repeats_no_part_of_a_userinfo(run: Any, tmp_path: Pat
     code, out = run("long.ttl", "--shapes", "bad-shapes.ttl", "--format", output_format)
     assert "SHACL001" in out
     assert "LongSecret" not in out
+
+
+def test_a_digit_led_iri_resolved_as_relative_repeats_no_userinfo(run: Any, tmp_path: Path) -> None:
+    # A scheme must start with a letter, so RDF/XML resolves "1https://..." against the document, which turns its
+    # "//" into "/": the special scheme https still has an authority there (#55).
+    (tmp_path / "digit.rdf").write_text(
+        '<?xml version="1.0"?>\n'
+        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:owl="http://www.w3.org/2002/07/owl#">\n'
+        '  <owl:Ontology rdf:about="https://example.test/onto"/>\n'
+        f'  <owl:Class rdf:about="1https://alice:{PASSWORD}@example.test/y"/>\n'
+        "</rdf:RDF>\n",
+        encoding="utf-8",
+    )
+    for output_format in FORMATS:
+        _code, out = run("digit.rdf", "--format", output_format, "--profile", "strict")
+        assert "example.test/y" in out, out
+        assert _leaks(out) == []
 
 
 def test_a_catalog_entry_for_a_credentialed_url_repeats_no_userinfo(run: Any, tmp_path: Path) -> None:

@@ -12,18 +12,23 @@ and for what ontolint may write (:func:`redact_userinfo`).
 * *Where a userinfo is.*  The parser reads an authority by its structure, never by the characters an IRI may
   hold, because rdflib accepts IRIs with white space, ``{ } | ^ ` \\``, quotes or a line break (RDF/XML and
   JSON-LD as written, Turtle from a ``UCHAR`` escape) and a URL parser sends such a userinfo as a credential.
-  An authority starts after a scheme (a letter, then letters, digits, ``+``, ``.`` or ``-``, not preceded
-  by one of those) and its ``:``, then ``//``; for the schemes WHATWG calls special (``http``, ``https``,
-  ``ws``, ``wss``, ``ftp``, any case) after ``:`` and its run of ``/`` and ``\\``, as a WHATWG parser
-  reads ``https:/u:p@h``, ``https:\\\\u:p@h`` and ``https:u:p@h``; but a ``\\`` after the run's last ``/``
-  belongs to the userinfo, as curl and ``urlsplit`` read ``https://\\a:pw@h`` (the user ``\\a``), so the
-  mask covers what either reading sends.  A tab or line break may stand between the ``:`` and the
-  slashes, or right after them (WHATWG removes them).  The authority runs to the first
+  An authority starts after a scheme (a letter, then letters, digits, ``+``, ``.`` or ``-``, read from the
+  first letter of a run of those characters: the digits and signs that start the run are no part of it, as
+  a reader takes ``1https://u:p@h`` after a list number or ``-https://u:p@h`` in a bullet; ``x1https`` is
+  one scheme and a run without a letter is none) and its ``:``, then ``//``; for the schemes WHATWG calls
+  special (``http``, ``https``, ``ws``, ``wss``, ``ftp``, any case) after ``:`` and its run of ``/`` and
+  ``\\``, as a WHATWG parser reads ``https:/u:p@h``, ``https:\\\\u:p@h`` and ``https:u:p@h``; but a ``\\``
+  after the run's last ``/`` belongs to the userinfo, as curl and ``urlsplit`` read ``https://\\a:pw@h`` (the
+  user ``\\a``), so the mask covers what either reading sends.  A tab or line break may stand between the
+  ``:`` and the slashes, or right after them (WHATWG removes them).  The authority runs to the first
   ``/``, ``?`` or ``#``, or the end of the text, and its userinfo up to its *last* ``@``: a URL parser
   reads ``https://u:p@ss@host`` as the password ``p@ss``.  A percent-encoded ``%40`` or ``%3A`` is data of
   the userinfo.  Not a userinfo: one that is empty or only colons (``https://@host``, ``https://:@host``),
   an ``@`` after the authority (``https://host/a@b``, ``?q=a@b``, ``#a@b``), a scheme without an
-  authority (``mailto:user@host``, ``urn:x:a@b``, ``git+https:/u:p@h``).  An IRI nested in another
+  authority (``mailto:user@host``, ``urn:x:a@b``, ``git+https:/u:p@h``).  So the userinfo of an IRI that
+  RDF/XML resolved as a relative path, which turns its ``//`` into ``/``, is not masked when its scheme is
+  not special (``1git+https://u:p@h`` or ``_x://u:p@h`` as written, which start with no scheme): one ``/``
+  after any scheme would also mask a path such as ``a:/b@c``.  An IRI nested in another
   (``urn:x:https://u:p@h``, ``https://h/?to=https://u:p@g``) has its own authority.
 * *SEC014.*  A text embeds a password when one of its userinfos has a non-empty part after its first
   ``:`` (:func:`userinfo_password`); the mask hides it whatever SEC014 decides.
@@ -35,7 +40,9 @@ and for what ontolint may write (:func:`redact_userinfo`).
   the source still show; the alternative is a published credential.
 * *Free text.*  A message or a note has no IRI delimiters, so its authority also runs to ``/ ? #``: a bare
   IRI followed, before any ``/ ? #``, by an ``@`` (``https://h has 'a'@en``) is masked up to it.  That
-  over-masking is cosmetic and is the price of masking ``https://alice:pw SPACE@h`` whole.  A rendered
+  over-masking is cosmetic and is the price of masking ``https://alice:pw SPACE@h`` whole.  A scheme read
+  after the digits or signs that start its run is masked although no URL parser takes such a text for a
+  URL (``1http:a@b`` becomes ``1http:****@b``): the same cosmetic over-masking.  A rendered
   report is masked again (:func:`redact_rendered`) with an authority that also stops at white space and
   at the delimiters of the report formats (``" < > \\``), because its fields were masked one by one
   already and a broad mask there would join a bare IRI with the next field.
@@ -73,14 +80,16 @@ REDACTED_USERINFO = "****"
 SHA-256 of a fingerprint (py/weak-sensitive-data-hashing)."""
 
 _AUTHORITY = re.compile(
-    r"(?<![A-Za-z0-9+.\-])"
+    r"(?<![A-Za-z0-9+.\-])[0-9+.\-]*"
     r"(?:(?i:https?|wss?|ftp):(?P<run>[/\\\t\n\r]*)"
     r"|[A-Za-z][A-Za-z0-9+.\-]*:[\t\n\r]*/[\t\n\r]*/)"
 )
 """Where an authority starts: after a special scheme's ``:`` and its slashes, or after ``scheme://``.
 
 The look-behind anchors a scheme at the start of its run of scheme characters, so the search never restarts
-inside one: the scan is linear (CodeQL py/polynomial-redos)."""
+inside one: the scan is linear (CodeQL py/polynomial-redos).  The digits and signs that start the run are
+skipped within that one attempt: a scheme starts with a letter, which they are not, so stepping back over
+them fails at once."""
 
 _TO_END = re.compile(r"[^/?#]*")
 """The rest of an authority: up to the first ``/``, ``?`` or ``#``."""
@@ -95,8 +104,9 @@ _LINE = re.compile(r"\bline (\d+)")
 
 
 def _authorities(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[int, int, int, int]]:
-    """Each authority of ``text``, in order: where its scheme starts, where its userinfo would start, where the
-    authority ends and its last ``@`` before that end (``-1`` for none).
+    """Each authority of ``text``, in order: where the run of scheme characters that holds its scheme starts,
+    where its userinfo would start, where the authority ends and its last ``@`` before that end (``-1`` for
+    none).
 
     Every authority is visited, also one that starts inside another (``https://public.test and https://u:p@h``,
     where the first runs to the second's ``/``).  The authorities that start inside one span of ``text`` without
@@ -213,8 +223,9 @@ def withheld_parser_message(detail: str, source: bytes) -> str:
 _AUTHORITY_END = re.compile(r"[/?#]")
 """What ends an authority (:data:`_TO_END`)."""
 
-_SCHEME_TAIL = re.compile(r"(?<![A-Za-z0-9+.\-])[A-Za-z][A-Za-z0-9+.\-]*:[\t\n\r]*(?:/[\t\n\r]*)?\Z")
-"""A scheme at the end of a text that a later ``//`` would give an authority (``git+https:`` then ``//u:p@h``)."""
+_SCHEME_TAIL = re.compile(r"(?<![A-Za-z0-9+.\-])[0-9+.\-]*[A-Za-z][A-Za-z0-9+.\-]*:[\t\n\r]*(?:/[\t\n\r]*)?\Z")
+"""A scheme at the end of a text that a later ``//`` would give an authority (``git+https:`` then ``//u:p@h``),
+read from the first letter of its run, as :data:`_AUTHORITY` reads it (``1git+https:``)."""
 
 
 def _complete_lines(text: str) -> tuple[int, bool]:
