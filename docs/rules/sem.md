@@ -17,6 +17,23 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module external
+
+Source: `src/ontolint/rules/external.py`.
+
+Specifications for rules that are not run by a graph rule module.
+
+SHACL001 and SEM001 are produced by adapters (pySHACL, ROBOT) and INPUT001/TOOL001 by the CLI front end.  They carry ``module=""`` because no ``run(ctx)`` function emits them.
+
+SHACL001 and SEM001 are findings: they appear in the report, gate the exit code through ``--fail-on`` (``1``), and obey ``--select``/``--ignore``, baselines and ``severity_overrides``.  INPUT001 and TOOL001 are diagnostics printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them, so naming them in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) is a configuration error (``TOOL001``, exit ``2``), and naming them in the policy's ``ignored_rules`` or ``severity_overrides`` is ``GOV020``.
+
+*Specified under each rule: SHACL001, INPUT001, TOOL001, SEM001.*
+
 ## Rules
 
 #### SEM001: OWL profile violation reported by ROBOT
@@ -24,7 +41,10 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** ontology
 - **Category:** deterministic
+- **Module:** [`external`](#module-external)
 - **Fix:** Correct the reported OWL profile violations, or select the intended OWL profile.
+
+**Specification.** Only with ``--owl-profile EL|QL|RL|DL|Full`` and ``docker`` on ``PATH`` (``unsupported`` otherwise).  For each ontology argument, the original file (not an ``owl:imports`` closure) is run through ``robot validate-profile`` in ``--robot-image`` (default ``ontolint-robot:1.9.11``), with ``--network none``, its directory mounted read-only, 2 GB memory, 256 processes, 2 CPUs, no capabilities and ``--robot-timeout`` seconds (default 120).  Exit ``0`` is no finding.  Any other exit with a profile report that lists violations gives exactly one finding focused on ``(ontology)`` (the report path names the file): the message groups the violations by kind and subject (at most 10 kinds, 5 subjects each) and the full report goes in ``details``.  Any other exit without such a list (a missing image, a Docker, Java or permission error) is no verdict on the ontology: the rule is ``failed`` with ROBOT's output quoted up to 500 characters (TOOL001, exit ``2``), as are a timeout and a failure to start ``docker``. Confidence ``certain``: the verdict is the OWL API's.  Why error: the user asked for this profile explicitly, and an ontology outside it cannot be relied on by the tools and reasoners built for that profile.
 
 *Flagged:* `ROBOT reports a violation` (run through the command line or an adapter; see `tests/rule_cases/`)
 

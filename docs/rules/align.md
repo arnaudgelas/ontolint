@@ -17,6 +17,31 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module alignment
+
+Source: `src/ontolint/rules/alignment.py`.
+
+Ontology alignment rules that can be decided inside one file: ALIGN002-005, 007, 009, 013-015.
+
+Every rule reads the mappings asserted in the linted graph (SKOS mapping properties, ``owl:sameAs``, ``owl:equivalentClass``/``equivalentProperty``) together with the file's own hierarchy and declarations.  Nothing is entailed beyond the transitive closure of asserted ``skos:exactMatch`` and asserted hierarchy edges, both computed iteratively.  The remaining ALIGN rules need an external mapping registry, the aligned ontologies or a reasoner and stay proposed.
+
+Specification of the error rule:
+
+*Specified under each rule: ALIGN003.*
+
+### Module policy_rules
+
+Source: `src/ontolint/rules/policy_rules.py`.
+
+Rules that are driven by the policy file: GOV016, GOV020, ALIGN012 and ALIGN016.
+
+Every rule is silent unless its policy field is set (``required_annotations``, ``alignment_namespaces``, ``alignment_min_coverage``) or, for GOV020, the policy file carried keys ontolint does not know.  GOV020 therefore needs no CLI-only plumbing: ``Policy.from_mapping`` records the unknown top-level keys, and the rule reports them like any other finding (focus ``(policy)``), so selection, ``--fail-on`` and severity overrides keep working.  An unsupported ``policy_version`` is not a finding: the file cannot be read at all, so the CLI refuses it with ``GOV020`` on standard error and exit code 2.
+
 ## Rules
 
 #### ALIGN002: Misspelt SKOS or OWL mapping predicate
@@ -24,7 +49,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Use the exact SKOS or OWL mapping property IRI (for example skos:exactMatch); the asserted one is unknown.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `wrong case`
 
@@ -94,7 +122,10 @@ ex:A skos:mappingRelation a:A .
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** skos:exactMatch is transitive and disjoint with broad/narrowMatch; drop one mapping of the chain.
+
+**Specification.** Group IRIs into the connected components of asserted ``skos:exactMatch`` triples between distinct IRIs, ignoring direction (exactMatch is symmetric and transitive, S44 and S45 of the SKOS Reference).  A finding for each ``skos:broadMatch`` triple, or inverted ``skos:narrowMatch`` triple, between two IRIs of one component that are not themselves linked by a direct exactMatch (that pair is SKOS012), when either end is owned.  It is focused on the narrower term; a pair asserted by both broadMatch and the inverse narrowMatch is reported once.  Likewise a finding for each pair of distinct IRIs of one component linked by ``skos:relatedMatch`` in either direction (once per pair, focused on the lexically smaller IRI) and not by a direct exactMatch.  Exclusions: owl:sameAs and owl:equivalentClass/equivalentProperty, skos:closeMatch (not transitive) and blank nodes do not join components.  Error, certain: with S45 the chain entails an exactMatch that integrity condition S46 makes disjoint with the broadMatch and with the relatedMatch.
 
 *Flagged:* `chain with broad`
 
@@ -220,7 +251,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Keep one mapping strength per pair: broadMatch, narrowMatch and relatedMatch exclude each other.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `mutual broad`
 
@@ -284,7 +318,10 @@ a:X skos:relatedMatch b:Y ; skos:broadMatch c:Z .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Keep one exactMatch per target namespace, or relate the targets to each other if they are the same thing.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `two targets`
 
@@ -342,7 +379,10 @@ ex:A skos:closeMatch a:One, a:Two .
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Assert the inverse skos:exactMatch/closeMatch too, since both terms are described in this file.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `one-way exactMatch`
 
@@ -398,7 +438,10 @@ Linter options: `base='http://elsewhere.test/'`.
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Map classes to classes and properties to properties; the declared kinds are incompatible.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `class to property`
 
@@ -467,7 +510,10 @@ ex:C a owl:Class . ex:p a owl:ObjectProperty . ex:C rdfs:seeAlso ex:p .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`policy_rules`](#module-policy_rules)
 - **Fix:** Map to a term inside one of alignment_namespaces, or add the target's namespace to the policy file.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `exactMatch outside`
 
@@ -560,7 +606,10 @@ Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'htt
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Keep the most precise mapping predicate; the same pair is related by several equivalent assertions.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `exact and equivalentClass`
 
@@ -623,7 +672,10 @@ ex:A skos:broadMatch ex:B . ex:C skos:narrowMatch ex:D .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Reverse the mapping or fix the hierarchy; the file places the broader term below the narrower one.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `broadMatch against subclass`
 
@@ -708,7 +760,10 @@ ex:A skos:exactMatch ex:B . ex:B rdfs:subClassOf ex:A .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** deterministic
+- **Module:** [`alignment`](#module-alignment)
 - **Fix:** Add a version, a creator and a licence to the sssom:MappingSet.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `bare mapping set`
 
@@ -781,7 +836,10 @@ Linter options: `base='http://elsewhere.test/'`.
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`policy_rules`](#module-policy_rules)
 - **Fix:** Align more classes and properties (skos:exactMatch, owl:equivalentClass) or lower alignment_min_coverage.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `1 of 10 mapped`
 

@@ -17,6 +17,23 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module library
+
+Source: `src/ontolint/rules/library.py`.
+
+Pattern-library rules: LIB001-LIB003, an index ontology against its member pattern ontologies.
+
+They run only with ``--pattern-library DIR`` (`ontolint.library`): the linted file is the index, the ontologies under ``DIR`` are its members.  Otherwise they are skipped, never passed.
+
+Terms.  An index *entry* is linked to a member when the entry's IRI is one of the member's identities (ontology or version IRI), when the index states any triple from the entry to one of them (for example ``rdfs:isDefinedBy``), or when the member's header names the entry's IRI.  An entry and a member have the *same name* when one of the entry's names (its local name and labels) and one of the member's names (``opla-core:hasPatternName``, ``rdfs:label``, ``dcterms:title`` ...) are equal once case, everything but letters and digits, and a trailing ``pattern`` are removed ("AgentRole" and "Agent Role").  The *entry classes* are the classes of the index's own individuals that are linked to a member or share a name with one; the entries are every owned individual of an entry class.
+
+*Specified under each rule: LIB001, LIB002, LIB003.*
+
 ## Rules
 
 #### LIB001: Pattern library index entry names no member ontology
@@ -24,7 +41,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`library`](#module-library)
 - **Fix:** Give the entry the member's ontology IRI, or link it to the member (for example with rdfs:isDefinedBy).
+
+**Specification.** An entry linked to no member.  When a member has the same name the message names it and how to link them: the index describes the pattern but cannot refer to it (MODL: every entry).  Warning, heuristic: the entry classes are inferred.  When library files did not parse, an entry with no same-named member says it may be in one of them (as LIB003 does); the message is fixed text, so a baseline does not depend on how many.  Exclusions: individuals of other classes (MODL's categories), terms the index does not own.
 
 *Flagged:* `same name, no IRI link (MODL)`
 
@@ -127,7 +147,10 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`library`](#module-library)
 - **Fix:** Add an index entry for the pattern ontology, or remove the file from the library.
+
+**Specification.** A member that no entry is linked to and no entry shares a name with: a pattern missing from the index.  The finding belongs to the member's file.  Warning, heuristic.
 
 *Flagged:* `a member nothing names`
 
@@ -173,7 +196,10 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`library`](#module-library)
 - **Fix:** Correct the IRI, or add the pattern ontology it names to the library.
+
+**Specification.** A member's header names an IRI in the library namespace that no member declares (an ``opla-core:hasRelatedPattern`` to a pattern that does not exist).  The *library namespace* is the longest common prefix of the members' ontology IRIs cut back to a ``/`` or ``#``; it needs at least two members and a path below the host, else the rule checks nothing.  IRIs under a member's own ontology IRI (its terms) are not references to members.  The finding belongs to the member's file.  Warning, heuristic.
 
 *Flagged:* `a related pattern the library lacks`
 

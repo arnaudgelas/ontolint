@@ -17,6 +17,33 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module class_heuristics
+
+Source: `src/ontolint/rules/class_heuristics.py`.
+
+Class-quality heuristics CLS010, CLS015, CLS017, CLS022, CLS023 and CLS024.
+
+Every rule reads the *asserted* graph over declared classes: no entailment, no imports, no network. They complement ``classes`` (CLS001-009) and ``hierarchy_quality`` (CLS011-014, 016, 018-021, 025) and do not repeat their checks.
+
+### Module classes
+
+Source: `src/ontolint/rules/classes.py`.
+
+Class-hierarchy rules (CLS001-CLS009) and class-equivalence checks (OWL012).
+
+### Module hierarchy_quality
+
+Source: `src/ontolint/rules/hierarchy_quality.py`.
+
+Class-hierarchy quality rules CLS011-CLS014, CLS016, CLS018-CLS021 and CLS025.
+
+Every rule reads the *asserted* ``rdfs:subClassOf`` graph over declared classes: no entailment, no imports, no network.  Graph walks are iterative (hierarchies of 100k classes must not recurse). CLS010, CLS015, CLS017 and CLS022-CLS024 live in ``class_heuristics``.
+
 ## Rules
 
 #### CLS001: Disconnected class
@@ -24,7 +51,10 @@ All examples assume these prefixes:
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `isolated class`
 
@@ -75,7 +105,10 @@ ex:A a owl:Class . ex:i a ex:A .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Check whether this class is intentionally uninstantiated, abstract, or imported.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `leaf next to a populated class`
 
@@ -108,7 +141,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:i a ex:A .
 - **Severity:** warning
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Review the asserted subclass cycle; an OWL subclass cycle is not by itself inconsistent.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `two-class cycle`
 
@@ -137,7 +173,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Remove a redundant asserted subclass axiom if it adds no documentation value.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `shortcut edge`
 
@@ -172,7 +211,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Review unusually deep asserted hierarchy and possible re-modeling.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `depth_limit=3 with 4`
 
@@ -207,7 +249,10 @@ Linter options: `depth_limit=3`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Review the intended meaning of multiple direct superclasses.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `inheritance_limit=2 with 3`
 
@@ -232,7 +277,10 @@ Linter options: `inheritance_limit=2`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Check long single-child taxonomic chains for needless subdivisions.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `four-class single-child chain`
 
@@ -263,7 +311,10 @@ ex:n1 rdfs:subClassOf ex:n2 .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Consider splitting classes or using property groups/shapes where appropriate.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `soup_limit=2 with 3`
 
@@ -288,7 +339,10 @@ Linter options: `soup_limit=2`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`classes`](#module-classes)
 - **Fix:** Check whether class equivalence is purposeful and not merely a duplicate name.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `equivalent with same label`
 
@@ -309,7 +363,10 @@ ex:A a owl:Class ; rdfs:label "One" ; owl:equivalentClass ex:B . ex:B a owl:Clas
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Give each sibling class a distinct label, or merge the classes if they mean the same thing.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `same label, different case`
 
@@ -342,7 +399,10 @@ ex:P a owl:Class . ex:Q a owl:Class . ex:A a owl:Class ; rdfs:subClassOf ex:P ; 
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Introduce intermediate classes to structure a flat fan-out of direct subclasses.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `51 direct subclasses` (built programmatically; see `tests/rule_cases/`)
 
@@ -373,7 +433,10 @@ Linter options: `policy=Policy(subclass_limit=3)`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Check whether the unused leaf subclasses are needed or whether instances should use them.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `instantiated parent, unused leaves`
 
@@ -406,7 +469,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Replace the catch-all 'Other' subclass with specific classes or an open-world note on its parent.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `Other under parent`
 
@@ -461,7 +527,10 @@ ex:A a owl:Class . ex:Mother a owl:Class ; rdfs:subClassOf ex:A .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove one of the superclass assertions or the disjointness; the class cannot have instances.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `direct`
 
@@ -534,7 +603,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Add an rdfs:label or skos:prefLabel to the class that heads a subtree.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `three subclasses, no label`
 
@@ -567,7 +639,10 @@ ex:P a owl:Class ; skos:prefLabel 'P' . ex:C1 a owl:Class ; rdfs:subClassOf ex:P
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Use rdfs:subClassOf or rdf:type, or a semantically specific property, instead of a generic 'is' property.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `isA`
 
@@ -624,7 +699,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Check whether the class/individual punning is intended; otherwise model the individual separately.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `named individual`
 
@@ -671,7 +749,10 @@ ex:DataType a owl:Class ; rdfs:subClassOf rdfs:Class . ex:Text a owl:Class, ex:D
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Drop the explicit owl:Thing or rdfs:Resource superclass; the class already has another superclass.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `Thing plus parent`
 
@@ -712,7 +793,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove the owl:Nothing assertion or the class if it is not meant to be unsatisfiable.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `below Nothing`
 
@@ -747,7 +831,10 @@ ex:A a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Give the subclass a label that says how it specializes its superclass.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `same label`
 
@@ -794,7 +881,10 @@ ex:A a owl:Class ; rdfs:label " " . ex:B a owl:Class ; rdfs:label " " ; rdfs:sub
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Check whether the subclass chain between equivalent classes is intended; it collapses the chain.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `direct parent`
 
@@ -845,7 +935,10 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Name classes with nouns; a has/is-style name usually denotes a property.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `hasPart`
 
@@ -894,7 +987,10 @@ ex:isolate a owl:Class . ex:hash a owl:Class . ex:has a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Split the class, or use owl:unionOf / owl:intersectionOf instead of 'And'/'Or' in the name.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `And`
 
@@ -929,7 +1025,10 @@ ex:AndGate a owl:Class . ex:Rock_And a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Check whether the class belongs under this parent or should follow its siblings' naming pattern.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `one outlier among four`
 
@@ -962,7 +1061,10 @@ ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdf
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove the redundant type assertion for the ancestor class.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `class and parent`
 

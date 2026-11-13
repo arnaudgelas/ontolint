@@ -17,6 +17,21 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module obo
+
+Source: `src/ontolint/rules/obo.py`.
+
+OBO Foundry convention rules: OBO001-OBO012.
+
+These rules encode conventions of the OBO Foundry (identifiers, textual definitions, obsolescence, scoped synonyms, PURLs, naming).  They only make sense for ontologies that follow those conventions, so the ``OBO`` family is *opt-in*: see `ontolint.profiles.OPT_IN_FAMILIES`.  It runs with ``--select OBO`` / ``--select OBO0xx`` or ``--profile obo`` and never as part of the default selection.
+
+Every rule is an asserted-graph check: nothing is entailed, no import is followed and no network is used.  Rules that would need outside data (a registry lookup, the full RO term list, a reasoner) are not implemented; ``OBO005`` is deliberately narrowed to a small embedded table of well-known RO and BFO relations.  Annotation properties are the IAO and oboInOwl ones used by OBO ontologies.
+
 ## Rules
 
 #### OBO001: OBO term IRI that does not follow the PREFIX_0000000 pattern
@@ -24,7 +39,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Mint OBO identifiers as http://purl.obolibrary.org/obo/PREFIX_NNNNNNN (optionally PREFIX_SUBSPACE_NNNNNNN).
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `letters in the number`
 
@@ -171,7 +189,10 @@ obo:RO_HOM0000001 a owl:ObjectProperty .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Add dc:title or dcterms:title, dc:description or dcterms:description, and dcterms:license to the header.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no title`
 
@@ -260,7 +281,10 @@ ex:o a owl:Ontology ; <http://purl.org/dc/elements/1.1/title> "t" ; <http://purl
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Add an obo:IAO_0000115 (definition) or obo:IAO_0000600 (elucidation) annotation with a non-empty text.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `class without definition`
 
@@ -367,7 +391,10 @@ obo:BFO_0000001 a owl:Class ; obo:IAO_0000600 "An elucidation." .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Give every term exactly one rdfs:label and make labels unique within each language.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `class without label`
 
@@ -472,7 +499,10 @@ ex:A a owl:Class ; owl:deprecated true ; rdfs:label "obsolete x" . ex:B a owl:Cl
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Reuse the RO/BFO relation, or assert rdfs:subPropertyOf or owl:equivalentProperty to it.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `ad hoc part of`
 
@@ -591,7 +621,10 @@ ex:p a owl:ObjectProperty ; rdfs:label "part of" ; owl:deprecated "true"^^xsd:bo
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Annotate the definition axiom with oboInOwl:hasDbXref, obo:IAO_0000119, dcterms:source or dc:source.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `definition without source`
 
@@ -722,7 +755,10 @@ ex:A a owl:Class ; obo:IAO_0000115 "A thing." ; owl:deprecated "true"^^xsd:boole
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Add obo:IAO_0000231 (reason), IAO_0000233 (tracker item), IAO_0100001 (replaced by) or oboInOwl:consider.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `obsolete class bare`
 
@@ -869,7 +905,10 @@ ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000233 <https://x.org/1> .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Give the root class an asserted rdfs:subClassOf to a BFO class, or a named BFO genus.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `class with no parent`
 
@@ -1014,7 +1053,10 @@ ex:p a owl:ObjectProperty .
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Use oboInOwl:hasExactSynonym, hasBroadSynonym, hasNarrowSynonym or hasRelatedSynonym.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `oboInOwl:hasSynonym`
 
@@ -1097,7 +1139,10 @@ ex:A skos:altLabel ex:B .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Import an ODK-style module (.../obo/<id>/imports/<term>_import.owl); bfo, omo and ro may be imported whole.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `whole ontology`
 
@@ -1190,7 +1235,10 @@ ex:o a owl:Ontology ; owl:imports "http://purl.obolibrary.org/obo/uberon.owl" .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Use .../obo/<id>.owl and a version IRI such as .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `non-OBO ontology IRI`
 
@@ -1377,7 +1425,10 @@ ex:A a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
 - **Fix:** Use labels without leading, trailing or repeated whitespace and without underscores.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `leading whitespace`
 

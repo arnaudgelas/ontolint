@@ -34,6 +34,13 @@ guarantees that proposed rules are never reported as executed.
      `rules/support.py`; do not re-scan the graph per term.
    * Import `RuleContext` under `if TYPE_CHECKING:` (the module must not import `runtime` at run
      time; `specs.py` imports every module).
+   * Write each rule's specification in the module docstring as a top-level bullet,
+     `* **ABC001.** text` (`* **ABC001 / ABC002.** text` for one text that specifies two rules), its
+     continuation lines indented two spaces and the bullet ended by a blank line, the next bullet or an
+     unindented paragraph. The rest of the docstring holds what the module's rules share. Both are
+     rendered in `docs/rules/<family>.md`, so the generator refuses a bullet header it would misread
+     (`* **ABC001.**text`) and a paragraph that would start a Markdown block (`#`, `>`, `-`, `1.`,
+     `<` ...).
    * Thresholds belong on `Policy`, never as magic numbers hidden in the rule.
 3. **Register it** with one line in `RULE_MODULES` in `src/ontolint/rules/builtin.py`.  Append at the end:
    order is observable (first emission wins de-duplication).  Registration derives the registry,
@@ -64,7 +71,10 @@ guarantees that proposed rules are never reported as executed.
    (empty graph, blank-node focus, literals where IRIs are expected, huge literals, unicode,
    malformed lists) are fed to every rule module automatically by `tests/test_rule_cases.py`; add
    family-specific hostile inputs to your case file if the rule has special structure.
-6. **Run the gate**:
+6. **Regenerate the rule reference and run the gate**:
+   `uv run python tests/rule_docs_generator.py` regenerates `docs/rules.md` and `docs/rules/*.md`;
+   `tests/test_rule_docs.py` fails while any page is stale. Every Markdown file in `docs/rules/` is
+   generated: the generator deletes any other. Then run
    `uv run python scripts/gate.py --fix`. It applies Ruff formatting and autofixes, then runs exactly
    the checks CI runs: format check, Ruff, Pyright, mypy (host and Win32), `pytest -n auto -W error`,
    `pip-audit` and `uv build`. Without `--fix` it only checks, as CI does.
@@ -79,6 +89,7 @@ guarantees that proposed rules are never reported as executed.
 | `test_rule_cases.py` | every implemented rule has positive and negative cases, positives fire exactly the rule, negatives do not, no rule module crashes on odd inputs, large hierarchies do not recurse |
 | `test_registry.py` | reachability of every graph rule, spec/catalogue field agreement, execution-status semantics |
 | `test_subject_contract.py` | every add site that needs a `subject=` passes one, and no two findings of a corpus or random run share rule, focus and subject |
+| `test_rule_docs.py` | the rule reference is current, lists every catalogue rule, and shows every case and every specification bullet under each rule it names; no page exceeds 500,000 bytes |
 
 A `proposed` rule must not appear in `CASES` or the registry; `execute()` reports a rule as
 `executed` only when its module or adapter actually ran.

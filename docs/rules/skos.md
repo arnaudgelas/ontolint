@@ -17,6 +17,33 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module skos
+
+Source: `src/ontolint/rules/skos.py`.
+
+SKOS concept-scheme rules: SKOS001-SKOS006.
+
+All rules read asserted triples only.  "Integrity condition Sn" refers to the SKOS Reference (W3C Recommendation, 18 August 2009).  Specifications of the error rules:
+
+*Specified under each rule: SKOS001, SKOS002.*
+
+### Module skos_integrity
+
+Source: `src/ontolint/rules/skos_integrity.py`.
+
+SKOS integrity rules: SKOS007-SKOS021.
+
+Every rule reads asserted triples only (no entailment).  The conditions come from the SKOS reference integrity axioms (disjointness of Concept/ConceptScheme/Collection, ``skos:related`` versus hierarchy, exactMatch versus broad/relatedMatch) and from common vocabulary-quality practice (labels, notations, scheme membership, mapping scope).
+
+"Integrity condition Sn" refers to the SKOS Reference (W3C Recommendation, 18 August 2009).  Types are the asserted ``rdf:type`` values (no subclass entailment), and blank nodes are never reported. Specifications of the error rules:
+
+*Specified under each rule: SKOS007, SKOS008, SKOS009, SKOS012, SKOS016.*
+
 ## Rules
 
 #### SKOS001: Multiple preferred labels in one language
@@ -24,7 +51,10 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`skos`](#module-skos)
 - **Fix:** Keep only one skos:prefLabel per language tag for a given resource.
+
+**Specification.** Scope: the owned resources explicitly typed ``skos:Concept`` (``ctx.concepts``; no subclass typing).  Condition: two or more distinct literal values of ``skos:prefLabel`` share a language tag.  Tags compare case-insensitively (``@en`` and ``@EN`` are one tag, as in RDF 1.1), and untagged labels (plain or ``xsd:string``) form one group reported as ``und``; an explicit ``@und`` tag joins that group.  Literals are compared as RDF 1.1 terms: ``"a"`` equals ``"a"^^xsd:string``, and ``"a"@en`` equals ``"a"@EN``, so a repeated label is not counted twice.  Other datatypes count as untagged labels (SKOS013 reports them).  Exclusions: non-literal values; resources that are not owned concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked).  One finding per concept and language.  Severity error, confidence certain: the triples violate integrity condition S14.
 
 *Flagged:* `two prefLabels in a language`
 
@@ -100,7 +130,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** error
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`skos`](#module-skos)
 - **Fix:** Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource.
+
+**Specification.** Scope: the owned concepts plus every resource that is the subject of ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` and is either an owned IRI or a blank node.  Condition: the same literal is a value of two or three of those properties of one resource. Literals compare as RDF 1.1 terms: lexical form and language tag (case-insensitively) must both match, ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Exclusions: same text with a different language tag; non-owned IRIs; sub-properties of the label properties (not entailed).  One finding per resource and literal.  Severity error, confidence certain: the triples violate integrity condition S13 (the three label properties are pairwise disjoint).
 
 *Flagged:* `same literal as pref and alt label`
 
@@ -188,7 +221,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`skos`](#module-skos)
 - **Fix:** Inspect hierarchical cycles; SKOS does not universally prohibit them.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `broader cycle`
 
@@ -217,7 +253,10 @@ ex:a a skos:Concept ; skos:broader ex:b . ex:b a skos:Concept .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`skos`](#module-skos)
 - **Fix:** Give a concept a preferred label in your supported language(s).
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no prefLabel`
 
@@ -256,7 +295,10 @@ ex:c a skos:Concept ; skos:historyNote "Moved." .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`skos`](#module-skos)
 - **Fix:** Use skos:Concept with skos:inScheme and an appropriate scheme policy.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `not in a scheme`
 
@@ -277,7 +319,10 @@ ex:c a skos:Concept ; skos:inScheme ex:s . ex:s a skos:ConceptScheme .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`skos`](#module-skos)
 - **Fix:** Review whether a scheme top concept should also have a broader concept.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `top concept with broader`
 
@@ -298,7 +343,10 @@ ex:c a skos:Concept ; skos:topConceptOf ex:s .
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Split the resource: skos:Concept and skos:ConceptScheme are disjoint classes.
+
+**Specification.** An owned IRI typed both ``skos:Concept`` and ``skos:ConceptScheme``.  Error, certain: integrity condition S9 makes the two classes disjoint.
 
 *Flagged:* `concept and scheme`
 
@@ -340,7 +388,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Do not type a skos:Collection as skos:Concept or skos:ConceptScheme; the classes are disjoint.
+
+**Specification.** An owned IRI typed ``skos:Collection`` or ``skos:OrderedCollection`` (a subclass of Collection, S29) and also ``skos:Concept`` or ``skos:ConceptScheme``.  A Collection that merely has concept members is fine.  Error, certain: integrity condition S37.
 
 *Flagged:* `collection and concept`
 
@@ -392,7 +443,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Remove skos:related or the broader/narrower link: associative and hierarchical relations are disjoint.
+
+**Specification.** Two distinct IRIs linked by ``skos:related`` or ``skos:relatedMatch`` (in either direction, S23) of which one is an ancestor of the other: reachable through one or more asserted ``skos:broader``, ``skos:broaderTransitive`` or ``skos:broadMatch`` edges, or inverted ``skos:narrower``, ``skos:narrowerTransitive`` or ``skos:narrowMatch`` edges (S22, S24-S26, and S41, which makes ``broadMatch``, ``narrowMatch`` and ``relatedMatch`` sub-properties of ``broader``, ``narrower`` and ``related``), so a grandparent counts as well as a parent.  The message names the associative property and says when the hierarchy needs a mapping edge: a ``skos:related`` pair conflicting without one keeps "skos:related and a hierarchical link both connect A and B."; otherwise "skos:relatedMatch and a hierarchical link through skos:broadMatch or skos:narrowMatch both connect A and B.", with either part as it applies.  Exclusions: siblings and cousins (a shared ancestor is not a conflict); a pair linked only by ``skos:relatedMatch`` whose conflict needs a mapping edge and that is directly linked by ``broadMatch`` or ``narrowMatch``, which is ALIGN004's (mapping strengths); ``skos:closeMatch`` and ``skos:exactMatch``, which are not hierarchical; a concept related to itself (SKOS010).  One finding per pair when either end is owned, focused on the lexically smaller IRI.  Error, certain: integrity condition S27 makes ``skos:related`` disjoint with ``skos:broaderTransitive``.
 
 *Flagged:* `related and broader`
 
@@ -530,7 +584,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Remove the reflexive skos:related statement.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `self related`
 
@@ -551,7 +608,10 @@ ex:a a skos:Concept ; skos:related ex:b .
 - **Severity:** info
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Use skos:broader/narrower/related inside a scheme; reserve mapping properties for cross-scheme links.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `exactMatch inside a scheme`
 
@@ -578,7 +638,10 @@ ex:a skos:exactMatch ex:b .
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Keep one mapping type per concept pair: skos:exactMatch is disjoint with broad/narrow/relatedMatch.
+
+**Specification.** Two distinct IRIs linked by ``skos:exactMatch`` (either direction) and by ``skos:broadMatch``, ``skos:narrowMatch`` or ``skos:relatedMatch`` (either direction).  narrowMatch counts because it is the inverse of broadMatch (S43) and exactMatch is symmetric (S44).  Exclusions: ``skos:closeMatch`` and ``skos:mappingRelation`` (compatible with exactMatch); conflicts that need the transitivity of exactMatch (ALIGN003).  One finding per pair when either end is owned, focused on the lexically smaller IRI.  Error, certain: integrity condition S46.
 
 *Flagged:* `exact and broad`
 
@@ -644,7 +707,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Use a plain or language-tagged string literal for skos:prefLabel, altLabel and hiddenLabel.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `integer label`
 
@@ -681,7 +747,10 @@ ex:c skos:prefLabel "a"@en, "b"^^xsd:string ; skos:altLabel "c" .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Trim the label and do not leave it empty.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `padded label`
 
@@ -714,7 +783,10 @@ ex:c skos:prefLabel "a b"@en .
 - **Severity:** info
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Declare entry points with skos:hasTopConcept or skos:topConceptOf.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `scheme without top`
 
@@ -747,7 +819,10 @@ ex:s a skos:ConceptScheme . ex:c skos:topConceptOf ex:s .
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** SKOS semantic, mapping and scheme relations link resources; replace the literal with an IRI.
+
+**Specification.** An owned IRI with a literal value for ``skos:semanticRelation``, ``broader``, ``narrower``, ``related``, ``broaderTransitive``, ``narrowerTransitive``, ``mappingRelation``, one of the five mapping properties, ``inScheme``, ``hasTopConcept`` or ``topConceptOf``.  Exclusions: blank-node subjects; ``skos:member`` and ``skos:memberList``; user sub-properties.  One finding per subject and property.  Error, certain: SKOS declares every one of them an ``owl:ObjectProperty`` with a class range (S18-S20, S38, and the scheme properties), so a literal value is no valid OWL 2 DL assertion and never what the author meant, although SKOS states no integrity condition for it.
 
 *Flagged:* `literal broader`
 
@@ -833,7 +908,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Describe the target concept in the vocabulary or correct the link.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `dangling broader`
 
@@ -862,7 +940,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Remove the direct broader link that is already implied through an asserted intermediate concept (vocabularies with a parallel classification keep such shortcuts on purpose: use --ignore SKOS018).
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `shortcut`
 
@@ -895,7 +976,10 @@ ex:a skos:broader ex:b, ex:c . ex:b skos:broader ex:d . ex:c skos:broader ex:d .
 - **Severity:** info
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Keep broader/narrower inside one scheme and use mapping properties across schemes.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `cross-scheme broader`
 
@@ -936,7 +1020,10 @@ ex:a skos:broader ex:b .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Make notations unique within a concept scheme.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `duplicate notation`
 
@@ -975,7 +1062,10 @@ ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Colle
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Give concepts of one scheme distinguishable preferred labels per language.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `duplicate prefLabel`
 

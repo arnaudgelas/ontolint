@@ -17,6 +17,33 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module governance
+
+Source: `src/ontolint/rules/governance.py`.
+
+Governance rules for deprecation, equivalence targets, and imports: GOV001-GOV003.
+
+### Module governance_metadata
+
+Source: `src/ontolint/rules/governance_metadata.py`.
+
+Graph-local governance-metadata rules: GOV004, GOV008-GOV014 and GOV017.
+
+Every rule reads the asserted graph only; nothing is resolved over the network and no policy file is consulted (thresholds are module constants).  Ontology-level rules fire once per ``owl:Ontology``. Term-level attribution, date and status rules only flag *stragglers*: they stay silent unless at least half of the declared local terms already carry the metadata, so ontologies that never record it are not buried in findings.  Release-oriented rules (GOV011, GOV017) only apply to ontologies that declare a version.  GOV005, GOV006, GOV007 and GOV015 are deliberately absent: ONT003/ONT004 already cover licence and version metadata, and no agreed vocabulary exists for the rest.
+
+### Module policy_rules
+
+Source: `src/ontolint/rules/policy_rules.py`.
+
+Rules that are driven by the policy file: GOV016, GOV020, ALIGN012 and ALIGN016.
+
+Every rule is silent unless its policy field is set (``required_annotations``, ``alignment_namespaces``, ``alignment_min_coverage``) or, for GOV020, the policy file carried keys ontolint does not know.  GOV020 therefore needs no CLI-only plumbing: ``Policy.from_mapping`` records the unknown top-level keys, and the rule reports them like any other finding (focus ``(policy)``), so selection, ``--fail-on`` and severity overrides keep working.  An unsupported ``policy_version`` is not a finding: the file cannot be read at all, so the CLI refuses it with ``GOV020`` on standard error and exit code 2.
+
 ## Rules
 
 #### GOV001: Reference to a deprecated term
@@ -24,7 +51,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`governance`](#module-governance)
 - **Fix:** Migrate non-annotation references to deprecated terms or justify them.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `deprecated class used as superclass`
 
@@ -59,7 +89,10 @@ ex:New a owl:Class . ex:A a owl:Class ; rdfs:subClassOf ex:New .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`governance`](#module-governance)
 - **Fix:** Pin or resolve imported ontology versions in an explicit import manifest.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `literal import target`
 
@@ -80,7 +113,10 @@ Reported: `Non-IRI import target: not an iri.`
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`governance`](#module-governance)
 - **Fix:** Review references to local undeclared vocabulary terms.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `equivalent to undeclared local class`
 
@@ -101,7 +137,10 @@ ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no contact`
 
@@ -226,7 +265,10 @@ ex:A a owl:Class .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `deprecated bare`
 
@@ -317,7 +359,10 @@ Linter options: `base='https://other.test/'`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Add dcterms:creator or dcterms:contributor to the terms that lack attribution.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `3 of 4 annotated`
 
@@ -417,7 +462,10 @@ ex:T2 a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Add dcterms:created or dcterms:modified to the terms that lack a date.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `3 of 4 annotated`
 
@@ -517,7 +565,10 @@ ex:T2 a owl:Class .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Record changes with skos:changeNote, vann:changes or owl:priorVersion.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `version info, no history`
 
@@ -576,7 +627,10 @@ ex:o a owl:Ontology ; owl:versionInfo "1" ; owl:priorVersion ex:o0 .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Add a status such as vs:term_status to the terms that lack one.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `3 of 4 annotated`
 
@@ -676,7 +730,10 @@ ex:T2 a owl:Class .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Replace references to owl:DeprecatedClass/owl:DeprecatedProperty terms or retire the referencing axiom.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `subclass of obsolete class`
 
@@ -783,7 +840,10 @@ ex:q a owl:DeprecatedProperty . ex:z a owl:DeprecatedClass . ex:z ex:q ex:b .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Move the definition to the owning vocabulary or keep only an import stub for external terms.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `foreign class with subclass axiom`
 
@@ -858,7 +918,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`policy_rules`](#module-policy_rules)
 - **Fix:** Add the missing annotations, or drop them from required_annotations in the policy file.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `class without comment`
 
@@ -981,7 +1044,10 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(required_ann
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`governance_metadata`](#module-governance_metadata)
 - **Fix:** Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `version info, no review`
 
@@ -1040,7 +1106,10 @@ ex:o a owl:Ontology ; owl:versionInfo "1" ; pav:curatedBy ex:r .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** deterministic
+- **Module:** [`policy_rules`](#module-policy_rules)
 - **Fix:** Remove or fix the unknown keys; the policy file only supports the documented keys and policy_version 1.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `one unknown key`
 

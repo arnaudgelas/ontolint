@@ -17,6 +17,35 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module identifiers
+
+Source: `src/ontolint/rules/identifiers.py`.
+
+Identifier hygiene rules: IRI001-IRI003.
+
+### Module iri_lexical_extras
+
+Source: `src/ontolint/rules/iri_lexical_extras.py`.
+
+Extra heuristics: IRI015 (opaque and readable local names in one namespace), LEX018 and LEX021.
+
+All three inspect only the asserted graph and never leave the process.  Their specifications:
+
+*Specified under each rule: IRI015, LEX018, LEX021.*
+
+### Module iri_quality
+
+Source: `src/ontolint/rules/iri_quality.py`.
+
+IRI and namespace quality rules: IRI004-IRI006, IRI008-IRI014 and IRI016-IRI019.
+
+IRI007 (dereferenceability) needs the network, so it stays proposed.  IRI015 is implemented in ``iri_lexical_extras`` as a mixed-naming check (namespace hijacking would need ownership evidence). Every rule here inspects only the asserted IRIs.
+
 ## Rules
 
 #### IRI001: Whitespace or non-absolute IRI
@@ -24,7 +53,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`identifiers`](#module-identifiers)
 - **Fix:** Use stable absolute IRIs; avoid whitespace in identifiers.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `whitespace in IRI` (built programmatically; see `tests/rule_cases/`)
 
@@ -49,7 +81,10 @@ ex:A a owl:Class .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`identifiers`](#module-identifiers)
 - **Fix:** Consider an extension-independent ontology identifier (policy-dependent).
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `ontology IRI ends in .owl`
 
@@ -82,7 +117,10 @@ Reported: `Ontology IRI contains a serialization file extension.`
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`identifiers`](#module-identifiers)
 - **Fix:** Check whether duplicate local identifiers across namespaces confuse users.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `same local name, two namespaces`
 
@@ -123,7 +161,10 @@ ex:Agent a owl:Class . ex:agent a owl:ObjectProperty .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Mint term IRIs under the ontology IRI, or document why the namespace differs.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `terms elsewhere` (built programmatically; see `tests/rule_cases/`)
 
@@ -146,7 +187,10 @@ Reported: `No term IRI starts with the ontology IRI.`
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Use one namespace style (hash or slash) for the terms of a vocabulary.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `hash and slash` (built programmatically; see `tests/rule_cases/`)
 
@@ -165,7 +209,10 @@ Reported: `1 hash-style and 1 slash-style term IRIs, e.g. https://a.test/ns#A an
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Avoid '?query' parts in term IRIs; they are not stable identifiers.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `query string` (built programmatically; see `tests/rule_cases/`)
 
@@ -184,7 +231,10 @@ ex:A a owl:Class .
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Use a single URI scheme for the terms of one vocabulary.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `http and https` (built programmatically; see `tests/rule_cases/`)
 
@@ -199,7 +249,10 @@ Reported: `Terms mix http and https IRIs.`
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Remove or percent-encode characters such as < > " { } | \ ^ and backtick.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `angle bracket and brace` (built programmatically; see `tests/rule_cases/`)
 
@@ -220,7 +273,10 @@ ex:A a owl:Class .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Give the term a local name; an IRI ending in '#' or '/' names a namespace.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `ends in hash` (built programmatically; see `tests/rule_cases/`)
 
@@ -241,7 +297,10 @@ ex:A a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Prefer readable local names without percent escapes.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `percent escape` (built programmatically; see `tests/rule_cases/`)
 
@@ -256,7 +315,10 @@ Reported: `Local name contains percent-encoded characters.`
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Publish terms under a resolvable, persistent host instead of localhost.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `localhost` (built programmatically; see `tests/rule_cases/`)
 
@@ -279,7 +341,10 @@ ex:A a owl:Class .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Keep term IRIs persistent; put versions in owl:versionIRI instead.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `v1 segment` (built programmatically; see `tests/rule_cases/`)
 
@@ -304,7 +369,10 @@ Reported: `1 term IRIs in this namespace embed a version or date segment (e.g. h
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Avoid leading/trailing or doubled '_' and '-' in local names.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `trailing underscore` (built programmatically; see `tests/rule_cases/`)
 
@@ -327,7 +395,10 @@ Reported: `Local name has a leading, trailing or repeated separator.`
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`iri_lexical_extras`](#module-iri_lexical_extras)
 - **Fix:** Use one naming scheme per namespace: either opaque numeric identifiers or readable names.
+
+**Specification.** Group the owned declared terms by namespace (the IRI minus its local name).  A local name is *opaque* when it is an optional prefix of up to eight letters, an optional ``_``, ``:`` or ``-``, then at least three digits (``T0001234``, ``BFO_0000001``); it is *readable* when it is letters, ``_`` and ``-`` only, starting with a letter, with three lower-case letters in a row (``hasPart``). Other names (``ab12``, empty) are not classified.  One finding per namespace that holds both kinds, focused on the namespace, unless the smaller kind is under 10% of the classified names.
 
 *Flagged:* `numeric and readable`
 
@@ -382,7 +453,10 @@ ex:T0001234 a owl:Class . ex:T0001235 a owl:Class .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Use an ontology IRI without '?query' or '#fragment' parts.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `fragment` (built programmatically; see `tests/rule_cases/`)
 
@@ -403,7 +477,10 @@ Reported: `Ontology IRI contains a query string or fragment.`
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Do not reuse the ontology IRI as a class, property, concept or individual.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `ontology IRI is also a class`
 
@@ -430,7 +507,10 @@ Reported: `Ontology IRI is also declared as a term.`
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Give the ontology a permanent IRI under a namespace you control, such as a w3id.org or purl.org PURL.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `Protege untitled ontology (MFTO)`
 
@@ -474,7 +554,10 @@ Linter options: `policy=Policy(imported_ontologies=frozenset({'http://www.semant
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Remove the prefix declaration, or import the vocabulary it was declared for.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `a CCO prefix nothing uses (rights ontology)`
 
