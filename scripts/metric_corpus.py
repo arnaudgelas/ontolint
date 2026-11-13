@@ -14,7 +14,10 @@ and ``fetch`` refuses a file whose checksum differs.  Each file is linted twice 
   the boundary itself (0 for an upper limit, full coverage for METRIC009), or an empty population.
 
 METRIC007 is never forced: it reads the same ratio as METRIC006, whose forced message gives it.  The labels in
-the manifest are proposals until the maintainer approves them (``"status": "approved"``).
+the manifest are proposals until the maintainer approves them (``"label_status": "approved"``).  Every rule of
+every entry must be labelled, by name or through ``"*"``, so an omission cannot pass for a judgement.
+
+The results are a snapshot of one ontolint version: nothing runs ``check`` in CI or at release (issue #31).
 """
 
 # ruff: noqa: S310, S603 -- downloads fixed, checksummed HTTPS URLs; runs this interpreter on ontolint.
@@ -40,7 +43,9 @@ RESULTS = ROOT / "docs" / "validation" / "metric-corpus-results.json"
 PAGE = ROOT / "docs" / "validation" / "metric-calibration.md"
 BEGIN, END = "<!-- metric_corpus.py: begin -->", "<!-- metric_corpus.py: end -->"
 RULES = tuple(f"METRIC{n:03d}" for n in range(1, 14))
-LABELS = ("fire", "silent")
+COUNTED = ("fire", "silent")  # labels that make a true or false positive or negative
+EXPECTS = (*COUNTED, "unknown", "unassessed")  # unknown: assessed and left open; unassessed: not looked at
+BASES = ("checked", "presumed", "none")  # how the label's reason was established
 
 # Every limit at the far end of its range: an upper limit of 0 fires on any non-zero value, a lower limit
 # above any possible value fires on any population.  METRIC007's 1e9 upper limit keeps the policy valid
@@ -62,21 +67,36 @@ FORCED_POLICY: dict[str, float] = {
     "metric_max_blank_node_ratio": 0.0,
 }
 
-# What a forced message says, per rule: (pattern, kind).  "ratio" captures a numerator and a whole,
-# "mean" a population and a printed mean, "count" one number.
+# What a forced message says, per rule: (pattern, kind), matched against the whole message.  "ratio" captures
+# a numerator and a whole, "mean" a population and a printed mean, "count" one number.  A value or limit is
+# printed with 2 to 6 decimals, or in full (``repr``) when those tie.
+_N = r"[\d.e+-]+"
+_GT, _LT = rf" \({_N} > {_N}\)\.", rf" \({_N} < {_N}\)\."
 MESSAGES: dict[str, tuple[re.Pattern[str], str]] = {
-    "METRIC001": (re.compile(r"^(\d+) of (\d+) classes lack a label "), "ratio"),
-    "METRIC002": (re.compile(r"^(\d+) of (\d+) classes lack a definition "), "ratio"),
-    "METRIC003": (re.compile(r"^(\d+) of (\d+) properties lack documentation "), "ratio"),
-    "METRIC004": (re.compile(r"^(\d+) parent classes have ([\d.]+) direct subclasses on average "), "mean"),
-    "METRIC005": (re.compile(r"^(\d+) of (\d+) classes are orphans: "), "ratio"),
-    "METRIC006": (re.compile(r"^(\d+) properties for (\d+) classes "), "ratio"),
-    "METRIC008": (re.compile(r"^(\d+) of (\d+) object/datatype properties have neither domain nor range "), "ratio"),
-    "METRIC009": (re.compile(r"^(\d+) of (\d+) labelled terms have a language-tagged label "), "ratio"),
-    "METRIC010": (re.compile(r"^(\d+) of (\d+) structural references point to another namespace "), "ratio"),
-    "METRIC011": (re.compile(r"^(\d+) distinct owl:imports "), "count"),
-    "METRIC012": (re.compile(r"^(\d+) defined classes average ([\d.]+) words per definition "), "mean"),
-    "METRIC013": (re.compile(r"^(\d+) of (\d+) subjects are blank nodes "), "ratio"),
+    "METRIC001": (re.compile(r"(\d+) of (\d+) classes lack a label" + _GT), "ratio"),
+    "METRIC002": (re.compile(r"(\d+) of (\d+) classes lack a definition" + _GT), "ratio"),
+    "METRIC003": (re.compile(r"(\d+) of (\d+) properties lack documentation" + _GT), "ratio"),
+    "METRIC004": (
+        re.compile(rf"(\d+) parent classes have ({_N}) direct subclasses on average \(threshold {_N}\)\."),
+        "mean",
+    ),
+    "METRIC005": (
+        re.compile(r"(\d+) of (\d+) classes are orphans: no asserted sub/superclass, instance, domain or range" + _GT),
+        "ratio",
+    ),
+    "METRIC006": (re.compile(r"(\d+) properties for (\d+) classes" + _LT), "ratio"),
+    "METRIC008": (
+        re.compile(r"(\d+) of (\d+) object/datatype properties have neither domain nor range" + _GT),
+        "ratio",
+    ),
+    "METRIC009": (re.compile(r"(\d+) of (\d+) labelled terms have a language-tagged label" + _LT), "ratio"),
+    "METRIC010": (re.compile(r"(\d+) of (\d+) structural references point to another namespace" + _GT), "ratio"),
+    "METRIC011": (re.compile(r"(\d+) distinct owl:imports \(threshold \d+\)\."), "count"),
+    "METRIC012": (
+        re.compile(rf"(\d+) defined classes average ({_N}) words per definition \(threshold {_N}\)\."),
+        "mean",
+    ),
+    "METRIC013": (re.compile(r"(\d+) of (\d+) subjects are blank nodes" + _GT), "ratio"),
 }
 # What a rule silent under the forced policy measured: the boundary, or an empty population, which the
 # forced run cannot tell apart (a population of one or more makes the forced rule fire unless its value is
@@ -97,15 +117,34 @@ class Entry:
     sha256: str
     labels: Mapping[str, Mapping[str, str]]
 
-    def expect(self, rule: str) -> str | None:
-        """Return the label for ``rule`` (``fire`` or ``silent``), or None when unlabelled or left open."""
-        label = self.labels.get(rule, self.labels.get("*", {})).get("expect")
-        return label if label in LABELS else None
+    def label(self, rule: str) -> Mapping[str, str]:
+        """Return the label of ``rule``: its own, else the entry's ``*``; a rule with neither is an error."""
+        label = self.labels.get(rule, self.labels.get("*"))
+        if label is None:
+            raise ValueError(f"{self.id}: {rule} has no label; name it, or give the entry a '*' label")
+        return label
+
+    def expect(self, rule: str) -> str:
+        return self.label(rule)["expect"]
+
+
+def validate(entry: Entry) -> None:
+    """Refuse an entry with an unknown rule key, an unlabelled rule, an unknown value or a label without a reason."""
+    extra = set(entry.labels) - {"*", *RULES}
+    if extra:
+        raise ValueError(f"{entry.id}: labels for unknown rules {sorted(extra)}")
+    for rule in RULES:
+        label = entry.label(rule)
+        if label.get("expect") not in EXPECTS or label.get("basis") not in BASES or not label.get("why", "").strip():
+            raise ValueError(f"{entry.id}: {rule} needs an expect in {EXPECTS}, a basis in {BASES} and a reason")
 
 
 def load_manifest(path: Path = MANIFEST) -> list[Entry]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return [Entry(item["id"], item["url"], item["sha256"], item.get("labels", {})) for item in data["entries"]]
+    entries = [Entry(item["id"], item["url"], item["sha256"], item["labels"]) for item in data["entries"]]
+    for entry in entries:
+        validate(entry)
+    return entries
 
 
 def label_status(path: Path = MANIFEST) -> str:
@@ -158,7 +197,7 @@ def parse_forced(messages: Mapping[str, str]) -> dict[str, dict[str, Any]]:
             measured[rule] = {"measured": SILENT_VALUE[rule]}
             continue
         pattern, kind = MESSAGES[rule]
-        match = pattern.match(message)
+        match = pattern.fullmatch(message)
         if match is None:
             raise ValueError(f"{rule}: message no longer matches the measurement pattern: {message!r}")
         if kind == "ratio":
@@ -191,31 +230,40 @@ def measure(directory: Path, entries: list[Entry]) -> dict[str, Any]:
     return {"results": results}
 
 
+OUTCOMES = ("tp", "fp", "tn_checked", "tn_presumed", "fn", "unknown", "unassessed")
+
+
+def outcome(entry: Entry, rule: str, fires: bool) -> str:
+    """Return one of OUTCOMES for ``rule`` on ``entry``; a true negative says whether its label was checked."""
+    label = entry.label(rule)
+    expect = label["expect"]
+    if expect not in COUNTED:
+        return expect
+    if expect == "fire":
+        return "tp" if fires else "fn"
+    if fires:
+        return "fp"
+    return "tn_checked" if label["basis"] == "checked" else "tn_presumed"
+
+
 def confusion(entries: list[Entry], results: Mapping[str, Any]) -> dict[str, dict[str, int]]:
-    """Count, per rule, labelled pairs by outcome: tp, fp, tn, fn; and the pairs left unlabelled."""
-    counts: dict[str, dict[str, int]] = {
-        rule: dict.fromkeys(("tp", "fp", "tn", "fn", "unlabelled"), 0) for rule in RULES
-    }
+    """Count, per rule, the (file, rule) pairs of each outcome."""
+    counts: dict[str, dict[str, int]] = {rule: dict.fromkeys(OUTCOMES, 0) for rule in RULES}
     for entry in entries:
         for rule in RULES:
-            fires = results["results"][entry.id][rule]["fires"]
-            label = entry.expect(rule)
-            if label is None:
-                counts[rule]["unlabelled"] += 1
-            elif label == "fire":
-                counts[rule]["tp" if fires else "fn"] += 1
-            else:
-                counts[rule]["fp" if fires else "tn"] += 1
+            counts[rule][outcome(entry, rule, results["results"][entry.id][rule]["fires"])] += 1
     return counts
 
 
-def _mark(label: str | None, fires: bool) -> str:
-    mark = {"fire": "F", "silent": "S", None: "?"}[label]
-    if label == "fire" and not fires:
-        return mark + " FN"
-    if label == "silent" and fires:
-        return mark + " FP"
-    return mark
+MARKS = {"fire": "F", "silent": "S", "unknown": "?", "unassessed": "-"}
+
+
+def _mark(entry: Entry, rule: str, fires: bool) -> str:
+    mark = MARKS[entry.expect(rule)]
+    if entry.label(rule)["basis"] == "presumed":
+        mark += "p"
+    found = outcome(entry, rule, fires)
+    return f"{mark} {found.upper()}" if found in ("fp", "fn") else mark
 
 
 def render(entries: list[Entry], results: Mapping[str, Any], status: str) -> str:
@@ -224,8 +272,9 @@ def render(entries: list[Entry], results: Mapping[str, Any], status: str) -> str
         "### Measurements",
         "",
         "Each cell is the forced measurement; **bold** means the rule fires at its default. The label is",
-        "in brackets: `F` expected to fire, `S` expected silent, `?` unlabelled or left open. A cell whose",
-        "outcome contradicts its label is marked FP or FN.",
+        "in brackets: `F` expected to fire, `S` expected silent (`Sp`: presumed from the file's standing,",
+        "not checked), `?` assessed and left open, `-` not assessed. A cell whose outcome contradicts its",
+        "label is marked FP or FN.",
         "",
         "| File | " + " | ".join(RULES) + " |",
         "| --- |" + " --- |" * len(RULES),
@@ -235,26 +284,34 @@ def render(entries: list[Entry], results: Mapping[str, Any], status: str) -> str
         for rule in RULES:
             cell = results["results"][entry.id][rule]
             text = f"**{cell['measured']}**" if cell["fires"] else cell["measured"]
-            cells.append(f"{text} [{_mark(entry.expect(rule), cell['fires'])}]")
+            cells.append(f"{text} [{_mark(entry, rule, cell['fires'])}]")
         lines.append(f"| `{entry.id}` | " + " | ".join(cells) + " |")
     lines += [
         "",
         f"### Outcomes under the {status} labels",
         "",
-        f"| Rule | Fires (of {len(entries)}) | True positive | False positive | True negative | False negative "
-        "| Unlabelled |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "Counts of (file, rule) pairs. A true negative is *checked* when its label's reason was verified in",
+        "the file, *presumed* when it rests on the file's standing alone.",
+        "",
+        f"| Rule | Fires (of {len(entries)}) | True positive | False positive | True negative, checked "
+        "| True negative, presumed | False negative | Left open | Not assessed |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     counts = confusion(entries, results)
     for rule in RULES:
         fired = sum(results["results"][entry.id][rule]["fires"] for entry in entries)
-        c = counts[rule]
-        lines.append(f"| {rule} | {fired} | {c['tp']} | {c['fp']} | {c['tn']} | {c['fn']} | {c['unlabelled']} |")
-    lines += ["", f"### The {status} labels", "", "| File | Rules | Label | Why |", "| --- | --- | --- | --- |"]
+        lines.append(f"| {rule} | {fired} | " + " | ".join(str(counts[rule][name]) for name in OUTCOMES) + " |")
+    lines += [
+        "",
+        f"### The {status} labels",
+        "",
+        "| File | Rules | Label | Basis | Why |",
+        "| --- | --- | --- | --- | --- |",
+    ]
     for entry in entries:
         for rule, label in sorted(entry.labels.items(), key=lambda item: (item[0] != "*", item[0])):
             rules = "every other rule" if rule == "*" and len(entry.labels) > 1 else "all" if rule == "*" else rule
-            lines.append(f"| `{entry.id}` | {rules} | {label['expect']} | {label['why']} |")
+            lines.append(f"| `{entry.id}` | {rules} | {label['expect']} | {label['basis']} | {label['why']} |")
     return "\n".join(lines)
 
 
