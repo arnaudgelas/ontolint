@@ -59,7 +59,8 @@ def test_an_unused_module_annotation_groups_nothing(tmp_path: Path, capsys: pyte
     item = resolve_inputs([str(tmp_path / "o.ttl")], tmp_path)[0]
     loaded = LoadedGraph(Graph(), SourceIndex({}))
     policy = Policy(module_annotation="<https://example.test/inModule>")
-    assert cli._file_modules(item, loaded, policy, []) == {}
+    # Not grouped: _lint_file then gives no finding a module.
+    assert cli._module_grouping(item, loaded, policy) is None
     assert "TOOL006: note: no term in" in capsys.readouterr().err
 
 

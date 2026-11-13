@@ -79,18 +79,30 @@ def _carriers(graph: Graph, predicate: URIRef | None) -> dict[str, list[URIRef]]
     return carriers
 
 
+def term_modules(graph: Graph, terms: Iterable[str], predicate: URIRef | None) -> dict[str, tuple[str, ...]]:
+    """The modules of each term (as a finding spells it, masked) that has one, by ``predicate`` or by namespace."""
+    carriers = _carriers(graph, predicate)
+    modules: dict[str, tuple[str, ...]] = {}
+    for term in terms:
+        names = set(_module_names(graph, term, predicate, carriers))
+        if names:
+            modules[term] = tuple(sorted(names))
+    return modules
+
+
 def finding_modules(
     graph: Graph, findings: Sequence[Finding], predicate: URIRef | None
 ) -> dict[Finding, tuple[str, ...]]:
-    """The modules of each finding that has one: by ``predicate``, or by namespace when it is ``None``."""
-    carriers = _carriers(graph, predicate)
+    """The modules of each finding that has one: by ``predicate``, or by namespace when it is ``None``.
+
+    A finding is in the modules of every term it is about (:func:`term_modules` of its focus and related terms).
+    """
+    of_term = term_modules(
+        graph, {term for finding in findings for term in (finding.focus, *finding.related)}, predicate
+    )
     modules: dict[Finding, tuple[str, ...]] = {}
     for finding in findings:
-        names = {
-            name
-            for term in (finding.focus, *finding.related)
-            for name in _module_names(graph, term, predicate, carriers)
-        }
+        names = {name for term in (finding.focus, *finding.related) for name in of_term.get(term, ())}
         if names:
             modules[finding] = tuple(sorted(names))
     return modules

@@ -266,20 +266,34 @@ def _term_graphs(
     return described, mentioned
 
 
-def finding_graphs(graph: Graph, index: GraphIndex, findings: Sequence[Finding]) -> dict[Finding, tuple[str, ...]]:
-    """The graphs of each finding that names one, through ``index`` (empty for a file without named graphs).
+def term_graphs(graph: Graph, index: GraphIndex, terms: Iterable[str]) -> dict[str, tuple[str, ...]]:
+    """The graphs of each term (as a finding spells it) that names one: those describing it, else mentioning it.
 
-    ``graph`` is the linted graph: a blank-node focus is the :func:`stable_blank_id` of a node in it, which
-    is computed only when some finding has a blank focus.
+    ``graph`` is the linted graph: a blank-node term is the :func:`stable_blank_id` of a node in it, which is
+    computed only when some term is a blank node.  Empty for a file without named graphs.
     """
     if not index.triples:
         return {}
-    wanted = {term for finding in findings for term in (finding.focus, *finding.related)}
+    wanted = set(terms)
     text = _TermText(graph, any(term.startswith("_:") for term in wanted))
     described, mentioned = _term_graphs(index, wanted, text)
+    graphs: dict[str, tuple[str, ...]] = {}
+    for term in wanted:
+        names = described.get(term, mentioned.get(term, ()))
+        if names:
+            graphs[term] = ordered(names)
+    return graphs
+
+
+def finding_graphs(graph: Graph, index: GraphIndex, findings: Sequence[Finding]) -> dict[Finding, tuple[str, ...]]:
+    """The graphs of each finding that names one, through ``index`` (empty for a file without named graphs).
+
+    A finding names the graphs of every term it is about (:func:`term_graphs` of its focus and related terms).
+    """
+    of_term = term_graphs(graph, index, {term for finding in findings for term in (finding.focus, *finding.related)})
     graphs: dict[Finding, tuple[str, ...]] = {}
     for finding in findings:
-        names = [n for term in (finding.focus, *finding.related) for n in described.get(term, mentioned.get(term, ()))]
+        names = [name for term in (finding.focus, *finding.related) for name in of_term.get(term, ())]
         if names:
             graphs[finding] = ordered(names)
     return graphs

@@ -18,7 +18,13 @@ from rdflib import Graph, Literal, URIRef
 
 from ontolint.cli import main
 from ontolint.models import Finding
-from ontolint.modules import UnresolvedModulePredicate, finding_modules, module_summary, resolve_predicate
+from ontolint.modules import (
+    UnresolvedModulePredicate,
+    finding_modules,
+    module_summary,
+    resolve_predicate,
+    term_modules,
+)
 from ontolint.policy import Policy
 
 SCHEMA = Path(__file__).parent / "schemas" / "sarif-schema-2.1.0.json"
@@ -115,6 +121,20 @@ def test_by_annotation_literals_and_iris_name_modules() -> None:
     graph.add((URIRef("http://e.test/B"), p, URIRef("http://e.test/modules/Event")))
     a, b, c = _finding("http://e.test/A"), _finding("http://e.test/B"), _finding("http://e.test/C")
     assert finding_modules(graph, [a, b, c], p) == {a: ("Container",), b: ("http://e.test/modules/Event",)}
+
+
+def test_a_term_is_in_the_modules_a_finding_about_it_is_in() -> None:
+    # Measurements place their terms with the same function, by annotation or by namespace.
+    graph = Graph()
+    p = URIRef("http://e.test/native")
+    graph.add((URIRef("http://e.test/A"), p, Literal("Core")))
+    graph.add((URIRef("http://e.test/A"), p, Literal("Extra")))
+    terms = ["http://e.test/A", "http://e.test/C", "(ontology)", "_:abc"]
+    assert term_modules(graph, terms, p) == {"http://e.test/A": ("Core", "Extra")}
+    assert term_modules(graph, terms, None) == {
+        "http://e.test/A": ("http://e.test/",),
+        "http://e.test/C": ("http://e.test/",),
+    }
 
 
 def test_the_summary_counts_a_shared_finding_in_each_module() -> None:

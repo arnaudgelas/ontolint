@@ -26,6 +26,7 @@ from ontolint.datasets import (
     finding_graphs,
     graph_name,
     relative_reference,
+    term_graphs,
 )
 from ontolint.loader import LoadedGraph, ParseFailure, load_document, load_graph, loaded_graph
 from ontolint.models import Finding
@@ -336,6 +337,17 @@ def test_a_focus_that_is_no_node_of_the_file_names_no_graph() -> None:
     index = GraphIndex({(A, RDFS.label, Literal("x")): (G1,)})
     findings = [_finding("(ontology)"), _finding("x"), _finding(f"{E}Unknown"), _finding("_:000000000000")]
     assert finding_graphs(Graph(), index, findings) == {}
+
+
+def test_a_term_is_placed_as_a_finding_about_it_is() -> None:
+    # Measurements place their terms with the same function: described, else mentioned, else nowhere.
+    index = GraphIndex(
+        {(A, RDF.type, OWL.Class): (G2, DEFAULT_GRAPH), (B, RDFS.subClassOf, C): (G1,), (B, RDFS.label, A): (G1,)}
+    )
+    terms = [str(A), str(B), str(C), f"{E}Unknown", "(ontology)"]
+    expected = {str(A): (DEFAULT_GRAPH, G2), str(B): (G1,), str(C): (G1,)}
+    assert term_graphs(Graph(), index, terms) == expected
+    assert term_graphs(Graph(), EMPTY_INDEX, terms) == {}
 
 
 def test_a_blank_focus_is_matched_by_its_stable_identity() -> None:
