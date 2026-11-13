@@ -1,0 +1,5 @@
+@prefix ex: <https://example.test/> .
+# Data for the sh:node shapes of shacl_node_shapes.ttl: ex:b, the value of ex:a's ex:knows, has no
+# ex:name and a non-integer ex:age, so ex:a's ex:knows value fails ex:N (issue #9).
+ex:a a ex:T ; ex:knows ex:b .
+ex:b ex:age "old" .

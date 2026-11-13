@@ -1,0 +1,9 @@
+@prefix ex: <https://example.test/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+# An sh:node violation with two nested causes (sh:detail), for shacl_node.ttl.
+ex:S a sh:NodeShape ; sh:targetClass ex:T ; sh:property ex:Knows .
+ex:Knows a sh:PropertyShape ; sh:path ex:knows ; sh:node ex:N .
+ex:N a sh:NodeShape ; sh:property ex:Name, ex:Age .
+ex:Name a sh:PropertyShape ; sh:path ex:name ; sh:minCount 1 .
+ex:Age a sh:PropertyShape ; sh:path ex:age ; sh:datatype xsd:integer .
