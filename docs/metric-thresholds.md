@@ -9,6 +9,8 @@ licensed corpus of 21 files, under labels that are proposed, not approved, and m
 those preliminary observations; they are not rerun by CI or at release.
 The conditions, populations and exclusions of each rule are in the specification at the top of
 [`src/ontolint/rules/metrics.py`](../src/ontolint/rules/metrics.py).
+Each rule reads a measurement, which `--format json --measurements` publishes below the threshold
+too ([measurements.md](measurements.md)).
 
 ## Overriding
 

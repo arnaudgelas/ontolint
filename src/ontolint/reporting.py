@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ._version import package_version
-from .models import Evidence, ExecutionStatus, Finding, RuleExecution, RuleSpec, plain_evidence
+from .models import Evidence, ExecutionStatus, Finding, Measurement, RuleExecution, RuleSpec, plain_evidence
 from .modules import module_summary
 from .redaction import clip, redact_rendered
 from .rules.registry import default_registry
@@ -78,6 +78,8 @@ class FileReport:
     others: Mapping[Finding, tuple[tuple[Origin, Location | None], ...]] = field(
         default_factory=dict[Finding, tuple[tuple[Origin, Location | None], ...]]
     )
+    # With --measurements: the measurement vector of the file (:mod:`ontolint.rules.measurements`); else ``None``.
+    measurements: tuple[Measurement, ...] | None = None
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -204,6 +206,8 @@ def to_json(report: RunReport) -> dict[str, Any]:
                 "executions": _execution_dicts(r.executions),
                 # Present only with module grouping, so runs without it keep their historical shape.
                 **({"module_summary": module_summary(_shown_modules(r))} if r.modules else {}),
+                # Present only with --measurements, likewise.
+                **({"measurements": [m.to_dict() for m in r.measurements]} if r.measurements is not None else {}),
             }
             for r in report.files
         ],
