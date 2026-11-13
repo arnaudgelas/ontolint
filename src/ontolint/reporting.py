@@ -93,6 +93,9 @@ class RunReport:
     # Baseline entries (their version 1 fingerprints) that matched no finding of this run by either hash;
     # ``None`` when no baseline was read.
     stale_baseline: tuple[str, ...] | None = None
+    # For each file, in the order of ``files``, the findings the baseline accepted (removed from the file);
+    # ``None`` when no baseline was read.  Only the Markdown summary renders them.
+    baselined: tuple[tuple[Finding, ...], ...] | None = None
 
     @property
     def findings(self) -> tuple[Finding, ...]:

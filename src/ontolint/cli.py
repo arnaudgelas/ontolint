@@ -504,14 +504,18 @@ def _legacy_order(findings: Sequence[Finding], plan: RunPlan) -> list[Finding]:
 
 def _apply_baselines(
     files: list[FileReport], args: argparse.Namespace
-) -> tuple[list[FileReport], tuple[str, ...] | None]:
-    """Write and/or apply the baseline (see :mod:`ontolint.baseline`); also return its stale entries (OPS003)."""
+) -> tuple[list[FileReport], tuple[str, ...] | None, tuple[tuple[Finding, ...], ...] | None]:
+    """Write and/or apply the baseline (see :mod:`ontolint.baseline`).
+
+    Also return its stale entries (OPS003) and, per file, the findings it accepted; both are ``None`` without
+    ``--baseline``.
+    """
     if args.write_baseline:
         Path(args.write_baseline).write_text(baseline.dumps(baseline.build(files)), encoding="utf-8")
     if args.baseline:
         applied = baseline.apply(baseline.loads(Path(args.baseline).read_text(encoding="utf-8")), files, SET_RULES)
-        return applied.files, applied.stale
-    return files, None
+        return applied.files, applied.stale, tuple(applied.baselined)
+    return files, None, None
 
 
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
@@ -969,8 +973,10 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     # gremlin: pardon[equivalent] shared holds one entry per input, like graphs, so strict never fires
     rows = zip(inputs, graphs, shared, strict=True)
     files = [_lint_file(item, graph, plan, args, found) for item, graph, found in rows]
-    files, stale = _apply_baselines(files, args)
-    return RunReport(tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale)
+    files, stale, baselined = _apply_baselines(files, args)
+    return RunReport(
+        tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale, baselined=baselined
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:

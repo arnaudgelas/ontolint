@@ -90,6 +90,36 @@ def test_two_file_baseline_uses_path_scoped_fingerprints(tmp_path: Path) -> None
     }
 
 
+def test_a_baseline_reports_the_findings_it_accepted_per_file(tmp_path: Path) -> None:
+    finding, other = _finding(), _finding("error", "ONT002")
+    reports = [FileReport("a.ttl", "a.ttl", (finding,)), FileReport("b.ttl", "b.ttl", (other,))]
+    assert cli._apply_baselines(reports, _baseline_args(tmp_path)) == (reports, None, None)  # noqa: SLF001
+    cli._apply_baselines([reports[0], FileReport("b.ttl", "b.ttl", ())], _baseline_args(tmp_path))  # noqa: SLF001
+    applying = argparse.Namespace(write_baseline=None, baseline=str(tmp_path / "b.json"))
+    files, stale, baselined = cli._apply_baselines(reports, applying)  # noqa: SLF001
+    assert [f.findings for f in files] == [(), (other,)]
+    assert stale == ()
+    assert baselined == ((finding,), ())
+
+
+def test_the_run_report_carries_the_findings_the_baseline_accepted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "a.ttl").write_text("<https://example.test/a> a <http://www.w3.org/2002/07/owl#Class> .\n")
+    reports: list[RunReport] = []
+    monkeypatch.setattr(cli, "render_report", lambda report, *_args: reports.append(report) or "")
+    cli.main(["a.ttl", "--write-baseline", "b.json"])
+    cli.main(["a.ttl", "--baseline", "b.json"])
+    capsys.readouterr()
+    without, applied = reports
+    assert without.baselined is None
+    assert applied.baselined is not None
+    assert len(applied.baselined) == 1
+    assert applied.baselined[0] == without.files[0].findings != ()
+    assert applied.files[0].findings == ()
+
+
 def _bad_ttl(tmp_path: Path, name: str) -> InputFile:
     path = tmp_path / name
     path.write_text("this is not turtle", encoding="utf-8")
