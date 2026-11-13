@@ -4,7 +4,7 @@ version = "0.13.1"
 description = "Offline ontology-quality linter for RDF, OWL, SKOS, and SHACL graphs"
 readme = "README.md"
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 authors = [
     { name = "Arnaud Gelas", email = "arnaudgelas+ontolint@gmail.com" }
 ]
