@@ -1,5 +1,5 @@
 {
-  "description": "The METRIC calibration corpus (issue #8). Files are fetched by URL and checked by SHA-256; none is committed. A label says whether a rule should fire on the file ('fire'), stay silent ('silent') or is left to judgement ('unknown'); '*' applies to every rule the entry does not name. See docs/validation/metric-calibration.md.",
+  "description": "The METRIC calibration corpus (issue #8). Files are fetched by URL and checked by SHA-256; none is committed. Every rule of every entry has a label, named or through '*' (the rules the entry does not name). 'expect' is 'fire' or 'silent' (counted), 'unknown' (assessed, left to the maintainer's judgement) or 'unassessed' (not looked at). 'basis' is 'checked' (the reason was verified in the file), 'presumed' (inferred from the file's standing, not checked) or 'none'. See docs/validation/metric-calibration.md.",
   "label_status": "proposed",
   "entries": [
     {
@@ -16,6 +16,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "ISO/IEC 21838-2 upper ontology. Curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -34,6 +35,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -52,6 +54,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -70,6 +73,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -88,14 +92,17 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC006": {
           "expect": "silent",
+          "basis": "checked",
           "why": "A quality taxonomy by design: its relations come from RO, so it owns none."
         },
         "METRIC009": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Untagged labels are the OBO convention. An English-only vocabulary whose untagged labels are a deliberate convention, not a defect."
         }
       }
@@ -114,6 +121,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -132,10 +140,12 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC008": {
           "expect": "silent",
+          "basis": "checked",
           "why": "SSN states its signatures as class restrictions instead of global domains and ranges, by design."
         }
       }
@@ -154,10 +164,12 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC009": {
           "expect": "silent",
+          "basis": "checked",
           "why": "An English-only vocabulary whose untagged labels are a deliberate convention, not a defect."
         }
       }
@@ -176,10 +188,12 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC008": {
           "expect": "silent",
+          "basis": "checked",
           "why": "The SKOS Reference leaves domains and ranges open on purpose; sub-properties inherit them from skos:semanticRelation."
         }
       }
@@ -198,10 +212,12 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC009": {
           "expect": "silent",
+          "basis": "checked",
           "why": "An English-only vocabulary whose untagged labels are a deliberate convention, not a defect."
         }
       }
@@ -220,6 +236,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -238,6 +255,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -256,14 +274,17 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC006": {
           "expect": "silent",
+          "basis": "checked",
           "why": "An ODK base release: its relations are imported from PMD core and RO, not owned."
         },
         "METRIC010": {
           "expect": "silent",
+          "basis": "checked",
           "why": "An application ontology that extends PMD core and BFO by subclassing: reuse by design."
         }
       }
@@ -280,16 +301,24 @@
       "sha256": "c5054058bde7cdea52eed59567a606a73243a5dd5a2abc3af3812406ef27a7be",
       "bytes": 9039,
       "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
+        },
         "METRIC001": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Every class is labelled."
         },
         "METRIC002": {
           "expect": "fire",
+          "basis": "checked",
           "why": "No class has a definition (18 of 18)."
         },
         "METRIC010": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Every class sits under a BFO class: alignment to an upper ontology is the intended reuse."
         }
       }
@@ -306,16 +335,24 @@
       "sha256": "667710d4e9a2f33ddc729216207ee8c10684c8f969a9abb0db0e5b5bc602da7a",
       "bytes": 17280,
       "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
+        },
         "METRIC001": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Every class is labelled."
         },
         "METRIC002": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Every class is defined."
         },
         "METRIC006": {
           "expect": "unknown",
+          "basis": "checked",
           "why": "Twelve classes and no relation: a taxonomy of Hohfeld's incidents may be intended, or unfinished."
         }
       }
@@ -332,24 +369,34 @@
       "sha256": "adbff3603a0e69fc783b70e9da102d43be433e7e21f06836edfdd2b9b4cb9196",
       "bytes": 162675,
       "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
+        },
         "METRIC001": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Every class is labelled."
         },
         "METRIC002": {
           "expect": "silent",
+          "basis": "checked",
           "why": "Most classes are defined (93 of 103)."
         },
         "METRIC003": {
           "expect": "fire",
+          "basis": "checked",
           "why": "None of its 13 owned properties is documented."
         },
         "METRIC004": {
           "expect": "unknown",
+          "basis": "checked",
           "why": "50 named questionnaires under one parent: a catalogue may be flat on purpose, or want grouping by construct."
         },
         "METRIC008": {
           "expect": "unknown",
+          "basis": "checked",
           "why": "10 of its 13 owned object and datatype properties have no signature, in a small research ontology: unfinished or deliberately open."
         }
       }
@@ -368,10 +415,12 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC011": {
           "expect": "silent",
+          "basis": "checked",
           "why": "The 80 imports are the model's own modules, by relative IRI: a modular header, not 80 dependencies."
         }
       }
@@ -390,6 +439,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "Curated and widely reused; no aggregate quality problem is known for it."
         }
       }
@@ -408,6 +458,7 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "A SKOS taxonomy: no class or property, so no METRIC rule has anything to judge."
         }
       }
@@ -424,20 +475,29 @@
       "sha256": "9307dd169cf295709113c34a3be761f3fcba1dc3b2e693a590580a769ae878e8",
       "bytes": 59596,
       "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
+        },
         "METRIC001": {
           "expect": "fire",
+          "basis": "checked",
           "why": "No class has a label: a diagram export that was never annotated."
         },
         "METRIC002": {
           "expect": "fire",
+          "basis": "checked",
           "why": "No class has a definition."
         },
         "METRIC003": {
           "expect": "fire",
+          "basis": "checked",
           "why": "No property is documented."
         },
         "METRIC008": {
           "expect": "silent",
+          "basis": "checked",
           "why": "MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design."
         }
       }
@@ -456,10 +516,12 @@
       "labels": {
         "*": {
           "expect": "silent",
+          "basis": "presumed",
           "why": "A DCMI Recommendation. Curated and widely reused; no aggregate quality problem is known for it."
         },
         "METRIC005": {
           "expect": "silent",
+          "basis": "checked",
           "why": "9 of the 10 classes CLS001 calls orphans are targets of dcam:rangeIncludes, which CLS001 does not read: connected, not orphans."
         }
       }

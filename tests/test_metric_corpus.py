@@ -72,9 +72,46 @@ def test_every_manifest_entry_is_pinned_licensed_and_labelled_well() -> None:
             assert re.fullmatch(r"[0-9a-f]{40}", entry["commit"]), entry["id"]
             assert f"/{entry['commit']}/" in entry["url"], entry["id"]
         assert set(entry["labels"]) <= {"*", *metric_corpus.RULES}, entry["id"]
+        # Every rule is labelled, by name or through "*": an omission is never read as a judgement.
+        assert "*" in entry["labels"] or set(entry["labels"]) == set(metric_corpus.RULES), entry["id"]
         for label in entry["labels"].values():
-            assert label["expect"] in {"fire", "silent", "unknown"}, entry["id"]
+            assert label["expect"] in metric_corpus.EXPECTS, entry["id"]
+            assert label["basis"] in metric_corpus.BASES, entry["id"]
             assert label["why"].strip(), entry["id"]
+    metric_corpus.load_manifest()  # validates every (entry, rule) pair
+
+
+def test_an_entry_that_leaves_a_rule_unlabelled_is_refused(tmp_path: Path) -> None:
+    data = _manifest()
+    mfto = next(entry for entry in data["entries"] if entry["id"] == "mfto.ttl")
+    del mfto["labels"]["*"]
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(ValueError, match=r"mfto\.ttl: METRIC003 has no label"):
+        metric_corpus.load_manifest(path)
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        {"expect": "maybe", "basis": "checked", "why": "x"},
+        {"expect": "silent", "basis": "guessed", "why": "x"},
+        {"expect": "silent", "basis": "checked", "why": " "},
+    ],
+)
+def test_a_label_without_a_known_value_basis_or_reason_is_refused(label: dict[str, str]) -> None:
+    with pytest.raises(ValueError, match="needs an expect"):
+        metric_corpus.validate(metric_corpus.Entry("x", "", "", {"*": label}))
+
+
+def test_every_counted_positive_or_negative_finding_rests_on_a_checked_label() -> None:
+    """A presumed label ("curated, no known problem") may only make a true negative, never a TP, FP or FN."""
+    results = _results()["results"]
+    for entry in metric_corpus.load_manifest():
+        for rule in metric_corpus.RULES:
+            found = metric_corpus.outcome(entry, rule, results[entry.id][rule]["fires"])
+            if found in ("tp", "fp", "fn"):
+                assert entry.label(rule)["basis"] == "checked", (entry.id, rule, found)
 
 
 def test_the_results_cover_every_entry_and_rule() -> None:
@@ -126,22 +163,40 @@ def test_a_forced_and_a_default_run_measure_a_known_fixture(tmp_path: Path) -> N
     assert set(metric_corpus._lint(path, None)) == {"METRIC001", "METRIC002", "METRIC005"}
 
 
-def test_an_unknown_message_is_an_error_not_a_silent_zero() -> None:
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Half of the classes lack a label.",
+        # The opening numbers are kept, the rest is new: a prefix match would read 6 of 10.
+        "6 of 10 classes lack a label (0.60 > 0.00). Deprecated classes are now counted.",
+        "6 of 10 classes lack a label or a definition (0.60 > 0.00).",
+    ],
+)
+def test_an_altered_message_is_an_error_not_an_old_measurement(message: str) -> None:
     with pytest.raises(ValueError, match="METRIC001"):
-        metric_corpus.parse_forced({"METRIC001": "Half of the classes lack a label."})
+        metric_corpus.parse_forced({"METRIC001": message})
 
 
-def test_outcomes_follow_the_labels_and_the_wildcard() -> None:
+def test_outcomes_follow_the_labels_the_wildcard_and_the_basis() -> None:
+    def label(expect: str, basis: str = "checked") -> dict[str, str]:
+        return {"expect": expect, "basis": basis, "why": "x"}
+
     entries = [
-        metric_corpus.Entry("a", "", "", {"*": {"expect": "silent"}, "METRIC001": {"expect": "fire"}}),
-        metric_corpus.Entry("b", "", "", {"METRIC001": {"expect": "silent"}, "METRIC002": {"expect": "unknown"}}),
+        metric_corpus.Entry("a", "", "", {"*": label("silent", "presumed"), "METRIC001": label("fire")}),
+        metric_corpus.Entry(
+            "b",
+            "",
+            "",
+            {"*": label("unassessed", "none"), "METRIC001": label("silent"), "METRIC002": label("unknown")},
+        ),
     ]
     fires = {"a": {"METRIC001", "METRIC002"}, "b": {"METRIC001"}}
     results = {"results": {e: {r: {"fires": r in fires[e]} for r in metric_corpus.RULES} for e in fires}}
     counts = metric_corpus.confusion(entries, results)
-    assert counts["METRIC001"] == {"tp": 1, "fp": 1, "tn": 0, "fn": 0, "unlabelled": 0}
-    assert counts["METRIC002"] == {"tp": 0, "fp": 1, "tn": 0, "fn": 0, "unlabelled": 1}
-    assert counts["METRIC003"] == {"tp": 0, "fp": 0, "tn": 1, "fn": 0, "unlabelled": 1}
+    zero = dict.fromkeys(metric_corpus.OUTCOMES, 0)
+    assert counts["METRIC001"] == {**zero, "tp": 1, "fp": 1}
+    assert counts["METRIC002"] == {**zero, "fp": 1, "unknown": 1}
+    assert counts["METRIC003"] == {**zero, "tn_presumed": 1, "unassessed": 1}
 
 
 def test_writing_the_page_keeps_the_text_around_an_empty_block(tmp_path: Path) -> None:

@@ -1,20 +1,34 @@
 # METRIC calibration corpus (ontolint 0.13.1)
 
 The `METRIC001`-`METRIC013` defaults are first estimates ([`docs/metric-thresholds.md`](../metric-thresholds.md)).
-This page measures them on 21 pinned, licensed public files and counts false positives and false
-negatives under labels that say, for each file and rule, whether the rule *should* fire (issue #8).
+This page measures them on 21 pinned, licensed public files and counts outcomes under labels that
+say, for each file and rule, whether the rule *should* fire (issue #8).
 
-**The labels are proposed, not approved.** They were written by the author of this page, with the
-measurements in view, from what each file's own documentation says it intends. Until the maintainer
-approves them (`"label_status": "approved"` in the manifest), the counts below are a hypothesis about
-precision, not a measurement of it.
+**This is an exploratory snapshot, not a calibration.** Three things limit it:
 
-**Result, under the proposed labels: no false negative, and no false positive for METRIC001, METRIC002
-and METRIC003, the two warnings among them included. Every false positive (12 in all) comes from a
-modelling choice the rule does not see, not from where its limit sits:** for five of the six rules
-concerned, only a limit that switches the rule off would remove them. METRIC005's one false positive
-would go with a limit above 0.45, but its cause is CLS001 not reading `dcam:rangeIncludes`. No
-default is changed here; the choices are in "For the maintainer" below.
+- **The labels are proposed, not approved.** The author of this page wrote them with the
+  measurements in view. Until the maintainer approves them (`"label_status": "approved"` in the
+  manifest), every count below is a preliminary observation conditioned on those labels.
+- **Most negatives are presumed.** Of the 273 (file, rule) pairs, 211 are labelled silent only
+  because the file is a curated, widely reused ontology with no known aggregate problem. That is an
+  assumption, not something checked in the file. Every true positive, false positive and false
+  negative rests instead on a label whose reason was verified in the file (a test enforces it).
+- **Recall is not measured for METRIC004 to METRIC013.** Only METRIC001, METRIC002 and METRIC003
+  have files labelled `fire`.
+
+The results are a one-time snapshot of ontolint 0.13.1. Nothing reruns them: neither CI nor the
+release runs `check`, so a later change to a rule, to ownership, to rdflib or to a default can leave
+them stale. Running the corpus at every release belongs to issue #31.
+
+**Observed under the proposed labels:**
+- **METRIC001, METRIC002 and METRIC003:** no false positive, and no false negative among the
+  labelled cases, which are few: 1 to 2 true positives each.
+- **The other rules:** each of the 12 false positives comes from a modelling choice the rule does
+  not see, not from where its limit sits. For five of the six rules concerned, only a limit that
+  switches the rule off would remove them. METRIC005's one false positive would go with a limit
+  above 0.45, but its cause is that CLS001 does not read `dcam:rangeIncludes`.
+
+No default is changed here; the choices are in "For the maintainer" below.
 
 ## Corpus
 
@@ -31,8 +45,14 @@ is the W3C namespace document and is fixed by its checksum only. The corpus mixe
   Assessment Ontology (no property documentation); and the Hohfeldian Rights Ontology, labelled
   only where its file is unambiguous.
 
-There is no known-poor example for METRIC004, METRIC005 and METRIC007 to METRIC013: no file is
-labelled `fire` for them, so their recall is not measured here, only their false-positive rate.
+There is no known-poor example for METRIC004 to METRIC013: no file is labelled `fire` for them, so
+their recall is not measured here, and their false-positive counts rest mostly on presumed labels.
+
+Every rule of every file has a label, named or through `*`, and `load_manifest` refuses an entry that
+leaves one out, so an omission cannot pass for a judgement. A label is `fire` or `silent` (counted),
+`unknown` (assessed, left to the maintainer: 3 pairs) or `unassessed` (not looked at: 37 pairs, the
+rules the four research files were not labelled for). Its `basis` is `checked` (the reason was
+verified in the file: 25 pairs), `presumed` (from the file's standing: 211) or `none`.
 
 ## Method
 
@@ -61,97 +81,105 @@ Every run exits 0 and executes all 13 rules. The results are in
 ### Measurements
 
 Each cell is the forced measurement; **bold** means the rule fires at its default. The label is
-in brackets: `F` expected to fire, `S` expected silent, `?` unlabelled or left open. A cell whose
-outcome contradicts its label is marked FP or FN.
+in brackets: `F` expected to fire, `S` expected silent (`Sp`: presumed from the file's standing,
+not checked), `?` assessed and left open, `-` not assessed. A cell whose outcome contradicts its
+label is marked FP or FN.
 
 | File | METRIC001 | METRIC002 | METRIC003 | METRIC004 | METRIC005 | METRIC006 | METRIC007 | METRIC008 | METRIC009 | METRIC010 | METRIC011 | METRIC012 | METRIC013 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `bfo-2020-core.ttl` | 0 [S] | 0 [S] | 0 [S] | 2.19 over 16 [S] | 0 [S] | 40 / 36 [S] | 40 / 36 [S] | 0 [S] | none untagged [S] | 0 [S] | 0 [S] | 28.06 over 36 [S] | 0 [S] |
-| `ro-core.owl` | 0 [S] | 0 [S] | 2 / 25 [S] | no parent [S] | 0 [S] | no class [S] | no class [S] | 10 / 24 [S] | none untagged [S] | 0 [S] | 0 [S] | no definition [S] | 16 / 76 [S] |
-| `cco-merged.ttl` | 0 [S] | 0 [S] | 1 / 172 [S] | 3.30 over 382 [S] | 0 [S] | 148 / 1400 [S] | 148 / 1400 [S] | 1 / 148 [S] | none untagged [S] | 303 / 1667 [S] | 0 [S] | 21.59 over 1400 [S] | 1 / 2020 [S] |
-| `iao.owl` | 0 [S] | 13 / 210 [S] | 10 / 57 [S] | 4.07 over 45 [S] | 0 [S] | 23 / 210 [S] | 23 / 210 [S] | 6 / 23 [S] | 255 / 267 [S] | 16 / 230 [S] | 0 [S] | 24.69 over 197 [S] | 16 / 457 [S] |
-| `pato-base.owl` | 0 [S] | 959 / 2931 [S] | 0 [S] | 4.36 over 521 [S] | 0 [S] | **0 / 2931** [S FP] | 0 / 2931 [S] | 0 [S] | **0 / 2847** [S FP] | 0 [S] | 0 [S] | 19.33 over 1972 [S] | 0 [S] |
-| `sosa.ttl` | 0 [S] | 0 [S] | 0 [S] | no parent [S] | 0 [S] | 23 / 13 [S] | 23 / 13 [S] | 0 [S] | none untagged [S] | 0 [S] | 0 [S] | 31.69 over 13 [S] | 1 / 55 [S] |
-| `ssn.ttl` | 0 [S] | 0 [S] | 0 [S] | no parent [S] | 0 [S] | 15 / 6 [S] | 15 / 6 [S] | **15 / 15** [S FP] | none untagged [S] | 0 [S] | 1 [S] | 19.50 over 6 [S] | 10 / 81 [S] |
-| `prov-o.ttl` | 0 [S] | 0 [S] | 10 / 65 [S] | 3.11 over 9 [S] | 0 [S] | 50 / 30 [S] | 50 / 30 [S] | 1 / 50 [S] | **1 / 80** [S FP] | 0 [S] | 0 [S] | 42.20 over 30 [S] | 0 [S] |
-| `skos-core.rdf` | 0 [S] | 0 [S] | 0 [S] | 1.00 over 1 [S] | 0 [S] | 18 / 4 [S] | 18 / 4 [S] | **12 / 18** [S FP] | none untagged [S] | 0 [S] | 0 [S] | 10.00 over 4 [S] | 0 [S] |
-| `schemaorg-30.1.ttl` | 0 [S] | 0 [S] | 0 [S] | 5.37 over 183 [S] | 0 [S] | 1538 / 939 [S] | 1538 / 939 [S] | 0 [S] | **7 / 2477** [S FP] | 10 / 992 [S] | 0 [S] | 22.19 over 939 [S] | 0 [S] |
-| `sdo-1.9.0.ttl` | 0 [S] | 0 [S] | 0 [S] | 1.62 over 8 [S] | 0 [S] | 103 / 25 [S] | 103 / 25 [S] | 1 / 103 [S] | 125 / 128 [S] | 8 / 139 [S] | 0 [S] | 21.80 over 25 [S] | 0 [S] |
-| `mod.ttl` | 0 [S] | 0 [S] | 0 [S] | 2.00 over 2 [S] | 0 [S] | 68 / 15 [S] | 68 / 15 [S] | 9 / 68 [S] | none untagged [S] | 8 / 104 [S] | 0 [S] | 14.80 over 15 [S] | 0 [S] |
-| `automatce-base.ttl` | 0 [S] | 0 [S] | 0 [S] | 1.70 over 27 [S] | 0 [S] | **11 / 309** [S FP] | 11 / 309 [S] | 0 [S] | none untagged [S] | **271 / 331** [S FP] | 0 [S] | 16.94 over 309 [S] | 0 [S] |
-| `mfto.ttl` | 0 [S] | **18 / 18** [F] | 2 / 2 [?] | no parent [?] | 4 / 18 [?] | 2 / 18 [?] | 2 / 18 [?] | 2 / 2 [?] | none untagged [?] | **14 / 14** [S FP] | 2 [?] | no definition [?] | 0 [?] |
-| `rights-ontology.ttl` | 0 [S] | 0 [S] | 0 [?] | 2.50 over 4 [?] | 1 / 12 [?] | **0 / 12** [?] | 0 / 12 [?] | 0 [?] | none untagged [?] | 0 [?] | 0 [?] | 22.67 over 12 [?] | 0 [?] |
-| `pao.owl` | 0 [S] | 10 / 103 [S] | **13 / 13** [F] | **13.57 over 7** [?] | 0 [?] | 13 / 103 [?] | 13 / 103 [?] | **10 / 13** [?] | none untagged [?] | 12 / 107 [?] | 2 [?] | 12.11 over 93 [?] | 0 [?] |
-| `ids-ontology.ttl` | 0 [S] | 0 [S] | 0 [S] | no parent [S] | 0 [S] | no class [S] | no class [S] | 0 [S] | none untagged [S] | 0 [S] | **80** [S FP] | no definition [S] | 2 / 16 [S] |
-| `tractusx-ontology.ttl` | 0 [S] | 0 [S] | 2 / 156 [S] | 2.60 over 10 [S] | 0 [S] | 139 / 32 [S] | 139 / 32 [S] | 0 [S] | 183 / 186 [S] | 6 / 236 [S] | 0 [S] | 15.72 over 32 [S] | 0 [S] |
-| `tractusx-taxonomy.ttl` | 0 [S] | 0 [S] | 0 [S] | no parent [S] | 0 [S] | no class [S] | no class [S] | 0 [S] | none untagged [S] | 0 [S] | 0 [S] | no definition [S] | 0 [S] |
-| `food-traceability.ttl` | **43 / 43** [F] | **43 / 43** [F] | **31 / 31** [F] | 6.00 over 3 [?] | 0 [?] | 31 / 43 [?] | 31 / 43 [?] | **31 / 31** [S FP] | none untagged [?] | 0 [?] | 0 [?] | no definition [?] | 58 / 137 [?] |
-| `dcterms.ttl` | 0 [S] | 0 [S] | 0 [S] | 2.00 over 4 [S] | **10 / 22** [S FP] | 55 / 22 [S] | 55 / 22 [S] | 0 [S] | none untagged [S] | 3 / 11 [S] | 0 [S] | 10.91 over 22 [S] | 0 [S] |
+| `bfo-2020-core.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.19 over 16 [Sp] | 0 [Sp] | 40 / 36 [Sp] | 40 / 36 [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | 28.06 over 36 [Sp] | 0 [Sp] |
+| `ro-core.owl` | 0 [Sp] | 0 [Sp] | 2 / 25 [Sp] | no parent [Sp] | 0 [Sp] | no class [Sp] | no class [Sp] | 10 / 24 [Sp] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | no definition [Sp] | 16 / 76 [Sp] |
+| `cco-merged.ttl` | 0 [Sp] | 0 [Sp] | 1 / 172 [Sp] | 3.30 over 382 [Sp] | 0 [Sp] | 148 / 1400 [Sp] | 148 / 1400 [Sp] | 1 / 148 [Sp] | none untagged [Sp] | 303 / 1667 [Sp] | 0 [Sp] | 21.59 over 1400 [Sp] | 1 / 2020 [Sp] |
+| `iao.owl` | 0 [Sp] | 13 / 210 [Sp] | 10 / 57 [Sp] | 4.07 over 45 [Sp] | 0 [Sp] | 23 / 210 [Sp] | 23 / 210 [Sp] | 6 / 23 [Sp] | 255 / 267 [Sp] | 16 / 230 [Sp] | 0 [Sp] | 24.69 over 197 [Sp] | 16 / 457 [Sp] |
+| `pato-base.owl` | 0 [Sp] | 959 / 2931 [Sp] | 0 [Sp] | 4.36 over 521 [Sp] | 0 [Sp] | **0 / 2931** [S FP] | 0 / 2931 [Sp] | 0 [Sp] | **0 / 2847** [S FP] | 0 [Sp] | 0 [Sp] | 19.33 over 1972 [Sp] | 0 [Sp] |
+| `sosa.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | 23 / 13 [Sp] | 23 / 13 [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | 31.69 over 13 [Sp] | 1 / 55 [Sp] |
+| `ssn.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | 15 / 6 [Sp] | 15 / 6 [Sp] | **15 / 15** [S FP] | none untagged [Sp] | 0 [Sp] | 1 [Sp] | 19.50 over 6 [Sp] | 10 / 81 [Sp] |
+| `prov-o.ttl` | 0 [Sp] | 0 [Sp] | 10 / 65 [Sp] | 3.11 over 9 [Sp] | 0 [Sp] | 50 / 30 [Sp] | 50 / 30 [Sp] | 1 / 50 [Sp] | **1 / 80** [S FP] | 0 [Sp] | 0 [Sp] | 42.20 over 30 [Sp] | 0 [Sp] |
+| `skos-core.rdf` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 1.00 over 1 [Sp] | 0 [Sp] | 18 / 4 [Sp] | 18 / 4 [Sp] | **12 / 18** [S FP] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | 10.00 over 4 [Sp] | 0 [Sp] |
+| `schemaorg-30.1.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 5.37 over 183 [Sp] | 0 [Sp] | 1538 / 939 [Sp] | 1538 / 939 [Sp] | 0 [Sp] | **7 / 2477** [S FP] | 10 / 992 [Sp] | 0 [Sp] | 22.19 over 939 [Sp] | 0 [Sp] |
+| `sdo-1.9.0.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 1.62 over 8 [Sp] | 0 [Sp] | 103 / 25 [Sp] | 103 / 25 [Sp] | 1 / 103 [Sp] | 125 / 128 [Sp] | 8 / 139 [Sp] | 0 [Sp] | 21.80 over 25 [Sp] | 0 [Sp] |
+| `mod.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 2 [Sp] | 0 [Sp] | 68 / 15 [Sp] | 68 / 15 [Sp] | 9 / 68 [Sp] | none untagged [Sp] | 8 / 104 [Sp] | 0 [Sp] | 14.80 over 15 [Sp] | 0 [Sp] |
+| `automatce-base.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 1.70 over 27 [Sp] | 0 [Sp] | **11 / 309** [S FP] | 11 / 309 [Sp] | 0 [Sp] | none untagged [Sp] | **271 / 331** [S FP] | 0 [Sp] | 16.94 over 309 [Sp] | 0 [Sp] |
+| `mfto.ttl` | 0 [S] | **18 / 18** [F] | 2 / 2 [-] | no parent [-] | 4 / 18 [-] | 2 / 18 [-] | 2 / 18 [-] | 2 / 2 [-] | none untagged [-] | **14 / 14** [S FP] | 2 [-] | no definition [-] | 0 [-] |
+| `rights-ontology.ttl` | 0 [S] | 0 [S] | 0 [-] | 2.50 over 4 [-] | 1 / 12 [-] | **0 / 12** [?] | 0 / 12 [-] | 0 [-] | none untagged [-] | 0 [-] | 0 [-] | 22.67 over 12 [-] | 0 [-] |
+| `pao.owl` | 0 [S] | 10 / 103 [S] | **13 / 13** [F] | **13.57 over 7** [?] | 0 [-] | 13 / 103 [-] | 13 / 103 [-] | **10 / 13** [?] | none untagged [-] | 12 / 107 [-] | 2 [-] | 12.11 over 93 [-] | 0 [-] |
+| `ids-ontology.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | no class [Sp] | no class [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | **80** [S FP] | no definition [Sp] | 2 / 16 [Sp] |
+| `tractusx-ontology.ttl` | 0 [Sp] | 0 [Sp] | 2 / 156 [Sp] | 2.60 over 10 [Sp] | 0 [Sp] | 139 / 32 [Sp] | 139 / 32 [Sp] | 0 [Sp] | 183 / 186 [Sp] | 6 / 236 [Sp] | 0 [Sp] | 15.72 over 32 [Sp] | 0 [Sp] |
+| `tractusx-taxonomy.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | no class [Sp] | no class [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | no definition [Sp] | 0 [Sp] |
+| `food-traceability.ttl` | **43 / 43** [F] | **43 / 43** [F] | **31 / 31** [F] | 6.00 over 3 [-] | 0 [-] | 31 / 43 [-] | 31 / 43 [-] | **31 / 31** [S FP] | none untagged [-] | 0 [-] | 0 [-] | no definition [-] | 58 / 137 [-] |
+| `dcterms.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 4 [Sp] | **10 / 22** [S FP] | 55 / 22 [Sp] | 55 / 22 [Sp] | 0 [Sp] | none untagged [Sp] | 3 / 11 [Sp] | 0 [Sp] | 10.91 over 22 [Sp] | 0 [Sp] |
 
 ### Outcomes under the proposed labels
 
-| Rule | Fires (of 21) | True positive | False positive | True negative | False negative | Unlabelled |
-| --- | --- | --- | --- | --- | --- | --- |
-| METRIC001 | 1 | 1 | 0 | 20 | 0 | 0 |
-| METRIC002 | 2 | 2 | 0 | 19 | 0 | 0 |
-| METRIC003 | 2 | 2 | 0 | 17 | 0 | 2 |
-| METRIC004 | 1 | 0 | 0 | 17 | 0 | 4 |
-| METRIC005 | 1 | 0 | 1 | 16 | 0 | 4 |
-| METRIC006 | 3 | 0 | 2 | 15 | 0 | 4 |
-| METRIC007 | 0 | 0 | 0 | 17 | 0 | 4 |
-| METRIC008 | 4 | 0 | 3 | 15 | 0 | 3 |
-| METRIC009 | 3 | 0 | 3 | 14 | 0 | 4 |
-| METRIC010 | 2 | 0 | 2 | 16 | 0 | 3 |
-| METRIC011 | 1 | 0 | 1 | 16 | 0 | 4 |
-| METRIC012 | 0 | 0 | 0 | 17 | 0 | 4 |
-| METRIC013 | 0 | 0 | 0 | 17 | 0 | 4 |
+Counts of (file, rule) pairs. A true negative is *checked* when its label's reason was verified in
+the file, *presumed* when it rests on the file's standing alone.
+
+| Rule | Fires (of 21) | True positive | False positive | True negative, checked | True negative, presumed | False negative | Left open | Not assessed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| METRIC001 | 1 | 1 | 0 | 3 | 17 | 0 | 0 | 0 |
+| METRIC002 | 2 | 2 | 0 | 2 | 17 | 0 | 0 | 0 |
+| METRIC003 | 2 | 2 | 0 | 0 | 17 | 0 | 0 | 2 |
+| METRIC004 | 1 | 0 | 0 | 0 | 17 | 0 | 1 | 3 |
+| METRIC005 | 1 | 0 | 1 | 0 | 16 | 0 | 0 | 4 |
+| METRIC006 | 3 | 0 | 2 | 0 | 15 | 0 | 1 | 3 |
+| METRIC007 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
+| METRIC008 | 4 | 0 | 3 | 0 | 15 | 0 | 1 | 2 |
+| METRIC009 | 3 | 0 | 3 | 0 | 14 | 0 | 0 | 4 |
+| METRIC010 | 2 | 0 | 2 | 0 | 16 | 0 | 0 | 3 |
+| METRIC011 | 1 | 0 | 1 | 0 | 16 | 0 | 0 | 4 |
+| METRIC012 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
+| METRIC013 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
 
 ### The proposed labels
 
-| File | Rules | Label | Why |
-| --- | --- | --- | --- |
-| `bfo-2020-core.ttl` | all | silent | ISO/IEC 21838-2 upper ontology. Curated and widely reused; no aggregate quality problem is known for it. |
-| `ro-core.owl` | all | silent | An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it. |
-| `cco-merged.ttl` | all | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `iao.owl` | all | silent | An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it. |
-| `pato-base.owl` | every other rule | silent | An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it. |
-| `pato-base.owl` | METRIC006 | silent | A quality taxonomy by design: its relations come from RO, so it owns none. |
-| `pato-base.owl` | METRIC009 | silent | Untagged labels are the OBO convention. An English-only vocabulary whose untagged labels are a deliberate convention, not a defect. |
-| `sosa.ttl` | all | silent | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
-| `ssn.ttl` | every other rule | silent | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
-| `ssn.ttl` | METRIC008 | silent | SSN states its signatures as class restrictions instead of global domains and ranges, by design. |
-| `prov-o.ttl` | every other rule | silent | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
-| `prov-o.ttl` | METRIC009 | silent | An English-only vocabulary whose untagged labels are a deliberate convention, not a defect. |
-| `skos-core.rdf` | every other rule | silent | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
-| `skos-core.rdf` | METRIC008 | silent | The SKOS Reference leaves domains and ranges open on purpose; sub-properties inherit them from skos:semanticRelation. |
-| `schemaorg-30.1.ttl` | every other rule | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `schemaorg-30.1.ttl` | METRIC009 | silent | An English-only vocabulary whose untagged labels are a deliberate convention, not a defect. |
-| `sdo-1.9.0.ttl` | all | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `mod.ttl` | all | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `automatce-base.ttl` | every other rule | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `automatce-base.ttl` | METRIC006 | silent | An ODK base release: its relations are imported from PMD core and RO, not owned. |
-| `automatce-base.ttl` | METRIC010 | silent | An application ontology that extends PMD core and BFO by subclassing: reuse by design. |
-| `mfto.ttl` | METRIC001 | silent | Every class is labelled. |
-| `mfto.ttl` | METRIC002 | fire | No class has a definition (18 of 18). |
-| `mfto.ttl` | METRIC010 | silent | Every class sits under a BFO class: alignment to an upper ontology is the intended reuse. |
-| `rights-ontology.ttl` | METRIC001 | silent | Every class is labelled. |
-| `rights-ontology.ttl` | METRIC002 | silent | Every class is defined. |
-| `rights-ontology.ttl` | METRIC006 | unknown | Twelve classes and no relation: a taxonomy of Hohfeld's incidents may be intended, or unfinished. |
-| `pao.owl` | METRIC001 | silent | Every class is labelled. |
-| `pao.owl` | METRIC002 | silent | Most classes are defined (93 of 103). |
-| `pao.owl` | METRIC003 | fire | None of its 13 owned properties is documented. |
-| `pao.owl` | METRIC004 | unknown | 50 named questionnaires under one parent: a catalogue may be flat on purpose, or want grouping by construct. |
-| `pao.owl` | METRIC008 | unknown | 10 of its 13 owned object and datatype properties have no signature, in a small research ontology: unfinished or deliberately open. |
-| `ids-ontology.ttl` | every other rule | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `ids-ontology.ttl` | METRIC011 | silent | The 80 imports are the model's own modules, by relative IRI: a modular header, not 80 dependencies. |
-| `tractusx-ontology.ttl` | all | silent | Curated and widely reused; no aggregate quality problem is known for it. |
-| `tractusx-taxonomy.ttl` | all | silent | A SKOS taxonomy: no class or property, so no METRIC rule has anything to judge. |
-| `food-traceability.ttl` | METRIC001 | fire | No class has a label: a diagram export that was never annotated. |
-| `food-traceability.ttl` | METRIC002 | fire | No class has a definition. |
-| `food-traceability.ttl` | METRIC003 | fire | No property is documented. |
-| `food-traceability.ttl` | METRIC008 | silent | MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design. |
-| `dcterms.ttl` | every other rule | silent | A DCMI Recommendation. Curated and widely reused; no aggregate quality problem is known for it. |
-| `dcterms.ttl` | METRIC005 | silent | 9 of the 10 classes CLS001 calls orphans are targets of dcam:rangeIncludes, which CLS001 does not read: connected, not orphans. |
+| File | Rules | Label | Basis | Why |
+| --- | --- | --- | --- | --- |
+| `bfo-2020-core.ttl` | all | silent | presumed | ISO/IEC 21838-2 upper ontology. Curated and widely reused; no aggregate quality problem is known for it. |
+| `ro-core.owl` | all | silent | presumed | An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it. |
+| `cco-merged.ttl` | all | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `iao.owl` | all | silent | presumed | An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it. |
+| `pato-base.owl` | every other rule | silent | presumed | An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it. |
+| `pato-base.owl` | METRIC006 | silent | checked | A quality taxonomy by design: its relations come from RO, so it owns none. |
+| `pato-base.owl` | METRIC009 | silent | checked | Untagged labels are the OBO convention. An English-only vocabulary whose untagged labels are a deliberate convention, not a defect. |
+| `sosa.ttl` | all | silent | presumed | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
+| `ssn.ttl` | every other rule | silent | presumed | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
+| `ssn.ttl` | METRIC008 | silent | checked | SSN states its signatures as class restrictions instead of global domains and ranges, by design. |
+| `prov-o.ttl` | every other rule | silent | presumed | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
+| `prov-o.ttl` | METRIC009 | silent | checked | An English-only vocabulary whose untagged labels are a deliberate convention, not a defect. |
+| `skos-core.rdf` | every other rule | silent | presumed | A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it. |
+| `skos-core.rdf` | METRIC008 | silent | checked | The SKOS Reference leaves domains and ranges open on purpose; sub-properties inherit them from skos:semanticRelation. |
+| `schemaorg-30.1.ttl` | every other rule | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `schemaorg-30.1.ttl` | METRIC009 | silent | checked | An English-only vocabulary whose untagged labels are a deliberate convention, not a defect. |
+| `sdo-1.9.0.ttl` | all | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `mod.ttl` | all | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `automatce-base.ttl` | every other rule | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `automatce-base.ttl` | METRIC006 | silent | checked | An ODK base release: its relations are imported from PMD core and RO, not owned. |
+| `automatce-base.ttl` | METRIC010 | silent | checked | An application ontology that extends PMD core and BFO by subclassing: reuse by design. |
+| `mfto.ttl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
+| `mfto.ttl` | METRIC001 | silent | checked | Every class is labelled. |
+| `mfto.ttl` | METRIC002 | fire | checked | No class has a definition (18 of 18). |
+| `mfto.ttl` | METRIC010 | silent | checked | Every class sits under a BFO class: alignment to an upper ontology is the intended reuse. |
+| `rights-ontology.ttl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
+| `rights-ontology.ttl` | METRIC001 | silent | checked | Every class is labelled. |
+| `rights-ontology.ttl` | METRIC002 | silent | checked | Every class is defined. |
+| `rights-ontology.ttl` | METRIC006 | unknown | checked | Twelve classes and no relation: a taxonomy of Hohfeld's incidents may be intended, or unfinished. |
+| `pao.owl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
+| `pao.owl` | METRIC001 | silent | checked | Every class is labelled. |
+| `pao.owl` | METRIC002 | silent | checked | Most classes are defined (93 of 103). |
+| `pao.owl` | METRIC003 | fire | checked | None of its 13 owned properties is documented. |
+| `pao.owl` | METRIC004 | unknown | checked | 50 named questionnaires under one parent: a catalogue may be flat on purpose, or want grouping by construct. |
+| `pao.owl` | METRIC008 | unknown | checked | 10 of its 13 owned object and datatype properties have no signature, in a small research ontology: unfinished or deliberately open. |
+| `ids-ontology.ttl` | every other rule | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `ids-ontology.ttl` | METRIC011 | silent | checked | The 80 imports are the model's own modules, by relative IRI: a modular header, not 80 dependencies. |
+| `tractusx-ontology.ttl` | all | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
+| `tractusx-taxonomy.ttl` | all | silent | presumed | A SKOS taxonomy: no class or property, so no METRIC rule has anything to judge. |
+| `food-traceability.ttl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
+| `food-traceability.ttl` | METRIC001 | fire | checked | No class has a label: a diagram export that was never annotated. |
+| `food-traceability.ttl` | METRIC002 | fire | checked | No class has a definition. |
+| `food-traceability.ttl` | METRIC003 | fire | checked | No property is documented. |
+| `food-traceability.ttl` | METRIC008 | silent | checked | MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design. |
+| `dcterms.ttl` | every other rule | silent | presumed | A DCMI Recommendation. Curated and widely reused; no aggregate quality problem is known for it. |
+| `dcterms.ttl` | METRIC005 | silent | checked | 9 of the 10 classes CLS001 calls orphans are targets of dcam:rangeIncludes, which CLS001 does not read: connected, not orphans. |
 <!-- metric_corpus.py: end -->
 
 ## Reading the false positives
@@ -193,11 +221,15 @@ A value below the sample gate (`metric_min_sample`, 10 terms) is left out.
 ## For the maintainer
 
 1. **Approve or correct the labels** in `metric-corpus.json`, then set `"label_status": "approved"`
-   and run `render`. A changed label changes only the counts, never a measurement.
+   and run `render`. A changed label changes only the counts, never a measurement. The presumed
+   ones most need a second look, or replacing with checked ones.
 2. **Decide the open labels**: METRIC004 on PAO, METRIC006 on the Rights Ontology, METRIC008 on PAO.
-3. **No default is changed here.** The corpus supports METRIC001, METRIC002 and METRIC003 as they
-   are. For the six rules with false positives, a limit cannot fix the cause; each would need a
-   scope change (reading restrictions, `dcam:` or inherited signatures, upper-ontology alignment,
-   own-module imports), a product decision for its own issue.
-4. **Known-poor files are missing** for METRIC004, METRIC005 and METRIC007 to METRIC013. Recall
-   needs one per rule; a synthetic fixture shows a boundary, not a real ontology.
+3. **No default is changed here.** Nothing observed argues for changing METRIC001, METRIC002 or
+   METRIC003, but 1 or 2 true positives each, against mostly presumed negatives, cannot confirm
+   their limits either. For the six rules with false positives, a limit cannot fix the cause; each
+   would need a scope change (reading restrictions, `dcam:` or inherited signatures,
+   upper-ontology alignment, own-module imports), a product decision for its own issue.
+4. **Known-poor files are missing** for METRIC004 to METRIC013. Recall needs one per rule; a
+   synthetic fixture shows a boundary, not a real ontology.
+5. **Rerun or retire the snapshot.** Nothing keeps these results current; issue #31 is where a
+   release-time run would go, and `check` is the command it could call.
