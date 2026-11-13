@@ -28,7 +28,9 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Node
 
+from ontolint.models import ExecutionStatus, Finding, RuleExecution
 from ontolint.policy import Policy
+from ontolint.reporting import SEVERITY_ORDER, FileReport, Origin, RunReport
 from ontolint.rules.specs import SEVERITY
 
 type Triple = tuple[Node, Node, Node]
@@ -654,3 +656,107 @@ selector_lists = st.lists(selector_tokens(), max_size=5)
 def canonical(text: str) -> str:
     """Replace blank-node labels in ``text`` by one token so relabelled graphs compare equal."""
     return BNODE_LABEL.sub("_:B", text)
+
+
+# --- Markdown summaries ------------------------------------------------------------------------------
+
+MARKDOWN_ATOMS = (
+    # links, images and footnotes
+    "[x](https://evil.test)",
+    "![i](https://evil.test/i.png)",
+    "[x]: https://evil.test",
+    "[^1]",
+    # HTML, comments, autolinks and entities
+    '<img src=x onerror="alert(1)">',
+    "<script>alert(1)</script>",
+    "<!--",
+    "-->",
+    "<https://evil.test>",
+    "&lt;",
+    "&#64;",
+    "&amp;",
+    # GitHub: mentions, references, emoji shortcodes, math and alerts
+    "@octocat",
+    "@org/team",
+    "#1",
+    "GH-1",
+    "o/r#1",
+    ":smile:",
+    "$x$",
+    "$`x`$",
+    "> [!NOTE]",
+    # GFM autolinks
+    "www.evil.test",
+    "https://evil.test",
+    "a@b.test",
+    # code, blocks, tables, lists and emphasis
+    "`",
+    "``",
+    "```",
+    "~~~",
+    "|",
+    "\\|",
+    "---",
+    "===",
+    "1. ",
+    "- [ ] ",
+    "# h",
+    "\\",
+    "*",
+    "**",
+    "_",
+    "~~",
+    "    ",
+    # what no code span may hold: line breaks, controls, bidi, separators, zero-width and tag characters, variation
+    # selectors and fillers, the unassigned default-ignorable code points, surrogates
+    "\n",
+    "\r\n",
+    "\t",
+    "\x00",
+    "\x1b[31m",
+    RLO,
+    "\u2028",
+    "\u2029",
+    "\u200b",
+    BOM,
+    "\U000e0001",
+    "\U000e0041",
+    "\U00002764\U0000fe0f",
+    "\U000e0100\U000e01ef",
+    "\u2065\ufff0\U000e0080\U000e0fff",
+    "\U00003164",
+    "\ud800",
+    "\udfff",
+    # a userinfo, alone, after a control character and across a line break
+    "https://alice:Zq7Secret@evil.test/x",
+    "\x00://u:pw@h",
+    "https://alice:pw\nZq@h",
+)
+"""What Markdown, HTML or GitHub would turn into markup, or a code span must not hold as it stands."""
+
+
+def markdown_texts() -> st.SearchStrategy[str]:
+    """Text a report may quote: :data:`MARKDOWN_ATOMS` mixed with random text."""
+    return st.lists(st.one_of(st.sampled_from(MARKDOWN_ATOMS), st.text(max_size=8)), max_size=6).map("".join)
+
+
+@st.composite
+def hostile_run_reports(draw: st.DrawFn, max_findings: int = 8) -> RunReport:
+    """Run reports whose every text (paths, origins, rule ids, foci, messages, details) is :func:`markdown_texts`;
+    severities and statuses are the real ones, and a baseline (accepted findings, stale entries) is optional."""
+    texts = markdown_texts()
+    findings = st.builds(
+        Finding, rule=texts, severity=st.sampled_from(SEVERITY_ORDER), focus=texts, message=texts, suggestion=texts
+    )
+    executions = st.builds(RuleExecution, texts, st.sampled_from(list(ExecutionStatus)), texts)
+    files = []
+    for _ in range(draw(st.integers(0, 3))):
+        found = tuple(draw(st.lists(findings, max_size=max_findings)))
+        origins = {f: Origin(draw(texts), draw(texts)) for f in found if draw(st.booleans())}
+        ran = tuple(draw(st.lists(executions, max_size=4)))
+        files.append(FileReport(draw(texts), draw(texts), found, ran, origins=origins))
+    if not draw(st.booleans()):
+        return RunReport(tuple(files))
+    baselined = tuple(tuple(draw(st.lists(findings, max_size=3))) for _ in files)
+    stale = tuple(draw(st.lists(st.sampled_from(("a" * 64, "b" * 64)), max_size=2, unique=True)))
+    return RunReport(tuple(files), stale_baseline=stale, baselined=baselined)
