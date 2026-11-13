@@ -1021,4 +1021,14 @@ checks.
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/arnaudgelas/ontolint/blob/main/LICENSE).
+Copyright 2026 Arnaud Gelas. Licensed under the Apache License, Version 2.0. See
+[LICENSE](https://github.com/arnaudgelas/ontolint/blob/main/LICENSE) and
+[NOTICE](https://github.com/arnaudgelas/ontolint/blob/main/NOTICE), which every redistribution
+must keep (section 4(d) of the licence). The crosswalks' sources and what they reuse are in
+[data/README.md](https://github.com/arnaudgelas/ontolint/blob/main/data/README.md).
+
+The logo (`logo.png`) was made with an AI image generator and added by the maintainer on
+2026-11-07 (`84045cc`); which generator was used is not recorded. It is in the repository only,
+not in the sdist or the wheel. Some jurisdictions, the United States among them, do not grant
+copyright to images made without human authorship, so the copyright line above may not cover the
+logo; whatever rights in it the project holds are under the same Apache-2.0 licence.
