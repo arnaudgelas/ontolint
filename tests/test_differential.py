@@ -83,6 +83,11 @@ fixtures, and ``--explain SHQ001 --format json`` prints the row's ``test_require
 ``explain_shapes_rule_json`` (its two outputs) changed; a JSON diff of the two snapshots showed nothing
 else.  The SHQ behaviour fixes before it moved no finding of the snapshot: the fixtures hold none of the
 constructs they concern, and ``legacy_rules.json`` did not move.
+
+Deliberate golden update (issue #9): two text SHACL001 cases added, ``text_clean_shacl_violation`` and
+``text_node_shacl_violation`` (``shacl_node.ttl``, an ``sh:node`` violation with two nested causes), pinned at
+main's behaviour (SHACL001 code as in 0.13.1; 3 findings for the ``sh:node`` run); no existing hash moved, and
+``legacy_rules.json`` is unchanged (neither case has ``--format``, so neither has a legacy view).
 """
 
 from __future__ import annotations
@@ -203,6 +208,14 @@ CLI_CASES: dict[str, tuple[list[str], int | None]] = {
     "text_clean": ([str(FIXTURES / "clean.ttl")], None),
     "json_clean_shacl_violation": (
         [str(FIXTURES / "clean.ttl"), "--format", "json", "--shapes", str(FIXTURES / "clean_shapes.ttl")],
+        None,
+    ),
+    "text_clean_shacl_violation": (
+        [str(FIXTURES / "clean.ttl"), "--shapes", str(FIXTURES / "clean_shapes.ttl")],
+        None,
+    ),
+    "text_node_shacl_violation": (
+        [str(FIXTURES / "shacl_node.ttl"), "--shapes", str(FIXTURES / "shacl_node_shapes.ttl"), "--select", "SHACL001"],
         None,
     ),
     "json_robot_fail": ([_kitchen(), "--format", "json", "--owl-profile", "EL"], 1),
