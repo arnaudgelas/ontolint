@@ -236,19 +236,13 @@ def _disjoint_pairs(ctx: RuleContext) -> set[tuple[URIRef, URIRef]]:
     pairs: set[tuple[URIRef, URIRef]] = set()
     for a, b in ctx.g.subject_objects(OWL.disjointWith):
         if isinstance(a, URIRef) and isinstance(b, URIRef) and a in ctx.classes and b in ctx.classes and a != b:
-            # gremlin: pardon[equivalent] a != b is guarded above, so str(a) == str(b) cannot occur
-            pairs.add((a, b) if str(a) < str(b) else (b, a))
+            low, high = sorted((a, b), key=str)
+            pairs.add((low, high))
     for group in ctx.g.subjects(RDF.type, OWL.AllDisjointClasses):
         head = next(iter(ctx.g.objects(group, OWL.members)), None)
         members = list_items(ctx.g, head, limit=MAX_DISJOINT_MEMBERS) if head is not None else None
-        distinct = sorted({m for m in members or () if m in ctx.classes}, key=str)
-        pairs.update(
-            (a, b)
-            for i, a in enumerate(distinct)
-            for b in distinct[i + 1 :]
-            # gremlin: pardon[equivalent] distinct is filtered by ctx.classes; the check only narrows the type
-            if isinstance(a, URIRef) and isinstance(b, URIRef)
-        )
+        distinct = sorted(ctx.classes.intersection(members or ()), key=str)
+        pairs.update((a, b) for i, a in enumerate(distinct) for b in distinct[i + 1 :])
     return pairs
 
 

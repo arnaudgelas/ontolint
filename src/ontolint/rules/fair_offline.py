@@ -363,8 +363,9 @@ def _person_identifiers(ctx: RuleContext) -> None:
     seen: set[tuple[Node, Node]] = set()
     for predicate in PERSON_PREDICATES:
         for subject, value in ctx.g.subject_objects(predicate):
-            # gremlin: pardon[equivalent] repeats are de-duplicated by add(); blank nodes give no problems
-            if not isinstance(value, URIRef | Literal) or (subject, value) in seen:
+            if not isinstance(value, URIRef | Literal):
+                continue
+            if (subject, value) in seen:
                 continue
             seen.add((subject, value))
             for kind, identifier, problem in _identifier_problems(value):
