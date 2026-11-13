@@ -477,8 +477,8 @@ Nothing open: 0.11.0 is released (see "Recently done").
     equivalents are pardoned (`zip(strict=True)` over lists built from one another; `<` or `<=`
     when keeping the least subject). The run was not repeated after those changes.
     Left open, under P1 "Baseline identity": release sequencing and the upgrade note to paste at
-    release (both since settled by this release itself, issue #10), the lenient version 1 match,
-    SARIF `partialFingerprints`. Messages this release
+    release (both since settled by this release itself, issue #10), the lenient version 1 match;
+    SARIF `partialFingerprints` was since decided too (issue #10: designed under GITHUB-ACTION). Messages this release
     changes for an unchanged input (list each later rule here as it lands): METRIC002, METRIC003
     and METRIC012 counts (LEX002-CLOSURE); OWL034, OWL036 and OWL040, and OWL032 and
     OWL042-OWL045 with a literal operand, OWL013 with a line break in its literal, and SEC014's
@@ -741,8 +741,10 @@ Validation corpus (public; licences per repository):
     by its fingerprint. Refusing version 1 matches for paths a version 2 file covers would close
     that, but would also reopen findings whenever a later release refines a rule's subject:
     decide which risk to take.
-  - *SARIF `partialFingerprints`* (code scanning merges results without them): left to the
-    GITHUB-ACTION item, which has the consumer.
+  - *SARIF `partialFingerprints`* (decided, issue #10): not emitted in 0.14.0. Nothing in this
+    repository can check what code scanning does with them before the Action uploads a report, and
+    waiting takes nothing away from today's users. The design, the failure modes it answers and
+    its tests are under GITHUB-ACTION (#24), which implements it.
   *Done when:* each is decided, and a decided change has its test.
 
 - [ ] **Audit the specifications of implemented rules, not only proposed rules.** A rule can be
@@ -978,9 +980,45 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   comes only if a user without code scanning asks for one. `action.yml` sits at the repository
   root, so `uses: arnaudgelas/ontolint@vX.Y.Z` pins the Action and the ontolint it installs to one
   release: from PyPI, by exact version with hashes, never the latest. Code scanning ignores SARIF
-  property bags, so `properties.evidence` does not reach its UI, and results with one message on
-  one location may be shown as one (there are no `partialFingerprints`); check both. The `tags`
-  ruleset already protects that tag. Decide:
+  property bags, so `properties.evidence` does not reach its UI; check it. The `tags` ruleset
+  already protects that tag.
+
+  *SARIF `partialFingerprints`* (designed in issue #10, implemented here). ontolint writes none,
+  so `upload-sarif` computes `primaryLocationLineHash` from the rule and about 100 characters of
+  source from the result's start line, and code scanning tracks an alert by it:
+  - results of one rule that start on one line share one hash, and are told apart only by a
+    count (32 of the kitchen sink's 136 SARIF results fall in 14 such groups);
+  - results without a region (ONT002, LEX007, SEC007, any ROBOT-converted file) or whose URI does
+    not resolve under the checkout (an absolute path, a file outside the repository) get no hash;
+  - re-serializing an ontology moves its lines, so its alerts close and reopen (about 19 or
+    fewer of 136 survive a re-serialization of the kitchen sink, where all 136 baseline
+    identities do).
+
+  The design:
+  - key `ontolintIdentity/v2`, value the baseline version 2 `identity(f)` (rule, focus and
+    subject), never the message and never the version 1 hash;
+  - `ontolintFingerprint/v1`, the path-free version 1 `fingerprint(f)`, is added only to a result
+    whose identity another result of its report shares (`baseline._unique`'s condition, factored
+    out for both), so such results stay apart;
+  - versioning: the key's suffix moves with `IDENTITY_TAG`; a subject refinement changes the
+    value, not the key, and is announced as a baseline break (`tests/golden/identities.json`).
+  - Disclosed cost: while a sibling shares a result's identity, the result's set of partial
+    fingerprints depends on its message, and the set changes when that sibling appears or goes.
+  - Left open, to decide from an observed upload: whether ontolint also writes
+    `primaryLocationLineHash` (GitHub keeps a value it finds and warns when it differs from its
+    own), whether the upload goes through `upload-sarif` or the REST API, and where in the result
+    the key sits.
+
+  Tests: each result's `ontolintIdentity/v2` equals the baseline identity of the same run; the
+  value does not move under a reworded message, a severity override, an evidence change or an
+  rdflib re-serialization of the input; it holds no IRI userinfo; OWL004's two findings on one
+  property get different values; only a forced identity collision gets the `v1` key; a one-file
+  run gives each result the value of the multi-file run; every report still validates against the
+  vendored SARIF 2.1.0 schema; and `sarif_default`, `sarif_shapes` and `multi_file_sarif` change
+  in a deliberate golden update. The Action's workflow proves, on a fixture, that two findings on
+  one line make two alerts and that a re-serialized fixture keeps its alerts.
+
+  Decide:
   - whether SARIF upload is the Action's job, which needs `security-events: write`, or the
     caller's;
   - whether one run writes both SARIF and the summary (a flag such as `--markdown-summary FILE`,
