@@ -586,8 +586,10 @@ def _assert_writers_layout(fixture: str, text: str) -> None:
 
 @pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
 def test_a_java_jsonld_fixture_is_an_export_of_the_turtle_next_to_it(tmp_path: Path, fixture: str) -> None:
-    exported = _document(tmp_path, "a.jsonld", (JAVA_JSONLD / fixture).read_text(encoding="utf-8")).graph
+    text = (JAVA_JSONLD / fixture).read_text(encoding="utf-8")
+    exported = _document(tmp_path, "a.jsonld", text).graph
     assert isomorphic(exported, Graph().parse(JAVA_JSONLD / "pets.ttl", format="turtle"))
+    _graph_nodes_by_id(text)  # and each node is written once: a repeated node changes no graph, only the file
 
 
 @pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
@@ -608,9 +610,13 @@ def test_every_iri_subject_of_a_java_jsonld_file_is_located_at_an_id(tmp_path: P
         assert prefixes.get(prefix, prefix + ":") + local == str(node), (node, location)
 
 
+@pytest.mark.parametrize("cwd", [".", "tests"], ids=["from-root", "from-tests"])
 @pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
-def test_a_java_jsonld_finding_has_a_region_at_its_focus(capsys: pytest.CaptureFixture[str], fixture: str) -> None:
+def test_a_java_jsonld_finding_has_a_region_at_its_focus(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, fixture: str, cwd: str
+) -> None:
     """The findings of the Turtle the file was exported from, each with a region that spells its focus."""
+    monkeypatch.chdir(Path(__file__).parent.parent / cwd)
     path = JAVA_JSONLD / fixture
     regions = _regions(path, capsys)
     turtle = _regions(JAVA_JSONLD / "pets.ttl", capsys)
@@ -627,14 +633,40 @@ def test_a_java_jsonld_finding_has_a_region_at_its_focus(capsys: pytest.CaptureF
     main([str(path), "--format", "sarif", "--fail-on", "never"])
     results = json.loads(capsys.readouterr().out)["runs"][0]["results"]
     uris = {r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] for r in results}
-    assert {(Path.cwd() / uri).resolve() for uri in uris} == {path.resolve()}  # relative to the working directory
+    assert not any(Path(uri).is_absolute() for uri in uris), uris  # relative to the working directory...
+    assert {(Path.cwd() / uri).resolve() for uri in uris} == {path.resolve()}  # ...and naming the linted file
     assert not any({"endLine", "endColumn"} & set(r["locations"][0]["physicalLocation"]["region"]) for r in results)
 
 
 def _graph_nodes_by_id(text: str) -> dict[str, object]:
     """The export as data (its context, and its ``@graph`` nodes by ``@id``), so member and node order do not count."""
     data = json.loads(text)
+    ids = [node["@id"] if isinstance(node, dict) else None for node in data["@graph"]]
+    assert all(isinstance(node_id, str) for node_id in ids), ids  # a node without an @id would be dropped
+    assert len(ids) == len(set(ids)), ids  # so would all but the last of two nodes with one @id
     return {"@context": data["@context"], **{node["@id"]: node for node in data["@graph"]}}
+
+
+# The jars of the apache-jena-4.10.0.zip whose SHA-512 the fixture README gives (each also matches the SHA-1
+# that Maven Central publishes for it). Checked before the riot test trusts the installation.
+JENA_JARS = {
+    "jena-arq-4.10.0.jar": "b091b4ddb5f0bf6de9d843b351bf6145899fab249ca754ac683453f969dd3137",
+    "jsonld-java-0.13.4.jar": "d8101c31cb4d6d07e87f03855c32ed67dbf29174b1a1a3a38cff8246290d3dcf",
+    "jackson-core-2.15.3.jar": "51fab7aad51ed588482edc507fd542747936c5094d1ab76ed21ddb63b96b610d",
+    "titanium-json-ld-1.3.2.jar": "a6f86da74bb4f6d4e3252f8b019157628f888ebc9c62b16bd2104a3f5725aed4",
+}
+
+
+def _riot(*args: str) -> str:
+    home = os.environ["ONTOLINT_JENA_HOME"]
+    return subprocess.run(  # noqa: S603 -- the maintainer's own Jena, named by ONTOLINT_JENA_HOME
+        [str(Path(home) / "bin" / "riot"), *args],
+        capture_output=True,
+        check=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "JENA_HOME": home},
+    ).stdout
 
 
 @pytest.mark.skipif("ONTOLINT_JENA_HOME" not in os.environ, reason="set ONTOLINT_JENA_HOME to an Apache Jena 4.10.0")
@@ -642,19 +674,15 @@ def _graph_nodes_by_id(text: str) -> dict[str, object]:
     ("fixture", "variant"), [("pets.jsonld10.jsonld", "JSONLD10"), ("pets.jsonld11.jsonld", "JSONLD")]
 )
 def test_a_java_jsonld_fixture_is_what_riot_writes_today(fixture: str, variant: str) -> None:
-    """The fixtures' provenance, checkable by anyone with Jena: a fresh export equals the fixture up to order.
+    """Corroborates the fixtures' origin: a fresh export by Jena 4.10.0 equals the fixture up to order.
 
     Neither writer reproduces its bytes (member and node order vary between runs), so the bytes are compared
-    as data, and the layout by the same test as the committed file. Not run in CI, which has no Java.
+    as data, and the layout by the same test as the committed file. The installation is identified by its
+    jars' digests and riot's version; the bin/riot script itself is trusted. Not run in CI, which has no Java.
     """
-    riot = Path(os.environ["ONTOLINT_JENA_HOME"]) / "bin" / "riot"
-    fresh = subprocess.run(  # noqa: S603 -- the maintainer's own Jena, named by ONTOLINT_JENA_HOME
-        [str(riot), f"--formatted={variant}", str(JAVA_JSONLD / "pets.ttl")],
-        capture_output=True,
-        check=True,
-        text=True,
-        encoding="utf-8",
-        env={**os.environ, "JENA_HOME": os.environ["ONTOLINT_JENA_HOME"]},
-    ).stdout
+    lib = Path(os.environ["ONTOLINT_JENA_HOME"]) / "lib"
+    assert {jar: hashlib.sha256((lib / jar).read_bytes()).hexdigest() for jar in JENA_JARS} == JENA_JARS
+    assert _riot("--version").strip() == "Apache Jena RIOT version 4.10.0"
+    fresh = _riot(f"--formatted={variant}", str(JAVA_JSONLD / "pets.ttl"))
     assert _graph_nodes_by_id(fresh) == _graph_nodes_by_id((JAVA_JSONLD / fixture).read_text(encoding="utf-8"))
     _assert_writers_layout(fixture, fresh)
