@@ -107,8 +107,8 @@ def run_bounded(task: WorkerTask, seconds: float, *, name: str) -> dict[str, Any
     context = multiprocessing.get_context("spawn")
     # gremlin: pardon[equivalent] the parent only reads and the worker only writes; duplex adds no behaviour
     receiver, sender = context.Pipe(duplex=False)
-    # gremlin: pardon[equivalent] the worker is always stopped in `finally`, so daemon only matters if the parent dies
     rdflib_level = logging.getLogger("rdflib").level
+    # gremlin: pardon[equivalent] the worker is always stopped in `finally`, so daemon only matters if the parent dies
     process = context.Process(target=_worker_main, args=(sender, task, rdflib_level), daemon=True)
     process.start()
     sender.close()  # the parent only reads: EOF on the pipe means the worker is gone

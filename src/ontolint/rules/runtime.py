@@ -239,9 +239,7 @@ class RuleContext:
             # One finding per message: of the subjects offered for it, keep the least, so the subject does not
             # depend on the order the graph is iterated in (a rule's subject finer than its message).
             index = self._emitted[key]
-            # gremlin: pardon[equivalent] replacing an equal subject by itself changes nothing
-            if about < self.findings[index].subject:
-                self.findings[index] = replace(self.findings[index], subject=about)
+            self.findings[index] = replace(self.findings[index], subject=min(about, self.findings[index].subject))
             return
         self.seen.add(key)
         self._emitted[key] = len(self.findings)

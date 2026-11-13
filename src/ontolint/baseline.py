@@ -79,7 +79,8 @@ def _unique(report: FileReport) -> list[tuple[Finding, str, bool]]:
     ids = [identity(f) for f in report.findings]
     counts = Counter(ids)
     # gremlin: pardon[equivalent] ids is built from report.findings, so the lengths always match
-    return [(f, i, counts[i] == 1) for f, i in zip(report.findings, ids, strict=True)]
+    pairs = zip(report.findings, ids, strict=True)
+    return [(f, i, counts[i] == 1) for f, i in pairs]
 
 
 def build(reports: Sequence[FileReport]) -> Baseline:
