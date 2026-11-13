@@ -39,11 +39,17 @@ in "For the maintainer" below.
 SHA-256. No corpus file is committed. Twenty files are fixed by a commit in their URL; SKOS Core
 is the W3C namespace document and is fixed by its checksum only. The script reads the manifest
 through `load_manifest`, which refuses:
-- an id that is not a plain file name, so `fetch` and `measure` never write or read outside DIR;
+- an id that is not a plain file name;
 - a source that is not pinned: no 64-hex SHA-256, no https URL, or a commit that is malformed or
   missing from the URL;
 - a missing licence, or an id given twice;
 - a label whose expectation and basis disagree.
+
+`fetch` and `measure` also refuse a corpus file that is a symbolic link or not a regular file.
+`fetch` writes a download by renaming a new file over the old name, which replaces a hard link
+instead of writing through it, and `measure` lints a private copy of the bytes whose checksum it
+checked. So neither reads or writes outside DIR through a name in it. DIR itself is yours: if it
+is a link, they follow it.
 
 The corpus mixes:
 
