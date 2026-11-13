@@ -7,7 +7,7 @@ Install and run: `uv tool install ontolint`, then `ontolint ontology.ttl`. Machi
 ## Start here
 
 - [README](https://github.com/arnaudgelas/ontolint/blob/main/README.md): quick start, every option, policy and baselines, input formats, input safety, limitations.
-- [Rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md): the index of every rule, linking one page per family (`docs/rules/<family>.md`) that gives each rule's severity, a failing example, a clean example and its message. Generated from the catalogue.
+- [Rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md): the index of every rule, linking one page per family (`docs/rules/<family>.md`) that gives each rule's severity and every failing and clean test case, with the message reported for each failing one. Generated from the catalogue.
 - [Rule catalogue](https://github.com/arnaudgelas/ontolint/blob/main/src/ontolint/data/rule_catalogue.csv): the machine-readable source of the rule list.
 
 ## Reference

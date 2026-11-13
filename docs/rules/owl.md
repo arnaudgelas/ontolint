@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Explicitly declare local classes used in class axioms.
 
-*Flagged:* undeclared superclass
+*Flagged:* `undeclared superclass`
 
 ```turtle
 ex:A a owl:Class ; rdfs:subClassOf ex:Undeclared .
@@ -34,11 +34,59 @@ ex:A a owl:Class ; rdfs:subClassOf ex:Undeclared .
 
 Reported: `URI used in subclass axiom but not explicitly declared a class.`
 
-*Clean:* declared superclass
+*Flagged:* `undeclared subclass`
+
+```turtle
+ex:Undeclared rdfs:subClassOf ex:A . ex:A a owl:Class .
+```
+
+Reported: `URI used in subclass axiom but not explicitly declared a class.`
+
+*Flagged:* `declared only as a property`
+
+```turtle
+ex:p a owl:ObjectProperty ; rdfs:subClassOf ex:A . ex:A a owl:Class .
+```
+
+Reported: `URI used in subclass axiom but not explicitly declared a class.`
+
+*Clean:* `declared superclass`
 
 ```turtle
 ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class .
 ```
+
+*Clean:* `declared rdfs:Class`
+
+```turtle
+ex:A a rdfs:Class ; rdfs:subClassOf ex:B . ex:B a rdfs:Class .
+```
+
+*Clean:* `owl:Thing is exempt`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf owl:Thing .
+```
+
+*Clean:* `owl:Nothing is exempt`
+
+```turtle
+owl:Nothing rdfs:subClassOf ex:A . ex:A a owl:Class .
+```
+
+*Clean:* `anonymous superclass`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A ] . ex:p a owl:ObjectProperty .
+```
+
+*Clean:* `foreign superclass`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf <https://other.example.test/vocab#Agent> .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### OWL002: Undeclared property in domain or range axiom
 
@@ -47,7 +95,7 @@ ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class .
 - **Category:** heuristic
 - **Fix:** Explicitly declare local properties used in schema axioms.
 
-*Flagged:* domain on an undeclared property
+*Flagged:* `domain on an undeclared property`
 
 ```turtle
 ex:p rdfs:domain ex:A . ex:A a owl:Class .
@@ -55,11 +103,41 @@ ex:p rdfs:domain ex:A . ex:A a owl:Class .
 
 Reported: `Predicate used with rdfs:domain but not declared property.`
 
-*Clean:* declared property
+*Flagged:* `range on an undeclared property`
+
+```turtle
+ex:p rdfs:range ex:A . ex:A a owl:Class .
+```
+
+Reported: `Predicate used with rdfs:range but not declared property.`
+
+*Flagged:* `typed only by a characteristic`
+
+```turtle
+ex:p a owl:TransitiveProperty ; rdfs:domain ex:A . ex:A a owl:Class .
+```
+
+Reported: `Predicate used with rdfs:domain but not declared property.`
+
+*Clean:* `declared property`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:A a owl:Class .
 ```
+
+*Clean:* `declared rdf:Property`
+
+```turtle
+ex:p a rdf:Property ; rdfs:range ex:A . ex:A a owl:Class .
+```
+
+*Clean:* `foreign property`
+
+```turtle
+<https://other.example.test/vocab#p> rdfs:domain ex:A . ex:A a owl:Class .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### OWL003: Property typed as both object and datatype property
 
@@ -68,7 +146,7 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:A a owl:Class .
 - **Category:** heuristic
 - **Fix:** Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty.
 
-*Flagged:* object and datatype property
+*Flagged:* `object and datatype property`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:DatatypeProperty .
@@ -76,10 +154,32 @@ ex:p a owl:ObjectProperty, owl:DatatypeProperty .
 
 Reported: `Property is typed as both object and datatype property.`
 
-*Clean:* object property only
+*Flagged:* `foreign property typed both`
+
+```turtle
+<https://other.example.test/vocab#p> a owl:ObjectProperty, owl:DatatypeProperty .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+Reported: `Property is typed as both object and datatype property.`
+
+*Clean:* `object property only`
 
 ```turtle
 ex:p a owl:ObjectProperty .
+```
+
+*Clean:* `datatype property only`
+
+```turtle
+ex:p a owl:DatatypeProperty .
+```
+
+*Clean:* `object and annotation property (OWL030)`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:AnnotationProperty .
 ```
 
 #### OWL004: Multiple domains or ranges mean intersection
@@ -89,7 +189,7 @@ ex:p a owl:ObjectProperty .
 - **Category:** heuristic
 - **Fix:** Review conjunction semantics of multiple rdfs:domain/rdfs:range; use owl:unionOf if intended.
 
-*Flagged:* two domains
+*Flagged:* `two domains`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:domain ex:A, ex:B .
@@ -97,11 +197,47 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A, ex:B .
 
 Reported: `Multiple asserted domains (2) mean intersection, not union.`
 
-*Clean:* single domain and range
+*Flagged:* `two ranges`
+
+```turtle
+ex:p a owl:ObjectProperty ; rdfs:range ex:A, ex:B .
+```
+
+Reported: `Multiple asserted ranges (2) mean intersection, not union.`
+
+*Flagged:* `a named and an anonymous domain`
+
+```turtle
+ex:p a owl:ObjectProperty ; rdfs:domain ex:A, [ owl:unionOf ( ex:B ex:C ) ] .
+```
+
+Reported: `Multiple asserted domains (2) mean intersection, not union.`
+
+*Clean:* `single domain and range`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:domain ex:A ; rdfs:range ex:B .
 ```
+
+*Clean:* `one union domain`
+
+```turtle
+ex:p a owl:ObjectProperty ; rdfs:domain [ owl:unionOf ( ex:A ex:B ) ] .
+```
+
+*Clean:* `undeclared property (OWL002)`
+
+```turtle
+ex:p rdfs:domain ex:A, ex:B .
+```
+
+*Clean:* `foreign property`
+
+```turtle
+<https://other.example.test/vocab#p> a owl:ObjectProperty ; rdfs:domain ex:A, ex:B .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### OWL005: Property without domain
 
@@ -110,7 +246,7 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A ; rdfs:range ex:B .
 - **Category:** heuristic
 - **Fix:** Consider declaring domain or explaining why a global domain is inappropriate.
 
-*Flagged:* no domain
+*Flagged:* `no domain`
 
 ```turtle
 ex:p a owl:ObjectProperty .
@@ -118,11 +254,67 @@ ex:p a owl:ObjectProperty .
 
 Reported: `Property has no asserted rdfs:domain.`
 
-*Clean:* domain asserted
+*Flagged:* `datatype property without domain`
+
+```turtle
+ex:d a owl:DatatypeProperty .
+```
+
+Reported: `Property has no asserted rdfs:domain.`
+
+*Flagged:* `rdf:Property without domain`
+
+```turtle
+ex:p a rdf:Property .
+```
+
+Reported: `Property has no asserted rdfs:domain.`
+
+*Flagged:* `annotation property also typed object property`
+
+```turtle
+ex:p a owl:AnnotationProperty, owl:ObjectProperty .
+```
+
+Reported: `Property has no asserted rdfs:domain.`
+
+*Clean:* `domain asserted`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:domain ex:A .
 ```
+
+*Clean:* `schema:domainIncludes`
+
+```turtle
+ex:p a rdf:Property ; <https://schema.org/domainIncludes> ex:A .
+```
+
+*Clean:* `dcam:domainIncludes`
+
+```turtle
+ex:p a rdf:Property ; <http://purl.org/dc/dcam/domainIncludes> ex:A .
+```
+
+*Clean:* `deprecated property`
+
+```turtle
+ex:p a owl:ObjectProperty ; owl:deprecated true .
+```
+
+*Clean:* `annotation property`
+
+```turtle
+ex:p a owl:AnnotationProperty .
+```
+
+*Clean:* `foreign property`
+
+```turtle
+<https://other.example.test/vocab#p> a owl:ObjectProperty .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### OWL006: Property without range
 
@@ -131,7 +323,7 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A .
 - **Category:** heuristic
 - **Fix:** Consider declaring range or explaining why a global range is inappropriate.
 
-*Flagged:* no range
+*Flagged:* `no range`
 
 ```turtle
 ex:p a owl:ObjectProperty .
@@ -139,11 +331,59 @@ ex:p a owl:ObjectProperty .
 
 Reported: `Property has no asserted rdfs:range.`
 
-*Clean:* range asserted
+*Flagged:* `datatype property without range`
+
+```turtle
+ex:d a owl:DatatypeProperty .
+```
+
+Reported: `Property has no asserted rdfs:range.`
+
+*Flagged:* `rdf:Property without range`
+
+```turtle
+ex:p a rdf:Property .
+```
+
+Reported: `Property has no asserted rdfs:range.`
+
+*Clean:* `range asserted`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:range ex:A .
 ```
+
+*Clean:* `schema:rangeIncludes`
+
+```turtle
+ex:p a rdf:Property ; <http://schema.org/rangeIncludes> ex:A .
+```
+
+*Clean:* `dcam:rangeIncludes`
+
+```turtle
+ex:p a rdf:Property ; <http://purl.org/dc/dcam/rangeIncludes> ex:A .
+```
+
+*Clean:* `deprecated property`
+
+```turtle
+ex:p a owl:ObjectProperty ; owl:deprecated "true"^^xsd:boolean .
+```
+
+*Clean:* `annotation property`
+
+```turtle
+ex:p a owl:AnnotationProperty .
+```
+
+*Clean:* `foreign property`
+
+```turtle
+<https://other.example.test/vocab#p> a owl:ObjectProperty .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### OWL007: Property declared inverse of itself
 
@@ -152,7 +392,7 @@ ex:p a owl:ObjectProperty ; rdfs:range ex:A .
 - **Category:** heuristic
 - **Fix:** Replace self-inverse modeling with owl:SymmetricProperty when this is intentional.
 
-*Flagged:* inverse of itself
+*Flagged:* `inverse of itself`
 
 ```turtle
 ex:p a owl:ObjectProperty ; owl:inverseOf ex:p .
@@ -160,10 +400,24 @@ ex:p a owl:ObjectProperty ; owl:inverseOf ex:p .
 
 Reported: `Property declared inverse of itself.`
 
-*Clean:* inverse of another property
+*Flagged:* `undeclared property inverse of itself`
+
+```turtle
+ex:p owl:inverseOf ex:p .
+```
+
+Reported: `Property declared inverse of itself.`
+
+*Clean:* `inverse of another property`
 
 ```turtle
 ex:p a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty .
+```
+
+*Clean:* `symmetric property`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:SymmetricProperty .
 ```
 
 #### OWL008: Symmetric property also declared with an inverse
@@ -173,7 +427,7 @@ ex:p a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty .
 - **Category:** heuristic
 - **Fix:** Review redundant or unintended inverse axioms on symmetric properties.
 
-*Flagged:* symmetric with inverse
+*Flagged:* `symmetric with inverse`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty .
@@ -181,10 +435,30 @@ ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf ex:q . ex:q a o
 
 Reported: `Symmetric property also declared inverse of https://example.test/onto#q.`
 
-*Clean:* inverse only
+*Flagged:* `symmetric named as the inverse`
+
+```turtle
+ex:q a owl:ObjectProperty ; owl:inverseOf ex:p . ex:p a owl:ObjectProperty, owl:SymmetricProperty .
+```
+
+Reported: `Symmetric property also declared inverse of https://example.test/onto#q.`
+
+*Clean:* `inverse only`
 
 ```turtle
 ex:p a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty.
+```
+
+*Clean:* `symmetric only`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:SymmetricProperty .
+```
+
+*Clean:* `symmetric and inverse of itself (OWL007)`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf ex:p .
 ```
 
 #### OWL009: Datatype property with object-property characteristic
@@ -194,7 +468,7 @@ ex:p a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty.
 - **Category:** heuristic
 - **Fix:** Use object properties for owl:inverseOf and symmetric/transitive property semantics.
 
-*Flagged:* inverse of a datatype property
+*Flagged:* `inverse of a datatype property`
 
 ```turtle
 ex:d a owl:DatatypeProperty ; owl:inverseOf ex:o . ex:o a owl:ObjectProperty .
@@ -202,10 +476,68 @@ ex:d a owl:DatatypeProperty ; owl:inverseOf ex:o . ex:o a owl:ObjectProperty .
 
 Reported: `owl:inverseOf involves a datatype property.`
 
-*Clean:* transitive object property
+*Flagged:* `datatype property named as the inverse`
+
+```turtle
+ex:o a owl:ObjectProperty ; owl:inverseOf ex:d . ex:d a owl:DatatypeProperty .
+```
+
+Reported: `owl:inverseOf involves a datatype property.`
+
+*Flagged:* `transitive datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:TransitiveProperty .
+```
+
+Reported: `Datatype property declared http://www.w3.org/2002/07/owl#TransitiveProperty.`
+
+*Flagged:* `symmetric datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:SymmetricProperty .
+```
+
+Reported: `Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.`
+
+*Flagged:* `asymmetric datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:AsymmetricProperty .
+```
+
+Reported: `Datatype property declared http://www.w3.org/2002/07/owl#AsymmetricProperty.`
+
+*Flagged:* `inverse-functional datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:InverseFunctionalProperty .
+```
+
+Reported: `Datatype property declared http://www.w3.org/2002/07/owl#InverseFunctionalProperty.`
+
+*Clean:* `transitive object property`
 
 ```turtle
 ex:o a owl:ObjectProperty, owl:TransitiveProperty .
+```
+
+*Clean:* `functional datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:FunctionalProperty .
+```
+
+*Clean:* `reflexive datatype property (OWL016)`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:ReflexiveProperty .
+```
+
+*Clean:* `inverse between object properties`
+
+```turtle
+ex:o a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty .
 ```
 
 #### OWL010: Property chain with fewer than two operands
@@ -215,7 +547,7 @@ ex:o a owl:ObjectProperty, owl:TransitiveProperty .
 - **Category:** heuristic
 - **Fix:** Review an owl:propertyChainAxiom whose RDF list has only one element.
 
-*Flagged:* one-operand chain
+*Flagged:* `one-operand chain`
 
 ```turtle
 ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ) .
@@ -223,10 +555,56 @@ ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ) .
 
 Reported: `Property-chain axiom has one operand.`
 
-*Clean:* two-operand chain
+*Flagged:* `one-operand chain on an undeclared property`
+
+```turtle
+ex:p owl:propertyChainAxiom ( ex:q ) .
+```
+
+Reported: `Property-chain axiom has one operand.`
+
+*Flagged:* `malformed list (not an RDF list)`
+
+```turtle
+ex:p a owl:ObjectProperty ; owl:propertyChainAxiom _:l . _:l rdf:first ex:q .
+```
+
+Reported: `Property-chain axiom does not point to a well-formed RDF list.`
+
+*Flagged:* `empty chain`
+
+```turtle
+ex:p a owl:ObjectProperty ; owl:propertyChainAxiom () .
+```
+
+Reported: `Property-chain axiom list is empty.`
+
+*Flagged:* `chain is a literal`
+
+```turtle
+ex:p a owl:ObjectProperty ; owl:propertyChainAxiom "ex:q ex:r" .
+```
+
+Reported: `Property-chain axiom does not point to a well-formed RDF list.`
+
+*Flagged:* `cyclic chain list`
+
+```turtle
+ex:p owl:propertyChainAxiom _:l . _:l rdf:first ex:q ; rdf:rest _:l .
+```
+
+Reported: `Property-chain axiom does not point to a well-formed RDF list.`
+
+*Clean:* `two-operand chain`
 
 ```turtle
 ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ex:r ) .
+```
+
+*Clean:* `three-operand chain`
+
+```turtle
+ex:p owl:propertyChainAxiom ( ex:q ex:r ex:s ) .
 ```
 
 #### OWL011: Universal restriction without existence
@@ -236,7 +614,7 @@ ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ex:r ) .
 - **Category:** heuristic
 - **Fix:** Check intended allValuesFrom semantics; it does not imply existence of a value.
 
-*Flagged:* allValuesFrom alone (blank-node focus)
+*Flagged:* `allValuesFrom alone (blank-node focus)`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:A .
@@ -244,11 +622,153 @@ ex:p a owl:ObjectProperty ; owl:propertyChainAxiom ( ex:q ex:r ) .
 
 Reported: `Universal restriction does not imply any property value.`
 
-*Clean:* with someValuesFrom
+*Flagged:* `superclass restriction of a named class`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] .
+```
+
+Reported: `Universal restriction on https://example.test/onto#p does not imply any property value.`
+
+*Flagged:* `general class axiom`
+
+```turtle
+[ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] rdfs:subClassOf ex:A .
+```
+
+Reported: `Universal restriction on https://example.test/onto#p in a general class axiom about https://example.test/onto#A does not imply any value.`
+
+*Flagged:* `existence on another property`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] , [ a owl:Restriction ; owl:onProperty ex:q ; owl:someValuesFrom ex:B ] .
+```
+
+Reported: `Universal restriction on https://example.test/onto#p does not imply any property value.`
+
+*Flagged:* `minimum cardinality 0 is no existence`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] , [ a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "0"^^xsd:nonNegativeInteger ] .
+```
+
+Reported: `Universal restriction on https://example.test/onto#p does not imply any property value.`
+
+*Clean:* `with someValuesFrom`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:A ; owl:someValuesFrom ex:A .
 ```
+
+*Clean:* `closure axiom: someValuesFrom on the same class`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] , [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:B ] .
+```
+
+*Clean:* `minimum cardinality 1 on the same class`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] , [ a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+```
+
+*Clean:* `hasValue in the same intersection`
+
+```turtle
+ex:A a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( ex:C [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] [ a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue ex:b ] ) ] .
+```
+
+*Clean:* `datatype filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom xsd:integer .
+```
+
+*Clean:* `declared datatype filler`
+
+```turtle
+ex:D a rdfs:Datatype . [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:D .
+```
+
+*Clean:* `datatype restriction filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom [ a rdfs:Datatype ; owl:onDatatype xsd:integer ; owl:withRestrictions ( [ xsd:minInclusive 0 ] ) ] .
+```
+
+*Clean:* `untyped datatype restriction filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom [ owl:onDatatype xsd:integer ; owl:withRestrictions ( [ xsd:minInclusive 0 ] ) ] .
+```
+
+*Clean:* `untyped datatype complement filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom [ owl:datatypeComplementOf xsd:integer ] .
+```
+
+*Clean:* `rdfs:Literal filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdfs:Literal .
+```
+
+*Clean:* `rdf:langString filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdf:langString .
+```
+
+*Clean:* `rdf:PlainLiteral filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdf:PlainLiteral .
+```
+
+*Clean:* `rdf:XMLLiteral filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdf:XMLLiteral .
+```
+
+*Clean:* `rdf:HTML filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdf:HTML .
+```
+
+*Clean:* `rdf:JSON filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdf:JSON .
+```
+
+*Clean:* `owl:real filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom owl:real .
+```
+
+*Clean:* `owl:rational filler`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom owl:rational .
+```
+
+*Clean:* `datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:d ; owl:allValuesFrom ex:A .
+```
+
+*Clean:* `axiom of a foreign class`
+
+```turtle
+<https://other.example.test/vocab#A> rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:B ] .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### OWL012: Class equivalent to itself
 
@@ -257,7 +777,7 @@ Reported: `Universal restriction does not imply any property value.`
 - **Category:** heuristic
 - **Fix:** Review the use of owl:equivalentClass on the class itself.
 
-*Flagged:* class equivalent to itself
+*Flagged:* `class equivalent to itself`
 
 ```turtle
 ex:A a owl:Class ; owl:equivalentClass ex:A .
@@ -265,7 +785,7 @@ ex:A a owl:Class ; owl:equivalentClass ex:A .
 
 Reported: `Class is explicitly equivalent to itself.`
 
-*Clean:* equivalent to another class
+*Clean:* `equivalent to another class`
 
 ```turtle
 ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
@@ -278,7 +798,7 @@ ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 - **Category:** heuristic
 - **Fix:** An object-property assertion should point to a resource, not a literal.
 
-*Flagged:* object property with literal value
+*Flagged:* `object property with literal value`
 
 ```turtle
 ex:p a owl:ObjectProperty . ex:i ex:p "text" .
@@ -286,10 +806,32 @@ ex:p a owl:ObjectProperty . ex:i ex:p "text" .
 
 Reported: `Object property https://example.test/onto#p points to literal "text".`
 
-*Clean:* object property with resource value
+*Flagged:* `foreign object property with a typed literal`
+
+```turtle
+<https://other.example.test/vocab#p> a owl:ObjectProperty . ex:i <https://other.example.test/vocab#p> "1"^^xsd:integer .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+Reported: `Object property https://other.example.test/vocab#p points to literal "1"^^<http://www.w3.org/2001/XMLSchema#integer>.`
+
+*Clean:* `object property with resource value`
 
 ```turtle
 ex:p a owl:ObjectProperty . ex:i ex:p ex:j .
+```
+
+*Clean:* `object property with blank-node value`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:i ex:p [] .
+```
+
+*Clean:* `undeclared predicate with literal`
+
+```turtle
+ex:i ex:p "text" .
 ```
 
 #### OWL014: Datatype property asserted with a resource value
@@ -299,7 +841,7 @@ ex:p a owl:ObjectProperty . ex:i ex:p ex:j .
 - **Category:** heuristic
 - **Fix:** A datatype-property assertion should point to a literal.
 
-*Flagged:* datatype property with resource value
+*Flagged:* `datatype property with resource value`
 
 ```turtle
 ex:d a owl:DatatypeProperty . ex:i ex:d ex:j .
@@ -307,10 +849,24 @@ ex:d a owl:DatatypeProperty . ex:i ex:d ex:j .
 
 Reported: `Datatype property https://example.test/onto#d points to resource https://example.test/onto#j.`
 
-*Clean:* datatype property with literal value
+*Flagged:* `datatype property with blank-node value`
+
+```turtle
+ex:d a owl:DatatypeProperty . ex:i ex:d [] .
+```
+
+Reported: `Datatype property https://example.test/onto#d points to resource _:304928c2ed93.`
+
+*Clean:* `datatype property with literal value`
 
 ```turtle
 ex:d a owl:DatatypeProperty . ex:i ex:d "text" .
+```
+
+*Clean:* `undeclared predicate with resource`
+
+```turtle
+ex:i ex:d ex:j .
 ```
 
 #### OWL015: Undeclared local predicate
@@ -320,7 +876,7 @@ ex:d a owl:DatatypeProperty . ex:i ex:d "text" .
 - **Category:** heuristic
 - **Fix:** Declare a local predicate as a property (or exclude it from schema-only policy).
 
-*Flagged:* undeclared local predicate
+*Flagged:* `undeclared local predicate`
 
 ```turtle
 ex:i ex:q ex:j .
@@ -330,10 +886,50 @@ Linter options: `base='https://example.test/onto#'`.
 
 Reported: `Local predicate is not explicitly declared as a property.`
 
-*Clean:* declared predicate
+*Flagged:* `typed only by a characteristic`
+
+```turtle
+ex:q a owl:TransitiveProperty . ex:i ex:q ex:j .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+Reported: `Local predicate is not explicitly declared as a property.`
+
+*Clean:* `declared predicate`
 
 ```turtle
 ex:q a owl:ObjectProperty . ex:i ex:q ex:j .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `declared annotation property`
+
+```turtle
+ex:q a owl:AnnotationProperty . ex:i ex:q "x" .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `no base namespace configured`
+
+```turtle
+ex:i ex:q ex:j .
+```
+
+*Clean:* `foreign predicate`
+
+```turtle
+ex:i <https://other.example.test/q> ex:j .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `built-in predicate`
+
+```turtle
+ex:i rdfs:label "i" .
 ```
 
 Linter options: `base='https://example.test/onto#'`.
@@ -345,7 +941,7 @@ Linter options: `base='https://example.test/onto#'`.
 - **Category:** deterministic
 - **Fix:** Remove owl:ReflexiveProperty/owl:IrreflexiveProperty; they apply to object properties only.
 
-*Flagged:* reflexive datatype property
+*Flagged:* `reflexive datatype property`
 
 ```turtle
 ex:d a owl:DatatypeProperty, owl:ReflexiveProperty .
@@ -353,10 +949,30 @@ ex:d a owl:DatatypeProperty, owl:ReflexiveProperty .
 
 Reported: `Datatype property is declared http://www.w3.org/2002/07/owl#ReflexiveProperty.`
 
-*Clean:* reflexive object property
+*Flagged:* `irreflexive datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:IrreflexiveProperty .
+```
+
+Reported: `Datatype property is declared http://www.w3.org/2002/07/owl#IrreflexiveProperty.`
+
+*Clean:* `reflexive object property`
 
 ```turtle
 ex:o a owl:ObjectProperty, owl:ReflexiveProperty .
+```
+
+*Clean:* `plain datatype property`
+
+```turtle
+ex:d a owl:DatatypeProperty .
+```
+
+*Clean:* `symmetric datatype property is OWL009's`
+
+```turtle
+ex:d a owl:DatatypeProperty, owl:SymmetricProperty .
 ```
 
 #### OWL017: Property both symmetric and asymmetric
@@ -366,7 +982,7 @@ ex:o a owl:ObjectProperty, owl:ReflexiveProperty .
 - **Category:** deterministic
 - **Fix:** Keep only one of owl:SymmetricProperty and owl:AsymmetricProperty; together they leave the property empty.
 
-*Flagged:* symmetric and asymmetric
+*Flagged:* `symmetric and asymmetric`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:SymmetricProperty, owl:AsymmetricProperty .
@@ -374,10 +990,24 @@ ex:p a owl:ObjectProperty, owl:SymmetricProperty, owl:AsymmetricProperty .
 
 Reported: `Property is declared both symmetric and asymmetric.`
 
-*Clean:* symmetric only
+*Flagged:* `no kind declaration needed`
+
+```turtle
+ex:p a owl:SymmetricProperty, owl:AsymmetricProperty .
+```
+
+Reported: `Property is declared both symmetric and asymmetric.`
+
+*Clean:* `symmetric only`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:SymmetricProperty .
+```
+
+*Clean:* `asymmetric only`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:AsymmetricProperty .
 ```
 
 #### OWL018: Reflexive property also irreflexive or asymmetric
@@ -387,7 +1017,7 @@ ex:p a owl:ObjectProperty, owl:SymmetricProperty .
 - **Category:** deterministic
 - **Fix:** Remove the contradictory characteristic; a reflexive property cannot be irreflexive or asymmetric.
 
-*Flagged:* reflexive and irreflexive
+*Flagged:* `reflexive and irreflexive`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:ReflexiveProperty, owl:IrreflexiveProperty .
@@ -395,10 +1025,24 @@ ex:p a owl:ObjectProperty, owl:ReflexiveProperty, owl:IrreflexiveProperty .
 
 Reported: `Property is declared both reflexive and irreflexive.`
 
-*Clean:* reflexive and symmetric
+*Flagged:* `reflexive and asymmetric`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:ReflexiveProperty, owl:AsymmetricProperty .
+```
+
+Reported: `Property is declared both reflexive and asymmetric.`
+
+*Clean:* `reflexive and symmetric`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:ReflexiveProperty, owl:SymmetricProperty .
+```
+
+*Clean:* `irreflexive and asymmetric`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:IrreflexiveProperty, owl:AsymmetricProperty .
 ```
 
 #### OWL019: Non-simple property in simple-property axiom
@@ -408,7 +1052,7 @@ ex:p a owl:ObjectProperty, owl:ReflexiveProperty, owl:SymmetricProperty .
 - **Category:** deterministic
 - **Fix:** Drop functional, inverse-functional, irreflexive or asymmetric from transitive or chain-defined properties.
 
-*Flagged:* transitive functional
+*Flagged:* `transitive functional`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:TransitiveProperty, owl:FunctionalProperty .
@@ -416,10 +1060,264 @@ ex:p a owl:ObjectProperty, owl:TransitiveProperty, owl:FunctionalProperty .
 
 Reported: `Property is transitive (non-simple) but declared functional.`
 
-*Clean:* transitive alone
+*Flagged:* `chain-defined irreflexive`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:IrreflexiveProperty ; owl:propertyChainAxiom ( ex:q ex:r ) .
+```
+
+Reported: `Property is defined by a property chain (non-simple) but declared irreflexive.`
+
+*Flagged:* `transitive inverse-functional`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:TransitiveProperty, owl:InverseFunctionalProperty .
+```
+
+Reported: `Property is transitive (non-simple) but declared inverse-functional.`
+
+*Flagged:* `transitive asymmetric`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:TransitiveProperty, owl:AsymmetricProperty .
+```
+
+Reported: `Property is transitive (non-simple) but declared asymmetric.`
+
+*Flagged:* `chain-defined functional`
+
+```turtle
+ex:p a owl:FunctionalProperty ; owl:propertyChainAxiom ( ex:q ex:r ex:s ) .
+```
+
+Reported: `Property is defined by a property chain (non-simple) but declared functional.`
+
+*Flagged:* `functional super-property of a transitive property`
+
+```turtle
+ex:q a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . ex:p a owl:FunctionalProperty .
+```
+
+Reported: `Property is non-simple through https://example.test/onto#q, which is transitive, but declared functional.`
+
+*Flagged:* `asymmetric property two sub-property steps above a transitive one`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:m . ex:m rdfs:subPropertyOf ex:p . ex:p a owl:AsymmetricProperty .
+```
+
+Reported: `Property is non-simple through https://example.test/onto#t, which is transitive, but declared asymmetric.`
+
+*Flagged:* `inverse-functional inverse of a transitive property`
+
+```turtle
+ex:t a owl:TransitiveProperty ; owl:inverseOf ex:p . ex:p a owl:InverseFunctionalProperty .
+```
+
+Reported: `Property is non-simple through https://example.test/onto#t, which is transitive, but declared inverse-functional.`
+
+*Flagged:* `functional property whose inverse is a sub-property's inverse`
+
+```turtle
+ex:t a owl:TransitiveProperty . ex:p owl:inverseOf ex:t . ex:q a owl:FunctionalProperty . ex:p rdfs:subPropertyOf ex:q .
+```
+
+Reported: `Property is non-simple through https://example.test/onto#t, which is transitive, but declared functional.`
+
+*Flagged:* `irreflexive equivalent of a chain-defined property`
+
+```turtle
+ex:c owl:propertyChainAxiom ( ex:a ex:b ) ; owl:equivalentProperty ex:p . ex:p a owl:IrreflexiveProperty .
+```
+
+Reported: `Property is non-simple through https://example.test/onto#c, which is defined by a property chain, but declared irreflexive.`
+
+*Flagged:* `super-property of a transitive inverse expression (INV rule)`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf [ owl:inverseOf ex:p ] . ex:p a owl:FunctionalProperty .
+```
+
+Reported: `Property is non-simple through https://example.test/onto#t, which is transitive, but declared functional.`
+
+*Flagged:* `property whose inverse expression is transitive`
+
+```turtle
+[ owl:inverseOf ex:p ] a owl:TransitiveProperty . ex:p a owl:FunctionalProperty .
+```
+
+Reported: `Property is transitive (non-simple) but declared functional.`
+
+*Flagged:* `property equivalent to the top object property`
+
+```turtle
+ex:p owl:equivalentProperty owl:topObjectProperty ; a owl:FunctionalProperty .
+```
+
+Reported: `Property is non-simple through http://www.w3.org/2002/07/owl#topObjectProperty, which is the top object property, but declared functional.`
+
+*Flagged:* `max cardinality on a transitive property`
+
+```turtle
+ex:t a owl:ObjectProperty, owl:TransitiveProperty . ex:A rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:t ; owl:maxCardinality 1 ] .
+```
+
+Reported: `https://example.test/onto#A: restriction on non-simple property https://example.test/onto#t (transitive) uses owl:maxCardinality.`
+
+*Flagged:* `qualified min cardinality on a super-property of a transitive property`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . [ a owl:Restriction ; owl:onProperty ex:p ; owl:minQualifiedCardinality 2 ; owl:onClass ex:A ] .
+```
+
+Reported: `Restriction on non-simple property https://example.test/onto#p (through https://example.test/onto#t, which is transitive) uses owl:minQualifiedCardinality.`
+
+*Flagged:* `hasSelf on a chain-defined property`
+
+```turtle
+ex:c owl:propertyChainAxiom ( ex:a ex:b ) . [ a owl:Restriction ; owl:onProperty ex:c ; owl:hasSelf true ] .
+```
+
+Reported: `Restriction on non-simple property https://example.test/onto#c (defined by a property chain) uses owl:hasSelf.`
+
+*Flagged:* `cardinality on the inverse of a transitive property`
+
+```turtle
+ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty [ owl:inverseOf ex:t ] ; owl:cardinality 1 ] .
+```
+
+Reported: `Restriction on non-simple property ObjectInverseOf(https://example.test/onto#t) (transitive) uses owl:cardinality.`
+
+*Flagged:* `transitive property declared disjoint`
+
+```turtle
+ex:t a owl:TransitiveProperty ; owl:propertyDisjointWith ex:q .
+```
+
+Reported: `Property is non-simple (transitive) but declared disjoint with https://example.test/onto#q.`
+
+*Flagged:* `simple property declared disjoint with a transitive one`
+
+```turtle
+ex:q owl:propertyDisjointWith ex:t . ex:t a owl:TransitiveProperty .
+```
+
+Reported: `Property is non-simple (transitive) but declared disjoint with https://example.test/onto#q.`
+
+*Flagged:* `chain-defined member of owl:AllDisjointProperties`
+
+```turtle
+ex:c owl:propertyChainAxiom ( ex:a ex:b ) . [ a owl:AllDisjointProperties ; owl:members ( ex:p ex:c ) ] .
+```
+
+Reported: `owl:AllDisjointProperties contains non-simple property https://example.test/onto#c (defined by a property chain).`
+
+*Clean:* `transitive alone`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:TransitiveProperty .
+```
+
+*Clean:* `functional alone`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:FunctionalProperty .
+```
+
+*Clean:* `one-operand chain is not non-simple`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:FunctionalProperty ; owl:propertyChainAxiom ( ex:q ) .
+```
+
+*Clean:* `chain with functional target absent`
+
+```turtle
+ex:p owl:propertyChainAxiom ( ex:q ex:r ) .
+```
+
+*Clean:* `transitive symmetric`
+
+```turtle
+ex:p a owl:TransitiveProperty, owl:SymmetricProperty, owl:ReflexiveProperty .
+```
+
+*Clean:* `malformed chain list is skipped`
+
+```turtle
+ex:p a owl:FunctionalProperty ; owl:propertyChainAxiom ex:q .
+```
+
+*Clean:* `functional sub-property of a transitive property`
+
+```turtle
+ex:p a owl:FunctionalProperty ; rdfs:subPropertyOf ex:t . ex:t a owl:TransitiveProperty .
+```
+
+*Clean:* `sub-property cycle without a composite member`
+
+```turtle
+ex:p rdfs:subPropertyOf ex:q . ex:q rdfs:subPropertyOf ex:p ; a owl:FunctionalProperty .
+```
+
+*Clean:* `super-property of a one-operand chain`
+
+```turtle
+ex:c owl:propertyChainAxiom ( ex:a ) ; rdfs:subPropertyOf ex:p . ex:p a owl:FunctionalProperty .
+```
+
+*Clean:* `functional datatype super-property is OWL021's`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty, owl:FunctionalProperty .
+```
+
+*Clean:* `existential restriction on a transitive property`
+
+```turtle
+ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty ex:t ; owl:someValuesFrom ex:A ] .
+```
+
+*Clean:* `cardinality on a simple sub-property of a transitive property`
+
+```turtle
+ex:p rdfs:subPropertyOf ex:t . ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality 1 ] .
+```
+
+*Clean:* `cardinality on a datatype property`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty . [ a owl:Restriction ; owl:onProperty ex:d ; owl:maxCardinality 1 ] .
+```
+
+*Clean:* `qualified data cardinality is a data restriction`
+
+```turtle
+ex:t a owl:TransitiveProperty . [ a owl:Restriction ; owl:onProperty ex:t ; owl:maxQualifiedCardinality 1 ; owl:onDataRange xsd:string ] .
+```
+
+*Clean:* `untyped restriction-shaped node is not judged`
+
+```turtle
+ex:t a owl:TransitiveProperty . [ owl:onProperty ex:t ; owl:maxCardinality 1 ] .
+```
+
+*Clean:* `simple properties declared disjoint`
+
+```turtle
+ex:p owl:propertyDisjointWith ex:q .
+```
+
+*Clean:* `simple members of owl:AllDisjointProperties`
+
+```turtle
+ex:t a owl:TransitiveProperty . [ a owl:AllDisjointProperties ; owl:members ( ex:p ex:q ) ] .
+```
+
+*Clean:* `characteristic on an anonymous inverse expression is not judged`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . [ owl:inverseOf ex:p ] a owl:FunctionalProperty .
 ```
 
 #### OWL020: Property subPropertyOf cycle
@@ -429,7 +1327,7 @@ ex:p a owl:ObjectProperty, owl:TransitiveProperty .
 - **Category:** deterministic
 - **Fix:** Break the owl:subPropertyOf cycle or replace it with owl:equivalentProperty if the properties are equivalent.
 
-*Flagged:* three-property cycle
+*Flagged:* `three-property cycle`
 
 ```turtle
 ex:a rdfs:subPropertyOf ex:b . ex:b rdfs:subPropertyOf ex:c . ex:c rdfs:subPropertyOf ex:a .
@@ -437,10 +1335,42 @@ ex:a rdfs:subPropertyOf ex:b . ex:b rdfs:subPropertyOf ex:c . ex:c rdfs:subPrope
 
 Reported: `rdfs:subPropertyOf cycle among: https://example.test/onto#a, https://example.test/onto#b, https://example.test/onto#c.`
 
-*Clean:* acyclic chain
+*Flagged:* `two-property cycle`
+
+```turtle
+ex:a rdfs:subPropertyOf ex:b . ex:b rdfs:subPropertyOf ex:a .
+```
+
+Reported: `rdfs:subPropertyOf cycle among: https://example.test/onto#a, https://example.test/onto#b.`
+
+*Clean:* `acyclic chain`
 
 ```turtle
 ex:a rdfs:subPropertyOf ex:b . ex:b rdfs:subPropertyOf ex:c .
+```
+
+*Clean:* `diamond`
+
+```turtle
+ex:a rdfs:subPropertyOf ex:b, ex:c . ex:b rdfs:subPropertyOf ex:d . ex:c rdfs:subPropertyOf ex:d .
+```
+
+*Clean:* `self sub-property is not a cycle finding`
+
+```turtle
+ex:a rdfs:subPropertyOf ex:a .
+```
+
+*Clean:* `cycle through a blank node`
+
+```turtle
+ex:a rdfs:subPropertyOf _:x . _:x rdfs:subPropertyOf ex:a .
+```
+
+*Clean:* `equivalence is not a sub-property edge`
+
+```turtle
+ex:a rdfs:subPropertyOf ex:b . ex:b owl:equivalentProperty ex:a .
 ```
 
 #### OWL021: Sub-property or equivalent property of a different kind
@@ -450,7 +1380,7 @@ ex:a rdfs:subPropertyOf ex:b . ex:b rdfs:subPropertyOf ex:c .
 - **Category:** deterministic
 - **Fix:** Relate object properties only to object properties and datatype properties only to datatype properties.
 
-*Flagged:* object sub-property of datatype property
+*Flagged:* `object sub-property of datatype property`
 
 ```turtle
 ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty .
@@ -458,10 +1388,51 @@ ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypePropert
 
 Reported: `Object property is related by http://www.w3.org/2000/01/rdf-schema#subPropertyOf to datatype property https://example.test/onto#d.`
 
-*Clean:* same kind
+*Flagged:* `equivalent across kinds`
+
+```turtle
+ex:o a owl:ObjectProperty ; owl:equivalentProperty ex:d . ex:d a owl:DatatypeProperty .
+```
+
+Reported: `Object property is related by http://www.w3.org/2002/07/owl#equivalentProperty to datatype property https://example.test/onto#d.`
+
+*Flagged:* `datatype sub-property of object property`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:subPropertyOf ex:o . ex:o a owl:ObjectProperty .
+```
+
+Reported: `Datatype property is related by http://www.w3.org/2000/01/rdf-schema#subPropertyOf to object property https://example.test/onto#o.`
+
+*Clean:* `same kind`
 
 ```turtle
 ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:p . ex:p a owl:ObjectProperty .
+```
+
+*Clean:* `untyped target`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:d .
+```
+
+*Clean:* `target typed both kinds is left to OWL003`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:d .
+ex:d a owl:DatatypeProperty, owl:ObjectProperty .
+```
+
+*Clean:* `untyped source`
+
+```turtle
+ex:x rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty .
+```
+
+*Clean:* `characteristic is not a kind`
+
+```turtle
+ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypeProperty .
 ```
 
 #### OWL022: Property range conflicts with property kind
@@ -471,7 +1442,7 @@ ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:p . ex:p a owl:ObjectProperty 
 - **Category:** deterministic
 - **Fix:** Use datatype ranges for datatype properties and class ranges for object properties.
 
-*Flagged:* object property with xsd range
+*Flagged:* `object property with xsd range`
 
 ```turtle
 ex:o a owl:ObjectProperty ; rdfs:range xsd:string .
@@ -479,10 +1450,109 @@ ex:o a owl:ObjectProperty ; rdfs:range xsd:string .
 
 Reported: `Object property has datatype range http://www.w3.org/2001/XMLSchema#string.`
 
-*Clean:* object property with class range
+*Flagged:* `object property with rdfs:Literal range`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range rdfs:Literal .
+```
+
+Reported: `Object property has datatype range http://www.w3.org/2000/01/rdf-schema#Literal.`
+
+*Flagged:* `object property with declared datatype`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range ex:T . ex:T a rdfs:Datatype .
+```
+
+Reported: `Object property has datatype range https://example.test/onto#T.`
+
+*Flagged:* `datatype property with class range`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range ex:C . ex:C a owl:Class .
+```
+
+Reported: `Datatype property has class range https://example.test/onto#C.`
+
+*Flagged:* `datatype property with owl:Thing range`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range owl:Thing .
+```
+
+Reported: `Datatype property has class range http://www.w3.org/2002/07/owl#Thing.`
+
+*Flagged:* `object property with owl:real range`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range owl:real .
+```
+
+Reported: `Object property has datatype range http://www.w3.org/2002/07/owl#real.`
+
+*Flagged:* `object property with rdf:PlainLiteral range`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range rdf:PlainLiteral .
+```
+
+Reported: `Object property has datatype range http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral.`
+
+*Flagged:* `object property with rdf:JSON range`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range rdf:JSON .
+```
+
+Reported: `Object property has datatype range http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON.`
+
+*Clean:* `object property with class range`
 
 ```turtle
 ex:o a owl:ObjectProperty ; rdfs:range ex:C . ex:C a owl:Class .
+```
+
+*Clean:* `datatype property with xsd range`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:string .
+```
+
+*Clean:* `untyped property`
+
+```turtle
+ex:p rdfs:range xsd:string .
+```
+
+*Clean:* `property typed both kinds is left to OWL003`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:DatatypeProperty ; rdfs:range xsd:string .
+```
+
+*Clean:* `datatype property with blank range`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ] .
+```
+
+*Clean:* `object property with blank range`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range [ a rdfs:Datatype ] .
+```
+
+*Clean:* `range punned class and datatype is left to OWL030`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:range ex:T . ex:d a owl:DatatypeProperty ; rdfs:range ex:T .
+ex:T a owl:Class, rdfs:Datatype .
+```
+
+*Clean:* `datatype property with untyped range`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range ex:C .
 ```
 
 #### OWL023: Property with several distinct inverses
@@ -492,7 +1562,7 @@ ex:o a owl:ObjectProperty ; rdfs:range ex:C . ex:C a owl:Class .
 - **Category:** deterministic
 - **Fix:** Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other.
 
-*Flagged:* two inverses
+*Flagged:* `two inverses`
 
 ```turtle
 ex:p owl:inverseOf ex:q, ex:r .
@@ -500,10 +1570,36 @@ ex:p owl:inverseOf ex:q, ex:r .
 
 Reported: `Property has several distinct inverses: https://example.test/onto#q, https://example.test/onto#r.`
 
-*Clean:* single inverse
+*Flagged:* `inverses in both directions`
+
+```turtle
+ex:p owl:inverseOf ex:q . ex:r owl:inverseOf ex:p .
+```
+
+Reported: `Property has several distinct inverses: https://example.test/onto#q, https://example.test/onto#r.`
+
+*Clean:* `single inverse`
 
 ```turtle
 ex:p owl:inverseOf ex:q .
+```
+
+*Clean:* `same inverse stated both ways`
+
+```turtle
+ex:p owl:inverseOf ex:q . ex:q owl:inverseOf ex:p .
+```
+
+*Clean:* `self inverse does not count (OWL007)`
+
+```turtle
+ex:p owl:inverseOf ex:p, ex:q .
+```
+
+*Clean:* `blank inverse does not count`
+
+```turtle
+ex:p owl:inverseOf ex:q, [ owl:inverseOf ex:r ] .
 ```
 
 #### OWL024: Disjoint properties that are sub-property or equivalent
@@ -513,7 +1609,7 @@ ex:p owl:inverseOf ex:q .
 - **Category:** deterministic
 - **Fix:** Remove the disjointness or the sub-property/equivalence axiom; the property can have no assertions.
 
-*Flagged:* disjoint with itself
+*Flagged:* `disjoint with itself`
 
 ```turtle
 ex:p owl:propertyDisjointWith ex:p .
@@ -521,10 +1617,86 @@ ex:p owl:propertyDisjointWith ex:p .
 
 Reported: `The property is declared disjoint with itself.`
 
-*Clean:* unrelated disjoint properties
+*Flagged:* `disjoint sub-property`
+
+```turtle
+ex:p owl:propertyDisjointWith ex:q ; rdfs:subPropertyOf ex:q .
+```
+
+Reported: `The property is disjoint with https://example.test/onto#q but also asserted a subproperty of or equivalent to it.`
+
+*Flagged:* `disjoint equivalent property`
+
+```turtle
+ex:q owl:equivalentProperty ex:p . ex:p owl:propertyDisjointWith ex:q .
+```
+
+Reported: `The property is disjoint with https://example.test/onto#q but also asserted a subproperty of or equivalent to it.`
+
+*Flagged:* `disjoint super-property`
+
+```turtle
+ex:p owl:propertyDisjointWith ex:q . ex:q rdfs:subPropertyOf ex:p .
+```
+
+Reported: `The property is disjoint with https://example.test/onto#q but also asserted a subproperty of or equivalent to it.`
+
+*Flagged:* `repeated member of all disjoint properties`
+
+```turtle
+[] a owl:AllDisjointProperties ; owl:members ( ex:p ex:q ex:p ) .
+```
+
+Reported: `The property is declared disjoint with itself.`
+
+*Flagged:* `all disjoint properties with equivalent members`
+
+```turtle
+[] a owl:AllDisjointProperties ; owl:members ( ex:p ex:q ex:r ) . ex:q owl:equivalentProperty ex:r .
+```
+
+Reported: `The property is disjoint with https://example.test/onto#r but also asserted a subproperty of or equivalent to it.`
+
+*Clean:* `unrelated disjoint properties`
 
 ```turtle
 ex:p owl:propertyDisjointWith ex:q .
+```
+
+*Clean:* `disjoint with a super-property's sibling`
+
+```turtle
+ex:p owl:propertyDisjointWith ex:q ; rdfs:subPropertyOf ex:r .
+```
+
+*Clean:* `malformed members list`
+
+```turtle
+[] a owl:AllDisjointProperties ; owl:members ex:p .
+```
+
+*Clean:* `all disjoint properties without a relation`
+
+```turtle
+[] a owl:AllDisjointProperties ; owl:members ( ex:p ex:q ex:r ) . ex:p rdfs:subPropertyOf ex:s .
+```
+
+*Clean:* `disjoint with the bottom object property`
+
+```turtle
+ex:p owl:propertyDisjointWith owl:bottomObjectProperty ; rdfs:subPropertyOf owl:bottomObjectProperty .
+```
+
+*Clean:* `bottom data property disjoint with itself`
+
+```turtle
+owl:bottomDataProperty owl:propertyDisjointWith owl:bottomDataProperty .
+```
+
+*Clean:* `group over 200 members is not read`
+
+```turtle
+[] a owl:AllDisjointProperties ; owl:members ( ex:m0 ex:m1 ex:m2 ex:m3 ex:m4 ex:m5 ex:m6 ex:m7 ex:m8 ex:m9 ex:m10 ex:m11 ex:m12 ex:m13 ex:m14 ex:m15 ex:m16 ex:m17 ex:m18 ex:m19 ex:m20 ex:m21 ex:m22 ex:m23 ex:m24 ex:m25 ex:m26 ex:m27 ex:m28 ex:m29 ex:m30 ex:m31 ex:m32 ex:m33 ex:m34 ex:m35 ex:m36 ex:m37 ex:m38 ex:m39 ex:m40 ex:m41 ex:m42 ex:m43 ex:m44 ex:m45 ex:m46 ex:m47 ex:m48 ex:m49 ex:m50 ex:m51 ex:m52 ex:m53 ex:m54 ex:m55 ex:m56 ex:m57 ex:m58 ex:m59 ex:m60 ex:m61 ex:m62 ex:m63 ex:m64 ex:m65 ex:m66 ex:m67 ex:m68 ex:m69 ex:m70 ex:m71 ex:m72 ex:m73 ex:m74 ex:m75 ex:m76 ex:m77 ex:m78 ex:m79 ex:m80 ex:m81 ex:m82 ex:m83 ex:m84 ex:m85 ex:m86 ex:m87 ex:m88 ex:m89 ex:m90 ex:m91 ex:m92 ex:m93 ex:m94 ex:m95 ex:m96 ex:m97 ex:m98 ex:m99 ex:m100 ex:m101 ex:m102 ex:m103 ex:m104 ex:m105 ex:m106 ex:m107 ex:m108 ex:m109 ex:m110 ex:m111 ex:m112 ex:m113 ex:m114 ex:m115 ex:m116 ex:m117 ex:m118 ex:m119 ex:m120 ex:m121 ex:m122 ex:m123 ex:m124 ex:m125 ex:m126 ex:m127 ex:m128 ex:m129 ex:m130 ex:m131 ex:m132 ex:m133 ex:m134 ex:m135 ex:m136 ex:m137 ex:m138 ex:m139 ex:m140 ex:m141 ex:m142 ex:m143 ex:m144 ex:m145 ex:m146 ex:m147 ex:m148 ex:m149 ex:m150 ex:m151 ex:m152 ex:m153 ex:m154 ex:m155 ex:m156 ex:m157 ex:m158 ex:m159 ex:m160 ex:m161 ex:m162 ex:m163 ex:m164 ex:m165 ex:m166 ex:m167 ex:m168 ex:m169 ex:m170 ex:m171 ex:m172 ex:m173 ex:m174 ex:m175 ex:m176 ex:m177 ex:m178 ex:m179 ex:m180 ex:m181 ex:m182 ex:m183 ex:m184 ex:m185 ex:m186 ex:m187 ex:m188 ex:m189 ex:m190 ex:m191 ex:m192 ex:m193 ex:m194 ex:m195 ex:m196 ex:m197 ex:m198 ex:m199 ex:m200 ) . ex:m0 rdfs:subPropertyOf ex:m1 .
 ```
 
 #### OWL025: Disjoint classes that are subclass or equivalent
@@ -534,7 +1706,7 @@ ex:p owl:propertyDisjointWith ex:q .
 - **Category:** deterministic
 - **Fix:** Remove the disjointness or the subclass/equivalence axiom; the class cannot have instances.
 
-*Flagged:* disjoint with itself
+*Flagged:* `disjoint with itself`
 
 ```turtle
 ex:A a owl:Class ; owl:disjointWith ex:A .
@@ -542,10 +1714,94 @@ ex:A a owl:Class ; owl:disjointWith ex:A .
 
 Reported: `The class is declared disjoint with itself.`
 
-*Clean:* unrelated disjoint classes
+*Flagged:* `disjoint with its superclass`
+
+```turtle
+ex:A a owl:Class ; rdfs:subClassOf ex:B ; owl:disjointWith ex:B . ex:B a owl:Class .
+```
+
+Reported: `The class is disjoint with https://example.test/onto#B but also asserted a subclass of or equivalent to it.`
+
+*Flagged:* `disjoint with its equivalent`
+
+```turtle
+ex:A owl:equivalentClass ex:B ; owl:disjointWith ex:B .
+```
+
+Reported: `The class is disjoint with https://example.test/onto#B but also asserted a subclass of or equivalent to it.`
+
+*Flagged:* `all disjoint classes with a subclass pair`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ex:B ) . ex:B rdfs:subClassOf ex:A .
+```
+
+Reported: `The class is disjoint with https://example.test/onto#B but also asserted a subclass of or equivalent to it.`
+
+*Flagged:* `equivalence stated in reverse`
+
+```turtle
+ex:A owl:disjointWith ex:B . ex:B owl:equivalentClass ex:A .
+```
+
+Reported: `The class is disjoint with https://example.test/onto#B but also asserted a subclass of or equivalent to it.`
+
+*Flagged:* `repeated member of all disjoint classes (also OWL045)`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ex:B ex:A ) .
+```
+
+Reported: `The class is declared disjoint with itself.`
+
+*Flagged:* `group of exactly 200 members is read`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:m0 ex:m1 ex:m2 ex:m3 ex:m4 ex:m5 ex:m6 ex:m7 ex:m8 ex:m9 ex:m10 ex:m11 ex:m12 ex:m13 ex:m14 ex:m15 ex:m16 ex:m17 ex:m18 ex:m19 ex:m20 ex:m21 ex:m22 ex:m23 ex:m24 ex:m25 ex:m26 ex:m27 ex:m28 ex:m29 ex:m30 ex:m31 ex:m32 ex:m33 ex:m34 ex:m35 ex:m36 ex:m37 ex:m38 ex:m39 ex:m40 ex:m41 ex:m42 ex:m43 ex:m44 ex:m45 ex:m46 ex:m47 ex:m48 ex:m49 ex:m50 ex:m51 ex:m52 ex:m53 ex:m54 ex:m55 ex:m56 ex:m57 ex:m58 ex:m59 ex:m60 ex:m61 ex:m62 ex:m63 ex:m64 ex:m65 ex:m66 ex:m67 ex:m68 ex:m69 ex:m70 ex:m71 ex:m72 ex:m73 ex:m74 ex:m75 ex:m76 ex:m77 ex:m78 ex:m79 ex:m80 ex:m81 ex:m82 ex:m83 ex:m84 ex:m85 ex:m86 ex:m87 ex:m88 ex:m89 ex:m90 ex:m91 ex:m92 ex:m93 ex:m94 ex:m95 ex:m96 ex:m97 ex:m98 ex:m99 ex:m100 ex:m101 ex:m102 ex:m103 ex:m104 ex:m105 ex:m106 ex:m107 ex:m108 ex:m109 ex:m110 ex:m111 ex:m112 ex:m113 ex:m114 ex:m115 ex:m116 ex:m117 ex:m118 ex:m119 ex:m120 ex:m121 ex:m122 ex:m123 ex:m124 ex:m125 ex:m126 ex:m127 ex:m128 ex:m129 ex:m130 ex:m131 ex:m132 ex:m133 ex:m134 ex:m135 ex:m136 ex:m137 ex:m138 ex:m139 ex:m140 ex:m141 ex:m142 ex:m143 ex:m144 ex:m145 ex:m146 ex:m147 ex:m148 ex:m149 ex:m150 ex:m151 ex:m152 ex:m153 ex:m154 ex:m155 ex:m156 ex:m157 ex:m158 ex:m159 ex:m160 ex:m161 ex:m162 ex:m163 ex:m164 ex:m165 ex:m166 ex:m167 ex:m168 ex:m169 ex:m170 ex:m171 ex:m172 ex:m173 ex:m174 ex:m175 ex:m176 ex:m177 ex:m178 ex:m179 ex:m180 ex:m181 ex:m182 ex:m183 ex:m184 ex:m185 ex:m186 ex:m187 ex:m188 ex:m189 ex:m190 ex:m191 ex:m192 ex:m193 ex:m194 ex:m195 ex:m196 ex:m197 ex:m198 ex:m199 ) . ex:m0 rdfs:subClassOf ex:m199 .
+```
+
+Reported: `The class is disjoint with https://example.test/onto#m199 but also asserted a subclass of or equivalent to it.`
+
+*Clean:* `unrelated disjoint classes`
 
 ```turtle
 ex:A owl:disjointWith ex:B .
+```
+
+*Clean:* `siblings`
+
+```turtle
+ex:A rdfs:subClassOf ex:P ; owl:disjointWith ex:B . ex:B rdfs:subClassOf ex:P .
+```
+
+*Clean:* `disjoint with owl:Nothing`
+
+```turtle
+ex:A owl:disjointWith owl:Nothing ; rdfs:subClassOf owl:Nothing .
+```
+
+*Clean:* `malformed members list`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ex:A . ex:A rdfs:subClassOf ex:B .
+```
+
+*Clean:* `group over 200 members is not read`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:m0 ex:m1 ex:m2 ex:m3 ex:m4 ex:m5 ex:m6 ex:m7 ex:m8 ex:m9 ex:m10 ex:m11 ex:m12 ex:m13 ex:m14 ex:m15 ex:m16 ex:m17 ex:m18 ex:m19 ex:m20 ex:m21 ex:m22 ex:m23 ex:m24 ex:m25 ex:m26 ex:m27 ex:m28 ex:m29 ex:m30 ex:m31 ex:m32 ex:m33 ex:m34 ex:m35 ex:m36 ex:m37 ex:m38 ex:m39 ex:m40 ex:m41 ex:m42 ex:m43 ex:m44 ex:m45 ex:m46 ex:m47 ex:m48 ex:m49 ex:m50 ex:m51 ex:m52 ex:m53 ex:m54 ex:m55 ex:m56 ex:m57 ex:m58 ex:m59 ex:m60 ex:m61 ex:m62 ex:m63 ex:m64 ex:m65 ex:m66 ex:m67 ex:m68 ex:m69 ex:m70 ex:m71 ex:m72 ex:m73 ex:m74 ex:m75 ex:m76 ex:m77 ex:m78 ex:m79 ex:m80 ex:m81 ex:m82 ex:m83 ex:m84 ex:m85 ex:m86 ex:m87 ex:m88 ex:m89 ex:m90 ex:m91 ex:m92 ex:m93 ex:m94 ex:m95 ex:m96 ex:m97 ex:m98 ex:m99 ex:m100 ex:m101 ex:m102 ex:m103 ex:m104 ex:m105 ex:m106 ex:m107 ex:m108 ex:m109 ex:m110 ex:m111 ex:m112 ex:m113 ex:m114 ex:m115 ex:m116 ex:m117 ex:m118 ex:m119 ex:m120 ex:m121 ex:m122 ex:m123 ex:m124 ex:m125 ex:m126 ex:m127 ex:m128 ex:m129 ex:m130 ex:m131 ex:m132 ex:m133 ex:m134 ex:m135 ex:m136 ex:m137 ex:m138 ex:m139 ex:m140 ex:m141 ex:m142 ex:m143 ex:m144 ex:m145 ex:m146 ex:m147 ex:m148 ex:m149 ex:m150 ex:m151 ex:m152 ex:m153 ex:m154 ex:m155 ex:m156 ex:m157 ex:m158 ex:m159 ex:m160 ex:m161 ex:m162 ex:m163 ex:m164 ex:m165 ex:m166 ex:m167 ex:m168 ex:m169 ex:m170 ex:m171 ex:m172 ex:m173 ex:m174 ex:m175 ex:m176 ex:m177 ex:m178 ex:m179 ex:m180 ex:m181 ex:m182 ex:m183 ex:m184 ex:m185 ex:m186 ex:m187 ex:m188 ex:m189 ex:m190 ex:m191 ex:m192 ex:m193 ex:m194 ex:m195 ex:m196 ex:m197 ex:m198 ex:m199 ex:m200 ) . ex:m0 rdfs:subClassOf ex:m1 .
+```
+
+*Clean:* `indirect subclass`
+
+```turtle
+ex:A owl:disjointWith ex:B ; rdfs:subClassOf ex:M . ex:M rdfs:subClassOf ex:B .
+```
+
+*Clean:* `intersection of disjoint classes (OWL043)`
+
+```turtle
+ex:A owl:disjointWith ex:B . ex:C owl:intersectionOf ( ex:A ex:B ) .
 ```
 
 #### OWL026: Individuals both same and different
@@ -555,7 +1811,7 @@ ex:A owl:disjointWith ex:B .
 - **Category:** deterministic
 - **Fix:** Remove either the owl:sameAs or the owl:differentFrom assertion; the ontology is inconsistent.
 
-*Flagged:* same and different
+*Flagged:* `same and different`
 
 ```turtle
 ex:a owl:sameAs ex:b ; owl:differentFrom ex:b .
@@ -563,10 +1819,50 @@ ex:a owl:sameAs ex:b ; owl:differentFrom ex:b .
 
 Reported: `Individual is both owl:sameAs and owl:differentFrom https://example.test/onto#b.`
 
-*Clean:* same only
+*Flagged:* `reversed same`
+
+```turtle
+ex:a owl:differentFrom ex:b . ex:b owl:sameAs ex:a .
+```
+
+Reported: `Individual is both owl:sameAs and owl:differentFrom https://example.test/onto#b.`
+
+*Flagged:* `different from itself`
+
+```turtle
+ex:a owl:differentFrom ex:a .
+```
+
+Reported: `Individual is declared different from itself.`
+
+*Clean:* `same only`
 
 ```turtle
 ex:a owl:sameAs ex:b .
+```
+
+*Clean:* `different only`
+
+```turtle
+ex:a owl:differentFrom ex:b .
+```
+
+*Clean:* `same with a third individual`
+
+```turtle
+ex:a owl:sameAs ex:b ; owl:differentFrom ex:c .
+```
+
+*Clean:* `sameAs chain is OWL044's`
+
+```turtle
+ex:a owl:sameAs ex:b . ex:b owl:sameAs ex:c . ex:a owl:differentFrom ex:c .
+```
+
+*Clean:* `all different with same members is OWL044's`
+
+```turtle
+ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:b ) .
 ```
 
 #### OWL027: Negative property assertion contradicts a positive assertion
@@ -576,7 +1872,7 @@ ex:a owl:sameAs ex:b .
 - **Category:** deterministic
 - **Fix:** Remove the NegativePropertyAssertion or the contradicting positive triple.
 
-*Flagged:* negated individual assertion that is asserted
+*Flagged:* `negated individual assertion that is asserted`
 
 ```turtle
 ex:a ex:p ex:b . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetIndividual ex:b .
@@ -584,10 +1880,50 @@ ex:a ex:p ex:b . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a 
 
 Reported: `Negative assertion on https://example.test/onto#p with https://example.test/onto#b contradicts an asserted triple.`
 
-*Clean:* negated assertion that is absent
+*Flagged:* `negated value assertion that is asserted`
+
+```turtle
+ex:a ex:p "v" . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetValue "v" .
+```
+
+Reported: `Negative assertion on https://example.test/onto#p with v contradicts an asserted triple.`
+
+*Flagged:* `negated integer with another lexical form`
+
+```turtle
+ex:a ex:p "1"^^xsd:integer . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetValue "01"^^xsd:integer .
+```
+
+Reported: `Negative assertion on https://example.test/onto#p with 1 contradicts an asserted triple.`
+
+*Clean:* `negated assertion that is absent`
 
 ```turtle
 ex:a ex:p ex:c . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetIndividual ex:b .
+```
+
+*Clean:* `different literal`
+
+```turtle
+ex:a ex:p "v" . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetValue "w" .
+```
+
+*Clean:* `incomplete negative assertion`
+
+```turtle
+[] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a .
+```
+
+*Clean:* `different property`
+
+```turtle
+ex:a ex:q ex:b . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetIndividual ex:b .
+```
+
+*Clean:* `equal value in another datatype`
+
+```turtle
+ex:a ex:p "1"^^xsd:integer . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetValue "1.0"^^xsd:decimal .
 ```
 
 #### OWL028: Irreflexive property used reflexively
@@ -597,7 +1933,7 @@ ex:a ex:p ex:c . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a 
 - **Category:** deterministic
 - **Fix:** Remove the assertion relating an individual to itself or drop owl:IrreflexiveProperty.
 
-*Flagged:* irreflexive property used reflexively
+*Flagged:* `irreflexive property used reflexively`
 
 ```turtle
 ex:p a owl:ObjectProperty, owl:IrreflexiveProperty . ex:a ex:p ex:a .
@@ -605,10 +1941,22 @@ ex:p a owl:ObjectProperty, owl:IrreflexiveProperty . ex:a ex:p ex:a .
 
 Reported: `Irreflexive property https://example.test/onto#p relates the individual to itself.`
 
-*Clean:* irreflexive property between distinct individuals
+*Clean:* `irreflexive property between distinct individuals`
 
 ```turtle
 ex:p a owl:IrreflexiveProperty . ex:a ex:p ex:b .
+```
+
+*Clean:* `reflexive use of an ordinary property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:a ex:p ex:a .
+```
+
+*Clean:* `reflexive use of a sub-property is not inherited`
+
+```turtle
+ex:p a owl:IrreflexiveProperty . ex:q rdfs:subPropertyOf ex:p . ex:a ex:q ex:a .
 ```
 
 #### OWL029: Asymmetric property asserted in both directions
@@ -618,7 +1966,7 @@ ex:p a owl:IrreflexiveProperty . ex:a ex:p ex:b .
 - **Category:** deterministic
 - **Fix:** Remove one direction (or a self-assertion) or drop owl:AsymmetricProperty.
 
-*Flagged:* both directions
+*Flagged:* `both directions`
 
 ```turtle
 ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b . ex:b ex:p ex:a .
@@ -626,10 +1974,36 @@ ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b . ex:b ex:p ex:a .
 
 Reported: `Asymmetric property https://example.test/onto#p is asserted in both directions with https://example.test/onto#b.`
 
-*Clean:* one direction
+*Flagged:* `self assertion`
+
+```turtle
+ex:p a owl:AsymmetricProperty . ex:a ex:p ex:a .
+```
+
+Reported: `Asymmetric property https://example.test/onto#p relates the individual to itself.`
+
+*Clean:* `one direction`
 
 ```turtle
 ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b .
+```
+
+*Clean:* `both directions on an ordinary property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:a ex:p ex:b . ex:b ex:p ex:a .
+```
+
+*Clean:* `literal value`
+
+```turtle
+ex:p a owl:AsymmetricProperty . ex:a ex:p "x" .
+```
+
+*Clean:* `reverse direction on another property`
+
+```turtle
+ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b . ex:b ex:q ex:a .
 ```
 
 #### OWL030: Illegal punning of declaration kinds
@@ -639,7 +2013,7 @@ ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b .
 - **Category:** deterministic
 - **Fix:** Do not declare one IRI as both class and datatype, or as annotation property and object/datatype property.
 
-*Flagged:* class and datatype
+*Flagged:* `class and datatype`
 
 ```turtle
 ex:T a owl:Class, rdfs:Datatype .
@@ -647,10 +2021,50 @@ ex:T a owl:Class, rdfs:Datatype .
 
 Reported: `Term is declared both owl:Class and rdfs:Datatype.`
 
-*Clean:* class and object property punning is legal
+*Flagged:* `annotation and object property`
+
+```turtle
+ex:p a owl:AnnotationProperty, owl:ObjectProperty .
+```
+
+Reported: `Term is declared both an annotation property and an object/datatype property.`
+
+*Flagged:* `annotation and datatype property`
+
+```turtle
+ex:p a owl:AnnotationProperty, owl:DatatypeProperty .
+```
+
+Reported: `Term is declared both an annotation property and an object/datatype property.`
+
+*Clean:* `class and object property punning is legal`
 
 ```turtle
 ex:X a owl:Class, owl:ObjectProperty .
+```
+
+*Clean:* `class and individual punning is legal`
+
+```turtle
+ex:X a owl:Class, owl:NamedIndividual .
+```
+
+*Clean:* `plain annotation property`
+
+```turtle
+ex:p a owl:AnnotationProperty .
+```
+
+*Clean:* `object and datatype property is OWL003's`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:DatatypeProperty .
+```
+
+*Clean:* `class and rdfs:Class is not a datatype`
+
+```turtle
+ex:T a owl:Class, rdfs:Class .
 ```
 
 #### OWL031: Malformed or empty class-expression list
@@ -660,7 +2074,7 @@ ex:X a owl:Class, owl:ObjectProperty .
 - **Category:** deterministic
 - **Fix:** Give owl:unionOf, owl:intersectionOf, owl:oneOf and owl:disjointUnionOf a well-formed, non-empty RDF list.
 
-*Flagged:* empty union
+*Flagged:* `empty union`
 
 ```turtle
 ex:C owl:unionOf () .
@@ -668,10 +2082,114 @@ ex:C owl:unionOf () .
 
 Reported: `owl:unionOf list is empty.`
 
-*Clean:* union of two
+*Flagged:* `empty oneOf`
+
+```turtle
+ex:C owl:oneOf rdf:nil .
+```
+
+Reported: `owl:oneOf list is empty.`
+
+*Flagged:* `union points to a literal`
+
+```turtle
+ex:C owl:unionOf "ex:A ex:B" .
+```
+
+Reported: `owl:unionOf does not point to a well-formed RDF list.`
+
+*Flagged:* `union points to a class`
+
+```turtle
+ex:C owl:unionOf ex:A .
+```
+
+Reported: `owl:unionOf does not point to a well-formed RDF list.`
+
+*Flagged:* `cyclic list`
+
+```turtle
+ex:C owl:intersectionOf _:l . _:l rdf:first ex:A ; rdf:rest _:l .
+```
+
+Reported: `owl:intersectionOf does not point to a well-formed RDF list.`
+
+*Flagged:* `list node without rest`
+
+```turtle
+ex:C owl:unionOf _:l . _:l rdf:first ex:A .
+```
+
+Reported: `owl:unionOf does not point to a well-formed RDF list.`
+
+*Flagged:* `empty disjointUnionOf`
+
+```turtle
+ex:C owl:disjointUnionOf () .
+```
+
+Reported: `owl:disjointUnionOf list is empty.`
+
+*Flagged:* `empty intersection`
+
+```turtle
+ex:C owl:intersectionOf () .
+```
+
+Reported: `owl:intersectionOf list is empty.`
+
+*Flagged:* `list node with two rdf:first`
+
+```turtle
+ex:C owl:unionOf _:l . _:l rdf:first ex:A, ex:B ; rdf:rest rdf:nil .
+```
+
+Reported: `owl:unionOf does not point to a well-formed RDF list.`
+
+*Flagged:* `anonymous expression with an empty list`
+
+```turtle
+ex:C rdfs:subClassOf [ owl:unionOf () ] .
+```
+
+Reported: `owl:unionOf list is empty.`
+
+*Flagged:* `empty data range union`
+
+```turtle
+ex:D a rdfs:Datatype ; owl:unionOf () .
+```
+
+Reported: `owl:unionOf list is empty.`
+
+*Clean:* `union of two`
 
 ```turtle
 ex:C owl:unionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `oneOf individuals`
+
+```turtle
+ex:C owl:oneOf ( ex:i ex:j ) .
+```
+
+*Clean:* `disjointUnionOf two`
+
+```turtle
+ex:C owl:disjointUnionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `single operand is OWL032's`
+
+```turtle
+ex:C owl:unionOf ( ex:A ) .
+```
+
+*Clean:* `other list predicates are not judged`
+
+```turtle
+[] a owl:AllDifferent ; owl:members () .
 ```
 
 #### OWL032: Single-operand union, intersection or disjoint union
@@ -681,7 +2199,7 @@ ex:C owl:unionOf ( ex:A ex:B ) .
 - **Category:** deterministic
 - **Fix:** Replace an owl:unionOf or owl:intersectionOf with one operand by that operand.
 
-*Flagged:* one-operand union
+*Flagged:* `one-operand union`
 
 ```turtle
 ex:C owl:unionOf ( ex:A ) .
@@ -689,10 +2207,50 @@ ex:C owl:unionOf ( ex:A ) .
 
 Reported: `owl:unionOf has a single operand (https://example.test/onto#A).`
 
-*Clean:* two operands
+*Flagged:* `one-operand intersection`
+
+```turtle
+ex:C owl:intersectionOf ( ex:A ) .
+```
+
+Reported: `owl:intersectionOf has a single operand (https://example.test/onto#A).`
+
+*Flagged:* `single-member disjointUnionOf`
+
+```turtle
+ex:C owl:disjointUnionOf ( ex:A ) .
+```
+
+Reported: `owl:disjointUnionOf has a single operand (https://example.test/onto#A).`
+
+*Clean:* `two operands`
 
 ```turtle
 ex:C owl:intersectionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `single-member oneOf is fine`
+
+```turtle
+ex:C owl:oneOf ( ex:i ) .
+```
+
+*Clean:* `malformed list is OWL031 only`
+
+```turtle
+ex:C owl:unionOf _:l . _:l rdf:first ex:A .
+```
+
+*Clean:* `two-member disjointUnionOf`
+
+```turtle
+ex:C owl:disjointUnionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `empty list is OWL031 only`
+
+```turtle
+ex:C owl:intersectionOf () .
 ```
 
 #### OWL033: Duplicate operand in class-expression list
@@ -702,7 +2260,7 @@ ex:C owl:intersectionOf ( ex:A ex:B ) .
 - **Category:** deterministic
 - **Fix:** Remove the repeated member from the owl:unionOf, owl:intersectionOf or owl:oneOf list.
 
-*Flagged:* duplicate union member
+*Flagged:* `duplicate union member`
 
 ```turtle
 ex:C owl:unionOf ( ex:A ex:B ex:A ) .
@@ -710,10 +2268,72 @@ ex:C owl:unionOf ( ex:A ex:B ex:A ) .
 
 Reported: `owl:unionOf list repeats a member.`
 
-*Clean:* distinct members
+*Flagged:* `duplicate oneOf individual`
+
+```turtle
+ex:C owl:oneOf ( ex:i ex:i ) .
+```
+
+Reported: `owl:oneOf list repeats a member.`
+
+*Flagged:* `duplicate intersection member`
+
+```turtle
+ex:C owl:intersectionOf ( ex:A ex:A ) .
+```
+
+Reported: `owl:intersectionOf list repeats a member.`
+
+*Flagged:* `duplicate literal in a data oneOf`
+
+```turtle
+ex:D a rdfs:Datatype ; owl:oneOf ( "a" "b" "a" ) .
+```
+
+Reported: `owl:oneOf list repeats a member.`
+
+*Flagged:* `disjointUnionOf repeats a member`
+
+```turtle
+ex:C owl:disjointUnionOf ( ex:A ex:B ex:A ) .
+```
+
+Reported: `owl:disjointUnionOf list repeats a member.`
+
+*Clean:* `distinct members`
 
 ```turtle
 ex:C owl:unionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `distinct anonymous members`
+
+```turtle
+ex:C owl:unionOf ( [ a owl:Class ] [ a owl:Class ] ) .
+```
+
+*Clean:* `distinct disjointUnionOf members`
+
+```turtle
+ex:C owl:disjointUnionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `empty disjointUnionOf is OWL031 only`
+
+```turtle
+ex:C owl:disjointUnionOf () .
+```
+
+*Clean:* `literals with different datatypes differ`
+
+```turtle
+ex:D owl:oneOf ( "1" "1"^^xsd:integer ) .
+```
+
+*Clean:* `malformed list is OWL031 only`
+
+```turtle
+ex:C owl:oneOf _:l . _:l rdf:first ex:i .
 ```
 
 #### OWL034: Restriction with missing or invalid owl:onProperty
@@ -723,7 +2343,7 @@ ex:C owl:unionOf ( ex:A ex:B ) .
 - **Category:** deterministic
 - **Fix:** Give every owl:Restriction exactly one owl:onProperty (or owl:onProperties) pointing to a property.
 
-*Flagged:* no onProperty
+*Flagged:* `no onProperty`
 
 ```turtle
 [] a owl:Restriction ; owl:someValuesFrom ex:A .
@@ -731,10 +2351,74 @@ ex:C owl:unionOf ( ex:A ex:B ) .
 
 Reported: `Restriction has no owl:onProperty.`
 
-*Clean:* one onProperty
+*Flagged:* `two onProperty`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p, ex:q ; owl:someValuesFrom ex:A .
+```
+
+Reported: `Restriction has more than one owl:onProperty.`
+
+*Flagged:* `literal onProperty`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty "p" ; owl:someValuesFrom ex:A .
+```
+
+Reported: `owl:onProperty points to literal "p".`
+
+*Flagged:* `anonymous restriction of a class`
+
+```turtle
+ex:C rdfs:subClassOf [ a owl:Restriction ; owl:allValuesFrom ex:A ] .
+```
+
+Reported: `https://example.test/onto#C (restriction): Restriction has no owl:onProperty.`
+
+*Flagged:* `both onProperty and onProperties`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onProperties ( ex:d ) ; owl:someValuesFrom xsd:string .
+```
+
+Reported: `Restriction has both owl:onProperty and owl:onProperties.`
+
+*Flagged:* `two onProperties lists`
+
+```turtle
+[] a owl:Restriction ; owl:onProperties ( ex:d1 ex:d2 ), ( ex:d3 ex:d4 ) ; owl:allValuesFrom ex:R .
+```
+
+Reported: `Restriction has more than one owl:onProperties.`
+
+*Clean:* `one onProperty`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A .
+```
+
+*Clean:* `onProperties`
+
+```turtle
+[] a owl:Restriction ; owl:onProperties ( ex:d1 ex:d2 ) ; owl:allValuesFrom ex:R .
+```
+
+*Clean:* `inverse property expression`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty [ owl:inverseOf ex:p ] ; owl:someValuesFrom ex:A .
+```
+
+*Clean:* `onProperty IRI is not checked against declarations`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A . ex:p a owl:Class .
+```
+
+*Clean:* `untyped restriction-shaped node is not judged`
+
+```turtle
+[] owl:someValuesFrom ex:A .
 ```
 
 #### OWL035: Restriction without exactly one valid constraint
@@ -744,7 +2428,7 @@ Reported: `Restriction has no owl:onProperty.`
 - **Category:** deterministic
 - **Fix:** Add an owl:someValuesFrom, owl:allValuesFrom, owl:hasValue, owl:hasSelf or cardinality constraint.
 
-*Flagged:* bare restriction
+*Flagged:* `bare restriction`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; a owl:Restriction .
@@ -752,10 +2436,150 @@ Reported: `Restriction has no owl:onProperty.`
 
 Reported: `Restriction has no value, cardinality or self constraint.`
 
-*Clean:* someValuesFrom
+*Flagged:* `only onClass`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A .
+```
+
+Reported: `Restriction has no value, cardinality or self constraint.`
+
+*Flagged:* `only onDataRange`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onDataRange xsd:string .
+```
+
+Reported: `Restriction has no value, cardinality or self constraint.`
+
+*Flagged:* `someValuesFrom and allValuesFrom`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A ; owl:allValuesFrom ex:B .
+```
+
+Reported: `Restriction has more than one constraint (owl:allValuesFrom, owl:someValuesFrom).`
+
+*Flagged:* `two someValuesFrom values`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A, ex:B .
+```
+
+Reported: `Restriction has more than one constraint (owl:someValuesFrom, owl:someValuesFrom).`
+
+*Flagged:* `min and max cardinality on one node`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 1 ; owl:maxCardinality 2 .
+```
+
+Reported: `Restriction has more than one constraint (owl:maxCardinality, owl:minCardinality).`
+
+*Flagged:* `hasSelf false`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf false .
+```
+
+Reported: `owl:hasSelf value "false"^^<http://www.w3.org/2001/XMLSchema#boolean> is not true.`
+
+*Flagged:* `hasSelf a plain string`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf "true" .
+```
+
+Reported: `owl:hasSelf value "true" is not true.`
+
+*Flagged:* `hasSelf an integer`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf 1 .
+```
+
+Reported: `owl:hasSelf value "1"^^<http://www.w3.org/2001/XMLSchema#integer> is not true.`
+
+*Flagged:* `hasSelf false written 0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf "0"^^xsd:boolean .
+```
+
+Reported: `owl:hasSelf value "false"^^<http://www.w3.org/2001/XMLSchema#boolean> is not true.`
+
+*Flagged:* `hasSelf an IRI`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf ex:yes .
+```
+
+Reported: `owl:hasSelf value https://example.test/onto#yes is not true.`
+
+*Clean:* `someValuesFrom`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A .
+```
+
+*Clean:* `hasSelf`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf "true"^^xsd:boolean .
+```
+
+*Clean:* `hasSelf written 1 is true`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasSelf "1"^^xsd:boolean .
+```
+
+*Clean:* `the same constraint twice is one triple`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A, ex:A .
+```
+
+*Clean:* `cardinality`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "1"^^xsd:nonNegativeInteger .
+```
+
+*Clean:* `allValuesFrom`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:A .
+```
+
+*Clean:* `hasValue`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue ex:i .
+```
+
+*Clean:* `qualified cardinality`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:qualifiedCardinality 1 ; owl:onClass ex:A .
+```
+
+*Clean:* `an invalid cardinality still counts (OWL036)`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality "many" .
+```
+
+*Clean:* `onProperties restriction`
+
+```turtle
+[] a owl:Restriction ; owl:onProperties ( ex:d1 ex:d2 ) ; owl:someValuesFrom ex:R .
+```
+
+*Clean:* `untyped restriction-shaped node is not judged`
+
+```turtle
+[] owl:onProperty ex:p .
 ```
 
 #### OWL036: Invalid cardinality restriction
@@ -765,7 +2589,7 @@ Reported: `Restriction has no value, cardinality or self constraint.`
 - **Category:** deterministic
 - **Fix:** Use a non-negative integer for cardinalities and add owl:onClass/owl:onDataRange to qualified ones.
 
-*Flagged:* negative cardinality
+*Flagged:* `negative cardinality`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "-1"^^xsd:integer .
@@ -773,10 +2597,136 @@ Reported: `Restriction has no value, cardinality or self constraint.`
 
 Reported: `owl:minCardinality value "-1"^^<http://www.w3.org/2001/XMLSchema#integer> is not a non-negative integer.`
 
-*Clean:* valid cardinality
+*Flagged:* `decimal cardinality`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality "1.5"^^xsd:decimal .
+```
+
+Reported: `owl:cardinality value "1.5"^^<http://www.w3.org/2001/XMLSchema#decimal> is not a non-negative integer.`
+
+*Flagged:* `resource cardinality`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality ex:two .
+```
+
+Reported: `owl:maxCardinality value https://example.test/onto#two is not a non-negative integer.`
+
+*Flagged:* `word cardinality`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality "two" .
+```
+
+Reported: `owl:maxCardinality value "two" is not a non-negative integer.`
+
+*Flagged:* `qualified without class`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger .
+```
+
+Reported: `Qualified cardinality has neither owl:onClass nor owl:onDataRange.`
+
+*Flagged:* `negative qualified cardinality`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A ; owl:maxQualifiedCardinality "-2" .
+```
+
+Reported: `owl:maxQualifiedCardinality value "-2" is not a non-negative integer.`
+
+*Flagged:* `exact qualified without class or data range`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:qualifiedCardinality 1 .
+```
+
+Reported: `Qualified cardinality has neither owl:onClass nor owl:onDataRange.`
+
+*Flagged:* `language-tagged word`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality "one"@en .
+```
+
+Reported: `owl:cardinality value "one"@en is not a non-negative integer.`
+
+*Flagged:* `qualified with both onClass and onDataRange`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minQualifiedCardinality 1 ; owl:onClass ex:A ; owl:onDataRange xsd:string .
+```
+
+Reported: `Qualified cardinality has more than one filler (owl:onClass, owl:onDataRange).`
+
+*Flagged:* `qualified with two onClass values`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxQualifiedCardinality 1 ; owl:onClass ex:A, ex:B .
+```
+
+Reported: `Qualified cardinality has more than one filler (owl:onClass, owl:onClass).`
+
+*Clean:* `valid cardinality`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "2"^^xsd:nonNegativeInteger .
+```
+
+*Clean:* `plain integer literal`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality 3 .
+```
+
+*Clean:* `qualified with class`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass ex:A .
+```
+
+*Clean:* `qualified with data range`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxQualifiedCardinality 1 ; owl:onDataRange xsd:string .
+```
+
+*Clean:* `negative zero`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality "-0" .
+```
+
+*Clean:* `explicit plus sign`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "+2" .
+```
+
+*Clean:* `surrounding whitespace`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality " 2 " .
+```
+
+*Clean:* `the literal datatype is not checked`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality "2"^^xsd:string .
+```
+
+*Clean:* `onClass on an unqualified cardinality is not judged`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 1 ; owl:onClass ex:A .
+```
+
+*Clean:* `two fillers next to an unqualified cardinality are not judged`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 1 ; owl:onClass ex:A ; owl:onDataRange xsd:string .
 ```
 
 #### OWL037: Minimum cardinality exceeds maximum cardinality
@@ -786,7 +2736,7 @@ Reported: `owl:minCardinality value "-1"^^<http://www.w3.org/2001/XMLSchema#inte
 - **Category:** deterministic
 - **Fix:** Make the lower cardinality bound at most the upper bound within one restriction.
 
-*Flagged:* min above max
+*Flagged:* `min above max`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 3 ; owl:maxCardinality 2 .
@@ -794,10 +2744,109 @@ Reported: `owl:minCardinality value "-1"^^<http://www.w3.org/2001/XMLSchema#inte
 
 Reported: `Lower cardinality bound 3 exceeds upper bound 2.`
 
-*Clean:* min equals max
+*Flagged:* `exact below min`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality 1 ; owl:minCardinality 2 .
+```
+
+Reported: `Lower cardinality bound 2 exceeds upper bound 1.`
+
+*Flagged:* `exact conflicting`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality 1 ; owl:cardinality 2 .
+```
+
+Reported: `Lower cardinality bound 2 exceeds upper bound 1.`
+
+*Flagged:* `qualified min above max`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A ; owl:minQualifiedCardinality 5 ; owl:maxQualifiedCardinality 1 .
+```
+
+Reported: `Lower cardinality bound 5 exceeds upper bound 1.`
+
+*Flagged:* `exact above max`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality 3 ; owl:maxCardinality 2 .
+```
+
+Reported: `Lower cardinality bound 3 exceeds upper bound 2.`
+
+*Flagged:* `qualified exact conflicting`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A ; owl:qualifiedCardinality 1 ; owl:qualifiedCardinality 2 .
+```
+
+Reported: `Lower cardinality bound 2 exceeds upper bound 1.`
+
+*Flagged:* `unqualified max 0 against a qualified min`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality 0 ; owl:minQualifiedCardinality 1 ; owl:onClass ex:A .
+```
+
+Reported: `Qualified lower cardinality bound 1 exceeds unqualified upper bound 0.`
+
+*Flagged:* `unqualified exact below a qualified exact`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality 1 ; owl:qualifiedCardinality 2 ; owl:onClass ex:A .
+```
+
+Reported: `Qualified lower cardinality bound 2 exceeds unqualified upper bound 1.`
+
+*Clean:* `min equals max`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 2 ; owl:maxCardinality 2 .
+```
+
+*Clean:* `min below max`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 1 ; owl:maxCardinality 4 .
+```
+
+*Clean:* `invalid values are not compared`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "x" ; owl:maxCardinality 0 .
+```
+
+*Clean:* `qualified min and unqualified max are different groups`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A ; owl:minCardinality 1 ; owl:maxQualifiedCardinality 0 .
+```
+
+*Clean:* `unqualified min and qualified max are no conflict`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 3 ; owl:maxQualifiedCardinality 1 ; owl:onClass ex:A .
+```
+
+*Clean:* `equal bounds across the groups`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality 2 ; owl:minQualifiedCardinality 2 ; owl:onClass ex:A .
+```
+
+*Clean:* `exact equals min and max`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality 2 ; owl:minCardinality 2 ; owl:maxCardinality 2 .
+```
+
+*Clean:* `bounds in two restrictions are not combined`
+
+```turtle
+ex:C rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 3 ] ,
+    [ a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality 2 ] .
 ```
 
 #### OWL038: Existential restriction on owl:Nothing
@@ -807,7 +2856,7 @@ Reported: `Lower cardinality bound 3 exceeds upper bound 2.`
 - **Category:** deterministic
 - **Fix:** Remove the restriction or use a satisfiable filler; no individual can be an instance of owl:Nothing.
 
-*Flagged:* someValuesFrom Nothing
+*Flagged:* `someValuesFrom Nothing`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Nothing .
@@ -815,10 +2864,64 @@ Reported: `Lower cardinality bound 3 exceeds upper bound 2.`
 
 Reported: `owl:someValuesFrom owl:Nothing can never be satisfied.`
 
-*Clean:* allValuesFrom Nothing is satisfiable
+*Flagged:* `min 1 on Nothing`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass owl:Nothing ; owl:minQualifiedCardinality 1 .
+```
+
+Reported: `owl:minQualifiedCardinality above 0 on owl:Nothing can never be satisfied.`
+
+*Flagged:* `exact 2 on Nothing`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass owl:Nothing ; owl:qualifiedCardinality 2 .
+```
+
+Reported: `owl:qualifiedCardinality above 0 on owl:Nothing can never be satisfied.`
+
+*Flagged:* `restriction used as a superclass`
+
+```turtle
+ex:C rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Nothing ] .
+```
+
+Reported: `https://example.test/onto#C (restriction on https://example.test/onto#p): owl:someValuesFrom owl:Nothing can never be satisfied.`
+
+*Clean:* `allValuesFrom Nothing is satisfiable`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom owl:Nothing .
+```
+
+*Clean:* `min 0 on Nothing`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass owl:Nothing ; owl:minQualifiedCardinality 0 .
+```
+
+*Clean:* `max on Nothing`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass owl:Nothing ; owl:maxQualifiedCardinality 3 .
+```
+
+*Clean:* `someValuesFrom Thing`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing .
+```
+
+*Clean:* `unqualified min with onClass Nothing`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass owl:Nothing ; owl:minCardinality 1 .
+```
+
+*Clean:* `an empty named class is not inferred`
+
+```turtle
+ex:E owl:equivalentClass owl:Nothing . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:E .
 ```
 
 #### OWL039: Vacuous restriction
@@ -828,7 +2931,7 @@ Reported: `owl:someValuesFrom owl:Nothing can never be satisfied.`
 - **Category:** deterministic
 - **Fix:** Remove a restriction that every individual satisfies (allValuesFrom owl:Thing, minimum cardinality 0).
 
-*Flagged:* allValuesFrom Thing
+*Flagged:* `allValuesFrom Thing`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom owl:Thing .
@@ -836,10 +2939,64 @@ Reported: `owl:someValuesFrom owl:Nothing can never be satisfied.`
 
 Reported: `owl:allValuesFrom owl:Thing holds for every individual.`
 
-*Clean:* allValuesFrom a class
+*Flagged:* `min cardinality 0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 0 .
+```
+
+Reported: `owl:minCardinality 0 holds for every individual.`
+
+*Flagged:* `qualified min 0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A ; owl:minQualifiedCardinality 0 .
+```
+
+Reported: `owl:minQualifiedCardinality 0 holds for every individual.`
+
+*Flagged:* `min cardinality written -0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality "-0" .
+```
+
+Reported: `owl:minCardinality 0 holds for every individual.`
+
+*Clean:* `allValuesFrom a class`
 
 ```turtle
 [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom ex:A .
+```
+
+*Clean:* `min cardinality 1`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinality 1 .
+```
+
+*Clean:* `max cardinality 0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality 0 .
+```
+
+*Clean:* `someValuesFrom Thing needs a successor`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing .
+```
+
+*Clean:* `qualified max 0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:onClass ex:A ; owl:maxQualifiedCardinality 0 .
+```
+
+*Clean:* `exact cardinality 0`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:cardinality 0 .
 ```
 
 #### OWL040: Restriction mixes object and datatype property kinds
@@ -849,7 +3006,7 @@ Reported: `owl:allValuesFrom owl:Thing holds for every individual.`
 - **Category:** deterministic
 - **Fix:** Use class fillers and resources with object properties, and datatypes and literals with datatype properties.
 
-*Flagged:* literal hasValue on object property
+*Flagged:* `literal hasValue on object property`
 
 ```turtle
 ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue "x" .
@@ -857,10 +3014,210 @@ ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction 
 
 Reported: `Restriction on object property https://example.test/onto#p uses literal hasValue "x".`
 
-*Clean:* class filler on object property
+*Flagged:* `datatype filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom xsd:string .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/2001/XMLSchema#string.`
+
+*Flagged:* `resource hasValue on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:hasValue ex:i .
+```
+
+Reported: `Restriction on datatype property https://example.test/onto#DP uses resource hasValue https://example.test/onto#i.`
+
+*Flagged:* `class filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:allValuesFrom ex:A .
+```
+
+Reported: `Restriction on datatype property https://example.test/onto#DP uses class filler https://example.test/onto#A.`
+
+*Flagged:* `owl:Thing filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom owl:Thing .
+```
+
+Reported: `Restriction on datatype property https://example.test/onto#DP uses class filler http://www.w3.org/2002/07/owl#Thing.`
+
+*Flagged:* `onDataRange on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:onDataRange xsd:string ; owl:minQualifiedCardinality 1 .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses owl:onDataRange http://www.w3.org/2001/XMLSchema#string.`
+
+*Flagged:* `onClass on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperty ex:DP ;
+    owl:onClass ex:A ; owl:qualifiedCardinality 1 .
+```
+
+Reported: `Restriction on datatype property https://example.test/onto#DP uses owl:onClass https://example.test/onto#A.`
+
+*Flagged:* `rdfs:Literal filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom rdfs:Literal .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/2000/01/rdf-schema#Literal.`
+
+*Flagged:* `declared datatype filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:Dt a rdfs:Datatype .
+[] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:Dt .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler https://example.test/onto#Dt.`
+
+*Flagged:* `restriction filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ;
+    owl:someValuesFrom [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:Thing ] .
+```
+
+Reported: `Restriction on datatype property https://example.test/onto#DP uses class filler _:466e3447c60e.`
+
+*Flagged:* `rdf:langString filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom rdf:langString .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/1999/02/22-rdf-syntax-ns#langString.`
+
+*Flagged:* `rdf:PlainLiteral filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom rdf:PlainLiteral .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral.`
+
+*Flagged:* `rdf:XMLLiteral filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom rdf:XMLLiteral .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral.`
+
+*Flagged:* `rdf:HTML filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom rdf:HTML .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML.`
+
+*Flagged:* `rdf:JSON filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom rdf:JSON .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON.`
+
+*Flagged:* `owl:real filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:real .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/2002/07/owl#real.`
+
+*Flagged:* `owl:rational filler on object property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom owl:rational .
+```
+
+Reported: `Restriction on object property https://example.test/onto#p uses datatype filler http://www.w3.org/2002/07/owl#rational.`
+
+*Clean:* `class filler on object property`
 
 ```turtle
 ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:A .
+```
+
+*Clean:* `literal hasValue on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:hasValue "x" .
+```
+
+*Clean:* `datatype filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom xsd:integer .
+```
+
+*Clean:* `undeclared property is not judged`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperty ex:u ; owl:hasValue ex:i .
+```
+
+*Clean:* `property typed as both is not judged`
+
+```turtle
+[] a owl:Restriction ; owl:onProperty ex:both ; owl:hasValue "x" .
+ex:both a owl:ObjectProperty, owl:DatatypeProperty .
+```
+
+*Clean:* `owl:real filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom owl:real .
+```
+
+*Clean:* `rdf:langString filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:allValuesFrom rdf:langString .
+```
+
+*Clean:* `custom datatype filler on datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:Dt a rdfs:Datatype .
+[] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom ex:Dt .
+```
+
+*Clean:* `unknown filler is not judged`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:DP ; owl:someValuesFrom ex:Unknown .
+```
+
+*Clean:* `untyped datatype restriction filler on object property is not judged`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty ex:p ;
+    owl:someValuesFrom [ owl:onDatatype xsd:integer ] .
+```
+
+*Clean:* `inverse property expression is not judged`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . [] a owl:Restriction ; owl:onProperty [ owl:inverseOf ex:p ] ; owl:hasValue "x" .
+```
+
+*Clean:* `onProperties is not judged`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperties ( ex:DP ) ; owl:allValuesFrom ex:A .
 ```
 
 #### OWL041: Contradictory owl:complementOf cycle
@@ -870,7 +3227,7 @@ ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex
 - **Category:** deterministic
 - **Fix:** Break the odd-length owl:complementOf cycle; a class cannot be the complement of itself.
 
-*Flagged:* self complement
+*Flagged:* `self complement`
 
 ```turtle
 ex:A owl:complementOf ex:A .
@@ -878,10 +3235,74 @@ ex:A owl:complementOf ex:A .
 
 Reported: `owl:complementOf assertions form an odd cycle (a class equals its complement).`
 
-*Clean:* two-cycle is consistent
+*Flagged:* `three-cycle`
+
+```turtle
+ex:A owl:complementOf ex:B . ex:B owl:complementOf ex:C . ex:C owl:complementOf ex:A .
+```
+
+Reported: `owl:complementOf assertions form an odd cycle (a class equals its complement).`
+
+*Flagged:* `anonymous self complement`
+
+```turtle
+_:x owl:complementOf _:x .
+```
+
+Reported: `owl:complementOf assertions form an odd cycle (a class equals its complement).`
+
+*Flagged:* `triangle through one class with two complements`
+
+```turtle
+ex:A owl:complementOf ex:B, ex:C . ex:B owl:complementOf ex:C .
+```
+
+Reported: `owl:complementOf assertions form an odd cycle (a class equals its complement).`
+
+*Flagged:* `five-cycle`
+
+```turtle
+ex:A owl:complementOf ex:B . ex:B owl:complementOf ex:C . ex:C owl:complementOf ex:D .
+ex:D owl:complementOf ex:E . ex:E owl:complementOf ex:A .
+```
+
+Reported: `owl:complementOf assertions form an odd cycle (a class equals its complement).`
+
+*Clean:* `two-cycle is consistent`
 
 ```turtle
 ex:A owl:complementOf ex:B . ex:B owl:complementOf ex:A .
+```
+
+*Clean:* `single complement`
+
+```turtle
+ex:A owl:complementOf ex:B .
+```
+
+*Clean:* `four-cycle is consistent`
+
+```turtle
+ex:A owl:complementOf ex:B . ex:B owl:complementOf ex:C .
+ex:C owl:complementOf ex:D . ex:D owl:complementOf ex:A .
+```
+
+*Clean:* `literal operand`
+
+```turtle
+ex:A owl:complementOf "x" .
+```
+
+*Clean:* `two complements of one class`
+
+```turtle
+ex:B owl:complementOf ex:A . ex:C owl:complementOf ex:A .
+```
+
+*Clean:* `equivalence is not part of the cycle`
+
+```turtle
+ex:A owl:complementOf ex:B . ex:B owl:equivalentClass ex:A .
 ```
 
 #### OWL042: Class subclass of or equivalent to its own complement
@@ -891,7 +3312,7 @@ ex:A owl:complementOf ex:B . ex:B owl:complementOf ex:A .
 - **Category:** deterministic
 - **Fix:** Remove the axiom relating a class to its own owl:complementOf expression.
 
-*Flagged:* subclass of own complement
+*Flagged:* `subclass of own complement`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf [ owl:complementOf ex:A ] .
@@ -899,10 +3320,60 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf [ owl:complementOf ex
 
 Reported: `Class is a subclass of its own complement _:4a41d5eb1f2f.`
 
-*Clean:* subclass of another complement
+*Flagged:* `equivalent to own complement`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:A owl:equivalentClass [ owl:complementOf ex:A ] .
+```
+
+Reported: `Class is equivalent to its own complement _:638b3292dcb1.`
+
+*Flagged:* `named complement`
+
+```turtle
+ex:A rdfs:subClassOf ex:N . ex:N owl:complementOf ex:A .
+```
+
+Reported: `Class is a subclass of its own complement https://example.test/onto#N.`
+
+*Flagged:* `complement equivalent to the class`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . [ owl:complementOf ex:A ] owl:equivalentClass ex:A .
+```
+
+Reported: `Class is equivalent to its own complement _:1c7316e52103.`
+
+*Flagged:* `anonymous class`
+
+```turtle
+_:a rdfs:subClassOf [ owl:complementOf _:a ] .
+```
+
+Reported: `Class is a subclass of its own complement _:53372c24a74d.`
+
+*Clean:* `subclass of another complement`
 
 ```turtle
 ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf [ owl:complementOf ex:B ] .
+```
+
+*Clean:* `complement subclass of the class`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . [ owl:complementOf ex:A ] rdfs:subClassOf ex:A .
+```
+
+*Clean:* `subclass chains are not followed`
+
+```turtle
+ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:B rdfs:subClassOf [ owl:complementOf ex:A ] .
+```
+
+*Clean:* `literal operand`
+
+```turtle
+ex:A owl:complementOf "x" ; rdfs:subClassOf "x" .
 ```
 
 #### OWL043: Contradictory or tautological operands in union or intersection
@@ -912,7 +3383,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf [ owl:complementOf ex
 - **Category:** deterministic
 - **Fix:** Review an intersection of complements/disjoint classes or a union of a class and its complement.
 
-*Flagged:* intersection with complement
+*Flagged:* `intersection with complement`
 
 ```turtle
 ex:C owl:intersectionOf ( ex:A [ owl:complementOf ex:A ] ) .
@@ -920,10 +3391,114 @@ ex:C owl:intersectionOf ( ex:A [ owl:complementOf ex:A ] ) .
 
 Reported: `owl:intersectionOf contains complementary or disjoint operands _:c42fe1c44183 and https://example.test/onto#A; it is unsatisfiable.`
 
-*Clean:* union of disjoint classes is fine
+*Flagged:* `union with complement`
+
+```turtle
+_:n owl:complementOf ex:A . ex:C owl:unionOf ( ex:A _:n ) .
+```
+
+Reported: `owl:unionOf contains complementary operands _:c42fe1c44183 and https://example.test/onto#A; it is equivalent to owl:Thing.`
+
+*Flagged:* `intersection of disjoint classes`
+
+```turtle
+ex:A owl:disjointWith ex:B . ex:C owl:intersectionOf ( ex:A ex:B ) .
+```
+
+Reported: `owl:intersectionOf contains complementary or disjoint operands https://example.test/onto#A and https://example.test/onto#B; it is unsatisfiable.`
+
+*Flagged:* `intersection with Nothing`
+
+```turtle
+ex:C owl:intersectionOf ( ex:A owl:Nothing ) .
+```
+
+Reported: `owl:intersectionOf contains owl:Nothing; it is unsatisfiable.`
+
+*Flagged:* `union with Thing`
+
+```turtle
+ex:C owl:unionOf ( ex:A owl:Thing ) .
+```
+
+Reported: `owl:unionOf contains owl:Thing; it is equivalent to owl:Thing.`
+
+*Flagged:* `disjointness asserted the other way`
+
+```turtle
+ex:B owl:disjointWith ex:A . ex:C owl:intersectionOf ( ex:A ex:B ) .
+```
+
+Reported: `owl:intersectionOf contains complementary or disjoint operands https://example.test/onto#A and https://example.test/onto#B; it is unsatisfiable.`
+
+*Flagged:* `anonymous intersection in a superclass`
+
+```turtle
+ex:C rdfs:subClassOf [ owl:intersectionOf ( ex:A [ owl:complementOf ex:A ] ) ] .
+```
+
+Reported: `owl:intersectionOf in the rdfs:subClassOf of https://example.test/onto#C contains complementary or disjoint operands _:c42fe1c44183 and https://example.test/onto#A; it is unsatisfiable.`
+
+*Flagged:* `single-operand intersection of Nothing`
+
+```turtle
+ex:C owl:intersectionOf ( owl:Nothing ) .
+```
+
+Reported: `owl:intersectionOf contains owl:Nothing; it is unsatisfiable.`
+
+*Clean:* `union of disjoint classes is fine`
 
 ```turtle
 ex:A owl:disjointWith ex:B . ex:C owl:unionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `intersection with Thing is fine`
+
+```turtle
+ex:C owl:intersectionOf ( ex:A owl:Thing ) .
+```
+
+*Clean:* `union with Nothing is fine`
+
+```turtle
+ex:C owl:unionOf ( ex:A owl:Nothing ) .
+```
+
+*Clean:* `complement of an unrelated class`
+
+```turtle
+ex:C owl:intersectionOf ( ex:A [ owl:complementOf ex:B ] ) .
+```
+
+*Clean:* `disjointness from AllDisjointClasses is not used`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ex:B ) . ex:C owl:intersectionOf ( ex:A ex:B ) .
+```
+
+*Clean:* `oneOf is not judged`
+
+```turtle
+ex:C owl:oneOf ( owl:Nothing ex:i ) .
+```
+
+*Clean:* `malformed list is OWL031 only`
+
+```turtle
+ex:C owl:unionOf _:l . _:l rdf:first owl:Thing .
+```
+
+*Clean:* `disjoint with its superclass (OWL025)`
+
+```turtle
+ex:A owl:disjointWith ex:B ; rdfs:subClassOf ex:B .
+```
+
+*Clean:* `disjoint with its equivalent (OWL025)`
+
+```turtle
+ex:A owl:disjointWith ex:B ; owl:equivalentClass ex:B .
 ```
 
 #### OWL044: Individuals identical through owl:sameAs chains but asserted different
@@ -933,7 +3508,7 @@ ex:A owl:disjointWith ex:B . ex:C owl:unionOf ( ex:A ex:B ) .
 - **Category:** deterministic
 - **Fix:** Remove the conflicting owl:sameAs or owl:differentFrom assertion; nothing differs from itself.
 
-*Flagged:* transitive same
+*Flagged:* `transitive same`
 
 ```turtle
 ex:a owl:sameAs ex:b . ex:b owl:sameAs ex:c . ex:a owl:differentFrom ex:c .
@@ -941,10 +3516,103 @@ ex:a owl:sameAs ex:b . ex:b owl:sameAs ex:c . ex:a owl:differentFrom ex:c .
 
 Reported: `Individual is asserted different from https://example.test/onto#c, but a chain of owl:sameAs makes them the same.`
 
-*Clean:* same only
+*Flagged:* `same through a shared individual`
+
+```turtle
+ex:a owl:sameAs ex:m . ex:b owl:sameAs ex:m . ex:a owl:differentFrom ex:b .
+```
+
+Reported: `Individual is asserted different from https://example.test/onto#b, but a chain of owl:sameAs makes them the same.`
+
+*Flagged:* `AllDifferent with same members`
+
+```turtle
+ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:members ( ex:a ex:b ex:c ) .
+```
+
+Reported: `owl:AllDifferent contains https://example.test/onto#a and https://example.test/onto#b, asserted the same.`
+
+*Flagged:* `AllDifferent distinctMembers same through a chain`
+
+```turtle
+ex:a owl:sameAs ex:m . ex:m owl:sameAs ex:b .
+[] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:b ) .
+```
+
+Reported: `owl:AllDifferent contains https://example.test/onto#a and https://example.test/onto#b, asserted the same.`
+
+*Flagged:* `same through a blank-node individual`
+
+```turtle
+ex:a owl:sameAs _:x . _:x owl:sameAs ex:b . ex:b owl:differentFrom ex:a .
+```
+
+Reported: `Individual is asserted different from https://example.test/onto#a, but a chain of owl:sameAs makes them the same.`
+
+*Clean:* `same only`
 
 ```turtle
 ex:a owl:sameAs ex:b .
+```
+
+*Clean:* `different only`
+
+```turtle
+ex:a owl:differentFrom ex:b .
+```
+
+*Clean:* `unrelated`
+
+```turtle
+ex:a owl:sameAs ex:b . ex:c owl:differentFrom ex:a .
+```
+
+*Clean:* `direct same and different`
+
+```turtle
+ex:a owl:sameAs ex:b ; owl:differentFrom ex:b .
+```
+
+*Clean:* `direct reversed same`
+
+```turtle
+ex:b owl:sameAs ex:a . ex:a owl:differentFrom ex:b .
+```
+
+*Clean:* `different from self`
+
+```turtle
+ex:a owl:differentFrom ex:a .
+```
+
+*Clean:* `literal object`
+
+```turtle
+ex:a owl:sameAs "x" ; owl:differentFrom "x" .
+```
+
+*Clean:* `AllDifferent distinct`
+
+```turtle
+ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:c ) .
+```
+
+*Clean:* `AllDifferent repeating a member is OWL045's`
+
+```turtle
+[] a owl:AllDifferent ; owl:members ( ex:a ex:b ex:a ) .
+```
+
+*Clean:* `malformed AllDifferent list is OWL045's`
+
+```turtle
+ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:members _:l . _:l rdf:first ex:a .
+```
+
+*Clean:* `untyped AllDifferent is not judged`
+
+```turtle
+ex:a owl:sameAs ex:b . [] owl:members ( ex:a ex:b ) .
 ```
 
 #### OWL045: Malformed owl:AllDifferent or owl:AllDisjointClasses
@@ -954,7 +3622,7 @@ ex:a owl:sameAs ex:b .
 - **Category:** deterministic
 - **Fix:** Give the axiom one well-formed member list with at least two distinct members.
 
-*Flagged:* AllDifferent without list
+*Flagged:* `AllDifferent without list`
 
 ```turtle
 [] a owl:AllDifferent .
@@ -962,8 +3630,120 @@ ex:a owl:sameAs ex:b .
 
 Reported: `owl:AllDifferent has no member list.`
 
-*Clean:* AllDifferent fine
+*Flagged:* `AllDifferent one member`
+
+```turtle
+[] a owl:AllDifferent ; owl:members ( ex:a ) .
+```
+
+Reported: `owl:AllDifferent has fewer than two members.`
+
+*Flagged:* `AllDifferent duplicate`
+
+```turtle
+[] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:b ex:a ) .
+```
+
+Reported: `owl:AllDifferent repeats a member.`
+
+*Flagged:* `AllDifferent malformed`
+
+```turtle
+[] a owl:AllDifferent ; owl:members _:l . _:l rdf:first ex:a .
+```
+
+Reported: `owl:AllDifferent member list is malformed.`
+
+*Flagged:* `AllDifferent two lists`
+
+```turtle
+[] a owl:AllDifferent ; owl:members ( ex:a ex:b ) ; owl:distinctMembers ( ex:c ex:d ) .
+```
+
+Reported: `owl:AllDifferent has more than one member list.`
+
+*Flagged:* `AllDisjointClasses empty`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members () .
+```
+
+Reported: `owl:AllDisjointClasses has fewer than two members.`
+
+*Flagged:* `AllDisjointClasses duplicate`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ex:A ) .
+```
+
+Reported: `owl:AllDisjointClasses repeats a member.`
+
+*Flagged:* `AllDifferent members literal`
+
+```turtle
+[] a owl:AllDifferent ; owl:members "x" .
+```
+
+Reported: `owl:AllDifferent member list is malformed.`
+
+*Flagged:* `AllDifferent empty`
+
+```turtle
+[] a owl:AllDifferent ; owl:distinctMembers () .
+```
+
+Reported: `owl:AllDifferent has fewer than two members.`
+
+*Flagged:* `AllDisjointClasses one member`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ) .
+```
+
+Reported: `owl:AllDisjointClasses has fewer than two members.`
+
+*Flagged:* `AllDisjointClasses takes owl:members, not owl:distinctMembers`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:distinctMembers ( ex:A ex:B ) .
+```
+
+Reported: `owl:AllDisjointClasses has no member list.`
+
+*Flagged:* `AllDisjointClasses two lists`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ex:B ) , ( ex:C ex:D ) .
+```
+
+Reported: `owl:AllDisjointClasses has more than one member list.`
+
+*Clean:* `AllDifferent fine`
 
 ```turtle
 [] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:b ) .
+```
+
+*Clean:* `AllDisjointClasses fine`
+
+```turtle
+[] a owl:AllDisjointClasses ; owl:members ( ex:A ex:B ex:C ) .
+```
+
+*Clean:* `untyped members`
+
+```turtle
+[] owl:members ( ex:a ) .
+```
+
+*Clean:* `AllDifferent with owl:members`
+
+```turtle
+[] a owl:AllDifferent ; owl:members ( ex:a ex:b ex:c ) .
+```
+
+*Clean:* `AllDisjointProperties is not judged`
+
+```turtle
+[] a owl:AllDisjointProperties ; owl:members ( ex:p ) .
 ```

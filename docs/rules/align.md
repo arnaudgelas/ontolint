@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Use the exact SKOS or OWL mapping property IRI (for example skos:exactMatch); the asserted one is unknown.
 
-*Flagged:* wrong case
+*Flagged:* `wrong case`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
@@ -35,11 +35,58 @@ ex:A skos:exactmatch a:A .
 
 Reported: `http://www.w3.org/2004/02/skos/core#exactmatch is not a SKOS or OWL mapping property; did you mean skos:exactMatch?`
 
-*Clean:* correct property
+*Flagged:* `owl typo`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A owl:sameas a:A .
+```
+
+Reported: `http://www.w3.org/2002/07/owl#sameas is not a SKOS or OWL mapping property; did you mean owl:sameAs?`
+
+*Flagged:* `unknown match property`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:relMatch a:A .
+```
+
+Reported: `http://www.w3.org/2004/02/skos/core#relMatch is not a SKOS or OWL mapping property`
+
+*Flagged:* `missing hash in the skos namespace`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A <http://www.w3.org/2004/02/skos/coreexactMatch> a:A .
+```
+
+Reported: `http://www.w3.org/2004/02/skos/coreexactMatch is not a SKOS or OWL mapping property; did you mean skos:exactMatch?`
+
+*Clean:* `correct property`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
 ex:A skos:exactMatch a:A .
+```
+
+*Clean:* `custom property in another namespace`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A ex:exactMatch a:A .
+```
+
+*Clean:* `other skos property`
+
+```turtle
+ex:A skos:prefLabel 'A' ; skos:related ex:B .
+```
+
+*Clean:* `mappingRelation`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:mappingRelation a:A .
 ```
 
 #### ALIGN003: exactMatch chain conflicting with broadMatch, narrowMatch or relatedMatch
@@ -49,7 +96,7 @@ ex:A skos:exactMatch a:A .
 - **Category:** deterministic
 - **Fix:** skos:exactMatch is transitive and disjoint with broad/narrowMatch; drop one mapping of the chain.
 
-*Flagged:* chain with broad
+*Flagged:* `chain with broad`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
@@ -58,12 +105,115 @@ a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .
 
 Reported: `http://a.test/X and http://c.test/Z are exactMatch-equivalent through a chain but also linked by broadMatch/narrowMatch.`
 
-*Clean:* direct conflict is SKOS012
+*Flagged:* `chain with narrow`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . c:Z skos:exactMatch b:Y . c:Z skos:narrowMatch a:X .
+```
+
+Reported: `http://a.test/X and http://c.test/Z are exactMatch-equivalent through a chain but also linked by broadMatch/narrowMatch.`
+
+*Flagged:* `longer chain`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . c:Z skos:exactMatch ex:W . ex:W skos:broadMatch a:X .
+```
+
+Reported: `https://example.test/onto#W and http://a.test/X are exactMatch-equivalent through a chain but also linked by broadMatch/narrowMatch.`
+
+*Flagged:* `relatedMatch in an exactMatch chain`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:relatedMatch c:Z .
+```
+
+Reported: `http://a.test/X and http://c.test/Z are exactMatch-equivalent through a chain but also linked by relatedMatch.`
+
+*Flagged:* `relatedMatch both ways in an exactMatch chain`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . c:Z skos:exactMatch b:Y . c:Z skos:relatedMatch a:X . a:X skos:relatedMatch c:Z .
+```
+
+Reported: `http://a.test/X and http://c.test/Z are exactMatch-equivalent through a chain but also linked by relatedMatch.`
+
+*Clean:* `direct conflict is SKOS012`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
 a:X skos:exactMatch b:Y ; skos:broadMatch b:Y .
 ```
+
+*Clean:* `unrelated terms`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . c:Z skos:broadMatch a:X .
+```
+
+*Clean:* `chain without hierarchy`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z .
+```
+
+*Clean:* `owl:sameAs does not join`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X owl:sameAs b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .
+```
+
+*Clean:* `closeMatch does not join`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:closeMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .
+```
+
+*Clean:* `direct exactMatch and relatedMatch is SKOS012`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y ; skos:relatedMatch b:Y .
+```
+
+*Clean:* `relatedMatch outside a chain`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . c:Z skos:relatedMatch a:X .
+```
+
+*Clean:* `closeMatch chain with relatedMatch`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:closeMatch b:Y . b:Y skos:closeMatch c:Z . a:X skos:relatedMatch c:Z .
+```
+
+*Clean:* `relatedMatch in a chain with no end owned`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:relatedMatch c:Z .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `no end owned`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y . b:Y skos:exactMatch c:Z . a:X skos:broadMatch c:Z .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### ALIGN004: Contradictory hierarchical or associative mapping strengths
 
@@ -72,7 +222,7 @@ a:X skos:exactMatch b:Y ; skos:broadMatch b:Y .
 - **Category:** deterministic
 - **Fix:** Keep one mapping strength per pair: broadMatch, narrowMatch and relatedMatch exclude each other.
 
-*Flagged:* mutual broad
+*Flagged:* `mutual broad`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
@@ -81,11 +231,52 @@ a:X skos:broadMatch b:Y . b:Y skos:broadMatch a:X .
 
 Reported: `http://a.test/X and http://b.test/Y are each mapped as broader than the other.`
 
-*Clean:* consistent pair
+*Flagged:* `broad and narrow same direction`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:broadMatch b:Y ; skos:narrowMatch b:Y .
+```
+
+Reported: `http://a.test/X and http://b.test/Y are each mapped as broader than the other.`
+
+*Flagged:* `related and broad`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:relatedMatch b:Y ; skos:broadMatch b:Y .
+```
+
+Reported: `http://a.test/X and http://b.test/Y are linked by skos:relatedMatch and by broadMatch/narrowMatch.`
+
+*Flagged:* `related and inverse narrow`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+b:Y skos:relatedMatch a:X . a:X skos:narrowMatch b:Y .
+```
+
+Reported: `http://b.test/Y and http://a.test/X are linked by skos:relatedMatch and by broadMatch/narrowMatch.`
+
+*Clean:* `consistent pair`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
 a:X skos:broadMatch b:Y . b:Y skos:narrowMatch a:X .
+```
+
+*Clean:* `exact and broad is SKOS012`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:exactMatch b:Y ; skos:broadMatch b:Y .
+```
+
+*Clean:* `related to different term`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+a:X skos:relatedMatch b:Y ; skos:broadMatch c:Z .
 ```
 
 #### ALIGN005: Term with several distinct exactMatch targets in one namespace
@@ -95,7 +286,7 @@ a:X skos:broadMatch b:Y . b:Y skos:narrowMatch a:X .
 - **Category:** context-dependent
 - **Fix:** Keep one exactMatch per target namespace, or relate the targets to each other if they are the same thing.
 
-*Flagged:* two targets
+*Flagged:* `two targets`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
@@ -104,11 +295,46 @@ ex:A skos:exactMatch a:One, a:Two .
 
 Reported: `Term has 2 distinct skos:exactMatch targets in http://a.test/: http://a.test/One, http://a.test/Two.`
 
-*Clean:* one target per namespace
+*Flagged:* `two targets in a slash namespace`
+
+```turtle
+ex:A skos:exactMatch <http://s.test/x/1>, <http://s.test/x/2> .
+```
+
+Reported: `Term has 2 distinct skos:exactMatch targets in http://s.test/x/: http://s.test/x/1, http://s.test/x/2.`
+
+*Clean:* `one target per namespace`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
 ex:A skos:exactMatch a:One, b:One .
+```
+
+*Clean:* `targets are matched to each other`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactMatch a:One, a:Two . a:One skos:exactMatch a:Two .
+```
+
+*Clean:* `targets are sameAs`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactMatch a:One, a:Two . a:Two owl:sameAs a:One .
+```
+
+*Clean:* `targets in the source namespace`
+
+```turtle
+ex:A skos:exactMatch ex:B, ex:C .
+```
+
+*Clean:* `closeMatch targets`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:closeMatch a:One, a:Two .
 ```
 
 #### ALIGN007: Symmetric SKOS mapping asserted in one direction only
@@ -118,7 +344,7 @@ ex:A skos:exactMatch a:One, b:One .
 - **Category:** context-dependent
 - **Fix:** Assert the inverse skos:exactMatch/closeMatch too, since both terms are described in this file.
 
-*Flagged:* one-way exactMatch
+*Flagged:* `one-way exactMatch`
 
 ```turtle
 ex:A skos:exactMatch ex:B . ex:B a skos:Concept .
@@ -126,11 +352,46 @@ ex:A skos:exactMatch ex:B . ex:B a skos:Concept .
 
 Reported: `skos:exactMatch to https://example.test/onto#B has no inverse assertion, although https://example.test/onto#B is described here.`
 
-*Clean:* both ways
+*Flagged:* `one-way closeMatch`
+
+```turtle
+ex:A skos:closeMatch ex:B . ex:B skos:prefLabel 'B' .
+```
+
+Reported: `skos:closeMatch to https://example.test/onto#B has no inverse assertion, although https://example.test/onto#B is described here.`
+
+*Clean:* `both ways`
 
 ```turtle
 ex:A skos:exactMatch ex:B . ex:B skos:exactMatch ex:A .
 ```
+
+*Clean:* `target not described here`
+
+```turtle
+ex:A skos:exactMatch ex:B .
+```
+
+*Clean:* `external target`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:A skos:exactMatch a:B .
+```
+
+*Clean:* `broadMatch is not symmetric`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:B a skos:Concept .
+```
+
+*Clean:* `external source is out of scope`
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:B a skos:Concept .
+```
+
+Linter options: `base='http://elsewhere.test/'`.
 
 #### ALIGN009: Mapping between a class and a property
 
@@ -139,7 +400,7 @@ ex:A skos:exactMatch ex:B . ex:B skos:exactMatch ex:A .
 - **Category:** context-dependent
 - **Fix:** Map classes to classes and properties to properties; the declared kinds are incompatible.
 
-*Flagged:* class to property
+*Flagged:* `class to property`
 
 ```turtle
 @prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
@@ -148,10 +409,57 @@ ex:C a owl:Class . a:p a owl:ObjectProperty . ex:C skos:exactMatch a:p .
 
 Reported: `skos:exactMatch maps class https://example.test/onto#C to property http://a.test/p.`
 
-*Clean:* class to class
+*Flagged:* `property to class`
+
+```turtle
+@prefix a: <http://a.test/> . @prefix b: <http://b.test/> . @prefix c: <http://c.test/> .
+ex:p a owl:DatatypeProperty . a:C a rdfs:Class . ex:p skos:closeMatch a:C .
+```
+
+Reported: `skos:closeMatch maps property https://example.test/onto#p to class http://a.test/C.`
+
+*Flagged:* `equivalentClass to property`
+
+```turtle
+ex:C a owl:Class . ex:p a rdf:Property . ex:C owl:equivalentClass ex:p .
+```
+
+Reported: `owl:equivalentClass maps class https://example.test/onto#C to property https://example.test/onto#p.`
+
+*Clean:* `class to class`
 
 ```turtle
 ex:C a owl:Class . ex:D a owl:Class . ex:C owl:equivalentClass ex:D .
+```
+
+*Clean:* `object to datatype property`
+
+```turtle
+ex:p a owl:ObjectProperty . ex:q a owl:DatatypeProperty . ex:p skos:closeMatch ex:q .
+```
+
+*Clean:* `punned class and property`
+
+```turtle
+ex:C a owl:Class, owl:ObjectProperty . ex:p a owl:ObjectProperty . ex:C skos:exactMatch ex:p .
+```
+
+*Clean:* `undeclared target`
+
+```turtle
+ex:C a owl:Class . ex:C skos:exactMatch ex:p .
+```
+
+*Clean:* `concept to class`
+
+```turtle
+ex:C a owl:Class . ex:k a skos:Concept . ex:k skos:exactMatch ex:C .
+```
+
+*Clean:* `non-mapping predicate`
+
+```turtle
+ex:C a owl:Class . ex:p a owl:ObjectProperty . ex:C rdfs:seeAlso ex:p .
 ```
 
 #### ALIGN012: Mapping target outside the declared alignment namespaces
@@ -161,7 +469,7 @@ ex:C a owl:Class . ex:D a owl:Class . ex:C owl:equivalentClass ex:D .
 - **Category:** deterministic
 - **Fix:** Map to a term inside one of alignment_namespaces, or add the target's namespace to the policy file.
 
-*Flagged:* exactMatch outside
+*Flagged:* `exactMatch outside`
 
 ```turtle
 ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
@@ -171,11 +479,81 @@ Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'htt
 
 Reported: `skos:exactMatch target https://elsewhere.test/A is outside the declared alignment namespaces.`
 
-*Clean:* silent without policy
+*Flagged:* `equivalentClass outside`
+
+```turtle
+ex:A a owl:Class ; owl:equivalentClass <https://elsewhere.test/A> .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+Reported: `owl:equivalentClass target https://elsewhere.test/A is outside the declared alignment namespaces.`
+
+*Flagged:* `sameAs outside on an individual`
+
+```turtle
+ex:i a owl:NamedIndividual ; owl:sameAs <https://elsewhere.test/i> .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+Reported: `owl:sameAs target https://elsewhere.test/i is outside the declared alignment namespaces.`
+
+*Flagged:* `one of two targets outside`
+
+```turtle
+ex:A a owl:Class ; skos:closeMatch <https://ref.test/a#A>, <https://elsewhere.test/A> .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+Reported: `skos:closeMatch target https://elsewhere.test/A is outside the declared alignment namespaces.`
+
+*Clean:* `silent without policy`
 
 ```turtle
 ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
 ```
+
+*Clean:* `inside first namespace`
+
+```turtle
+ex:A a owl:Class ; skos:exactMatch <https://ref.test/a#A> .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+*Clean:* `inside second namespace`
+
+```turtle
+ex:A a owl:Class ; owl:equivalentClass <https://ref.test/b/A> .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+*Clean:* `non-mapping predicate ignored`
+
+```turtle
+ex:A a owl:Class ; rdfs:seeAlso <https://elsewhere.test/A> .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+*Clean:* `literal target ignored`
+
+```turtle
+ex:A a owl:Class ; skos:exactMatch "x" .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
+
+*Clean:* `undeclared subject ignored`
+
+```turtle
+ex:U skos:exactMatch <https://elsewhere.test/A> . ex:A a owl:Class .
+```
+
+Linter options: `policy=Policy(alignment_namespaces=('https://ref.test/a#', 'https://ref.test/b/'))`.
 
 #### ALIGN013: Duplicate mapping through several predicates
 
@@ -184,7 +562,7 @@ ex:A a owl:Class ; skos:exactMatch <https://elsewhere.test/A> .
 - **Category:** context-dependent
 - **Fix:** Keep the most precise mapping predicate; the same pair is related by several equivalent assertions.
 
-*Flagged:* exact and equivalentClass
+*Flagged:* `exact and equivalentClass`
 
 ```turtle
 ex:A owl:equivalentClass ex:B ; skos:exactMatch ex:B .
@@ -192,10 +570,52 @@ ex:A owl:equivalentClass ex:B ; skos:exactMatch ex:B .
 
 Reported: `https://example.test/onto#A and https://example.test/onto#B are related by several equivalence predicates: owl:equivalentClass, skos:exactMatch.`
 
-*Clean:* single predicate both ways
+*Flagged:* `exact and close`
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:B skos:closeMatch ex:A .
+```
+
+Reported: `https://example.test/onto#A and https://example.test/onto#B are related by several equivalence predicates: skos:closeMatch, skos:exactMatch.`
+
+*Flagged:* `sameAs and exact reversed`
+
+```turtle
+ex:A owl:sameAs ex:B . ex:B skos:exactMatch ex:A .
+```
+
+Reported: `https://example.test/onto#A and https://example.test/onto#B are related by several equivalence predicates: owl:sameAs, skos:exactMatch.`
+
+*Flagged:* `broad and inverse narrow`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:B skos:narrowMatch ex:A .
+```
+
+Reported: `https://example.test/onto#B being broader than https://example.test/onto#A is asserted by both skos:broadMatch and skos:narrowMatch.`
+
+*Clean:* `single predicate both ways`
 
 ```turtle
 ex:A skos:exactMatch ex:B . ex:B skos:exactMatch ex:A .
+```
+
+*Clean:* `different pairs`
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:A owl:equivalentClass ex:C .
+```
+
+*Clean:* `broad and narrow in the same orientation`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:A skos:narrowMatch ex:B .
+```
+
+*Clean:* `broad and narrow of different pairs`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:C skos:narrowMatch ex:D .
 ```
 
 #### ALIGN014: broadMatch or narrowMatch contradicting the asserted hierarchy
@@ -205,7 +625,7 @@ ex:A skos:exactMatch ex:B . ex:B skos:exactMatch ex:A .
 - **Category:** deterministic
 - **Fix:** Reverse the mapping or fix the hierarchy; the file places the broader term below the narrower one.
 
-*Flagged:* broadMatch against subclass
+*Flagged:* `broadMatch against subclass`
 
 ```turtle
 ex:A skos:broadMatch ex:B . ex:B rdfs:subClassOf ex:A .
@@ -213,10 +633,74 @@ ex:A skos:broadMatch ex:B . ex:B rdfs:subClassOf ex:A .
 
 Reported: `skos:broadMatch makes https://example.test/onto#B broader than https://example.test/onto#A, but the asserted hierarchy places https://example.test/onto#B below https://example.test/onto#A.`
 
-*Clean:* consistent
+*Flagged:* `narrowMatch against subclass`
+
+```turtle
+ex:A skos:narrowMatch ex:B . ex:A rdfs:subClassOf ex:B .
+```
+
+Reported: `skos:narrowMatch makes https://example.test/onto#A broader than https://example.test/onto#B, but the asserted hierarchy places https://example.test/onto#A below https://example.test/onto#B.`
+
+*Flagged:* `through a chain`
+
+```turtle
+ex:A skos:broadMatch ex:C . ex:C rdfs:subClassOf ex:M . ex:M rdfs:subClassOf ex:A .
+```
+
+Reported: `skos:broadMatch makes https://example.test/onto#C broader than https://example.test/onto#A, but the asserted hierarchy places https://example.test/onto#C below https://example.test/onto#A.`
+
+*Flagged:* `subproperty`
+
+```turtle
+ex:p skos:broadMatch ex:q . ex:q rdfs:subPropertyOf ex:p .
+```
+
+Reported: `skos:broadMatch makes https://example.test/onto#q broader than https://example.test/onto#p, but the asserted hierarchy places https://example.test/onto#q below https://example.test/onto#p.`
+
+*Flagged:* `skos broader`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:B skos:broader ex:A .
+```
+
+Reported: `skos:broadMatch makes https://example.test/onto#B broader than https://example.test/onto#A, but the asserted hierarchy places https://example.test/onto#B below https://example.test/onto#A.`
+
+*Flagged:* `skos narrower`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:A skos:narrower ex:B .
+```
+
+Reported: `skos:broadMatch makes https://example.test/onto#B broader than https://example.test/onto#A, but the asserted hierarchy places https://example.test/onto#B below https://example.test/onto#A.`
+
+*Clean:* `consistent`
 
 ```turtle
 ex:A skos:broadMatch ex:B . ex:A rdfs:subClassOf ex:B .
+```
+
+*Clean:* `consistent narrow`
+
+```turtle
+ex:A skos:narrowMatch ex:B . ex:B rdfs:subClassOf ex:A .
+```
+
+*Clean:* `hierarchy cycle`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:B rdfs:subClassOf ex:A . ex:A rdfs:subClassOf ex:B .
+```
+
+*Clean:* `unrelated hierarchy`
+
+```turtle
+ex:A skos:broadMatch ex:B . ex:C rdfs:subClassOf ex:A .
+```
+
+*Clean:* `exactMatch is not hierarchical`
+
+```turtle
+ex:A skos:exactMatch ex:B . ex:B rdfs:subClassOf ex:A .
 ```
 
 #### ALIGN015: Declared mapping set without version, creator or licence
@@ -226,7 +710,7 @@ ex:A skos:broadMatch ex:B . ex:A rdfs:subClassOf ex:B .
 - **Category:** deterministic
 - **Fix:** Add a version, a creator and a licence to the sssom:MappingSet.
 
-*Flagged:* bare mapping set
+*Flagged:* `bare mapping set`
 
 ```turtle
 ex:M a <https://w3id.org/sssom/MappingSet> .
@@ -234,11 +718,63 @@ ex:M a <https://w3id.org/sssom/MappingSet> .
 
 Reported: `Mapping set has no version, creator or licence.`
 
-*Clean:* complete
+*Flagged:* `http namespace`
+
+```turtle
+ex:M a <http://w3id.org/sssom/MappingSet> ; dcterms:creator 'x' ; dcterms:license ex:L .
+```
+
+Reported: `Mapping set has no version.`
+
+*Flagged:* `no licence`
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:creator 'x' .
+```
+
+Reported: `Mapping set has no licence.`
+
+*Flagged:* `no creator`
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:license ex:L .
+```
+
+Reported: `Mapping set has no creator.`
+
+*Flagged:* `no version`
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> ; dcterms:creator 'x' ; dcterms:license ex:L .
+```
+
+Reported: `Mapping set has no version.`
+
+*Clean:* `complete`
 
 ```turtle
 ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:creator 'x' ; dcterms:license ex:L .
 ```
+
+*Clean:* `sssom properties`
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> ; <https://w3id.org/sssom/mapping_set_version> '1' ; <https://w3id.org/sssom/creator_id> ex:me ; <https://w3id.org/sssom/license> ex:L .
+```
+
+*Clean:* `not a declared mapping set`
+
+```turtle
+ex:O a owl:Ontology .
+```
+
+*Clean:* `outside base`
+
+```turtle
+ex:M a <https://w3id.org/sssom/MappingSet> .
+```
+
+Linter options: `base='http://elsewhere.test/'`.
 
 #### ALIGN016: Mapping coverage below the expected ratio
 
@@ -247,7 +783,7 @@ ex:M a <https://w3id.org/sssom/MappingSet> ; owl:versionInfo '1' ; dcterms:creat
 - **Category:** context-dependent
 - **Fix:** Align more classes and properties (skos:exactMatch, owl:equivalentClass) or lower alignment_min_coverage.
 
-*Flagged:* 1 of 10 mapped
+*Flagged:* `1 of 10 mapped`
 
 ```turtle
 ex:C0 a owl:Class .
@@ -267,7 +803,7 @@ Linter options: `policy=Policy(alignment_min_coverage=0.5)`.
 
 Reported: `1 of 10 classes and properties have a mapping (0.10 < 0.50).`
 
-*Clean:* silent without policy
+*Flagged:* `none mapped`
 
 ```turtle
 ex:C0 a owl:Class .
@@ -281,6 +817,195 @@ ex:C7 a owl:Class .
 ex:C8 a owl:Class .
 ex:C9 a owl:Class .
 ```
+
+Linter options: `policy=Policy(alignment_min_coverage=0.1)`.
+
+Reported: `0 of 10 classes and properties have a mapping (0.00 < 0.10).`
+
+*Flagged:* `just below ratio`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+ex:C0 skos:exactMatch <https://ref.test/a#C0> .
+ex:C1 skos:exactMatch <https://ref.test/a#C1> .
+ex:C2 skos:exactMatch <https://ref.test/a#C2> .
+ex:C3 skos:exactMatch <https://ref.test/a#C3> .
+```
+
+Linter options: `policy=Policy(alignment_min_coverage=0.5)`.
+
+Reported: `4 of 10 classes and properties have a mapping (0.40 < 0.50).`
+
+*Flagged:* `below sample of 1`
+
+```turtle
+ex:C0 a owl:Class .
+```
+
+Linter options: `policy=Policy(metric_min_sample=1, alignment_min_coverage=0.5)`.
+
+Reported: `0 of 1 classes and properties have a mapping (0.00 < 0.50).`
+
+*Flagged:* `self mapping does not count`
+
+```turtle
+ex:A a owl:Class ; owl:equivalentClass ex:A .
+```
+
+Linter options: `policy=Policy(metric_min_sample=1, alignment_min_coverage=0.5)`.
+
+Reported: `0 of 1 classes and properties have a mapping (0.00 < 0.50).`
+
+*Flagged:* `properties count in population`
+
+```turtle
+ex:A a owl:Class ; skos:exactMatch <https://r.test/A> . ex:p a owl:ObjectProperty .
+```
+
+Linter options: `policy=Policy(metric_min_sample=2, alignment_min_coverage=0.9)`.
+
+Reported: `1 of 2 classes and properties have a mapping (0.50 < 0.90).`
+
+*Clean:* `silent without policy`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+```
+
+*Clean:* `exactly at ratio`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+ex:C0 skos:exactMatch <https://ref.test/a#C0> .
+ex:C1 skos:exactMatch <https://ref.test/a#C1> .
+ex:C2 skos:exactMatch <https://ref.test/a#C2> .
+ex:C3 skos:exactMatch <https://ref.test/a#C3> .
+ex:C4 skos:exactMatch <https://ref.test/a#C4> .
+```
+
+Linter options: `policy=Policy(alignment_min_coverage=0.5)`.
+
+*Clean:* `above ratio`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+ex:C0 skos:exactMatch <https://ref.test/a#C0> .
+ex:C1 skos:exactMatch <https://ref.test/a#C1> .
+ex:C2 skos:exactMatch <https://ref.test/a#C2> .
+ex:C3 skos:exactMatch <https://ref.test/a#C3> .
+ex:C4 skos:exactMatch <https://ref.test/a#C4> .
+ex:C5 skos:exactMatch <https://ref.test/a#C5> .
+ex:C6 skos:exactMatch <https://ref.test/a#C6> .
+ex:C7 skos:exactMatch <https://ref.test/a#C7> .
+ex:C8 skos:exactMatch <https://ref.test/a#C8> .
+```
+
+Linter options: `policy=Policy(alignment_min_coverage=0.5)`.
+
+*Clean:* `sample not met`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+```
+
+Linter options: `policy=Policy(alignment_min_coverage=0.5)`.
+
+*Clean:* `ratio zero never fires`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+```
+
+Linter options: `policy=Policy(alignment_min_coverage=0.0)`.
+
+*Clean:* `deprecated terms skipped`
+
+```turtle
+ex:C0 a owl:Class .
+ex:C1 a owl:Class .
+ex:C2 a owl:Class .
+ex:C3 a owl:Class .
+ex:C4 a owl:Class .
+ex:C5 a owl:Class .
+ex:C6 a owl:Class .
+ex:C7 a owl:Class .
+ex:C8 a owl:Class .
+ex:C9 a owl:Class .
+
+ex:C0 owl:deprecated true .
+ex:C1 owl:deprecated true .
+ex:C2 owl:deprecated true .
+ex:C3 owl:deprecated true .
+ex:C4 owl:deprecated true .
+ex:C5 owl:deprecated true .
+ex:C6 owl:deprecated true .
+ex:C7 owl:deprecated true .
+ex:C8 owl:deprecated true .
+ex:C9 owl:deprecated true .
+```
+
+Linter options: `policy=Policy(metric_min_sample=1, alignment_min_coverage=0.5)`.
+
+*Clean:* `property mapping counts`
+
+```turtle
+ex:A a owl:Class ; skos:exactMatch <https://r.test/A> . ex:p a owl:ObjectProperty ; owl:equivalentProperty <https://r.test/p> .
+```
+
+Linter options: `policy=Policy(metric_min_sample=2, alignment_min_coverage=1.0)`.
 
 ### ALIGN: TODO (to be implemented)
 

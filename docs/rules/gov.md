@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Migrate non-annotation references to deprecated terms or justify them.
 
-*Flagged:* deprecated class used as superclass
+*Flagged:* `deprecated class used as superclass`
 
 ```turtle
 ex:Old a owl:Class ; owl:deprecated true . ex:A a owl:Class ; rdfs:subClassOf ex:Old .
@@ -34,10 +34,24 @@ ex:Old a owl:Class ; owl:deprecated true . ex:A a owl:Class ; rdfs:subClassOf ex
 
 Reported: `Deprecated term https://example.test/onto#Old appears as object of http://www.w3.org/2000/01/rdf-schema#subClassOf.`
 
-*Clean:* deprecated but unused
+*Flagged:* `deprecated property used`
+
+```turtle
+ex:old a owl:ObjectProperty ; owl:deprecated true . ex:i ex:old ex:j .
+```
+
+Reported: `Deprecated property https://example.test/onto#old used in assertion.`
+
+*Clean:* `deprecated but unused`
 
 ```turtle
 ex:Old a owl:Class ; owl:deprecated true .
+```
+
+*Clean:* `current term used`
+
+```turtle
+ex:New a owl:Class . ex:A a owl:Class ; rdfs:subClassOf ex:New .
 ```
 
 #### GOV002: Unpinned or invalid ontology import
@@ -47,7 +61,7 @@ ex:Old a owl:Class ; owl:deprecated true .
 - **Category:** heuristic
 - **Fix:** Pin or resolve imported ontology versions in an explicit import manifest.
 
-*Flagged:* literal import target
+*Flagged:* `literal import target`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:imports "not an iri" .
@@ -55,7 +69,7 @@ ex:Old a owl:Class ; owl:deprecated true .
 
 Reported: `Non-IRI import target: not an iri.`
 
-*Clean:* IRI import target
+*Clean:* `IRI import target`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/other> .
@@ -68,7 +82,7 @@ Reported: `Non-IRI import target: not an iri.`
 - **Category:** heuristic
 - **Fix:** Review references to local undeclared vocabulary terms.
 
-*Flagged:* equivalent to undeclared local class
+*Flagged:* `equivalent to undeclared local class`
 
 ```turtle
 ex:A a owl:Class ; owl:equivalentClass ex:Undeclared .
@@ -76,7 +90,7 @@ ex:A a owl:Class ; owl:equivalentClass ex:Undeclared .
 
 Reported: `Local URI used in owl:equivalentClass but not declared a class.`
 
-*Clean:* equivalent to declared class
+*Clean:* `equivalent to declared class`
 
 ```turtle
 ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
@@ -89,7 +103,7 @@ ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 - **Category:** heuristic
 - **Fix:** Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact.
 
-*Flagged:* no contact
+*Flagged:* `no contact`
 
 ```turtle
 ex:o a owl:Ontology ; dcterms:creator "A" ; dcterms:license ex:l .
@@ -97,7 +111,21 @@ ex:o a owl:Ontology ; dcterms:creator "A" ; dcterms:license ex:l .
 
 Reported: `Ontology names no contact, publisher or maintainer.`
 
-*Clean:* publisher
+*Flagged:* `second ontology lacks contact`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; dcterms:publisher "P" . ex:p a owl:Ontology .
+```
+
+Reported: `Ontology names no contact, publisher or maintainer.`
+
+*Clean:* `publisher`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -109,6 +137,90 @@ Reported: `Ontology names no contact, publisher or maintainer.`
 ex:o a owl:Ontology ; dcterms:publisher "P" .
 ```
 
+*Clean:* `contributor`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; dcterms:contributor "P" .
+```
+
+*Clean:* `dc publisher`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; dc:publisher "P" .
+```
+
+*Clean:* `dc contributor`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; dc:contributor "P" .
+```
+
+*Clean:* `foaf maintainer`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; foaf:maintainer ex:m .
+```
+
+*Clean:* `foaf mbox`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; foaf:mbox <mailto:a@b.test> .
+```
+
+*Clean:* `schema maintainer`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; schema:maintainer ex:m .
+```
+
+*Clean:* `dcat contact point and doap maintainer`
+
+```turtle
+@prefix dcat: <http://www.w3.org/ns/dcat#> . @prefix doap: <http://usefulinc.com/ns/doap#> .ex:o a owl:Ontology ; dcat:contactPoint ex:c . ex:q a owl:Ontology ; doap:maintainer ex:m .
+```
+
+*Clean:* `no ontology`
+
+```turtle
+ex:A a owl:Class .
+```
+
 #### GOV008: Deprecated term without a replacement or reason
 
 - **Severity:** warning
@@ -116,7 +228,7 @@ ex:o a owl:Ontology ; dcterms:publisher "P" .
 - **Category:** heuristic
 - **Fix:** Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms.
 
-*Flagged:* deprecated bare
+*Flagged:* `deprecated bare`
 
 ```turtle
 ex:A a owl:Class ; owl:deprecated true .
@@ -124,7 +236,15 @@ ex:A a owl:Class ; owl:deprecated true .
 
 Reported: `Deprecated term has neither a replacement nor an obsolescence reason.`
 
-*Clean:* replacement
+*Flagged:* `deprecated property bare`
+
+```turtle
+ex:p a owl:ObjectProperty ; owl:deprecated true .
+```
+
+Reported: `Deprecated term has neither a replacement nor an obsolescence reason.`
+
+*Clean:* `replacement`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -136,6 +256,62 @@ Reported: `Deprecated term has neither a replacement nor an obsolescence reason.
 ex:A a owl:Class ; owl:deprecated true ; dcterms:isReplacedBy ex:B .
 ```
 
+*Clean:* `obo replacement`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0100001 ex:B .
+```
+
+*Clean:* `comment reason`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true ; rdfs:comment 'merged' .
+```
+
+*Clean:* `history note reason`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true ; skos:historyNote 'merged' .
+```
+
+*Clean:* `obo reason`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000231 'dup' .
+```
+
+*Clean:* `not deprecated`
+
+```turtle
+ex:A a owl:Class .
+```
+
+*Clean:* `deprecated false`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated false .
+```
+
+*Clean:* `foreign deprecated term with base`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true .
+```
+
+Linter options: `base='https://other.test/'`.
+
 #### GOV009: Term without creator attribution
 
 - **Severity:** info
@@ -143,7 +319,7 @@ ex:A a owl:Class ; owl:deprecated true ; dcterms:isReplacedBy ex:B .
 - **Category:** heuristic
 - **Fix:** Add dcterms:creator or dcterms:contributor to the terms that lack attribution.
 
-*Flagged:* 3 of 4 annotated
+*Flagged:* `3 of 4 annotated`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -160,7 +336,24 @@ ex:T3 a owl:Class .
 
 Reported: `Term has no creator or contributor attribution, though most local terms do.`
 
-*Clean:* 1 of 4 annotated
+*Flagged:* `2 of 4 annotated is a majority tie`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:creator "A" .
+ex:T1 a owl:Class ; dcterms:creator "A" .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+Reported: `Term has no creator or contributor attribution, though most local terms do.`
+
+*Clean:* `1 of 4 annotated`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -175,6 +368,50 @@ ex:T2 a owl:Class .
 ex:T3 a owl:Class .
 ```
 
+*Clean:* `none annotated`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class .
+ex:T1 a owl:Class .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+*Clean:* `all annotated`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:creator "A" .
+ex:T1 a owl:Class ; dcterms:creator "A" .
+ex:T2 a owl:Class ; dcterms:creator "A" .
+ex:T3 a owl:Class ; dcterms:creator "A" .
+```
+
+*Clean:* `3 terms is below the sample`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:creator "A" .
+ex:T1 a owl:Class ; dcterms:creator "A" .
+ex:T2 a owl:Class .
+```
+
 #### GOV010: Term without creation or modification date
 
 - **Severity:** info
@@ -182,7 +419,7 @@ ex:T3 a owl:Class .
 - **Category:** heuristic
 - **Fix:** Add dcterms:created or dcterms:modified to the terms that lack a date.
 
-*Flagged:* 3 of 4 annotated
+*Flagged:* `3 of 4 annotated`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -199,7 +436,24 @@ ex:T3 a owl:Class .
 
 Reported: `Term has no creation or modification date, though most local terms do.`
 
-*Clean:* 1 of 4 annotated
+*Flagged:* `2 of 4 annotated is a majority tie`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T1 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+Reported: `Term has no creation or modification date, though most local terms do.`
+
+*Clean:* `1 of 4 annotated`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -214,6 +468,50 @@ ex:T2 a owl:Class .
 ex:T3 a owl:Class .
 ```
 
+*Clean:* `none annotated`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class .
+ex:T1 a owl:Class .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+*Clean:* `all annotated`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T1 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T2 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T3 a owl:Class ; dcterms:created "2024-01-01" .
+```
+
+*Clean:* `3 terms is below the sample`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T1 a owl:Class ; dcterms:created "2024-01-01" .
+ex:T2 a owl:Class .
+```
+
 #### GOV011: Versioned ontology without change history
 
 - **Severity:** info
@@ -221,7 +519,7 @@ ex:T3 a owl:Class .
 - **Category:** heuristic
 - **Fix:** Record changes with skos:changeNote, vann:changes or owl:priorVersion.
 
-*Flagged:* version info, no history
+*Flagged:* `version info, no history`
 
 ```turtle
 ex:o a owl:Ontology ; owl:versionInfo "1" .
@@ -229,10 +527,48 @@ ex:o a owl:Ontology ; owl:versionInfo "1" .
 
 Reported: `Versioned ontology records no change history.`
 
-*Clean:* unversioned
+*Flagged:* `version iri, no history`
+
+```turtle
+ex:o a owl:Ontology ; owl:versionIRI ex:o1 .
+```
+
+Reported: `Versioned ontology records no change history.`
+
+*Clean:* `unversioned`
 
 ```turtle
 ex:o a owl:Ontology .
+```
+
+*Clean:* `change note on term`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; owl:versionInfo "1" . ex:A a owl:Class ; skos:changeNote "x" .
+```
+
+*Clean:* `history note`
+
+```turtle
+ex:o a owl:Ontology ; owl:versionInfo "1" ; skos:historyNote "x" .
+```
+
+*Clean:* `vann changes`
+
+```turtle
+@prefix vann: <http://purl.org/vocab/vann/> .ex:o a owl:Ontology ; owl:versionInfo "1" ; vann:changes <https://x.test/log> .
+```
+
+*Clean:* `prior version`
+
+```turtle
+ex:o a owl:Ontology ; owl:versionInfo "1" ; owl:priorVersion ex:o0 .
 ```
 
 #### GOV012: Term without a status
@@ -242,7 +578,7 @@ ex:o a owl:Ontology .
 - **Category:** heuristic
 - **Fix:** Add a status such as vs:term_status to the terms that lack one.
 
-*Flagged:* 3 of 4 annotated
+*Flagged:* `3 of 4 annotated`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -259,7 +595,24 @@ ex:T3 a owl:Class .
 
 Reported: `Term has no status, though most local terms do.`
 
-*Clean:* 1 of 4 annotated
+*Flagged:* `2 of 4 annotated is a majority tie`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; vs:term_status 'stable' .
+ex:T1 a owl:Class ; vs:term_status 'stable' .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+Reported: `Term has no status, though most local terms do.`
+
+*Clean:* `1 of 4 annotated`
 
 ```turtle
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
@@ -274,6 +627,50 @@ ex:T2 a owl:Class .
 ex:T3 a owl:Class .
 ```
 
+*Clean:* `none annotated`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class .
+ex:T1 a owl:Class .
+ex:T2 a owl:Class .
+ex:T3 a owl:Class .
+```
+
+*Clean:* `all annotated`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; vs:term_status 'stable' .
+ex:T1 a owl:Class ; vs:term_status 'stable' .
+ex:T2 a owl:Class ; vs:term_status 'stable' .
+ex:T3 a owl:Class ; vs:term_status 'stable' .
+```
+
+*Clean:* `3 terms is below the sample`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:T0 a owl:Class ; vs:term_status 'stable' .
+ex:T1 a owl:Class ; vs:term_status 'stable' .
+ex:T2 a owl:Class .
+```
+
 #### GOV013: Obsolete term still used in axioms
 
 - **Severity:** warning
@@ -281,7 +678,7 @@ ex:T3 a owl:Class .
 - **Category:** heuristic
 - **Fix:** Replace references to owl:DeprecatedClass/owl:DeprecatedProperty terms or retire the referencing axiom.
 
-*Flagged:* subclass of obsolete class
+*Flagged:* `subclass of obsolete class`
 
 ```turtle
 ex:Old a owl:DeprecatedClass . ex:A rdfs:subClassOf ex:Old .
@@ -289,10 +686,96 @@ ex:Old a owl:DeprecatedClass . ex:A rdfs:subClassOf ex:Old .
 
 Reported: `Obsolete term https://example.test/onto#Old appears as object of http://www.w3.org/2000/01/rdf-schema#subClassOf.`
 
-*Clean:* unused
+*Flagged:* `range obsolete class`
+
+```turtle
+ex:Old a owl:DeprecatedClass . ex:p rdfs:range ex:Old .
+```
+
+Reported: `Obsolete term https://example.test/onto#Old appears as object of http://www.w3.org/2000/01/rdf-schema#range.`
+
+*Flagged:* `instance of obsolete class`
+
+```turtle
+ex:Old a owl:DeprecatedClass . ex:i a ex:Old .
+```
+
+Reported: `Obsolete term https://example.test/onto#Old appears as object of http://www.w3.org/1999/02/22-rdf-syntax-ns#type.`
+
+*Flagged:* `obsolete property used`
+
+```turtle
+ex:q a owl:DeprecatedProperty . ex:a ex:q ex:b .
+```
+
+Reported: `Obsolete property https://example.test/onto#q used in assertion.`
+
+*Flagged:* `restriction on obsolete property`
+
+```turtle
+ex:q a owl:DeprecatedProperty . [] owl:onProperty ex:q .
+```
+
+Reported: `Obsolete term https://example.test/onto#q appears as object of http://www.w3.org/2002/07/owl#onProperty.`
+
+*Clean:* `unused`
 
 ```turtle
 ex:Old a owl:DeprecatedClass .
+```
+
+*Clean:* `label and replacement only`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:Old a owl:DeprecatedClass ; rdfs:label 'o' . ex:A rdfs:seeAlso ex:Old ; dcterms:isReplacedBy ex:Old .
+```
+
+*Clean:* `self reference`
+
+```turtle
+ex:Old a owl:DeprecatedClass ; rdfs:subClassOf ex:Old .
+```
+
+*Clean:* `obsolete refers to obsolete`
+
+```turtle
+ex:Old a owl:DeprecatedClass . ex:Old2 a owl:DeprecatedClass ; rdfs:subClassOf ex:Old .
+```
+
+*Clean:* `referrer deprecated`
+
+```turtle
+ex:Old a owl:DeprecatedClass . ex:A owl:deprecated true ; rdfs:subClassOf ex:Old .
+```
+
+*Clean:* `owl:deprecated true is GOV001's`
+
+```turtle
+ex:Old a owl:DeprecatedClass ; owl:deprecated true . ex:A rdfs:subClassOf ex:Old .
+```
+
+*Clean:* `plain class`
+
+```turtle
+ex:Old a owl:Class . ex:A rdfs:subClassOf ex:Old .
+```
+
+*Clean:* `obsolete property referrer deprecated`
+
+```turtle
+ex:q a owl:DeprecatedProperty . ex:a ex:q ex:b ; owl:deprecated true .
+```
+
+*Clean:* `obsolete property used by obsolete`
+
+```turtle
+ex:q a owl:DeprecatedProperty . ex:z a owl:DeprecatedClass . ex:z ex:q ex:b .
 ```
 
 #### GOV014: Term defined outside the base namespace
@@ -302,7 +785,7 @@ ex:Old a owl:DeprecatedClass .
 - **Category:** heuristic
 - **Fix:** Move the definition to the owning vocabulary or keep only an import stub for external terms.
 
-*Flagged:* foreign class with subclass axiom
+*Flagged:* `foreign class with subclass axiom`
 
 ```turtle
 <https://other.test/Thing> a owl:Class ; rdfs:subClassOf ex:A .
@@ -312,10 +795,60 @@ Linter options: `base='https://example.test/onto#'`.
 
 Reported: `Term is defined with axioms outside the base namespace https://example.test/onto#.`
 
-*Clean:* foreign stub without axioms
+*Flagged:* `foreign property with domain`
+
+```turtle
+<https://other.test/p> a owl:ObjectProperty ; rdfs:domain ex:A .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+Reported: `Term is defined with axioms outside the base namespace https://example.test/onto#.`
+
+*Flagged:* `foreign concept with equivalence`
+
+```turtle
+<https://other.test/c> a skos:Concept ; owl:equivalentClass ex:A .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+Reported: `Term is defined with axioms outside the base namespace https://example.test/onto#.`
+
+*Clean:* `foreign stub without axioms`
 
 ```turtle
 <https://other.test/Thing> a owl:Class .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `no base`
+
+```turtle
+<https://other.test/Thing> a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+*Clean:* `local axioms`
+
+```turtle
+ex:B a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `core namespace term`
+
+```turtle
+owl:Thing a owl:Class ; rdfs:subClassOf ex:A .
+```
+
+Linter options: `base='https://example.test/onto#'`.
+
+*Clean:* `undeclared foreign subject`
+
+```turtle
+<https://other.test/Thing> rdfs:subClassOf ex:A .
 ```
 
 Linter options: `base='https://example.test/onto#'`.
@@ -327,7 +860,7 @@ Linter options: `base='https://example.test/onto#'`.
 - **Category:** deterministic
 - **Fix:** Add the missing annotations, or drop them from required_annotations in the policy file.
 
-*Flagged:* class without comment
+*Flagged:* `class without comment`
 
 ```turtle
 ex:A a owl:Class ; rdfs:label "A" .
@@ -337,11 +870,111 @@ Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.o
 
 Reported: `Missing required annotations: rdfs:comment.`
 
-*Clean:* silent without policy
+*Flagged:* `blank literal`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "  " .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
+
+Reported: `Missing required annotations: rdfs:comment.`
+
+*Flagged:* `blank node value`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment [] .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
+
+Reported: `Missing required annotations: rdfs:comment.`
+
+*Flagged:* `property`
+
+```turtle
+ex:p a owl:ObjectProperty .
+```
+
+Linter options: `policy=Policy(required_annotations=(('property', ('http://www.w3.org/2000/01/rdf-schema#label',)),))`.
+
+Reported: `Missing required annotations: rdfs:label.`
+
+*Flagged:* `concept`
+
+```turtle
+ex:c a skos:Concept .
+```
+
+Linter options: `policy=Policy(required_annotations=(('concept', ('http://www.w3.org/2004/02/skos/core#prefLabel',)),))`.
+
+Reported: `Missing required annotations: skos:prefLabel.`
+
+*Flagged:* `individual`
+
+```turtle
+ex:i a owl:NamedIndividual .
+```
+
+Linter options: `policy=Policy(required_annotations=(('individual', ('http://www.w3.org/2000/01/rdf-schema#label',)),))`.
+
+Reported: `Missing required annotations: rdfs:label.`
+
+*Flagged:* `one of two predicates missing`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A" .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#label', 'http://www.w3.org/2000/01/rdf-schema#comment')),))`.
+
+Reported: `Missing required annotations: rdfs:comment.`
+
+*Clean:* `silent without policy`
 
 ```turtle
 ex:A a owl:Class .
 ```
+
+*Clean:* `satisfied`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "d" .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
+
+*Clean:* `iri value counts`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment ex:B .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
+
+*Clean:* `deprecated skipped`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
+
+*Clean:* `other kind not required`
+
+```turtle
+ex:p a owl:ObjectProperty .
+```
+
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
+
+*Clean:* `foreign term not owned`
+
+```turtle
+<https://other.test/x#A> a owl:Class . ex:o a owl:Ontology . ex:B a owl:Class ; rdfs:comment 'x' .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
 
 #### GOV017: Versioned ontology without review or approval metadata
 
@@ -350,7 +983,7 @@ ex:A a owl:Class .
 - **Category:** heuristic
 - **Fix:** Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy.
 
-*Flagged:* version info, no review
+*Flagged:* `version info, no review`
 
 ```turtle
 ex:o a owl:Ontology ; owl:versionInfo "1" .
@@ -358,10 +991,48 @@ ex:o a owl:Ontology ; owl:versionInfo "1" .
 
 Reported: `Versioned ontology records no review or approval metadata.`
 
-*Clean:* unversioned
+*Flagged:* `version iri, no review`
+
+```turtle
+ex:o a owl:Ontology ; owl:versionIRI ex:o1 .
+```
+
+Reported: `Versioned ontology records no review or approval metadata.`
+
+*Clean:* `unversioned`
 
 ```turtle
 ex:o a owl:Ontology .
+```
+
+*Clean:* `date accepted`
+
+```turtle
+ex:o a owl:Ontology ; owl:versionInfo "1" ; dcterms:dateAccepted "2024-01-01" .
+```
+
+*Clean:* `term reviewed`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; owl:versionInfo "1" . ex:A schema:reviewedBy ex:r .
+```
+
+*Clean:* `curated by`
+
+```turtle
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pav: <http://purl.org/pav/> .
+ex:o a owl:Ontology ; owl:versionInfo "1" ; pav:curatedBy ex:r .
 ```
 
 #### GOV020: Policy file invalid or for a different policy-pack version
@@ -371,7 +1042,7 @@ ex:o a owl:Ontology .
 - **Category:** deterministic
 - **Fix:** Remove or fix the unknown keys; the policy file only supports the documented keys and policy_version 1.
 
-*Flagged:* one unknown key
+*Flagged:* `one unknown key`
 
 ```turtle
 ex:A a owl:Class .
@@ -381,11 +1052,25 @@ Linter options: `policy=Policy(unknown_keys=('bogus',))`.
 
 Reported: `Unknown policy key 'bogus' is ignored.`
 
-*Clean:* silent without policy
+*Flagged:* `misspelt key` (the empty data graph)
+
+Linter options: `policy=Policy(unknown_keys=('depth_limt',))`.
+
+Reported: `Unknown policy key 'depth_limt' is ignored.`
+
+*Clean:* `silent without policy`
 
 ```turtle
 ex:A a owl:Class .
 ```
+
+*Clean:* `known keys only`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Linter options: `policy=Policy()`.
 
 ### GOV: TODO (to be implemented)
 

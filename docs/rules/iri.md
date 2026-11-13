@@ -30,7 +30,15 @@ All examples assume these prefixes:
 
 Reported: `IRI contains whitespace or is not absolute.`
 
-*Clean:* absolute IRI
+*Flagged:* `relative IRI` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `IRI contains whitespace or is not absolute.`
+
+*Flagged:* `http IRI without a host` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `http: IRI has no '//' host, so it cannot be dereferenced.`
+
+*Clean:* `absolute IRI`
 
 ```turtle
 ex:A a owl:Class .
@@ -43,7 +51,7 @@ ex:A a owl:Class .
 - **Category:** heuristic
 - **Fix:** Consider an extension-independent ontology identifier (policy-dependent).
 
-*Flagged:* ontology IRI ends in .owl
+*Flagged:* `ontology IRI ends in .owl`
 
 ```turtle
 <https://example.test/onto.owl> a owl:Ontology .
@@ -51,10 +59,22 @@ ex:A a owl:Class .
 
 Reported: `Ontology IRI contains a serialization file extension.`
 
-*Clean:* extensionless ontology IRI
+*Clean:* `extensionless ontology IRI`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
+```
+
+*Clean:* `extension on a term is fine`
+
+```turtle
+<https://example.test/term.owl> a owl:Class .
+```
+
+*Clean:* `OBO PURL ontology IRI`
+
+```turtle
+<http://purl.obolibrary.org/obo/envo.owl> a owl:Ontology .
 ```
 
 #### IRI003: Local-name collision across namespaces
@@ -64,7 +84,7 @@ Reported: `Ontology IRI contains a serialization file extension.`
 - **Category:** heuristic
 - **Fix:** Check whether duplicate local identifiers across namespaces confuse users.
 
-*Flagged:* same local name, two namespaces
+*Flagged:* `same local name, two namespaces`
 
 ```turtle
 <https://a.test/Same> a owl:Class . <https://b.test/Same> a owl:Class .
@@ -72,10 +92,30 @@ Reported: `Ontology IRI contains a serialization file extension.`
 
 Reported: `Local-name collision across IRIs: https://a.test/Same, https://b.test/Same`
 
-*Clean:* distinct local names
+*Flagged:* `case-only collision within one kind`
+
+```turtle
+ex:Agent a owl:Class . ex:agent a owl:Class .
+```
+
+Reported: `Local-name collision across IRIs: https://example.test/onto#Agent, https://example.test/onto#agent`
+
+*Clean:* `distinct local names`
 
 ```turtle
 <https://a.test/One> a owl:Class . <https://b.test/Two> a owl:Class .
+```
+
+*Clean:* `class and property of the same name`
+
+```turtle
+ex:Agent a owl:Class . ex:agent a owl:ObjectProperty .
+```
+
+*Clean:* `deprecated terms`
+
+```turtle
+<https://a.test/Same> a owl:Class ; owl:deprecated true . <https://b.test/Same> a owl:Class .
 ```
 
 #### IRI004: Term namespaces unrelated to the ontology IRI
@@ -91,6 +131,16 @@ Reported: `No term IRI starts with the ontology IRI.`
 
 *Clean:* `terms under ontology IRI` (built programmatically; see `tests/rule_cases/`)
 
+*Clean:* `hash ontology IRI` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `relative ontology IRI is IRI001's concern` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `OBO PURL ontology with ID-style terms` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `no terms` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `two ontologies are ambiguous` (built programmatically; see `tests/rule_cases/`)
+
 #### IRI005: Mixed hash and slash term namespaces
 
 - **Severity:** info
@@ -104,6 +154,12 @@ Reported: `1 hash-style and 1 slash-style term IRIs, e.g. https://a.test/ns#A an
 
 *Clean:* `all hash` (built programmatically; see `tests/rule_cases/`)
 
+*Clean:* `all slash` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `OBO subset annotation properties next to OBO IDs` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `namespace-only IRIs are ignored` (built programmatically; see `tests/rule_cases/`)
+
 #### IRI006: Term IRI contains a query string
 
 - **Severity:** warning
@@ -115,11 +171,13 @@ Reported: `1 hash-style and 1 slash-style term IRIs, e.g. https://a.test/ns#A an
 
 Reported: `Term IRI contains a query string.`
 
-*Clean:* plain
+*Clean:* `plain`
 
 ```turtle
 ex:A a owl:Class .
 ```
+
+*Clean:* `2000 clean terms (scale)` (built programmatically; see `tests/rule_cases/`)
 
 #### IRI008: Mixed http and https term IRIs
 
@@ -134,6 +192,8 @@ Reported: `Terms mix http and https IRIs.`
 
 *Clean:* `https only` (built programmatically; see `tests/rule_cases/`)
 
+*Clean:* `urn and http` (built programmatically; see `tests/rule_cases/`)
+
 #### IRI009: IRI contains characters that are not allowed
 
 - **Severity:** warning
@@ -145,7 +205,11 @@ Reported: `Terms mix http and https IRIs.`
 
 Reported: `IRI contains characters that are not allowed in IRIs.`
 
-*Clean:* plain
+*Flagged:* `caret` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `IRI contains characters that are not allowed in IRIs.`
+
+*Clean:* `plain`
 
 ```turtle
 ex:A a owl:Class .
@@ -162,7 +226,11 @@ ex:A a owl:Class .
 
 Reported: `Term IRI ends in a namespace separator and has no local name.`
 
-*Clean:* plain
+*Flagged:* `ends in slash` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Term IRI ends in a namespace separator and has no local name.`
+
+*Clean:* `plain`
 
 ```turtle
 ex:A a owl:Class .
@@ -181,6 +249,8 @@ Reported: `Local name contains percent-encoded characters.`
 
 *Clean:* `percent outside local name` (built programmatically; see `tests/rule_cases/`)
 
+*Clean:* `lone percent` (built programmatically; see `tests/rule_cases/`)
+
 #### IRI012: Term IRI uses a loopback host
 
 - **Severity:** warning
@@ -192,11 +262,17 @@ Reported: `Local name contains percent-encoded characters.`
 
 Reported: `Term IRI uses a loopback host.`
 
-*Clean:* example host
+*Flagged:* `loopback` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Term IRI uses a loopback host.`
+
+*Clean:* `example host`
 
 ```turtle
 ex:A a owl:Class .
 ```
+
+*Clean:* `localhost in path only` (built programmatically; see `tests/rule_cases/`)
 
 #### IRI013: Version or date embedded in a term IRI
 
@@ -209,7 +285,19 @@ ex:A a owl:Class .
 
 Reported: `1 term IRIs in this namespace embed a version or date segment (e.g. https://a.test/v1/A).`
 
+*Flagged:* `dotted version` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `1 term IRIs in this namespace embed a version or date segment (e.g. https://a.test/1.2.0/A).`
+
+*Flagged:* `dated` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `1 term IRIs in this namespace embed a version or date segment (e.g. https://a.test/2024-05-01/A).`
+
 *Clean:* `plain` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `year only is not a version` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `version-like word` (built programmatically; see `tests/rule_cases/`)
 
 #### IRI014: Leading, trailing or repeated separators in a local name
 
@@ -222,7 +310,17 @@ Reported: `1 term IRIs in this namespace embed a version or date segment (e.g. h
 
 Reported: `Local name has a leading, trailing or repeated separator.`
 
+*Flagged:* `leading hyphen` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Local name has a leading, trailing or repeated separator.`
+
+*Flagged:* `double underscore` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Local name has a leading, trailing or repeated separator.`
+
 *Clean:* `single separators` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `empty local name is IRI010` (built programmatically; see `tests/rule_cases/`)
 
 #### IRI015: Opaque and readable local names mixed in one namespace
 
@@ -231,7 +329,7 @@ Reported: `Local name has a leading, trailing or repeated separator.`
 - **Category:** heuristic
 - **Fix:** Use one naming scheme per namespace: either opaque numeric identifiers or readable names.
 
-*Flagged:* numeric and readable
+*Flagged:* `numeric and readable`
 
 ```turtle
 ex:Person a owl:Class . ex:T0001234 a owl:Class .
@@ -239,10 +337,44 @@ ex:Person a owl:Class . ex:T0001234 a owl:Class .
 
 Reported: `Namespace mixes 1 opaque local names (e.g. T0001234) and 1 readable ones (e.g. Person).`
 
-*Clean:* one outlier among eleven terms (below 10%)
+*Flagged:* `prefixed number and readable`
+
+```turtle
+ex:hasPart a owl:ObjectProperty . ex:BFO_0000001 a owl:Class .
+```
+
+Reported: `Namespace mixes 1 opaque local names (e.g. BFO_0000001) and 1 readable ones (e.g. hasPart).`
+
+*Flagged:* `minority of exactly 10%`
+
+```turtle
+ex:Nameaax a owl:Class . ex:Nameabx a owl:Class . ex:Nameacx a owl:Class . ex:Nameadx a owl:Class . ex:Nameaex a owl:Class . ex:Nameafx a owl:Class . ex:Nameagx a owl:Class . ex:Nameahx a owl:Class . ex:Nameaix a owl:Class . ex:T1000 a owl:Class .
+```
+
+Reported: `Namespace mixes 1 opaque local names (e.g. T1000) and 9 readable ones (e.g. Nameaax, Nameabx, Nameacx).`
+
+*Clean:* `one outlier among eleven terms (below 10%)`
 
 ```turtle
 ex:Nameaax a owl:Class . ex:Nameabx a owl:Class . ex:Nameacx a owl:Class . ex:Nameadx a owl:Class . ex:Nameaex a owl:Class . ex:Nameafx a owl:Class . ex:Nameagx a owl:Class . ex:Nameahx a owl:Class . ex:Nameaix a owl:Class . ex:Nameajx a owl:Class . ex:T1000 a owl:Class .
+```
+
+*Clean:* `all readable`
+
+```turtle
+ex:Person a owl:Class . ex:hasPart a owl:ObjectProperty .
+```
+
+*Clean:* `all opaque`
+
+```turtle
+ex:T0001234 a owl:Class . ex:T0001235 a owl:Class .
+```
+
+*Clean:* `different namespaces`
+
+```turtle
+<https://a.test/Person> a owl:Class . <https://b.test/T0001234> a owl:Class .
 ```
 
 #### IRI016: Ontology IRI has a query string or fragment
@@ -256,7 +388,15 @@ ex:Nameaax a owl:Class . ex:Nameabx a owl:Class . ex:Nameacx a owl:Class . ex:Na
 
 Reported: `Ontology IRI contains a query string or fragment.`
 
+*Flagged:* `query` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Ontology IRI contains a query string or fragment.`
+
 *Clean:* `clean` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `trailing hash is empty fragment` (built programmatically; see `tests/rule_cases/`)
+
+*Clean:* `fragment on a term is fine` (built programmatically; see `tests/rule_cases/`)
 
 #### IRI017: Ontology IRI also used as a term
 
@@ -265,7 +405,7 @@ Reported: `Ontology IRI contains a query string or fragment.`
 - **Category:** heuristic
 - **Fix:** Do not reuse the ontology IRI as a class, property, concept or individual.
 
-*Flagged:* ontology IRI is also a class
+*Flagged:* `ontology IRI is also a class`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology, owl:Class .
@@ -273,10 +413,16 @@ Reported: `Ontology IRI contains a query string or fragment.`
 
 Reported: `Ontology IRI is also declared as a term.`
 
-*Clean:* ontology only
+*Clean:* `ontology only`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
+```
+
+*Clean:* `class under ontology`
+
+```turtle
+<https://example.test/onto> a owl:Ontology . ex:A a owl:Class .
 ```
 
 #### IRI018: Placeholder ontology IRI
@@ -286,7 +432,7 @@ Reported: `Ontology IRI is also declared as a term.`
 - **Category:** heuristic
 - **Fix:** Give the ontology a permanent IRI under a namespace you control, such as a w3id.org or purl.org PURL.
 
-*Flagged:* Protege untitled ontology (MFTO)
+*Flagged:* `Protege untitled ontology (MFTO)`
 
 ```turtle
 <http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-139> a owl:Ontology .
@@ -294,11 +440,34 @@ Reported: `Ontology IRI is also declared as a term.`
 
 Reported: `Ontology IRI is Protege's untitled-ontology placeholder.`
 
-*Clean:* a permanent IRI
+*Flagged:* `Protege default base, renamed`
+
+```turtle
+<http://www.semanticweb.org/someone/ontologies/2018/8/moral> a owl:Ontology .
+```
+
+Reported: `Ontology IRI is under Protege's default http://www.semanticweb.org/<user>/ontologies/ base, which its authors do not control.`
+
+*Clean:* `a permanent IRI`
 
 ```turtle
 <https://w3id.org/moral> a owl:Ontology .
 ```
+
+*Clean:* `untitled is only a word`
+
+```turtle
+<https://example.test/untitled-ontology> a owl:Ontology .
+```
+
+*Clean:* `an imported module's header`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-1> .
+<http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-1> a owl:Ontology .
+```
+
+Linter options: `policy=Policy(imported_ontologies=frozenset({'http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-1'}))`.
 
 #### IRI019: Declared prefix that no IRI uses
 
@@ -307,7 +476,7 @@ Reported: `Ontology IRI is Protege's untitled-ontology placeholder.`
 - **Category:** heuristic
 - **Fix:** Remove the prefix declaration, or import the vocabulary it was declared for.
 
-*Flagged:* a CCO prefix nothing uses (rights ontology)
+*Flagged:* `a CCO prefix nothing uses (rights ontology)`
 
 ```turtle
 @prefix AllCoreOntology: <http://www.ontologyrepository.com/CommonCoreOntologies/Mid/AllCoreOntology#> .
@@ -316,7 +485,25 @@ ex:A a owl:Class .
 
 Reported: `Prefix AllCoreOntology: is declared for <http://www.ontologyrepository.com/CommonCoreOntologies/Mid/AllCoreOntology#>, but no IRI uses it.`
 
-*Clean:* every prefix used
+*Clean:* `every prefix used`
+
+```turtle
+ex:A a owl:Class .
+```
+
+*Clean:* `a prefix used only as a datatype`
+
+```turtle
+@prefix dt: <https://dt.test/> . ex:A a owl:Class ; ex:v 'x'^^dt:custom .
+```
+
+*Clean:* `the prefix names the ontology`
+
+```turtle
+@prefix o: <https://example.test/o#> . <https://example.test/o> a owl:Ontology . ex:A a owl:Class .
+```
+
+*Clean:* `RDFLib's own default prefixes`
 
 ```turtle
 ex:A a owl:Class .

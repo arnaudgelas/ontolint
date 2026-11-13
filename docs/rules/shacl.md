@@ -26,6 +26,6 @@ All examples assume these prefixes:
 - **Category:** deterministic
 - **Fix:** Fix the supplied SHACL shapes or data, and inspect the SHACL report.
 
-*Flagged:* `constraint violated` (built programmatically; see `tests/rule_cases/`)
+*Flagged:* `constraint violated` (run through the command line or an adapter; see `tests/rule_cases/`)
 
-*Clean:* `data conforms` (built programmatically; see `tests/rule_cases/`)
+*Clean:* `data conforms` (run through the command line or an adapter; see `tests/rule_cases/`)

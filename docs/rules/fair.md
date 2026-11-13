@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** context-dependent
 - **Fix:** Mint the IRI under a persistent-identifier service (w3id.org, purl.org, doi.org) or a domain you control.
 
-*Flagged:* raw github
+*Flagged:* `raw github`
 
 ```turtle
 <https://raw.githubusercontent.com/org/repo/main/o.owl> a owl:Ontology ; rdfs:label 'x' .
@@ -34,10 +34,128 @@ All examples assume these prefixes:
 
 Reported: `Ontology IRI https://raw.githubusercontent.com/org/repo/main/o.owl is on the mutable host raw.githubusercontent.com, not a persistent identifier.`
 
-*Clean:* w3id
+*Flagged:* `github.io`
+
+```turtle
+<https://org.github.io/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI https://org.github.io/onto is on the mutable host org.github.io, not a persistent identifier.`
+
+*Flagged:* `github.com blob`
+
+```turtle
+<https://github.com/org/repo/blob/main/o.owl> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI https://github.com/org/repo/blob/main/o.owl is on the mutable host github.com, not a persistent identifier.`
+
+*Flagged:* `gitlab`
+
+```turtle
+<https://gitlab.com/org/repo/-/raw/main/o.owl> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI https://gitlab.com/org/repo/-/raw/main/o.owl is on the mutable host gitlab.com, not a persistent identifier.`
+
+*Flagged:* `localhost`
+
+```turtle
+<http://localhost:8080/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI http://localhost:8080/onto is on the mutable host localhost, not a persistent identifier.`
+
+*Flagged:* `ip address`
+
+```turtle
+<http://192.168.0.10/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI http://192.168.0.10/onto is on a bare IP address, not a persistent identifier.`
+
+*Flagged:* `ipv6 address`
+
+```turtle
+<http://[::1]/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI http://[::1]/onto is on a bare IP address, not a persistent identifier.`
+
+*Flagged:* `local file`
+
+```turtle
+<file:///home/me/o.owl> a owl:Ontology ; rdfs:label 'x' .
+```
+
+Reported: `Ontology IRI file:///home/me/o.owl is on a local file, not a persistent identifier.`
+
+*Flagged:* `mutable version IRI only`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://raw.githubusercontent.com/org/repo/v1.0/o.owl> .
+```
+
+Reported: `Version IRI https://raw.githubusercontent.com/org/repo/v1.0/o.owl is on the mutable host raw.githubusercontent.com, not a persistent identifier.`
+
+*Clean:* `w3id`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `purl`
+
+```turtle
+<http://purl.org/example/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `obo purl`
+
+```turtle
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `w3.org namespace`
+
+```turtle
+<http://www.w3.org/ns/org#> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `foaf namespace`
+
+```turtle
+<http://xmlns.com/foaf/0.1/> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `institutional domain`
+
+```turtle
+<https://ontology.example.edu/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `look-alike host`
+
+```turtle
+<https://notgithub.com/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `urn`
+
+```turtle
+<urn:example:onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `persistent version`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/1.0> .
+```
+
+*Clean:* `no ontology header`
+
+```turtle
+ex:A a owl:Class .
 ```
 
 #### FAIR006: Licence given as a text literal or as an IRI outside the well-known licence families
@@ -47,7 +165,7 @@ Reported: `Ontology IRI https://raw.githubusercontent.com/org/repo/main/o.owl is
 - **Category:** context-dependent
 - **Fix:** Point dcterms:license at a licence IRI such as https://spdx.org/licenses/CC-BY-4.0 or a Creative Commons URL.
 
-*Flagged:* plain text
+*Flagged:* `plain text`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; dcterms:license 'CC BY 4.0' .
@@ -55,10 +173,126 @@ Reported: `Ontology IRI https://raw.githubusercontent.com/org/repo/main/o.owl is
 
 Reported: `Licence 'CC BY 4.0' is a text literal, not a licence IRI.`
 
-*Clean:* cc by
+*Flagged:* `url as string`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license 'https://creativecommons.org/licenses/by/4.0/' .
+```
+
+Reported: `Licence 'https://creativecommons.org/licenses/by/4.0/' is a text literal, not a licence IRI.`
+
+*Flagged:* `typed anyURI`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license 'https://creativecommons.org/licenses/by/4.0/'^^xsd:anyURI .
+```
+
+Reported: `Licence 'https://creativecommons.org/licenses/by/4.0/' is a text literal, not a licence IRI.`
+
+*Flagged:* `unknown licence iri`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://example.org/my-licence> .
+```
+
+Reported: `Licence IRI https://example.org/my-licence is outside the well-known licence families.`
+
+*Flagged:* `cc namespace predicate`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; <http://creativecommons.org/ns#license> 'MIT' .
+```
+
+Reported: `Licence 'MIT' is a text literal, not a licence IRI.`
+
+*Flagged:* `schema.org licence`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; <https://schema.org/license> 'MIT' .
+```
+
+Reported: `Licence 'MIT' is a text literal, not a licence IRI.`
+
+*Flagged:* `look-alike host`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://notspdx.org/licenses/MIT> .
+```
+
+Reported: `Licence IRI https://notspdx.org/licenses/MIT is outside the well-known licence families.`
+
+*Flagged:* `lookalike path`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://example.org/creativecommons.org/licenses/by/4.0/> .
+```
+
+Reported: `Licence IRI https://example.org/creativecommons.org/licenses/by/4.0/ is outside the well-known licence families.`
+
+*Clean:* `cc by`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+```
+
+*Clean:* `cc by http`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <http://creativecommons.org/licenses/by/4.0/> .
+```
+
+*Clean:* `cc zero`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://creativecommons.org/publicdomain/zero/1.0/> .
+```
+
+*Clean:* `spdx`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://spdx.org/licenses/Apache-2.0> .
+```
+
+*Clean:* `osi`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://opensource.org/licenses/MIT> .
+```
+
+*Clean:* `gnu with www`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <https://www.gnu.org/licenses/gpl-3.0.html> .
+```
+
+*Clean:* `open data commons`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license <http://www.opendatacommons.org/licenses/pddl/1.0/> .
+```
+
+*Clean:* `no licence`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `blank licence text`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license ' ' .
+```
+
+*Clean:* `blank node licence`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:license [ a ex:License ] .
+```
+
+*Clean:* `licence on a term is out of scope`
+
+```turtle
+ex:A a owl:Class ; dcterms:license 'MIT' .
 ```
 
 #### FAIR007: Version IRI equal to the ontology IRI, with a floating marker, or without a version token
@@ -68,7 +302,7 @@ Reported: `Licence 'CC BY 4.0' is a text literal, not a licence IRI.`
 - **Category:** context-dependent
 - **Fix:** Give each release its own immutable owl:versionIRI containing a version or date, never latest or main.
 
-*Flagged:* same as ontology IRI
+*Flagged:* `same as ontology IRI`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto> .
@@ -76,10 +310,118 @@ Reported: `Licence 'CC BY 4.0' is a text literal, not a licence IRI.`
 
 Reported: `Version IRI https://w3id.org/example/onto is the same as the ontology IRI, so it does not identify one release.`
 
-*Clean:* dated
+*Flagged:* `same up to trailing slash`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/ is the same as the ontology IRI, so it does not identify one release.`
+
+*Flagged:* `latest`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/latest> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/latest contains the floating marker 'latest', which is not tied to one release.`
+
+*Flagged:* `master`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/master/o.owl> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/master/o.owl contains the floating marker 'master', which is not tied to one release.`
+
+*Flagged:* `main`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/main> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/main contains the floating marker 'main', which is not tied to one release.`
+
+*Flagged:* `current uppercase`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/CURRENT> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/CURRENT contains the floating marker 'current', which is not tied to one release.`
+
+*Flagged:* `dev`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/dev/o.owl> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/dev/o.owl contains the floating marker 'dev', which is not tied to one release.`
+
+*Flagged:* `marker with a digit still floats`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/head/2024> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/head/2024 contains the floating marker 'head', which is not tied to one release.`
+
+*Flagged:* `no version token`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/release> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/release has no version or date token that distinguishes it from the ontology IRI.`
+
+*Flagged:* `only a new non-digit token`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/final.owl> .
+```
+
+Reported: `Version IRI https://w3id.org/example/onto/final.owl has no version or date token that distinguishes it from the ontology IRI.`
+
+*Clean:* `dated`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/2024-01-31/onto.owl> .
+```
+
+*Clean:* `semantic version`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/1.2.0> .
+```
+
+*Clean:* `v prefix`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/v2> .
+```
+
+*Clean:* `version in the fragment`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto#2024> .
+```
+
+*Clean:* `obo release`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <http://purl.obolibrary.org/obo/xyz/releases/2024-01-31/xyz.owl> .
+```
+
+*Clean:* `marker already in the ontology IRI`
+
+```turtle
+<https://w3id.org/main/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/main/onto/2024> .
+```
+
+*Clean:* `no version IRI`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; rdfs:label 'x' .
 ```
 
 #### FAIR011: Creator or contributor identifier that is not a well-formed ORCID iD or ROR identifier
@@ -89,7 +431,7 @@ Reported: `Version IRI https://w3id.org/example/onto is the same as the ontology
 - **Category:** context-dependent
 - **Fix:** Use the full ORCID iD (https://orcid.org/0000-0002-1825-0097) or ROR id; check the digits and checksum.
 
-*Flagged:* bad ORCID checksum
+*Flagged:* `bad ORCID checksum`
 
 ```turtle
 ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0098> .
@@ -97,10 +439,186 @@ ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0098> .
 
 Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-0098' fails the ISO 7064 mod 11-2 checksum.`
 
-*Clean:* valid ORCID
+*Flagged:* `short ORCID`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-009> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-009' is not of the form dddd-dddd-dddd-dddX.`
+
+*Flagged:* `ORCID without dashes`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000000218250097> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000000218250097' is not of the form dddd-dddd-dddd-dddX.`
+
+*Flagged:* `lowercase x`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1694-233x> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1694-233x' is not of the form dddd-dddd-dddd-dddX.`
+
+*Flagged:* `trailing slash`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0097/> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-0097/' is not of the form dddd-dddd-dddd-dddX.`
+
+*Flagged:* `ORCID literal URL bad checksum`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'https://orcid.org/0000-0002-1825-0098' .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-0098' fails the ISO 7064 mod 11-2 checksum.`
+
+*Flagged:* `bare literal ORCID bad checksum`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'Jane Doe 0000-0002-1825-0098' .
+```
+
+Reported: `ORCID iD in 'Jane Doe 0000-0002-1825-0098' fails the ISO 7064 mod 11-2 checksum.`
+
+*Flagged:* `orcid host without id`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'see orcid.org/jane' .
+```
+
+Reported: `ORCID iD in 'see orcid.org/jane' is not of the form dddd-dddd-dddd-dddX.`
+
+*Flagged:* `ROR bad checksum`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://ror.org/02mhbdp95> .
+```
+
+Reported: `ROR identifier in 'https://ror.org/02mhbdp95' fails the ROR checksum.`
+
+*Flagged:* `ROR bad shape`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://ror.org/02mhbdp9> .
+```
+
+Reported: `ROR identifier in 'https://ror.org/02mhbdp9' is not of the form 0 + six base-32 characters + two digits.`
+
+*Flagged:* `ROR with forbidden letter`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://ror.org/02mhbdu94> .
+```
+
+Reported: `ROR identifier in 'https://ror.org/02mhbdu94' is not of the form 0 + six base-32 characters + two digits.`
+
+*Flagged:* `ROR literal`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'https://ror.org/02mhbdp95' .
+```
+
+Reported: `ROR identifier in 'https://ror.org/02mhbdp95' fails the ROR checksum.`
+
+*Flagged:* `contributor on a term`
+
+```turtle
+ex:A a owl:Class ; dcterms:contributor <https://orcid.org/0000-0002-1825-0098> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-0098' fails the ISO 7064 mod 11-2 checksum.`
+
+*Flagged:* `dc creator`
+
+```turtle
+ex:o a owl:Ontology ; <http://purl.org/dc/elements/1.1/creator> <https://orcid.org/0000-0002-1825-0098> .
+```
+
+Reported: `ORCID iD in 'https://orcid.org/0000-0002-1825-0098' fails the ISO 7064 mod 11-2 checksum.`
+
+*Clean:* `valid ORCID`
 
 ```turtle
 ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0097> .
+```
+
+*Clean:* `valid ORCID with X`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1694-233X> .
+```
+
+*Clean:* `valid ORCID http and www`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <http://www.orcid.org/0000-0002-1825-0097> .
+```
+
+*Clean:* `valid ORCID literal`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'https://orcid.org/0000-0002-1825-0097' .
+```
+
+*Clean:* `valid bare ORCID in text`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'Jane Doe (0000-0002-1825-0097)' .
+```
+
+*Clean:* `valid ORCID followed by a dot`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'https://orcid.org/0000-0002-1825-0097.' .
+```
+
+*Clean:* `valid ROR`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://ror.org/02mhbdp94> .
+```
+
+*Clean:* `valid ROR literal`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'https://ror.org/01ggx4157' .
+```
+
+*Clean:* `plain name`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator 'Jane Doe' .
+```
+
+*Clean:* `other identifier IRI`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator <https://example.org/people/jane> .
+```
+
+*Clean:* `blank node`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator [ a ex:Person ] .
+```
+
+*Clean:* `a number that looks nothing like an ORCID`
+
+```turtle
+ex:o a owl:Ontology ; dcterms:creator '1234-5678' .
+```
+
+*Clean:* `unrelated predicate is ignored`
+
+```turtle
+ex:o a owl:Ontology ; rdfs:comment 'orcid.org/bad' .
 ```
 
 #### FAIR017: Deprecated ontology or version without a pointer to its successor
@@ -110,7 +628,7 @@ ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0097> .
 - **Category:** context-dependent
 - **Fix:** Add dcterms:isReplacedBy (or obo:IAO_0100001) to the deprecated ontology, naming its replacement.
 
-*Flagged:* deprecated ontology
+*Flagged:* `deprecated ontology`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true .
@@ -118,10 +636,106 @@ ex:o a owl:Ontology ; dcterms:creator <https://orcid.org/0000-0002-1825-0097> .
 
 Reported: `Deprecated ontology has no successor (dcterms:isReplacedBy or obo:IAO_0100001).`
 
-*Clean:* replaced by
+*Flagged:* `deprecated version node`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:versionIRI <https://w3id.org/example/onto/1.0> .
+<https://w3id.org/example/onto/1.0> owl:deprecated true .
+```
+
+Reported: `Deprecated ontology has no successor (dcterms:isReplacedBy or obo:IAO_0100001).`
+
+*Flagged:* `literal 1 is true`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated '1'^^xsd:boolean .
+```
+
+Reported: `Deprecated ontology has no successor (dcterms:isReplacedBy or obo:IAO_0100001).`
+
+*Flagged:* `blank replacement text`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; dcterms:isReplacedBy ' ' .
+```
+
+Reported: `Deprecated ontology has no successor (dcterms:isReplacedBy or obo:IAO_0100001).`
+
+*Flagged:* `self-referencing predecessor`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; owl:priorVersion <https://w3id.org/example/onto> .
+```
+
+Reported: `Deprecated ontology has no successor (dcterms:isReplacedBy or obo:IAO_0100001).`
+
+*Clean:* `replaced by`
 
 ```turtle
 <https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; dcterms:isReplacedBy <https://w3id.org/example/new> .
+```
+
+*Clean:* `IAO replaced by`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; <http://purl.obolibrary.org/obo/IAO_0100001> <https://w3id.org/new> .
+```
+
+*Clean:* `replaced by a text`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; dcterms:isReplacedBy 'the 2024 ontology' .
+```
+
+*Clean:* `structured replacement node`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true ; dcterms:isReplacedBy [] .
+```
+
+*Clean:* `not deprecated`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; rdfs:label 'x' .
+```
+
+*Clean:* `deprecated false`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated false .
+```
+
+*Clean:* `deprecated false-typed`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated '0'^^xsd:boolean .
+```
+
+*Clean:* `successor names this ontology as its predecessor`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true .
+<https://w3id.org/example/new> a owl:Ontology ; owl:priorVersion <https://w3id.org/example/onto> .
+```
+
+*Clean:* `successor replaces this ontology`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; owl:deprecated true .
+<https://w3id.org/example/new> a owl:Ontology ; dcterms:replaces <https://w3id.org/example/onto> .
+```
+
+*Clean:* `pointer on the ontology covers a deprecated version`
+
+```turtle
+<https://w3id.org/example/onto> a owl:Ontology ; dcterms:isReplacedBy <https://w3id.org/example/new> ; owl:versionIRI <https://w3id.org/example/onto/1.0> .
+<https://w3id.org/example/onto/1.0> owl:deprecated true .
+```
+
+*Clean:* `a deprecated term is not an ontology`
+
+```turtle
+ex:A a owl:Class ; owl:deprecated true .
 ```
 
 ### FAIR: TODO (to be implemented)

@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Check a property assertion for range/type confusion.
 
-*Flagged:* string where xsd:integer is the range
+*Flagged:* `string where xsd:integer is the range`
 
 ```turtle
 ex:d a owl:DatatypeProperty ; rdfs:range xsd:integer . ex:i ex:d "x" .
@@ -34,10 +34,154 @@ ex:d a owl:DatatypeProperty ; rdfs:range xsd:integer . ex:i ex:d "x" .
 
 Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#integer but value has datatype None.`
 
-*Clean:* matching datatype
+*Flagged:* `0 is outside xsd:positiveInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger . ex:i ex:d 0 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#positiveInteger but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `-1 is outside xsd:nonNegativeInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger . ex:i ex:d -1 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#nonNegativeInteger but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `0 is outside xsd:negativeInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:negativeInteger . ex:i ex:d 0 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#negativeInteger but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `128 is outside xsd:byte`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:byte . ex:i ex:d 128 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#byte but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `-129 is outside xsd:byte`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:byte . ex:i ex:d -129 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#byte but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `256 is outside xsd:unsignedByte`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:unsignedByte . ex:i ex:d 256 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#unsignedByte but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `2147483648 is outside xsd:int`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:int . ex:i ex:d 2147483648 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#int but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Flagged:* `1.5 is outside xsd:integer`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:integer . ex:i ex:d 1.5 .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#integer but value has datatype http://www.w3.org/2001/XMLSchema#decimal.`
+
+*Flagged:* `"abc"^^xsd:integer is outside xsd:positiveInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger . ex:i ex:d "abc"^^xsd:integer .
+```
+
+Reported: `https://example.test/onto#d has range http://www.w3.org/2001/XMLSchema#positiveInteger but value has datatype http://www.w3.org/2001/XMLSchema#integer.`
+
+*Clean:* `matching datatype`
 
 ```turtle
 ex:d a owl:DatatypeProperty ; rdfs:range xsd:integer . ex:i ex:d "1"^^xsd:integer .
+```
+
+*Clean:* `plain literal for xsd:string`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:string . ex:i ex:d "x" .
+```
+
+*Clean:* `1 fits xsd:positiveInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger . ex:i ex:d 1 .
+```
+
+*Clean:* `0 fits xsd:nonNegativeInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger . ex:i ex:d 0 .
+```
+
+*Clean:* `0 fits xsd:nonPositiveInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:nonPositiveInteger . ex:i ex:d 0 .
+```
+
+*Clean:* `-1 fits xsd:negativeInteger`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:negativeInteger . ex:i ex:d -1 .
+```
+
+*Clean:* `127 fits xsd:byte`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:byte . ex:i ex:d 127 .
+```
+
+*Clean:* `-128 fits xsd:byte`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:byte . ex:i ex:d -128 .
+```
+
+*Clean:* `255 fits xsd:unsignedByte`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:unsignedByte . ex:i ex:d 255 .
+```
+
+*Clean:* `2147483647 fits xsd:int`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:int . ex:i ex:d 2147483647 .
+```
+
+*Clean:* `-9223372036854775808 fits xsd:long`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:long . ex:i ex:d -9223372036854775808 .
+```
+
+*Clean:* `18446744073709551615 fits xsd:unsignedLong`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:unsignedLong . ex:i ex:d 18446744073709551615 .
+```
+
+*Clean:* `7 fits xsd:decimal`
+
+```turtle
+ex:d a owl:DatatypeProperty ; rdfs:range xsd:decimal . ex:i ex:d 7 .
 ```
 
 #### DATA002: Property usage conflicts with subject type
@@ -47,7 +191,7 @@ ex:d a owl:DatatypeProperty ; rdfs:range xsd:integer . ex:i ex:d "1"^^xsd:intege
 - **Category:** heuristic
 - **Fix:** Check a property assertion for datatype/object-property confusion.
 
-*Flagged:* usage implies a disjoint domain
+*Flagged:* `usage implies a disjoint domain`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:A owl:disjointWith ex:B . ex:i a ex:B ; ex:p ex:j .
@@ -55,7 +199,7 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:A owl:disjointWith ex:B . ex:i
 
 Reported: `Usage of https://example.test/onto#p infers https://example.test/onto#A but subject is explicitly typed https://example.test/onto#B, declared disjoint.`
 
-*Clean:* no disjointness axiom
+*Clean:* `no disjointness axiom`
 
 ```turtle
 ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .
@@ -68,7 +212,7 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .
 - **Category:** deterministic
 - **Fix:** Correct the value or its datatype ('2004'^^xsd:gYear, not xsd:date); type plain text as xsd:string.
 
-*Flagged:* date with a one-digit day (MOD)
+*Flagged:* `date with a one-digit day (MOD)`
 
 ```turtle
 ex:A a owl:Class ; dcterms:issued '2024-06-2'^^xsd:date .
@@ -76,11 +220,70 @@ ex:A a owl:Class ; dcterms:issued '2024-06-2'^^xsd:date .
 
 Reported: `Value '2024-06-2' of http://purl.org/dc/terms/issued is typed xsd:date, but it is not a valid xsd:date.`
 
-*Clean:* valid values
+*Flagged:* `a year typed as a date (MOD)`
+
+```turtle
+ex:A a owl:Class ; dcterms:issued '2004'^^xsd:date .
+```
+
+Reported: `Value '2004' of http://purl.org/dc/terms/issued is typed xsd:date, but it is not a valid xsd:date.`
+
+*Flagged:* `a word typed as an integer`
+
+```turtle
+ex:p a owl:DatatypeProperty . ex:a ex:p 'many'^^xsd:integer .
+```
+
+Reported: `Value 'many' of https://example.test/onto#p is typed xsd:integer, but it is not a valid xsd:integer.`
+
+*Flagged:* `typed rdfs:Literal (food traceability)`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment 'A note.'^^rdfs:Literal .
+```
+
+Reported: `Value 'A note.' of http://www.w3.org/2000/01/rdf-schema#comment is typed rdfs:Literal, but rdfs:Literal has no lexical forms in OWL 2, so no literal can be typed with it.`
+
+*Flagged:* `inside an axiom annotation`
+
+```turtle
+ex:A a owl:Class . [ a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty rdfs:label ; owl:annotatedTarget 'A' ; dcterms:date 'yesterday'^^xsd:dateTime ] .
+```
+
+Reported: `Value 'yesterday' of http://purl.org/dc/terms/date is typed xsd:dateTime, but it is not a valid xsd:dateTime.`
+
+*Clean:* `valid values`
 
 ```turtle
 ex:A a owl:Class ; dcterms:issued '2024-06-02'^^xsd:date ; ex:n '3'^^xsd:integer .
 ```
+
+*Clean:* `plain and language-tagged strings`
+
+```turtle
+ex:A a owl:Class ; rdfs:label 'A' , 'A'@en .
+```
+
+*Clean:* `a datatype RDFLib does not know`
+
+```turtle
+ex:A a owl:Class ; ex:v 'x'^^<https://dt.test/custom> .
+```
+
+*Clean:* `a year typed as a year`
+
+```turtle
+ex:A a owl:Class ; dcterms:issued '2004'^^xsd:gYear .
+```
+
+*Clean:* `an imported vocabulary's literal`
+
+```turtle
+<https://example.test/onto> a owl:Ontology . ex:A a owl:Class .
+<https://other.test/B> a owl:Class ; <https://other.test/n> 'many'^^xsd:integer .
+```
+
+Linter options: `base='https://example.test/onto#'`.
 
 #### DATA004: Datatype outside the OWL 2 datatype map
 
@@ -89,7 +292,7 @@ ex:A a owl:Class ; dcterms:issued '2024-06-02'^^xsd:date ; ex:n '3'^^xsd:integer
 - **Category:** deterministic
 - **Fix:** Use a datatype of the OWL 2 datatype map (xsd:dateTime rather than xsd:date), or rdfs:Literal.
 
-*Flagged:* xsd:anyType range (Tractus-X)
+*Flagged:* `xsd:anyType range (Tractus-X)`
 
 ```turtle
 ex:p a owl:DatatypeProperty ; rdfs:range xsd:anyType .
@@ -97,8 +300,68 @@ ex:p a owl:DatatypeProperty ; rdfs:range xsd:anyType .
 
 Reported: `xsd:anyType (used as rdfs:range) is XML Schema's ur-type, not a datatype; use rdfs:Literal for any value.`
 
-*Clean:* OWL 2 datatypes
+*Flagged:* `xsd:date range`
+
+```turtle
+ex:p a owl:DatatypeProperty ; rdfs:range xsd:date .
+```
+
+Reported: `xsd:date (used as rdfs:range) is not in the OWL 2 datatype map, so OWL 2 DL tools reject it; xsd:dateTime is.`
+
+*Flagged:* `datatype restriction on xsd:gYear`
+
+```turtle
+ex:p a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:onDatatype xsd:gYear ; owl:withRestrictions ( [ xsd:minInclusive '2000'^^xsd:gYear ] ) ] .
+```
+
+Reported: `xsd:gYear (used as owl:onDatatype) is not in the OWL 2 datatype map, so OWL 2 DL tools reject it; xsd:dateTime is.`
+
+*Flagged:* `data restriction filler`
+
+```turtle
+ex:p a owl:DatatypeProperty . ex:A a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom xsd:duration ] .
+```
+
+Reported: `xsd:duration (used as owl:someValuesFrom) is not in the OWL 2 datatype map, so OWL 2 DL tools reject it.`
+
+*Flagged:* `member of a data range union`
+
+```turtle
+ex:p a owl:DatatypeProperty ;
+    rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:dateTime xsd:time ) ] .
+```
+
+Reported: `xsd:time (used as rdf:first) is not in the OWL 2 datatype map, so OWL 2 DL tools reject it; xsd:dateTime is.`
+
+*Clean:* `OWL 2 datatypes`
 
 ```turtle
 ex:p a owl:DatatypeProperty ; rdfs:range xsd:dateTime , xsd:string , xsd:integer .
 ```
+
+*Clean:* `rdfs:Literal and rdf:PlainLiteral`
+
+```turtle
+ex:p a owl:DatatypeProperty ; rdfs:range rdfs:Literal .
+```
+
+*Clean:* `a class range`
+
+```turtle
+ex:p a owl:ObjectProperty ; rdfs:range ex:A . ex:A a owl:Class .
+```
+
+*Clean:* `a date-typed annotation value is DATA003's concern`
+
+```turtle
+ex:A a owl:Class ; dcterms:issued '2004-01-01'^^xsd:date .
+```
+
+*Clean:* `an imported vocabulary's range`
+
+```turtle
+<https://example.test/onto> a owl:Ontology . ex:p a owl:DatatypeProperty ; rdfs:range xsd:string .
+<https://other.test/q> a owl:DatatypeProperty ; rdfs:range xsd:date .
+```
+
+Linter options: `base='https://example.test/onto#'`.

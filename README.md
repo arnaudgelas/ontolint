@@ -812,8 +812,9 @@ are defined in [docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint
 
 [docs/rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) is the index of every rule,
 by family. Each family's page under `docs/rules/` documents its rules with
-their severity, fix, a flagged example, a clean example and the reported
-message. Rules that are not implemented yet are listed as TODO. The pages are
+their severity and fix, then every flagged and every clean test case, each
+flagged one with the message the linter reports. Rules that are not
+implemented yet are listed as TODO. The pages are
 generated; regenerate them with `uv run python tests/rule_docs_generator.py`.
 
 ## Interpretation principles

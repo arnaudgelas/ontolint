@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Declare a stable ontology IRI using rdf:type owl:Ontology.
 
-*Flagged:* no owl:Ontology
+*Flagged:* `no owl:Ontology`
 
 ```turtle
 ex:A a owl:Class .
@@ -34,7 +34,7 @@ ex:A a owl:Class .
 
 Reported: `Missing owl:Ontology declaration.`
 
-*Clean:* ontology declared
+*Clean:* `ontology declared`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
@@ -47,7 +47,7 @@ Reported: `Missing owl:Ontology declaration.`
 - **Category:** heuristic
 - **Fix:** Prefer one primary owl:Ontology declaration per standalone ontology document.
 
-*Flagged:* two ontologies
+*Flagged:* `two ontologies`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology . <https://example.test/other> a owl:Ontology .
@@ -55,7 +55,7 @@ Reported: `Missing owl:Ontology declaration.`
 
 Reported: `2 owl:Ontology declarations found.`
 
-*Clean:* one ontology
+*Clean:* `one ontology`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
@@ -68,7 +68,7 @@ Reported: `2 owl:Ontology declarations found.`
 - **Category:** heuristic
 - **Fix:** Add dcterms:license (or an agreed equivalent) to the ontology.
 
-*Flagged:* no license
+*Flagged:* `no license`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
@@ -76,7 +76,7 @@ Reported: `2 owl:Ontology declarations found.`
 
 Reported: `Ontology has no license annotation.`
 
-*Clean:* dcterms:license
+*Clean:* `dcterms:license`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; dcterms:license <https://example.test/license> .
@@ -89,7 +89,7 @@ Reported: `Ontology has no license annotation.`
 - **Category:** heuristic
 - **Fix:** Add owl:versionIRI or owl:versionInfo according to your release policy.
 
-*Flagged:* no version
+*Flagged:* `no version`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
@@ -97,7 +97,7 @@ Reported: `Ontology has no license annotation.`
 
 Reported: `No versionIRI/versionInfo.`
 
-*Clean:* versionInfo
+*Clean:* `versionInfo`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:versionInfo "1.0" .
@@ -110,7 +110,7 @@ Reported: `No versionIRI/versionInfo.`
 - **Category:** heuristic
 - **Fix:** Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).
 
-*Flagged:* no provenance
+*Flagged:* `no provenance`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
@@ -118,7 +118,15 @@ Reported: `No versionIRI/versionInfo.`
 
 Reported: `Missing creator and dcterms:created provenance.`
 
-*Clean:* creator and created
+*Flagged:* `creator without created`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; dcterms:creator "me" .
+```
+
+Reported: `Missing dcterms:created provenance.`
+
+*Clean:* `creator and created`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; dcterms:creator "me" ; dcterms:created "2026-01-01" .
@@ -131,7 +139,7 @@ Reported: `Missing creator and dcterms:created provenance.`
 - **Category:** heuristic
 - **Fix:** Describe the ontology with dcterms:description or rdfs:comment.
 
-*Flagged:* no description
+*Flagged:* `no description`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology .
@@ -139,7 +147,7 @@ Reported: `Missing creator and dcterms:created provenance.`
 
 Reported: `Missing ontology description.`
 
-*Clean:* rdfs:comment
+*Clean:* `rdfs:comment`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; rdfs:comment "An ontology." .
@@ -152,7 +160,7 @@ Reported: `Missing ontology description.`
 - **Category:** deterministic
 - **Fix:** Keep one document per release: remove the stale copy, give every release its own version IRI, and give a fork its own ontology IRI.
 
-*Flagged:* two inputs, one version IRI, different content
+*Flagged:* `two inputs, one version IRI, different content`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
@@ -162,13 +170,71 @@ Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://ex
 
 Reported: `Version IRI declared by 2 input files whose content differs: release.ttl, working.ttl.`
 
-*Clean:* one file, nothing shared
+*Flagged:* `two unversioned inputs, one ontology IRI, different content`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='inputs', members=('release.ttl', 'working.ttl'), identical=False),))`.
+
+Reported: `Ontology IRI declared by 2 input files whose content differs: release.ttl, working.ttl.`
+
+*Flagged:* `two modules of one closure`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='closure', members=('root.ttl', 'copy.ttl'), identical=False),))`.
+
+Reported: `Ontology IRI declared by 2 files of the import closure whose content differs: root.ttl, copy.ttl.`
+
+*Flagged:* `a closure module an import did not load`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='closure', members=('copy.ttl', 'module.ttl'), identical=False, unloaded=(('https://example.test/onto', 'module.ttl'),)),))`.
+
+Reported: `Ontology IRI declared by 2 files of the import closure whose content differs: copy.ttl, module.ttl; owl:imports <https://example.test/onto> resolves to module.ttl but did not load it, since a loaded file already declares that IRI.`
+
+*Flagged:* `an --import-dir with two candidates`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='import-dir', members=('mirror/a.ttl', 'mirror/b.ttl'), identical=False, where='mirror'),))`.
+
+Reported: `owl:imports <https://example.test/onto> matches 2 files in --import-dir mirror whose content differs: mirror/a.ttl, mirror/b.ttl; it resolved to mirror/a.ttl, the first in path order.`
+
+*Flagged:* `two graphs of a dataset`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='graphs', members=('(default graph)', 'https://example.test/g'), identical=False, where='d.trig'),))`.
+
+Reported: `Ontology IRI declared by 2 graphs of d.trig whose content differs: (default graph), https://example.test/g.`
+
+*Clean:* `one file, nothing shared`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
 ```
 
 Linter options: `policy=Policy()`.
+
+*Clean:* `identical copies are ONT008`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='inputs', members=('release.ttl', 'working.ttl'), identical=True),))`.
 
 #### ONT008: Identical copies of one ontology in several documents
 
@@ -177,7 +243,7 @@ Linter options: `policy=Policy()`.
 - **Category:** deterministic
 - **Fix:** Keep one copy, or generate the others from it (robot mirror, a release step) so they cannot drift apart.
 
-*Flagged:* two inputs with identical content
+*Flagged:* `two inputs with identical content`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
@@ -187,10 +253,28 @@ Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://ex
 
 Reported: `Version IRI declared by 2 input files with identical content: copy.ttl, release.ttl.`
 
-*Clean:* one file, nothing shared
+*Flagged:* `an --import-dir holding an identical copy`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='import-dir', members=('mirror/a.ttl', 'mirror/b.ttl'), identical=True, where='mirror'),))`.
+
+Reported: `owl:imports <https://example.test/onto> matches 2 files in --import-dir mirror with identical content: mirror/a.ttl, mirror/b.ttl; it resolved to mirror/a.ttl, the first in path order.`
+
+*Clean:* `one file, nothing shared`
 
 ```turtle
 <https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
 ```
 
 Linter options: `policy=Policy()`.
+
+*Clean:* `different content is ONT007`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:versionIRI <https://example.test/onto/1.0> .
+```
+
+Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='inputs', members=('release.ttl', 'working.ttl'), identical=False),))`.

@@ -26,7 +26,7 @@ All examples assume these prefixes:
 - **Category:** heuristic
 - **Fix:** Give the entry the member's ontology IRI, or link it to the member (for example with rdfs:isDefinedBy).
 
-*Flagged:* same name, no IRI link (MODL)
+*Flagged:* `same name, no IRI link (MODL)`
 
 ```turtle
 ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
@@ -37,11 +37,87 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 
 Reported: `Index entry names no pattern ontology by IRI; <https://example.test/library/event> has its name: link them (for example rdfs:isDefinedBy <https://example.test/library/event>).`
 
-*Clean:* linked by rdfs:isDefinedBy
+*Flagged:* `an entry of the entry class with no member at all`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> . ex:Ghost a ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+Reported: `Index entry names no pattern ontology of the library.`
+
+*Flagged:* `no member, and an unreadable file in the library`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:seeAlso <https://example.test/library/event> . ex:Ghost a ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),), unreadable=('broken.ttl',)))`.
+
+Reported: `Index entry names no pattern ontology of the library. Some files of the library did not parse (TOOL008), so it may be in one of them.`
+
+*Clean:* `linked by rdfs:isDefinedBy`
 
 ```turtle
 ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
 ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+*Clean:* `the entry is the member`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+<https://example.test/library/event> a ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+*Clean:* `the member's header names the entry`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/onto#Event'),)),)))`.
+
+*Clean:* `an individual of another class (a category)`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+*Clean:* `no entry class can be inferred`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Thing a ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+*Clean:* `a foreign individual of the entry class is not an entry`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> . <http://other.test/Ghost> a ex:Pattern .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+*Clean:* `a class of the index typed with the entry class is not an entry`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> . ex:Ghost a owl:Class , ex:Pattern .
 ```
 
 Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
@@ -53,7 +129,7 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 - **Category:** heuristic
 - **Fix:** Add an index entry for the pattern ontology, or remove the file from the library.
 
-*Flagged:* a member nothing names
+*Flagged:* `a member nothing names`
 
 ```turtle
 ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
@@ -64,11 +140,30 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 
 Reported: `Pattern ontology is not in the index: no entry names it.`
 
-*Clean:* every member linked
+*Flagged:* `an index with no entries at all`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+Reported: `Pattern ontology is not in the index: no entry names it.`
+
+*Clean:* `every member linked`
 
 ```turtle
 ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
 ex:Event a ex:Pattern ; rdfs:isDefinedBy <https://example.test/library/event> .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
+
+*Clean:* `a member matched by name only (LIB001 reports it)`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+ex:Event a ex:Pattern .
 ```
 
 Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)),)))`.
@@ -80,7 +175,7 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 - **Category:** heuristic
 - **Fix:** Correct the IRI, or add the pattern ontology it names to the library.
 
-*Flagged:* a related pattern the library lacks
+*Flagged:* `a related pattern the library lacks`
 
 ```turtle
 ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
@@ -90,10 +185,42 @@ Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=Patt
 
 Reported: `The header names <https://example.test/library/agent> (hasRelatedPattern), which no pattern ontology of the library declares.`
 
-*Clean:* a related pattern the library has
+*Clean:* `a related pattern the library has`
 
 ```turtle
 ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
 ```
 
 Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='agentrole.ttl', uri='file:///lib/agentrole.ttl', ontology='https://example.test/library/agentrole', identities=frozenset({'https://example.test/library/agentrole'}), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/library/event'),)), LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)))))`.
+
+*Clean:* `a term of a member, not a member`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='agentrole.ttl', uri='file:///lib/agentrole.ttl', ontology='https://example.test/library/agentrole', identities=frozenset({'https://example.test/library/agentrole'}), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/library/event#Event'),)), LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)))))`.
+
+*Clean:* `an IRI outside the library namespace`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='agentrole.ttl', uri='file:///lib/agentrole.ttl', ontology='https://example.test/library/agentrole', identities=frozenset({'https://example.test/library/agentrole'}), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'http://www.ontologydesignpatterns.org/ont/dul/DUL.owl'),)), LibraryMember(display='event.ttl', uri='file:///lib/event.ttl', ontology='https://example.test/library/event', identities=frozenset({'https://example.test/library/event'}), names=('Event Pattern',)))))`.
+
+*Clean:* `one member: no library namespace`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='agentrole.ttl', uri='file:///lib/agentrole.ttl', ontology='https://example.test/library/agentrole', identities=frozenset({'https://example.test/library/agentrole'}), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/library/agent'),)),)))`.
+
+*Clean:* `members sharing only the host: no library namespace`
+
+```turtle
+ex:Pattern a owl:Class . ex:Category a owl:Class . ex:Places a owl:NamedIndividual , ex:Category .
+```
+
+Linter options: `base='https://example.test/onto#'`, `policy=Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='a.ttl', uri='file:///a.ttl', ontology='https://example.test/a', identities=frozenset({'https://example.test/a'}), references=(('http://ontologydesignpatterns.org/opla-core#hasRelatedPattern', 'https://example.test/zzz'),)), LibraryMember(display='b.ttl', uri='file:///b.ttl', ontology='https://example.test/b', identities=frozenset({'https://example.test/b'})))))`.

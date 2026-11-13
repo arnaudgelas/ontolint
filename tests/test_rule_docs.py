@@ -7,10 +7,16 @@ builds the pages, which takes seconds; the other page tests read the committed f
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
+import pytest
+import rule_docs_generator
 from planned_rule_intents import INTENTS
-from rule_docs_generator import DOC, PAGES, _value, build, stale_pages, write_pages
+from rdflib import Graph
+from rule_cases import load_cases
+from rule_docs_generator import DOC, PAGES, _block, _code, _value, build, render, stale_pages, write_pages
+from rule_harness import built, probed, rule_cases, ttl, with_shapes
 
 from ontolint.catalogue import load_catalogue
 from ontolint.models import LibraryMember, PatternLibrary, SharedIdentity
@@ -24,6 +30,16 @@ def _committed() -> dict[str, str]:
     pages = {"rules.md": DOC.read_text(encoding="utf-8")}
     pages.update({f"rules/{path.name}": path.read_text(encoding="utf-8") for path in PAGES.glob("*.md")})
     return pages
+
+
+def _sections() -> dict[str, str]:
+    """Return the entry of every implemented rule on the committed family pages, by rule id."""
+    sections: dict[str, str] = {}
+    for name, text in _committed().items():
+        if name != "rules.md":
+            for chunk in re.split(r"^#### ", text, flags=re.MULTILINE)[1:]:
+                sections[chunk.split(":", 1)[0]] = re.split(r"^#{1,3} ", chunk, flags=re.MULTILINE)[0]
+    return sections
 
 
 def test_rule_reference_is_current() -> None:
@@ -86,6 +102,81 @@ def test_options_print_only_the_fields_a_case_sets_and_sets_sorted_at_every_dept
     )
     defaults = f"depth_limit={Policy().depth_limit}, inheritance_limit={Policy().inheritance_limit}"
     assert not [name for name, text in _committed().items() if defaults in text]
+
+
+def test_every_case_of_every_rule_is_shown_in_order() -> None:
+    sections = _sections()
+    for rule_id, cases in load_cases().items():
+        expected = [f"*Flagged:* {_code(case.name)}" for case in cases.positive]
+        expected += [f"*Clean:* {_code(case.name)}" for case in cases.negative]
+        shown = [line for line in sections[rule_id].splitlines() if line.startswith(("*Flagged:* ", "*Clean:* "))]
+        assert len(shown) == len(expected), rule_id
+        for line, start in zip(shown, expected, strict=True):
+            assert line == start or line.startswith(f"{start} ("), (rule_id, line)
+
+
+def test_every_flagged_graph_case_shows_its_message() -> None:
+    sections = _sections()
+    total = 0
+    for rule_id, cases in load_cases().items():
+        graph_cases = sum(1 for case in cases.positive if case.probe is None)
+        reported = [line for line in sections[rule_id].splitlines() if line.startswith("Reported: ")]
+        assert len(reported) == graph_cases, rule_id
+        total += graph_cases
+    assert total > len(sections)  # 778 messages for 249 rules when this test was written
+
+
+def test_a_case_is_labelled_by_how_it_is_made_and_shows_its_options() -> None:
+    label = "(run through the command line or an adapter; see `tests/rule_cases/`)"
+    assert _block("Flagged", probed("cli", lambda: ["TOOL001"])) == [f"*Flagged:* `cli` {label}", ""]
+    assert _block("Clean", ttl("empty", "")) == ["*Clean:* `empty` (the empty data graph)", ""]
+    assert _block("Flagged", ttl("empty", " \n", policy=Policy(unknown_keys=("k",)))) == [
+        "*Flagged:* `empty` (the empty data graph)",
+        "",
+        "Linter options: `policy=Policy(unknown_keys=('k',))`.",
+        "",
+    ]
+    assert _block("Flagged", with_shapes("shapes only", "", "ex:S a sh:NodeShape .")) == [
+        "*Flagged:* `shapes only` (the empty data graph)",
+        "",
+        "Shapes graph:",
+        "",
+        "```turtle",
+        "ex:S a sh:NodeShape .",
+        "```",
+        "",
+    ]
+    assert _block("Clean", built("relative", Graph, base="https://example.test/")) == [
+        "*Clean:* `relative` (built programmatically; see `tests/rule_cases/`)",
+        "",
+        "Linter options: `base='https://example.test/'`.",
+        "",
+    ]
+
+
+def test_names_messages_and_turtle_cannot_break_out_of_their_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert _code("plain") == "`plain`"
+    assert _code("a`b") == "``a`b``"
+    assert _code("`x") == "`` `x ``"
+    assert _code("x``") == "``` x`` ```"
+    assert _code(" both ") == "`  both  `"
+    assert _code(" ") == "` `"
+    with pytest.raises(ValueError, match="empty"):
+        _code("")
+    assert _block("Flagged", ttl("x <http://x.test/> [y]", "ex:A a owl:Class ."))[0] == (
+        "*Flagged:* `x <http://x.test/> [y]`"
+    )
+    assert _block("Flagged", ttl("fence", 'ex:A rdfs:comment "```" .'))[2:5] == [
+        "````turtle",
+        'ex:A rdfs:comment "```" .',
+        "````",
+    ]
+    case = ttl("undeclared", "ex:A rdfs:subClassOf ex:B .")
+    with pytest.raises(ValueError, match="case name"):
+        render({"OWL001": rule_cases([ttl("two\nlines", case.turtle)], [case])})
+    monkeypatch.setattr(rule_docs_generator, "_first_message", lambda rule_id, case: "two\rlines")
+    with pytest.raises(ValueError, match="message"):
+        render({"OWL001": rule_cases([case], [case])})
 
 
 def test_every_proposed_rule_has_an_intent_and_no_other_does() -> None:
