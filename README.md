@@ -89,7 +89,7 @@ the report has no published JSON Schema yet, so pin the version you parse agains
 | A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
 | Accepted findings that stay quiet | `--write-baseline FILE`, then `--baseline FILE` | [Policy and baselines](#policy-and-baselines) |
 | ontolint inside a Python program | `from ontolint import Linter` | [Run the linter](#run-the-linter) |
-| The rule documentation and its source | [`docs/rules.md`](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) (generated), `src/ontolint/data/rule_catalogue.csv` | [Rule reference](#rule-reference) |
+| The rule documentation and its source | [`docs/rules.md`](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) (generated: the index, and one page per family under `docs/rules/`), `src/ontolint/data/rule_catalogue.csv` | [Rule reference](#rule-reference) |
 
 A finding has a rule id, severity (`error`, `warning`, `info`), focus (the term it is about),
 message, suggestion and confidence. A finding is a review prompt, not a proof of inconsistency
@@ -99,7 +99,7 @@ agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.tx
 ## What it checks
 
 249 of the 304 catalogue rules are implemented; the rest are planned. The
-[rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one with an example.
+[rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one, with one page per family.
 
 - 236 Python graph checks for metadata, identifiers, IRIs, labels and lexical
   quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
@@ -810,10 +810,11 @@ are defined in [docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint
 
 ## Rule reference
 
-[docs/rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents every rule with its severity, fix, a flagged
-example, a clean example and the reported message. Rules that are not
-implemented yet are listed as TODO. The file is generated; regenerate it with
-`uv run python tests/rule_docs_generator.py`.
+[docs/rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) is the index of every rule,
+by family. Each family's page under `docs/rules/` documents its rules with
+their severity, fix, a flagged example, a clean example and the reported
+message. Rules that are not implemented yet are listed as TODO. The pages are
+generated; regenerate them with `uv run python tests/rule_docs_generator.py`.
 
 ## Interpretation principles
 
