@@ -30,6 +30,7 @@ by the line it decorates) and the mutant with the source.
 | --- | --- | --- | --- |
 | `src/ontolint/adapters/shacl.py` | `@dataclass(frozen=True) class _ValidationJob:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/context.py` | `@dataclass(frozen=True) class GraphContext:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
+| `src/ontolint/cli.py` | `rows = zip(inputs, graphs, shared, strict=True)` | boolean: True to False | `graphs` has one graph per input (any input that fails to parse ends the run with exit 2 before this line), and `shared` is either `shared_identities(inputs, ...)`, one tuple per input, or `[()] * len(inputs)`, so `strict` never fires. |
 | `src/ontolint/cli.py` | `@dataclass(frozen=True) class ImportOptions:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/imports.py` | `@dataclass(frozen=True) class Catalog:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/imports.py` | `@dataclass(frozen=True) class Closure:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
