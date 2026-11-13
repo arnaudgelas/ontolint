@@ -6,7 +6,11 @@
     uv run python scripts/metric_corpus.py render        # rewrite the page's generated part from the JSON files
 
 No corpus file is committed: ``docs/validation/metric-corpus.json`` names each one by URL, commit and checksum,
-and ``fetch`` refuses a file whose checksum differs.  Each file is linted twice with ``--select METRIC``:
+and ``fetch`` refuses a file whose checksum differs.  ``load_manifest`` refuses a manifest that could make the
+script read or write outside DIR (an id that is not a plain file name), an entry that is not pinned or licensed,
+and an id given twice, so a custom manifest is held to the rules the committed one follows.
+
+Each file is linted twice with ``--select METRIC``:
 
 * *default*: the default policy, which says whether each rule fires as shipped;
 * *forced*: every limit at the end of its range and ``metric_min_sample`` 1, so every rule with a non-empty
@@ -46,6 +50,8 @@ RULES = tuple(f"METRIC{n:03d}" for n in range(1, 14))
 COUNTED = ("fire", "silent")  # labels that make a true or false positive or negative
 EXPECTS = (*COUNTED, "unknown", "unassessed")  # unknown: assessed and left open; unassessed: not looked at
 BASES = ("checked", "presumed", "none")  # how the label's reason was established
+SHA256 = re.compile(r"[0-9a-f]{64}")
+COMMIT = re.compile(r"[0-9a-f]{40}")
 
 # Every limit at the far end of its range: an upper limit of 0 fires on any non-zero value, a lower limit
 # above any possible value fires on any population.  METRIC007's 1e9 upper limit keeps the policy valid
@@ -135,15 +141,56 @@ def validate(entry: Entry) -> None:
         raise ValueError(f"{entry.id}: labels for unknown rules {sorted(extra)}")
     for rule in RULES:
         label = entry.label(rule)
-        if label.get("expect") not in EXPECTS or label.get("basis") not in BASES or not label.get("why", "").strip():
+        expect, basis = label.get("expect"), label.get("basis")
+        if expect not in EXPECTS or basis not in BASES or not label.get("why", "").strip():
             raise ValueError(f"{entry.id}: {rule} needs an expect in {EXPECTS}, a basis in {BASES} and a reason")
 
 
+def safe_name(entry_id: str) -> str:
+    """Return ``entry_id`` if it is a plain file name, so that ``DIR / id`` stays inside DIR; else raise."""
+    if (
+        not entry_id
+        or entry_id in (".", "..")
+        or "/" in entry_id
+        or "\\" in entry_id
+        or Path(entry_id).name != entry_id
+    ):
+        raise ValueError(f"{entry_id!r}: a corpus id must be a plain file name, without a directory or '..'")
+    return entry_id
+
+
+def _check_source(item: Mapping[str, Any]) -> None:
+    """Refuse an entry that is not pinned (checksum, HTTPS, commit in the URL) or names no licence."""
+    name = item.get("id")
+    if not isinstance(item.get("sha256"), str) or not SHA256.fullmatch(item["sha256"]):
+        raise ValueError(f"{name}: the SHA-256 must be 64 lower-case hex digits")
+    if not isinstance(item.get("url"), str) or not item["url"].startswith("https://"):
+        raise ValueError(f"{name}: the URL must use https")
+    if "commit" not in item:
+        raise ValueError(f"{name}: state the commit, or null for a file pinned by its checksum only")
+    commit = item["commit"]
+    if commit is not None and (
+        not isinstance(commit, str) or not COMMIT.fullmatch(commit) or f"/{commit}/" not in item["url"]
+    ):
+        raise ValueError(f"{name}: the commit must be 40 hex digits and appear in the URL")
+    if not isinstance(item.get("licence"), str) or not item["licence"].strip():
+        raise ValueError(f"{name}: name the licence")
+
+
 def load_manifest(path: Path = MANIFEST) -> list[Entry]:
+    """Read and validate the manifest: safe, unique ids, pinned and licensed sources, and complete labels."""
     data = json.loads(path.read_text(encoding="utf-8"))
-    entries = [Entry(item["id"], item["url"], item["sha256"], item["labels"]) for item in data["entries"]]
-    for entry in entries:
+    entries: list[Entry] = []
+    seen: set[str] = set()
+    for item in data["entries"]:
+        name = safe_name(item.get("id", ""))
+        if name in seen:
+            raise ValueError(f"{name}: the id appears twice")
+        seen.add(name)
+        _check_source(item)
+        entry = Entry(name, item["url"], item["sha256"], item["labels"])
         validate(entry)
+        entries.append(entry)
     return entries
 
 
@@ -155,7 +202,7 @@ def fetch(directory: Path, entries: list[Entry]) -> None:
     """Download every entry into ``directory`` (named by its id) unless a file with its checksum is there."""
     directory.mkdir(parents=True, exist_ok=True)
     for entry in entries:
-        target = directory / entry.id
+        target = directory / safe_name(entry.id)
         if target.is_file() and _sha256(target.read_bytes()) == entry.sha256:
             continue
         with urllib.request.urlopen(entry.url, timeout=120) as response:
@@ -218,7 +265,7 @@ def measure(directory: Path, entries: list[Entry]) -> dict[str, Any]:
         forced = Path(scratch) / "forced.json"
         forced.write_text(json.dumps(FORCED_POLICY), encoding="utf-8")
         for entry in entries:
-            path = directory / entry.id
+            path = directory / safe_name(entry.id)
             if not path.is_file() or _sha256(path.read_bytes()) != entry.sha256:
                 raise SystemExit(f"{entry.id}: missing or changed in {directory}; run fetch first")
             fired = _lint(path, None)

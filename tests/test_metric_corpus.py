@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -59,26 +59,89 @@ def test_the_forced_policy_sets_every_metric_key_and_is_valid() -> None:
     Policy.from_mapping(metric_corpus.FORCED_POLICY)  # raises on an invalid value
 
 
-def test_every_manifest_entry_is_pinned_licensed_and_labelled_well() -> None:
+def test_the_committed_manifest_is_valid() -> None:
+    """load_manifest enforces pinning, licences, safe unique ids and labels; the committed manifest passes."""
+    assert _manifest()["label_status"] in {"proposed", "approved"}
+    assert len(metric_corpus.load_manifest()) == len(_manifest()["entries"])
+
+
+def _write_manifest(tmp_path: Path, data: dict[str, Any]) -> Path:
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+UNSAFE_IDS = ["../../escape.ttl", "/absolute/escape.ttl", "sub/escape.ttl", "sub\\escape.ttl", "..", ".", ""]
+
+
+@pytest.mark.parametrize("unsafe", UNSAFE_IDS)
+def test_a_manifest_id_that_is_not_a_plain_file_name_is_refused(tmp_path: Path, unsafe: str) -> None:
     data = _manifest()
-    assert data["label_status"] in {"proposed", "approved"}
-    ids = [entry["id"] for entry in data["entries"]]
-    assert len(ids) == len(set(ids))
-    for entry in data["entries"]:
-        assert re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]), entry["id"]
-        assert entry["url"].startswith("https://"), entry["id"]
-        assert entry["licence"], entry["id"]
-        if entry["commit"] is not None:
-            assert re.fullmatch(r"[0-9a-f]{40}", entry["commit"]), entry["id"]
-            assert f"/{entry['commit']}/" in entry["url"], entry["id"]
-        assert set(entry["labels"]) <= {"*", *metric_corpus.RULES}, entry["id"]
-        # Every rule is labelled, by name or through "*": an omission is never read as a judgement.
-        assert "*" in entry["labels"] or set(entry["labels"]) == set(metric_corpus.RULES), entry["id"]
-        for label in entry["labels"].values():
-            assert label["expect"] in metric_corpus.EXPECTS, entry["id"]
-            assert label["basis"] in metric_corpus.BASES, entry["id"]
-            assert label["why"].strip(), entry["id"]
-    metric_corpus.load_manifest()  # validates every (entry, rule) pair
+    data["entries"][0]["id"] = unsafe
+    with pytest.raises(ValueError, match="plain file name"):
+        metric_corpus.load_manifest(_write_manifest(tmp_path, data))
+
+
+def _first(data: dict[str, Any]) -> dict[str, Any]:
+    return data["entries"][0]
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda d: _first(d).update(sha256="ABC"), "SHA-256"),
+        (lambda d: _first(d).update(sha256="0" * 63), "SHA-256"),
+        (lambda d: _first(d).update(url=_first(d)["url"].replace("https://", "http://")), "https"),
+        (lambda d: _first(d).update(commit="0" * 40), "commit"),
+        (lambda d: _first(d).update(commit="main"), "commit"),
+        (lambda d: _first(d).update(licence=""), "licence"),
+        (lambda d: _first(d).pop("licence"), "licence"),
+        (lambda d: _first(d).pop("commit"), "commit"),
+        (lambda d: d["entries"].append(dict(_first(d))), "twice"),
+    ],
+)
+def test_an_unpinned_unlicensed_or_duplicate_entry_is_refused(
+    tmp_path: Path, change: Callable[[dict[str, Any]], object], message: str
+) -> None:
+    data = _manifest()
+    change(data)
+    with pytest.raises(ValueError, match=message):
+        metric_corpus.load_manifest(_write_manifest(tmp_path, data))
+
+
+def _body_response(body: bytes) -> Callable[..., object]:
+    class Response:
+        def __enter__(self) -> Response:
+            return self
+
+        def __exit__(self, *_: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return body
+
+    return lambda *_args, **_kwargs: Response()
+
+
+def test_fetch_never_writes_outside_its_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Even an Entry built by hand, bypassing load_manifest, cannot name a file outside DIR."""
+    body = b"attacker bytes"
+    monkeypatch.setattr(metric_corpus.urllib.request, "urlopen", _body_response(body))
+    entry = metric_corpus.Entry("../escape.ttl", "https://example.test/x", metric_corpus._sha256(body), {})
+    with pytest.raises(ValueError, match="plain file name"):
+        metric_corpus.fetch(tmp_path / "corpus", [entry])
+    assert not (tmp_path / "escape.ttl").exists()
+
+
+def test_measure_never_reads_outside_its_directory(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.ttl"
+    outside.write_text(FIXTURE, encoding="utf-8")
+    (tmp_path / "corpus").mkdir()
+    entry = metric_corpus.Entry(
+        "../outside.ttl", "https://example.test/x", metric_corpus._sha256(outside.read_bytes()), {}
+    )
+    with pytest.raises(ValueError, match="plain file name"):
+        metric_corpus.measure(tmp_path / "corpus", [entry])
 
 
 def test_an_entry_that_leaves_a_rule_unlabelled_is_refused(tmp_path: Path) -> None:
