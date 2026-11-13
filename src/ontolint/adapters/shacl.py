@@ -60,7 +60,13 @@ _FIELDS = (
     ("resultMessage", SH.resultMessage),
     ("resultSeverity", SH.resultSeverity),
 )
-"""Each evidence key and the result property it holds, in the order of the SHACL result table (SHACL 3.6.2)."""
+"""Each evidence key and the result property it holds, in the order of the SHACL result table (SHACL 3.6.2).
+
+SHACL-AF result annotations (``sh:resultAnnotation``, SHACL Advanced Features section 4) are not here: pySHACL 0.40.2
+does not write them.  When the annotation canaries of ``tests/test_shacl_evidence.py`` fail, a pySHACL upgrade writes
+them: map them here, update the evidence key list in README "Optional SHACL validation" and ``rules/external.py``,
+and update ``test_each_evidence_key_is_the_local_name_of_its_shacl_property``.
+"""
 EVIDENCE_FIELDS = frozenset(predicate for _key, predicate in _FIELDS)
 """Every validation result property SHACL001 keeps (all but ``rdf:type``)."""
 _RESULT_KEY = ("sourceShape", "sourceConstraintComponent", "resultPath", "value", "sourceConstraint")
@@ -214,7 +220,8 @@ class _Report:
 
 
 def _evidence(report: _Report, result: Node, depth: int = 0, above: frozenset[Node] = frozenset()) -> Evidence:
-    """Every property of one validation result, keyed by its SHACL name; a property the report lacks is omitted.
+    """Every result property of :data:`_FIELDS` of one validation result, keyed by its SHACL name; one the report
+    lacks is omitted.
 
     Data terms (focus node, value) are named in the data graph and shapes terms in the shapes graph, as the
     finding names them.  ``sh:detail`` results are nested, sorted, at most :data:`MAX_DETAIL_DEPTH` deep and

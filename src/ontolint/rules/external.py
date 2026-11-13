@@ -19,9 +19,13 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   ``[shape: <source shape>]``.  The severity is the result's: ``sh:Violation`` error, ``sh:Warning`` warning,
   ``sh:Info`` info, any other value error with ``(severity <value>)`` appended; the spec's ``error`` is only the
   default shown in rule listings.  Each finding's ``evidence`` (JSON ``evidence``, SARIF ``properties.evidence``,
-  never text) holds every property of its result under its SHACL name, in this order and only when present:
-  ``focusNode``, ``resultPath``, ``value``, ``sourceShape``, ``sourceConstraintComponent``, ``sourceConstraint``,
-  ``detail``, ``resultMessage`` (sorted, without language tags), ``resultSeverity`` (the original IRI).  IRIs are
+  never text) holds every SHACL result property listed below, under its SHACL name, in this order and only when
+  present: ``focusNode``, ``resultPath``, ``value``, ``sourceShape``, ``sourceConstraintComponent``,
+  ``sourceConstraint``, ``detail``, ``resultMessage`` (sorted, without language tags), ``resultSeverity`` (the
+  original IRI).  SHACL-AF result annotations (``sh:resultAnnotation`` on a SPARQL-based constraint or constraint
+  component; SHACL Advanced Features, section 4 "Annotation Properties") are not implemented by pySHACL 0.40.2, so
+  they appear neither in its report nor in the evidence; a canary test fails when a pySHACL upgrade starts writing
+  them.  IRIs are
   plain, blank nodes the content-stable ``_:`` id (data terms in the data graph, shapes terms in the shapes graph),
   literals one-line N-Triples, a complex path SPARQL 1.1 property-path syntax, or ``(malformed path)`` when it
   does not parse or exceeds 32 levels or 1,000 nodes; ``detail`` nests the ``sh:detail`` results, sorted, at most

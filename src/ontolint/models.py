@@ -94,7 +94,8 @@ class Finding:
     related: tuple[str, ...] = field(default=(), compare=False)
     """Other terms the finding is about (the rest of a collision), used to place it in modules; never rendered."""
     evidence: Evidence | None = field(default=None, compare=False)
-    """The backend's structured result (SHACL001: every field of the SHACL validation result); JSON and SARIF only."""
+    """The backend's structured result (SHACL001: every SHACL result property ``adapters.shacl`` lists); JSON and
+    SARIF only."""
     subject: tuple[str, ...] = field(default=(), compare=False)
     """What the finding is about beyond its rule and focus (terms, predicate, literal, axiom key): its baseline
     identity with them, independent of the message wording; never rendered."""
