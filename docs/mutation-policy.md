@@ -79,7 +79,9 @@ within the next two scheduled runs by one of:
 1. Kill it: add or strengthen a test (preferred).
 2. Remove dead code that makes the mutant equivalent.
 3. Pardon it with a gremlins pragma carrying a reason and justification
-   (an equivalent mutant, or an unobservable side effect). A reviewer other than
+   (an equivalent mutant, or an unobservable side effect), on a line that holds
+   only that mutant, with a row in `docs/mutation-pardons.md`
+   (`tests/test_mutation_pardons.py` enforces both). A reviewer other than
    the author must approve the pragma in the PR.
 4. Waive a threshold temporarily: open an issue naming the operator, current
    score, owner and expiry date (at most 30 days) and link it in the PR that
@@ -87,7 +89,8 @@ within the next two scheduled runs by one of:
 
 Pardons are limited to 5% of mutants (`--gremlin-max-pardons-pct=5`). Run
 `uv run pytest -m 'not slow' --gremlins --gremlin-audit-pardons` to list active pardons;
-review them quarterly.
+review them quarterly. `docs/mutation-pardons.md` lists them with their mutants and
+records each audit.
 
 ## Blocking versus advisory
 
