@@ -25,7 +25,7 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.redaction import clip
 
-from .support import META_LICENSE, list_items
+from .support import META_LICENSE, list_items, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -407,7 +407,7 @@ def _purl_pattern(ctx: RuleContext) -> None:
                 ctx.add(
                     "OBO011",
                     ontology,
-                    f"Version IRI {version} does not follow {OBO_NS}<id>/releases/YYYY-MM-DD/<id>.owl.",
+                    f"Version IRI {value_text(version)} does not follow {OBO_NS}<id>/releases/YYYY-MM-DD/<id>.owl.",
                     confidence="certain",
                     subject=(OWL.versionIRI, version),
                 )

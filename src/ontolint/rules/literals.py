@@ -18,7 +18,7 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.redaction import clip
 
-from .support import owning_term
+from .support import owning_term, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -149,7 +149,8 @@ def _ill_typed(ctx: RuleContext) -> None:
         if _foreign(ctx, owner):
             continue
         shown = clip(str(o), LEXICAL_FORM_SHOWN, "...")
-        ctx.add("DATA003", owner, f"Value {shown!r} of {p} is typed {datatype}, but {problem}.", subject=(p, o))
+        message = f"Value {shown!r} of {value_text(p)} is typed {datatype}, but {problem}."
+        ctx.add("DATA003", owner, message, subject=(p, o))
 
 
 def _unmapped_datatypes(ctx: RuleContext) -> None:

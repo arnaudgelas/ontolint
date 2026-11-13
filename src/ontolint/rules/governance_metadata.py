@@ -20,7 +20,7 @@ from rdflib.term import Node
 from ontolint.context import KINDS
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import META_CREATOR, describing_nodes
+from .support import META_CREATOR, describing_nodes, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -279,7 +279,7 @@ def _obsolete_usage(ctx: RuleContext) -> None:
         for s, p in g.subject_predicates(term):
             if p in REFERENCE_ANNOTATIONS or s == term or s in obsolete or _is_deprecated(ctx, s):
                 continue
-            ctx.add("GOV013", s, f"Obsolete term {term} appears as object of {p}.", subject=(term, p))
+            ctx.add("GOV013", s, f"Obsolete term {term} appears as object of {value_text(p)}.", subject=(term, p))
         for s, _o in g.subject_objects(term):
             if s not in obsolete and not _is_deprecated(ctx, s):
                 ctx.add("GOV013", s, f"Obsolete property {term} used in assertion.", subject=(term,))

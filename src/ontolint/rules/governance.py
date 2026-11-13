@@ -11,7 +11,7 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
 from .owl import is_deprecated, owned_checker, owning_term
-from .support import OBO, relative_reference
+from .support import OBO, relative_reference, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -118,17 +118,21 @@ def _deprecated_usage(ctx: RuleContext) -> None:
                         ctx.add(
                             "GOV001",
                             focus,
-                            f"Deprecated term {term} appears in a list of {owner_predicate}.",
+                            f"Deprecated term {value_text(term)} appears in a list of {owner_predicate}.",
                             subject=(term, "list", owner_predicate),
                         )
                 continue
             if not _foreign(ctx, focus := owning_term(g, s)):
                 ctx.add(
-                    "GOV001", focus, f"Deprecated term {term} appears as object of {p}.", subject=(term, "object", p)
+                    "GOV001",
+                    focus,
+                    f"Deprecated term {value_text(term)} appears as object of {value_text(p)}.",
+                    subject=(term, "object", p),
                 )
         for s, _o in g.subject_objects(term):
             if not _foreign(ctx, s):
-                ctx.add("GOV001", s, f"Deprecated property {term} used in assertion.", subject=(term, "predicate"))
+                message = f"Deprecated property {value_text(term)} used in assertion."
+                ctx.add("GOV001", s, message, subject=(term, "predicate"))
 
 
 def _foreign(ctx: RuleContext, node: object) -> bool:
@@ -150,7 +154,7 @@ def _imports(ctx: RuleContext) -> None:
         relative: list[str] = []
         for imported in set(ctx.g.objects(ont, OWL.imports)):
             if not isinstance(imported, URIRef):
-                ctx.add("GOV002", ont, f"Non-IRI import target: {imported}.", subject=(imported,))
+                ctx.add("GOV002", ont, f"Non-IRI import target: {value_text(imported)}.", subject=(imported,))
             elif (reference := relative_reference(str(imported), bases)) is not None:
                 relative.append(reference)
         if relative:

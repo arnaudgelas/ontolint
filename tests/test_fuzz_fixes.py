@@ -381,7 +381,7 @@ def test_blank_node_labels_after_the_blank_node_prefix_are_rewritten_too() -> No
     assert "n5c89" not in message
 
 
-def test_a_bare_label_without_a_digit_cannot_rewrite_an_ordinary_word() -> None:
-    """Only labels after the ``_:`` prefix, or bare labels containing a digit, are replaced."""
+def test_a_bare_label_without_a_digit_is_never_left_in_a_message() -> None:
+    """SKOS013 writes its blank value ``_:value``, which is replaced whatever the label; the word "value" stays."""
     message = _skos013_message("value")
-    assert message == "skos:prefLabel value 'value' is not a string literal."
+    assert re.fullmatch(r"skos:prefLabel value '_:[0-9a-f]{12}' is not a string literal\.", message), message

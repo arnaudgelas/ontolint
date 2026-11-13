@@ -13,7 +13,7 @@ from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 from rdflib.term import Identifier, Node
 
 from ontolint.ownership import base_matches
-from ontolint.redaction import redact_userinfo
+from ontolint.redaction import clip, redact_userinfo
 
 OBO = "http://purl.obolibrary.org/obo/"
 PROV = "http://www.w3.org/ns/prov#"
@@ -237,3 +237,13 @@ def value_text(node: Node) -> str:
     nothing else, so a shape rule that put a bare label in its message would depend on the parser's labels.
     """
     return f"_:{node}" if isinstance(node, BNode) else str(node)
+
+
+def quoted_text(node: Node, limit: int) -> str:
+    """``node`` quoted for a message: a blank node as ``'_:label'``, any other value as Python quotes its text.
+
+    The blank node is written whole, so ``RuleContext`` rewrites it to its identity whatever its label: ``repr``
+    would cut a long label, escape a backslash in it or quote one holding ``'`` with ``"``, and the label left in
+    the message would no longer be found.  Any other value is masked and cut to ``limit`` first (:func:`clip`).
+    """
+    return f"'{value_text(node)}'" if isinstance(node, BNode) else repr(clip(str(node), limit))
