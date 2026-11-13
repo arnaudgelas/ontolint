@@ -108,7 +108,7 @@ class Module:
     """The named graphs that state each of the file's triples (empty unless it is a dataset with one)."""
 
 
-# gremlin: pardon[equivalent] nothing mutates a choice; frozen only guards against it
+# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class ImportChoice:
     """An ``owl:imports`` IRI the ``--import-dir`` options hold in several files, so the import took the first."""
@@ -121,7 +121,7 @@ class ImportChoice:
     one the import resolved to.  Only paths: a candidate the closure did not load is read only to compare it."""
 
 
-# gremlin: pardon[equivalent] nothing mutates a shadow; frozen only guards against it
+# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class ImportShadow:
     """An ``owl:imports`` IRI a loaded file already declares, although it resolves to a file that was not loaded."""
@@ -623,7 +623,7 @@ def _decode_document(payload: dict[str, Any]) -> tuple[Graph, GraphIndex]:
     return graph, index
 
 
-# gremlin: pardon[equivalent] nothing mutates a job; frozen only guards against it
+# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class _ParseJob:
     """Everything the worker needs: the bytes (already checked by the parent), the format and the bounds."""

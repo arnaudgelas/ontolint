@@ -334,7 +334,6 @@ def _same_label_as_parent(ctx: RuleContext, h: Hierarchy) -> None:
 def _equivalent_ancestors(ctx: RuleContext, h: Hierarchy) -> None:
     seen: set[frozenset[URIRef]] = set()
     for a, b in sorted(ctx.g.subject_objects(OWL.equivalentClass), key=str):
-        # gremlin: pardon[equivalent] ancestors hold only declared classes, so no extra CLS021
         if not (isinstance(a, URIRef) and isinstance(b, URIRef) and a != b and a in ctx.classes and b in ctx.classes):
             continue
         key = frozenset((a, b))
@@ -349,7 +348,6 @@ def _equivalent_ancestors(ctx: RuleContext, h: Hierarchy) -> None:
 def _multi_typed(ctx: RuleContext) -> dict[URIRef, frozenset[URIRef]]:
     result: dict[URIRef, frozenset[URIRef]] = {}
     for subject, types in ctx.context.types_by_subject.items():
-        # gremlin: pardon[equivalent] ctx.classes holds only URIRefs; the isinstance check only narrows the type
         declared = frozenset(t for t in types if isinstance(t, URIRef) and t in ctx.classes)
         if isinstance(subject, URIRef) and len(declared) > 1 and subject not in ctx.classes:
             result[subject] = declared
