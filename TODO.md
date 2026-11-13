@@ -30,6 +30,20 @@ Nothing open: 0.11.0 is released (see "Recently done").
     crosswalks' sources, answered on 2026-11-09, stay in `data/README.md`: identifiers and short
     smell names only, no copied text; no dependency is copyleft beyond file-level MPL-2.0; the
     ROBOT jar is downloaded at image build with a pinned checksum).
+  - **JACKSON-LAYOUT** (P1; issue #7): source regions are confirmed on JSON-LD that a Java tool
+    wrote. `tests/fixtures/java_jsonld/` holds `pets.ttl` and its two exports by Apache Jena 4.10.0's
+    `riot` (Java 11): `--formatted=JSONLD10` (jsonld-java 0.13.4, printed by Jackson 2.15.3's
+    `DefaultPrettyPrinter`: `"@id" : "…"`, `[ {`, `}, {`, `@context` last) and `--formatted=JSONLD`
+    (the 1.1 writer: `"@id": "…"`, compact IRIs such as `xsd:nonNegativeInteger`). The fixture's
+    README gives the distribution's SHA-512 and the commands. No code changed: the locator already
+    skips whitespace before `:` (the synthetic `space-before-colon` regression case). New tests: each
+    fixture keeps its writer's layout; every IRI subject is located at an `@id` string that names
+    it; every finding has the same rule and message as the Turtle source and a region at its focus.
+    - Verified: with whitespace before `:` no longer skipped, the two tests on the Jackson file fail
+      (the 1.1 file still passes, as it should); the 14 findings of each export equal the Turtle
+      source's.
+    - Left open: none. A rerun of the 1.0 writer may order the `@context` members differently (a
+      Java hash map); the tests do not depend on that order.
 - Unreleased (after 0.12.0):
   - **PREDICATE-CLOSURE** (P1 audit, issue 15; the LEX002-CLOSURE follow-ups): one cached
     `PropertyClosure` (`rules/runtime.py`) indexes the graph's `rdfs:subPropertyOf` and
@@ -592,10 +606,10 @@ Validation corpus (public; licences per repository):
   next, TriG a term or `}`). *Done when:* the reproduction lints, and the strict `xfail` in
   `tests/test_metamorphic_serialization.py` is removed because it now passes.
 
-- [ ] **Source regions: confirm one real-world JSON-LD layout.** Unverified: that Java's Jackson
-  pretty-printer writes `"key" : value`. Confirm it with a Jena or jsonld-java export and keep that
-  file as a fixture. Needs a Java JSON-LD tool, which the
-  development machine does not have.
+- [x] **Source regions: confirm one real-world JSON-LD layout.** Confirmed (issue #7, see "Recently
+  done", JACKSON-LAYOUT): Jena 4.10.0's JSON-LD 1.0 writer (jsonld-java, printed by Jackson) writes
+  `"key" : value`, and every finding of that export has a region at its focus. Both Jena exports
+  are fixtures in `tests/fixtures/java_jsonld/`.
 
 - [ ] **Calibrate metric thresholds before treating them as universal policy.** Existing `METRIC*`
   ratio defaults are first estimates, even where configuration already exists. Assemble a small,
