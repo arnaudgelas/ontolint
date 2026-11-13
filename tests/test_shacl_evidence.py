@@ -1,4 +1,4 @@
-"""SHACL001 keeps every field of the SHACL validation result as its ``evidence`` (JSON and SARIF only).
+"""SHACL001 keeps every SHACL result property pySHACL writes as its ``evidence`` (JSON and SARIF only).
 
 The message, focus, severity and fingerprint stay as they were; the evidence is what tells two violations of
 one shape on one node apart, and what a fix has to change.
@@ -404,11 +404,45 @@ def test_each_evidence_key_is_the_local_name_of_its_shacl_property() -> None:
     assert all(p == SH[_local(p)] for p in EVIDENCE_FIELDS)
 
 
+# SHACL-AF result annotations (SHACL Advanced Features, section 4 "Annotation Properties"): sh:resultAnnotation on
+# a SPARQL-based constraint component's validators and on an sh:sparql constraint, the spec's own form. pySHACL
+# 0.40.2 does not implement them, so its results hold no annotation property and these DONE_WHEN cases pass. They
+# are canaries: the day a pySHACL upgrade writes ex:excess, ex:note or ex:x2 on a result, the predicates <=
+# EVIDENCE_FIELDS assertion fails. Then map the annotations in adapters.shacl._FIELDS (or decide to drop them),
+# update the evidence key list in README "Optional SHACL validation" and rules/external.py, and update
+# test_each_evidence_key_is_the_local_name_of_its_shacl_property. A node validator does not select ?value:
+# pySHACL pre-binds it to the focus node.
+ANNOTATED_COMPONENT = (
+    "ex:MaxStart a sh:ConstraintComponent ; sh:parameter [ sh:path ex:maxStart ] ;\n"
+    '  sh:nodeValidator [ a sh:SPARQLSelectValidator ; sh:message "Start too big {?excess}" ;\n'
+    '    sh:select "SELECT $this ?excess WHERE { $this <https://example.test/start> ?s . '
+    'FILTER(?s > $maxStart) BIND(?s - $maxStart AS ?excess) }" ;\n'
+    "    sh:resultAnnotation [ a sh:ResultAnnotation ; sh:annotationProperty ex:excess ; "
+    'sh:annotationVarName "excess" ] ,\n'
+    '      [ a sh:ResultAnnotation ; sh:annotationProperty ex:note ; sh:annotationValue "fixed" ] ] ;\n'
+    '  sh:propertyValidator [ a sh:SPARQLSelectValidator ; sh:message "Value too big {?excess}" ;\n'
+    '    sh:select "SELECT $this ?value ?excess WHERE { $this $PATH ?value . '
+    'FILTER(?value > $maxStart) BIND(?value - $maxStart AS ?excess) }" ;\n'
+    "    sh:resultAnnotation [ a sh:ResultAnnotation ; sh:annotationProperty ex:excess ; "
+    'sh:annotationVarName "excess" ] ] .\n'
+)
+ANNOTATED_NODE_VALIDATOR = f"{ANNOTATED_COMPONENT}{ON_T} ex:maxStart 3 ."
+ANNOTATED_PROPERTY_VALIDATOR = f"{ANNOTATED_COMPONENT}{ON_T} sh:property [ sh:path ex:start ; ex:maxStart 4 ] ."
+ANNOTATED_SPARQL = (
+    f'{ON_T} sh:sparql [ a sh:SPARQLConstraint ; sh:message "Start {{?x}}" ;\n'
+    '  sh:select "SELECT $this ?x WHERE { $this <https://example.test/start> ?x }" ;\n'
+    '  sh:resultAnnotation [ a sh:ResultAnnotation ; sh:annotationProperty ex:x2 ; sh:annotationVarName "x" ] ] .'
+)
+START = "ex:a a ex:T ; ex:start 5 ."
+
 DONE_WHEN = {
     **{name: (data, shapes) for name, (data, shapes, _expected) in FAMILIES.items()},
     "node": ("ex:a a ex:T ; ex:knows ex:b .", NODE_SHAPES),
     "path": ("ex:a a ex:T .", f"{ON_T} sh:property [ sh:path [ sh:inversePath ex:p ] ; sh:minCount 1 ] ."),
     "blank value": ("ex:a a ex:T ; ex:knows [ ex:x 1 ] .", f"{PROPERTY}knows ; sh:nodeKind sh:IRI ."),
+    "annotated node validator": (START, ANNOTATED_NODE_VALIDATOR),
+    "annotated property validator": (START, ANNOTATED_PROPERTY_VALIDATOR),
+    "annotated SPARQL constraint": (START, ANNOTATED_SPARQL),
 }
 
 
@@ -430,6 +464,20 @@ def test_every_result_property_in_the_report_reaches_the_report(
     reported = Counter(frozenset(e) for e in _reported_evidence(_cli(tmp_path, capsys, data, shapes, fmt), fmt))
     assert raw
     assert reported == raw
+
+
+def test_a_result_of_an_annotated_validator_keeps_its_component_and_raw_message() -> None:
+    """No annotation reaches the result (pySHACL 0.40.2), and the message is the validator's, unsubstituted."""
+    (finding,) = _findings(START, ANNOTATED_NODE_VALIDATOR)
+    assert finding.message == "Start too big {?excess} [shape: https://example.test/S]"
+    assert finding.evidence == {
+        "focusNode": A,
+        "value": A,
+        "sourceShape": f"{EX}S",
+        "sourceConstraintComponent": f"{EX}MaxStart",
+        "resultMessage": ("Start too big {?excess}",),
+        "resultSeverity": VIOLATION,
+    }
 
 
 # --- deterministic order and naming -------------------------------------------------------------------

@@ -318,7 +318,7 @@ case a `Rule execution:` block is appended.
   finding whose message abbreviates a tool's output also carries the full output in `details`
   (`SEM001`: ROBOT's profile report, whose violations the message groups by kind). A finding
   whose backend returns a structured result carries it as an `evidence` object after `details`
-  (`SHACL001`: every field of the SHACL validation result, see "Optional SHACL validation"); it is
+  (`SHACL001`: every SHACL result property listed in "Optional SHACL validation"); it is
   not part of the finding's identity, so fingerprints and baselines ignore it. In a dataset with
   named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
@@ -616,13 +616,17 @@ reported as `error` and named in the message. Blank-node shapes and focus nodes
 are named by a content-stable identity, in the focus and in a finding's baseline identity alike,
 so baselines keep matching across runs.
 
-In JSON and SARIF (not in text), each `SHACL001` finding also carries the whole result as
-`evidence` (`properties.evidence` in SARIF), so two violations of one shape on one node, which
+In JSON and SARIF (not in text), each `SHACL001` finding also carries every SHACL result property
+listed below as `evidence` (`properties.evidence` in SARIF), so two violations of one shape on one node, which
 share their message, still say which value or path to fix. Its keys are the SHACL names of the
 result's properties, in this order, each present only when the report has it: `focusNode`,
 `resultPath`, `value`, `sourceShape`, `sourceConstraintComponent`, `sourceConstraint` (SPARQL-based
 constraints), `detail`, `resultMessage` (every message, sorted, without language tags) and
-`resultSeverity` (the original IRI, also for a custom severity). An IRI is written as is, a blank
+`resultSeverity` (the original IRI, also for a custom severity). SHACL-AF result annotations
+(`sh:resultAnnotation` on a SPARQL-based constraint or constraint component; SHACL Advanced
+Features, section 4 "Annotation Properties") are not implemented by pySHACL 0.40.2, so they appear
+neither in its report nor in the evidence; a canary test fails when a pySHACL upgrade starts
+writing them. An IRI is written as is, a blank
 node by the same content-stable `_:` identity as a focus, and a literal as one N-Triples term
 on one line (`"x"`, `"5"^^<http://www.w3.org/2001/XMLSchema#integer>`, `"chat"@fr`, with `\"`,
 `\\`, `\n` and `\r` escaped), so a literal focus is `"x"` in the evidence but `x` in `focus`.

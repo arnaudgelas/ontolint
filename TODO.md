@@ -697,9 +697,11 @@ Validation corpus (public; licences per repository):
     codes; keep or drop is the maintainer's decision, and the evidence now makes the duplicate
     visible.
   - *Evidence in text output* (a `Value:` line, say): the text format is a protected contract.
-  - *SHACL-AF `sh:resultAnnotation`* (with `advanced=True`): such a property would not reach the
-    evidence. `tests/test_shacl_evidence.py` fails if pySHACL writes an unmapped property on its
-    fixtures, but a shape that declares annotations is not among them.
+  - *SHACL-AF `sh:resultAnnotation`*: decided (issue #9), documented, with canary fixtures.
+    pySHACL 0.40.2 does not implement it, so no annotation reaches its report or the evidence;
+    three `DONE_WHEN` cases of `tests/test_shacl_evidence.py` (a node validator, a property
+    validator and an `sh:sparql` constraint, each declaring annotations) fail the day a pySHACL
+    upgrade writes one, and the `_FIELDS` docstring says what to do then.
   *Done when:* each of the three is decided, and a decided change has its fixture.
 
 - [ ] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
