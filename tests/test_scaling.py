@@ -5,8 +5,9 @@ for every term, and CLS017 recomputed a set difference over all classes for ever
 40,000-class file took 30 s.  A draft of SHQ011's rewriting of a pattern for Python searched the rest
 of the text for the ``}`` of every ``\\p{``, so a megabyte of unclosed ``\\p{`` took seconds.  Each
 test times only its step (no parsing, which is linear and would hide the quadratic term) at two sizes
-and compares them, so it holds on slow runners: quadrupling the input must cost well under the
-sixteen-fold time of a quadratic step.
+and compares them, so it holds on slow runners: multiplying the input by eight must cost well under
+the sixty-four-fold time of a quadratic step.  The time is CPU time, alternated between the sizes, as a
+run beside other workers is slowed by them as a whole and the larger input more.
 """
 
 from __future__ import annotations
@@ -34,18 +35,24 @@ from ontolint.source_locations import build_source_index
 
 pytestmark = pytest.mark.slow
 
-SMALL = 5_000
-LARGE = 4 * SMALL
-MAX_RATIO = 8.0  # linear growth gives about 4; a quadratic step gives about 16
+GROWTH = 8  # a wide step keeps linear and quadratic times apart when a busy machine inflates both
+SMALL = 10_000
+LARGE = GROWTH * SMALL
+MAX_RATIO = GROWTH**2 / 2  # a quadratic step gives at least 64; a linear one 8, up to 24 as its dicts outgrow the cache
 
 
-def _best_of(step: Callable[[], object]) -> float:
-    best = float("inf")
+Step = Callable[[], object]
+
+
+def _best_times(small: Step, large: Step) -> tuple[float, float]:
+    """The fastest of several runs of each step, alternating them so both see the same load on a busy machine."""
+    best = [float("inf"), float("inf")]
     for _attempt in range(5):  # the fastest run discards scheduling noise from a loaded machine
-        started = time.perf_counter()
-        step()
-        best = min(best, time.perf_counter() - started)
-    return best
+        for side, step in enumerate((small, large)):
+            started = time.process_time()
+            step()
+            best[side] = min(best[side], time.process_time() - started)
+    return best[0], best[1]
 
 
 def _classes(count: int) -> tuple[str, Graph]:
@@ -56,15 +63,15 @@ def _classes(count: int) -> tuple[str, Graph]:
     return text, graph
 
 
-def _locate(count: int) -> float:
+def _locate(count: int) -> Step:
     text, graph = _classes(count)
     data = text.encode()
-    return _best_of(lambda: build_source_index(data, "nt", "file:///a.nt", graph).locations)
+    return lambda: build_source_index(data, "nt", "file:///a.nt", graph).locations
 
 
-def _cls017(count: int) -> float:
+def _cls017(count: int) -> Step:
     _text, graph = _classes(count)
-    return _best_of(lambda: Linter(graph).execute(["CLS017"]))
+    return lambda: Linter(graph).execute(["CLS017"])
 
 
 def _dataset(count: int) -> tuple[Memory, BNode]:
@@ -79,19 +86,19 @@ def _dataset(count: int) -> tuple[Memory, BNode]:
     return store, default
 
 
-def _graph_index(count: int) -> float:
+def _graph_index(count: int) -> Step:
     store, default = _dataset(count)
-    return _best_of(lambda: build_graph_index(store, default, "file:///w/"))
+    return lambda: build_graph_index(store, default, "file:///w/")
 
 
-def _finding_graphs(count: int) -> float:
+def _finding_graphs(count: int) -> Step:
     store, default = _dataset(count)
     index = build_graph_index(store, default, "file:///w/")
     findings = [Finding("LEX002", "info", f"https://example.test/C{i}", "m", "s") for i in range(count)]
-    return _best_of(lambda: finding_graphs(Graph(), index, findings))
+    return lambda: finding_graphs(Graph(), index, findings)
 
 
-def _closure(count: int) -> float:
+def _closure(count: int) -> Step:
     """A chain of ``count`` properties below skos:definition, alternating sub-property and equivalence links,
     each with a cycle back to the chain's head, and a star of ``count`` sub-properties of rdfs:label."""
     graph = Graph()
@@ -108,10 +115,10 @@ def _closure(count: int) -> float:
         assert len(closure.below(DESCRIPTIONS)) == len(DESCRIPTIONS) + count
         closure.below(LABELS)
 
-    return _best_of(step)
+    return step
 
 
-def _shared_headers(count: int) -> float:
+def _shared_headers(count: int) -> Step:
     """ONT007 over a dataset of ``count / 5`` named graphs that each repeat one ontology header (the first draft
     of ONT007 built each graph by scanning every triple of the file, so the step grew with the square of the
     graphs)."""
@@ -124,10 +131,10 @@ def _shared_headers(count: int) -> float:
     (item,) = resolve_inputs(["d.trig"], Path.cwd())
     source_index = build_source_index(b"", "nt", "file:///w/d.trig", Graph())
     loaded = LoadedGraph(Graph(store=store, identifier=default), source_index, graphs=index)
-    return _best_of(lambda: shared_identities([item], [loaded], Policy()))
+    return lambda: shared_identities([item], [loaded], Policy())
 
 
-def _distinct_shared_headers(count: int) -> float:
+def _distinct_shared_headers(count: int) -> Step:
     """ONT007 over a dataset of ``count / 5`` pairs of named graphs, each pair repeating its own ontology header
     (the first draft of ONT007 checked each finding against the findings of every other IRI, so the step grew
     with the square of the shared IRIs)."""
@@ -141,7 +148,7 @@ def _distinct_shared_headers(count: int) -> float:
     (item,) = resolve_inputs(["d.trig"], Path.cwd())
     source_index = build_source_index(b"", "nt", "file:///w/d.trig", Graph())
     loaded = LoadedGraph(Graph(store=store, identifier=default), source_index, graphs=index)
-    return _best_of(lambda: shared_identities([item], [loaded], Policy()))
+    return lambda: shared_identities([item], [loaded], Policy())
 
 
 @pytest.mark.parametrize(
@@ -157,21 +164,21 @@ def _distinct_shared_headers(count: int) -> float:
         "distinct-shared-headers",
     ],
 )
-def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], float]) -> None:
-    small, large = step(SMALL), step(LARGE)
+def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], Step]) -> None:
+    small, large = _best_times(step(SMALL), step(LARGE))
     assert large / small < MAX_RATIO, f"{SMALL} classes: {small:.3f} s, {LARGE} classes: {large:.3f} s"
 
 
-PATTERN_SMALL = 60_000  # characters of sh:pattern
-PATTERN_LARGE = 4 * PATTERN_SMALL
+PATTERN_SMALL = 120_000  # characters of sh:pattern
+PATTERN_LARGE = GROWTH * PATTERN_SMALL
 
 
 @pytest.mark.parametrize("unit", ["\\p{", "\\p{a", "[\\p{", "[a-[\\p{"], ids=["escape", "name", "class", "subtraction"])
 def test_the_sh_pattern_judgement_grows_linearly_with_the_pattern(unit: str) -> None:
     # No \\p{ has its }: searching the rest of the text for it, from each one, is quadratic.
-    def judge(size: int) -> float:
+    def judge(size: int) -> Step:
         text = unit * (size // len(unit))
-        return _best_of(lambda: pattern_problem(text, ""))
+        return lambda: pattern_problem(text, "")
 
-    small, large = judge(PATTERN_SMALL), judge(PATTERN_LARGE)
+    small, large = _best_times(judge(PATTERN_SMALL), judge(PATTERN_LARGE))
     assert large / small < MAX_RATIO, f"{PATTERN_SMALL} chars: {small:.3f} s, {PATTERN_LARGE} chars: {large:.3f} s"
