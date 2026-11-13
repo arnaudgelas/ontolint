@@ -82,7 +82,7 @@ BROKEN_TTL = (
 )
 BROKEN_NT = f"<https://alice:{PASSWORD}@example.test/a> <http://x.test/p> <bad\n"
 REMOTE_CONTEXT = f'{{"@context": "https://alice:{PASSWORD}@example.test/ctx.jsonld", "@id": "https://x.test/y"}}\n'
-FORMATS = ("text", "json", "sarif")
+FORMATS = ("text", "json", "sarif", "markdown")
 
 
 @pytest.fixture
@@ -140,7 +140,10 @@ def test_no_dataset_report_repeats_a_userinfo(run: Any, output_format: str, name
     code, out = run(name, "--format", output_format, "--module-by", "namespace")
     assert code == 1, out
     assert _leaks(out) == []
-    assert "https://****@example.test/graph1" in out
+    # The Markdown summary names no graph; the masked IRIs of the graph's terms show its findings are there.
+    assert (
+        "` https://****@example.test/onto " if output_format == "markdown" else "https://****@example.test/graph1"
+    ) in out
 
 
 @pytest.mark.parametrize("output_format", FORMATS)

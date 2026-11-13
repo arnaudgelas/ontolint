@@ -22,6 +22,7 @@ import pytest
 from fuzz import fuzzer
 
 from ontolint import cli
+from ontolint.reporting import MARKDOWN_MAX_BYTES, RunReport, render_markdown
 
 pytestmark = pytest.mark.slow
 
@@ -132,6 +133,46 @@ def test_generated_cli_options_are_accepted_by_the_real_parser(runner: fuzzer.Ru
         seen.update(a for a in argv if a.startswith("--"))
     assert {"--select", "--ignore", "--profile", "--format", "--fail-on", "--base", "--language", "--shapes"} <= seen
     assert {"--depth-limit", "--max-triples", "--max-input-bytes", "--baseline", "--output"} <= seen
+
+
+# The argv each saved CLI case replays, as 0.13 built it from its optseed (``WORK`` is the work directory): a
+# change to the option builders that moved a draw would replay a saved crasher with other options, and so would
+# no longer test what it was saved for.
+SAVED_CLI_ARGV = {
+    1954055657: [
+        "--profile", "obo", "--base", "x" * 500, "--inheritance-limit", "9223372036854775808",
+        "--output", "WORK/report.out", "WORK/input.ttl",
+    ],
+    2044887847: [
+        "--profile", "ci", "--language", "FR", "--soup-limit", "-1", "--max-triples", "1",
+        "--shapes", "WORK/input.ttl", "WORK/input.ttl",
+    ],
+    71506165: [
+        "--ignore", "LEX011", "--format", "sarif", "--fail-on", "warning", "--inheritance-limit", "2",
+        "--shapes", "WORK/shapes.ttl", "--baseline", "WORK/baseline.json", "WORK/input.ttl",
+    ],
+    602926872: [
+        "--format", "text", "--fail-on", "never", "--base", "", "--depth-limit", "1000000000000000000000000000000",
+        "--shapes", "WORK/input.ttl", "WORK/input.ttl",
+    ],
+    7: [
+        "--select", "CLS014,DATA002,GOV004", "--ignore", "OBO", "--profile", "ci", "--format", "text",
+        "--fail-on", "never", "--base", "http://example.org/", "--inheritance-limit",
+        "1000000000000000000000000000000", "--max-triples", "5", "--shapes", "WORK/input.ttl",
+        "--config", "WORK/config.json", "WORK/input.ttl",
+    ],
+}  # fmt: skip
+
+
+def test_saved_cli_cases_keep_their_argv(runner: fuzzer.Runner) -> None:
+    cases = [fuzzer.parse_case_path(path) for path in (*_files(fuzzer.REGRESSIONS_DIR), *_files(fuzzer.KNOWN_BUGS_DIR))]
+    # Every saved CLI case is pinned, and so is the optseed test_every_seed_passes_every_target runs.
+    assert {case.opt for case in cases if case.target == "cli"} | {"7"} <= {str(optseed) for optseed in SAVED_CLI_ARGV}
+    mutant = runner.work.write("input.ttl", b"")
+    work = f"{runner.work.root}{os.sep}"
+    for optseed, expected in SAVED_CLI_ARGV.items():
+        argv = fuzzer.build_cli_argv(optseed, runner.work, mutant)
+        assert argv == [arg.replace("WORK/", work) for arg in expected], optseed
 
 
 def test_smoke_run_is_deterministic(corpus: fuzzer.Corpus) -> None:
@@ -335,10 +376,10 @@ def test_cli_contract_violations_are_detected(runner: fuzzer.Runner, monkeypatch
 def test_cli_output_formats_are_validated(runner: fuzzer.Runner, monkeypatch: pytest.MonkeyPatch) -> None:
     work = runner.work
 
-    def run_with(output: str) -> str | None:
+    def run_with(output: str, fmt: str = "sarif") -> str | None:
         monkeypatch.setattr(cli, "main", lambda argv=None: (print(output), 0)[1])
         try:
-            fuzzer.check_cli(["--format", "sarif", "x.ttl"], work)
+            fuzzer.check_cli(["--format", fmt, "x.ttl"], work)
         except fuzzer.InvariantViolation as exc:
             return exc.kind
         return None
@@ -346,6 +387,13 @@ def test_cli_output_formats_are_validated(runner: fuzzer.Runner, monkeypatch: py
     assert run_with("not json") == "cli:invalid-sarif"
     assert run_with('{"version": "2.1.0"}') == "cli:invalid-sarif"
     assert run_with('{"version": "2.1.0", "runs": []}') is None
+    summary = render_markdown(RunReport(()), 0)
+    assert run_with(summary, "markdown") is None
+    assert run_with("not a summary", "markdown") == "cli:invalid-markdown"
+    assert run_with(summary + "x" * MARKDOWN_MAX_BYTES, "markdown") == "cli:invalid-markdown"
+    assert run_with(f"{summary}\n\nhttps://alice:Zq7@example.test/x", "markdown") == "cli:invalid-markdown"
+    assert run_with("not json", "markdown") == "cli:invalid-markdown"  # a summary is not parsed as JSON
+    assert run_with(summary, "text") is None
 
 
 def test_config_target_accepts_only_value_errors(runner: fuzzer.Runner) -> None:

@@ -1,8 +1,9 @@
-"""Metamorphic relation: the three report formats are views of one result, so they must describe the same findings.
+"""Metamorphic relation: the report formats are views of one result, so they must describe the same findings.
 
-One input is linted three times, with ``--format json``, ``--format sarif`` and the default text format.  The JSON
+One input is linted with ``--format json``, ``--format sarif`` and the default text format.  The JSON
 ``findings`` are the reference; the SARIF ``results`` must hold the same rule, the SARIF level of the same severity
 and the same focus and message, and the text output the same count and the same severity, rule and focus per line.
+The Markdown summary, which lists only the first findings, must count the same findings per severity.
 """
 
 from __future__ import annotations
@@ -18,12 +19,14 @@ from hypothesis_strategies import budget, roundtrip_triple_lists
 from hypothesis_strategies import build_graph as build
 from metamorphic_support import cli, serialisable, workdir
 
-from ontolint.reporting import SARIF_LEVELS
+from ontolint.reporting import MARKDOWN_SHOWN, SARIF_LEVELS, SEVERITY_ORDER
 
 pytestmark = pytest.mark.slow
 
 FINDING_LINE = re.compile(r"^\[(ERROR|WARNING|INFO) *\] (\S+) (\S+): ", re.MULTILINE)
 COUNT_LINE = re.compile(r"^Ontology linter: (\d+) finding\(s\)$", re.MULTILINE)
+COUNT_ROW = re.compile(r"^\| (error|warning|info|total) \| (\d+) \|$", re.MULTILINE)
+SUMMARY_LINE = re.compile(r"^- \*\*(error|warning|info)\*\* ` (\w+) ` ", re.MULTILINE)
 
 
 @budget(0.5)
@@ -61,3 +64,25 @@ def test_json_sarif_and_text_reports_describe_the_same_findings(triples: list) -
     assert document["summary"] == dict(counts)
     assert [int(n) for n in COUNT_LINE.findall(text)] == [len(findings)]
     assert len(results) == len(findings)
+
+
+@budget(0.3)
+@given(roundtrip_triple_lists())
+def test_the_markdown_summary_counts_the_findings_of_the_json_report(triples: list) -> None:
+    """RELATION (summary consistency): the summary counts the JSON findings per severity, lists the first
+    MARKDOWN_SHOWN of them with their rules, most severe first and otherwise in report order, and exits alike."""
+    graph = build(serialisable(triples))
+    assume(len(graph))
+
+    with workdir() as root:
+        (root / "g.ttl").write_text(graph.serialize(format="turtle"), encoding="utf-8")
+        code, json_text = cli("g.ttl", fmt="json")
+        markdown_code, markdown = cli("g.ttl", fmt="markdown")
+
+    findings: list[dict[str, Any]] = json.loads(json_text)["findings"]
+    counts = Counter(f["severity"] for f in findings)
+    assert markdown_code == code
+    expected = {**{s: counts[s] for s in SEVERITY_ORDER}, "total": len(findings)}
+    assert {s: int(n) for s, n in COUNT_ROW.findall(markdown)} == expected
+    ranked = sorted(findings, key=lambda f: SEVERITY_ORDER.index(f["severity"]))
+    assert SUMMARY_LINE.findall(markdown) == [(f["severity"], f["rule"]) for f in ranked[:MARKDOWN_SHOWN]]

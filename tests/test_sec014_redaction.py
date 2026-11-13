@@ -56,7 +56,7 @@ def run(tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.
 
 
 @pytest.mark.parametrize("name", sorted(INPUTS))
-@pytest.mark.parametrize("output_format", ["text", "json", "sarif"])
+@pytest.mark.parametrize("output_format", ["text", "json", "sarif", "markdown"])
 def test_no_report_format_repeats_the_password(tmp_path: Path, run: Any, name: str, output_format: str) -> None:
     (tmp_path / name).write_text(INPUTS[name], encoding="utf-8")
     code, out, err = run(name, "--select", "SEC014", "--format", output_format)

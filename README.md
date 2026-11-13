@@ -57,6 +57,7 @@ file and any imports you point it at.
   - [Modules inside one file](#modules-inside-one-file)
   - [Datasets: named graphs](#datasets-named-graphs)
   - [Pattern libraries](#pattern-libraries)
+  - [Pull-request summary (Markdown)](#pull-request-summary-markdown)
   - [GitHub annotations](#github-annotations)
   - [Optional SHACL validation](#optional-shacl-validation)
   - [OWL profile validation with ROBOT in Docker](#owl-profile-validation-with-robot-in-docker)
@@ -199,7 +200,8 @@ ontolint ontology.ttl \
 ontolint ontology.ttl --fail-on warning
 ```
 
-Supported report formats are `text`, `json`, and `sarif`.
+Supported report formats are `text`, `json`, `sarif` and `markdown`, a summary for a pull request
+(see [Pull-request summary (Markdown)](#pull-request-summary-markdown)).
 
 | Exit code | Meaning |
 | --- | --- |
@@ -541,10 +543,42 @@ the safe loader, inside the import root (`SEC009`), at most `max_imported_files`
 that does not parse is skipped with a `TOOL008` warning, and the rules then say what they report
 missing may be in one of the skipped files. Without the option the `LIB` rules are `skipped`.
 
+### Pull-request summary (Markdown)
+
+`--format markdown` writes a summary of the run for the people who review a pull request, for
+example as the summary of a GitHub Actions step:
+
+```yaml
+- run: ontolint ontology.ttl --baseline baseline.json --format markdown >> "$GITHUB_STEP_SUMMARY"
+```
+
+It shows the verdict and the exit status, the findings per severity (new and baselined ones when
+`--baseline` is given), the rule execution counts, the rule runs that delivered no verdict and so
+cause exit `2`, the first 50 findings, most severe first, and the stale-baseline note. It names a
+finding's file when the run has several or the finding is about an imported module. It carries no
+suggestions, modules, named graphs or source regions: the SARIF report lists every finding with
+them, and needs a second run (`--format sarif`). The exit code is the one every format gives, so the
+step above fails on findings or a tool failure after it has written the summary. `--list-rules` and
+`--explain` print their text form.
+
+Every text the report supplies (rule ids, foci, messages, paths, the detail of a rule run) is shown
+as it is, inside a code span, so a label such as `[x](https://evil.test)`, `<img src=x>` or `@team`
+cannot become a link, an image, HTML or a mention, and none is placed in a table. Line breaks,
+control, bidi-control, zero-width and tag characters, variation selectors, the other characters
+Unicode calls default-ignorable (unassigned ones included) and lone surrogates are shown as
+escapes (`\n`, `\u202e`, `\U000e0001`, `\ufe0f`), and every IRI userinfo is masked,
+as in every output. A rule id is cut at 40 characters, a focus and a path at 200, a message and a
+detail at 300, and at most 20 rule runs without a verdict are listed (stderr has every one), so a
+summary never exceeds 512 KiB, half of GitHub's limit of 1 MiB per step. It is byte-identical
+across runs for one Python version (a later Unicode database may show more characters as escapes).
+The layout is for people and may change in a minor release; parse JSON or SARIF instead.
+
 ### GitHub annotations
 
 `--format github` is not available yet. The escaping helpers (`%`, CR, LF and, for properties,
-`:` and `,`) already exist in `ontolint.github`; a formatter has not yet been added.
+`:` and `,`) already exist in `ontolint.github`; a formatter has not yet been added. Upload SARIF
+for annotations on the changed lines, and write the [Markdown summary](#pull-request-summary-markdown)
+to `$GITHUB_STEP_SUMMARY` for an overview of the run.
 
 ### Optional SHACL validation
 
