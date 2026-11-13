@@ -639,7 +639,9 @@ Validation corpus (public; licences per repository):
   labels), so no default changed. Left to the maintainer: approve or correct the labels
   (`label_status`), decide the three left open, and the severity, confidence and CLS001 questions
   (#63); known-poor files are still missing for METRIC004-013 (recall unmeasured); nothing reruns
-  the snapshot (a release-time run belongs to #31).
+  the snapshot (a release-time run belongs to #31). No METRIC threshold, severity or confidence
+  changes on this snapshot alone: first approved or independently redone labels, then a release-time
+  rerun.
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
 

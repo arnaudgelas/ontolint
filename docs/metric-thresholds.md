@@ -86,7 +86,8 @@ Tractus-X was 34 of 236 references before and 6 after.
   each). Every false positive of the other rules (12 in all) rests on a checked label and comes from
   a modelling choice the rule does not see. For five of those rules only a limit that switches the
   rule off would remove them; for METRIC005 a limit above 0.45 would, but its cause is the CLS001 gap
-  below. No default has changed.
+  below. No default has changed, and none should change on this corpus alone: that needs approved
+  or independently redone labels (issue #8) and measurements rerun at release (issue #31).
 - The corpus has no known-poor file for METRIC004 to METRIC013, so their recall is not measured.
 - The corpus is a snapshot of 0.13.1: nothing reruns `scripts/metric_corpus.py check`, so a later
   change can leave it stale (a release-time run belongs to issue #31).
