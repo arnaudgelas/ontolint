@@ -458,7 +458,11 @@ instance data validated alone reports false violations (and can silently pass wh
 is reached through a subclass). With `--follow-imports`, a shapes file that `owl:imports` the
 ontology supplies it: SHACL validates the data merged with that closure (inference off), reports
 only results about nodes the linted file mentions (as a subject or an object, so a
-`sh:targetObjectsOf` focus counts), and the term rules still judge the data file alone. An imported
+`sh:targetObjectsOf` focus counts), and the term rules still judge the data file alone. A result
+also counts when one of the results nested in its `detail` is about such a node: SHACL reports an
+`sh:node` violation on the referencing node, which may be the ontology's, with the linted node as
+its cause. Such a finding is focused on the ontology's node, at its shape's severity, with no source
+region in the linted file. A cause nested deeper than 8 levels is not looked at. An imported
 file that declares shapes is a shape library: its shapes are validated with too (a `TOOL009` note
 names it), and its other triples, if any, join the ontology background.
 
@@ -609,7 +613,8 @@ validators are merged; a validator of another standard is passed over with a `TO
 profile that names no SHACL validator, or one with no local copy, fails the run (`TOOL001`, exit
 `2`). `--shapes` and `--shapes-from-profile` are alternatives.
 
-Each SHACL result becomes a `SHACL001` finding at the result's own severity:
+Each result the SHACL report lists (`sh:result`) becomes a `SHACL001` finding at its own severity,
+which for an `sh:node` violation is the referencing shape's:
 `sh:Violation` is `error`, `sh:Warning` is `warning` and `sh:Info` is `info`, so
 warnings-only data passes the default `--fail-on error`. A custom severity is
 reported as `error` and named in the message. Blank-node shapes and focus nodes
@@ -633,8 +638,11 @@ on one line (`"x"`, `"5"^^<http://www.w3.org/2001/XMLSchema#integer>`, `"chat"@f
 A path other than a single predicate is written in SPARQL property-path syntax (`^<p>`,
 `<a>/<b>`, `<a>|<b>*`); a malformed, cyclic, or over-deep or over-large one is
 `(malformed path)`. `detail` lists the nested results of a `sh:node` (or
-similar) violation as evidence objects, sorted, at most 8 levels deep. pySHACL types those nested
-results as validation results too, so each is also a finding of its own, as before. The evidence
+similar) violation as evidence objects, sorted, at most 8 levels deep. A nested result explains
+its parent (SHACL 3.5): it is part of the parent's evidence, not a finding of its own, although
+pySHACL types it as a validation result too. Only a report that lists no result through
+`sh:result` (never pySHACL's) has each typed result as a finding. A result nested deeper than 8
+levels appears in no output; its top-level result still does, and still fails the run. The evidence
 copies each value in full, so a report with many results on long literals grows accordingly.
 Findings with the same message are ordered by their evidence, so the output no longer depends on
 pySHACL's hash-seed-dependent result order. The message, focus, severity and fingerprint are

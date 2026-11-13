@@ -88,6 +88,11 @@ Deliberate golden update (issue #9): two text SHACL001 cases added, ``text_clean
 ``text_node_shacl_violation`` (``shacl_node.ttl``, an ``sh:node`` violation with two nested causes), pinned at
 main's behaviour (SHACL001 code as in 0.13.1; 3 findings for the ``sh:node`` run); no existing hash moved, and
 ``legacy_rules.json`` is unchanged (neither case has ``--format``, so neither has a legacy view).
+
+Deliberate golden update (issue #9, nested SHACL results dropped): SHACL001 reports only the results the SHACL
+report lists (``sh:result``), not their ``sh:detail`` causes, so ``text_node_shacl_violation`` reports 1 finding
+where it reported 3 (the two nested results are gone; the parent's lines are unchanged).  It is the only case that
+changed: no other fixture of the snapshot has an ``sh:node`` violation, and a JSON-tree diff shows nothing else.
 """
 
 from __future__ import annotations

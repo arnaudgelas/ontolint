@@ -11,12 +11,14 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
 
 * **SHACL001.** Only with ``--shapes FILE`` (the shapes file passes the safe loader) and pySHACL installed
   (``unsupported`` otherwise, which exits ``2``).  The data graph (merged, with ``--follow-imports``, with the
-  ontology the shapes import, keeping only results whose focus the linted file mentions, as a subject or an
-  object) is validated with
+  ontology the shapes import, keeping only results whose focus, or the focus of a result nested in their
+  ``detail``, the linted file mentions, as a subject or an object) is validated with
   ``inference="none"``, ``advanced=True``, ``meta_shacl=True``, with the network disabled (a socket or DNS attempt,
-  even one pySHACL catches, makes the rule ``failed``).  One finding per ``sh:ValidationResult``, focused on
+  even one pySHACL catches, makes the rule ``failed``).  One finding per value of the report's ``sh:result``
+  (SHACL 3.6.1.2), or per typed ``sh:ValidationResult`` when the report links none, focused on
   its ``sh:focusNode`` (a blank node by its content-stable id), with the result messages joined by ``; `` and
-  ``[shape: <source shape>]``.  The severity is the result's: ``sh:Violation`` error, ``sh:Warning`` warning,
+  ``[shape: <source shape>]``.  The severity is that result's, so for an ``sh:node`` violation its referencing
+  shape's: ``sh:Violation`` error, ``sh:Warning`` warning,
   ``sh:Info`` info, any other value error with ``(severity <value>)`` appended; the spec's ``error`` is only the
   default shown in rule listings.  Each finding's ``evidence`` (JSON ``evidence``, SARIF ``properties.evidence``,
   never text) holds every SHACL result property listed below, under its SHACL name, in this order and only when
@@ -29,7 +31,8 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   plain, blank nodes the content-stable ``_:`` id (data terms in the data graph, shapes terms in the shapes graph),
   literals one-line N-Triples, a complex path SPARQL 1.1 property-path syntax, or ``(malformed path)`` when it
   does not parse or exceeds 32 levels or 1,000 nodes; ``detail`` nests the ``sh:detail`` results, sorted, at most
-  8 deep, never around a cycle, and each of them is also a finding of its own.  Findings tied on focus and message
+  8 deep, never around a cycle; nested results are their parent's ``detail``, not findings (SHACL 3.5), and one
+  nested deeper than 8 appears in no output.  Findings tied on focus and message
   are ordered by their evidence, since pySHACL's result order depends on the hash seed.  The evidence is not part
   of the finding's identity: messages and fingerprints are unchanged.  A non-conforming report without result
   nodes gives one error on ``(shapes)``, without evidence.  A shapes graph refused by the pre-check

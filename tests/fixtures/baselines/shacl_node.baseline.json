@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "files": [
+    "shacl_node.ttl"
+  ],
+  "fingerprints": [
+    "00759b0126544b83309e5afe9544aa5ae4a3bfa5b5adc2b4ac6a557b372732c2",
+    "a082817e17f00b8377abfef6b2ff411a452ff43f0e1ec081b6c5e1556b9975b4",
+    "f2375cb737cb379b7bbac6154627b1137d0e4965c831bb261e1c0f192ba42019"
+  ],
+  "identities": {
+    "shacl_node.ttl": {
+      "31aa308a33a4c1971d9b16a0eeed83c489289c287cad7dba605ccb75d52a838c": "f2375cb737cb379b7bbac6154627b1137d0e4965c831bb261e1c0f192ba42019",
+      "7c25a5eb393866d2b3cc779a3ee7f85b13f5d534505ac0a02c6c128b25bd753e": "a082817e17f00b8377abfef6b2ff411a452ff43f0e1ec081b6c5e1556b9975b4",
+      "fb547da6f2e9aee847fe402adcaef9bf24bdcace31da30f34167beba8c47f8c2": "00759b0126544b83309e5afe9544aa5ae4a3bfa5b5adc2b4ac6a557b372732c2"
+    }
+  }
+}

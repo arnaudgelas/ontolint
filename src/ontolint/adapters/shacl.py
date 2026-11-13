@@ -45,7 +45,8 @@ MAX_PATH_DEPTH = 32
 MAX_PATH_SIZE = 1_000
 """Most path nodes and list cells walked for one ``sh:resultPath``, counted again each time a shared part is."""
 MAX_DETAIL_DEPTH = 8
-"""Deepest ``sh:detail`` nesting copied into evidence; the results below it are still findings of their own."""
+"""Deepest ``sh:detail`` nesting copied into evidence; results below it appear in no output (their top-level result
+still does)."""
 MALFORMED_PATH = "(malformed path)"
 """The ``resultPath`` evidence of a path that is not a well-formed, bounded SHACL path."""
 
@@ -262,6 +263,34 @@ def shacl_result_key(evidence: Evidence) -> tuple[str, ...]:
     return tuple(value if isinstance(value := evidence.get(key, ""), str) else "" for key in _RESULT_KEY)
 
 
+def detail_foci(evidence: Evidence | None) -> set[str]:
+    """The ``focusNode`` of every result nested in ``evidence``'s ``detail``, at any depth, spelled as the evidence
+    spells it (an IRI as is, a blank node by its content-stable id, a literal in N-Triples)."""
+    foci: set[str] = set()
+    stack = [evidence] if evidence is not None else []
+    while stack:
+        current = stack.pop()
+        for nested in current.get("detail", ()):
+            if isinstance(nested, str):  # never in SHACL001 evidence: ``detail`` holds evidence objects
+                continue
+            focus = nested.get("focusNode")
+            if isinstance(focus, str):
+                foci.add(focus)
+            stack.append(nested)
+    return foci
+
+
+def _results(report: Graph) -> set[Node]:
+    """The validation results of ``report``: the ``sh:result`` values of its ``sh:ValidationReport`` (SHACL 3.6.1.2).
+
+    A result nested with ``sh:detail`` explains another (SHACL 3.5, 4.7.1) and is only that result's evidence,
+    although pySHACL types it ``sh:ValidationResult`` too.  A report that links no result (never pySHACL's) falls
+    back to every node typed ``sh:ValidationResult``.
+    """
+    listed = {r for node in report.subjects(RDF.type, SH.ValidationReport) for r in report.objects(node, SH.result)}
+    return listed or set(report.subjects(RDF.type, SH.ValidationResult))
+
+
 def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, object]:
     """``(conforms, report)`` from pySHACL, run with the network disabled; a failure is diagnosed, then re-raised.
 
@@ -293,7 +322,11 @@ def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, o
 
 
 def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
-    """Validate ``g`` against ``sg`` with pySHACL (imported lazily; required only with shapes)."""
+    """Validate ``g`` against ``sg`` with pySHACL (imported lazily; required only with shapes).
+
+    One finding per result the report lists (:func:`_results`), at that result's severity; the results nested in
+    its ``sh:detail`` are its evidence, not findings.
+    """
     try:
         from pyshacl import validate  # noqa: PLC0415 -- optional dependency, required only with --shapes.
     except ImportError:
@@ -306,7 +339,7 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
         raise RuntimeError(f"pySHACL returned an unexpected report type: {type(report).__name__}")
     keyed: list[tuple[tuple[str, str, str], Finding]] = []
     graphs = _Report(report, g, sg)
-    for result in report.subjects(RDF.type, SH.ValidationResult):
+    for result in _results(report):
         focus = _name(g, next(report.objects(result, SH.focusNode), None))
         message = "; ".join(sorted(map(str, report.objects(result, SH.resultMessage)))) or "SHACL constraint violation"
         src = _name(sg, next(report.objects(result, SH.sourceShape), None))
