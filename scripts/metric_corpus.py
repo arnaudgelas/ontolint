@@ -50,6 +50,14 @@ RULES = tuple(f"METRIC{n:03d}" for n in range(1, 14))
 COUNTED = ("fire", "silent")  # labels that make a true or false positive or negative
 EXPECTS = (*COUNTED, "unknown", "unassessed")  # unknown: assessed and left open; unassessed: not looked at
 BASES = ("checked", "presumed", "none")  # how the label's reason was established
+# The bases each expectation may have: a positive is always checked, a negative is checked or presumed, a
+# judgement left open was assessed, and only an unassessed pair has no basis.
+ALLOWED_BASES: dict[str, tuple[str, ...]] = {
+    "fire": ("checked",),
+    "silent": ("checked", "presumed"),
+    "unknown": ("checked",),
+    "unassessed": ("none",),
+}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 
@@ -144,6 +152,10 @@ def validate(entry: Entry) -> None:
         expect, basis = label.get("expect"), label.get("basis")
         if expect not in EXPECTS or basis not in BASES or not label.get("why", "").strip():
             raise ValueError(f"{entry.id}: {rule} needs an expect in {EXPECTS}, a basis in {BASES} and a reason")
+        if basis not in ALLOWED_BASES[expect]:
+            raise ValueError(
+                f"{entry.id}: {rule}: {expect!r} cannot have basis {basis!r} (allowed: {ALLOWED_BASES[expect]})"
+            )
 
 
 def safe_name(entry_id: str) -> str:

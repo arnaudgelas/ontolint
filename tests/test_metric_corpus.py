@@ -167,6 +167,38 @@ def test_a_label_without_a_known_value_basis_or_reason_is_refused(label: dict[st
         metric_corpus.validate(metric_corpus.Entry("x", "", "", {"*": label}))
 
 
+@pytest.mark.parametrize(
+    ("expect", "basis"),
+    [
+        ("fire", "presumed"),
+        ("fire", "none"),
+        ("silent", "none"),
+        ("unknown", "presumed"),
+        ("unknown", "none"),
+        ("unassessed", "checked"),
+        ("unassessed", "presumed"),
+    ],
+)
+def test_a_label_whose_expect_and_basis_disagree_is_refused(expect: str, basis: str) -> None:
+    """A presumed or unassessed basis cannot make a positive, and "silent, none" would be a made-up negative."""
+    with pytest.raises(ValueError, match="cannot have basis"):
+        metric_corpus.validate(metric_corpus.Entry("x", "", "", {"*": {"expect": expect, "basis": basis, "why": "x"}}))
+
+
+@pytest.mark.parametrize(
+    ("expect", "basis"),
+    [
+        ("fire", "checked"),
+        ("silent", "checked"),
+        ("silent", "presumed"),
+        ("unknown", "checked"),
+        ("unassessed", "none"),
+    ],
+)
+def test_the_consistent_label_combinations_are_accepted(expect: str, basis: str) -> None:
+    metric_corpus.validate(metric_corpus.Entry("x", "", "", {"*": {"expect": expect, "basis": basis, "why": "x"}}))
+
+
 def test_every_counted_positive_or_negative_finding_rests_on_a_checked_label() -> None:
     """A presumed label ("curated, no known problem") may only make a true negative, never a TP, FP or FN."""
     results = _results()["results"]
