@@ -1,0 +1,468 @@
+{
+  "description": "The METRIC calibration corpus (issue #8). Files are fetched by URL and checked by SHA-256; none is committed. A label says whether a rule should fire on the file ('fire'), stay silent ('silent') or is left to judgement ('unknown'); '*' applies to every rule the entry does not name. See docs/validation/metric-calibration.md.",
+  "label_status": "proposed",
+  "entries": [
+    {
+      "id": "bfo-2020-core.ttl",
+      "title": "Basic Formal Ontology 2020, core",
+      "source": "https://github.com/BFO-ontology/BFO-2020",
+      "release": "release-2024-01-29",
+      "commit": "044490fc5100ffed6df7d4d15cbc167698b6fdee",
+      "path": "src/owl/bfo-core.ttl",
+      "url": "https://raw.githubusercontent.com/BFO-ontology/BFO-2020/044490fc5100ffed6df7d4d15cbc167698b6fdee/src/owl/bfo-core.ttl",
+      "licence": "CC-BY-4.0",
+      "sha256": "6944e2c96a0d8709dc15ae5364792019e208061eda3f32311af4f3b8d8443a3b",
+      "bytes": 108100,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "ISO/IEC 21838-2 upper ontology. Curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "ro-core.owl",
+      "title": "Relation Ontology, core",
+      "source": "https://github.com/oborel/obo-relations",
+      "release": "v2026-09-04",
+      "commit": "091f4761ec84657cc336d623e02006d6c351722c",
+      "path": "core.owl",
+      "url": "https://raw.githubusercontent.com/oborel/obo-relations/091f4761ec84657cc336d623e02006d6c351722c/core.owl",
+      "licence": "CC0-1.0",
+      "sha256": "3c8e219fddd6f772c2d5e27cced12a91e8c3d2431b5e02af58e4ec567a4efeb8",
+      "bytes": 65612,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "cco-merged.ttl",
+      "title": "Common Core Ontologies, merged",
+      "source": "https://github.com/CommonCoreOntology/CommonCoreOntologies",
+      "release": "v2.2",
+      "commit": "0bc7d33e1bc09fd4693366119ab4e03cb0340042",
+      "path": "src/cco-merged/CommonCoreOntologiesMerged.ttl",
+      "url": "https://raw.githubusercontent.com/CommonCoreOntology/CommonCoreOntologies/0bc7d33e1bc09fd4693366119ab4e03cb0340042/src/cco-merged/CommonCoreOntologiesMerged.ttl",
+      "licence": "BSD-3-Clause",
+      "sha256": "a9453382b25b40781c181d6ba44981f228abb76d90d548846713adba9baadb42",
+      "bytes": 1994610,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "iao.owl",
+      "title": "Information Artifact Ontology",
+      "source": "https://github.com/information-artifact-ontology/IAO",
+      "release": "master, 2026-04-10",
+      "commit": "3006aedacbf813ffd1d2ac15cda10766ca9ed388",
+      "path": "iao.owl",
+      "url": "https://raw.githubusercontent.com/information-artifact-ontology/IAO/3006aedacbf813ffd1d2ac15cda10766ca9ed388/iao.owl",
+      "licence": "CC-BY-4.0",
+      "sha256": "c27ff2964a2ad8165bc365698b628aae95108411384aa4450e6e1b1e82bf0f41",
+      "bytes": 609839,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "pato-base.owl",
+      "title": "Phenotype And Trait Ontology, base",
+      "source": "https://github.com/pato-ontology/pato",
+      "release": "master, 2026-11-01",
+      "commit": "f16927f80599f74d7a974ab3567a78e5420691ea",
+      "path": "pato-base.owl",
+      "url": "https://raw.githubusercontent.com/pato-ontology/pato/f16927f80599f74d7a974ab3567a78e5420691ea/pato-base.owl",
+      "licence": "CC-BY-3.0",
+      "sha256": "bff51a75e9be788a955a0a88c1b9a6930f23dfb3c71bbf68193d3fb69ae8535e",
+      "bytes": 3178797,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "An OBO Foundry ontology, curated and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC006": {
+          "expect": "silent",
+          "why": "A quality taxonomy by design: its relations come from RO, so it owns none."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "why": "Untagged labels are the OBO convention. An English-only vocabulary whose untagged labels are a deliberate convention, not a defect."
+        }
+      }
+    },
+    {
+      "id": "sosa.ttl",
+      "title": "W3C/OGC SOSA",
+      "source": "https://github.com/w3c/sdw",
+      "release": "gh-pages, 2026-09-20",
+      "commit": "f3171647f6437b73e1caf871f056d233feb4a9da",
+      "path": "ssn/integrated/sosa.ttl",
+      "url": "https://raw.githubusercontent.com/w3c/sdw/f3171647f6437b73e1caf871f056d233feb4a9da/ssn/integrated/sosa.ttl",
+      "licence": "W3C-20150513",
+      "sha256": "c70b0d1c843c0047e4c98e0a89392e46a05752ff6365bda7f7f55303905a0392",
+      "bytes": 27326,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "ssn.ttl",
+      "title": "W3C/OGC SSN",
+      "source": "https://github.com/w3c/sdw",
+      "release": "gh-pages, 2026-09-20",
+      "commit": "f3171647f6437b73e1caf871f056d233feb4a9da",
+      "path": "ssn/integrated/ssn.ttl",
+      "url": "https://raw.githubusercontent.com/w3c/sdw/f3171647f6437b73e1caf871f056d233feb4a9da/ssn/integrated/ssn.ttl",
+      "licence": "W3C-20150513",
+      "sha256": "184d86189191146e314cc52b1bceb96fca11e70aacbc160d71588102a5153eb9",
+      "bytes": 22714,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC008": {
+          "expect": "silent",
+          "why": "SSN states its signatures as class restrictions instead of global domains and ranges, by design."
+        }
+      }
+    },
+    {
+      "id": "prov-o.ttl",
+      "title": "W3C PROV-O",
+      "source": "https://github.com/w3c/prov",
+      "release": "main, 2026-07-03",
+      "commit": "aa82bd71b6bb1f7b735bf3f7f5b948fae87764f0",
+      "path": "namespace/prov-o.ttl",
+      "url": "https://raw.githubusercontent.com/w3c/prov/aa82bd71b6bb1f7b735bf3f7f5b948fae87764f0/namespace/prov-o.ttl",
+      "licence": "W3C-20150513",
+      "sha256": "3d03c8e15753178541fb8cd59fbefecaf1861f9c37ef75190c6e938b85fb0c3d",
+      "bytes": 68795,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "why": "An English-only vocabulary whose untagged labels are a deliberate convention, not a defect."
+        }
+      }
+    },
+    {
+      "id": "skos-core.rdf",
+      "title": "W3C SKOS Core",
+      "source": "https://www.w3.org/2004/02/skos/core",
+      "release": null,
+      "commit": null,
+      "path": null,
+      "url": "https://www.w3.org/2004/02/skos/core.rdf",
+      "licence": "W3C-20150513",
+      "sha256": "e79633b8d0564816cee8a99f5c9acf9a0e6fc7257c7209acd684ecad53a89dd6",
+      "bytes": 28966,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "A W3C Recommendation vocabulary, reviewed and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC008": {
+          "expect": "silent",
+          "why": "The SKOS Reference leaves domains and ranges open on purpose; sub-properties inherit them from skos:semanticRelation."
+        }
+      }
+    },
+    {
+      "id": "schemaorg-30.1.ttl",
+      "title": "schema.org 30.1",
+      "source": "https://github.com/schemaorg/schemaorg",
+      "release": "main, 2026-11-12",
+      "commit": "9004a6654f69f067e69cfe5d0b3df2b8a4c86238",
+      "path": "data/releases/30.1/schemaorg-current-https.ttl",
+      "url": "https://raw.githubusercontent.com/schemaorg/schemaorg/9004a6654f69f067e69cfe5d0b3df2b8a4c86238/data/releases/30.1/schemaorg-current-https.ttl",
+      "licence": "CC-BY-SA-3.0",
+      "sha256": "7f15ca89398c4f235f478a4b3b8d1f975d63c5a860b77c8a8fce01f791b7ae2f",
+      "bytes": 1088235,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "why": "An English-only vocabulary whose untagged labels are a deliberate convention, not a defect."
+        }
+      }
+    },
+    {
+      "id": "sdo-1.9.0.ttl",
+      "title": "Software Description Ontology 1.9.0",
+      "source": "https://github.com/KnowledgeCaptureAndDiscovery/SoftwareDescriptionOntology",
+      "release": "master, 2025-01-31",
+      "commit": "c7de99d1d932a09eb9fd9c2c9cb0254c52fb9d33",
+      "path": "release/1.9.0/ontology.ttl",
+      "url": "https://raw.githubusercontent.com/KnowledgeCaptureAndDiscovery/SoftwareDescriptionOntology/c7de99d1d932a09eb9fd9c2c9cb0254c52fb9d33/release/1.9.0/ontology.ttl",
+      "licence": "CC-BY-2.0",
+      "sha256": "c44942dce9260d53a25e42adf73e3c04f9f58d8dcd20d2957b02af105c589fef",
+      "bytes": 67311,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "mod.ttl",
+      "title": "FAIR-IMPACT Metadata for Ontology Description (MOD)",
+      "source": "https://github.com/FAIR-IMPACT/MOD",
+      "release": "main, 2026-05-28",
+      "commit": "30c5411179e8b9caf8bb22ffdc7b96600fce71c7",
+      "path": "mod.ttl",
+      "url": "https://raw.githubusercontent.com/FAIR-IMPACT/MOD/30c5411179e8b9caf8bb22ffdc7b96600fce71c7/mod.ttl",
+      "licence": "CC-BY-4.0",
+      "sha256": "63f7b1804507b014010b1b5dd9a23ca4d3cc1999039dc944174915f4069e894e",
+      "bytes": 287919,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "automatce-base.ttl",
+      "title": "AutomaTCE, base release",
+      "source": "https://github.com/materialdigital/automatce",
+      "release": "main, 2026-11-02",
+      "commit": "44946d63581a895c3703a73187cd544d1ed8c925",
+      "path": "automatce-base.ttl",
+      "url": "https://raw.githubusercontent.com/materialdigital/automatce/44946d63581a895c3703a73187cd544d1ed8c925/automatce-base.ttl",
+      "licence": "CC-BY-4.0",
+      "sha256": "3e213f85836162250fdf0e2f58180d8ad45ebc59a68a7e8080aecfe5d49e41a5",
+      "bytes": 298345,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC006": {
+          "expect": "silent",
+          "why": "An ODK base release: its relations are imported from PMD core and RO, not owned."
+        },
+        "METRIC010": {
+          "expect": "silent",
+          "why": "An application ontology that extends PMD core and BFO by subclassing: reuse by design."
+        }
+      }
+    },
+    {
+      "id": "mfto.ttl",
+      "title": "Moral Foundations Theory Ontology",
+      "source": "https://github.com/neilotte/moralpsych",
+      "release": "master, 2025-06-19",
+      "commit": "61d60890ce0eeaa18a93eb7eee9cab00caf6012f",
+      "path": "MFTO.ttl",
+      "url": "https://raw.githubusercontent.com/neilotte/moralpsych/61d60890ce0eeaa18a93eb7eee9cab00caf6012f/MFTO.ttl",
+      "licence": "MIT",
+      "sha256": "c5054058bde7cdea52eed59567a606a73243a5dd5a2abc3af3812406ef27a7be",
+      "bytes": 9039,
+      "labels": {
+        "METRIC001": {
+          "expect": "silent",
+          "why": "Every class is labelled."
+        },
+        "METRIC002": {
+          "expect": "fire",
+          "why": "No class has a definition (18 of 18)."
+        },
+        "METRIC010": {
+          "expect": "silent",
+          "why": "Every class sits under a BFO class: alignment to an upper ontology is the intended reuse."
+        }
+      }
+    },
+    {
+      "id": "rights-ontology.ttl",
+      "title": "Hohfeldian Rights Ontology",
+      "source": "https://github.com/neilotte/moralpsych",
+      "release": "master, 2025-06-19",
+      "commit": "61d60890ce0eeaa18a93eb7eee9cab00caf6012f",
+      "path": "rights-ontology.ttl",
+      "url": "https://raw.githubusercontent.com/neilotte/moralpsych/61d60890ce0eeaa18a93eb7eee9cab00caf6012f/rights-ontology.ttl",
+      "licence": "MIT",
+      "sha256": "667710d4e9a2f33ddc729216207ee8c10684c8f969a9abb0db0e5b5bc602da7a",
+      "bytes": 17280,
+      "labels": {
+        "METRIC001": {
+          "expect": "silent",
+          "why": "Every class is labelled."
+        },
+        "METRIC002": {
+          "expect": "silent",
+          "why": "Every class is defined."
+        },
+        "METRIC006": {
+          "expect": "unknown",
+          "why": "Twelve classes and no relation: a taxonomy of Hohfeld's incidents may be intended, or unfinished."
+        }
+      }
+    },
+    {
+      "id": "pao.owl",
+      "title": "Personality Assessment Ontology",
+      "source": "https://github.com/neilotte/moralpsych",
+      "release": "master, 2025-06-19",
+      "commit": "61d60890ce0eeaa18a93eb7eee9cab00caf6012f",
+      "path": "PersonalityAssessmentOntology/PAO.owl",
+      "url": "https://raw.githubusercontent.com/neilotte/moralpsych/61d60890ce0eeaa18a93eb7eee9cab00caf6012f/PersonalityAssessmentOntology/PAO.owl",
+      "licence": "MIT",
+      "sha256": "adbff3603a0e69fc783b70e9da102d43be433e7e21f06836edfdd2b9b4cb9196",
+      "bytes": 162675,
+      "labels": {
+        "METRIC001": {
+          "expect": "silent",
+          "why": "Every class is labelled."
+        },
+        "METRIC002": {
+          "expect": "silent",
+          "why": "Most classes are defined (93 of 103)."
+        },
+        "METRIC003": {
+          "expect": "fire",
+          "why": "None of its 13 owned properties is documented."
+        },
+        "METRIC004": {
+          "expect": "unknown",
+          "why": "50 named questionnaires under one parent: a catalogue may be flat on purpose, or want grouping by construct."
+        },
+        "METRIC008": {
+          "expect": "unknown",
+          "why": "10 of its 13 owned object and datatype properties have no signature, in a small research ontology: unfinished or deliberately open."
+        }
+      }
+    },
+    {
+      "id": "ids-ontology.ttl",
+      "title": "IDS Information Model, header",
+      "source": "https://github.com/International-Data-Spaces-Association/InformationModel",
+      "release": "develop, 2023-12-13",
+      "commit": "a9b79eab4fe148dd6237fa456253070f0e6cb686",
+      "path": "Ontology.ttl",
+      "url": "https://raw.githubusercontent.com/International-Data-Spaces-Association/InformationModel/a9b79eab4fe148dd6237fa456253070f0e6cb686/Ontology.ttl",
+      "licence": "Apache-2.0",
+      "sha256": "c3d855a5ced9ca1e3df4f874931d8286eda0ee81025e69a54c4772f67fa7676d",
+      "bytes": 8081,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC011": {
+          "expect": "silent",
+          "why": "The 80 imports are the model's own modules, by relative IRI: a modular header, not 80 dependencies."
+        }
+      }
+    },
+    {
+      "id": "tractusx-ontology.ttl",
+      "title": "Tractus-X semantic layer, merged ontology",
+      "source": "https://github.com/eclipse-tractusx/sldt-ontology-model",
+      "release": "main, 2026-11-09",
+      "commit": "68ff17314678b4b258cad3a8bda63b02a30ea8f1",
+      "path": "ontology.ttl",
+      "url": "https://raw.githubusercontent.com/eclipse-tractusx/sldt-ontology-model/68ff17314678b4b258cad3a8bda63b02a30ea8f1/ontology.ttl",
+      "licence": "Apache-2.0",
+      "sha256": "26d307cd5208f9872c577c0ff1acb025555e60ee1144184fe8c06ee50fae9fbd",
+      "bytes": 56372,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "Curated and widely reused; no aggregate quality problem is known for it."
+        }
+      }
+    },
+    {
+      "id": "tractusx-taxonomy.ttl",
+      "title": "Tractus-X semantic layer, merged taxonomy",
+      "source": "https://github.com/eclipse-tractusx/sldt-ontology-model",
+      "release": "main, 2026-11-09",
+      "commit": "68ff17314678b4b258cad3a8bda63b02a30ea8f1",
+      "path": "taxonomy.ttl",
+      "url": "https://raw.githubusercontent.com/eclipse-tractusx/sldt-ontology-model/68ff17314678b4b258cad3a8bda63b02a30ea8f1/taxonomy.ttl",
+      "licence": "Apache-2.0",
+      "sha256": "174eebbf9a4d7ce7affb9cdc828e23de90832598cb07fdb3a0cbf4534f2fc959",
+      "bytes": 14467,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "A SKOS taxonomy: no class or property, so no METRIC rule has anything to judge."
+        }
+      }
+    },
+    {
+      "id": "food-traceability.ttl",
+      "title": "MOMo food-traceability schema",
+      "source": "https://github.com/Data-Semantics-Laboratory/Modular-Ontology-Modeling-for-Food-Supply-Chains",
+      "release": "master, 2021-11-05",
+      "commit": "3db9a9d8bb1e6cf193d4f7017a40ae03e31a2630",
+      "path": "food-traceability-schema.ttl",
+      "url": "https://raw.githubusercontent.com/Data-Semantics-Laboratory/Modular-Ontology-Modeling-for-Food-Supply-Chains/3db9a9d8bb1e6cf193d4f7017a40ae03e31a2630/food-traceability-schema.ttl",
+      "licence": "CC-BY-4.0",
+      "sha256": "9307dd169cf295709113c34a3be761f3fcba1dc3b2e693a590580a769ae878e8",
+      "bytes": 59596,
+      "labels": {
+        "METRIC001": {
+          "expect": "fire",
+          "why": "No class has a label: a diagram export that was never annotated."
+        },
+        "METRIC002": {
+          "expect": "fire",
+          "why": "No class has a definition."
+        },
+        "METRIC003": {
+          "expect": "fire",
+          "why": "No property is documented."
+        },
+        "METRIC008": {
+          "expect": "silent",
+          "why": "MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design."
+        }
+      }
+    },
+    {
+      "id": "dcterms.ttl",
+      "title": "DCMI Metadata Terms (terms namespace), copy vendored by MOD",
+      "source": "https://github.com/FAIR-IMPACT/MOD",
+      "release": "main, 2026-05-28",
+      "commit": "30c5411179e8b9caf8bb22ffdc7b96600fce71c7",
+      "path": "resources/dublin_core_terms.ttl",
+      "url": "https://raw.githubusercontent.com/FAIR-IMPACT/MOD/30c5411179e8b9caf8bb22ffdc7b96600fce71c7/resources/dublin_core_terms.ttl",
+      "licence": "CC-BY-4.0",
+      "sha256": "13df401072dd7015bf9d75162f3e41c8138075304b7b9cc1aa1e9c16db976797",
+      "bytes": 47834,
+      "labels": {
+        "*": {
+          "expect": "silent",
+          "why": "A DCMI Recommendation. Curated and widely reused; no aggregate quality problem is known for it."
+        },
+        "METRIC005": {
+          "expect": "silent",
+          "why": "9 of the 10 classes CLS001 calls orphans are targets of dcam:rangeIncludes, which CLS001 does not read: connected, not orphans."
+        }
+      }
+    }
+  ]
+}
