@@ -37,13 +37,16 @@ Nothing open: 0.11.0 is released (see "Recently done").
     (the 1.1 writer: `"@id": "…"`, compact IRIs such as `xsd:nonNegativeInteger`). The fixture's
     README gives the distribution's SHA-512 and the commands. No code changed: the locator already
     skips whitespace before `:` (the synthetic `space-before-colon` regression case). New tests: each
-    fixture keeps its writer's layout; every IRI subject is located at an `@id` string that names
-    it; every finding has the same rule and message as the Turtle source and a region at its focus.
+    fixture keeps its committed SHA-256 and its writer's layout (separator, indent unit, Jackson's
+    `[ {` and `}, {`) and parses to the graph of `pets.ttl`; every IRI subject is located at an `@id`
+    string that names it; every finding has the same rule and message as the Turtle source and a
+    region at its focus.
     - Verified: with whitespace before `:` no longer skipped, the two tests on the Jackson file fail
       (the 1.1 file still passes, as it should); the 14 findings of each export equal the Turtle
       source's.
-    - Left open: none. A rerun of the 1.0 writer may order the `@context` members differently (a
-      Java hash map); the tests do not depend on that order.
+    - Left open: none. Neither writer is deterministic (1.0 orders its `@context` members, 1.1 its
+      `@graph` nodes, differently between runs), so a regeneration passes the layout and graph tests
+      but needs a new digest; that the committed bytes came from `riot` rests on the README.
 - Unreleased (after 0.12.0):
   - **PREDICATE-CLOSURE** (P1 audit, issue 15; the LEX002-CLOSURE follow-ups): one cached
     `PropertyClosure` (`rules/runtime.py`) indexes the graph's `rdfs:subPropertyOf` and

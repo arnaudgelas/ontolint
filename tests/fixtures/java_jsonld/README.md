@@ -9,7 +9,10 @@ Java's Jackson pretty-printer, not only by RDFLib's writer (issue #7).
 | `pets.jsonld10.jsonld` | Jena's JSON-LD 1.0 writer: jsonld-java 0.13.4, printed by Jackson 2.15.3 (`DefaultPrettyPrinter`) | `"key" : value`, two-space indent, `[ {` and `}, {` |
 | `pets.jsonld11.jsonld` | Jena's default JSON-LD writer (1.1: titanium-json-ld 1.3.2) | `"key": value`, four-space indent, one value per line |
 
-Both files are byte for byte what `riot` wrote; do not reformat them.
+Both files are committed as `riot` wrote them; do not reformat them. The tests pin their SHA-256,
+check each writer's layout as the table gives it, and check that each parses to the same graph as
+`pets.ttl`. Only the last two can be checked by anyone: that the bytes came from `riot` rests on
+this README, and a rerun does not reproduce them (see below).
 
 ## Regenerating
 
@@ -24,6 +27,7 @@ export JENA_HOME=/path/to/apache-jena-4.10.0
 "$JENA_HOME/bin/riot" --formatted=JSONLD pets.ttl > pets.jsonld11.jsonld
 ```
 
-The JSON-LD 1.1 output was the same on every run. The JSON-LD 1.0 writer builds its `@context` from a
-Java hash map, so a new run may list the `@context` members in another order; the tests do not
-depend on that order.
+Neither writer is deterministic: a rerun may list the `@context` members (1.0) or the `@graph` nodes
+(1.1) in another order (checked on 2026-11-13: three 1.1 runs gave two different files). The graph and
+the layout stay the same, so a regenerated file passes every test but the digest one: update
+`JAVA_DIGESTS` in `tests/test_source_locations.py` together with the files.
