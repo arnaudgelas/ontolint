@@ -45,14 +45,20 @@ through `load_manifest`, which refuses:
 - a missing licence, or an id given twice;
 - a label whose expectation and basis disagree.
 
-`fetch` and `measure` also refuse a corpus file that is a symbolic link or not a regular file.
-`fetch` writes a download by renaming a new file over the old name, which replaces a hard link
-instead of writing through it, and `measure` lints a private copy of the bytes whose checksum it
-checked. So neither reads or writes outside DIR through a name in it. DIR itself is yours: if it
-is a link, they follow it. Each `measure` run must also report on the file it was asked to lint,
-alone, with every METRIC rule executed once and at most one finding each: a rule that did not run
-reports nothing, which would otherwise read as a measured silence. `load_manifest` also refuses a `label_status` other than `proposed` or
-`approved`, since the page prints it as the standing of the labels.
+`fetch` and `measure` also refuse a corpus file that is a symbolic link or not a regular file,
+and treat one with a second hard link as missing. A file swapped for a link between that check and
+the open is refused before it is read: by `O_NOFOLLOW` where the platform has it, and everywhere
+by comparing the opened file with the one checked (device and inode), which is what holds on
+Windows. `fetch` writes a download by renaming a new file over the old name, which replaces a
+link instead of writing through it, and `measure` lints a private copy of the bytes whose
+checksum it checked. So neither reads or writes outside DIR through a name in it. DIR itself is
+yours: if it is a link, they follow it. These checks have run on macOS; the Windows path (no
+`O_NOFOLLOW`) is exercised by a test that removes the flag, not on Windows itself.
+
+Each `measure` run must also report on the file it was asked to lint, alone, with every METRIC
+rule executed once and at most one finding each: a rule that did not run reports nothing, which
+would otherwise read as a measured silence. `load_manifest` also refuses a `label_status` other
+than `proposed` or `approved`, since the page prints it as the standing of the labels.
 
 The corpus mixes:
 
