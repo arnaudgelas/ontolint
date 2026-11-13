@@ -33,7 +33,7 @@ documented in ``docs/measurements.md``.  Every measurement keeps to these rules:
 from __future__ import annotations
 
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -44,7 +44,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 from rdflib.term import Node
 
 from ontolint.graph import hierarchy_depths, weakly_connected_components
-from ontolint.models import MeasurementKind
+from ontolint.models import Measurement, MeasurementKind
 from ontolint.ownership import OwnershipMode
 from ontolint.redaction import redact_userinfo
 
@@ -153,7 +153,15 @@ def require(ctx: RuleContext, measurement_id: str) -> Value:
 
 def ratio(ctx: RuleContext, measurement_id: str) -> tuple[int, int]:
     """``(numerator, denominator)`` of a ratio measurement (a mean's sum and count) that was taken."""
-    value = require(ctx, measurement_id)
+    return _parts(measurement_id, require(ctx, measurement_id))
+
+
+def count(ctx: RuleContext, measurement_id: str) -> int:
+    """The value of a count measurement that was taken."""
+    return _count(measurement_id, require(ctx, measurement_id))
+
+
+def _parts(measurement_id: str, value: Value) -> tuple[int, int]:
     if isinstance(value, TermRatio):
         return len(value.numerator), len(value.denominator)
     if isinstance(value, TermValues):
@@ -163,12 +171,61 @@ def ratio(ctx: RuleContext, measurement_id: str) -> tuple[int, int]:
     raise TypeError(f"{measurement_id} is a count, not a ratio")
 
 
-def count(ctx: RuleContext, measurement_id: str) -> int:
-    """The value of a count measurement that was taken."""
-    value = require(ctx, measurement_id)
+def _count(measurement_id: str, value: Value) -> int:
     if not isinstance(value, Count):
         raise TypeError(f"{measurement_id} is not a count")
     return value.value
+
+
+# --- publication ---------------------------------------------------------------------------------------------
+
+
+def taken(ctx: RuleContext) -> tuple[tuple[MeasurementSpec, Value | Absent], ...]:
+    """Every measurement of :data:`SPECS` on ``ctx``, in order; one whose computation raises is absent.
+
+    The reason of such a failure is ``failed: <ExceptionType>: <message>``: publishing never fails a run, and a
+    METRIC rule that read the measurement has already failed with the exception itself.
+    """
+    return tuple((spec, _safely(ctx, spec)) for spec in SPECS)
+
+
+def _safely(ctx: RuleContext, spec: MeasurementSpec) -> Value | Absent:
+    try:
+        return measure(ctx, spec.id)
+    except Exception as exc:  # noqa: BLE001 -- the published reason says what failed.
+        return Absent(_failure(exc))
+
+
+def _failure(exc: Exception) -> str:
+    return f"failed: {type(exc).__name__}: {exc}"
+
+
+def publish(ctx: RuleContext) -> tuple[Measurement, ...]:
+    """The published record of every measurement on ``ctx``, in catalogue order; never raises."""
+    return tuple(record(spec, value) for spec, value in taken(ctx))
+
+
+def record(spec: MeasurementSpec, value: Value | Absent) -> Measurement:
+    """The published record of ``value``: counts only, the term sets left out; absent when it cannot be built."""
+    try:
+        return _record(spec, value)
+    except Exception as exc:  # noqa: BLE001 -- a value that does not fit its kind is published as absent.
+        return Measurement(spec.id, spec.version, spec.kind, spec.population, reason=_failure(exc))
+
+
+def _record(spec: MeasurementSpec, value: Value | Absent) -> Measurement:
+    identity = (spec.id, spec.version, spec.kind, spec.population)
+    if isinstance(value, Absent):
+        return Measurement(*identity, reason=value.reason)
+    if spec.kind is MeasurementKind.COUNT:
+        return Measurement(*identity, value=_count(spec.id, value))
+    if spec.kind is MeasurementKind.HISTOGRAM:
+        if not isinstance(value, TermValues):
+            raise TypeError(f"{spec.id} is not a histogram")
+        return Measurement(*identity, buckets=tuple(sorted(Counter(value.values.values()).items())))
+    numerator, denominator = _parts(spec.id, value)
+    by_namespace = value.by_namespace if isinstance(value, CountRatio) else None
+    return Measurement(*identity, numerator=numerator, denominator=denominator, by_namespace=by_namespace)
 
 
 # --- populations -----------------------------------------------------------------------------------------------

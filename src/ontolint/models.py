@@ -135,6 +135,72 @@ class Finding:
         return data
 
 
+_MEASURED = ("numerator", "denominator", "value", "buckets", "by_namespace")
+"""The value fields of a :class:`Measurement`; one that could not be taken has none of them."""
+_FIELDS: dict[MeasurementKind, tuple[set[str], set[str]]] = {
+    MeasurementKind.RATIO: ({"numerator", "denominator"}, {"by_namespace"}),
+    MeasurementKind.COUNT: ({"value"}, set()),
+    MeasurementKind.HISTOGRAM: (set(), {"buckets"}),  # an empty population has no bucket
+}
+"""Per kind, the value fields a measurement that was taken must have, and those it may have."""
+
+
+@dataclass(frozen=True)
+class Measurement:
+    """One published measurement (``--measurements``): integers and names only, never a term or a float.
+
+    A ratio has a ``numerator`` and a ``denominator`` (and, for some, ``by_namespace``, which splits the
+    numerator), a count a ``value``, a histogram its ``buckets`` (``(value, terms)`` pairs, ascending).  A
+    measurement that could not be taken has a ``reason`` and none of these.  The reason and the namespaces are
+    masked (:func:`ontolint.redaction.redact_userinfo`), and a record of any other shape is refused.
+    """
+
+    id: str
+    definition_version: int
+    kind: MeasurementKind
+    population: str
+    numerator: int | None = None
+    denominator: int | None = None
+    value: int | None = None
+    buckets: tuple[tuple[int, int], ...] = ()
+    by_namespace: tuple[tuple[str, int], ...] | None = None
+    reason: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", MeasurementKind(self.kind))
+        if self.reason is not None:
+            object.__setattr__(self, "reason", redact_userinfo(self.reason))
+        if self.by_namespace is not None:
+            object.__setattr__(self, "by_namespace", tuple((redact_userinfo(ns), n) for ns, n in self.by_namespace))
+        present = {name for name in _MEASURED if getattr(self, name) not in (None, ())}
+        required, optional = _FIELDS[self.kind] if self.reason is None else (set[str](), set[str]())
+        if not required <= present <= required | optional:
+            raise ValueError(f"{self.id}: a {self.kind} measurement cannot have the fields {sorted(present)}")
+        counts = [self.numerator, self.denominator, self.value, *(n for pair in self.buckets for n in pair)]
+        if any(n is not None and n < 0 for n in [*counts, *(n for _ns, n in self.by_namespace or ())]):
+            raise ValueError(f"{self.id}: a measurement counts, so it is never negative")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-ready representation: the identity, then only the fields this measurement has."""
+        data: dict[str, Any] = {
+            "id": self.id,
+            "definition_version": self.definition_version,
+            "kind": self.kind.value,
+            "population": self.population,
+        }
+        if self.reason is not None:
+            data["reason"] = self.reason
+        elif self.kind is MeasurementKind.RATIO:
+            data["numerator"], data["denominator"] = self.numerator, self.denominator
+            if self.by_namespace is not None:
+                data["by_namespace"] = [{"namespace": ns, "count": n} for ns, n in self.by_namespace]
+        elif self.kind is MeasurementKind.COUNT:
+            data["value"] = self.value
+        else:
+            data["buckets"] = [{"value": value, "count": n} for value, n in self.buckets]
+        return data
+
+
 def redacted_evidence(evidence: Evidence) -> Evidence:
     """``evidence`` with every userinfo masked, in the same key order and shape."""
     return {key: _redacted(value) for key, value in evidence.items()}

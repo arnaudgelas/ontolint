@@ -51,6 +51,7 @@ file and any imports you point it at.
   - [Discovering rules](#discovering-rules)
   - [Selecting rules and profiles](#selecting-rules-and-profiles)
   - [Rule execution status](#rule-execution-status)
+  - [Measurements](#measurements)
   - [Several files](#several-files)
   - [One ontology in several documents](#one-ontology-in-several-documents)
   - [Modular ontologies: following `owl:imports`](#modular-ontologies-following-owlimports)
@@ -87,6 +88,7 @@ the report has no published JSON Schema yet, so pin the version you parse agains
 | The findings of a run | `ontolint FILE --format json` (keys `schema_version`, `summary`, `findings`, `execution_summary`, `rules`, `files`) | [Run the linter](#run-the-linter) |
 | Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub annotations](#github-annotations) |
 | Which rules ran, were skipped or failed | `files[].executions` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
+| The measurements behind the METRIC rules, as numerators and denominators | `ontolint FILE --format json --measurements` (`files[].measurements`) | [Measurements](#measurements) |
 | A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
 | Accepted findings that stay quiet | `--write-baseline FILE`, then `--baseline FILE` | [Policy and baselines](#policy-and-baselines) |
 | ontolint inside a Python program | `from ontolint import Linter` | [Run the linter](#run-the-linter) |
@@ -321,7 +323,8 @@ case a `Rule execution:` block is appended.
   (`SHACL001`: every SHACL result property listed in "Optional SHACL validation"; text prints
   its path, value and nested causes); it is not part of the finding's identity, so fingerprints
   and baselines ignore it. In a dataset with
-  named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
+  named graphs, a finding also lists its `graphs` (see "Datasets: named graphs"). With
+  `--measurements`, each file also carries its `measurements` (see "Measurements").
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
   `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
   `artifactLocation` on every result (and `properties.details`, `properties.evidence` and
@@ -333,6 +336,26 @@ case a `Rule execution:` block is appended.
   first spelled, whichever graph that is in. JSON-LD findings include a region for an
   explicit `@id`, including compact IRIs defined by a local context; generated JSON-LD nodes retain
   their artifact URI but omit a region rather than reporting an unreliable location.
+
+### Measurements
+
+The METRIC rules compare figures of the ontology (label coverage, orphan share, imports ...) with
+thresholds, and a figure shows only as a finding once it crosses its threshold. `--measurements`
+publishes the figures themselves, for every file, whatever the thresholds:
+
+```bash
+ontolint onto.ttl --format json --measurements
+```
+
+Each `files[]` entry gains `measurements`: every measurement behind `METRIC001`-`METRIC013`, plus the
+hierarchy-depth histogram, the number of disconnected parts of the asserted hierarchy and the SHACL
+class-target coverage. A record has an `id`, a `definition_version`, a `kind` and a `population`; a
+ratio is a `numerator` and a `denominator`, never a float, and a measurement that could not be
+taken (the SHACL coverage without `--shapes`) has a `reason` instead of a value, never 0. Findings,
+fingerprints, baselines and the exit code are the same with and without the flag, and it works with
+`--format json` only (otherwise a usage error, exit 2). There is no single health score.
+[docs/measurements.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/measurements.md)
+gives each measurement's population and exclusions.
 
 ### Several files
 

@@ -53,6 +53,7 @@ from .profiles import PROFILES, Profile
 from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
 from .reporting import TOOL_FAILURE_EXIT, FileReport, Location, Origin, RunReport, render_report, run_exit_code
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
+from .rules import measurements
 from .rules.duplicate_ids import SET_RULES, finding_key
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
@@ -186,6 +187,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--robot-image", default="ontolint-robot:1.9.11")
     ap.add_argument("--robot-timeout", type=int, default=120)
     ap.add_argument("--format", choices=FORMATS, default="text")
+    ap.add_argument(
+        "--measurements",
+        action="store_true",
+        help="Add each file's measurement vector to the JSON report (files[].measurements: the ratios behind the "
+        "METRIC rules and more, as numerators and denominators); requires --format json",
+    )
     ap.add_argument("--output", help="Output file (default stdout)")
     ap.add_argument("--fail-on", choices=["error", "warning", "info", "never"], default=None)
     _add_selection_arguments(ap)
@@ -364,8 +371,20 @@ def _lint_file(
         locations = {f: where for f, where in locations.items() if f not in members}
         graphs = {f: names for f, names in graphs.items() if f not in members}
     others = _shared_places((item, loaded), findings, shared, sarif, (origins, locations, graphs)) if shared else {}
+    # Taken after the rules ran, so a measurement a METRIC rule read is the value it compared.
+    measured = measurements.publish(ctx) if args.measurements else None
     return FileReport(
-        item.display, item.uri, findings, executions_sorted, locations, problem, origins, modules, graphs, others
+        item.display,
+        item.uri,
+        findings,
+        executions_sorted,
+        locations,
+        problem,
+        origins,
+        modules,
+        graphs,
+        others,
+        measured,
     )
 
 
@@ -1017,6 +1036,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stderr = stderr
 
 
+def _usage_problem(args: argparse.Namespace) -> str | None:
+    """The first usage error of a lint run's options, checked after the info commands; ``None`` if there is none."""
+    if not args.ontology:
+        return "at least one ONTOLOGY path is required"
+    if args.fail_on_stale_baseline and not args.baseline:
+        return "--fail-on-stale-baseline requires --baseline"
+    if args.shapes and args.shapes_from_profile:
+        return "--shapes and --shapes-from-profile are alternatives; give one"
+    if args.module_annotation is not None and args.module_by is not None:
+        return "--module-annotation and --module-by are alternatives; give one"
+    if args.measurements and args.format != "json":
+        return "--measurements requires --format json"
+    return None
+
+
 def _main(argv: Sequence[str] | None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -1025,14 +1059,8 @@ def _main(argv: Sequence[str] | None) -> int:
     info = _info_command(args)
     if info is not None:
         return info
-    if not args.ontology:
-        parser.error("at least one ONTOLOGY path is required")
-    if args.fail_on_stale_baseline and not args.baseline:
-        parser.error("--fail-on-stale-baseline requires --baseline")
-    if args.shapes and args.shapes_from_profile:
-        parser.error("--shapes and --shapes-from-profile are alternatives; give one")
-    if args.module_annotation is not None and args.module_by is not None:
-        parser.error("--module-annotation and --module-by are alternatives; give one")
+    if (problem := _usage_problem(args)) is not None:
+        parser.error(problem)
     stage = ["configuration"]
     try:
         outcome = _lint(args, stage)
