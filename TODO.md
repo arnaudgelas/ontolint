@@ -619,15 +619,18 @@ Validation corpus (public; licences per repository):
   licensed corpus of ontologies with known-good and known-poor outcomes; measure false positives and
   false negatives before changing defaults or exposing additional knobs.
   The rationale and override behaviour of every threshold are recorded in `docs/metric-thresholds.md`
-  (0.11.0). The pinned corpus exists (issue #8, 2026-11-13): 21 licensed files in
-  `docs/validation/metric-corpus.json`, measured by `scripts/metric_corpus.py`, results and counts
-  in `docs/validation/metric-calibration.md`, one corpus column per threshold. Under the *proposed*
-  labels METRIC001-003 have no false positive or negative; the 12 false positives of METRIC005,
-  006, 008, 009, 010 and 011 each come from a modelling choice the rule does not see (restrictions,
-  `dcam:`, upper-ontology alignment, own-module imports, untagged-by-convention labels), so no
-  default changed. Left to the maintainer: approve or correct the labels (`label_status`), decide
-  the three left open, and the severity, confidence and CLS001 questions of the METRIC-SPEC entry;
-  known-poor files are still missing for METRIC004, 005 and 007-013 (recall unmeasured).
+  (0.11.0). A pinned corpus snapshot exists (issue #8, 2026-11-13): 21 licensed files in
+  `docs/validation/metric-corpus.json`, measured once on 0.13.1 by `scripts/metric_corpus.py`,
+  results and counts in `docs/validation/metric-calibration.md`, one corpus column per threshold.
+  It is exploratory, not a calibration: the labels are proposed, and 211 of the 273 (file, rule)
+  labels are presumed from a file's standing. Under them METRIC001-003 have no false positive and
+  no false negative among few labelled cases; the 12 false positives of METRIC005, 006, 008, 009,
+  010 and 011 each rest on a checked label and come from a modelling choice the rule does not see
+  (restrictions, `dcam:`, upper-ontology alignment, own-module imports, untagged-by-convention
+  labels), so no default changed. Left to the maintainer: approve or correct the labels
+  (`label_status`), decide the three left open, and the severity, confidence and CLS001 questions
+  (#63); known-poor files are still missing for METRIC004-013 (recall unmeasured); nothing reruns
+  the snapshot (a release-time run belongs to #31).
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
 

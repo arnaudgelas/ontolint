@@ -3,9 +3,10 @@
 The `METRIC001`-`METRIC013` rules each measure one ontology-wide figure (a ratio, a mean or a
 count) and compare it with a threshold. A run reports at most one finding per rule, on the
 ontology, and never a score. Every default below is a **first estimate**, chosen when the rules
-were written. Each is measured on a pinned, licensed corpus of 21 files, under labels that are
-proposed and not yet approved ([`validation/metric-calibration.md`](validation/metric-calibration.md));
-the "Corpus" column summarises it.
+were written, and none is calibrated. Each was measured once, on ontolint 0.13.1, on a pinned,
+licensed corpus of 21 files, under labels that are proposed, not approved, and mostly presumed
+([`validation/metric-calibration.md`](validation/metric-calibration.md)). The "Corpus" column gives
+those preliminary observations; they are not rerun by CI or at release.
 The conditions, populations and exclusions of each rule are in the specification at the top of
 [`src/ontolint/rules/metrics.py`](../src/ontolint/rules/metrics.py).
 
@@ -78,16 +79,21 @@ Tractus-X was 34 of 236 references before and 6 after.
 
 - The six copies above are unpinned and unlabelled. The pinned corpus
   ([`validation/metric-calibration.md`](validation/metric-calibration.md)) replaces them as evidence,
-  but its labels are proposed, not approved, so its counts are a hypothesis about precision.
-  Under them, METRIC001, METRIC002 and METRIC003 have no false positive or false negative; every
-  false positive of the other rules (12 in all) comes from a modelling choice the rule does not see.
-  For five of those rules only a limit that switches the rule off would remove them; for METRIC005
-  a limit above 0.45 would, but its cause is the CLS001 gap below. No default has changed.
-- The corpus has no known-poor file for METRIC004, METRIC005 and METRIC007 to METRIC013, so their
-  recall is not measured.
+  but its labels are proposed, not approved, and 211 of its 273 (file, rule) labels are presumed
+  from a file's standing rather than checked in it. Its counts are preliminary observations under
+  those labels, not a measurement of precision. Under them, METRIC001, METRIC002 and METRIC003 have
+  no false positive, and no false negative among their few labelled cases (1 or 2 true positives
+  each). Every false positive of the other rules (12 in all) rests on a checked label and comes from
+  a modelling choice the rule does not see. For five of those rules only a limit that switches the
+  rule off would remove them; for METRIC005 a limit above 0.45 would, but its cause is the CLS001 gap
+  below. No default has changed.
+- The corpus has no known-poor file for METRIC004 to METRIC013, so their recall is not measured.
+- The corpus is a snapshot of 0.13.1: nothing reruns `scripts/metric_corpus.py check`, so a later
+  change can leave it stale (a release-time run belongs to issue #31).
 - `METRIC010` does not count reuse of another OBO ontology as foreign, because all OBO terms share
   one namespace. Counting it is a product question.
 - CLS001 ignores `dcam:domainIncludes` and `dcam:rangeIncludes`, so `METRIC005` inherits that gap
   (dcterms keeps 10 of 22 orphans).
 - `METRIC001` and `METRIC002` are warnings, so they fail the `ci`, `obo` and `fair` profiles. On the
-  corpus they fire only on the files labelled poor, never on a curated one.
+  corpus they fire only on the files labelled poor, never on a curated one, which is consistent
+  with their limits but too little evidence to confirm them.

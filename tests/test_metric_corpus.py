@@ -137,6 +137,25 @@ def test_the_thresholds_page_counts_agree_with_the_corpus() -> None:
     assert all(counts[rule]["fp"] == 0 and counts[rule]["fn"] == 0 for rule in ("METRIC001", "METRIC002", "METRIC003"))
 
 
+def test_the_pages_quote_the_label_counts_of_the_manifest() -> None:
+    """The prose says how many labels are presumed, checked, left open and not assessed; keep it true."""
+    entries = metric_corpus.load_manifest()
+    labels = [entry.label(rule) for entry in entries for rule in metric_corpus.RULES]
+    presumed = sum(label["basis"] == "presumed" for label in labels)
+    checked = sum(label["basis"] == "checked" for label in labels)
+    open_ = sum(label["expect"] == "unknown" for label in labels)
+    unassessed = sum(label["expect"] == "unassessed" for label in labels)
+    calibration = metric_corpus.PAGE.read_text(encoding="utf-8")
+    thresholds = (ROOT / "docs" / "metric-thresholds.md").read_text(encoding="utf-8")
+    assert f"Of the {len(labels)} (file, rule) pairs, {presumed} are labelled silent only" in calibration
+    assert f"{presumed} of its {len(labels)} (file, rule) labels are presumed" in thresholds
+    assert f"checked` (the reason was\nverified in the file: {checked} pairs)" in calibration
+    assert f"`unknown` (assessed, left to the maintainer: {open_} pairs)" in calibration
+    assert f"`unassessed` (not looked at: {unassessed} pairs" in calibration
+    fired = {rule for entry in entries for rule in metric_corpus.RULES if entry.expect(rule) == "fire"}
+    assert fired == {"METRIC001", "METRIC002", "METRIC003"}, "the pages say recall is unmeasured for METRIC004-013"
+
+
 def test_a_forced_and_a_default_run_measure_a_known_fixture(tmp_path: Path) -> None:
     path = tmp_path / "fixture.ttl"
     path.write_text(FIXTURE, encoding="utf-8")
