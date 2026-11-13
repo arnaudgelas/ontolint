@@ -52,6 +52,7 @@ def _published_ontologies(graph: Graph, ontologies: set[URIRef], imported: froze
     return root_only or ontologies
 
 
+# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class GraphContext:
     """Cached graph facts used repeatedly by local lint rules."""

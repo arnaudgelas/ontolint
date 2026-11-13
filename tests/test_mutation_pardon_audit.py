@@ -10,7 +10,7 @@ import pytest
 from rdflib import Graph, URIRef
 from rule_harness import BASE, graph
 
-from ontolint import Linter, cli, declarations, imports, loader, models, prof, reporting, worker
+from ontolint import Linter, cli, context, declarations, imports, loader, models, prof, reporting, worker
 from ontolint.adapters import shacl
 from ontolint.rules import shacl_quality
 from ontolint.source_locations import _iri_end, _skip_string, build_source_index
@@ -18,6 +18,7 @@ from ontolint.source_locations import _iri_end, _skip_string, build_source_index
 # Value objects handed between pipeline stages, cached or shared with a worker: their immutability is
 # a contract (a stage must not change what another reads), not an accident of the decorator.
 FROZEN = [
+    context.GraphContext,
     imports.Catalog,
     imports.Closure,
     shacl._ValidationJob,
