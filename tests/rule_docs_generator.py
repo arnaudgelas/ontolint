@@ -16,12 +16,14 @@ generated.
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import re
 import sys
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from planned_rule_intents import INTENTS
 from rule_cases import load_cases
@@ -83,6 +85,54 @@ def _first_message(rule_id: str, case: Case) -> str | None:
     return re.sub(r"_:n[0-9a-f]{20,}", "_:b", findings[0].message) if findings else None
 
 
+def _is_default(field: dataclasses.Field[Any], value: object) -> bool:
+    """Whether a dataclass field has a default and ``value`` equals it (a required field never has one)."""
+    if field.default is not dataclasses.MISSING:
+        return bool(value == field.default)
+    if field.default_factory is not dataclasses.MISSING:
+        return bool(value == field.default_factory())
+    return False
+
+
+def _value(obj: object) -> str:
+    """Return a compact, deterministic ``repr`` of a case option.
+
+    A dataclass prints only its required fields and those that differ from their defaults, so a case
+    shows the settings it chose and a new ``Policy`` field rewrites no page; containers recurse, and
+    sets print sorted at every depth, so no item order depends on the hash seed.
+    """
+    if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
+        fields = [
+            f"{field.name}={_value(value)}"
+            for field in dataclasses.fields(obj)
+            if not _is_default(field, value := getattr(obj, field.name))
+        ]
+        return f"{type(obj).__name__}({', '.join(fields)})"
+    if isinstance(obj, (set, frozenset)):
+        return _members(obj)
+    if isinstance(obj, (tuple, list, dict)):
+        return _items(obj)
+    return repr(obj)
+
+
+def _members(obj: set[object] | frozenset[object]) -> str:
+    """Return the ``repr`` of a set with its members sorted by their own :func:`_value`."""
+    if not obj:
+        return f"{type(obj).__name__}()"
+    listed = "{" + ", ".join(sorted(_value(item) for item in obj)) + "}"
+    return listed if isinstance(obj, set) else f"{type(obj).__name__}({listed})"
+
+
+def _items(obj: tuple[object, ...] | list[object] | dict[object, object]) -> str:
+    """Return the ``repr`` of a tuple, list or dict with every element through :func:`_value`, in order."""
+    if isinstance(obj, dict):
+        return "{" + ", ".join(f"{_value(key)}: {_value(item)}" for key, item in obj.items()) + "}"
+    inner = ", ".join(_value(item) for item in obj)
+    if isinstance(obj, list):
+        return f"[{inner}]"
+    return f"({inner},)" if len(obj) == 1 else f"({inner})"
+
+
 def _block(label: str, case: Case) -> list[str]:
     """Render one example (data and optional shapes) as fenced Turtle."""
     turtle = _turtle(case)
@@ -94,7 +144,7 @@ def _block(label: str, case: Case) -> list[str]:
     if case.shapes is not None:
         lines += ["Shapes graph:", "", "```turtle", case.shapes.strip(), "```", ""]
     if case.options:
-        options = ", ".join(f"`{key}={value!r}`" for key, value in sorted(case.options.items()))
+        options = ", ".join(f"`{key}={_value(value)}`" for key, value in sorted(case.options.items()))
         lines += [f"Linter options: {options}.", ""]
     return lines
 

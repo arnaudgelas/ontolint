@@ -10,9 +10,11 @@ import logging
 from pathlib import Path
 
 from planned_rule_intents import INTENTS
-from rule_docs_generator import DOC, PAGES, build, stale_pages, write_pages
+from rule_docs_generator import DOC, PAGES, _value, build, stale_pages, write_pages
 
 from ontolint.catalogue import load_catalogue
+from ontolint.models import LibraryMember, PatternLibrary, SharedIdentity
+from ontolint.policy import Policy
 
 PAGE_BUDGET = 500_000  # UTF-8 bytes; github.com stops rendering a Markdown file at about 512 KB
 
@@ -60,6 +62,30 @@ def test_stale_missing_and_orphan_pages_are_reported_and_other_files_ignored(tmp
     assert stale_pages(pages, tmp_path) == []
     assert not (tmp_path / "rules" / "extra.md").exists()
     assert (tmp_path / "rules" / ".DS_Store").read_bytes() == b"\0"
+
+
+def test_options_print_only_the_fields_a_case_sets_and_sets_sorted_at_every_depth() -> None:
+    assert _value(Policy()) == "Policy()"
+    assert _value(Policy(unknown_keys=("x",))) == "Policy(unknown_keys=('x',))"
+    assert _value(frozenset({"b", "a"})) == "frozenset({'a', 'b'})"
+    assert _value(frozenset({9, 10})) == "frozenset({10, 9})"  # sorted as text; ints iterate 9, 10 at any seed
+    assert _value({"b", "a"}) == "{'a', 'b'}"
+    assert _value(frozenset()) == "frozenset()"
+    assert _value(set[str]()) == "set()"
+    assert _value(("x", ["y", {"k": 1.5}])) == "('x', ['y', {'k': 1.5}])"
+    member = LibraryMember("m.ttl", "file:///m.ttl", "https://example.test/m", frozenset({"b", "a"}))
+    library = PatternLibrary("lib", (member,))
+    assert _value(Policy(library=library)) == (
+        "Policy(library=PatternLibrary(directory='lib', members=(LibraryMember(display='m.ttl', "
+        "uri='file:///m.ttl', ontology='https://example.test/m', identities=frozenset({'a', 'b'})),)))"
+    )
+    shared = SharedIdentity("https://example.test/o", "ontology", "inputs", ("a.ttl", "b.ttl"), identical=False)
+    assert _value(shared) == (
+        "SharedIdentity(iri='https://example.test/o', kind='ontology', scope='inputs', members=('a.ttl', 'b.ttl'), "
+        "identical=False)"
+    )
+    defaults = f"depth_limit={Policy().depth_limit}, inheritance_limit={Policy().inheritance_limit}"
+    assert not [name for name, text in _committed().items() if defaults in text]
 
 
 def test_every_proposed_rule_has_an_intent_and_no_other_does() -> None:
