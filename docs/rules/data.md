@@ -17,6 +17,31 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module literals
+
+Source: `src/ontolint/rules/literals.py`.
+
+Literal and datatype rules: DATA003 (ill-typed literal) and DATA004 (datatype outside the OWL 2 map).
+
+OWL 2 (Structural Specification, Section 5.7) requires the lexical form of every literal in an OWL 2 DL ontology to belong to the lexical space of its datatype, and (Section 5.2) every datatype to be ``rdfs:Literal``, a member of the OWL 2 datatype map (Section 4), or a datatype the ontology defines. ``rdfs:Literal`` itself has no lexical space, so no literal can be typed with it.
+
+### Module owl
+
+Source: `src/ontolint/rules/owl.py`.
+
+OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002.
+
+OWL012 (self-equivalence) is emitted by `ontolint.rules.classes`.
+
+All rules read the asserted graph only: no import is followed and nothing is inferred (no ``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means ``ctx.local`` (`ontolint.ownership`); "declared" means typed by the named class in an asserted ``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``, ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
+
+*Specified under each rule: OWL001, OWL002, OWL003, OWL004, OWL005, OWL006, OWL007, OWL008, OWL009, OWL010, OWL011, OWL012, OWL013, OWL014, OWL015.*
+
 ## Rules
 
 #### DATA001: Value datatype conflicts with property range
@@ -24,7 +49,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Check a property assertion for range/type confusion.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `string where xsd:integer is the range`
 
@@ -189,7 +217,10 @@ ex:d a owl:DatatypeProperty ; rdfs:range xsd:decimal . ex:i ex:d 7 .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Check a property assertion for datatype/object-property confusion.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `usage implies a disjoint domain`
 
@@ -210,7 +241,10 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`literals`](#module-literals)
 - **Fix:** Correct the value or its datatype ('2004'^^xsd:gYear, not xsd:date); type plain text as xsd:string.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `date with a one-digit day (MOD)`
 
@@ -290,7 +324,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`literals`](#module-literals)
 - **Fix:** Use a datatype of the OWL 2 datatype map (xsd:dateTime rather than xsd:date), or rdfs:Literal.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `xsd:anyType range (Tractus-X)`
 

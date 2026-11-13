@@ -17,6 +17,23 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module external
+
+Source: `src/ontolint/rules/external.py`.
+
+Specifications for rules that are not run by a graph rule module.
+
+SHACL001 and SEM001 are produced by adapters (pySHACL, ROBOT) and INPUT001/TOOL001 by the CLI front end.  They carry ``module=""`` because no ``run(ctx)`` function emits them.
+
+SHACL001 and SEM001 are findings: they appear in the report, gate the exit code through ``--fail-on`` (``1``), and obey ``--select``/``--ignore``, baselines and ``severity_overrides``.  INPUT001 and TOOL001 are diagnostics printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them, so naming them in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) is a configuration error (``TOOL001``, exit ``2``), and naming them in the policy's ``ignored_rules`` or ``severity_overrides`` is ``GOV020``.
+
+*Specified under each rule: SHACL001, INPUT001, TOOL001, SEM001.*
+
 ## Rules
 
 #### SHACL001: SHACL validation violation
@@ -24,7 +41,10 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** shapes
 - **Category:** deterministic
+- **Module:** [`external`](#module-external)
 - **Fix:** Fix the supplied SHACL shapes or data, and inspect the SHACL report.
+
+**Specification.** Only with ``--shapes FILE`` (the shapes file passes the safe loader) and pySHACL installed (``unsupported`` otherwise, which exits ``2``).  The data graph (merged, with ``--follow-imports``, with the ontology the shapes import, keeping only results whose focus the linted file mentions, as a subject or an object) is validated with ``inference="none"``, ``advanced=True``, ``meta_shacl=True``, with the network disabled (a socket or DNS attempt, even one pySHACL catches, makes the rule ``failed``).  One finding per ``sh:ValidationResult``, focused on its ``sh:focusNode`` (a blank node by its content-stable id), with the result messages joined by ``; `` and ``[shape: <source shape>]``.  The severity is the result's: ``sh:Violation`` error, ``sh:Warning`` warning, ``sh:Info`` info, any other value error with ``(severity <value>)`` appended; the spec's ``error`` is only the default shown in rule listings.  Each finding's ``evidence`` (JSON ``evidence``, SARIF ``properties.evidence``, never text) holds every property of its result under its SHACL name, in this order and only when present: ``focusNode``, ``resultPath``, ``value``, ``sourceShape``, ``sourceConstraintComponent``, ``sourceConstraint``, ``detail``, ``resultMessage`` (sorted, without language tags), ``resultSeverity`` (the original IRI).  IRIs are plain, blank nodes the content-stable ``_:`` id (data terms in the data graph, shapes terms in the shapes graph), literals one-line N-Triples, a complex path SPARQL 1.1 property-path syntax, or ``(malformed path)`` when it does not parse or exceeds 32 levels or 1,000 nodes; ``detail`` nests the ``sh:detail`` results, sorted, at most 8 deep, never around a cycle, and each of them is also a finding of its own.  Findings tied on focus and message are ordered by their evidence, since pySHACL's result order depends on the hash seed.  The evidence is not part of the finding's identity: messages and fingerprints are unchanged.  A non-conforming report without result nodes gives one error on ``(shapes)``, without evidence.  A shapes graph refused by the pre-check (unserialisable IRI, cyclic, shared or overlong ``rdf:list``) or a pySHACL crash makes the rule ``failed`` (no finding, TOOL001 line, exit ``2``).  With ``max_validation_seconds`` (``--max-validation-seconds``; default unset, in process) the validation of each file runs in a worker process, with the same findings and failure details, and is stopped at the budget: ``failed`` with ``ValidationTimeout: SHACL validation did not finish within the time budget of <s> seconds (max_validation_seconds)``, the report written, exit ``2``.  Confidence ``certain``: the verdict is pySHACL's, on the user's own shapes. Why error: a violated shape is a contract the user wrote; a shape that means less says so with ``sh:severity``.
 
 *Flagged:* `constraint violated` (run through the command line or an adapter; see `tests/rule_cases/`)
 

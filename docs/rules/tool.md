@@ -17,6 +17,23 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module external
+
+Source: `src/ontolint/rules/external.py`.
+
+Specifications for rules that are not run by a graph rule module.
+
+SHACL001 and SEM001 are produced by adapters (pySHACL, ROBOT) and INPUT001/TOOL001 by the CLI front end.  They carry ``module=""`` because no ``run(ctx)`` function emits them.
+
+SHACL001 and SEM001 are findings: they appear in the report, gate the exit code through ``--fail-on`` (``1``), and obey ``--select``/``--ignore``, baselines and ``severity_overrides``.  INPUT001 and TOOL001 are diagnostics printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them, so naming them in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) is a configuration error (``TOOL001``, exit ``2``), and naming them in the policy's ``ignored_rules`` or ``severity_overrides`` is ``GOV020``.
+
+*Specified under each rule: SHACL001, INPUT001, TOOL001, SEM001.*
+
 ## Rules
 
 #### TOOL001: Linter tool or configuration failure
@@ -24,8 +41,11 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** tool
 - **Category:** deterministic
+- **Module:** [`external`](#module-external)
 - **Fix:** Correct the configuration or execution error and run the linter again.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** The linter could not do what was asked: an unknown ``--explain`` rule, an unknown ``--select`` or ``--ignore`` selector (the message suggests the closest valid identifiers), a selector syntax error, an unreadable or invalid policy file or catalog, or any other exception raised while configuring (``TOOL001: configuration failed: ...``) or while linting (``TOOL001: lint execution failed: ...``, for example an unwritable ``--write-baseline``); these exit ``2`` with no report.  A report that cannot be written to ``--output`` (a missing directory, a directory, no permission) or encoded as UTF-8 (a lone surrogate in a text report, on ``--output`` or stdout) is ``TOOL001: report output failed: <ExceptionType>: <message>``, exit ``2`` whatever the findings, with no fallback to stdout; an existing ``--output`` file is kept when the report cannot be encoded.  On stdout this depends on the stream's error handler: under UTF-8 mode or a POSIX locale it is ``surrogateescape``, which writes a surrogate in U+DC80-U+DCFF as a raw byte instead of failing, so no TOOL001 is printed.  A selected rule whose module or adapter raised (``failed``) or whose backend is missing (``unsupported``) is listed in the report, which is still written, and then printed as ``TOOL001: rule <ID> <status> for <file>: <detail>``; the exit code is ``2`` even with ``--fail-on never``.  Policy files with an unknown rule or ``policy_version`` are GOV020, not TOOL001. Why error: the run cannot vouch for a result.
 
 *Flagged:* `unknown selector` (run through the command line or an adapter; see `tests/rule_cases/`)
 

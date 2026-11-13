@@ -17,6 +17,23 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module fair_offline
+
+Source: `src/ontolint/rules/fair_offline.py`.
+
+Offline FAIR publishing rules: FAIR004, FAIR006, FAIR007, FAIR011 and FAIR017.
+
+The FAIR catalogue is mostly about what happens over HTTP (does an IRI resolve, does content negotiation return RDF, is the ontology in a registry).  Those checks need a controlled network backend and stay ``proposed``.  The rules here are the subset that is *sound from the file alone*: they inspect the shape of identifiers and metadata values and never claim that anything resolves.
+
+They are publishing checks that do not apply to every ontology, so the ``FAIR`` family is *opt-in* (see `ontolint.profiles.OPT_IN_FAMILIES`): ``--select FAIR`` or ``--profile fair``.
+
+Each rule is deliberately narrow.  ``FAIR004`` only names hosts that are known to be mutable or local (it does not demand a persistent-identifier service, because institutional domains are often fine).  ``FAIR006`` flags only licence values that are not IRIs, or IRIs outside a table of well-known licence families.  ``FAIR007`` compares a version IRI with its ontology IRI.  ``FAIR011`` validates ORCID iD and ROR identifier syntax and checksum, not whether they exist.  ``FAIR017`` needs a ``owl:deprecated`` ontology.
+
 ## Rules
 
 #### FAIR004: Ontology or version IRI on a mutable or local host instead of a persistent identifier
@@ -24,7 +41,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`fair_offline`](#module-fair_offline)
 - **Fix:** Mint the IRI under a persistent-identifier service (w3id.org, purl.org, doi.org) or a domain you control.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `raw github`
 
@@ -163,7 +183,10 @@ ex:A a owl:Class .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`fair_offline`](#module-fair_offline)
 - **Fix:** Point dcterms:license at a licence IRI such as https://spdx.org/licenses/CC-BY-4.0 or a Creative Commons URL.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `plain text`
 
@@ -300,7 +323,10 @@ ex:A a owl:Class ; dcterms:license 'MIT' .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`fair_offline`](#module-fair_offline)
 - **Fix:** Give each release its own immutable owl:versionIRI containing a version or date, never latest or main.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `same as ontology IRI`
 
@@ -429,7 +455,10 @@ Reported: `Version IRI https://w3id.org/example/onto/final.owl has no version or
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`fair_offline`](#module-fair_offline)
 - **Fix:** Use the full ORCID iD (https://orcid.org/0000-0002-1825-0097) or ROR id; check the digits and checksum.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `bad ORCID checksum`
 
@@ -626,7 +655,10 @@ ex:o a owl:Ontology ; rdfs:comment 'orcid.org/bad' .
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** context-dependent
+- **Module:** [`fair_offline`](#module-fair_offline)
 - **Fix:** Add dcterms:isReplacedBy (or obo:IAO_0100001) to the deprecated ontology, naming its replacement.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `deprecated ontology`
 

@@ -17,6 +17,23 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module external
+
+Source: `src/ontolint/rules/external.py`.
+
+Specifications for rules that are not run by a graph rule module.
+
+SHACL001 and SEM001 are produced by adapters (pySHACL, ROBOT) and INPUT001/TOOL001 by the CLI front end.  They carry ``module=""`` because no ``run(ctx)`` function emits them.
+
+SHACL001 and SEM001 are findings: they appear in the report, gate the exit code through ``--fail-on`` (``1``), and obey ``--select``/``--ignore``, baselines and ``severity_overrides``.  INPUT001 and TOOL001 are diagnostics printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them, so naming them in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) is a configuration error (``TOOL001``, exit ``2``), and naming them in the policy's ``ignored_rules`` or ``severity_overrides`` is ``GOV020``.
+
+*Specified under each rule: SHACL001, INPUT001, TOOL001, SEM001.*
+
 ## Rules
 
 #### INPUT001: RDF input could not be parsed
@@ -24,8 +41,11 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`external`](#module-external)
 - **Fix:** Fix RDF syntax or explicitly choose the input serialization format.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without ``--convert-with-robot`` (``UnsupportedSyntax``; the message names the flag and suggests ``robot convert``) or with it and ROBOT cannot convert it (``ConversionFailed``: no Docker, a timeout, ROBOT's first error line, and for Manchester Syntax the reminder that every entity must be declared in the file), or the parser raised (any exception, including recursion and memory exhaustion, and a parse worker that did not start or died).  So is a file of an ``owl:imports`` closure.  The message is ``INPUT001: RDF input parsing failed[ for <file>]: <ExceptionType>: <parser message>``, with a hint when the file holds an HTML page; it quotes the parser's or the operating system's message (which may hold a fragment of the input or the file's path), nothing else.  As for the SEC rules, every argument is attempted, then the run stops with no report and exit ``2``.  Why error: nothing can be linted.
 
 *Flagged:* `unparsable RDF` (run through the command line or an adapter; see `tests/rule_cases/`)
 

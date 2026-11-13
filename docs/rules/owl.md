@@ -17,6 +17,43 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module owl
+
+Source: `src/ontolint/rules/owl.py`.
+
+OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002.
+
+OWL012 (self-equivalence) is emitted by `ontolint.rules.classes`.
+
+All rules read the asserted graph only: no import is followed and nothing is inferred (no ``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means ``ctx.local`` (`ontolint.ownership`); "declared" means typed by the named class in an asserted ``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``, ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
+
+*Specified under each rule: OWL001, OWL002, OWL003, OWL004, OWL005, OWL006, OWL007, OWL008, OWL009, OWL010, OWL011, OWL012, OWL013, OWL014, OWL015.*
+
+### Module owl_axioms
+
+Source: `src/ontolint/rules/owl_axioms.py`.
+
+OWL axiom and property-characteristic rules: OWL016-OWL030.
+
+All rules are asserted-graph checks; nothing is entailed and no reasoner is involved.  Subproperty, subclass and equivalence relations are read as asserted, never closed transitively, except that OWL019 walks the property hierarchy that the OWL 2 definition of a simple property is stated over.  A property's kind is read from its explicit ``rdf:type owl:ObjectProperty`` / ``owl:DatatypeProperty`` only (a characteristic such as ``owl:TransitiveProperty`` does not make it an object property).  No rule is restricted to owned terms: every subject of the graph is checked, imported or not.  Every finding is ``certain`` except OWL023's.  Their specifications:
+
+*Specified under each rule: OWL016, OWL017, OWL018, OWL019, OWL020, OWL021, OWL022, OWL023, OWL024, OWL025, OWL026, OWL027, OWL028, OWL029, OWL030.*
+
+### Module owl_expressions
+
+Source: `src/ontolint/rules/owl_expressions.py`.
+
+OWL class-expression, restriction and individual-assertion rules: OWL031-OWL045.
+
+Every rule is purely graph-local and sound without a reasoner: each reports a structural defect or a direct contradiction visible in the asserted triples (no entailment is materialised, so nothing is inferred through ``rdfs:subClassOf`` chains, equivalences or imports that are not in the graph). Scope is the whole graph: ownership (``ctx.local``) is not consulted, so imported or borrowed axioms present in the graph are checked too.  "Restriction" below means a subject with an asserted ``rdf:type owl:Restriction``; a restriction-shaped node without that type is not judged.  RDF lists are read with `support.list_items`: a list is *malformed* when its head is neither ``rdf:nil`` nor a node with exactly one ``rdf:first`` and one ``rdf:rest`` (this includes literal and plain-IRI heads), when it is cyclic, or when it exceeds a million cells; list cells may be IRIs. Every finding is certain except OWL041's, which is emitted with the default (heuristic) confidence. A blank-node focus is printed as its stable content-based identity.  Terms in messages print as IRIs, ``_:`` stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/XMLSchema#integer>``, ``"x"@en``; a line break is escaped), never as Python reprs.  The specifications:
+
+*Specified under each rule: OWL031, OWL032, OWL033, OWL034, OWL035, OWL036, OWL037, OWL038, OWL039, OWL040, OWL041, OWL042, OWL043, OWL044, OWL045.*
+
 ## Rules
 
 #### OWL001: Undeclared class in subclass axiom
@@ -24,7 +61,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Explicitly declare local classes used in class axioms.
+
+**Specification.** Every IRI that is the subject or the object of an ``rdfs:subClassOf`` triple, is owned, is not in ``ctx.classes`` and is neither ``owl:Thing`` nor ``owl:Nothing``; one finding per IRI. Blank nodes (restrictions, class expressions) and foreign IRIs are not reported; an IRI declared only as something else (a property, an ``owl:Restriction``) is.  ``owl:equivalentClass`` and ``owl:disjointWith`` are not inspected.  Warning, heuristic: SS 5.8.1 requires a class used in an axiom to be declared, but tools infer the type and the IRI may be a typo; locality is a judgement.
 
 *Flagged:* `undeclared superclass`
 
@@ -93,7 +133,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Explicitly declare local properties used in schema axioms.
+
+**Specification.** Every owned IRI that is the subject of an ``rdfs:domain`` or ``rdfs:range`` triple and is not typed by one of the four property types above (a type such as ``owl:TransitiveProperty`` or ``owl:FunctionalProperty`` alone does not count); one finding per IRI and per predicate.  Warning, heuristic: SS 5.8.1 requires the declaration, but RDFS tools read the triple anyway.
 
 *Flagged:* `domain on an undeclared property`
 
@@ -144,7 +187,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty.
+
+**Specification.** Every node, owned or not, IRI or blank, typed both ``owl:ObjectProperty`` and ``owl:DatatypeProperty``.  Annotation-property punning is OWL030's.  Error, certain: SS 5.8.1 forbids one IRI to be declared both an object and a data property, so the graph is not OWL 2 DL; the condition is exact.
 
 *Flagged:* `object and datatype property`
 
@@ -187,7 +233,10 @@ ex:p a owl:ObjectProperty, owl:AnnotationProperty .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Review conjunction semantics of multiple rdfs:domain/rdfs:range; use owl:unionOf if intended.
+
+**Specification.** Every property in ``ctx.properties`` with more than one distinct ``rdfs:domain`` object, and separately every one with more than one distinct ``rdfs:range`` object (named or anonymous: a single ``owl:unionOf`` counts as one).  Undeclared and foreign properties are not reported.  Warning, certain: the count is exact and DS gives the axioms conjunctive meaning, but the intersection may be intended, so the finding asks for review.
 
 *Flagged:* `two domains`
 
@@ -244,7 +293,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Consider declaring domain or explaining why a global domain is inappropriate.
+
+**Specification.** Every property in ``ctx.properties`` with no ``rdfs:domain`` (``rdfs:range``) triple and no ``schema:domainIncludes`` (``schema:rangeIncludes``, ``http`` or ``https``) or ``dcam:domainIncludes`` (``dcam:rangeIncludes``) triple.  Excluded: a property with ``owl:deprecated`` ``true`` or ``1``, and one typed ``owl:AnnotationProperty`` but neither object nor datatype property. A domain implied through ``owl:inverseOf`` or a superproperty is not considered.  Info, heuristic: a missing domain or range is legal and often deliberate.
 
 *Flagged:* `no domain`
 
@@ -321,7 +373,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Consider declaring range or explaining why a global range is inappropriate.
+
+**Specification.** Every property in ``ctx.properties`` with no ``rdfs:domain`` (``rdfs:range``) triple and no ``schema:domainIncludes`` (``schema:rangeIncludes``, ``http`` or ``https``) or ``dcam:domainIncludes`` (``dcam:rangeIncludes``) triple.  Excluded: a property with ``owl:deprecated`` ``true`` or ``1``, and one typed ``owl:AnnotationProperty`` but neither object nor datatype property. A domain implied through ``owl:inverseOf`` or a superproperty is not considered.  Info, heuristic: a missing domain or range is legal and often deliberate.
 
 *Flagged:* `no range`
 
@@ -390,7 +445,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Replace self-inverse modeling with owl:SymmetricProperty when this is intentional.
+
+**Specification.** Every subject of an ``owl:inverseOf`` triple whose object is the same node, declared or not.  Warning, certain: ``InverseObjectProperties(p p)`` is valid and means p is symmetric (DS), so the triple is exact but probably a mistake or an indirect ``owl:SymmetricProperty``.
 
 *Flagged:* `inverse of itself`
 
@@ -425,7 +483,10 @@ ex:p a owl:ObjectProperty, owl:SymmetricProperty .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Review redundant or unintended inverse axioms on symmetric properties.
+
+**Specification.** For every ``owl:inverseOf`` triple between two different nodes, each of the two that is typed ``owl:SymmetricProperty`` (the axiom is symmetric, so the symmetric property may be on either side); the message names the other one.  A self-inverse is OWL007's.  Warning, heuristic: valid OWL 2, but it makes the two properties equivalent, which is rarely intended.
 
 *Flagged:* `symmetric with inverse`
 
@@ -466,7 +527,10 @@ ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf ex:p .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Use object properties for owl:inverseOf and symmetric/transitive property semantics.
+
+**Specification.** Every subject of an ``owl:inverseOf`` triple where either side is typed ``owl:DatatypeProperty``, and every node typed ``owl:DatatypeProperty`` and one of ``owl:SymmetricProperty``, ``owl:TransitiveProperty``, ``owl:AsymmetricProperty`` or ``owl:InverseFunctionalProperty``.  ``owl:FunctionalProperty`` is allowed on data properties; ``owl:ReflexiveProperty`` and ``owl:IrreflexiveProperty`` are OWL016's.  Ownership is not checked. Warning, certain: these axioms take object property expressions only (SS 9.2, DS Table 6), so the graph is not OWL 2 DL.
 
 *Flagged:* `inverse of a datatype property`
 
@@ -545,7 +609,10 @@ ex:o a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty .
 - **Severity:** info
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Review an owl:propertyChainAxiom whose RDF list has only one element.
+
+**Specification.** Every subject of an ``owl:propertyChainAxiom`` whose object is not a list of two or more members, one finding per kind of defect: a well-formed RDF list of exactly one member; the empty list (``rdf:nil``); or no well-formed RDF list at all (a literal, an IRI or blank node without exactly one ``rdf:first`` and one ``rdf:rest``, a cyclic list), as `support.list_items` reads it. Ownership is not checked.  Info, certain: SS 9.2.1 and MAP Table 16 require at least two chain members, so the axiom is not OWL 2.
 
 *Flagged:* `one-operand chain`
 
@@ -612,7 +679,10 @@ ex:p owl:propertyChainAxiom ( ex:q ex:r ex:s ) .
 - **Severity:** info
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Check intended allValuesFrom semantics; it does not imply existence of a value.
+
+**Specification.** Every node with an ``owl:allValuesFrom`` value that does not also carry ``owl:someValuesFrom``, unless: the filler is a datatype (an IRI in the XSD namespace or one of the other datatype IRIs OWL022 and OWL040 know, `support.LITERAL_RANGES`: ``rdfs:Literal``, ``owl:real``, ``owl:rational``, ``rdf:PlainLiteral``, ``rdf:XMLLiteral``, ``rdf:langString``, ``rdf:HTML``, ``rdf:JSON``; a node typed ``rdfs:Datatype``; or, unlike those two error rules, an untyped node with ``owl:onDatatype`` / ``owl:datatypeComplementOf``, the two constructors that build nothing but a data range, so a heuristic may spare them; an untyped ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:oneOf`` filler is not inspected for datatype members or literals and is reported); one ``owl:onProperty`` value is typed ``owl:DatatypeProperty``; a *sibling* restriction on one of its ``owl:onProperty`` values requires a value (``owl:someValuesFrom``, ``owl:hasValue``, ``owl:hasSelf``, or ``owl:minCardinality``, ``owl:minQualifiedCardinality``, ``owl:cardinality`` or ``owl:qualifiedCardinality`` of at least 1); or the owning term (the first IRI reached upwards through incoming triples, at most eight hops) is a foreign IRI.  Siblings are the other ``rdfs:subClassOf`` / ``owl:equivalentClass`` objects of a class holding the restriction that way, the other members of an ``owl:intersectionOf`` list holding it, and the superclasses and equivalents of the classes defined by that intersection; inherited existentials are not followed.  The focus is the owning term; for a restriction no IRI holds, the smallest IRI it is ``rdfs:subClassOf`` / ``owl:equivalentClass`` of (a general class axiom), else the blank node itself.  Info, heuristic: ``ObjectAllValuesFrom`` is satisfied vacuously by an individual with no value (DS Table 4), which is legal but often not what the modeller meant.
 
 *Flagged:* `allValuesFrom alone (blank-node focus)`
 
@@ -775,7 +845,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** info
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Review the use of owl:equivalentClass on the class itself.
+
+**Specification.** (in `ontolint.rules.classes`) Every class in ``ctx.classes`` that is the subject and the object of one ``owl:equivalentClass`` triple.  Info, heuristic: a tautology, harmless but noise.
 
 *Flagged:* `class equivalent to itself`
 
@@ -796,7 +869,10 @@ ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** An object-property assertion should point to a resource, not a literal.
+
+**Specification.** Every subject of a triple whose predicate is typed ``owl:ObjectProperty`` (owned or not) and whose object is a literal; one finding per subject, property and literal, which the message prints in one-line N-Triples (a line break escaped).  Warning, certain: an object property assertion needs an individual (DS 2.2: literals are not in the object domain), so the graph is not OWL 2 DL.
 
 *Flagged:* `object property with literal value`
 
@@ -839,7 +915,10 @@ ex:i ex:p "text" .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** A datatype-property assertion should point to a literal.
+
+**Specification.** Every subject of a triple whose predicate is typed ``owl:DatatypeProperty`` (owned or not) and whose object is an IRI or a blank node.  Warning, certain: the converse of OWL013 (MAP 3.2.5 maps such a triple to no axiom).
 
 *Flagged:* `datatype property with resource value`
 
@@ -874,7 +953,10 @@ ex:i ex:d ex:j .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** heuristic
+- **Module:** [`owl`](#module-owl)
 - **Fix:** Declare a local predicate as a property (or exclude it from schema-only policy).
+
+**Specification.** Only when an explicit ``base`` is configured: every owned predicate of the graph not in ``ctx.properties`` (built-in and foreign predicates are not owned).  Warning, heuristic: SS 5.8.1 wants the declaration, and locality is the configured base's judgement.
 
 *Flagged:* `undeclared local predicate`
 
@@ -939,7 +1021,10 @@ Linter options: `base='https://example.test/onto#'`.
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove owl:ReflexiveProperty/owl:IrreflexiveProperty; they apply to object properties only.
+
+**Specification.** A node typed ``owl:DatatypeProperty`` and ``owl:ReflexiveProperty`` or ``owl:IrreflexiveProperty``; one finding per characteristic.  The other object-only characteristics (symmetric, asymmetric, transitive, inverse-functional) on a datatype property are OWL009's. *Error:* (ir)reflexivity axioms take an object property expression, so the graph is not OWL 2 DL.
 
 *Flagged:* `reflexive datatype property`
 
@@ -980,7 +1065,10 @@ ex:d a owl:DatatypeProperty, owl:SymmetricProperty .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Keep only one of owl:SymmetricProperty and owl:AsymmetricProperty; together they leave the property empty.
+
+**Specification.** A node typed both ``owl:SymmetricProperty`` and ``owl:AsymmetricProperty``. *Error:* consistent, but the property can hold between no individuals (an unsatisfiable property).
 
 *Flagged:* `symmetric and asymmetric`
 
@@ -1015,7 +1103,10 @@ ex:p a owl:ObjectProperty, owl:AsymmetricProperty .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove the contradictory characteristic; a reflexive property cannot be irreflexive or asymmetric.
+
+**Specification.** A node typed ``owl:ReflexiveProperty`` and ``owl:IrreflexiveProperty``, or ``owl:ReflexiveProperty`` and ``owl:AsymmetricProperty`` (asymmetry implies irreflexivity); one finding per pair.  Reflexive with symmetric, and irreflexive with asymmetric, are compatible. *Error:* every individual must then relate to itself and must not, so the ontology is inconsistent.
 
 *Flagged:* `reflexive and irreflexive`
 
@@ -1050,7 +1141,10 @@ ex:p a owl:ObjectProperty, owl:IrreflexiveProperty, owl:AsymmetricProperty .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Drop functional, inverse-functional, irreflexive or asymmetric from transitive or chain-defined properties.
+
+**Specification.** A node typed ``owl:FunctionalProperty``, ``owl:InverseFunctionalProperty``, ``owl:IrreflexiveProperty`` or ``owl:AsymmetricProperty`` that is non-simple; one finding per characteristic.  Non-simple is OWL 2 Structural Specification (SS) section 11.1: a property is *composite* when it or its inverse is typed ``owl:TransitiveProperty`` or is the subject of an ``owl:propertyChainAxiom`` whose well-formed list has at least two operands, or when it is ``owl:topObjectProperty`` or ``owl:bottomObjectProperty``; it is *non-simple* when a composite property reaches it through the hierarchy ``→*``, built from ``rdfs:subPropertyOf`` (upwards only), ``owl:equivalentProperty`` and ``owl:inverseOf`` (both ways), where a blank ``[ owl:inverseOf x ]`` stands for ``x`` (``owl:SymmetricProperty`` adds nothing, as a property and its inverse are composite together).  A node itself typed transitive or chain-defined keeps the message "Property is transitive (non-simple) ..." (or "defined by a property chain"); a property non-simple through another names the first composite, in IRI order, that reaches it.  The other axioms SS 11.2 restricts to simple properties are reported too: on a node typed ``owl:Restriction`` without ``owl:onDataRange``, one finding per ``owl:onProperty`` value (an IRI or a blank inverse expression, printed ``ObjectInverseOf(x)``) that is non-simple and per predicate it carries among the six (qualified) cardinalities and ``owl:hasSelf``, focused on the restriction and naming its owning IRI when it has one; for ``p owl:propertyDisjointWith q``, one finding on each non-simple side, naming the other; for a node typed ``owl:AllDisjointProperties``, one finding per non-simple member of each well-formed ``owl:members`` list of at most 200 members, focused on the axiom.  Excluded: a property typed ``owl:DatatypeProperty`` and not ``owl:ObjectProperty`` reached only through the hierarchy (a kind mismatch, OWL021's), and in a restriction or disjointness axiom whatever its type; a characteristic typed on an anonymous inverse expression (judged only when the expression is itself transitive or chain-defined); a sub-property of a composite property, which may be simple; ``owl:onProperties`` (data properties only); a restriction-shaped node not typed ``owl:Restriction``; and the other global restriction of SS 11.2, the regularity of the property hierarchy.  A one-operand chain is OWL010's and makes nothing composite.  *Error:* violates the OWL 2 DL global restriction on simple properties (SS 11.2).
 
 *Flagged:* `transitive functional`
 
@@ -1325,7 +1419,10 @@ ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:p . [ owl:inverseOf ex:p ]
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Break the owl:subPropertyOf cycle or replace it with owl:equivalentProperty if the properties are equivalent.
+
+**Specification.** A strongly connected component of two or more IRIs in the asserted ``rdfs:subPropertyOf`` graph; one finding per component, on its lexically first member, naming all of them.  Self-loops, edges to or from blank nodes, and ``owl:equivalentProperty`` are ignored. *Warning:* valid OWL; the cycle only entails that its members are equivalent, which is usually unintended.
 
 *Flagged:* `three-property cycle`
 
@@ -1378,7 +1475,10 @@ ex:a rdfs:subPropertyOf ex:b . ex:b owl:equivalentProperty ex:a .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Relate object properties only to object properties and datatype properties only to datatype properties.
+
+**Specification.** A triple ``p rdfs:subPropertyOf q`` or ``p owl:equivalentProperty q`` where one side is typed ``owl:ObjectProperty`` and not ``owl:DatatypeProperty`` and the other the reverse; reported on ``p``.  An untyped side, or one typed both kinds (OWL003's), is not reported. *Error:* sub- and equivalent-property axioms relate properties of one kind; not OWL 2 DL.
 
 *Flagged:* `object sub-property of datatype property`
 
@@ -1440,7 +1540,10 @@ ex:t a owl:TransitiveProperty ; rdfs:subPropertyOf ex:d . ex:d a owl:DatatypePro
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Use datatype ranges for datatype properties and class ranges for object properties.
+
+**Specification.** An ``rdfs:range`` IRI that conflicts with the kind of a property typed one kind only.  For an object property: a datatype, that is an ``xsd:`` IRI, ``rdfs:Literal``, ``rdf:langString``, ``rdf:XMLLiteral``, ``rdf:HTML``, ``rdf:JSON``, ``rdf:PlainLiteral``, ``owl:real``, ``owl:rational`` (`support.LITERAL_RANGES`, shared with OWL011 and OWL040) or any node typed ``rdfs:Datatype``.  For a datatype property: ``owl:Thing`` or a node typed ``owl:Class``.  A range typed both ``owl:Class`` and ``rdfs:Datatype`` (OWL030's) and a blank-node range are not reported. *Error:* an object property's range is a class expression and a datatype property's a data range; not OWL 2 DL.
 
 *Flagged:* `object property with xsd range`
 
@@ -1560,7 +1663,10 @@ ex:d a owl:DatatypeProperty ; rdfs:range ex:C .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other.
+
+**Specification.** An IRI related by ``owl:inverseOf``, in either direction, to two or more other IRIs; one finding per such property.  Self-inverse and blank-node inverses are ignored (OWL007 has the former). *Warning, heuristic:* valid OWL; the inverses are entailed equivalent, which may be intended.
 
 *Flagged:* `two inverses`
 
@@ -1607,7 +1713,10 @@ ex:p owl:inverseOf ex:q, [ owl:inverseOf ex:r ] .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove the disjointness or the sub-property/equivalence axiom; the property can have no assertions.
+
+**Specification.** Two properties declared disjoint, by ``owl:propertyDisjointWith`` or as members of one ``owl:AllDisjointProperties`` list, that are also related by an asserted ``rdfs:subPropertyOf`` or ``owl:equivalentProperty`` in either direction, or a property declared disjoint with itself (including a member repeated in a group).  One finding per unordered pair, on its lexically first member.  Pairs involving ``owl:bottomObjectProperty`` or ``owl:bottomDataProperty`` are skipped, as is a group whose ``owl:members`` list is malformed or longer than 200 members. *Error:* the sub-property (or both equivalents) can hold between nothing: an unsatisfiable property.
 
 *Flagged:* `disjoint with itself`
 
@@ -1704,7 +1813,10 @@ owl:bottomDataProperty owl:propertyDisjointWith owl:bottomDataProperty .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove the disjointness or the subclass/equivalence axiom; the class cannot have instances.
+
+**Specification.** The same as OWL024 for classes: ``owl:disjointWith`` and ``owl:AllDisjointClasses`` against ``rdfs:subClassOf`` and ``owl:equivalentClass``, skipping pairs with ``owl:Nothing``.  An intersection of disjoint classes is a class expression, OWL043's; a repeated group member is also OWL045's.  *Error:* the subclass (or both equivalents) is unsatisfiable.
 
 *Flagged:* `disjoint with itself`
 
@@ -1809,7 +1921,10 @@ ex:A owl:disjointWith ex:B . ex:C owl:intersectionOf ( ex:A ex:B ) .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove either the owl:sameAs or the owl:differentFrom assertion; the ontology is inconsistent.
+
+**Specification.** A triple ``a owl:differentFrom a``, or ``a owl:differentFrom b`` with ``a owl:sameAs b`` or ``b owl:sameAs a``; one finding per unordered pair.  ``owl:AllDifferent`` and ``owl:sameAs`` chains are OWL044's.  *Error:* the ontology is inconsistent.
 
 *Flagged:* `same and different`
 
@@ -1870,7 +1985,10 @@ ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:b )
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove the NegativePropertyAssertion or the contradicting positive triple.
+
+**Specification.** An ``owl:NegativePropertyAssertion`` whose ``owl:sourceIndividual``, ``owl:assertionProperty`` and ``owl:targetIndividual`` or ``owl:targetValue`` form a triple that is asserted; reported on the source.  Literals match as RDF terms after RDFLib's lexical normalisation (``"01"^^xsd:integer`` matches ``"1"^^xsd:integer``; ``"1.0"^^xsd:decimal`` does not), and an incomplete assertion is skipped.  *Error:* inconsistent.
 
 *Flagged:* `negated individual assertion that is asserted`
 
@@ -1931,7 +2049,10 @@ ex:a ex:p "1"^^xsd:integer . [] a owl:NegativePropertyAssertion ; owl:sourceIndi
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove the assertion relating an individual to itself or drop owl:IrreflexiveProperty.
+
+**Specification.** A triple ``a p a`` where ``p`` is typed ``owl:IrreflexiveProperty``; reported on ``a``. *Error:* inconsistent.
 
 *Flagged:* `irreflexive property used reflexively`
 
@@ -1964,7 +2085,10 @@ ex:p a owl:IrreflexiveProperty . ex:q rdfs:subPropertyOf ex:p . ex:a ex:q ex:a .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove one direction (or a self-assertion) or drop owl:AsymmetricProperty.
+
+**Specification.** For ``p`` typed ``owl:AsymmetricProperty``: a triple ``a p a``, or both ``a p b`` and ``b p a`` (reported once, on the lexically lesser node).  Literal objects are ignored. *Error:* inconsistent.
 
 *Flagged:* `both directions`
 
@@ -2011,7 +2135,10 @@ ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b . ex:b ex:q ex:a .
 - **Severity:** error
 - **Scope:** term
 - **Category:** deterministic
+- **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Do not declare one IRI as both class and datatype, or as annotation property and object/datatype property.
+
+**Specification.** A node typed both ``owl:Class`` and ``rdfs:Datatype``, or ``owl:AnnotationProperty`` and ``owl:ObjectProperty`` or ``owl:DatatypeProperty``.  Object with datatype property is OWL003's; class with property or individual punning is legal and not reported.  *Error:* breaks the OWL 2 typing constraints (Structural Specification section 5.8.1); not OWL 2 DL.
 
 *Flagged:* `class and datatype`
 
@@ -2072,7 +2199,10 @@ ex:T a owl:Class, rdfs:Class .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Give owl:unionOf, owl:intersectionOf, owl:oneOf and owl:disjointUnionOf a well-formed, non-empty RDF list.
+
+**Specification.** For every subject of ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` (named or anonymous, class or data range), one finding per triple whose object is a malformed list or the empty list (``()``, ``rdf:nil``), focused on that subject.  Error: OWL 2 requires at least two operands for unions, intersections and disjoint unions and at least one for enumerations (Structural Specification sections 8, 7 and 9.1.4), so the triple does not map to an OWL 2 DL expression or axiom.  A one-member list is OWL032's.
 
 *Flagged:* `empty union`
 
@@ -2197,7 +2327,10 @@ ex:C owl:unionOf ( ex:A ) .
 - **Severity:** info
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Replace an owl:unionOf or owl:intersectionOf with one operand by that operand.
+
+**Specification.** An ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:disjointUnionOf`` whose well-formed list has exactly one member, focused on the subject; the message names the operand.  ``owl:oneOf`` with one member is a valid enumeration and is not reported.  Info: the expression means its operand (a one-member disjoint union only makes the class equivalent to it), so it is redundant rather than wrong (it is, however, outside the OWL 2 DL grammar, which requires two operands, SS 8.1 and 9.1.4).
 
 *Flagged:* `one-operand union`
 
@@ -2258,7 +2391,10 @@ ex:C owl:intersectionOf () .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Remove the repeated member from the owl:unionOf, owl:intersectionOf or owl:oneOf list.
+
+**Specification.** An ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` whose well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and ``"1"^^xsd:integer`` differ; structurally equal blank-node expressions are not compared), one finding per list, focused on the subject.  Warning: in a union, intersection or enumeration the repeat is semantically harmless but usually a copy-paste slip where another operand was meant; in a disjoint union it is a defect either way, as read as a set it may leave one operand (SS 9.1.4 needs two) and read as a list it makes the repeated class disjoint with itself, so empty.
 
 *Flagged:* `duplicate union member`
 
@@ -2341,7 +2477,10 @@ ex:C owl:oneOf _:l . _:l rdf:first ex:i .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Give every owl:Restriction exactly one owl:onProperty (or owl:onProperties) pointing to a property.
+
+**Specification.** A restriction with neither ``owl:onProperty`` nor ``owl:onProperties``; with more than one ``owl:onProperty`` value; with both ``owl:onProperty`` and ``owl:onProperties``; with more than one ``owl:onProperties`` value; or (one finding per value) whose ``owl:onProperty`` is a literal. A blank-node property (an ``owl:inverseOf`` expression) is accepted, one ``owl:onProperties`` alone satisfies the rule and its list is not checked, and an IRI property is not checked against the property declarations.  The focus is the restriction; when it belongs to a named term (see `support.owning_term`) the message starts with that term and the restricted IRIs, as for every restriction rule up to OWL040.  Error: the RDF mapping (section 3.2) parses a restriction only with exactly one property, so it is not an OWL 2 class expression.
 
 *Flagged:* `no onProperty`
 
@@ -2426,7 +2565,10 @@ ex:A a owl:Class . ex:B a owl:Class . [] a owl:Restriction ; owl:onProperty ex:p
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Add an owl:someValuesFrom, owl:allValuesFrom, owl:hasValue, owl:hasSelf or cardinality constraint.
+
+**Specification.** A restriction with none of ``owl:someValuesFrom``, ``owl:allValuesFrom``, ``owl:hasValue``, ``owl:hasSelf`` or the six (qualified) cardinality predicates, whatever their values (``owl:onClass`` or ``owl:onDataRange`` alone does not count); with two or more of them, counted as distinct triples (two values of one predicate count twice, and the message lists the predicates); and, one finding per value, an ``owl:hasSelf`` that is not an ``xsd:boolean`` literal whose value is true (``"1"^^xsd:boolean`` is true and is accepted; ``false``, a string, an integer and an IRI are not).  Invalid cardinality values are OWL036's; a restriction with a minimum above its maximum also gets OWL037's finding, a distinct defect.  Error: every restriction pattern of MAP Table 15 consumes exactly one constraint triple, and ``ObjectHasSelf`` is mapped from ``owl:hasSelf "true"^^xsd:boolean``, so the restriction does not map to any OWL 2 class expression.
 
 *Flagged:* `bare restriction`
 
@@ -2587,7 +2729,10 @@ Reported: `owl:hasSelf value https://example.test/onto#yes is not true.`
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Use a non-negative integer for cardinalities and add owl:onClass/owl:onDataRange to qualified ones.
+
+**Specification.** For each of ``owl:minCardinality``, ``owl:maxCardinality``, ``owl:cardinality`` and their ``Qualified`` forms, one finding per value that is not a literal whose stripped lexical form is in the xsd:nonNegativeInteger lexical space (digits with an optional ``+``, or ``-`` before zeros); the literal's datatype is not checked.  Separately, one finding when a qualified cardinality is present without ``owl:onClass`` and without ``owl:onDataRange``, and one when it has more than one filler value over the two (both predicates, or two values of one; the message lists them). ``owl:onClass`` or ``owl:onDataRange`` next to an unqualified cardinality only is not judged. Error: a negative, fractional or non-literal cardinality, or a qualified cardinality without exactly one filler, has no OWL 2 mapping (MAP Table 15 consumes one ``owl:onClass`` or one ``owl:onDataRange`` triple).
 
 *Flagged:* `negative cardinality`
 
@@ -2734,7 +2879,10 @@ Reported: `Qualified cardinality has more than one filler (owl:onClass, owl:onCl
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Make the lower cardinality bound at most the upper bound within one restriction.
+
+**Specification.** Within one restriction and separately for the unqualified and the qualified predicates, the largest of the minimum and exact values exceeds the smallest of the maximum and exact values (so two different exact values also conflict); and, across the two groups, the largest qualified minimum or exact value exceeds the smallest unqualified maximum or exact value (``owl:maxCardinality 0`` against ``owl:minQualifiedCardinality 1``).  Only valid values (as in OWL036) are compared; an unqualified minimum against a qualified maximum is no conflict, and bounds on different restrictions are not combined.  One restriction carrying two bounds is also OWL035's (several constraints). Error: no individual can satisfy the bounds (under the Direct Semantics the values that satisfy a qualified filler are among all the values, so they are at most as many), which is a contradiction in the asserted triples.
 
 *Flagged:* `min above max`
 
@@ -2854,7 +3002,10 @@ ex:C rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:minCardinal
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Remove the restriction or use a satisfiable filler; no individual can be an instance of owl:Nothing.
+
+**Specification.** A restriction with ``owl:someValuesFrom owl:Nothing``, or with ``owl:onClass owl:Nothing`` and a valid ``owl:minQualifiedCardinality`` or ``owl:qualifiedCardinality`` above 0. ``owl:allValuesFrom owl:Nothing``, a 0 or maximum bound, and an unqualified cardinality next to ``owl:onClass owl:Nothing`` are not reported; a filler that is merely equivalent to ``owl:Nothing`` is not inferred.  Error: under the Direct Semantics the restriction denotes the empty set, so a class that it describes or restricts is unsatisfiable.
 
 *Flagged:* `someValuesFrom Nothing`
 
@@ -2929,7 +3080,10 @@ ex:E owl:equivalentClass owl:Nothing . [] a owl:Restriction ; owl:onProperty ex:
 - **Severity:** info
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Remove a restriction that every individual satisfies (allValuesFrom owl:Thing, minimum cardinality 0).
+
+**Specification.** A restriction with ``owl:allValuesFrom owl:Thing``, or with a valid ``owl:minCardinality`` or ``owl:minQualifiedCardinality`` of 0 (one finding each).  Exact or maximum 0 and ``owl:someValuesFrom owl:Thing`` are not vacuous.  Info: the restriction is equivalent to ``owl:Thing`` and adds nothing, which is redundant but not wrong.
 
 *Flagged:* `allValuesFrom Thing`
 
@@ -3004,7 +3158,10 @@ Reported: `owl:minCardinality 0 holds for every individual.`
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Use class fillers and resources with object properties, and datatypes and literals with datatype properties.
+
+**Specification.** For every IRI ``owl:onProperty`` value with an asserted ``rdf:type`` of exactly one of ``owl:ObjectProperty`` and ``owl:DatatypeProperty`` (undeclared, punned and blank-node properties and ``owl:onProperties`` are not judged).  On an object property: a literal ``owl:hasValue``; a ``owl:someValuesFrom``/``owl:allValuesFrom`` filler that is datatype-like (an IRI in the XSD namespace; ``rdfs:Literal``, ``rdf:langString``, ``rdf:PlainLiteral``, ``rdf:XMLLiteral``, ``rdf:HTML``, ``rdf:JSON``, ``owl:real`` or ``owl:rational``, the OWL 2 datatype map's, RDF 1.1's and JSON-LD 1.1's datatypes outside it, as OWL011 and OWL022 read them; or a node typed ``rdfs:Datatype``; an untyped ``owl:onDatatype`` node is not, as MAP types every data range ``rdfs:Datatype``); any ``owl:onDataRange``.  On a datatype property: a non-literal ``owl:hasValue``; a filler that is class-like (``owl:Thing``, ``owl:Nothing``, an owned declared class, or a node typed ``owl:Class`` or ``owl:Restriction``) and not datatype-like; any ``owl:onClass``.  One finding per offending value; fillers of unknown kind are not judged.  Error: OWL 2 DL keeps the object and data property vocabularies apart, so the restriction has no OWL 2 DL mapping.
 
 *Flagged:* `literal hasValue on object property`
 
@@ -3225,7 +3382,10 @@ ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Break the odd-length owl:complementOf cycle; a class cannot be the complement of itself.
+
+**Specification.** Treat each ``owl:complementOf`` triple with a non-literal object as an undirected edge (``A = not B`` iff ``B = not A``) and two-colour every connected component iteratively (no depth bound); one finding per component that contains an odd cycle, a self-loop included, focused on the first node, in a depth-first walk over sorted nodes, with an edge to a node of its own colour. Even cycles (``A = not B``, ``B = not A``) are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error: an odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is inconsistent under the Direct Semantics.
 
 *Flagged:* `self complement`
 
@@ -3310,7 +3470,10 @@ ex:A owl:complementOf ex:B . ex:B owl:equivalentClass ex:A .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Remove the axiom relating a class to its own owl:complementOf expression.
+
+**Specification.** For each ``E owl:complementOf C`` with a non-literal ``C``: ``C rdfs:subClassOf E`` ("subclass of its own complement"), and ``C owl:equivalentClass E`` asserted in either direction ("equivalent"), focused on ``C``; ``E`` may be named or anonymous.  ``E rdfs:subClassOf C`` (it makes ``C`` equal to ``owl:Thing``) and paths through intermediate classes are not reported. Error: ``C`` is unsatisfiable (subclass case) or the ontology is inconsistent (equivalence case).
 
 *Flagged:* `subclass of own complement`
 
@@ -3381,7 +3544,10 @@ ex:A owl:complementOf "x" ; rdfs:subClassOf "x" .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Review an intersection of complements/disjoint classes or a union of a class and its complement.
+
+**Specification.** For every ``owl:unionOf`` or ``owl:intersectionOf`` with a well-formed, non-empty list (one-member lists included): one finding per pair of members where one is asserted ``owl:complementOf`` the other, or, for an intersection only, ``owl:disjointWith`` the other (either direction); and a finding for a union containing ``owl:Thing`` or an intersection containing ``owl:Nothing``.  Disjointness from ``owl:AllDisjointClasses`` or ``owl:disjointUnionOf``, nested operands and ``owl:oneOf`` are not considered.  The focus is the owning named term of the expression and the message names where it is used (``in the rdfs:subClassOf of ex:C``).  Warning: the union is equivalent to ``owl:Thing`` or the intersection is unsatisfiable; this is valid OWL but almost always a modelling slip.  Disjoint classes linked by a subclass or equivalence axiom are OWL025's.
 
 *Flagged:* `intersection with complement`
 
@@ -3506,7 +3672,10 @@ ex:A owl:disjointWith ex:B ; owl:equivalentClass ex:B .
 - **Severity:** error
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Remove the conflicting owl:sameAs or owl:differentFrom assertion; nothing differs from itself.
+
+**Specification.** Build the ``owl:sameAs`` equivalence classes (union-find over all non-literal objects, so chains through blank nodes and through a shared individual count).  Report each ``a owl:differentFrom b`` (``b`` not a literal) whose ends are in one class, focused on ``a``, except a direct conflict (``a = b``, or ``owl:sameAs`` asserted between them in either direction), which is OWL026's.  Also report, on the axiom, each pair of distinct members of an ``owl:AllDifferent`` list (``owl:members`` or ``owl:distinctMembers``) that are in one class, including directly ``owl:sameAs`` members; repeated members and malformed lists are OWL045's.  Error: ``owl:sameAs`` is an equivalence relation, so the ontology is inconsistent under the Direct Semantics.
 
 *Flagged:* `transitive same`
 
@@ -3620,7 +3789,10 @@ ex:a owl:sameAs ex:b . [] owl:members ( ex:a ex:b ) .
 - **Severity:** warning
 - **Scope:** axiom
 - **Category:** deterministic
+- **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Give the axiom one well-formed member list with at least two distinct members.
+
+**Specification.** For each node typed ``owl:AllDifferent`` (member lists on ``owl:members`` or ``owl:distinctMembers``) or ``owl:AllDisjointClasses`` (``owl:members`` only), focused on the axiom: no member list; more than one; and per list, malformed, fewer than two members, or a repeated member.  ``owl:AllDisjointProperties`` and untyped nodes are not judged.  Warning: an OWL 2 parser cannot map the axiom (RDF mapping section 3.2) and drops it, so the intended distinctness or disjointness silently disappears.
 
 *Flagged:* `AllDifferent without list`
 

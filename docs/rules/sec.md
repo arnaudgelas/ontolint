@@ -17,6 +17,48 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module imports_note
+
+Source: `src/ontolint/rules/imports_note.py`.
+
+Run note about ``owl:imports`` that ontolint did not follow: SEC007.
+
+ontolint never fetches ``owl:imports`` from the network (deterministic output).  By default every rule judges the asserted graph of the one file it was given; with ``--follow-imports`` or ``--catalog`` the imports that resolve to local files are loaded too (`ontolint.imports`), and only the others are listed here.  An unfollowed import is a limit of the result, not a defect of the ontology, hence the INFO severity: the finding is one summary line per file (focus ``(imports)``) naming the imports that were skipped, so a reader knows what the other rules could not see.  It never fails a run by default and can be silenced with ``--ignore SEC007``.  Pinning of the imports is GOV002's concern, not this rule's.
+
+### Module safe_loader
+
+Source: `src/ontolint/rules/safe_loader.py`.
+
+Specifications for the safe-loader rules, emitted by the CLI front end while it reads input.
+
+``SEC001``, ``SEC002``, ``SEC003``, ``SEC006``, ``SEC009``, ``SEC010``, ``SEC011``, ``SEC013`` and ``SEC015`` are raised as `ontolint.loader.InputRejected` by `ontolint.loader` and `ontolint.imports` (``module=""``): no graph exists yet when they apply, so there is no ``run(ctx)``.  The other SEC rules (``SEC004``, ``SEC005``, ``SEC007``, ``SEC008``, ``SEC012``, ``SEC014``) are graph rules in `ontolint.rules.safety` and `ontolint.rules.imports_note`.
+
+What every one of them does to the run (``cli._lint``):
+
+* It is a refusal, not a finding.  The CLI prints ``<ID>: <message>`` on stderr, writes no report (nothing on stdout, no ``--output`` file, no baseline) and exits ``2`` whatever ``--fail-on`` says.  Every ontology argument is still loaded first, so each refused or unparsable input gets its own line; with several inputs a message that does not already name the file ends in `` for <file>``.  The ``--shapes`` file is loaded (through the same checks) only once every input loaded; a refused ``--catalog`` or ``--import-dir`` folder (``SEC015``) stops the run before any input.
+* ``--select``, ``--ignore``, profiles, ``ignored_rules`` and ``severity_overrides`` do not affect them: the loader never consults the selection.  Naming one in ``--select`` or ``--ignore`` (by id; the mixed ``SEC`` family applies to the graph SEC rules only) is therefore a configuration error, ``TOOL001`` and exit ``2`` before any input is read, and naming one in ``ignored_rules`` or ``severity_overrides`` is ``GOV020``, exit ``2``.  The limits are per document: each ontology argument, the shapes file, each file of an ``owl:imports`` closure and each file of an ``--import-dir`` (a refused ``--import-dir`` file is skipped with a ``TOOL010`` warning naming it and the refusal, and the run goes on; a ``catalog-v001.xml`` there, and a file that does not parse, are skipped silently, since the folder may hold catalogs and non-RDF files).
+* Messages name the file by its report path (relative to the working directory, else absolute) and, for a limit, its value and policy key; they quote what was refused (a context IRI, a blocked address, an entity name) but never the content of a file outside the input: no external entity, context or import is ever read.
+* Why ``error`` and ``deterministic``: the run cannot give any verdict on an input it refused, and every trigger is an exact comparison of a measured quantity with a configured limit, or a syntactic fact about the bytes.
+
+The rules:
+
+*Specified under each rule: SEC001, SEC002, SEC003, SEC006, SEC009, SEC010, SEC011, SEC013, SEC015.*
+
+### Module safety
+
+Source: `src/ontolint/rules/safety.py`.
+
+Graph-local security hygiene rules: SEC004, SEC005, SEC008, SEC012 and SEC014.
+
+These rules inspect the already-parsed RDFLib graph only; parser, network and file-system policy belong to the loader.  Every traversal is iterative so hostile inputs cannot exhaust the stack.
+
+*Specified under each rule: SEC014.*
+
 ## Rules
 
 #### SEC001: Input file exceeds the size limit
@@ -24,8 +66,11 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Split the ontology, or raise --max-input-bytes (or max_input_bytes in the policy) if the size is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** Before parsing, the file's size from ``fstat`` exceeds ``max_input_bytes`` (``--max-input-bytes``, default 64 MiB = 67108864 bytes), or the file grew past it while being read (at most ``limit + 1`` bytes are ever read).  A file of exactly the limit is accepted.  OASIS catalogs (``--catalog`` and every ``catalog-v001.xml`` found next to an input or an imported file) are bounded by the same key.
 
 *Flagged:* `one byte over the limit` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -36,8 +81,11 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Lint a smaller module, or raise --max-triples (or max_triples in the policy) if the size is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** While the parser builds the graph, the store holds more than ``max_triples`` (``--max-triples``, default 5,000,000) distinct triples, over all named graphs: the parse stops at the first triple past the limit, in-process or in the SEC003 worker, so memory is bounded too.  Exactly ``max_triples`` triples are accepted. The same key bounds a whole import closure (SEC015).
 
 *Flagged:* `four triples with a limit of three` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -48,8 +96,11 @@ All examples assume these prefixes:
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Lint a smaller module, or raise --max-parse-seconds (or max_parse_seconds in the policy) if it is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** Only when ``max_parse_seconds`` (``--max-parse-seconds``; a number in ``(0, 86400]``; default unset, no budget) is set: the parse then runs in a ``spawn`` worker process and the parent waits that many wall-clock seconds, counted from the moment the worker reports it is ready (interpreter start-up and imports have their own 120 s limit and fail as INPUT001) until its answer arrives.  On expiry the worker is terminated, then killed after a 2 s grace.  The budget covers parsing and encoding the graph in the worker; the parent's size, compression and DTD checks and its decoding of the answer are not counted.
 
 *Flagged:* `125k triples with a 50 ms budget` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -62,7 +113,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safety`](#module-safety)
 - **Fix:** Flatten the structure or give intermediate nodes IRIs; recursive consumers can exhaust their stack on it.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `101 nested blank nodes` (built programmatically; see `tests/rule_cases/`)
 
@@ -93,7 +147,10 @@ _:a ex:p _:b . _:b ex:p _:a .
 - **Severity:** warning
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safety`](#module-safety)
 - **Fix:** Store large payloads outside the ontology and reference them by IRI.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `literal of 100001 characters` (built programmatically; see `tests/rule_cases/`)
 
@@ -112,8 +169,11 @@ ex:a rdfs:label "A" .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Inline the @context in the document; ontolint never downloads contexts.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** During the parse, rdflib asks to load a JSON-LD ``@context`` that is not inline: a remote IRI, a relative or a local file reference alike.  The request is refused without any I/O.  It takes precedence over SEC013 when both happened.
 
 *Flagged:* `remote @context` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -124,7 +184,10 @@ ex:a rdfs:label "A" .
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** deterministic
+- **Module:** [`imports_note`](#module-imports_note)
 - **Fix:** Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or put local copies in a folder (for example with robot mirror) and pass --import-dir; ontolint never fetches imports from the network. Use --ignore SEC007 to silence this note.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `one IRI import`
 
@@ -169,7 +232,10 @@ Reported: `1 owl:import was not followed: not an iri.`
 - **Severity:** warning
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safety`](#module-safety)
 - **Fix:** Use http(s), urn or another resolvable-by-design scheme instead of file:, javascript:, data: or similar.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `file IRI`
 
@@ -236,8 +302,11 @@ ex:a ex:p <https://example.test/file:/x> .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Pass a regular file inside the working directory, not a device, a '..' escape or a link leaving it.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** The path is not acceptable: a relative argument whose normalised path climbs out of the working directory with ``..``; a path whose last component is a symlink resolving outside the working directory; a path written inside the working directory that reaches a file outside it through a symlinked directory; a file that is not a regular file (device, FIFO, socket; checked on the opened descriptor, without blocking); or an ``owl:imports`` target that resolves outside the import root (``--import-root``, default the enclosing git repository of the catalog or input) after symlinks are followed.  An absolute path outside the working directory with no symlink in its last component is explicit user intent and accepted.
 
 *Flagged:* `symlink leaving the directory` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -252,8 +321,11 @@ ex:a ex:p <https://example.test/file:/x> .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Remove SYSTEM/PUBLIC identifiers and nested entities; plain internal entities (Protege style) are accepted.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** The detected syntax is RDF/XML (whatever the extension) or the file is an OASIS catalog, and its ``DOCTYPE`` (comments removed; UTF-16/32 recognised by BOM or by the bytes of ``<``, else read as Latin-1) declares a ``SYSTEM`` or ``PUBLIC`` identifier, an entity whose value references another entity, or entities whose references in the document would expand to more than ``max_input_bytes`` characters (value length times the number of ``&name;`` references; exactly the limit is accepted).  Plain internal entities, as Protege writes them, are accepted.
 
 *Flagged:* `external entity` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -268,8 +340,11 @@ ex:a ex:p <https://example.test/file:/x> .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Decompress the file yourself and pass the plain RDF serialization.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** The file's first bytes are a gzip, bzip2, xz, zip, zstd or 7z signature, whatever its extension. Checked after SEC001, before the syntax is chosen.
 
 *Flagged:* `gzip input` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -280,7 +355,10 @@ ex:a ex:p <https://example.test/file:/x> .
 - **Severity:** warning
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safety`](#module-safety)
 - **Fix:** Remove control and bidirectional-override characters; they can disguise the text a reader sees.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `bidi override in label`
 
@@ -365,8 +443,11 @@ ex:a rdfs:label "abc\u206Adef" .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Make the input self-contained; ontolint runs with the network disabled and never fetches resources.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** During the parse, code called ``socket.socket.connect``, ``connect_ex`` or ``sendto``, ``socket.create_connection``, ``socket.getaddrinfo``, ``gethostbyname``, ``gethostbyname_ex`` or ``gethostbyaddr``: the call raises, and the attempt is recorded, so a parser that swallows the exception is still refused.  The message names the first blocked call.  The guard is active only while a document is parsed; SHACL validation and ROBOT (in a container started with ``--network none``) run outside it.
 
 *Flagged:* `parser dials out` (run through the command line or an adapter; see `tests/rule_cases/`)
 
@@ -379,7 +460,10 @@ ex:a rdfs:label "abc\u206Adef" .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safety`](#module-safety)
 - **Fix:** Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it at the SARIF region or in the source.
+
+**Specification.** An IRI in subject, predicate or object position of the data graph (not the shapes graph, not an ``xsd:anyURI`` literal) that holds a userinfo with a password.  Where a userinfo is, is decided by the parser that also masks it (`ontolint.redaction`, which specifies it), so SEC014 reports exactly the passwords the mask hides: after a scheme (any, case-insensitive: ``https``, ``HTTP``, ``ftp``, ``x+y.z-1``) and ``//`` (for ``http``, ``https``, ``ws``, ``wss`` and ``ftp``, any run of ``/`` and ``\``, none included, as a WHATWG parser reads ``https:/u:p@h``), an authority runs to the first ``/ ? #``, whatever its characters (white space, braces, a line break), and its userinfo to its last ``@``; the part after the first ``:`` of that userinfo is not empty (``https://alice:secret@...``, ``https://:pw@...``, ``https://u:p@ss@...``, ``https://alice:pw SPACE@...``).  An IRI nested in the IRI (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too.  Excluded: a user without a password (``https://alice@...``) or with an empty one (``https://alice:@...``), so a bare token used as the user name is not caught (it is still masked); a percent-encoded colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in the path, query or fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a relative reference resolved against the document (GOV002's concern).  The focus is the IRI with its whole userinfo, user name included, replaced by ``****`` (``https://****@example.test/x``), like every IRI in every finding and output of ontolint (RFC 3986 section 3.2.1 says not to render the password, and a token sent as the user name cannot be told from a name), and the message names no part of the userinfo, so no report or baseline repeats a secret; the SARIF region is the credentialed IRI's.  One finding per distinct IRI once masked, so IRIs that differ only in their userinfo give one finding, located at the first of them: the finding stays until the last is removed.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the syntactic test has no false positive; a published credential must be rotated.
 
 *Flagged:* `user and password`
 
@@ -580,8 +664,11 @@ ex:a ex:p "https://alice:fake-pw@example.test/"^^xsd:anyURI .
 - **Severity:** error
 - **Scope:** input
 - **Category:** deterministic
+- **Module:** [`safe_loader`](#module-safe_loader)
 - **Fix:** Lint a smaller closure, or raise max_import_depth, max_imported_files or max_triples in the policy if the size is expected.
 - **Selectable:** no (a pipeline rule: it always applies, so `--select` and `--ignore` reject it)
+
+**Specification.** With ``--follow-imports``, ``--catalog`` or ``--import-dir``: an imported file would sit deeper than ``max_import_depth`` (policy key, default 16; the root's direct imports are at depth 1, so exactly the limit is accepted); loading one more file would exceed ``max_imported_files`` (policy key, default 100, the root not counted); the merged closure holds more than ``max_triples`` triples after a file is added; or an ``--import-dir`` folder holds more than ``max_imported_files`` files with an RDF suffix (counted before any is parsed).  Depth and file count have no CLI flag; ``max_triples`` is ``--max-triples``.
 
 *Flagged:* `closure above max_triples` (run through the command line or an adapter; see `tests/rule_cases/`)
 

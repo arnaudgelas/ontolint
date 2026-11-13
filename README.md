@@ -99,7 +99,7 @@ agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.tx
 ## What it checks
 
 249 of the 304 catalogue rules are implemented; the rest are planned. The
-[rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one, with one page per family.
+[rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one, with its specification and test cases, on one page per family.
 
 - 236 Python graph checks for metadata, identifiers, IRIs, labels and lexical
   quality, class hierarchies, OWL axioms and class expressions, SKOS, SHACL
@@ -812,10 +812,12 @@ are defined in [docs/mutation-policy.md](https://github.com/arnaudgelas/ontolint
 
 [docs/rules.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) is the index of every rule,
 by family. Each family's page under `docs/rules/` documents its rules with
-their severity and fix, then every flagged and every clean test case, each
-flagged one with the message the linter reports. Rules that are not
-implemented yet are listed as TODO. The pages are
-generated; regenerate them with `uv run python tests/rule_docs_generator.py`.
+their severity and fix, their specification (quoted from the docstring of the
+module that implements them, with the notes the module's rules share), then
+every flagged and every clean test case, each flagged one with the message
+the linter reports. Rules that are not implemented yet are listed as TODO.
+The pages are generated; regenerate them with
+`uv run python tests/rule_docs_generator.py`.
 
 ## Interpretation principles
 

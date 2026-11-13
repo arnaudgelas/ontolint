@@ -17,6 +17,35 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module iri_lexical_extras
+
+Source: `src/ontolint/rules/iri_lexical_extras.py`.
+
+Extra heuristics: IRI015 (opaque and readable local names in one namespace), LEX018 and LEX021.
+
+All three inspect only the asserted graph and never leave the process.  Their specifications:
+
+*Specified under each rule: IRI015, LEX018, LEX021.*
+
+### Module lexical
+
+Source: `src/ontolint/rules/lexical.py`.
+
+Label, definition, and naming-style rules: LEX001-LEX009.
+
+### Module lexical_quality
+
+Source: `src/ontolint/rules/lexical_quality.py`.
+
+Terminology and documentation quality rules: LEX010-LEX017, LEX019, LEX020, LEX022-LEX024.
+
+LEX018 and LEX021 are implemented in ``iri_lexical_extras`` as markup and NFC checks: polysemy needs NLP and domain judgement, and malformed language tags cannot be observed because RDFLib rejects them at parse time.
+
 ## Rules
 
 #### LEX001: Term without label
@@ -24,7 +53,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add rdfs:label or an accepted alternative to the declared local term.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no label`
 
@@ -79,7 +111,10 @@ ex:name owl:equivalentProperty rdfs:label . ex:A a owl:Class ; ex:name "A" .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no definition`
 
@@ -146,7 +181,10 @@ ex:n rdfs:subPropertyOf skos:note . ex:A a owl:Class ; ex:n 'About A.' .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use one language-specific primary label per term and language.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `two labels in one language`
 
@@ -179,7 +217,10 @@ ex:short rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; rdfs:label "Aye"@en 
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Differentiate labels or formally document and link genuinely equivalent concepts.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `same label on two terms`
 
@@ -242,7 +283,10 @@ ex:A a owl:Class ; rdfs:label "S"@en . ex:B a owl:Class ; rdfs:label "S"@fr .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Trim whitespace or replace empty labels.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `padded label`
 
@@ -271,7 +315,10 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use a consistent label language-tag policy.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `plain and tagged`
 
@@ -298,7 +345,10 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Severity:** info
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use one configured naming convention for comparable term identifiers.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `four terms, two styles (sample size)`
 
@@ -331,7 +381,10 @@ ex:X_0000001 a owl:Class . ex:X_0000002 a owl:Class . ex:eF a owl:Class . ex:gH 
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add the required preferred language label.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `required language missing`
 
@@ -362,7 +415,10 @@ ex:A a owl:Class ; rdfs:label "A"@en .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical`](#module-lexical)
 - **Fix:** Review capitalization and wording relative to the namespace policy.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `one upper-case class among ten lower-case`
 
@@ -445,7 +501,10 @@ ex:u5 a owl:Class ; rdfs:label "Up 5" .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Write a human-readable label (words separated by spaces) instead of repeating the identifier.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `camelCase label equals local name`
 
@@ -480,7 +539,10 @@ ex:Person a owl:Class ; rdfs:label "Person" .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use single spaces inside labels.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `newline`
 
@@ -523,7 +585,10 @@ ex:A a owl:Class ; rdfs:label " a " .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Remove trailing punctuation such as '.', ':', ';' or ',' from labels.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `period`
 
@@ -558,7 +623,10 @@ ex:A a owl:Class ; rdfs:label "a.b" .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use a literal value for labels and definitions; link resources with a different property.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `IRI label`
 
@@ -599,7 +667,10 @@ ex:A a owl:Class ; skos:definition ex:d . ex:d rdf:value "An A." .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use plain or language-tagged string literals for labels.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `integer label`
 
@@ -640,7 +711,10 @@ ex:A a owl:Class ; rdfs:label "A"^^xsd:string .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Remove alternative labels that equal the term's own label in the same language.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `altLabel equals prefLabel`
 
@@ -667,7 +741,10 @@ ex:A a owl:Class ; skos:prefLabel "Car"@en ; skos:altLabel "Car"@fr .
 - **Severity:** warning
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Resolve the overlap: relate the terms or remove the conflicting synonym.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `synonym is another term's label`
 
@@ -700,7 +777,10 @@ ex:A a owl:Class ; rdfs:label "" . ex:B a owl:Class ; skos:altLabel "" .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Write a definition that says more than the label.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `definition equals label`
 
@@ -721,7 +801,10 @@ ex:A a owl:Class ; rdfs:label "Car" ; rdfs:comment "A wheeled vehicle." .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_lexical_extras`](#module-iri_lexical_extras)
 - **Fix:** Store labels as plain text; remove HTML/XML tags and character entities.
+
+**Specification.** A label of an owned term (``rdfs:label``, ``skos:prefLabel``, ``skos:altLabel`` and any configured extra label predicate) containing an XML/HTML tag (``<b>``, ``</b>``) or a named, decimal or hexadecimal character entity (``&amp;``, ``&#233;``).  A bare ``<``, ``>`` or ``&`` is plain text, and a trailing ``<word>`` disambiguator that is not an HTML tag name is allowed.  Comments and definitions are not labels and are not checked.
 
 *Flagged:* `html tag`
 
@@ -790,7 +873,10 @@ ex:A a owl:Class ; rdfs:comment "<b>x</b>" .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Provide definition text or remove the empty annotation.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `empty`
 
@@ -825,7 +911,10 @@ ex:A a owl:Class .
 - **Severity:** warning
 - **Scope:** vocabulary
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Write a distinguishing definition for each term.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `same definition twice`
 
@@ -858,7 +947,10 @@ ex:A a owl:Class ; rdfs:comment "" . ex:B a owl:Class ; rdfs:comment "" .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`iri_lexical_extras`](#module-iri_lexical_extras)
 - **Fix:** Normalize labels to Unicode NFC so equal-looking labels compare equal.
+
+**Specification.** A label, on the same predicates as LEX018, that differs from its Unicode NFC normal form (for example a decomposed ``e`` plus combining acute accent).
 
 *Flagged:* `decomposed e-acute`
 
@@ -893,7 +985,10 @@ ex:A a owl:Class ; rdfs:label "Cafe" .
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use a configured language tag or extend the language policy.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `German label with en policy`
 
@@ -940,7 +1035,10 @@ Linter options: `languages=('en',)`.
 - **Severity:** info
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Add the definition in every configured language, or none.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `definition only in English`
 
@@ -979,7 +1077,10 @@ ex:A a owl:Class ; rdfs:comment "An A."@en .
 - **Severity:** warning
 - **Scope:** term
 - **Category:** heuristic
+- **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Keep one skos:definition per language and term.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `two definitions`
 

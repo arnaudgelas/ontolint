@@ -17,6 +17,40 @@ All examples assume these prefixes:
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 ```
 
+## Modules
+
+The docstring of each module that implements a rule of this page: the definitions that its rules'
+specifications share. Each rule's own specification is shown under the rule.
+
+### Module duplicate_ids
+
+Source: `src/ontolint/rules/duplicate_ids.py`.
+
+Set-level rules: one ontology or version IRI declared by several documents of a run (ONT007, ONT008).
+
+Every other rule judges one file.  These two judge the set of documents a run reads, which no single file can show: two inputs that claim to be the same release, two modules of an import closure with one header, the ``--import-dir`` options holding an ontology twice (``owl:imports`` then takes the first file in argument and path order, so which copy is linted depends on file names), or two named graphs of a dataset that each declare it.  The command line finds them before linting (`ontolint.declarations`) and hands each file the ones reported on it as ``Policy.shared_identities``; ``run`` only turns those into findings, so the engine applies selection, ignores, severity overrides, baselines and ``--fail-on`` to them like to any rule.  A run of one file without imports or named graphs, and the library API on a bare graph, have none: one document shares nothing, so the rules run and find nothing (status ``executed``).  When neither rule is selected, the CLI compares nothing.
+
+A document *declares* an ontology IRI when it states ``<IRI> rdf:type owl:Ontology``, and a version IRI when it states ``<O> owl:versionIRI <IRI>`` for such an ontology ``<O>``.  Blank-node ontologies declare nothing.  The documents are compared in four places, each separately:
+
+* ``inputs``: the files given on the command line, each without its imports (with two or more inputs);
+* ``closure``: the files of one input's ``owl:imports`` closure, the input first, then in load order, and the file an import resolves to but did not load because a loaded file already declares the imported IRI (the OWL API does not read an ontology again under an IRI it has; which module wins then depends on the order of the imports, and the module that loses vanishes from the closure);
+* ``import-dir``: for each ``owl:imports`` resolved through ``--import-dir``, every file of those directories that declares the imported IRI, by directory in argument order then by path (the first is the one used); a duplicate no import uses changes no result and is not reported;
+* ``graphs``: the named graphs (and default graph) of one dataset file: TriG, N-Quads, JSON-LD.
+
+Two versions of one ontology series share the ontology IRI under different version IRIs, and OWL 2 lets them coexist (Structural Specification, section 3.3): an ODK ``x-edit.owl`` without a version IRI and its release ``x.owl`` with a dated one, or two releases.  So for the inputs and the graphs of a dataset, which are independent documents, a version IRI is reported whenever two documents declare it, and an ontology IRI only among the documents that give it no version IRI.  An import closure must not hold two versions of one series (section 3.5), so there an ontology IRI is reported whenever two files declare it, and a version IRI only when its files do not all declare one ontology IRI.  For ``import-dir`` the focus is the imported IRI, ontology or version IRI alike: the import had to choose.
+
+*Content* is the document's RDF graph, not its bytes (`ontolint.datasets.same_content`): two documents have the same content when their graphs are isomorphic, IRIs absolute as parsed, so syntax, prefixes, triple order and blank-node labels change nothing.
+
+*Specified under each rule: ONT007, ONT008.*
+
+One fact is reported once: a finding whose documents are all documents of another finding on the same IRI is dropped (the closure of an input that is also an input; two inputs importing one IRI from one ``--import-dir``).  A finding is reported on the first input in report-path order (so the argument order changes nothing), or on the input whose closure, import or dataset holds the documents.  It belongs to the first document's file in that order (JSON ``path``), which is deterministic but says nothing about which document is the original.  SARIF gives that file as the location and every other file as a related location (SARIF 2.1.0, section 3.27.12: removing any one copy fixes the finding).  Its baseline identity is the rule, the IRI, the place and the kind, never the documents: paths depend on the machine and the working directory, and another copy is the same problem, not a new one; a copy that starts or stops differing changes the rule, so it is a new finding.
+
+### Module metadata
+
+Source: `src/ontolint/rules/metadata.py`.
+
+Ontology-header rules: ONT001-ONT006.
+
 ## Rules
 
 #### ONT001: Missing ontology declaration
@@ -24,7 +58,10 @@ All examples assume these prefixes:
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`metadata`](#module-metadata)
 - **Fix:** Declare a stable ontology IRI using rdf:type owl:Ontology.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no owl:Ontology`
 
@@ -45,7 +82,10 @@ Reported: `Missing owl:Ontology declaration.`
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`metadata`](#module-metadata)
 - **Fix:** Prefer one primary owl:Ontology declaration per standalone ontology document.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `two ontologies`
 
@@ -66,7 +106,10 @@ Reported: `2 owl:Ontology declarations found.`
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`metadata`](#module-metadata)
 - **Fix:** Add dcterms:license (or an agreed equivalent) to the ontology.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no license`
 
@@ -87,7 +130,10 @@ Reported: `Ontology has no license annotation.`
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`metadata`](#module-metadata)
 - **Fix:** Add owl:versionIRI or owl:versionInfo according to your release policy.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no version`
 
@@ -108,7 +154,10 @@ Reported: `No versionIRI/versionInfo.`
 - **Severity:** info
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`metadata`](#module-metadata)
 - **Fix:** Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created).
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no provenance`
 
@@ -137,7 +186,10 @@ Reported: `Missing dcterms:created provenance.`
 - **Severity:** warning
 - **Scope:** ontology
 - **Category:** heuristic
+- **Module:** [`metadata`](#module-metadata)
 - **Fix:** Describe the ontology with dcterms:description or rdfs:comment.
+
+*No rule-level specification yet; see the module notes above.*
 
 *Flagged:* `no description`
 
@@ -158,7 +210,10 @@ Reported: `Missing ontology description.`
 - **Severity:** warning
 - **Scope:** set
 - **Category:** deterministic
+- **Module:** [`duplicate_ids`](#module-duplicate_ids)
 - **Fix:** Keep one document per release: remove the stale copy, give every release its own version IRI, and give a fork its own ontology IRI.
+
+**Specification.** A shared identity whose documents differ in content.  The focus is the shared IRI; the message names how many documents declare it and lists them, for ``import-dir`` the imported IRI, the directories and the file it resolved to, and for ``closure`` each file an import did not load.  Why warning: two different documents under one identity make a result depend on which one a tool reads (file names, for ``--import-dir``; the order of the imports, in a closure), and a version IRI names exactly one release.  Confidence ``certain``.
 
 *Flagged:* `two inputs, one version IRI, different content`
 
@@ -241,7 +296,10 @@ Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://ex
 - **Severity:** info
 - **Scope:** set
 - **Category:** deterministic
+- **Module:** [`duplicate_ids`](#module-duplicate_ids)
 - **Fix:** Keep one copy, or generate the others from it (robot mirror, a release step) so they cannot drift apart.
+
+**Specification.** The same, when every document has the same content.  Why info: a mirrored or vendored copy is harmless today, but the copies drift apart unless one is generated from the other.  Confidence ``certain``.
 
 *Flagged:* `two inputs with identical content`
 
