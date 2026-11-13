@@ -92,6 +92,14 @@ def test_the_page_shows_the_recorded_results_and_labels() -> None:
     assert metric_corpus.generated_part() == expected, "run: uv run python scripts/metric_corpus.py render"
 
 
+def test_the_thresholds_page_counts_agree_with_the_corpus() -> None:
+    """docs/metric-thresholds.md quotes the false positives per rule; they must be the corpus's."""
+    counts = metric_corpus.confusion(metric_corpus.load_manifest(), _results())
+    page = (ROOT / "docs" / "metric-thresholds.md").read_text(encoding="utf-8")
+    assert f"({sum(c['fp'] for c in counts.values())} in all)" in page
+    assert all(counts[rule]["fp"] == 0 and counts[rule]["fn"] == 0 for rule in ("METRIC001", "METRIC002", "METRIC003"))
+
+
 def test_a_forced_and_a_default_run_measure_a_known_fixture(tmp_path: Path) -> None:
     path = tmp_path / "fixture.ttl"
     path.write_text(FIXTURE, encoding="utf-8")
