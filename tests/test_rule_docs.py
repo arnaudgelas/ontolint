@@ -32,6 +32,7 @@ from rule_docs_generator import (
     _block,
     _code,
     _markdown,
+    _prose,
     _reflow,
     _value,
     build,
@@ -221,6 +222,22 @@ def test_names_messages_and_turtle_cannot_break_out_of_their_code(monkeypatch: p
     monkeypatch.setattr(rule_docs_generator, "_first_message", lambda rule_id, case: "two\rlines")
     with pytest.raises(ValueError, match="message"):
         render({"OWL001": rule_cases([case], [case])}, spec_modules())
+
+
+def test_titles_fixes_and_intents_keep_their_angle_brackets() -> None:
+    assert _prose("Use .../obo/<id>.owl") == "Use .../obo/\\<id>.owl"
+    assert _prose("Encode < > \\ ^") == "Encode \\< > \\\\ ^"
+    entries = [
+        line
+        for page in _committed().values()
+        for line in page.splitlines()
+        if line.startswith(("#### ", "- **Fix:** ", "| "))
+    ]
+    assert (
+        "- **Fix:** Use .../obo/\\<id>.owl and a version IRI such as .../obo/\\<id>/releases/YYYY-MM-DD/\\<id>.owl."
+        in (entries)
+    )
+    assert not [line for line in entries if re.search(r"(?<!\\)<", re.sub(r"`[^`]*`", "", line))]
 
 
 def test_a_bullet_ends_at_its_first_unindented_line() -> None:

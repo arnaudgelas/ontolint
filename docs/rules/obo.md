@@ -1140,7 +1140,7 @@ ex:A skos:altLabel ex:B .
 - **Scope:** ontology
 - **Category:** context-dependent
 - **Module:** [`obo`](#module-obo)
-- **Fix:** Import an ODK-style module (.../obo/<id>/imports/<term>_import.owl); bfo, omo and ro may be imported whole.
+- **Fix:** Import an ODK-style module (.../obo/\<id>/imports/\<term>_import.owl); bfo, omo and ro may be imported whole.
 
 *No rule-level specification yet; see the module notes above.*
 
@@ -1236,7 +1236,7 @@ ex:o a owl:Ontology ; owl:imports "http://purl.obolibrary.org/obo/uberon.owl" .
 - **Scope:** ontology
 - **Category:** context-dependent
 - **Module:** [`obo`](#module-obo)
-- **Fix:** Use .../obo/<id>.owl and a version IRI such as .../obo/<id>/releases/YYYY-MM-DD/<id>.owl.
+- **Fix:** Use .../obo/\<id>.owl and a version IRI such as .../obo/\<id>/releases/YYYY-MM-DD/\<id>.owl.
 
 *No rule-level specification yet; see the module notes above.*
 

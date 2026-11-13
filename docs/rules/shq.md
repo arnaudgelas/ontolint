@@ -380,7 +380,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Scope:** shapes
 - **Category:** deterministic
 - **Module:** [`shacl_authoring`](#module-shacl_authoring)
-- **Fix:** Make sh:minCount <= sh:maxCount.
+- **Fix:** Make sh:minCount \<= sh:maxCount.
 
 **Specification.** A shape with exactly one ``sh:minCount`` and exactly one ``sh:maxCount``, both naturals, where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``), derived integer types included (SHQ008 reports their datatype).  Excluded: equal bounds, a missing bound, several values for either parameter, and a bound that is not a natural (SHQ008 reports it).  Error, certain: no set of value nodes satisfies both, so every focus node violates the shape.
 
@@ -1924,7 +1924,7 @@ ex:U sh:node ex:V .
 - **Scope:** shapes
 - **Category:** deterministic
 - **Module:** [`shacl_authoring`](#module-shacl_authoring)
-- **Fix:** Make sh:minLength <= sh:maxLength.
+- **Fix:** Make sh:minLength \<= sh:maxLength.
 
 **Specification.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``, derived integer types included. Excluded as for SHQ007; a length that is not a natural is SHQ008's.  Error, certain: no value node has a string length in the range, so every value node (and every blank node) violates the shape.
 
