@@ -412,9 +412,22 @@ def test_measure_refuses_a_directory_under_an_entrys_name(tmp_path: Path) -> Non
         metric_corpus.measure(tmp_path, [entry])
 
 
-def _report(executions: list[dict[str, str]], findings: list[str], files: int = 1) -> dict[str, Any]:
-    file = {"path": "x.ttl", "executions": executions}
+LINTED = "<the linted file>"  # replaced by the path _lint is given
+
+
+def _report(
+    executions: list[dict[str, str]], findings: list[str], files: int = 1, path: str = LINTED
+) -> dict[str, Any]:
+    file = {"path": path, "executions": executions}
     return {"files": [file] * files, "findings": [{"rule": rule, "message": "m"} for rule in findings]}
+
+
+def _lint_reporting(monkeypatch: pytest.MonkeyPatch, report: dict[str, Any], path: Path) -> dict[str, str]:
+    """Run _lint on ``path`` with ontolint replaced by a process that prints ``report``."""
+    stdout = json.dumps(report).replace(json.dumps(LINTED), json.dumps(str(path)))
+    done = metric_corpus.subprocess.CompletedProcess([], 0, stdout, "")
+    monkeypatch.setattr(metric_corpus.subprocess, "run", lambda *_args, **_kwargs: done)
+    return metric_corpus._lint(path, None)
 
 
 def _ran(*rules: str, status: str = "executed") -> list[dict[str, str]]:
@@ -443,16 +456,22 @@ def test_an_incomplete_report_is_refused_not_read_as_silence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, report: dict[str, Any]
 ) -> None:
     """A rule that did not run reports nothing; read as a measurement, it would be a fabricated silence."""
-    done = metric_corpus.subprocess.CompletedProcess([], 0, json.dumps(report), "")
-    monkeypatch.setattr(metric_corpus.subprocess, "run", lambda *_args, **_kwargs: done)
     with pytest.raises(SystemExit, match="METRIC rule|one finding per|files, not one"):
-        metric_corpus._lint(tmp_path / "x.ttl", None)
+        _lint_reporting(monkeypatch, report, tmp_path / "x.ttl")
+
+
+@pytest.mark.parametrize("reported", ["other.ttl", "x.ttl.bak", "/elsewhere/x.ttl"])
+def test_a_report_of_another_file_is_refused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, reported: str) -> None:
+    """A complete report of the wrong file would record that file's findings as this entry's."""
+    with pytest.raises(SystemExit, match="the report is of"):
+        _lint_reporting(monkeypatch, _report(ALL_RAN, ["METRIC002"], path=reported), tmp_path / "x.ttl")
 
 
 def test_a_complete_report_is_accepted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    done = metric_corpus.subprocess.CompletedProcess([], 0, json.dumps(_report(ALL_RAN, ["METRIC002"])), "")
-    monkeypatch.setattr(metric_corpus.subprocess, "run", lambda *_args, **_kwargs: done)
-    assert metric_corpus._lint(tmp_path / "x.ttl", None) == {"METRIC002": "m"}
+    assert _lint_reporting(monkeypatch, _report(ALL_RAN, ["METRIC002"]), tmp_path / "x.ttl") == {"METRIC002": "m"}
+    monkeypatch.chdir(tmp_path)  # the CLI writes a path under the working directory relative to it
+    report = _report(ALL_RAN, ["METRIC002"], path="x.ttl")
+    assert _lint_reporting(monkeypatch, report, tmp_path / "x.ttl") == {"METRIC002": "m"}
 
 
 @pytest.mark.parametrize("status", [None, "Approved", "draft", "", 1])

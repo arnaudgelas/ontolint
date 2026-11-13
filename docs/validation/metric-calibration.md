@@ -49,9 +49,9 @@ through `load_manifest`, which refuses:
 `fetch` writes a download by renaming a new file over the old name, which replaces a hard link
 instead of writing through it, and `measure` lints a private copy of the bytes whose checksum it
 checked. So neither reads or writes outside DIR through a name in it. DIR itself is yours: if it
-is a link, they follow it. Each `measure` run must also report every METRIC rule as executed once,
-with at most one finding each: a rule that did not run reports nothing, which would otherwise read
-as a measured silence. `load_manifest` also refuses a `label_status` other than `proposed` or
+is a link, they follow it. Each `measure` run must also report on the file it was asked to lint,
+alone, with every METRIC rule executed once and at most one finding each: a rule that did not run
+reports nothing, which would otherwise read as a measured silence. `load_manifest` also refuses a `label_status` other than `proposed` or
 `approved`, since the page prints it as the standing of the labels.
 
 The corpus mixes:
