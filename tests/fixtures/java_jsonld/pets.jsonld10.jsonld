@@ -1,0 +1,90 @@
+{
+  "@graph" : [ {
+    "@id" : "_:b0",
+    "@type" : "owl:Restriction",
+    "onProperty" : "https://example.test/pets#hasOwner",
+    "someValuesFrom" : "https://example.test/pets#Person"
+  }, {
+    "@id" : "https://example.test/pets",
+    "@type" : "owl:Ontology",
+    "label" : {
+      "@language" : "en",
+      "@value" : "Pets"
+    }
+  }, {
+    "@id" : "https://example.test/pets#Animal",
+    "@type" : "owl:Class",
+    "label" : [ {
+      "@language" : "fr",
+      "@value" : "animal"
+    }, {
+      "@language" : "en",
+      "@value" : "animal"
+    } ],
+    "definition" : {
+      "@language" : "en",
+      "@value" : "A living organism that moves."
+    }
+  }, {
+    "@id" : "https://example.test/pets#Dog",
+    "@type" : "owl:Class",
+    "label" : {
+      "@language" : "en",
+      "@value" : "dog"
+    },
+    "subClassOf" : "https://example.test/pets#Pet"
+  }, {
+    "@id" : "https://example.test/pets#Person",
+    "@type" : "owl:Class",
+    "label" : {
+      "@language" : "en",
+      "@value" : "person"
+    }
+  }, {
+    "@id" : "https://example.test/pets#Pet",
+    "@type" : "owl:Class",
+    "subClassOf" : [ "_:b0", "https://example.test/pets#Animal" ]
+  }, {
+    "@id" : "https://example.test/pets#age",
+    "@type" : "owl:DatatypeProperty",
+    "range" : "xsd:nonNegativeInteger"
+  }, {
+    "@id" : "https://example.test/pets#hasOwner",
+    "@type" : "owl:ObjectProperty",
+    "domain" : "https://example.test/pets#Pet",
+    "range" : "https://example.test/pets#Person"
+  } ],
+  "@context" : {
+    "someValuesFrom" : {
+      "@id" : "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "@type" : "@id"
+    },
+    "onProperty" : {
+      "@id" : "http://www.w3.org/2002/07/owl#onProperty",
+      "@type" : "@id"
+    },
+    "label" : {
+      "@id" : "http://www.w3.org/2000/01/rdf-schema#label"
+    },
+    "subClassOf" : {
+      "@id" : "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "@type" : "@id"
+    },
+    "range" : {
+      "@id" : "http://www.w3.org/2000/01/rdf-schema#range",
+      "@type" : "@id"
+    },
+    "domain" : {
+      "@id" : "http://www.w3.org/2000/01/rdf-schema#domain",
+      "@type" : "@id"
+    },
+    "definition" : {
+      "@id" : "http://www.w3.org/2004/02/skos/core#definition"
+    },
+    "@vocab" : "https://example.test/pets#",
+    "owl" : "http://www.w3.org/2002/07/owl#",
+    "xsd" : "http://www.w3.org/2001/XMLSchema#",
+    "skos" : "http://www.w3.org/2004/02/skos/core#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#"
+  }
+}

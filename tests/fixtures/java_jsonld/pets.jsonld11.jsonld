@@ -1,0 +1,95 @@
+{
+    "@graph": [
+        {
+            "@id": "https://example.test/pets#Person",
+            "rdfs:label": {
+                "@language": "en",
+                "@value": "person"
+            },
+            "@type": "owl:Class"
+        },
+        {
+            "@id": "https://example.test/pets",
+            "rdfs:label": {
+                "@language": "en",
+                "@value": "Pets"
+            },
+            "@type": "owl:Ontology"
+        },
+        {
+            "@id": "https://example.test/pets#Dog",
+            "rdfs:label": {
+                "@language": "en",
+                "@value": "dog"
+            },
+            "rdfs:subClassOf": {
+                "@id": "https://example.test/pets#Pet"
+            },
+            "@type": "owl:Class"
+        },
+        {
+            "@id": "https://example.test/pets#Pet",
+            "rdfs:subClassOf": [
+                {
+                    "@id": "_:b0"
+                },
+                {
+                    "@id": "https://example.test/pets#Animal"
+                }
+            ],
+            "@type": "owl:Class"
+        },
+        {
+            "@id": "https://example.test/pets#hasOwner",
+            "rdfs:range": {
+                "@id": "https://example.test/pets#Person"
+            },
+            "rdfs:domain": {
+                "@id": "https://example.test/pets#Pet"
+            },
+            "@type": "owl:ObjectProperty"
+        },
+        {
+            "@id": "https://example.test/pets#age",
+            "rdfs:range": {
+                "@id": "xsd:nonNegativeInteger"
+            },
+            "@type": "owl:DatatypeProperty"
+        },
+        {
+            "@id": "https://example.test/pets#Animal",
+            "skos:definition": {
+                "@language": "en",
+                "@value": "A living organism that moves."
+            },
+            "rdfs:label": [
+                {
+                    "@language": "fr",
+                    "@value": "animal"
+                },
+                {
+                    "@language": "en",
+                    "@value": "animal"
+                }
+            ],
+            "@type": "owl:Class"
+        },
+        {
+            "@id": "_:b0",
+            "owl:someValuesFrom": {
+                "@id": "https://example.test/pets#Person"
+            },
+            "owl:onProperty": {
+                "@id": "https://example.test/pets#hasOwner"
+            },
+            "@type": "owl:Restriction"
+        }
+    ],
+    "@context": {
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "@vocab": "https://example.test/pets#"
+    }
+}
