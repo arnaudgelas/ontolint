@@ -60,15 +60,37 @@ layout:
    sets the result of `_constructDefaultPrettyPrinter()`, which is
    `new com.fasterxml.jackson.core.util.DefaultPrettyPrinter`.
 
+Run from any directory: the classes are unpacked into a new temporary directory. Apart from the first
+(the call site, with its branch), each command prints a whole method, so the order of its calls shows:
+
 ```sh
-unzip -q lib/jena-arq-4.10.0.jar 'org/apache/jena/riot/writer/JsonLD10Writer.class'
-javap -c -p org/apache/jena/riot/writer/JsonLD10Writer.class | grep JsonUtils.writePretty
-unzip -q lib/jsonld-java-0.13.4.jar 'com/github/jsonldjava/utils/JsonUtils.class'
-javap -c -p com/github/jsonldjava/utils/JsonUtils.class | grep useDefaultPrettyPrinter
-unzip -q lib/jackson-core-2.15.3.jar 'com/fasterxml/jackson/core/base/GeneratorBase.class'
-javap -c -p com/fasterxml/jackson/core/base/GeneratorBase.class | grep -A6 '_constructDefaultPrettyPrinter()'
+export JENA_HOME=/path/to/apache-jena-4.10.0
+cd "$(mktemp -d)"
+unzip -q "$JENA_HOME/lib/jena-arq-4.10.0.jar" 'org/apache/jena/riot/writer/JsonLD10Writer.class'
+javap -c -p org/apache/jena/riot/writer/JsonLD10Writer.class | grep -B3 -A3 'JsonUtils.write'
+unzip -q "$JENA_HOME/lib/jsonld-java-0.13.4.jar" 'com/github/jsonldjava/utils/JsonUtils.class'
+javap -c -p com/github/jsonldjava/utils/JsonUtils.class \
+  | sed -n '/writePrettyPrint(java.io.Writer, java.lang.Object)/,/^$/p'
+javap -c -p com/github/jsonldjava/utils/JsonUtils.class | sed -n '/static {}/,/^$/p' | grep JsonFactory
+unzip -q "$JENA_HOME/lib/jackson-core-2.15.3.jar" \
+  'com/fasterxml/jackson/core/base/GeneratorBase.class' 'com/fasterxml/jackson/core/JsonFactory.class'
+javap -c -p com/fasterxml/jackson/core/base/GeneratorBase.class \
+  | sed -n '/ useDefaultPrettyPrinter()/,/^$/p;/_constructDefaultPrettyPrinter()/,/^$/p'
+javap -c -p com/fasterxml/jackson/core/JsonFactory.class \
+  | sed -n '/ _createGenerator(java.io.Writer, /,/^$/p' | grep 'Method'
 ```
 
-`useDefaultPrettyPrinter` keeps a printer already set on the generator, but step 2 calls it right
-after `JsonFactory.createGenerator(Writer)` with nothing in between, on a factory that `JsonUtils`
-configures only by disabling three features. The path was read, not traced at run time.
+What they show (2026-11-13):
+
+- `JsonLD10Writer` calls `writePrettyPrint` when the output is pretty, and `JsonUtils.write` otherwise.
+- `writePrettyPrint` calls `createGenerator(Writer)` at offset 4 and `useDefaultPrettyPrinter()` at
+  offset 9, with only a store and a load of the generator between them, then `writeObject`.
+- `JsonUtils`'s static initialiser makes `JSON_FACTORY` with `new JsonFactory(...)`, the plain class,
+  and then only calls `disable` on it, three times.
+- `useDefaultPrettyPrinter` keeps a printer already set (`getPrettyPrinter`, `ifnull`), else sets the
+  result of `_constructDefaultPrettyPrinter()`, which is `new DefaultPrettyPrinter()`.
+- `JsonFactory._createGenerator(Writer, IOContext)` builds a `WriterBasedJsonGenerator` and calls only
+  `setHighestNonEscapedChar`, `setCharacterEscapes` and `setRootValueSeparator` on it: it sets no printer.
+
+So the generator `writePrettyPrint` creates has no printer when `useDefaultPrettyPrinter` runs, and gets a
+`DefaultPrettyPrinter`. The path was read from the bytecode, not traced at run time.
