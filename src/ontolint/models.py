@@ -201,6 +201,40 @@ class Measurement:
         return data
 
 
+PARTITIONS = ("file", "graph", "module")
+"""What a :class:`MeasurementPartition` is of, in the order a report lists them."""
+
+
+@dataclass(frozen=True)
+class MeasurementPartition:
+    """The measurements of the owned terms placed in one closure file, named graph or in-file module.
+
+    A term is placed exactly where a finding about it is.  ``path`` is the report path of the file (for a graph,
+    the file holding it; none for a module) and ``name`` the graph's or module's name (none for a file); the
+    name is masked (:func:`ontolint.redaction.redact_userinfo`).
+    """
+
+    by: str
+    path: str | None
+    name: str | None
+    measurements: tuple[Measurement, ...]
+
+    def __post_init__(self) -> None:
+        if self.by not in PARTITIONS:
+            raise ValueError(f"a partition is by one of {PARTITIONS}, not {self.by!r}")
+        if self.name is not None:
+            object.__setattr__(self, "name", redact_userinfo(self.name))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-ready representation: ``by``, then ``path`` and ``name`` when set, then the measurements."""
+        return {
+            "by": self.by,
+            **({"path": self.path} if self.path is not None else {}),
+            **({"name": self.name} if self.name is not None else {}),
+            "measurements": [m.to_dict() for m in self.measurements],
+        }
+
+
 def redacted_evidence(evidence: Evidence) -> Evidence:
     """``evidence`` with every userinfo masked, in the same key order and shape."""
     return {key: _redacted(value) for key, value in evidence.items()}

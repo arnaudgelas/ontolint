@@ -353,7 +353,9 @@ class-target coverage. A record has an `id`, a `definition_version`, a `kind` an
 ratio is a `numerator` and a `denominator`, never a float, and a measurement that could not be
 taken (the SHACL coverage without `--shapes`) has a `reason` instead of a value, never 0. Findings,
 fingerprints, baselines and the exit code are the same with and without the flag, and it works with
-`--format json` only (otherwise a usage error, exit 2). There is no single health score.
+`--format json` only (otherwise a usage error, exit 2). There is no single health score. With
+module grouping, named graphs or `--follow-imports`, `measurement_partitions` gives the term
+measurements per module, graph or imported file, each term placed where its findings are.
 [docs/measurements.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/measurements.md)
 gives each measurement's population and exclusions.
 

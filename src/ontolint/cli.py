@@ -31,7 +31,7 @@ from . import baseline, engine
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
-from .datasets import finding_graphs
+from .datasets import finding_graphs, term_graphs
 from .declarations import Place, Shared, shared_identities
 from .imports import (
     CATALOG_NAME,
@@ -44,8 +44,16 @@ from .imports import (
 )
 from .library import load_library
 from .loader import InputRejected, LoadedGraph, Module, ParseFailure, load_graph, loaded_graph, source_index
-from .models import ExecutionStatus, Finding, PatternLibrary, RuleBackend, RuleExecution
-from .modules import MODULE_BY, UnresolvedModulePredicate, finding_modules, resolve_predicate
+from .models import (
+    ExecutionStatus,
+    Finding,
+    Measurement,
+    MeasurementPartition,
+    PatternLibrary,
+    RuleBackend,
+    RuleExecution,
+)
+from .modules import MODULE_BY, UnresolvedModulePredicate, finding_modules, resolve_predicate, term_modules
 from .paths import InputFile, resolve_inputs
 from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .prof import ProfileError, shapes_files
@@ -373,7 +381,7 @@ def _lint_file(
         graphs = {f: names for f, names in graphs.items() if f not in members}
     others = _shared_places((item, loaded), findings, shared, sarif, (origins, locations, graphs)) if shared else {}
     # Taken after the rules ran, so a measurement a METRIC rule read is the value it compared.
-    measured = measurements.publish(ctx) if args.measurements else None
+    measured, partitions = _measured(item, loaded, ctx, grouping) if args.measurements else (None, ())
     return FileReport(
         item.display,
         item.uri,
@@ -386,7 +394,67 @@ def _lint_file(
         graphs,
         others,
         measured,
+        partitions,
     )
+
+
+type _Place = tuple[str, str | None, str | None]
+"""A partition of a file's measurements: ``(by, path, name)``, as :class:`~ontolint.models.MeasurementPartition`."""
+
+
+def _measured(
+    item: InputFile, loaded: LoadedGraph, ctx: RuleContext, grouping: _ModuleGrouping | None
+) -> tuple[tuple[Measurement, ...], tuple[MeasurementPartition, ...]]:
+    """The file's measurement vector, and its term measurements per closure file, named graph and module.
+
+    A partition restricts the vector to the owned terms placed in it (:func:`ontolint.rules.measurements.partition`)
+    and never recomputes it.  The vector is taken after the rules ran, so a value a METRIC rule compared is the
+    value published.
+    """
+    vector = measurements.publish(ctx)
+    terms = measurements.partition_terms(ctx)
+    places = _term_places(item, loaded, terms, grouping)
+    if not places:
+        return vector, ()
+    taken = measurements.taken(ctx)
+    return vector, tuple(
+        MeasurementPartition(by, path, name, measurements.partition(taken, {t for text in held for t in terms[text]}))
+        for (by, path, name), held in places.items()
+    )
+
+
+def _term_places(
+    item: InputFile, loaded: LoadedGraph, texts: Mapping[str, object], grouping: _ModuleGrouping | None
+) -> dict[_Place, set[str]]:
+    """The partitions of a file, each with the terms (focus texts) placed in it, as findings about them are placed.
+
+    A term belongs to the closure file that declares it, else to the root (:func:`_module_origins`); to the graphs
+    of that file that describe it, else mention it (:func:`~ontolint.datasets.term_graphs`); and to its modules
+    (:func:`~ontolint.modules.term_modules`).  Every closure file is listed, the root too, and every graph of each
+    file's index, so one without owned terms shows 0 of 0; a module is listed when an owned term is in it.  The
+    order is the report's: files in closure order (the root first), each file's graphs (the default graph first,
+    then sorted), then the modules, sorted.
+    """
+    places: dict[_Place, set[str]] = {}
+    if loaded.modules:
+        declared = _declared_terms(loaded.modules)
+        owners = {text: _declaring_module(declared, text) or 0 for text in texts}  # else the root
+        files = []
+        for position, module in enumerate(loaded.modules):
+            owned = {text for text, owner in owners.items() if owner == position}
+            places["file", module.display, None] = owned
+            files.append((module.display, module.graphs, owned))
+    else:
+        files = [(item.display, loaded.graphs, set(texts))]
+    for path, index, owned in files:
+        of_term = term_graphs(loaded.graph, index, owned)
+        for name in index.names:
+            places["graph", path, name] = {text for text in owned if name in of_term.get(text, ())}
+    if grouping is not None:
+        of_term = term_modules(loaded.graph, texts, grouping.predicate)
+        for name in sorted({name for names in of_term.values() for name in names}):
+            places["module", None, name] = {text for text, names in of_term.items() if name in names}
+    return places
 
 
 def _shared_places(

@@ -22,7 +22,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ._version import package_version
-from .models import Evidence, ExecutionStatus, Finding, Measurement, RuleExecution, RuleSpec, plain_evidence
+from .models import (
+    Evidence,
+    ExecutionStatus,
+    Finding,
+    Measurement,
+    MeasurementPartition,
+    RuleExecution,
+    RuleSpec,
+    plain_evidence,
+)
 from .modules import module_summary
 from .redaction import clip, redact_rendered
 from .rules.registry import default_registry
@@ -80,6 +89,8 @@ class FileReport:
     )
     # With --measurements: the measurement vector of the file (:mod:`ontolint.rules.measurements`); else ``None``.
     measurements: tuple[Measurement, ...] | None = None
+    # With --measurements, per closure file, named graph or in-file module: the measurements of its terms.
+    measurement_partitions: tuple[MeasurementPartition, ...] = ()
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -208,6 +219,11 @@ def to_json(report: RunReport) -> dict[str, Any]:
                 **({"module_summary": module_summary(_shown_modules(r))} if r.modules else {}),
                 # Present only with --measurements, likewise.
                 **({"measurements": [m.to_dict() for m in r.measurements]} if r.measurements is not None else {}),
+                **(
+                    {"measurement_partitions": [p.to_dict() for p in r.measurement_partitions]}
+                    if r.measurement_partitions
+                    else {}
+                ),
             }
             for r in report.files
         ],
