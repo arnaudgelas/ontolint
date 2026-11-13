@@ -43,6 +43,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 from rdflib.term import Node
 
+from ontolint.graph import hierarchy_depths, weakly_connected_components
 from ontolint.models import MeasurementKind
 from ontolint.ownership import OwnershipMode
 from ontolint.redaction import redact_userinfo
@@ -50,6 +51,8 @@ from ontolint.redaction import redact_userinfo
 from .classes import orphan_classes
 from .lexical import is_unlabelled
 from .owl import annotation_only, lacks_domain, lacks_range, signature_exempt
+from .shapes import class_target_reach
+from .support import directed_edges
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -85,7 +88,7 @@ class CountRatio:
 
 @dataclass(frozen=True)
 class Count:
-    """A count of things that are not terms of the population (import IRIs)."""
+    """A count of things that are not terms of the population (import IRIs, hierarchy components)."""
 
     value: int
 
@@ -379,7 +382,47 @@ def _blank_subjects(ctx: RuleContext) -> CountRatio:
     return CountRatio(sum(1 for s in subjects if isinstance(s, BNode)), len(subjects))
 
 
-RATIO, COUNT = MeasurementKind.RATIO, MeasurementKind.COUNT
+# --- measurements no rule thresholds ------------------------------------------------------------------------
+
+
+def _class_depth(ctx: RuleContext) -> TermValues:
+    """Per owned class, the number of classes on the longest asserted chain from a top class down to it.
+
+    A class with no owned superclass is 1.  A class on a subclass cycle (CLS003) is 0 and adds nothing to the
+    depth of its subclasses; a self-loop is ignored.  The chains are the asserted ``rdfs:subClassOf`` triples
+    between owned classes, read upwards: :func:`~ontolint.graph.hierarchy_depths` over the reversed edges, so
+    the deepest class is as deep as the highest subtree CLS005 measures with ``--depth-limit``.
+    """
+    classes = owned_classes(ctx)
+    upwards = ((parent, child) for child, parent in directed_edges(ctx.g, RDFS.subClassOf, classes))
+    return TermValues(MappingProxyType(hierarchy_depths(classes, upwards)))
+
+
+def _hierarchy_components(ctx: RuleContext) -> Count:
+    """The weakly connected components of the asserted ``rdfs:subClassOf`` triples between owned classes.
+
+    ``owl:Thing`` and every class that is not owned are left out, so a common external superclass connects
+    nothing, and a class with no owned sub- or superclass is a component of its own.
+    """
+    classes = owned_classes(ctx) - {OWL.Thing}
+    return Count(len(weakly_connected_components(classes, directed_edges(ctx.g, RDFS.subClassOf, classes))))
+
+
+NO_SHAPES = "no SHACL shapes graph was supplied"
+
+
+def _shacl_class_target_coverage(ctx: RuleContext) -> TermRatio | Absent:
+    """Owned classes that a class target of the shapes graph reaches: SHQ006's set (:func:`class_target_reach`).
+
+    Absent without a shapes graph, since nothing could target a class then; an empty shapes graph is 0 of them.
+    """
+    if ctx.shapes is None:
+        return Absent(NO_SHAPES)
+    classes = owned_classes(ctx)
+    return TermRatio(classes & class_target_reach(ctx, ctx.shapes), classes)
+
+
+RATIO, COUNT, HISTOGRAM = MeasurementKind.RATIO, MeasurementKind.COUNT, MeasurementKind.HISTOGRAM
 
 SPECS: tuple[MeasurementSpec, ...] = (
     MeasurementSpec("class_label_coverage", 1, RATIO, "owned_classes", _class_label_coverage, rules=("METRIC001",)),
@@ -419,5 +462,8 @@ SPECS: tuple[MeasurementSpec, ...] = (
     MeasurementSpec("unresolved_imports", 1, COUNT, "graph", _unresolved_imports, rules=("METRIC011",)),
     MeasurementSpec("definition_length", 1, RATIO, "defined_owned_classes", _definition_length, rules=("METRIC012",)),
     MeasurementSpec("blank_subjects", 1, RATIO, "non_structural_subjects", _blank_subjects, rules=("METRIC013",)),
+    MeasurementSpec("class_depth", 1, HISTOGRAM, "owned_classes", _class_depth),
+    MeasurementSpec("hierarchy_components", 1, COUNT, "owned_classes", _hierarchy_components),
+    MeasurementSpec("shacl_class_target_coverage", 1, RATIO, "owned_classes", _shacl_class_target_coverage),
 )
 """The catalogue, in publication order."""
