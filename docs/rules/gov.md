@@ -333,7 +333,7 @@ Linter options: `base='https://example.test/onto#'`.
 ex:A a owl:Class ; rdfs:label "A" .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, max_validation_seconds=None, unknown_keys=(), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=None, shared_identities=())`.
+Linter options: `policy=Policy(required_annotations=(('class', ('http://www.w3.org/2000/01/rdf-schema#comment',)),))`.
 
 Reported: `Missing required annotations: rdfs:comment.`
 
@@ -377,7 +377,7 @@ ex:o a owl:Ontology .
 ex:A a owl:Class .
 ```
 
-Linter options: `policy=Policy(base=None, languages=(), depth_limit=10, inheritance_limit=5, soup_limit=15, subclass_limit=50, metric_min_sample=10, metric_max_imports=10, metric_max_unlabelled_ratio=0.5, metric_max_undefined_ratio=0.5, metric_max_undocumented_property_ratio=0.5, metric_max_orphan_ratio=0.3, metric_max_unsigned_property_ratio=0.5, metric_min_language_coverage=0.5, metric_max_foreign_reference_ratio=0.5, metric_max_blank_node_ratio=0.6, metric_max_mean_fanout=8.0, metric_min_property_class_ratio=0.1, metric_max_property_class_ratio=5.0, metric_min_definition_words=4.0, max_input_bytes=67108864, max_triples=5000000, max_import_depth=16, max_imported_files=100, extra_definition_predicates=(), extra_label_predicates=(), ignored_rules=frozenset(), severity_overrides=(), required_annotations=(), alignment_namespaces=(), alignment_min_coverage=None, module_annotation=None, module_by=None, max_parse_seconds=None, max_validation_seconds=None, unknown_keys=('bogus',), resolved_imports=frozenset(), imported_ontologies=frozenset(), document_bases=(), root_terms=frozenset(), source=SourceFacts(comment_license=None, declared_prefixes=None), owl_converter=None, library=None, shared_identities=())`.
+Linter options: `policy=Policy(unknown_keys=('bogus',))`.
 
 Reported: `Unknown policy key 'bogus' is ignored.`
 
