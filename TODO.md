@@ -769,19 +769,28 @@ Validation corpus (public; licences per repository):
     the new cases and the specifications are visible only in the source. Render the module
     specifications (or all cases) in the generator.
 
-- [ ] **Approve a current mutation baseline before making it blocking.** Existing mutation-policy
-  thresholds and pardon-review rules are useful only if a clean GitHub run establishes that the
-  current suite meets them. The last *full* triage predates 0.4.0; the targeted runs since then killed every mutant in the code each release changed, and the survivors that remain are all in older code (see the 0.10.2 entry). `context.py` is outside the mutation scope; decide
-  whether it belongs in it. There are 20 `gremlin: pardon` markers for a reviewer to audit. The
-  first hosted run (42611542815) timed out before writing a report; its causes are fixed and on
-  `main` since 2026-11-09. Its re-run on 2026-11-10 (attempt 2) proves
-  nothing: a re-run repeats the original commit (`7b08ff8`, 0.8.0), so the ROBOT job failed again
-  with the old "/output/profile.txt (Permission denied)". Start a new run with "Run workflow" on
-  `main` instead, then have a
-  reviewer other than the change author audit
-  every active pardon, then change the repository variable. *Done when:* a current hosted run meets
-  all thresholds, reviewer approval is recorded for every pardon, and `MUTATION_GATE_MODE=blocking`
-  has survived at least one scheduled run.
+- [ ] **Approve a current mutation baseline before making it blocking.** (Issue #19.) What the
+  repository could do is done (branch `test/19-mutation-baseline`): the last hosted run,
+  42975786493 (2026-11-11, `1e797c5`, 0.11.0 code), met every threshold, and its report passes the
+  gate in blocking mode (overall 96.7%, boolean 95.9%, arithmetic 90.0%), but 48 commits and about
+  1 500 lines of the mutation scope have changed since, so it is not current. A local run of the
+  same command on 0.13.1 (`f584f01`) also passes blocking mode: 2 422 mutants, overall 95.1%,
+  arithmetic 89.0% (minimum 85%), boolean 94.1%, 65 survivors, 53 errors (timeouts not counted as
+  kills), 2 h 03 min on a loaded 14-core laptop. Every pardon was audited
+  (`docs/mutation-pardons.md`, guarded by `tests/test_mutation_pardons.py`): of the 31 pragmas,
+  14 now remain, one mutant each; one pardon hid a bug (`--follow-imports` changed SHACL001
+  messages, fixed). `context.py` joined the scope (15 mutants: 14 killed, none surviving, its frozen decorator pardoned); `declarations.py`
+  stays out (boolean 53%). The deferred older survivors in `cli.py` and `imports.py` are killed,
+  except the `--pattern-library` root fallback (`cli.py` `_library`) and the declared-prefix
+  merge of `_file_modules`, which is equivalent now that a merged closure keeps the root's
+  prefixes. Left to the maintainer, in order: approve the pardon audit in that pull request's
+  review (the audit was an AI agent's, not a second human's); after merging, start "Run
+  workflow" (Validation, `main`, advisory) and check that it meets every threshold within the
+  job's 120-minute timeout; set the repository variable `MUTATION_GATE_MODE=blocking`; wait
+  for one scheduled Monday run to pass. Still to triage before or after blocking: the 40
+  survivors of `rules/shacl_authoring.py` (SHQ work of 0.13.0) and the rest of the 65.
+  *Done when:* a current hosted run meets all thresholds, reviewer approval is recorded for every
+  pardon, and `MUTATION_GATE_MODE=blocking` has survived at least one scheduled run.
 
 ## P1 — quality observability: measurements, not a score
 
