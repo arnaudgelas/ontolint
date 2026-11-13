@@ -158,21 +158,24 @@ def test_baseline_removes_exactly_the_baselined_findings(items: list[Finding], r
     with tempfile.TemporaryDirectory() as folder:
         baseline = Path(folder) / "baseline.json"
         _apply_baselines(known, _baseline_args(write=baseline))
-        kept, _stale = _apply_baselines(reports, _baseline_args(baseline=baseline))
-        kept_reworded, _stale = _apply_baselines(reworded, _baseline_args(baseline=baseline))
+        kept, _stale, removed = _apply_baselines(reports, _baseline_args(baseline=baseline))
+        kept_reworded, _stale, removed_reworded = _apply_baselines(reworded, _baseline_args(baseline=baseline))
 
     prints = {fingerprint(f, r.path if multi else None) for r in known for f in r.findings}
     accepted = {(r.path, i) for r in known for i in _unique_identities(r)}
-    for before, after, again, after_again in zip(reports, kept, reworded, kept_reworded, strict=True):
-        for report, result in ((before, after), (again, after_again)):
+    assert removed is not None and removed_reworded is not None
+    rows = zip(reports, kept, removed, reworded, kept_reworded, removed_reworded, strict=True)
+    for before, after, dropped, again, after_again, dropped_again in rows:
+        for report, result, baselined in ((before, after, dropped), (again, after_again, dropped_again)):
             unique = _unique_identities(report)
-            expected = tuple(
-                f
-                for f in report.findings
-                if fingerprint(f, report.path if multi else None) not in prints
-                and not (baseline_identity(f) in unique and (report.path, baseline_identity(f)) in accepted)
-            )
-            assert result.findings == expected
+
+            def is_accepted(f: Finding, report: FileReport = report, unique: set[str] = unique) -> bool:
+                return fingerprint(f, report.path if multi else None) in prints or (
+                    baseline_identity(f) in unique and (report.path, baseline_identity(f)) in accepted
+                )
+
+            assert result.findings == tuple(f for f in report.findings if not is_accepted(f))
+            assert baselined == tuple(f for f in report.findings if is_accepted(f))
 
 
 @budget(0.5)
@@ -326,6 +329,22 @@ def test_bare_findings_sarif_and_text_render_for_any_findings(items: list[Findin
     assert len(sarif["runs"][0]["results"]) == len(items)
     assert text.startswith(f"Ontology linter: {len(items)} finding(s)")
     assert all(f.rule in text for f in items)
+
+
+@budget(1)
+@given(run_reports(), st.data(), st.one_of(st.none(), st.integers(0, 2)))
+def test_the_findings_a_baseline_accepted_change_no_text_json_or_sarif_report(
+    report: RunReport, data: st.DataObject, status: int | None
+) -> None:
+    """INVARIANT: ``RunReport.baselined`` is read by the Markdown summary only; text, JSON and SARIF ignore it."""
+    baselined = tuple(tuple(data.draw(finding_lists)) for _ in report.files)
+    accepted = replace(report, baselined=baselined, stale_baseline=data.draw(st.one_of(st.none(), st.just(()))))
+    plain = replace(accepted, baselined=None)
+
+    assert accepted.baselined == baselined
+    assert to_json(accepted) == to_json(plain)
+    for fmt in ("text", "json", "sarif"):
+        assert render_report(accepted, fmt, status) == render_report(plain, fmt, status)
 
 
 # --- exit codes --------------------------------------------------------------------------------------
