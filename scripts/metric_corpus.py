@@ -20,6 +20,9 @@ Each file is linted twice with ``--select METRIC``:
   population reports and its message gives the measured value.  A rule that still stays silent has measured
   the boundary itself (0 for an upper limit, full coverage for METRIC009), or an empty population.
 
+A run is used only if its report is of the one file and every METRIC rule executed in it once, with at most
+one finding each: a rule that did not run reports nothing, which either run would read as a measurement.
+
 METRIC007 is never forced: it reads the same ratio as METRIC006, whose forced message gives it.  The labels in
 the manifest are proposals until the maintainer approves them (``"label_status": "approved"``).  Every rule of
 every entry must be labelled, by name or through ``"*"``, so an omission cannot pass for a judgement.
@@ -267,10 +270,25 @@ def _lint(path: Path, config: Path | None) -> dict[str, str]:
     if done.returncode != 0:
         raise SystemExit(f"{path.name}: ontolint exited {done.returncode}: {done.stderr.strip()}")
     report = json.loads(done.stdout)
-    not_run = [e for f in report["files"] for e in f["executions"] if e["status"] != "executed"]
-    if not_run:
-        raise SystemExit(f"{path.name}: rules did not execute: {not_run}")
+    check_report(path.name, report)
     return {finding["rule"]: finding["message"] for finding in report["findings"]}
+
+
+def check_report(name: str, report: Mapping[str, Any]) -> None:
+    """Refuse a report that is not of one file on which every METRIC rule ran once and reported at most once.
+
+    A rule that did not run reports nothing, which both runs would read as a measurement: silence at the
+    default, the boundary or an empty population when forced.
+    """
+    if len(report["files"]) != 1:
+        raise SystemExit(f"{name}: the report holds {len(report['files'])} files, not one")
+    executions = report["files"][0]["executions"]
+    ran = sorted(e["rule"] for e in executions if e["status"] == "executed")
+    if ran != list(RULES) or len(executions) != len(RULES):
+        raise SystemExit(f"{name}: every METRIC rule must execute once; the report has {executions}")
+    reported = [finding["rule"] for finding in report["findings"]]
+    if len(reported) != len(set(reported)) or not set(reported) <= set(RULES):
+        raise SystemExit(f"{name}: expected at most one finding per METRIC rule, got {sorted(reported)}")
 
 
 def parse_forced(messages: Mapping[str, str]) -> dict[str, dict[str, Any]]:

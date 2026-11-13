@@ -410,3 +410,46 @@ def test_measure_refuses_a_directory_under_an_entrys_name(tmp_path: Path) -> Non
     entry = metric_corpus.Entry("x.ttl", "https://example.test/x", "0" * 64, {})
     with pytest.raises(SystemExit, match="not a regular file"):
         metric_corpus.measure(tmp_path, [entry])
+
+
+def _report(executions: list[dict[str, str]], findings: list[str], files: int = 1) -> dict[str, Any]:
+    file = {"path": "x.ttl", "executions": executions}
+    return {"files": [file] * files, "findings": [{"rule": rule, "message": "m"} for rule in findings]}
+
+
+def _ran(*rules: str, status: str = "executed") -> list[dict[str, str]]:
+    return [{"rule": rule, "status": status, "detail": ""} for rule in rules]
+
+
+ALL_RAN = _ran(*metric_corpus.RULES)
+
+
+@pytest.mark.parametrize(
+    "report",
+    [
+        pytest.param(_report([], []), id="no-execution"),
+        pytest.param(_report(_ran("METRIC001"), []), id="one-rule-ran"),
+        pytest.param(_report(ALL_RAN[:-1], []), id="one-rule-missing"),
+        pytest.param(_report([*ALL_RAN, *_ran("METRIC001")], []), id="a-rule-twice"),
+        pytest.param(_report([*ALL_RAN[1:], *_ran("METRIC001", status="skipped")], []), id="a-rule-skipped"),
+        pytest.param(_report([*ALL_RAN, *_ran("CLS001")], []), id="another-rule-ran"),
+        pytest.param(_report(ALL_RAN, ["METRIC001", "METRIC001"]), id="two-findings-of-a-rule"),
+        pytest.param(_report(ALL_RAN, ["CLS001"]), id="a-finding-of-another-rule"),
+        pytest.param(_report(ALL_RAN, [], files=0), id="no-file"),
+        pytest.param(_report(ALL_RAN, [], files=2), id="two-files"),
+    ],
+)
+def test_an_incomplete_report_is_refused_not_read_as_silence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, report: dict[str, Any]
+) -> None:
+    """A rule that did not run reports nothing; read as a measurement, it would be a fabricated silence."""
+    done = metric_corpus.subprocess.CompletedProcess([], 0, json.dumps(report), "")
+    monkeypatch.setattr(metric_corpus.subprocess, "run", lambda *_args, **_kwargs: done)
+    with pytest.raises(SystemExit, match="METRIC rule|one finding per|files, not one"):
+        metric_corpus._lint(tmp_path / "x.ttl", None)
+
+
+def test_a_complete_report_is_accepted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    done = metric_corpus.subprocess.CompletedProcess([], 0, json.dumps(_report(ALL_RAN, ["METRIC002"])), "")
+    monkeypatch.setattr(metric_corpus.subprocess, "run", lambda *_args, **_kwargs: done)
+    assert metric_corpus._lint(tmp_path / "x.ttl", None) == {"METRIC002": "m"}
