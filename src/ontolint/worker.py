@@ -156,7 +156,6 @@ def _ready(receiver: Any, timeout: float) -> bool:
     try:
         return bool(receiver.poll(timeout)) and receiver.recv_bytes() == b"ready"
     except (EOFError, OSError):
-        # gremlin: pardon[equivalent] None and False are both falsy for the only caller, `if not _ready(...)`
         return False
 
 

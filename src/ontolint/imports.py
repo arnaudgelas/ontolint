@@ -51,7 +51,7 @@ class CatalogError(ValueError):
     """The catalog file is not a readable OASIS XML catalog; a configuration error (``TOOL001``)."""
 
 
-# gremlin: pardon[equivalent] nothing mutates a catalog; frozen only guards against it
+# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class Catalog:
     """IRI-to-file mappings from one OASIS XML catalog, and the directory every resolved file must stay in."""
@@ -142,7 +142,7 @@ def _local(directory: Path, reference: str) -> Path:
     return Path(os.path.normpath(directory / redact_userinfo(reference)))
 
 
-# gremlin: pardon[equivalent] nothing mutates a closure; frozen only guards against it
+# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class Closure:
     """A root document merged with every import that resolved to a local file."""

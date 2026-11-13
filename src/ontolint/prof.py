@@ -46,7 +46,6 @@ class ProfileError(ValueError):
     """The profile names no SHACL validator, or one ontolint cannot find locally; a ``TOOL001`` failure."""
 
 
-# gremlin: pardon[equivalent] nothing mutates the result; frozen only guards against it
 @dataclass(frozen=True)
 class Validators:
     """The validator artifacts a profile names: the SHACL ones, and those passed over as another standard."""

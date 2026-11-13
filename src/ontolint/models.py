@@ -225,7 +225,6 @@ SHARED_SCOPES = ("inputs", "closure", "import-dir", "graphs")
 candidates of one ``--import-dir`` for an import, or the named graphs of one dataset file."""
 
 
-# gremlin: pardon[equivalent] nothing mutates a shared identity; frozen only guards against it
 @dataclass(frozen=True)
 class SharedIdentity:
     """An ontology or version IRI that several documents of one run declare (rules ``ONT007`` and ``ONT008``).

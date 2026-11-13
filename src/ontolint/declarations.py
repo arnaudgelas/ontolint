@@ -42,7 +42,6 @@ from .policy import Policy
 from .source_locations import SourceIndex
 
 
-# gremlin: pardon[equivalent] nothing mutates a place; frozen only guards against it
 @dataclass(frozen=True)
 class Place:
     """One file a shared identity is declared in: its report path, its SARIF artifact URI, its source positions."""
@@ -52,7 +51,6 @@ class Place:
     source_index: SourceIndex | None = None
 
 
-# gremlin: pardon[equivalent] nothing mutates a shared identity; frozen only guards against it
 @dataclass(frozen=True)
 class Shared:
     """A shared identity and the file of each of its members."""
@@ -62,7 +60,6 @@ class Shared:
     """The files of the members, first member first: one per member, or the single dataset file for ``graphs``."""
 
 
-# gremlin: pardon[equivalent] nothing mutates the facts; frozen only guards against it
 @dataclass(frozen=True)
 class _Facts:
     """What a document declares, and where its file's terms are."""

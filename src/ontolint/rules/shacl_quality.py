@@ -176,7 +176,6 @@ def _shapes(sg: Graph) -> list[Node]:
     """Return subjects that use the SHACL vocabulary, typed shapes and property-shape objects, sorted."""
     found: set[Node] = set(sg.subjects(RDF.type, SH.NodeShape)) | set(sg.subjects(RDF.type, SH.PropertyShape))
     found |= {o for o in sg.objects(None, SH.property) if isinstance(o, URIRef | BNode)}
-    # gremlin: pardon[equivalent] RDF subjects are always IRIs or blank nodes; the isinstance check narrows the type
     found |= {s for s, p in sg.subject_predicates() if isinstance(s, URIRef | BNode) and str(p).startswith(SHAPE_NS)}
     return sorted(found, key=str)
 

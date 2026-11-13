@@ -160,7 +160,6 @@ def _scan(
             continue
         char = text[index]
         if char == "<":
-            # gremlin: pardon[equivalent] starting one character earlier only rescans the "<" itself
             end = _iri_end(text, index + 1)
             if end is None:
                 break
@@ -239,7 +238,6 @@ def _resolve_iri(public_id: str, value: str) -> URIRef | None:
 
 
 def _iri_end(text: str, index: int) -> int | None:
-    # gremlin: pardon[equivalent] the parse succeeded, so a ">" always ends the IRI before the text does
     while index < len(text):
         if text[index] == "\\":
             index += 2
@@ -255,7 +253,6 @@ def _skip_string(text: str, index: int) -> int:
     triple = text.startswith(quote * 3, index)
     marker = quote * (3 if triple else 1)
     index += len(marker)
-    # gremlin: pardon[equivalent] the parse succeeded, so the closing quote comes before the end of the text
     while index < len(text):
         if text[index] == "\\":
             index += 2
@@ -263,7 +260,6 @@ def _skip_string(text: str, index: int) -> int:
             return index + len(marker)
         else:
             index += 1
-    # gremlin: pardon[equivalent] the parse succeeded, so every string is closed and this is unreachable
     return len(text)
 
 
