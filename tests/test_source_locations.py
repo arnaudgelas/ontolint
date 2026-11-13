@@ -639,12 +639,33 @@ def test_a_java_jsonld_finding_has_a_region_at_its_focus(
 
 
 def _graph_nodes_by_id(text: str) -> dict[str, object]:
-    """The export as data (its context, and its ``@graph`` nodes by ``@id``), so member and node order do not count."""
+    """The export as data: its context, and its ``@graph`` nodes by ``@id``, each with its value arrays sorted.
+
+    JSON-LD gives no order to a node's values, nor to the nodes of ``@graph``; only an ``@list`` is ordered.
+    """
     data = json.loads(text)
     ids = [node["@id"] if isinstance(node, dict) else None for node in data["@graph"]]
     assert all(isinstance(node_id, str) for node_id in ids), ids  # a node without an @id would be dropped
     assert len(ids) == len(set(ids)), ids  # so would all but the last of two nodes with one @id
-    return {"@context": data["@context"], **{node["@id"]: node for node in data["@graph"]}}
+    return {"@context": data["@context"], **{node["@id"]: _unordered(node) for node in data["@graph"]}}
+
+
+def _unordered(value: object, *, ordered: bool = False) -> object:
+    if isinstance(value, dict):
+        return {key: _unordered(item, ordered=key == "@list") for key, item in value.items()}
+    if isinstance(value, list):
+        items = [_unordered(item) for item in value]
+        return items if ordered else sorted(items, key=lambda item: json.dumps(item, sort_keys=True))
+    return value
+
+
+def test_the_export_comparison_ignores_value_order_but_not_list_order() -> None:
+    def export(labels: list[str], members: list[str]) -> str:
+        node = {"@id": "x", "label": labels, "members": {"@list": members}}
+        return json.dumps({"@graph": [node, {"@id": "y"}], "@context": {}})
+
+    assert _graph_nodes_by_id(export(["a", "b"], ["m", "n"])) == _graph_nodes_by_id(export(["b", "a"], ["m", "n"]))
+    assert _graph_nodes_by_id(export(["a", "b"], ["m", "n"])) != _graph_nodes_by_id(export(["a", "b"], ["n", "m"]))
 
 
 # The jars of the apache-jena-4.10.0.zip whose SHA-512 the fixture README gives (each also matches the SHA-1
