@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 from pathlib import Path
 
-from rdflib import BNode, Graph
+from rdflib import BNode, Graph, Literal
 
 from .adapters.robot import robot_profile_issues
-from .adapters.shacl import bounded_shacl_issues, shacl_issues
+from .adapters.shacl import bounded_shacl_issues, detail_foci, shacl_issues
 from .context import GraphContext
 from .models import (
     ExecutionStatus,
@@ -29,7 +29,7 @@ from .reporting import SEVERITY_ORDER
 from .rules.builtin import RULE_MODULES, module_name, module_runners, module_specs
 from .rules.registry import RuleRegistry, default_registry
 from .rules.runtime import RuleContext
-from .rules.support import stable_blank_id
+from .rules.support import ntriples_literal, stable_blank_id
 from .worker import WorkerFailed
 
 type RuleFamily = Callable[[RuleContext], None]
@@ -128,17 +128,29 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
     The background (the ontology the shapes import) only supplies context, such as the classes of
     vocabulary individuals: results about nodes that only the background mentions are not findings of
     the linted file.  A node the linted file mentions anywhere is its own, as an object too: a shape
-    with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.  A finding's focus
-    is masked (:mod:`ontolint.redaction`), so the file's nodes are compared masked too.
+    with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.  A finding is kept
+    when its focus is the file's, or the focus of any result nested in its ``evidence.detail`` is: SHACL
+    reports an ``sh:node`` violation on the referencing node, which may be the background's, while its
+    nested result is the cause in the linted file.  A finding's focus and evidence are masked
+    (:mod:`ontolint.redaction`), so the file's nodes are compared masked too, each spelled as the finding
+    or the evidence spells a term (the evidence writes a literal in N-Triples).
     """
     assert ctx.shapes is not None  # noqa: S101 -- _not_run rules out SHACL without shapes.
     seconds = ctx.policy.max_validation_seconds
     if ctx.shacl_background is None:
         return _validate(ctx.g, ctx.shapes, seconds)
     data = ctx.g | ctx.shacl_background
-    nodes = {node for s, _p, o in ctx.g for node in (s, o)}
-    own = {stable_blank_id(data, n) if isinstance(n, BNode) else redact_userinfo(str(n)) for n in nodes}
-    return [finding for finding in _validate(data, ctx.shapes, seconds) if finding.focus in own]
+    own: set[str] = set()  # as a finding names its focus
+    spelled: set[str] = set()  # as evidence spells a term
+    for n in {node for s, _p, o in ctx.g for node in (s, o)}:
+        name = stable_blank_id(data, n) if isinstance(n, BNode) else redact_userinfo(str(n))
+        own.add(name)
+        spelled.add(redact_userinfo(ntriples_literal(n)) if isinstance(n, Literal) else name)
+    return [
+        finding
+        for finding in _validate(data, ctx.shapes, seconds)
+        if finding.focus in own or not spelled.isdisjoint(detail_foci(finding.evidence))
+    ]
 
 
 def _run_adapter(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -> tuple[RuleExecution, list[Finding]]:

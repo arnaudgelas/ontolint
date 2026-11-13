@@ -28,11 +28,13 @@ from ontolint.adapters.shacl import (
     MAX_DETAIL_DEPTH,
     MAX_PATH_DEPTH,
     MAX_PATH_SIZE,
+    detail_foci,
     shacl_issues,
     shacl_result_key,
 )
 from ontolint.cli import main
 from ontolint.models import Evidence, Finding
+from ontolint.reporting import identity
 from ontolint.rules.support import stable_blank_id
 
 EX = "https://example.test/"
@@ -331,10 +333,10 @@ NODE_SHAPES = f"{PROPERTY}knows ; sh:node ex:N . ex:N a sh:NodeShape ; sh:proper
 NODE_SHAPES += "ex:Q sh:path ex:name ; sh:minCount 1 ."
 
 
-def test_a_node_violation_links_the_nested_result_and_still_reports_it_alone() -> None:
-    parent, nested = _findings("ex:a a ex:T ; ex:knows ex:b .", NODE_SHAPES)
+def test_a_node_violation_is_one_finding_whose_detail_holds_the_nested_result() -> None:
+    """The nested result explains its parent (SHACL 3.5, 4.7.1): it is the parent's evidence, not a finding."""
+    (parent,) = _findings("ex:a a ex:T ; ex:knows ex:b .", NODE_SHAPES)
     assert parent.evidence is not None
-    assert nested.evidence is not None
     inner = _expected(f"{EX}b", f"{EX}Q", "MinCount", "Less than 1 values on ex:b->ex:name", resultPath=f"{EX}name")
     assert parent.evidence == {
         "focusNode": A,
@@ -346,10 +348,59 @@ def test_a_node_violation_links_the_nested_result_and_still_reports_it_alone() -
         "resultMessage": ("Value does not conform to Shape ex:N. See details for more information.",),
         "resultSeverity": VIOLATION,
     }
-    assert nested.focus == f"{EX}b"
-    assert nested.evidence == inner  # today's behaviour, kept: the nested result is a finding of its own
     (detail,) = _details(parent.evidence)
     assert detail["focusNode"] == parent.evidence["value"]
+
+
+def test_a_node_shape_also_targeted_directly_gives_its_own_result_once() -> None:
+    """ex:b fails ex:N as the value of ex:a and as its target: two results, two identities, no duplicate."""
+    findings = _findings("ex:a a ex:T ; ex:knows ex:b .", NODE_SHAPES + " ex:N sh:targetNode ex:b .")
+    assert [(f.focus, f.message.split(" [")[0]) for f in findings] == [
+        (A, "Value does not conform to Shape ex:N. See details for more information."),
+        (f"{EX}b", "Less than 1 values on ex:b->ex:name"),
+    ]
+    assert len({identity(f) for f in findings}) == len(findings)
+    assert len({(f.rule, f.focus, f.subject) for f in findings}) == len(findings)
+
+
+def test_two_foci_sharing_a_failing_value_give_one_finding_each_and_none_on_the_value() -> None:
+    findings = _findings("ex:a1 a ex:T ; ex:knows ex:b . ex:a2 a ex:T ; ex:knows ex:b .", NODE_SHAPES)
+    assert [f.focus for f in findings] == [f"{EX}a1", f"{EX}a2"]
+    for finding in findings:
+        assert finding.evidence is not None
+        assert [d["focusNode"] for d in _details(finding.evidence)] == [f"{EX}b"]
+
+
+CHAIN_SHAPES = f"{PROPERTY}knows ; sh:node ex:N1 . ex:N1 sh:property [ sh:path ex:knows ; sh:node ex:N2 ] . "
+CHAIN_SHAPES += "ex:N2 sh:property [ sh:path ex:name ; sh:minCount 1 ] ."
+
+
+def test_an_sh_node_chain_is_one_finding_nesting_each_level() -> None:
+    (finding,) = _findings("ex:a a ex:T ; ex:knows ex:b . ex:b ex:knows ex:c .", CHAIN_SHAPES)
+    assert finding.focus == A
+    assert finding.evidence is not None
+    assert _nesting(finding.evidence) == 2  # noqa: PLR2004 -- ex:b fails ex:N1 because ex:c fails ex:N2
+    (middle,) = _details(finding.evidence)
+    (bottom,) = _details(middle)
+    assert [middle["focusNode"], bottom["focusNode"]] == [f"{EX}b", f"{EX}c"]
+
+
+WARNING_PARENT = NODE_SHAPES.replace("sh:node ex:N .", "sh:node ex:N ; sh:severity sh:Warning .")
+
+
+def test_a_nested_violation_under_a_warning_shape_is_a_warning(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The severity is the reported result's, so its referencing shape's; the nested violation does not gate."""
+    data = "ex:a a ex:T ; ex:knows ex:b ."
+    (finding,) = _findings(data, WARNING_PARENT)
+    assert finding.severity == "warning"
+    assert finding.evidence is not None
+    assert [d["resultSeverity"] for d in _details(finding.evidence)] == [VIOLATION]
+    data_file, shapes_file = _files(tmp_path, data, WARNING_PARENT)
+    argv = [data_file, "--shapes", shapes_file, "--select", "SHACL001", "--fail-on"]
+    assert [main([*argv, level]) for level in ("error", "warning")] == [0, 1]
+    capsys.readouterr()
 
 
 def test_nested_details_are_sorted() -> None:
@@ -456,14 +507,41 @@ def test_every_result_property_in_the_report_reaches_the_report(
     data_graph, shapes_graph = _graphs(data, shapes)
     _conforms, report, _text = pyshacl.validate(data_graph, shacl_graph=shapes_graph, inference="none", advanced=True)
     assert isinstance(report, Graph)
-    raw: Counter[frozenset[str]] = Counter()
-    for result in report.subjects(RDF.type, SH.ValidationResult):
+    for result in report.subjects(RDF.type, SH.ValidationResult):  # nested results too: the canary
         predicates = {p for p in report.predicates(result) if p != RDF.type}
         assert predicates <= EVIDENCE_FIELDS, predicates - EVIDENCE_FIELDS
-        raw[frozenset(_local(p) for p in predicates if isinstance(p, URIRef))] += 1
-    reported = Counter(frozenset(e) for e in _reported_evidence(_cli(tmp_path, capsys, data, shapes, fmt), fmt))
+    (report_node,) = report.subjects(RDF.type, SH.ValidationReport)
+    # Each result the report lists is one finding, its sh:detail results inside its evidence.
+    raw = Counter(_raw_shape(report, result) for result in report.objects(report_node, SH.result))
+    reported = Counter(_reported_shape(e) for e in _reported_evidence(_cli(tmp_path, capsys, data, shapes, fmt), fmt))
     assert raw
     assert reported == raw
+
+
+type _Shape = tuple[tuple[str, ...], ...]
+
+
+def _raw_shape(report: Graph, result: Node) -> _Shape:
+    """The property names of ``result`` and of every result below it through ``sh:detail``, as a sorted multiset."""
+    keys: list[tuple[str, ...]] = []
+    stack = [result]
+    while stack:
+        node = stack.pop()
+        names = (_local(p) for p in report.predicates(node) if p != RDF.type and isinstance(p, URIRef))
+        keys.append(tuple(sorted(names)))
+        stack.extend(report.objects(node, SH.detail))
+    return tuple(sorted(keys))
+
+
+def _reported_shape(evidence: dict[str, Any]) -> _Shape:
+    """The keys of reported ``evidence`` and of every evidence nested in its ``detail``, as :func:`_raw_shape`."""
+    keys: list[tuple[str, ...]] = []
+    stack = [evidence]
+    while stack:
+        current = stack.pop()
+        keys.append(tuple(sorted(current)))
+        stack.extend(current.get("detail", ()))
+    return tuple(sorted(keys))
 
 
 def test_a_result_of_an_annotated_validator_keeps_its_component_and_raw_message() -> None:
@@ -715,9 +793,14 @@ def test_a_detail_pointing_back_to_its_result_is_not_followed(monkeypatch: pytes
     assert "detail" not in finding.evidence
 
 
-def _detail_chain(report: Graph, length: int) -> None:
-    """``length`` results, each the ``sh:detail`` of the one before; the first is about ``ex:a``."""
+def _detail_chain(report: Graph, length: int, *, listed: bool = True) -> None:
+    """``length`` results, each the ``sh:detail`` of the one before; the first is about ``ex:a``.
+
+    ``listed``: a ``sh:ValidationReport`` lists the first as its only ``sh:result``, as pySHACL writes it.
+    """
     above = _result(report, "0")
+    if listed:
+        _listing(report, above)
     for index in range(1, length):
         below = _result(report, str(index))
         report.set((below, SH.focusNode, URIRef(f"{EX}n{index}")))
@@ -738,13 +821,86 @@ def _nesting(evidence: Evidence) -> int:
     [(MAX_DETAIL_DEPTH, MAX_DETAIL_DEPTH - 1), (MAX_DETAIL_DEPTH + 1, MAX_DETAIL_DEPTH), (10, MAX_DETAIL_DEPTH)],
 )
 def test_details_nest_at_most_the_bound_deep(monkeypatch: pytest.MonkeyPatch, length: int, nested: int) -> None:
+    """Only the listed result is a finding; a result nested deeper than the bound appears in no output."""
     report = Graph()
     _detail_chain(report, length)
-    findings = _issues(monkeypatch, report)
-    assert len(findings) == length  # every nested result is still a finding of its own
-    (top,) = [f for f in findings if f.focus == A]
+    (top,) = _issues(monkeypatch, report)
+    assert top.focus == A
     assert top.evidence is not None
     assert _nesting(top.evidence) == nested
+
+
+def test_without_a_listing_every_typed_result_of_a_chain_is_a_finding(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The fallback for a report that links no result: each typed result is one, nested or not."""
+    report = Graph()
+    _detail_chain(report, MAX_DETAIL_DEPTH + 1, listed=False)
+    findings = _issues(monkeypatch, report)
+    assert len(findings) == MAX_DETAIL_DEPTH + 1
+    (top,) = [f for f in findings if f.focus == A]
+    assert top.evidence is not None
+    assert _nesting(top.evidence) == MAX_DETAIL_DEPTH
+
+
+# --- which results are findings: the report's sh:result (SHACL 3.6.1.2) -------------------------------
+
+
+def _listing(report: Graph, *results: Node) -> BNode:
+    """A ``sh:ValidationReport`` whose ``sh:result`` values are ``results``."""
+    node = BNode()
+    report.add((node, RDF.type, SH.ValidationReport))
+    for result in results:
+        report.add((node, SH.result, result))
+    return node
+
+
+def _values(findings: list[Finding]) -> list[object]:
+    return [None if f.evidence is None else f.evidence["value"] for f in findings]
+
+
+def test_only_the_results_a_report_lists_are_findings(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    listed = _result(report, "listed")
+    _result(report, "unlisted")
+    _listing(report, listed)
+    assert _values(_issues(monkeypatch, report)) == ['"listed"']
+
+
+def test_a_report_node_without_results_falls_back_to_the_typed_results(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    _result(report, "x")
+    _result(report, "y")
+    _listing(report)
+    assert _values(_issues(monkeypatch, report)) == ['"x"', '"y"']
+
+
+def test_a_listed_result_that_is_also_a_detail_is_still_a_finding(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    parent, child = _result(report, "parent"), _result(report, "child")
+    report.add((parent, SH.detail, child))
+    _listing(report, parent, child)
+    findings = _issues(monkeypatch, report)
+    assert _values(findings) == ['"child"', '"parent"']
+    assert findings[1].evidence is not None
+    assert [d["value"] for d in _details(findings[1].evidence)] == ['"child"']
+
+
+def test_detail_foci_names_every_nested_focus_at_any_depth() -> None:
+    """What the background filter compares: the nested foci only, as the evidence spells them."""
+    deep: Evidence = {"focusNode": '"x"', "detail": ({"focusNode": "c"},)}
+    evidence: Evidence = {"focusNode": "top", "detail": ({"focusNode": "a", "detail": (deep, {"value": "v"})},)}
+    assert detail_foci(evidence) == {"a", '"x"', "c"}
+    assert detail_foci({"focusNode": "top"}) == set()
+    assert detail_foci(None) == set()
+    assert detail_foci({"detail": ("text",)}) == set()  # a tuple of text is evidence too, but holds no result
+
+
+def test_a_listed_result_need_not_be_typed(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    untyped = _result(report, "untyped")
+    report.remove((untyped, RDF.type, SH.ValidationResult))
+    _result(report, "typed")
+    _listing(report, untyped)
+    assert _values(_issues(monkeypatch, report)) == ['"untyped"']
 
 
 # --- the structured identity BASELINE-V2 builds on ----------------------------------------------------

@@ -689,13 +689,12 @@ Validation corpus (public; licences per repository):
 
 - [ ] **SHACL001 evidence: what is left to the maintainer.** The evidence itself is done
   (0.11.0, see "Recently done"). Three choices were left out because each changes a contract:
-  - *Nested results reported twice.* pySHACL types the `sh:detail` results of a `sh:node`
-    violation as `sh:ValidationResult` too, although the report's `sh:result` does not list them,
-    so each is a finding of its own as well as an entry
-    of its parent's `evidence.detail` (reproduced 2026-11-10: 12 typed results, 11 top-level).
-    Dropping the nested ones changes finding counts, stale-baseline lists and `--fail-on` exit
-    codes; keep or drop is the maintainer's decision, and the evidence now makes the duplicate
-    visible.
+  - *Nested results reported twice*: decided (issue #9), dropped. Findings are the values of the
+    report's `sh:result`, with every typed result as the fallback for a report that links none;
+    the nested results are only their parent's `evidence.detail`. The background filter keeps a
+    finding when a nested result is about a node of the linted file. Fixtures pin the count, the
+    severity (`--fail-on` follows the referencing shape), the stale entries of a baseline written
+    before (`tests/fixtures/baselines/shacl_node.baseline.json`) and the background cases.
   - *Evidence in text output* (a `Value:` line, say): the text format is a protected contract.
   - *SHACL-AF `sh:resultAnnotation`*: decided (issue #9), documented, with canary fixtures.
     pySHACL 0.40.2 does not implement it, so no annotation reaches its report or the evidence;

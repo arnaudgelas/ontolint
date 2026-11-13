@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from rdflib import URIRef
+from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, SH
 
 from ontolint import cli
@@ -21,6 +21,7 @@ from ontolint.cli import main
 from ontolint.loader import load_graph
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.rules.support import stable_blank_id
 
 CORPUS = Path(__file__).parent / "fixtures" / "modular"
 
@@ -187,3 +188,126 @@ def test_evidence_names_data_values_in_the_merged_graph_and_keeps_the_filter(
     assert merged[0]["evidence"]["value"].startswith("_:")
     assert merged[0]["evidence"] == without[0]["evidence"]
     assert merged[0]["evidence"]["sourceConstraintComponent"] == str(SH.NodeKindConstraintComponent)
+
+
+# --- a violation reached from the background, caused in the linted file (issue #9) ---------------------------
+
+PREFIXES = "@prefix ex: <https://ex.test/> . @prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+PREFIXES += "@prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
+NAMED = "ex:N sh:property [ sh:path ex:name ; sh:minCount 1 ] ."
+"""A node shape the linted node fails: it has no ex:name."""
+
+
+def _background_run(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], data: str, background: str, shapes: str, *extra: str
+) -> tuple[int, list[Any]]:
+    """Lint ``data`` against ``shapes``, which import an ontology holding ``background`` (``--follow-imports``)."""
+    (tmp_path / ".git").mkdir(exist_ok=True)
+    (tmp_path / "catalog-v001.xml").write_text(
+        '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+        '<uri name="https://ex.test/onto" uri="onto.ttl"/></catalog>',
+        encoding="utf-8",
+    )
+    (tmp_path / "onto.ttl").write_text(f"{PREFIXES}<https://ex.test/onto> a owl:Ontology .\n{background}\n")
+    (tmp_path / "shapes.ttl").write_text(
+        f"{PREFIXES}<https://ex.test/shapes> a owl:Ontology ; owl:imports <https://ex.test/onto> .\n"
+        f"ex:S a sh:NodeShape ; sh:targetClass ex:T ; {shapes}\n"
+    )
+    (tmp_path / "data.ttl").write_text(f"{PREFIXES}{data}\n")
+    code, findings, err = _shacl(capsys, tmp_path / "data.ttl", tmp_path / "shapes.ttl", "--follow-imports", *extra)
+    assert code in {0, 1}, err
+    return code, findings
+
+
+def _nested_foci(finding: dict[str, Any]) -> list[str]:
+    """The focus of each result nested in ``finding``'s evidence, depth first."""
+    foci, stack = [], list(reversed(finding["evidence"].get("detail", [])))
+    while stack:
+        detail = stack.pop()
+        foci.append(detail["focusNode"])
+        stack.extend(reversed(detail.get("detail", [])))
+    return foci
+
+
+@pytest.mark.parametrize("budget", [[], ["--max-validation-seconds", "120"]])
+def test_a_violation_reached_from_the_background_is_kept_for_its_linted_cause(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], budget: list[str]
+) -> None:
+    """SHACL reports the violation on the background node; its nested cause is the linted file's node."""
+    code, findings = _background_run(
+        tmp_path,
+        capsys,
+        "ex:b a ex:Person .",
+        "ex:bg a ex:T ; ex:knows ex:b .",
+        f"sh:property [ sh:path ex:knows ; sh:node ex:N ] . {NAMED}",
+        *budget,
+    )
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0]) == ["https://ex.test/b"]
+    assert code == 1
+
+
+def test_a_cause_nested_deeper_than_one_level_keeps_the_violation(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """bg -> c (background only) -> b (linted): the value of the background node is not the linted node."""
+    shapes = "sh:property [ sh:path ex:knows ; sh:node ex:N1 ] . "
+    shapes += f"ex:N1 sh:property [ sh:path ex:knows ; sh:node ex:N ] . {NAMED}"
+    code, findings = _background_run(
+        tmp_path, capsys, "ex:b a ex:Person .", "ex:bg a ex:T ; ex:knows ex:c . ex:c ex:knows ex:b .", shapes
+    )
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0]) == ["https://ex.test/c", "https://ex.test/b"]
+    assert code == 1
+
+
+def test_a_violation_whose_causes_the_linted_file_never_mentions_is_dropped(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, findings = _background_run(
+        tmp_path,
+        capsys,
+        "ex:z a ex:Person .",
+        "ex:bg a ex:T ; ex:knows ex:b .",
+        f"sh:property [ sh:path ex:knows ; sh:node ex:N ] . {NAMED}",
+    )
+    assert (code, findings) == (0, [])
+
+
+# ex:c is the linted file's, but never a focus: the sequence path reaches the linted value from ex:bg.
+ADDRESS = "sh:property [ sh:path ( ex:knows ex:addr ) ; sh:node ex:Addr ] . "
+ADDRESS += "ex:Addr sh:property [ sh:path ex:city ; sh:minCount 1 ] ."
+
+
+def test_a_blank_cause_is_compared_by_its_identity_in_the_merged_graph(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    background = "ex:bg a ex:T ; ex:knows ex:c ."
+    data = 'ex:c ex:addr [ ex:zip "1" ] .'
+    code, findings = _background_run(tmp_path, capsys, data, background, ADDRESS)
+    merged = Graph().parse(data=PREFIXES + data, format="turtle") + Graph().parse(
+        data=PREFIXES + background, format="turtle"
+    )
+    (blank,) = merged.objects(URIRef("https://ex.test/c"), URIRef("https://ex.test/addr"))
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0]) == [stable_blank_id(merged, blank)]
+    assert code == 1
+
+
+def test_a_cause_with_userinfo_is_compared_masked(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code, findings = _background_run(
+        tmp_path, capsys, "ex:c ex:addr <https://u:pw@h.test/b> .", "ex:bg a ex:T ; ex:knows ex:c .", ADDRESS
+    )
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0]) == ["https://****@h.test/b"]
+    assert code == 1
+
+
+def test_a_literal_cause_is_compared_in_its_ntriples_spelling(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shapes = "sh:property [ sh:path ( ex:knows ex:age ) ; sh:node ex:Int ] . ex:Int sh:datatype xsd:integer ."
+    code, findings = _background_run(tmp_path, capsys, 'ex:c ex:age "x" .', "ex:bg a ex:T ; ex:knows ex:c .", shapes)
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0]) == ['"x"']
+    assert code == 1

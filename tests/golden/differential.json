@@ -609,14 +609,14 @@
   "text_node_shacl_violation": {
    "to_file": {
     "exit": 1,
-    "file": "Ontology linter: 3 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n[ERROR  ] SHACL001 https://example.test/b: Less than 1 values on ex:b-><https://example.test/name> [shape: https://example.test/Name]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n[ERROR  ] SHACL001 https://example.test/b: Value is not Literal with datatype xsd:integer [shape: https://example.test/Age]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n",
+    "file": "Ontology linter: 1 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "Ontology linter: 3 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n[ERROR  ] SHACL001 https://example.test/b: Less than 1 values on ex:b-><https://example.test/name> [shape: https://example.test/Name]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n[ERROR  ] SHACL001 https://example.test/b: Value is not Literal with datatype xsd:integer [shape: https://example.test/Age]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n"
+    "stdout": "Ontology linter: 1 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n"
    }
   }
  },

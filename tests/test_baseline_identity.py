@@ -324,6 +324,28 @@ def test_a_baseline_written_before_the_term_message_fix_still_matches(tmp_path: 
     assert code == 1
 
 
+SHACL_NODE = (FIXTURES / "shacl_node.ttl", FIXTURES / "shacl_node_shapes.ttl")
+# Written by ``--write-baseline`` (from ``tmp_path``, as ``shacl_node.ttl``) before SHACL001 stopped reporting the
+# ``sh:detail`` results of an ``sh:node`` violation as findings of their own (issue #9); never regenerate it.
+SHACL_NODE_BASELINE = FIXTURES / "baselines" / "shacl_node.baseline.json"
+
+
+def test_a_baseline_with_nested_shacl_results_keeps_its_parent_and_goes_stale_for_the_rest(
+    tmp_path: Path, run: Run
+) -> None:
+    """The parent finding stays accepted; the entries of the two nested results, no longer findings, go stale."""
+    for source in SHACL_NODE:
+        (tmp_path / source.name).write_bytes(source.read_bytes())
+    written = json.loads(SHACL_NODE_BASELINE.read_text(encoding="utf-8"))
+    argv = ("shacl_node.ttl", "--shapes", "shacl_node_shapes.ttl", "--select", "SHACL001")
+    code, document = run(*argv, "--baseline", str(SHACL_NODE_BASELINE))
+    assert document["findings"] == []
+    assert len(document["baseline"]["stale_fingerprints"]) == len(written["fingerprints"]) - 1
+    assert code == 0
+    code, _document = run(*argv, "--baseline", str(SHACL_NODE_BASELINE), "--fail-on-stale-baseline")
+    assert code == 1
+
+
 def test_a_version_2_file_read_by_0_10_2_gives_the_version_1_results() -> None:
     reports = [*_kitchen_reports(), FileReport("b.ttl", "b.ttl", _kitchen_reports()[0].findings[:3])]
     text = baseline.dumps(baseline.build(reports))
