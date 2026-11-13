@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from pathlib import Path
 
@@ -530,3 +531,54 @@ def test_a_trig_finding_has_the_region_of_its_turtle_twin(
     assert regions == _regions(tmp_path / "a.ttl", capsys)
     assert regions
     assert all(region is not None for _rule, _message, region in regions)
+
+
+# --- JSON-LD written by a Java tool (issue #7): Jena's riot, see tests/fixtures/java_jsonld/README.md ----
+
+JAVA_JSONLD = Path(__file__).parent / "fixtures" / "java_jsonld"
+# Jackson's DefaultPrettyPrinter (Jena's JSON-LD 1.0 writer) puts a space before the colon; the 1.1 writer does not.
+JAVA_LAYOUTS = {"pets.jsonld10.jsonld": '"@id" : ', "pets.jsonld11.jsonld": '"@id": '}
+_FOCUS = re.compile(r"Focus: (\S+)\. Suggestion: ")
+
+
+@pytest.mark.parametrize(("fixture", "separator"), JAVA_LAYOUTS.items(), ids=JAVA_LAYOUTS.keys())
+def test_a_java_jsonld_fixture_keeps_its_writers_layout(fixture: str, separator: str) -> None:
+    """The fixtures are worth keeping only as written: a reformatted copy no longer tests Jackson's layout."""
+    text = (JAVA_JSONLD / fixture).read_text(encoding="utf-8")
+    assert separator in text
+    assert not any(other in text for other in set(JAVA_LAYOUTS.values()) - {separator})
+
+
+@pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
+def test_every_iri_subject_of_a_java_jsonld_file_is_located_at_an_id(tmp_path: Path, fixture: str) -> None:
+    text = (JAVA_JSONLD / fixture).read_text(encoding="utf-8")
+    document = _document(tmp_path, "a.jsonld", text)
+    index = document.source_index
+    assert index.problem is None
+    assert {s for s in document.graph.subjects() if isinstance(s, URIRef)} <= set(index.locations)
+    # A compact @id (the 1.1 writer's "xsd:nonNegativeInteger") names the node through the file's prefixes.
+    prefixes = {k: v for k, v in json.loads(text)["@context"].items() if isinstance(v, str)}
+    lines = text.split("\n")
+    for node, location in index.locations.items():
+        assert location.column is not None
+        at = sum(len(line) + 1 for line in lines[: location.line - 1]) + location.column - 1
+        assert text[:at].endswith(JAVA_LAYOUTS[fixture]), (node, location)
+        prefix, _colon, local = json.JSONDecoder().raw_decode(text, at)[0].partition(":")
+        assert prefixes.get(prefix, prefix + ":") + local == str(node), (node, location)
+
+
+@pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
+def test_a_java_jsonld_finding_has_a_region_at_its_focus(capsys: pytest.CaptureFixture[str], fixture: str) -> None:
+    """The findings of the Turtle the file was exported from, each with a region that spells its focus."""
+    path = JAVA_JSONLD / fixture
+    regions = _regions(path, capsys)
+    turtle = _regions(JAVA_JSONLD / "pets.ttl", capsys)
+    assert sorted(found[:2] for found in regions) == sorted(found[:2] for found in turtle)
+    assert regions
+    lines = path.read_text(encoding="utf-8").split("\n")
+    for _rule, message, region in regions:
+        assert isinstance(region, dict), message
+        focus = _FOCUS.search(message)
+        assert focus is not None, message
+        spelled, _end = json.JSONDecoder().raw_decode(lines[region["startLine"] - 1], region["startColumn"] - 1)
+        assert spelled == focus[1], (message, region)
