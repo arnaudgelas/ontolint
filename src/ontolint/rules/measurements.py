@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Set
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING
@@ -117,6 +117,8 @@ class MeasurementSpec:
     compute: Callable[[RuleContext], Value | Absent]
     rules: tuple[str, ...] = ()
     """The METRIC rules that threshold it."""
+    partitioned: bool = False
+    """Whether its value is of owned terms, so a module, file or graph partition can restrict it (:func:`partition`)."""
 
 
 class MeasurementUnavailable(Exception):
@@ -205,12 +207,47 @@ def publish(ctx: RuleContext) -> tuple[Measurement, ...]:
     return tuple(record(spec, value) for spec, value in taken(ctx))
 
 
-def record(spec: MeasurementSpec, value: Value | Absent) -> Measurement:
-    """The published record of ``value``: counts only, the term sets left out; absent when it cannot be built."""
+def record(spec: MeasurementSpec, value: Value | Absent, terms: Set[Node] | None = None) -> Measurement:
+    """The published record of ``value`` (restricted to ``terms`` if given): counts only, the term sets left out.
+
+    A value that does not fit its kind, or that is not of terms when ``terms`` is given, is published as absent.
+    """
     try:
-        return _record(spec, value)
+        return _record(spec, value if terms is None else restrict(value, terms))
     except Exception as exc:  # noqa: BLE001 -- a value that does not fit its kind is published as absent.
         return Measurement(spec.id, spec.version, spec.kind, spec.population, reason=_failure(exc))
+
+
+def partition_terms(ctx: RuleContext) -> dict[str, frozenset[Node]]:
+    """The terms a partition places, by the text a finding about each has as its focus.
+
+    They are the owned classes and properties, of which every partitioned population is.  IRIs that differ only
+    in their userinfo share one text, as they share one finding.
+    """
+    texts: dict[str, set[Node]] = {}
+    for term in owned_classes(ctx) | owned_properties(ctx):
+        texts.setdefault(ctx._focus_text(term), set()).add(term)  # the focus text a finding about it has
+    return {text: frozenset(terms) for text, terms in texts.items()}
+
+
+def partition(vector: Iterable[tuple[MeasurementSpec, Value | Absent]], terms: Set[Node]) -> tuple[Measurement, ...]:
+    """The partitioned measurements of ``vector`` (:func:`taken`) restricted to ``terms``, as published records.
+
+    A partition restricts and never recomputes: each of its terms counts with its value in the whole file (a
+    class's depth, a parent's number of subclasses), and an absent measurement is absent with the same reason.
+    """
+    return tuple(record(spec, value, terms) for spec, value in vector if spec.partitioned)
+
+
+def restrict(value: Value | Absent, terms: Set[Node]) -> Value | Absent:
+    """``value`` with only the terms of ``terms`` in its sets (both of a ratio's); an absent value stays absent."""
+    if isinstance(value, Absent):
+        return value
+    if isinstance(value, TermRatio):
+        return TermRatio(value.numerator & terms, value.denominator & terms)
+    if isinstance(value, TermValues):
+        return TermValues(MappingProxyType({term: n for term, n in value.values.items() if term in terms}))
+    raise TypeError(f"a {type(value).__name__} is not of terms")
 
 
 def _record(spec: MeasurementSpec, value: Value | Absent) -> Measurement:
@@ -482,9 +519,17 @@ def _shacl_class_target_coverage(ctx: RuleContext) -> TermRatio | Absent:
 RATIO, COUNT, HISTOGRAM = MeasurementKind.RATIO, MeasurementKind.COUNT, MeasurementKind.HISTOGRAM
 
 SPECS: tuple[MeasurementSpec, ...] = (
-    MeasurementSpec("class_label_coverage", 1, RATIO, "owned_classes", _class_label_coverage, rules=("METRIC001",)),
     MeasurementSpec(
-        "class_definition_coverage", 1, RATIO, "owned_classes", _class_definition_coverage, rules=("METRIC002",)
+        "class_label_coverage", 1, RATIO, "owned_classes", _class_label_coverage, rules=("METRIC001",), partitioned=True
+    ),
+    MeasurementSpec(
+        "class_definition_coverage",
+        1,
+        RATIO,
+        "owned_classes",
+        _class_definition_coverage,
+        rules=("METRIC002",),
+        partitioned=True,
     ),
     MeasurementSpec(
         "property_documentation_coverage",
@@ -493,9 +538,14 @@ SPECS: tuple[MeasurementSpec, ...] = (
         "owned_properties",
         _property_documentation_coverage,
         rules=("METRIC003",),
+        partitioned=True,
     ),
-    MeasurementSpec("class_fanout", 1, RATIO, "owned_parent_classes", _class_fanout, rules=("METRIC004",)),
-    MeasurementSpec("orphan_classes", 1, RATIO, "owned_classes", _orphan_classes, rules=("METRIC005",)),
+    MeasurementSpec(
+        "class_fanout", 1, RATIO, "owned_parent_classes", _class_fanout, rules=("METRIC004",), partitioned=True
+    ),
+    MeasurementSpec(
+        "orphan_classes", 1, RATIO, "owned_classes", _orphan_classes, rules=("METRIC005",), partitioned=True
+    ),
     MeasurementSpec(
         "relation_properties_per_class",
         1,
@@ -503,6 +553,7 @@ SPECS: tuple[MeasurementSpec, ...] = (
         "owned_classes",
         _relation_properties_per_class,
         rules=("METRIC006", "METRIC007"),
+        partitioned=True,
     ),
     MeasurementSpec(
         "unsigned_properties",
@@ -511,16 +562,33 @@ SPECS: tuple[MeasurementSpec, ...] = (
         "owned_object_and_datatype_properties",
         _unsigned_properties,
         rules=("METRIC008",),
+        partitioned=True,
     ),
     MeasurementSpec(
-        "label_language_coverage", 1, RATIO, "labelled_owned_terms", _label_language_coverage, rules=("METRIC009",)
+        "label_language_coverage",
+        1,
+        RATIO,
+        "labelled_owned_terms",
+        _label_language_coverage,
+        rules=("METRIC009",),
+        partitioned=True,
     ),
     MeasurementSpec("foreign_references", 1, RATIO, "structural_references", _foreign_references, rules=("METRIC010",)),
     MeasurementSpec("unresolved_imports", 1, COUNT, "graph", _unresolved_imports, rules=("METRIC011",)),
-    MeasurementSpec("definition_length", 1, RATIO, "defined_owned_classes", _definition_length, rules=("METRIC012",)),
+    MeasurementSpec(
+        "definition_length",
+        1,
+        RATIO,
+        "defined_owned_classes",
+        _definition_length,
+        rules=("METRIC012",),
+        partitioned=True,
+    ),
     MeasurementSpec("blank_subjects", 1, RATIO, "non_structural_subjects", _blank_subjects, rules=("METRIC013",)),
-    MeasurementSpec("class_depth", 1, HISTOGRAM, "owned_classes", _class_depth),
+    MeasurementSpec("class_depth", 1, HISTOGRAM, "owned_classes", _class_depth, partitioned=True),
     MeasurementSpec("hierarchy_components", 1, COUNT, "owned_classes", _hierarchy_components),
-    MeasurementSpec("shacl_class_target_coverage", 1, RATIO, "owned_classes", _shacl_class_target_coverage),
+    MeasurementSpec(
+        "shacl_class_target_coverage", 1, RATIO, "owned_classes", _shacl_class_target_coverage, partitioned=True
+    ),
 )
 """The catalogue, in publication order."""

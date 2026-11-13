@@ -189,7 +189,8 @@ def test_without_the_flag_nothing_is_measured_beyond_the_rules(
     def boom(*_args: object) -> Any:
         raise AssertionError("measured without --measurements")
 
-    monkeypatch.setattr(measurements, "publish", boom)
+    for name_ in ("publish", "taken", "partition", "partition_terms"):
+        monkeypatch.setattr(measurements, name_, boom)
     specs = tuple(spec if spec.rules else replace(spec, compute=boom) for spec in measurements.SPECS)
     monkeypatch.setattr(measurements, "SPECS", specs)
     argv = _case(name, monkeypatch)
@@ -372,7 +373,9 @@ def test_a_record_emits_only_the_fields_it_has() -> None:
 # --- the documentation --------------------------------------------------------------------------------------------
 
 DOC = ROOT / "docs" / "measurements.md"
-ROW = re.compile(r"^\| `(\w+)` \| (\d+) \| (\w+) \| `(\w+)` \| [^|]+ \| ([^|]+) \| ([^|]+) \|$", re.MULTILINE)
+ROW = re.compile(
+    r"^\| `(\w+)` \| (\d+) \| (\w+) \| `(\w+)` \| [^|]+ \| ([^|]+) \| (yes|no) \| ([^|]+) \|$", re.MULTILINE
+)
 
 
 def _empty_value(record: dict[str, Any]) -> str:
@@ -383,8 +386,15 @@ def _empty_value(record: dict[str, Any]) -> str:
 
 def test_the_documented_catalogue_is_the_engine_catalogue() -> None:
     rows = ROW.findall(DOC.read_text(encoding="utf-8"))
-    assert [(i, int(v), k, p, r.strip()) for i, v, k, p, r, _empty in rows] == [
-        (spec.id, spec.version, spec.kind.value, spec.population, ", ".join(spec.rules) or "none")
+    assert [(i, int(v), k, p, r.strip(), part) for i, v, k, p, r, part, _empty in rows] == [
+        (
+            spec.id,
+            spec.version,
+            spec.kind.value,
+            spec.population,
+            ", ".join(spec.rules) or "none",
+            "yes" if spec.partitioned else "no",
+        )
         for spec in measurements.SPECS
     ]
     # The empty column is what an empty graph (and an empty shapes graph) publishes.

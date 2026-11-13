@@ -49,23 +49,23 @@ The engine is `src/ontolint/rules/measurements.py`; the METRIC specification at 
 In publication order. "Empty population" is the value of an ontology with no owned term (and, for
 the SHACL coverage, an empty shapes graph).
 
-| ID | Version | Kind | Population | Counts | Read by | Empty population |
-| --- | --- | --- | --- | --- | --- | --- |
-| `class_label_coverage` | 1 | ratio | `owned_classes` | owned classes with a label | METRIC001 | 0/0 |
-| `class_definition_coverage` | 1 | ratio | `owned_classes` | owned classes with a definition | METRIC002 | 0/0 |
-| `property_documentation_coverage` | 1 | ratio | `owned_properties` | owned properties with documentation | METRIC003 | 0/0 |
-| `class_fanout` | 1 | ratio | `owned_parent_classes` | direct subclass edges, over the classes that have one | METRIC004 | 0/0 |
-| `orphan_classes` | 1 | ratio | `owned_classes` | the classes `CLS001` reports | METRIC005 | 0/0 |
-| `relation_properties_per_class` | 1 | ratio | `owned_classes` | owned properties that are not annotation-only, over owned classes | METRIC006, METRIC007 | 0/0 |
-| `unsigned_properties` | 1 | ratio | `owned_object_and_datatype_properties` | the properties `OWL005` and `OWL006` both report | METRIC008 | 0/0 |
-| `label_language_coverage` | 1 | ratio | `labelled_owned_terms` | labelled terms with a language-tagged label | METRIC009 | 0/0 |
-| `foreign_references` | 1 | ratio | `structural_references` | references to a foreign namespace, split by namespace | METRIC010 | 0/0 |
-| `unresolved_imports` | 1 | count | `graph` | distinct `owl:imports` IRIs not loaded | METRIC011 | 0 |
-| `definition_length` | 1 | ratio | `defined_owned_classes` | words of the longest definition, summed over the defined classes | METRIC012 | 0/0 |
-| `blank_subjects` | 1 | ratio | `non_structural_subjects` | blank subjects | METRIC013 | 0/0 |
-| `class_depth` | 1 | histogram | `owned_classes` | owned classes per depth | none | [] |
-| `hierarchy_components` | 1 | count | `owned_classes` | weakly connected parts of the asserted hierarchy | none | 0 |
-| `shacl_class_target_coverage` | 1 | ratio | `owned_classes` | owned classes a class target reaches | none | 0/0 |
+| ID | Version | Kind | Population | Counts | Read by | Partitioned | Empty population |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `class_label_coverage` | 1 | ratio | `owned_classes` | owned classes with a label | METRIC001 | yes | 0/0 |
+| `class_definition_coverage` | 1 | ratio | `owned_classes` | owned classes with a definition | METRIC002 | yes | 0/0 |
+| `property_documentation_coverage` | 1 | ratio | `owned_properties` | owned properties with documentation | METRIC003 | yes | 0/0 |
+| `class_fanout` | 1 | ratio | `owned_parent_classes` | direct subclass edges, over the classes that have one | METRIC004 | yes | 0/0 |
+| `orphan_classes` | 1 | ratio | `owned_classes` | the classes `CLS001` reports | METRIC005 | yes | 0/0 |
+| `relation_properties_per_class` | 1 | ratio | `owned_classes` | owned properties that are not annotation-only, over owned classes | METRIC006, METRIC007 | yes | 0/0 |
+| `unsigned_properties` | 1 | ratio | `owned_object_and_datatype_properties` | the properties `OWL005` and `OWL006` both report | METRIC008 | yes | 0/0 |
+| `label_language_coverage` | 1 | ratio | `labelled_owned_terms` | labelled terms with a language-tagged label | METRIC009 | yes | 0/0 |
+| `foreign_references` | 1 | ratio | `structural_references` | references to a foreign namespace, split by namespace | METRIC010 | no | 0/0 |
+| `unresolved_imports` | 1 | count | `graph` | distinct `owl:imports` IRIs not loaded | METRIC011 | no | 0 |
+| `definition_length` | 1 | ratio | `defined_owned_classes` | words of the longest definition, summed over the defined classes | METRIC012 | yes | 0/0 |
+| `blank_subjects` | 1 | ratio | `non_structural_subjects` | blank subjects | METRIC013 | no | 0/0 |
+| `class_depth` | 1 | histogram | `owned_classes` | owned classes per depth | none | yes | [] |
+| `hierarchy_components` | 1 | count | `owned_classes` | weakly connected parts of the asserted hierarchy | none | no | 0 |
+| `shacl_class_target_coverage` | 1 | ratio | `owned_classes` | owned classes a class target reaches | none | yes | 0/0 |
 
 ## Populations and exclusions
 
@@ -172,6 +172,7 @@ concepts and individuals are in no population.
 
 - `measurements` comes after `executions` (and after `module_summary` when there is one), and
   only with `--measurements`. It always lists every measurement of the catalogue, in its order.
+  `measurement_partitions` follows it when the file has partitions (see "Partitions").
 - A ratio has `numerator` and `denominator`; `foreign_references` also has `by_namespace`, a list
   even when empty. A count has `value`. A histogram has `buckets`, possibly empty.
 - A measurement that could not be taken keeps `id`, `definition_version`, `kind` and `population`
@@ -179,6 +180,43 @@ concepts and individuals are in no population.
   reason `failed: <ExceptionType>: <message>`; a METRIC rule that read it has failed too.
 - The report's `schema_version` stays `1`: the key is additive.
 - No IRI userinfo is ever printed: reasons and namespaces are masked.
+
+## Partitions
+
+With module grouping (`--module-by`, `--module-annotation`), named graphs (TriG, N-Quads, JSON-LD) or
+an import closure (`--follow-imports`, `--catalog`), the file's entry also carries
+`measurement_partitions`: the partitioned measurements (the "Partitioned" column) of the owned terms in
+each in-file module, named graph or closure file.
+
+```json
+"measurement_partitions": [
+  {"by": "file", "path": "onto.ttl", "measurements": []},
+  {"by": "file", "path": "modules/core.ttl", "measurements": []},
+  {"by": "graph", "path": "onto.ttl", "name": "(default graph)", "measurements": []},
+  {"by": "module", "name": "core", "measurements": []}
+]
+```
+
+- A term is placed exactly where a finding about it is placed: in the closure file that declares it
+  (else the root), in the graphs of that file that describe it (else those that mention it), and in
+  the modules its annotation names or its namespace is. So a partition's coverage and the findings
+  listed for the same module, graph or file come from one placement rule.
+- A partition restricts the file's measurement to its terms and never recomputes it: each term keeps
+  its value in the whole file (a class's depth, a parent's number of subclasses, counted over the
+  whole hierarchy). `relation_properties_per_class` restricts both its properties and its classes.
+- A term in two graphs or two modules counts in both. A term without a module annotation is in no
+  module. A term is in exactly one closure file, so the `file` partitions of a measurement add up to
+  the file's own record.
+- Every closure file is listed (the root too, also when the closure is the root alone), and every
+  graph of each file's index: one without owned terms shows 0 of 0 (a histogram `[]`). A module is
+  listed when an owned class or property is in it.
+- `foreign_references`, `unresolved_imports`, `blank_subjects` and `hierarchy_components` are not
+  measurements of single owned terms, so they appear only in the file's own record.
+- A measurement that could not be taken is absent, with the same reason, in every partition.
+- Partitions are listed by kind (files, then graphs, then modules): files in closure order, the root
+  first; graphs by file, then `(default graph)` first and the others sorted; modules sorted by name.
+  `path` is the report path of the file (for a graph, of the file holding it); `name` is the graph's
+  or the module's.
 
 ## Limitations
 
