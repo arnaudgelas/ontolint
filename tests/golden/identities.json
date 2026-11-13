@@ -1,0 +1,7845 @@
+{
+ "cases": {
+  "ALIGN002:missing hash in the skos namespace": [
+   [
+    "ALIGN002",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/coreexactMatch"
+    ],
+    "18ae29cb88ec486b8d2d4d855df36ab13edd363d34ab44ff8613da8ccda8096d"
+   ]
+  ],
+  "ALIGN002:owl typo": [
+   [
+    "ALIGN002",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2002/07/owl#sameas"
+    ],
+    "ccecc8de333035296c886d5250f92147217164b7defc53507d405fdba56543d8"
+   ]
+  ],
+  "ALIGN002:unknown match property": [
+   [
+    "ALIGN002",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#relMatch"
+    ],
+    "d9ef3d21b7e68c3bfc1627c58ffdbb2d0bcb7915020d44184aff754c3fdc92fb"
+   ]
+  ],
+  "ALIGN002:wrong case": [
+   [
+    "ALIGN002",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#exactmatch"
+    ],
+    "26aa7f5d61cc776b7ae5083e25eb944cfb2c025c26ba49b5168ce2bfbf77b7b3"
+   ]
+  ],
+  "ALIGN003:chain with broad": [
+   [
+    "ALIGN003",
+    "http://a.test/X",
+    [
+     "http://c.test/Z"
+    ],
+    "f7213bed3a76e302a1bdc5218cedb53c7a9cc90605a756e0ffc0e4b8bd258fd8"
+   ]
+  ],
+  "ALIGN003:chain with narrow": [
+   [
+    "ALIGN003",
+    "http://a.test/X",
+    [
+     "http://c.test/Z"
+    ],
+    "f7213bed3a76e302a1bdc5218cedb53c7a9cc90605a756e0ffc0e4b8bd258fd8"
+   ]
+  ],
+  "ALIGN003:longer chain": [
+   [
+    "ALIGN003",
+    "https://example.test/onto#W",
+    [
+     "http://a.test/X"
+    ],
+    "37240eab8000abcc1d47c072fd4dfc6cff088f1435f4d9134e83205942720356"
+   ]
+  ],
+  "ALIGN003:relatedMatch both ways in an exactMatch chain": [
+   [
+    "ALIGN003",
+    "http://a.test/X",
+    [
+     "http://www.w3.org/2004/02/skos/core#relatedMatch",
+     "http://c.test/Z"
+    ],
+    "8d0ff1a2b39d3a1ed59a167ee673478776bd868e8648d16e7f232ff80d664623"
+   ]
+  ],
+  "ALIGN003:relatedMatch in an exactMatch chain": [
+   [
+    "ALIGN003",
+    "http://a.test/X",
+    [
+     "http://www.w3.org/2004/02/skos/core#relatedMatch",
+     "http://c.test/Z"
+    ],
+    "8d0ff1a2b39d3a1ed59a167ee673478776bd868e8648d16e7f232ff80d664623"
+   ]
+  ],
+  "ALIGN004:broad and narrow same direction": [
+   [
+    "ALIGN004",
+    "http://a.test/X",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "http://b.test/Y"
+    ],
+    "4359ab8ff643ab2b683c3e99cfff25b7148362dc83fda1796d76f98cc21eeca5"
+   ]
+  ],
+  "ALIGN004:mutual broad": [
+   [
+    "ALIGN004",
+    "http://a.test/X",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "http://b.test/Y"
+    ],
+    "4359ab8ff643ab2b683c3e99cfff25b7148362dc83fda1796d76f98cc21eeca5"
+   ]
+  ],
+  "ALIGN004:related and broad": [
+   [
+    "ALIGN004",
+    "http://a.test/X",
+    [
+     "http://www.w3.org/2004/02/skos/core#relatedMatch",
+     "http://b.test/Y"
+    ],
+    "847285c27186025a6ca4a5492c60e49fa01018326e86d4604d0f2d64e8aa184f"
+   ]
+  ],
+  "ALIGN004:related and inverse narrow": [
+   [
+    "ALIGN004",
+    "http://b.test/Y",
+    [
+     "http://www.w3.org/2004/02/skos/core#relatedMatch",
+     "http://a.test/X"
+    ],
+    "d47efb48caf41bb5cfa0bb656d2a7ce87ccf6ad51f45b2c0035d737245ffb596"
+   ]
+  ],
+  "ALIGN005:two targets": [
+   [
+    "ALIGN005",
+    "https://example.test/onto#A",
+    [
+     "http://a.test/"
+    ],
+    "5983b27d38573e119ed17ba59b8f173d334d0ef5d0ac6c694e15275fe299c414"
+   ]
+  ],
+  "ALIGN005:two targets in a slash namespace": [
+   [
+    "ALIGN005",
+    "https://example.test/onto#A",
+    [
+     "http://s.test/x/"
+    ],
+    "2c1ee1af00b256f4c2a8bcefe2baa9c8fe68c42fffaf245e7904f0e614f03239"
+   ]
+  ],
+  "ALIGN007:one-way closeMatch": [
+   [
+    "ALIGN007",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#closeMatch",
+     "https://example.test/onto#B"
+    ],
+    "93a6204fe1d7be15651083a17ecaf147da2571b390d02b635f823962dcc5173a"
+   ]
+  ],
+  "ALIGN007:one-way exactMatch": [
+   [
+    "ALIGN007",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#exactMatch",
+     "https://example.test/onto#B"
+    ],
+    "7fbd7ee5b69b5e83d2052042a6d167b46d316356526f3b113e62f197502d9bc9"
+   ]
+  ],
+  "ALIGN009:class to property": [
+   [
+    "ALIGN009",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2004/02/skos/core#exactMatch",
+     "http://a.test/p"
+    ],
+    "7169af7ce8c3eec0e4110e4b5161f2b012737cbf639e520ec124ab25a3244a9a"
+   ]
+  ],
+  "ALIGN009:equivalentClass to property": [
+   [
+    "ALIGN009",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#equivalentClass",
+     "https://example.test/onto#p"
+    ],
+    "0ccddbf7bf1326321412517afd05e59d7bdc0e7fa7c53ee3efcc1644d2c53300"
+   ]
+  ],
+  "ALIGN009:property to class": [
+   [
+    "ALIGN009",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2004/02/skos/core#closeMatch",
+     "http://a.test/C"
+    ],
+    "0b8069bd485b885e0b9a562802556f39738371c571cb06c3c808d9e341e9afa8"
+   ]
+  ],
+  "ALIGN012:equivalentClass outside": [
+   [
+    "ALIGN012",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2002/07/owl#equivalentClass",
+     "https://elsewhere.test/A"
+    ],
+    "9c0661e2708ef08fcac041d9b9a9c93df29e0e031f5361403128e448e8d1b80a"
+   ]
+  ],
+  "ALIGN012:exactMatch outside": [
+   [
+    "ALIGN012",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#exactMatch",
+     "https://elsewhere.test/A"
+    ],
+    "74ded0453c7a8e6819890e4ef212462429ca4ea6f3010869e6790857a4b53f89"
+   ]
+  ],
+  "ALIGN012:one of two targets outside": [
+   [
+    "ALIGN012",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#closeMatch",
+     "https://elsewhere.test/A"
+    ],
+    "a93d0027c57938a5c90575c8fa4ea385659f19d1b86a26e54aca6b483c8d6ff2"
+   ]
+  ],
+  "ALIGN012:sameAs outside on an individual": [
+   [
+    "ALIGN012",
+    "https://example.test/onto#i",
+    [
+     "http://www.w3.org/2002/07/owl#sameAs",
+     "https://elsewhere.test/i"
+    ],
+    "c4cd5f50391710d6524c5d2c1f8f6f4f2d0834af56aa7b71e572eb6d109c63e6"
+   ]
+  ],
+  "ALIGN013:broad and inverse narrow": [
+   [
+    "ALIGN013",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "http://www.w3.org/2004/02/skos/core#narrowMatch",
+     "https://example.test/onto#B"
+    ],
+    "07e97b3ae055e7b40bb0939b5faae6af41cd47bcbe00cad08db21c9bb9c23745"
+   ]
+  ],
+  "ALIGN013:exact and close": [
+   [
+    "ALIGN013",
+    "https://example.test/onto#A",
+    [
+     "equivalence",
+     "https://example.test/onto#B"
+    ],
+    "615ef754e1e074848395bdd689442f17ce19635a8e0675811478439f54c12ae6"
+   ]
+  ],
+  "ALIGN013:exact and equivalentClass": [
+   [
+    "ALIGN013",
+    "https://example.test/onto#A",
+    [
+     "equivalence",
+     "https://example.test/onto#B"
+    ],
+    "615ef754e1e074848395bdd689442f17ce19635a8e0675811478439f54c12ae6"
+   ]
+  ],
+  "ALIGN013:sameAs and exact reversed": [
+   [
+    "ALIGN013",
+    "https://example.test/onto#A",
+    [
+     "equivalence",
+     "https://example.test/onto#B"
+    ],
+    "615ef754e1e074848395bdd689442f17ce19635a8e0675811478439f54c12ae6"
+   ]
+  ],
+  "ALIGN014:broadMatch against subclass": [
+   [
+    "ALIGN014",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "https://example.test/onto#B"
+    ],
+    "7533bbd5dbb433f55cc46ed5f7ec61baaef88ef2cc99ca5929d8f4de764de71d"
+   ]
+  ],
+  "ALIGN014:narrowMatch against subclass": [
+   [
+    "ALIGN014",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#narrowMatch",
+     "https://example.test/onto#B"
+    ],
+    "12e797e41d42338bfe2b78220599ff66b5d4e8472bcf6cec6791cb42c87f218d"
+   ]
+  ],
+  "ALIGN014:skos broader": [
+   [
+    "ALIGN014",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "https://example.test/onto#B"
+    ],
+    "7533bbd5dbb433f55cc46ed5f7ec61baaef88ef2cc99ca5929d8f4de764de71d"
+   ]
+  ],
+  "ALIGN014:skos narrower": [
+   [
+    "ALIGN014",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "https://example.test/onto#B"
+    ],
+    "7533bbd5dbb433f55cc46ed5f7ec61baaef88ef2cc99ca5929d8f4de764de71d"
+   ]
+  ],
+  "ALIGN014:subproperty": [
+   [
+    "ALIGN014",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "https://example.test/onto#q"
+    ],
+    "e3cb2418016369ffb21eee1ba390507c15a03535263a2ad31dc87fde892a5917"
+   ]
+  ],
+  "ALIGN014:through a chain": [
+   [
+    "ALIGN014",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#broadMatch",
+     "https://example.test/onto#C"
+    ],
+    "ebe7ddb3e87864e1efd010309ea93a996a70169bf0a7a4318b758a3f37e27647"
+   ]
+  ],
+  "ALIGN015:bare mapping set": [
+   [
+    "ALIGN015",
+    "https://example.test/onto#M",
+    [],
+    "4b6cad6a7456e12263673f13fa6bba1c7694bd218e7dc5c29ec071a1de914b70"
+   ]
+  ],
+  "ALIGN015:http namespace": [
+   [
+    "ALIGN015",
+    "https://example.test/onto#M",
+    [],
+    "4b6cad6a7456e12263673f13fa6bba1c7694bd218e7dc5c29ec071a1de914b70"
+   ]
+  ],
+  "ALIGN015:no creator": [
+   [
+    "ALIGN015",
+    "https://example.test/onto#M",
+    [],
+    "4b6cad6a7456e12263673f13fa6bba1c7694bd218e7dc5c29ec071a1de914b70"
+   ]
+  ],
+  "ALIGN015:no licence": [
+   [
+    "ALIGN015",
+    "https://example.test/onto#M",
+    [],
+    "4b6cad6a7456e12263673f13fa6bba1c7694bd218e7dc5c29ec071a1de914b70"
+   ]
+  ],
+  "ALIGN015:no version": [
+   [
+    "ALIGN015",
+    "https://example.test/onto#M",
+    [],
+    "4b6cad6a7456e12263673f13fa6bba1c7694bd218e7dc5c29ec071a1de914b70"
+   ]
+  ],
+  "ALIGN016:1 of 10 mapped": [
+   [
+    "ALIGN016",
+    "urn:ontolint:graph",
+    [],
+    "87381a840801525589147b78e18df1823a5520db99baa1f08d8fdec00c3bf57d"
+   ]
+  ],
+  "ALIGN016:below sample of 1": [
+   [
+    "ALIGN016",
+    "urn:ontolint:graph",
+    [],
+    "87381a840801525589147b78e18df1823a5520db99baa1f08d8fdec00c3bf57d"
+   ]
+  ],
+  "ALIGN016:just below ratio": [
+   [
+    "ALIGN016",
+    "urn:ontolint:graph",
+    [],
+    "87381a840801525589147b78e18df1823a5520db99baa1f08d8fdec00c3bf57d"
+   ]
+  ],
+  "ALIGN016:none mapped": [
+   [
+    "ALIGN016",
+    "urn:ontolint:graph",
+    [],
+    "87381a840801525589147b78e18df1823a5520db99baa1f08d8fdec00c3bf57d"
+   ]
+  ],
+  "ALIGN016:properties count in population": [
+   [
+    "ALIGN016",
+    "urn:ontolint:graph",
+    [],
+    "87381a840801525589147b78e18df1823a5520db99baa1f08d8fdec00c3bf57d"
+   ]
+  ],
+  "ALIGN016:self mapping does not count": [
+   [
+    "ALIGN016",
+    "urn:ontolint:graph",
+    [],
+    "87381a840801525589147b78e18df1823a5520db99baa1f08d8fdec00c3bf57d"
+   ]
+  ],
+  "CLS001:isolated class": [
+   [
+    "CLS001",
+    "https://example.test/onto#A",
+    [],
+    "afdfe00d80ea7a595b1be56b2d31520bce26060dcaa9ba60b912d0cd245117ca"
+   ]
+  ],
+  "CLS002:leaf next to a populated class": [
+   [
+    "CLS002",
+    "https://example.test/onto#A",
+    [],
+    "c7f1ddf9fd3f7adfdab0c61003e5dd34826d27d7c06cb733e427bcb85f933035"
+   ]
+  ],
+  "CLS003:self subclass": [
+   [
+    "CLS003",
+    "https://example.test/onto#A",
+    [],
+    "cb38519f9087d4a4b4781b0fdb9ad2fdac1cfc45a3a87ca893d4867bef8b1a65"
+   ]
+  ],
+  "CLS003:two-class cycle": [
+   [
+    "CLS003",
+    "https://example.test/onto#A",
+    [],
+    "cb38519f9087d4a4b4781b0fdb9ad2fdac1cfc45a3a87ca893d4867bef8b1a65"
+   ]
+  ],
+  "CLS004:shortcut edge": [
+   [
+    "CLS004",
+    "https://example.test/onto#n0",
+    [
+     "https://example.test/onto#n2"
+    ],
+    "aad740d3a92b92e1a534101a83427c39fd7f9741bbe8640881f18162db95f678"
+   ]
+  ],
+  "CLS005:depth_limit=3 with 4": [
+   [
+    "CLS005",
+    "https://example.test/onto#n3",
+    [],
+    "de35bb529a8f7f5d32465cc0703e229c9fb4f7754eaf0cbcb85a13696215baeb"
+   ]
+  ],
+  "CLS006:inheritance_limit=2 with 3": [
+   [
+    "CLS006",
+    "https://example.test/onto#A",
+    [],
+    "8841f4de5b751bea105e3ba50a3980c8396d02735e121252bd84832e4057f63e"
+   ]
+  ],
+  "CLS007:four-class single-child chain": [
+   [
+    "CLS007",
+    "https://example.test/onto#n3",
+    [],
+    "fc5054df41af7b69cb6a026b08db5658c3d048654f178bf67a69ef5c23edd38a"
+   ]
+  ],
+  "CLS008:soup_limit=2 with 3": [
+   [
+    "CLS008",
+    "https://example.test/onto#A",
+    [],
+    "e8b4dc53a4f3122f7a5c9453755fc2557fcafd7b53690fb3909381e11afc0866"
+   ]
+  ],
+  "CLS009:equivalent with same label": [
+   [
+    "CLS009",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#B"
+    ],
+    "09b0cf40aa75cd1e1994b8413a9189ae9d3b56252c987059f31619a361134a88"
+   ]
+  ],
+  "CLS010:same label, different case": [
+   [
+    "CLS010",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#P",
+     "",
+     "thing"
+    ],
+    "038065f157dc0b8aed0a1e3b7939d5f80f32aef3fe4c24c1ed02f3bba2f0826f"
+   ],
+   [
+    "CLS010",
+    "https://example.test/onto#B",
+    [
+     "https://example.test/onto#P",
+     "",
+     "thing"
+    ],
+    "f77a35daf3803974c5cf92bd0cd192fd8baf914b2a10fa996c706b3ccd717ff0"
+   ]
+  ],
+  "CLS011:51 direct subclasses": [
+   [
+    "CLS011",
+    "https://example.test/onto#n0",
+    [],
+    "41b2ae1b47215e53d5274ec53f4cee3a9c14c0fd70bd4bc0144fce85a14d0505"
+   ]
+  ],
+  "CLS011:subclass_limit=3 with 4": [
+   [
+    "CLS011",
+    "https://example.test/onto#P",
+    [],
+    "ba245f41312131564649dfdfc7f8e24f081f1df527e8cbc3c293d53e5dd7411b"
+   ]
+  ],
+  "CLS012:instantiated parent, unused leaves": [
+   [
+    "CLS012",
+    "https://example.test/onto#A",
+    [],
+    "7d9c1f1d7e5e5451ca2cd178dcbbfa847cbed87bf17ef7b5123ecc04ba6b5955"
+   ]
+  ],
+  "CLS013:Misc by label": [
+   [
+    "CLS013",
+    "https://example.test/onto#K",
+    [],
+    "02e94c59d73102f9982f9e7205fed4046f03023ccd0226fda8fb7844e10d7495"
+   ]
+  ],
+  "CLS013:Other under parent": [
+   [
+    "CLS013",
+    "https://example.test/onto#OtherDairy",
+    [],
+    "325ba540c82b0bd06878f0ec491e18194bc7de3980b991c94f30a3aa9b259f8d"
+   ]
+  ],
+  "CLS013:snake case": [
+   [
+    "CLS013",
+    "https://example.test/onto#other_dairy",
+    [],
+    "7d8a95b7b3e4914312f2c29759047213935f4574a200478b234155a1e7e45310"
+   ]
+  ],
+  "CLS014:all disjoint list": [
+   [
+    "CLS014",
+    "https://example.test/onto#C",
+    [],
+    "d3fc73161ffb8b340e39a871b1b7c17a0cf9abb4f6afc50d5c569b6099f84da0"
+   ]
+  ],
+  "CLS014:direct": [
+   [
+    "CLS014",
+    "https://example.test/onto#C",
+    [],
+    "d3fc73161ffb8b340e39a871b1b7c17a0cf9abb4f6afc50d5c569b6099f84da0"
+   ]
+  ],
+  "CLS014:scale: deep chain": [
+   [
+    "CLS014",
+    "https://example.test/onto#n19998",
+    [],
+    "263bece4df37e228c6f3479da4416541bd1c023d76595c8e51594465e98bb108"
+   ]
+  ],
+  "CLS014:subclass of its disjoint": [
+   [
+    "CLS014",
+    "https://example.test/onto#A",
+    [],
+    "adca32bbe0eb68e87020f9435bfcbdcec08060f8ab1e9699e89a1c1122f58ab1"
+   ]
+  ],
+  "CLS014:through ancestors": [
+   [
+    "CLS014",
+    "https://example.test/onto#C",
+    [],
+    "d3fc73161ffb8b340e39a871b1b7c17a0cf9abb4f6afc50d5c569b6099f84da0"
+   ]
+  ],
+  "CLS015:three subclasses, no label": [
+   [
+    "CLS015",
+    "https://example.test/onto#P",
+    [],
+    "b2d71b74d2797e20cb94ee5bfee476f66c7192875a1d65cc03cff9cf99ad61ce"
+   ]
+  ],
+  "CLS016:is": [
+   [
+    "CLS016",
+    "https://example.test/onto#is",
+    [],
+    "b4b8d933858f18fce6e0fa28a68814fe0965061f38850cc49e298eef6ca58560"
+   ]
+  ],
+  "CLS016:isA": [
+   [
+    "CLS016",
+    "https://example.test/onto#isA",
+    [],
+    "19c93958d9562932ea3201b9ed2e2261281aadc9d812c131eeb3fb3da42ad3d6"
+   ]
+  ],
+  "CLS016:snake kind of": [
+   [
+    "CLS016",
+    "https://example.test/onto#is_kind_of",
+    [],
+    "17d477f10e3e8fb8313ded148fae6d07e841395be7bd652f72476de7ce037bed"
+   ]
+  ],
+  "CLS017:instance of a declared class": [
+   [
+    "CLS017",
+    "https://example.test/onto#A",
+    [],
+    "b83e4343e20dee96abfb30af3066db9041664f391cbc57cbd1034705a83b3edc"
+   ]
+  ],
+  "CLS017:named individual": [
+   [
+    "CLS017",
+    "https://example.test/onto#A",
+    [],
+    "b83e4343e20dee96abfb30af3066db9041664f391cbc57cbd1034705a83b3edc"
+   ]
+  ],
+  "CLS018:Resource plus restriction": [
+   [
+    "CLS018",
+    "https://example.test/onto#A",
+    [],
+    "9cad5567a0c2e1f6ae0bbb4486dc9da8cb76129e75e5bff657e2d30ad8365a74"
+   ]
+  ],
+  "CLS018:Thing plus parent": [
+   [
+    "CLS018",
+    "https://example.test/onto#A",
+    [],
+    "9cad5567a0c2e1f6ae0bbb4486dc9da8cb76129e75e5bff657e2d30ad8365a74"
+   ]
+  ],
+  "CLS019:below Nothing": [
+   [
+    "CLS019",
+    "https://example.test/onto#A",
+    [],
+    "0559f027317b9304f8f5560ead3a6630a87ee5e29c676bb6c3bdcb4e26238ac4"
+   ]
+  ],
+  "CLS019:equivalent to Nothing": [
+   [
+    "CLS019",
+    "https://example.test/onto#A",
+    [],
+    "0559f027317b9304f8f5560ead3a6630a87ee5e29c676bb6c3bdcb4e26238ac4"
+   ]
+  ],
+  "CLS020:same label": [
+   [
+    "CLS020",
+    "https://example.test/onto#B",
+    [
+     "https://example.test/onto#A"
+    ],
+    "07c4e7e6e5b6329cc389bec5085a1d0a36c2c96576ea273ed5088837ef304c86"
+   ]
+  ],
+  "CLS020:same tagged label": [
+   [
+    "CLS020",
+    "https://example.test/onto#B",
+    [
+     "https://example.test/onto#A"
+    ],
+    "07c4e7e6e5b6329cc389bec5085a1d0a36c2c96576ea273ed5088837ef304c86"
+   ]
+  ],
+  "CLS021:direct parent": [
+   [
+    "CLS021",
+    "https://example.test/onto#B",
+    [
+     "https://example.test/onto#A"
+    ],
+    "d8101203afda9125a8bdb937f943bb1bdcb564529b896d5fb9033d98de7f4dce"
+   ]
+  ],
+  "CLS021:grandparent": [
+   [
+    "CLS021",
+    "https://example.test/onto#C",
+    [
+     "https://example.test/onto#A"
+    ],
+    "1fbda4bebb6aa57d6e3d0b80a1f98aa6a1f5fc6c13443c933bba8f2e0a3bf533"
+   ]
+  ],
+  "CLS021:scale: deep chain": [
+   [
+    "CLS021",
+    "https://example.test/onto#n0",
+    [
+     "https://example.test/onto#n19999"
+    ],
+    "897f107f68b31d292ccc8ca5ef3de9f87db40379f2ac33069d066f0471f5b022"
+   ]
+  ],
+  "CLS022:hasPart": [
+   [
+    "CLS022",
+    "https://example.test/onto#hasPart",
+    [],
+    "64e74054b98bf2f634cc4f176349e7e5c591f1ab76020e1d91a599d16ce2513b"
+   ]
+  ],
+  "CLS022:isPartOf": [
+   [
+    "CLS022",
+    "https://example.test/onto#isPartOf",
+    [],
+    "3e0c639b6fa77327cf187d35cd1dbe07423ea4853d403a9bd3033523dffbece3"
+   ]
+  ],
+  "CLS022:snake case": [
+   [
+    "CLS022",
+    "https://example.test/onto#has_part",
+    [],
+    "15004fa81a37e7c119adc607d6fff6e19a2746e14f14e6d1cef04ffc6e28de4b"
+   ]
+  ],
+  "CLS023:And": [
+   [
+    "CLS023",
+    "https://example.test/onto#DogAndCat",
+    [],
+    "f48a9c34749d70080f022b078fe2476ea8cfe83c9cf611fb9bd60f1aef0430bb"
+   ]
+  ],
+  "CLS023:Or": [
+   [
+    "CLS023",
+    "https://example.test/onto#CarOrBoat",
+    [],
+    "0be6d52448e51f7a26f8978f179fdccfa5c8e1f45fa12330e683dab5b3bea94b"
+   ]
+  ],
+  "CLS024:one outlier among four": [
+   [
+    "CLS024",
+    "https://example.test/onto#Bicycle",
+    [
+     "https://example.test/onto#Vehicle"
+    ],
+    "79e0770b3a4d4ddc7d164ab393433b25a96a4631c16caea0b97a73ed10ae9fe4"
+   ]
+  ],
+  "CLS025:class and grandparent": [
+   [
+    "CLS025",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#C",
+     "https://example.test/onto#A"
+    ],
+    "de9df3b44f8fcfcaf74a96b6786cc6dc568d4021f71654d71e42d93dea564d70"
+   ]
+  ],
+  "CLS025:class and parent": [
+   [
+    "CLS025",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#B",
+     "https://example.test/onto#A"
+    ],
+    "b0b490a8c33ccc9b69a465c1994a183c59f47e10931f87a5fc2b8b178693fdcd"
+   ]
+  ],
+  "CLS025:scale: deep chain": [
+   [
+    "CLS025",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#n0",
+     "https://example.test/onto#n19999"
+    ],
+    "03db450bf4fc2bd24a086c304a84e020d39997a8bbb2f7d01ec27b4cc6011b74"
+   ]
+  ],
+  "DATA001:\"abc\"^^xsd:integer is outside xsd:positiveInteger": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:-1 is outside xsd:nonNegativeInteger": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:-129 is outside xsd:byte": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:0 is outside xsd:negativeInteger": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:0 is outside xsd:positiveInteger": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:1.5 is outside xsd:integer": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#decimal"
+    ],
+    "91539ecef5c5a82be9508fbbfc9e311dcffb399f3bb388a2f1d9c11543caa971"
+   ]
+  ],
+  "DATA001:128 is outside xsd:byte": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:2147483648 is outside xsd:int": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:256 is outside xsd:unsignedByte": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "5af3251100a3222255bef91af5bd4dbef9d81510354895c32e9892dd29dcbbda"
+   ]
+  ],
+  "DATA001:string where xsd:integer is the range": [
+   [
+    "DATA001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     ""
+    ],
+    "ed74e591d92cfd8dcf680e771522c76407c4552a5608741d568bb2a5e957f4a1"
+   ]
+  ],
+  "DATA002:usage implies a disjoint domain": [
+   [
+    "DATA002",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#p",
+     "https://example.test/onto#A",
+     "https://example.test/onto#B"
+    ],
+    "49b463cc0039c956ddbf78e6f14711c82672119e8e404a928f5ca61e1fe56046"
+   ]
+  ],
+  "DATA003:a word typed as an integer": [
+   [
+    "DATA003",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p",
+     "\"many\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "a1a0a1fd1addc43de88b90baa0472d6d94b2495d696d6b17fda836be4c0d24d5"
+   ]
+  ],
+  "DATA003:a year typed as a date (MOD)": [
+   [
+    "DATA003",
+    "https://example.test/onto#A",
+    [
+     "http://purl.org/dc/terms/issued",
+     "\"2004\"^^<http://www.w3.org/2001/XMLSchema#date>"
+    ],
+    "248b8df53a72341f3b36ca3c7a2f4644d41249341ab8254682603da1fef98775"
+   ]
+  ],
+  "DATA003:date with a one-digit day (MOD)": [
+   [
+    "DATA003",
+    "https://example.test/onto#A",
+    [
+     "http://purl.org/dc/terms/issued",
+     "\"2024-06-2\"^^<http://www.w3.org/2001/XMLSchema#date>"
+    ],
+    "0720eebbe0add808d238496a5cfd65db6329346e54b079a0d2d7bb889793d699"
+   ]
+  ],
+  "DATA003:inside an axiom annotation": [
+   [
+    "DATA003",
+    "_:264fb491a366",
+    [
+     "http://purl.org/dc/terms/date",
+     "\"yesterday\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"
+    ],
+    "91fcaa7fd783537a3218d0fabefa26998bb850ae5d187800586823ceaf5a8092"
+   ]
+  ],
+  "DATA003:typed rdfs:Literal (food traceability)": [
+   [
+    "DATA003",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#comment",
+     "\"A note.\"^^<http://www.w3.org/2000/01/rdf-schema#Literal>"
+    ],
+    "da12d46c6ec22f7b2821f5f6b6c62834b93bf6fc7dde1fce09a31b10db38dfda"
+   ]
+  ],
+  "DATA004:data restriction filler": [
+   [
+    "DATA004",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2001/XMLSchema#duration",
+     "http://www.w3.org/2002/07/owl#someValuesFrom"
+    ],
+    "37505a9755b76ab411d22ee8e23e176053391f7a5afcd857dc2002ba5977117a"
+   ]
+  ],
+  "DATA004:datatype restriction on xsd:gYear": [
+   [
+    "DATA004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2001/XMLSchema#gYear",
+     "http://www.w3.org/2002/07/owl#onDatatype"
+    ],
+    "7e16a3b6edd1fdda507c09e63f22a9d6713a45eeaee8416380ae86392a7b3d18"
+   ]
+  ],
+  "DATA004:member of a data range union": [
+   [
+    "DATA004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2001/XMLSchema#time",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
+    ],
+    "c22eb9d6584d6950486ae293e57de7214e30c050966ff2892e6bee40071f71ab"
+   ]
+  ],
+  "DATA004:xsd:anyType range (Tractus-X)": [
+   [
+    "DATA004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2001/XMLSchema#anyType",
+     "http://www.w3.org/2000/01/rdf-schema#range"
+    ],
+    "776478a526cccec930da05ce3213e12621d61dfe540df353a113adcd8ede9997"
+   ]
+  ],
+  "DATA004:xsd:date range": [
+   [
+    "DATA004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2001/XMLSchema#date",
+     "http://www.w3.org/2000/01/rdf-schema#range"
+    ],
+    "4b56836bde2a9b908b796a26306c0425d1c4905bda0fdb49967d40917dd0949d"
+   ]
+  ],
+  "FAIR004:github.com blob": [
+   [
+    "FAIR004",
+    "https://github.com/org/repo/blob/main/o.owl",
+    [
+     "https://github.com/org/repo/blob/main/o.owl"
+    ],
+    "3688e7d07de509356ff80819276654570a69ca13ff6132a889542077926b550c"
+   ]
+  ],
+  "FAIR004:github.io": [
+   [
+    "FAIR004",
+    "https://org.github.io/onto",
+    [
+     "https://org.github.io/onto"
+    ],
+    "8ceeb1ed6dab8c230f46c81f2dd5846d907e811e6ddd13555593f881d1e70460"
+   ]
+  ],
+  "FAIR004:gitlab": [
+   [
+    "FAIR004",
+    "https://gitlab.com/org/repo/-/raw/main/o.owl",
+    [
+     "https://gitlab.com/org/repo/-/raw/main/o.owl"
+    ],
+    "87e3a0bdefe654d09254e9579d57a0a78e397fcd5b9f8625cfded63e1f694df1"
+   ]
+  ],
+  "FAIR004:ip address": [
+   [
+    "FAIR004",
+    "http://192.168.0.10/onto",
+    [
+     "http://192.168.0.10/onto"
+    ],
+    "1a81dfd4a95f4b12e7d42550d70f6565074b69cf07c2b8b1032d8214116530ea"
+   ]
+  ],
+  "FAIR004:ipv6 address": [
+   [
+    "FAIR004",
+    "http://[::1]/onto",
+    [
+     "http://[::1]/onto"
+    ],
+    "ac658def8284c5e47f716ab6ec1becf6320a7c6eef39f1d94c0c24d1c09a4611"
+   ]
+  ],
+  "FAIR004:local file": [
+   [
+    "FAIR004",
+    "file:///home/me/o.owl",
+    [
+     "file:///home/me/o.owl"
+    ],
+    "9e04cf533e7a06448fd7b03e6745173176c9a3654a35c9dd384ff9e63e704e77"
+   ]
+  ],
+  "FAIR004:localhost": [
+   [
+    "FAIR004",
+    "http://localhost:8080/onto",
+    [
+     "http://localhost:8080/onto"
+    ],
+    "9d985d0df366edb6216e1473b03afe7eeab0f86f845431e999659427228062fe"
+   ]
+  ],
+  "FAIR004:mutable version IRI only": [
+   [
+    "FAIR004",
+    "https://w3id.org/example/onto",
+    [
+     "https://raw.githubusercontent.com/org/repo/v1.0/o.owl"
+    ],
+    "de573dd66f6959a95ea2784c2cb551c65e1b0ce5f6fef5a7f2d6794f72c0667e"
+   ]
+  ],
+  "FAIR004:raw github": [
+   [
+    "FAIR004",
+    "https://raw.githubusercontent.com/org/repo/main/o.owl",
+    [
+     "https://raw.githubusercontent.com/org/repo/main/o.owl"
+    ],
+    "17f940af7bcb56aa29068fd0d691dd8fb056f8e25152165c1021e16531efb8a2"
+   ]
+  ],
+  "FAIR006:cc namespace predicate": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "\"MIT\""
+    ],
+    "83fc1968d3e7d1ada1eefde6b0857b46770a8810787c489be8f56becbb9a9c45"
+   ]
+  ],
+  "FAIR006:look-alike host": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "https://notspdx.org/licenses/MIT"
+    ],
+    "de0f5ca22388e27f9c2fa8a66e92a6bba7e2399c2f45b3462f575bdcea48f50c"
+   ]
+  ],
+  "FAIR006:lookalike path": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "https://example.org/creativecommons.org/licenses/by/4.0/"
+    ],
+    "b3952a7bd01beaeb4e44bc988fa0eeff6c5939e4a809ed8fc4ee291918437562"
+   ]
+  ],
+  "FAIR006:plain text": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "\"CC BY 4.0\""
+    ],
+    "12537b12314771308dec9f7fb4a7e7d5533a2d9b3087ecde1b78bba3dff1edd7"
+   ]
+  ],
+  "FAIR006:schema.org licence": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "\"MIT\""
+    ],
+    "83fc1968d3e7d1ada1eefde6b0857b46770a8810787c489be8f56becbb9a9c45"
+   ]
+  ],
+  "FAIR006:typed anyURI": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "\"https://creativecommons.org/licenses/by/4.0/\"^^<http://www.w3.org/2001/XMLSchema#anyURI>"
+    ],
+    "417cdaec6ba934e596c0e67348d7e691bb12f9a194bff5c02f211fbd02dc892e"
+   ]
+  ],
+  "FAIR006:unknown licence iri": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "https://example.org/my-licence"
+    ],
+    "3e7221d2483dedf9bab717376db0d01ec2702bf63dd9145b2ce42d9e488a3f2a"
+   ]
+  ],
+  "FAIR006:url as string": [
+   [
+    "FAIR006",
+    "https://w3id.org/example/onto",
+    [
+     "\"https://creativecommons.org/licenses/by/4.0/\""
+    ],
+    "e0e1ac721d18e32712df8bc11f17421ef2725568533bbcf7be6626407d495251"
+   ]
+  ],
+  "FAIR007:current uppercase": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/CURRENT"
+    ],
+    "a8d9978c4fc407b3077027388cd781fd437de7fb78184c94cfbedeeaa699cd9e"
+   ]
+  ],
+  "FAIR007:dev": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/dev/o.owl"
+    ],
+    "2321ae2a92e68bfa863b0787d67a696d17087fd9caea847b509ae50d003bf260"
+   ]
+  ],
+  "FAIR007:latest": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/latest"
+    ],
+    "658ab11e9043244bf8a8931f22ee9fc61051fd6fe5eae0698b4b00247c283757"
+   ]
+  ],
+  "FAIR007:main": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/main"
+    ],
+    "1d2272f8d096667a552ae1241fc197acdb7397a0bb103499bcd0c1f4328d31a1"
+   ]
+  ],
+  "FAIR007:marker with a digit still floats": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/head/2024"
+    ],
+    "a7cca062ef25a253e3c66fbe7267076026e2c173394820a9463297642cfde88b"
+   ]
+  ],
+  "FAIR007:master": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/master/o.owl"
+    ],
+    "e655e0e188a113c9f91fec2f47f5013ef2505f439cfa6d0ead53cb11bccf9c96"
+   ]
+  ],
+  "FAIR007:no version token": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/release"
+    ],
+    "af04ad765fecd2d457f75727295ac0d4d9ad0e39c94dde6c5ea35ae65ace44a5"
+   ]
+  ],
+  "FAIR007:only a new non-digit token": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/final.owl"
+    ],
+    "e32277563e61ccafddf035b63f06c005e1225b3ef0d2d192285fdd2e10c7288c"
+   ]
+  ],
+  "FAIR007:same as ontology IRI": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto"
+    ],
+    "b1f8b74deb12ed661112e13ae8a91455c5fdb829f0ca8b27d97e7d5d6b9e66a5"
+   ]
+  ],
+  "FAIR007:same up to trailing slash": [
+   [
+    "FAIR007",
+    "https://w3id.org/example/onto",
+    [
+     "https://w3id.org/example/onto/"
+    ],
+    "bdfed792a47a2d6f58d95a86be424365a4e0c3e1660972c2ae717834333da4b7"
+   ]
+  ],
+  "FAIR011:ORCID literal URL bad checksum": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000-0002-1825-0098",
+     "ORCID iD",
+     "0000-0002-1825-0098"
+    ],
+    "bb0be8d644cb17030b7f76f192b4d0700201427f91043d0beda74254ea508f8a"
+   ]
+  ],
+  "FAIR011:ORCID without dashes": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000000218250097",
+     "ORCID iD",
+     "0000000218250097"
+    ],
+    "93c444b719abb71b71147119d03ac0974703aba1afbd933007ffc6878a7c5872"
+   ]
+  ],
+  "FAIR011:ROR bad checksum": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://ror.org/02mhbdp95",
+     "ROR identifier",
+     "02mhbdp95"
+    ],
+    "d9faa983cef19efc5faae2207f46aac5900bafc76b6c487ab0d650b39c99ba1f"
+   ]
+  ],
+  "FAIR011:ROR bad shape": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://ror.org/02mhbdp9",
+     "ROR identifier",
+     "02mhbdp9"
+    ],
+    "5ec9eee8cbfd91d1425832fe255df2ec70d8c341e1db8f992cb7dc7fa91d91a4"
+   ]
+  ],
+  "FAIR011:ROR literal": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://ror.org/02mhbdp95",
+     "ROR identifier",
+     "02mhbdp95"
+    ],
+    "d9faa983cef19efc5faae2207f46aac5900bafc76b6c487ab0d650b39c99ba1f"
+   ]
+  ],
+  "FAIR011:ROR with forbidden letter": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://ror.org/02mhbdu94",
+     "ROR identifier",
+     "02mhbdu94"
+    ],
+    "76eef557d13f88149b4266acbec09e07f8b8e0e96656dbad48e4c2b5e784c31f"
+   ]
+  ],
+  "FAIR011:bad ORCID checksum": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000-0002-1825-0098",
+     "ORCID iD",
+     "0000-0002-1825-0098"
+    ],
+    "bb0be8d644cb17030b7f76f192b4d0700201427f91043d0beda74254ea508f8a"
+   ]
+  ],
+  "FAIR011:bare literal ORCID bad checksum": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "Jane Doe 0000-0002-1825-0098",
+     "ORCID iD",
+     "0000-0002-1825-0098"
+    ],
+    "16e48d7656b2c01944d720cfc797b911c0b18ee8694d56562e10f7631e82efef"
+   ]
+  ],
+  "FAIR011:contributor on a term": [
+   [
+    "FAIR011",
+    "https://example.test/onto#A",
+    [
+     "https://orcid.org/0000-0002-1825-0098",
+     "ORCID iD",
+     "0000-0002-1825-0098"
+    ],
+    "9b800a965e164404173cab430514f016a6551c2cba8326195a29700322fa680d"
+   ]
+  ],
+  "FAIR011:dc creator": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000-0002-1825-0098",
+     "ORCID iD",
+     "0000-0002-1825-0098"
+    ],
+    "bb0be8d644cb17030b7f76f192b4d0700201427f91043d0beda74254ea508f8a"
+   ]
+  ],
+  "FAIR011:lowercase x": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000-0002-1694-233x",
+     "ORCID iD",
+     "0000-0002-1694-233x"
+    ],
+    "aac2514df0ebe200b254bf8b5f7c701bc4ca65c579d1d6d76c9d543654f21ea2"
+   ]
+  ],
+  "FAIR011:orcid host without id": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "see orcid.org/jane",
+     "ORCID iD",
+     "jane"
+    ],
+    "a16a24cefad8a7c70dbcfac44159e9891acc542b9592d9cbdd1acc479721825a"
+   ]
+  ],
+  "FAIR011:short ORCID": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000-0002-1825-009",
+     "ORCID iD",
+     "0000-0002-1825-009"
+    ],
+    "e309955dca2f0aea7038ea11af39a187e926586f04352f428219f5deee764741"
+   ]
+  ],
+  "FAIR011:trailing slash": [
+   [
+    "FAIR011",
+    "https://example.test/onto#o",
+    [
+     "https://orcid.org/0000-0002-1825-0097/",
+     "ORCID iD",
+     "0000-0002-1825-0097/"
+    ],
+    "6ed4f04d10ae8c1e0b15cd10b624acfa1224828805a9fa6797db11b28fffc2c3"
+   ]
+  ],
+  "FAIR017:blank replacement text": [
+   [
+    "FAIR017",
+    "https://w3id.org/example/onto",
+    [],
+    "404f4b999a7610d93e9643b610c2fdd7b2525637440bdb1f7a504a73934e18ed"
+   ]
+  ],
+  "FAIR017:deprecated ontology": [
+   [
+    "FAIR017",
+    "https://w3id.org/example/onto",
+    [],
+    "404f4b999a7610d93e9643b610c2fdd7b2525637440bdb1f7a504a73934e18ed"
+   ]
+  ],
+  "FAIR017:deprecated version node": [
+   [
+    "FAIR017",
+    "https://w3id.org/example/onto/1.0",
+    [],
+    "37a4d2f847dece8f9b8fbb87bf08dd28e9a703cbb9f1770a8bba6544d6e73fdf"
+   ]
+  ],
+  "FAIR017:literal 1 is true": [
+   [
+    "FAIR017",
+    "https://w3id.org/example/onto",
+    [],
+    "404f4b999a7610d93e9643b610c2fdd7b2525637440bdb1f7a504a73934e18ed"
+   ]
+  ],
+  "FAIR017:self-referencing predecessor": [
+   [
+    "FAIR017",
+    "https://w3id.org/example/onto",
+    [],
+    "404f4b999a7610d93e9643b610c2fdd7b2525637440bdb1f7a504a73934e18ed"
+   ]
+  ],
+  "GOV001:deprecated class used as superclass": [
+   [
+    "GOV001",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#Old",
+     "object",
+     "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+    ],
+    "209b0485059edbdababa9684bf85f8cf48bed6599f285abfe5f95d0d63ac4d6a"
+   ]
+  ],
+  "GOV001:deprecated property used": [
+   [
+    "GOV001",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#old",
+     "predicate"
+    ],
+    "ed18281216b01bfe2d9da7737ae2b59ce6bd26934ebd6002693466fbb5de69af"
+   ]
+  ],
+  "GOV002:literal import target": [
+   [
+    "GOV002",
+    "https://example.test/onto",
+    [
+     "\"not an iri\""
+    ],
+    "d5e1c5f124ac9358d2e71550e50d9e9a45869e71b879e58057ab38edc98d8f29"
+   ]
+  ],
+  "GOV003:equivalent to undeclared local class": [
+   [
+    "GOV003",
+    "https://example.test/onto#Undeclared",
+    [],
+    "5041a90b1aa3bc5d8ba77de09361c5774b96ebaf54631335730e9ccb54b5cb2e"
+   ]
+  ],
+  "GOV004:no contact": [
+   [
+    "GOV004",
+    "https://example.test/onto#o",
+    [],
+    "a1265ed484581fdd6e4eb9531cc343cf26a06deb47c41435ec49776536cab96b"
+   ]
+  ],
+  "GOV004:second ontology lacks contact": [
+   [
+    "GOV004",
+    "https://example.test/onto#p",
+    [],
+    "8d58e59dbbbd725cdc99891a1920fca36cc6e7ad922635a7596ca89a14b6844d"
+   ]
+  ],
+  "GOV008:deprecated bare": [
+   [
+    "GOV008",
+    "https://example.test/onto#A",
+    [],
+    "843c21a150b82c0224b127337e7aaacbc2d7f6f606de4ec2274c2c63c757952e"
+   ]
+  ],
+  "GOV008:deprecated property bare": [
+   [
+    "GOV008",
+    "https://example.test/onto#p",
+    [],
+    "6be0e21fdb81a600c2f3f3b6953bb5499ddeb92d222180f5ec38feee88032510"
+   ]
+  ],
+  "GOV009:2 of 4 annotated is a majority tie": [
+   [
+    "GOV009",
+    "https://example.test/onto#T2",
+    [],
+    "d1ac0e29acab704941e9b02d033199f74b510560048a6235e6150d8ef9c99378"
+   ],
+   [
+    "GOV009",
+    "https://example.test/onto#T3",
+    [],
+    "e37a88fd9164f099549de0797ae0f1f8cccd42ed71d17dae189cba189e913b2d"
+   ]
+  ],
+  "GOV009:3 of 4 annotated": [
+   [
+    "GOV009",
+    "https://example.test/onto#T3",
+    [],
+    "e37a88fd9164f099549de0797ae0f1f8cccd42ed71d17dae189cba189e913b2d"
+   ]
+  ],
+  "GOV010:2 of 4 annotated is a majority tie": [
+   [
+    "GOV010",
+    "https://example.test/onto#T2",
+    [],
+    "43cdd958e7d8e8e19c68b146ae239b661934fe259916595d1733dbbab7e07770"
+   ],
+   [
+    "GOV010",
+    "https://example.test/onto#T3",
+    [],
+    "b51c9e7f8e3dd4ca69be2368b5d3a66d72b347489b867fabb51dac586e641d94"
+   ]
+  ],
+  "GOV010:3 of 4 annotated": [
+   [
+    "GOV010",
+    "https://example.test/onto#T3",
+    [],
+    "b51c9e7f8e3dd4ca69be2368b5d3a66d72b347489b867fabb51dac586e641d94"
+   ]
+  ],
+  "GOV011:version info, no history": [
+   [
+    "GOV011",
+    "https://example.test/onto#o",
+    [],
+    "9aa10f4bca5efd1a8c7e6526591b6ba177369c7a0f67212053661c7d3eec7b15"
+   ]
+  ],
+  "GOV011:version iri, no history": [
+   [
+    "GOV011",
+    "https://example.test/onto#o",
+    [],
+    "9aa10f4bca5efd1a8c7e6526591b6ba177369c7a0f67212053661c7d3eec7b15"
+   ]
+  ],
+  "GOV012:2 of 4 annotated is a majority tie": [
+   [
+    "GOV012",
+    "https://example.test/onto#T2",
+    [],
+    "12f3a311270bdf105c6de5f09060b10db473c27748843e33f64a7fa5b34674b4"
+   ],
+   [
+    "GOV012",
+    "https://example.test/onto#T3",
+    [],
+    "352e3387adb3b46000d3d96c8477f77f8ff936c145443375f44266fc19cc522f"
+   ]
+  ],
+  "GOV012:3 of 4 annotated": [
+   [
+    "GOV012",
+    "https://example.test/onto#T3",
+    [],
+    "352e3387adb3b46000d3d96c8477f77f8ff936c145443375f44266fc19cc522f"
+   ]
+  ],
+  "GOV013:instance of obsolete class": [
+   [
+    "GOV013",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#Old",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    ],
+    "b490098277666e3c7a62094ca39f34fad693d942bfcebf9e20f946e909f54e92"
+   ]
+  ],
+  "GOV013:obsolete property used": [
+   [
+    "GOV013",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#q"
+    ],
+    "8ead4e0112abef39251db37ffc891bccf4b1f7388b714441e2bd87543e0928eb"
+   ]
+  ],
+  "GOV013:range obsolete class": [
+   [
+    "GOV013",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#Old",
+     "http://www.w3.org/2000/01/rdf-schema#range"
+    ],
+    "7ce73ae3437d85b4ec73101986257f33580130579ac217a9b38eaab5486bedca"
+   ]
+  ],
+  "GOV013:restriction on obsolete property": [
+   [
+    "GOV013",
+    "_:b23bb92571d6",
+    [
+     "https://example.test/onto#q",
+     "http://www.w3.org/2002/07/owl#onProperty"
+    ],
+    "513922b612633cd7ecee23b9653903288af0da015348c7dc8794a0052e246dd9"
+   ]
+  ],
+  "GOV013:subclass of obsolete class": [
+   [
+    "GOV013",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#Old",
+     "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+    ],
+    "3151372cb6b8bb6c16e849d75833d70e97839797d8a96219123fdeadf39e825e"
+   ]
+  ],
+  "GOV014:foreign class with subclass axiom": [
+   [
+    "GOV014",
+    "https://other.test/Thing",
+    [],
+    "2ac5e1ef21d1dd89853f0091ac522b20734dcc043d44bcc6d27cf2eba01fde63"
+   ]
+  ],
+  "GOV014:foreign concept with equivalence": [
+   [
+    "GOV014",
+    "https://other.test/c",
+    [],
+    "48600c0f3909f48303d42d858bff51c350e066065ce1b717fb2f296d4b718617"
+   ]
+  ],
+  "GOV014:foreign property with domain": [
+   [
+    "GOV014",
+    "https://other.test/p",
+    [],
+    "bd2046770e0091234b046a081006bc50cd5b3332081067cd1b150b0733b59b95"
+   ]
+  ],
+  "GOV016:blank literal": [
+   [
+    "GOV016",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#comment"
+    ],
+    "9d48a6895c7478b0818b925c0eac11a40ae1f3966d75e9f9b8bcb1f7b05eb566"
+   ]
+  ],
+  "GOV016:blank node value": [
+   [
+    "GOV016",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#comment"
+    ],
+    "9d48a6895c7478b0818b925c0eac11a40ae1f3966d75e9f9b8bcb1f7b05eb566"
+   ]
+  ],
+  "GOV016:class without comment": [
+   [
+    "GOV016",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#comment"
+    ],
+    "9d48a6895c7478b0818b925c0eac11a40ae1f3966d75e9f9b8bcb1f7b05eb566"
+   ]
+  ],
+  "GOV016:concept": [
+   [
+    "GOV016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#prefLabel"
+    ],
+    "09977eec1519a47cca5f6e49b751a9e6b37486a68001f94cf0b6360806924080"
+   ]
+  ],
+  "GOV016:individual": [
+   [
+    "GOV016",
+    "https://example.test/onto#i",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "7c1d022d26affe4db4df3aa4a448245205df36f01c783f0990b9f04897f69b77"
+   ]
+  ],
+  "GOV016:one of two predicates missing": [
+   [
+    "GOV016",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#comment"
+    ],
+    "9d48a6895c7478b0818b925c0eac11a40ae1f3966d75e9f9b8bcb1f7b05eb566"
+   ]
+  ],
+  "GOV016:property": [
+   [
+    "GOV016",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "be29069c1e8761e8fa8b40741de3338e3eafbac320f7c795972172443fb87183"
+   ]
+  ],
+  "GOV017:version info, no review": [
+   [
+    "GOV017",
+    "https://example.test/onto#o",
+    [],
+    "5bae962edb3cd1de38e19630526dc499cc5e37251a6584f81a6434f634f3d340"
+   ]
+  ],
+  "GOV017:version iri, no review": [
+   [
+    "GOV017",
+    "https://example.test/onto#o",
+    [],
+    "5bae962edb3cd1de38e19630526dc499cc5e37251a6584f81a6434f634f3d340"
+   ]
+  ],
+  "GOV020:misspelt key": [
+   [
+    "GOV020",
+    "(policy)",
+    [
+     "depth_limt"
+    ],
+    "316ca7bf430d661688ff7c90e3da8f44ee39826f68a0be68601be73f9527817d"
+   ]
+  ],
+  "GOV020:one unknown key": [
+   [
+    "GOV020",
+    "(policy)",
+    [
+     "bogus"
+    ],
+    "5c04bea1747e09e3031528c3b376ba5a86748629ca24bae7592b182fa3081a7e"
+   ]
+  ],
+  "IRI001:http IRI without a host": [
+   [
+    "IRI001",
+    "http:semanticweb.example/rights_0000001",
+    [],
+    "e5b8e899464d8ed28891ae3f735897438af6d89525d9262eb0d2f263decb4826"
+   ]
+  ],
+  "IRI001:relative IRI": [
+   [
+    "IRI001",
+    "relative-term",
+    [],
+    "79ac03286231280fd31e1f79d2f1a04390aa3ebee3981701088a2fc22646ae84"
+   ]
+  ],
+  "IRI001:whitespace in IRI": [
+   [
+    "IRI001",
+    "https://example.test/with space",
+    [],
+    "9a04cbcee129732072da382ceaa5135b720e1ec54427c58fc50b2b3d6f2c23df"
+   ]
+  ],
+  "IRI002:ontology IRI ends in .owl": [
+   [
+    "IRI002",
+    "https://example.test/onto.owl",
+    [],
+    "ca2a34a0d9a330da84fb376fa1cea124cc535eff2616eb1dd48fdc136756b006"
+   ]
+  ],
+  "IRI003:case-only collision within one kind": [
+   [
+    "IRI003",
+    "https://example.test/onto#Agent",
+    [
+     "agent",
+     "class"
+    ],
+    "aff2f4fef3f5d2ac6dbcbb7356ce9f602a98c6dc11d71e320e0be2b0933a86f3"
+   ]
+  ],
+  "IRI003:same local name, two namespaces": [
+   [
+    "IRI003",
+    "https://a.test/Same",
+    [
+     "same",
+     "class"
+    ],
+    "e2c34e03f55a9c1f655c1f584d85bf5641ed82badacd1710bc6de391c2fb0413"
+   ]
+  ],
+  "IRI004:terms elsewhere": [
+   [
+    "IRI004",
+    "https://a.test/onto",
+    [],
+    "a8299ced9e43e8d519e70eedbcd30d4b4c482ff44233bcb80cd8438df261f48b"
+   ]
+  ],
+  "IRI005:hash and slash": [
+   [
+    "IRI005",
+    "(vocabulary)",
+    [],
+    "6a8242aba28db816af075630357b2a2c399fea1343c4f3f6d7505be5efe9c913"
+   ]
+  ],
+  "IRI006:query string": [
+   [
+    "IRI006",
+    "https://a.test/term?id=1",
+    [],
+    "b92a4ea0acadfa0076c99762c93b4d12b2028d90183d4ee3aba1517a050e10ad"
+   ]
+  ],
+  "IRI008:http and https": [
+   [
+    "IRI008",
+    "(vocabulary)",
+    [],
+    "d9e1058342ca6a442060097330beaf0f5fb2848d0ea4745d91957ba7888829dc"
+   ]
+  ],
+  "IRI009:angle bracket and brace": [
+   [
+    "IRI009",
+    "https://a.test/A{b}",
+    [],
+    "74f8cee5aa73a61f59bca9f5ad79fe45414465a7973cef725301748c22daeecc"
+   ]
+  ],
+  "IRI009:caret": [
+   [
+    "IRI009",
+    "https://a.test/A^B",
+    [],
+    "62e71800739fd44fa046c99985ae115eada3a5c801b9f7487ef99fa08d03d874"
+   ]
+  ],
+  "IRI010:ends in hash": [
+   [
+    "IRI010",
+    "https://a.test/ns#",
+    [],
+    "dbabe263aad19ff35c3af012c6253380003949a0ffa32a391eff29e54e405ec3"
+   ]
+  ],
+  "IRI010:ends in slash": [
+   [
+    "IRI010",
+    "https://a.test/ns/",
+    [],
+    "9635d349276123f8eb6a245643cc1c3ace506fc5e2610b05967e669db705283a"
+   ]
+  ],
+  "IRI011:percent escape": [
+   [
+    "IRI011",
+    "https://a.test/ns#my%20term",
+    [],
+    "bc9732b46a3d11f9104bba5d35e990c2de0e5eda9ea4f262276d67483ff3bd3d"
+   ]
+  ],
+  "IRI012:localhost": [
+   [
+    "IRI012",
+    "http://localhost:8080/ns#A",
+    [],
+    "703c0919d106ad43e8a9843c73b08046565271d7510283ee124d388649f68a78"
+   ]
+  ],
+  "IRI012:loopback": [
+   [
+    "IRI012",
+    "http://127.0.0.1/ns#A",
+    [],
+    "2cfca0f8f59a1652c92406c15712103dcb331144dad82e0f2760de684423f7c7"
+   ]
+  ],
+  "IRI013:dated": [
+   [
+    "IRI013",
+    "https://a.test/2024-05-01/",
+    [],
+    "6e54ad058788db8f7c982d0eebdb03245ef5464e0e33ea000056c07bac31b427"
+   ]
+  ],
+  "IRI013:dotted version": [
+   [
+    "IRI013",
+    "https://a.test/1.2.0/",
+    [],
+    "87a86b2b2ac0951b49f0544770291f592b4d39ac6fefc892e0e038a6d56fe0fd"
+   ]
+  ],
+  "IRI013:v1 segment": [
+   [
+    "IRI013",
+    "https://a.test/v1/",
+    [],
+    "c9211524333dd1f4b631940317dd1efcd63f14753164223d0b7aff129a0be544"
+   ]
+  ],
+  "IRI014:double underscore": [
+   [
+    "IRI014",
+    "https://a.test/ns#a__b",
+    [],
+    "e257243afe6b6a7b53150cea4f89ea8b425dbefccf82c9ab38286f9cea4ad6eb"
+   ]
+  ],
+  "IRI014:leading hyphen": [
+   [
+    "IRI014",
+    "https://a.test/ns#-A",
+    [],
+    "177f20323fb8347c50b90d5928587331ab7ef182006d6ccb6ae5f3699ec2d4c0"
+   ]
+  ],
+  "IRI014:trailing underscore": [
+   [
+    "IRI014",
+    "https://a.test/ns#A_",
+    [],
+    "27a39f24b0483fcf5457ee193e6a5d36fc2c10514ca2628ceb5274731c4ae021"
+   ]
+  ],
+  "IRI015:minority of exactly 10%": [
+   [
+    "IRI015",
+    "https://example.test/onto#",
+    [],
+    "0e6a26069b392673b20d1f6d4fff71b0bfd233ce6c45598218145701f1adc5ad"
+   ]
+  ],
+  "IRI015:numeric and readable": [
+   [
+    "IRI015",
+    "https://example.test/onto#",
+    [],
+    "0e6a26069b392673b20d1f6d4fff71b0bfd233ce6c45598218145701f1adc5ad"
+   ]
+  ],
+  "IRI015:prefixed number and readable": [
+   [
+    "IRI015",
+    "https://example.test/onto#",
+    [],
+    "0e6a26069b392673b20d1f6d4fff71b0bfd233ce6c45598218145701f1adc5ad"
+   ]
+  ],
+  "IRI016:fragment": [
+   [
+    "IRI016",
+    "https://a.test/o#v1",
+    [],
+    "625dbbffca92a54bf32b83aef171d885a7cc1a3eff5114cde971350a9b93624b"
+   ]
+  ],
+  "IRI016:query": [
+   [
+    "IRI016",
+    "https://a.test/o?x=1",
+    [],
+    "ed030f141054fa0282c63f0fc494c623773c564ab625e5b3ece2f9906f18b2d3"
+   ]
+  ],
+  "IRI017:ontology IRI is also a class": [
+   [
+    "IRI017",
+    "https://example.test/onto",
+    [],
+    "ab0931763ffbe8e0e5302ffbef9b20c24079a78f3fe65d049b938db1242bfff7"
+   ]
+  ],
+  "IRI018:Protege default base, renamed": [
+   [
+    "IRI018",
+    "http://www.semanticweb.org/someone/ontologies/2018/8/moral",
+    [],
+    "0394a7f10bb4a34421171a922a4511c1a71d228c6c0aff131c6181da5e1d2b3f"
+   ]
+  ],
+  "IRI018:Protege untitled ontology (MFTO)": [
+   [
+    "IRI018",
+    "http://www.semanticweb.org/someone/ontologies/2018/8/untitled-ontology-139",
+    [],
+    "6d6f0b5f3f286b3d545a37d78c7674ea0c93253b681b2ee75bb0f55e29ef40ae"
+   ]
+  ],
+  "IRI019:a CCO prefix nothing uses (rights ontology)": [
+   [
+    "IRI019",
+    "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/AllCoreOntology#",
+    [
+     "AllCoreOntology"
+    ],
+    "9b09e9dff6df255c53d1314886ad75dab232c8858b6b8c94f7a2fe31040968db"
+   ]
+  ],
+  "LEX001:a sub-property of rdfs:comment": [
+   [
+    "LEX001",
+    "https://example.test/onto#A",
+    [],
+    "bb149a4881cf9805ef08980f4d27789577b0dd1c29cfc41380b3d789a05becbd"
+   ]
+  ],
+  "LEX001:a sub-property of skos:altLabel": [
+   [
+    "LEX001",
+    "https://example.test/onto#A",
+    [],
+    "bb149a4881cf9805ef08980f4d27789577b0dd1c29cfc41380b3d789a05becbd"
+   ]
+  ],
+  "LEX001:no label": [
+   [
+    "LEX001",
+    "https://example.test/onto#A",
+    [],
+    "bb149a4881cf9805ef08980f4d27789577b0dd1c29cfc41380b3d789a05becbd"
+   ]
+  ],
+  "LEX002:equivalent to a non-definition": [
+   [
+    "LEX002",
+    "https://example.test/onto#A",
+    [],
+    "bd4a78caa1883c343b48163b9a7238f08d35fd3b2190b56e1e53956dd063b6b5"
+   ]
+  ],
+  "LEX002:no definition": [
+   [
+    "LEX002",
+    "https://example.test/onto#A",
+    [],
+    "bd4a78caa1883c343b48163b9a7238f08d35fd3b2190b56e1e53956dd063b6b5"
+   ]
+  ],
+  "LEX002:sub-property of an editorial note": [
+   [
+    "LEX002",
+    "https://example.test/onto#A",
+    [],
+    "bd4a78caa1883c343b48163b9a7238f08d35fd3b2190b56e1e53956dd063b6b5"
+   ]
+  ],
+  "LEX003:two labels in one language": [
+   [
+    "LEX003",
+    "https://example.test/onto#A",
+    [
+     "en"
+    ],
+    "113a2c9a60fc238ccf70d828c2445c0c3afd82ec6532594338c5a5132c148e33"
+   ]
+  ],
+  "LEX004:same label on two terms": [
+   [
+    "LEX004",
+    "https://example.test/onto#A",
+    [
+     "Same",
+     "und",
+     "class"
+    ],
+    "5ad9852a1beb18924bdbb482a402e6a1f40190897e15ba516e67b7ffb4c6b8db"
+   ]
+  ],
+  "LEX005:blank label": [
+   [
+    "LEX005",
+    "https://example.test/onto#A",
+    [
+     ""
+    ],
+    "ca3d4ec48274fa9ee492a2fd7b284f4ffaebc2d7783d72195f8a53a677fab8da"
+   ]
+  ],
+  "LEX005:padded label": [
+   [
+    "LEX005",
+    "https://example.test/onto#A",
+    [
+     " padded "
+    ],
+    "53b20fa5d3f224ff448ff061106b83ab235ec122d4bd84214d47945cb4373e7c"
+   ]
+  ],
+  "LEX006:plain and tagged": [
+   [
+    "LEX006",
+    "https://example.test/onto#A",
+    [],
+    "b2e71cdaae2e8cffd91230a63bbd1bb64d4fc14d704a6502f321d65989a7a681"
+   ]
+  ],
+  "LEX007:four terms, two styles (sample size)": [
+   [
+    "LEX007",
+    "(vocabulary)",
+    [],
+    "ea050bb4ff64a3ecd964d83609e2408d42fec79281f62ef159e84104a034bb32"
+   ]
+  ],
+  "LEX008:required language missing": [
+   [
+    "LEX008",
+    "https://example.test/onto#A",
+    [
+     "fr"
+    ],
+    "92308042366e4a5a0ed83151c2b46b786d26917ade654f5c7d4025fa8249f7aa"
+   ]
+  ],
+  "LEX009:one upper-case class among ten lower-case": [
+   [
+    "LEX009",
+    "https://example.test/onto#codd",
+    [
+     "Class"
+    ],
+    "4b5649f94d1ad29d0ffc2f5f4bc33e8e713de9cd6d1fa11ffba0eab767d7ecf1"
+   ]
+  ],
+  "LEX009:one upper-case property among ten lower-case": [
+   [
+    "LEX009",
+    "https://example.test/onto#podd",
+    [
+     "Property"
+    ],
+    "4eea356b3f86913725b894685f486b90559db9403366b13735dbfde9aee19174"
+   ]
+  ],
+  "LEX010:camelCase label equals local name": [
+   [
+    "LEX010",
+    "https://example.test/onto#hasPart",
+    [
+     "hasPart"
+    ],
+    "19c17b4bf5924183fc4b0207f7ef23252f9e3be8432079dd111818dbcc9e5def"
+   ]
+  ],
+  "LEX010:underscore label equals local name": [
+   [
+    "LEX010",
+    "https://example.test/onto#has_part",
+    [
+     "has_part"
+    ],
+    "cd17dab66429e8dcd0f545b29033d508ca78940b3a5f1a4ef1209cc32147e33d"
+   ]
+  ],
+  "LEX011:double space": [
+   [
+    "LEX011",
+    "https://example.test/onto#A",
+    [],
+    "0c4545e1cbc6f21a9be86b4923e39f092b341680d6a139c201f072d7220611ad"
+   ]
+  ],
+  "LEX011:newline": [
+   [
+    "LEX011",
+    "https://example.test/onto#A",
+    [],
+    "0c4545e1cbc6f21a9be86b4923e39f092b341680d6a139c201f072d7220611ad"
+   ]
+  ],
+  "LEX011:tab": [
+   [
+    "LEX011",
+    "https://example.test/onto#A",
+    [],
+    "0c4545e1cbc6f21a9be86b4923e39f092b341680d6a139c201f072d7220611ad"
+   ]
+  ],
+  "LEX012:colon": [
+   [
+    "LEX012",
+    "https://example.test/onto#A",
+    [
+     "Thing:"
+    ],
+    "dcf2a5acd903c6d427080e7038a687236f29100eddd49e29ec9002500152448f"
+   ]
+  ],
+  "LEX012:period": [
+   [
+    "LEX012",
+    "https://example.test/onto#A",
+    [
+     "Thing."
+    ],
+    "fc9f635d5db6466ae80acdcddcbc5ec3feb40735ab4fb42abca7db15393392be"
+   ]
+  ],
+  "LEX013:IRI label": [
+   [
+    "LEX013",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "3bc9b78c0048d22740184afff14cde69b06796c4d6f5bd439453129b24f6f809"
+   ]
+  ],
+  "LEX013:blank-node definition": [
+   [
+    "LEX013",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#definition"
+    ],
+    "ab87ec2c14a3973678c698e893c4d383ca370e3d1c63113403b757feeac2d619"
+   ]
+  ],
+  "LEX014:custom datatype": [
+   [
+    "LEX014",
+    "https://example.test/onto#A",
+    [
+     "x",
+     "https://example.test/onto#custom"
+    ],
+    "c6fcf43bab50eec8bc10b24b554d93d7413f1635ba2a3125f3fa2303325e74e4"
+   ]
+  ],
+  "LEX014:integer label": [
+   [
+    "LEX014",
+    "https://example.test/onto#A",
+    [
+     "5",
+     "http://www.w3.org/2001/XMLSchema#integer"
+    ],
+    "e1aceec6d968b2df154e748426e5cfaa4e5c1eb4e017d7dbd6fc837d51b69734"
+   ]
+  ],
+  "LEX015:altLabel equals prefLabel": [
+   [
+    "LEX015",
+    "https://example.test/onto#A",
+    [
+     "car"
+    ],
+    "2503787b60563143d9a207578947e56c032cbad4defc4442f71fdc10da83a17c"
+   ]
+  ],
+  "LEX016:synonym is another term's label": [
+   [
+    "LEX016",
+    "https://example.test/onto#B",
+    [
+     "Car"
+    ],
+    "5819207e77913a96639f5852386ee697ef01bc374fbc40d058fcd1760f275fdc"
+   ]
+  ],
+  "LEX017:definition equals label": [
+   [
+    "LEX017",
+    "https://example.test/onto#A",
+    [
+     "car"
+    ],
+    "6d6f82cc56f437c9821af63f891396f6b054d0741457b20698547538a932af66"
+   ]
+  ],
+  "LEX018:alt label numeric entity": [
+   [
+    "LEX018",
+    "https://example.test/onto#A",
+    [
+     "a&#233;b"
+    ],
+    "b593608e923252cb66fdb60ed7e293c68e492f3c6c9d5f4fb0cdffbb33884fa8"
+   ]
+  ],
+  "LEX018:entity": [
+   [
+    "LEX018",
+    "https://example.test/onto#A",
+    [
+     "R&amp;D"
+    ],
+    "ab907b6f58b979dc7276be72445312fb8dabf511071e663676bd1fbaa634c612"
+   ]
+  ],
+  "LEX018:html tag": [
+   [
+    "LEX018",
+    "https://example.test/onto#A",
+    [
+     "<b>Thing</b>"
+    ],
+    "c4a63bde5fdf104ac59d435368b65822dabe8874aecb6abf90d3da93ff63aa1b"
+   ]
+  ],
+  "LEX018:sub-property of rdfs:label": [
+   [
+    "LEX018",
+    "https://example.test/onto#A",
+    [
+     "<i>A</i>"
+    ],
+    "9a5cd5353d8995ad8552ad07a883f8a6ce6255f8f5fb0c80712f2cb08d91251a"
+   ]
+  ],
+  "LEX019:empty": [
+   [
+    "LEX019",
+    "https://example.test/onto#A",
+    [],
+    "c23e9e1435c29dc517cb97dc94694084a3691a2369e198ca9034ffa0ccdf3c81"
+   ]
+  ],
+  "LEX019:whitespace": [
+   [
+    "LEX019",
+    "https://example.test/onto#A",
+    [],
+    "c23e9e1435c29dc517cb97dc94694084a3691a2369e198ca9034ffa0ccdf3c81"
+   ]
+  ],
+  "LEX020:same definition twice": [
+   [
+    "LEX020",
+    "https://example.test/onto#A",
+    [
+     "a thing.",
+     "und"
+    ],
+    "7962ad8f75e2af98a2b478ffe9d7bd3bc0838b8ad4956710eb654c905e567e45"
+   ]
+  ],
+  "LEX021:alt label": [
+   [
+    "LEX021",
+    "https://example.test/onto#A",
+    [
+     "Café"
+    ],
+    "1dfab29b2066abf7d4e67bcf2b27b5a152a829d8038ea639f1cab1b26df9fc74"
+   ]
+  ],
+  "LEX021:decomposed e-acute": [
+   [
+    "LEX021",
+    "https://example.test/onto#A",
+    [
+     "Café"
+    ],
+    "1dfab29b2066abf7d4e67bcf2b27b5a152a829d8038ea639f1cab1b26df9fc74"
+   ]
+  ],
+  "LEX022:German label with en policy": [
+   [
+    "LEX022",
+    "https://example.test/onto#A",
+    [
+     "de"
+    ],
+    "8e13c18f1fa4372f587641085485c69b202af822f74b8e56fb1f615b0d45544a"
+   ]
+  ],
+  "LEX023:definition only in English": [
+   [
+    "LEX023",
+    "https://example.test/onto#A",
+    [
+     "fr"
+    ],
+    "1058a962887dacfc8cb937fcd92e4088e07f7d9c16a16bb9ba3734c275098515"
+   ]
+  ],
+  "LEX024:two definitions": [
+   [
+    "LEX024",
+    "https://example.test/onto#A",
+    [
+     "en"
+    ],
+    "26115eb1c04466d808c6aa51e9adec1c448a0a1dde09b32d7803bc75b15fff7b"
+   ]
+  ],
+  "LIB001:an entry of the entry class with no member at all": [
+   [
+    "LIB001",
+    "https://example.test/onto#Ghost",
+    [],
+    "2fc34620877614d0eeddce827a2683643cd87a0c755b6cfeb03d4f126660582d"
+   ]
+  ],
+  "LIB001:no member, and an unreadable file in the library": [
+   [
+    "LIB001",
+    "https://example.test/onto#Ghost",
+    [],
+    "2fc34620877614d0eeddce827a2683643cd87a0c755b6cfeb03d4f126660582d"
+   ]
+  ],
+  "LIB001:same name, no IRI link (MODL)": [
+   [
+    "LIB001",
+    "https://example.test/onto#Event",
+    [],
+    "04c4c2aa34b23c5b3ed0e14ddace4d9ac6829a97b86eb0b9b2097da686ababdd"
+   ]
+  ],
+  "LIB002:a member nothing names": [
+   [
+    "LIB002",
+    "https://example.test/library/place",
+    [],
+    "0a4c23077c64b0730b06e327a859fb04979298495d4a3d7063e1129d9a1168e2"
+   ]
+  ],
+  "LIB002:an index with no entries at all": [
+   [
+    "LIB002",
+    "https://example.test/library/event",
+    [],
+    "9cc0f3decdd6e79428887d2d3adf0a563d66e86f9063ce4091944791652b11a6"
+   ]
+  ],
+  "LIB003:a related pattern the library lacks": [
+   [
+    "LIB003",
+    "https://example.test/library/agentrole",
+    [
+     "http://ontologydesignpatterns.org/opla-core#hasRelatedPattern",
+     "https://example.test/library/agent"
+    ],
+    "7d16df2eb219cc30def44f8d2f5b3548652bfa87c23e1242f757ff5e81a26bf2"
+   ]
+  ],
+  "METRIC001:IRI-valued labels do not count": [
+   [
+    "METRIC001",
+    "urn:ontolint:graph",
+    [],
+    "e3e038424c8ca0aa3fb82b555a401027a0bb8f2e499f50f4155f472d4850d623"
+   ]
+  ],
+  "METRIC001:only 4 of 10 labelled": [
+   [
+    "METRIC001",
+    "urn:ontolint:graph",
+    [],
+    "e3e038424c8ca0aa3fb82b555a401027a0bb8f2e499f50f4155f472d4850d623"
+   ]
+  ],
+  "METRIC001:sub-properties of skos:altLabel do not count": [
+   [
+    "METRIC001",
+    "urn:ontolint:graph",
+    [],
+    "e3e038424c8ca0aa3fb82b555a401027a0bb8f2e499f50f4155f472d4850d623"
+   ]
+  ],
+  "METRIC002:a sub-property of skos:note is not a definition": [
+   [
+    "METRIC002",
+    "urn:ontolint:graph",
+    [],
+    "12a6389a4ab0c15a81324544092af3edc8a62167a11e5662129a4c9db26bc6d8"
+   ]
+  ],
+  "METRIC002:only 4 of 10 defined": [
+   [
+    "METRIC002",
+    "urn:ontolint:graph",
+    [],
+    "12a6389a4ab0c15a81324544092af3edc8a62167a11e5662129a4c9db26bc6d8"
+   ]
+  ],
+  "METRIC002:skos:scopeNote is not a definition": [
+   [
+    "METRIC002",
+    "urn:ontolint:graph",
+    [],
+    "12a6389a4ab0c15a81324544092af3edc8a62167a11e5662129a4c9db26bc6d8"
+   ]
+  ],
+  "METRIC003:undocumented properties": [
+   [
+    "METRIC003",
+    "urn:ontolint:graph",
+    [],
+    "44e13f1de0fe66242570bf734baca570b59e68a31f6382ccecb9d26bab181db7"
+   ]
+  ],
+  "METRIC004:one parent with 9 children": [
+   [
+    "METRIC004",
+    "urn:ontolint:graph",
+    [],
+    "960efd4fa1ccafa8bc8f71dbb66b5d55ccf898214af5e0bf30df5e92686cb966"
+   ]
+  ],
+  "METRIC005:disjointness does not connect": [
+   [
+    "METRIC005",
+    "urn:ontolint:graph",
+    [],
+    "55df801415e1197753f0316e56f91fce263ecebef44f70a42347b62a9f95a7fa"
+   ]
+  ],
+  "METRIC005:ten isolated classes": [
+   [
+    "METRIC005",
+    "urn:ontolint:graph",
+    [],
+    "55df801415e1197753f0316e56f91fce263ecebef44f70a42347b62a9f95a7fa"
+   ]
+  ],
+  "METRIC006:a pure taxonomy": [
+   [
+    "METRIC006",
+    "urn:ontolint:graph",
+    [],
+    "a0cc19f5dfcfae1b5a2f0a2bc2e721247d6f3bf008aef7102da80948aad5cf51"
+   ]
+  ],
+  "METRIC006:annotation properties are not relations": [
+   [
+    "METRIC006",
+    "urn:ontolint:graph",
+    [],
+    "a0cc19f5dfcfae1b5a2f0a2bc2e721247d6f3bf008aef7102da80948aad5cf51"
+   ]
+  ],
+  "METRIC007:51 properties for 10 classes": [
+   [
+    "METRIC007",
+    "urn:ontolint:graph",
+    [],
+    "ce7ee6db0dae980a4c68392654047db496aac5511332f4a1a54a08f763aed492"
+   ]
+  ],
+  "METRIC008:datatype properties": [
+   [
+    "METRIC008",
+    "urn:ontolint:graph",
+    [],
+    "f3b94c7d96dac743e78a8714b22b8a4da171341162d773895c19b3159ce3ee2b"
+   ]
+  ],
+  "METRIC008:no signatures": [
+   [
+    "METRIC008",
+    "urn:ontolint:graph",
+    [],
+    "f3b94c7d96dac743e78a8714b22b8a4da171341162d773895c19b3159ce3ee2b"
+   ]
+  ],
+  "METRIC009:untagged labels": [
+   [
+    "METRIC009",
+    "urn:ontolint:graph",
+    [],
+    "a812ef8093c98fff758ac7426eb20cf9f27ed2049ac09f4498668df2fe5ad76c"
+   ]
+  ],
+  "METRIC009:xsd:string is untagged": [
+   [
+    "METRIC009",
+    "urn:ontolint:graph",
+    [],
+    "a812ef8093c98fff758ac7426eb20cf9f27ed2049ac09f4498668df2fe5ad76c"
+   ]
+  ],
+  "METRIC010:all superclasses external": [
+   [
+    "METRIC010",
+    "urn:ontolint:graph",
+    [],
+    "543fd03d381a612fbaa7baf84bad11c07ced9f819e1ca7e468781abdef1dc8b1"
+   ]
+  ],
+  "METRIC010:well-known vocabularies are foreign": [
+   [
+    "METRIC010",
+    "urn:ontolint:graph",
+    [],
+    "543fd03d381a612fbaa7baf84bad11c07ced9f819e1ca7e468781abdef1dc8b1"
+   ]
+  ],
+  "METRIC011:11 imports": [
+   [
+    "METRIC011",
+    "https://example.test/onto#o",
+    [],
+    "28f839440aed55c858206bce910cd0e8c03c84319a11b09ef86ef2e34f8271ea"
+   ]
+  ],
+  "METRIC011:the imports of every header are counted": [
+   [
+    "METRIC011",
+    "https://example.test/onto#o",
+    [],
+    "28f839440aed55c858206bce910cd0e8c03c84319a11b09ef86ef2e34f8271ea"
+   ]
+  ],
+  "METRIC012:one-word definitions": [
+   [
+    "METRIC012",
+    "urn:ontolint:graph",
+    [],
+    "fb8333f2ca4714622c117ace2d79fc9c937ac587ed93650492193c46e86db46b"
+   ]
+  ],
+  "METRIC013:ten free blank subjects": [
+   [
+    "METRIC013",
+    "urn:ontolint:graph",
+    [],
+    "3749aca3c99a5980db2d46831208e1f3b84ba53489e389b28fb8a1ae493ec31b"
+   ]
+  ],
+  "OBO001:hash class": [
+   [
+    "OBO001",
+    "http://purl.obolibrary.org/obo/foo#bar",
+    [],
+    "3837ef1d66a05777f6f5230dac7839d48461d702a4b8b1817ddd340ef972a155"
+   ]
+  ],
+  "OBO001:hash local name": [
+   [
+    "OBO001",
+    "http://purl.obolibrary.org/obo/uberon#part_of",
+    [],
+    "230b9f5736e08e2a9d40d5326670f54549cbdbf4b05560931c9ef3c2ed2b98bb"
+   ]
+  ],
+  "OBO001:letters in the number": [
+   [
+    "OBO001",
+    "http://purl.obolibrary.org/obo/XYZ_12a",
+    [],
+    "8acbe4bbe3e1f239626715402d55e77dc4face9703fe465be8faf3b4dca2b8fa"
+   ]
+  ],
+  "OBO001:letters without digits": [
+   [
+    "OBO001",
+    "http://purl.obolibrary.org/obo/FOO_abc",
+    [],
+    "bb00d4f56ba5d7ee78223c246f4bdb9c803cbea637d2412a7a651f69bf1502a0"
+   ]
+  ],
+  "OBO001:no number": [
+   [
+    "OBO001",
+    "http://purl.obolibrary.org/obo/XYZ_",
+    [],
+    "24be622b1b1018408fe3e7be4e62847d562bda01d062289e02e5837380496eb7"
+   ]
+  ],
+  "OBO001:no prefix separator": [
+   [
+    "OBO001",
+    "http://purl.obolibrary.org/obo/xyz",
+    [],
+    "4bd487ffcc97bbda38d9b8bef600658352aaa83287863f4f69901287fb8159c8"
+   ]
+  ],
+  "OBO002:bare header": [
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/description"
+    ],
+    "06504c1628b39ea4215c3c7418c406fe4375c124b49dd0cfb1b39a4426973e33"
+   ],
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/license"
+    ],
+    "ea020442f52aaea3bac1317c04f7311432ac6411f418e0600118052abe65b3b7"
+   ],
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/title"
+    ],
+    "7081d174c12e94a40e7cd1d1642879a56d46607ac1eed3b3aacd65d53a809f6d"
+   ]
+  ],
+  "OBO002:blank title": [
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/title"
+    ],
+    "7081d174c12e94a40e7cd1d1642879a56d46607ac1eed3b3aacd65d53a809f6d"
+   ]
+  ],
+  "OBO002:no description": [
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/description"
+    ],
+    "06504c1628b39ea4215c3c7418c406fe4375c124b49dd0cfb1b39a4426973e33"
+   ]
+  ],
+  "OBO002:no license": [
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/license"
+    ],
+    "ea020442f52aaea3bac1317c04f7311432ac6411f418e0600118052abe65b3b7"
+   ]
+  ],
+  "OBO002:no title": [
+   [
+    "OBO002",
+    "https://example.test/onto#o",
+    [
+     "http://purl.org/dc/terms/title"
+    ],
+    "7081d174c12e94a40e7cd1d1642879a56d46607ac1eed3b3aacd65d53a809f6d"
+   ]
+  ],
+  "OBO003:blank definition": [
+   [
+    "OBO003",
+    "https://example.test/onto#A",
+    [],
+    "e636fe584a89e1a617094628c8b7a7575d4ac3fe25cad7df53ec7fd832f2413c"
+   ]
+  ],
+  "OBO003:class without definition": [
+   [
+    "OBO003",
+    "https://example.test/onto#A",
+    [],
+    "e636fe584a89e1a617094628c8b7a7575d4ac3fe25cad7df53ec7fd832f2413c"
+   ]
+  ],
+  "OBO003:comment only class": [
+   [
+    "OBO003",
+    "https://example.test/onto#A",
+    [],
+    "e636fe584a89e1a617094628c8b7a7575d4ac3fe25cad7df53ec7fd832f2413c"
+   ]
+  ],
+  "OBO003:false deprecated flag": [
+   [
+    "OBO003",
+    "https://example.test/onto#A",
+    [],
+    "e636fe584a89e1a617094628c8b7a7575d4ac3fe25cad7df53ec7fd832f2413c"
+   ]
+  ],
+  "OBO003:object property without definition": [
+   [
+    "OBO003",
+    "https://example.test/onto#p",
+    [],
+    "54dbfbe90525669b0ef3fd170e290f69cb512115e74faf7ba974a7e6b0609585"
+   ]
+  ],
+  "OBO003:rdfs:comment is not a definition": [
+   [
+    "OBO003",
+    "https://example.test/onto#A",
+    [],
+    "e636fe584a89e1a617094628c8b7a7575d4ac3fe25cad7df53ec7fd832f2413c"
+   ]
+  ],
+  "OBO004:blank label": [
+   [
+    "OBO004",
+    "https://example.test/onto#A",
+    [],
+    "02592b0cdd70d482a678bf76e1da666932d3bd9f5738923b06b71637e5c9f6e9"
+   ]
+  ],
+  "OBO004:class and property share a label": [
+   [
+    "OBO004",
+    "https://example.test/onto#A",
+    [
+     "cell",
+     ""
+    ],
+    "edd6da3016619b63d388b1440318ead371676ca639d230e40e99bc9e1b279230"
+   ],
+   [
+    "OBO004",
+    "https://example.test/onto#p",
+    [
+     "cell",
+     ""
+    ],
+    "735f04da91a17087c8f2b090acd497b6404024ace749ec59f655a72a3feaa5c5"
+   ]
+  ],
+  "OBO004:class without label": [
+   [
+    "OBO004",
+    "https://example.test/onto#A",
+    [],
+    "02592b0cdd70d482a678bf76e1da666932d3bd9f5738923b06b71637e5c9f6e9"
+   ]
+  ],
+  "OBO004:property without label": [
+   [
+    "OBO004",
+    "https://example.test/onto#p",
+    [],
+    "e58b2852036f4889fe993171e32010cb40e7346532bc9993e522021d15b6c20e"
+   ]
+  ],
+  "OBO004:shared label": [
+   [
+    "OBO004",
+    "https://example.test/onto#A",
+    [
+     "cell",
+     ""
+    ],
+    "edd6da3016619b63d388b1440318ead371676ca639d230e40e99bc9e1b279230"
+   ],
+   [
+    "OBO004",
+    "https://example.test/onto#B",
+    [
+     "cell",
+     ""
+    ],
+    "64c286df3bffa0d0797e4fc6b6fd011ac7003b1992b7fad0b8947b666997521e"
+   ]
+  ],
+  "OBO005:ad hoc part of": [
+   [
+    "OBO005",
+    "https://example.test/onto#partOf",
+    [
+     "part of",
+     "http://purl.obolibrary.org/obo/BFO_0000050"
+    ],
+    "873900677b1af72ecd2e528b8623f96367860a44de5c704b35d03528a3deb859"
+   ]
+  ],
+  "OBO005:case and spacing are ignored": [
+   [
+    "OBO005",
+    "https://example.test/onto#p",
+    [
+     "Develops  FROM",
+     "http://purl.obolibrary.org/obo/RO_0002202"
+    ],
+    "a3414053fde3790e4aad2ff52f0029acccc220b8c9eba13cf482ffca7962dbe7"
+   ]
+  ],
+  "OBO005:sub-property of the wrong relation": [
+   [
+    "OBO005",
+    "https://example.test/onto#p",
+    [
+     "has part",
+     "http://purl.obolibrary.org/obo/BFO_0000051"
+    ],
+    "d621e612a5691f4c9cebd1c83bc1721d7a1d27c72ca03e244686c9f93dfd4f17"
+   ]
+  ],
+  "OBO005:unrelated sub-property does not count": [
+   [
+    "OBO005",
+    "https://example.test/onto#p",
+    [
+     "has part",
+     "http://purl.obolibrary.org/obo/BFO_0000051"
+    ],
+    "d621e612a5691f4c9cebd1c83bc1721d7a1d27c72ca03e244686c9f93dfd4f17"
+   ]
+  ],
+  "OBO006:BFO-style axiom with only IAO_0010000": [
+   [
+    "OBO006",
+    "https://example.test/onto#A",
+    [],
+    "ee006f88d74ec29a9074618a15777478f752b48fc874a58240d3eae7e8ecfdf8"
+   ]
+  ],
+  "OBO006:axiom annotation about another definition": [
+   [
+    "OBO006",
+    "https://example.test/onto#A",
+    [],
+    "ee006f88d74ec29a9074618a15777478f752b48fc874a58240d3eae7e8ecfdf8"
+   ]
+  ],
+  "OBO006:axiom without provenance": [
+   [
+    "OBO006",
+    "https://example.test/onto#A",
+    [],
+    "ee006f88d74ec29a9074618a15777478f752b48fc874a58240d3eae7e8ecfdf8"
+   ]
+  ],
+  "OBO006:definition without source": [
+   [
+    "OBO006",
+    "https://example.test/onto#A",
+    [],
+    "ee006f88d74ec29a9074618a15777478f752b48fc874a58240d3eae7e8ecfdf8"
+   ]
+  ],
+  "OBO006:second definition lacks a source": [
+   [
+    "OBO006",
+    "https://example.test/onto#A",
+    [],
+    "ee006f88d74ec29a9074618a15777478f752b48fc874a58240d3eae7e8ecfdf8"
+   ]
+  ],
+  "OBO006:xref on an axiom about another property": [
+   [
+    "OBO006",
+    "https://example.test/onto#A",
+    [],
+    "ee006f88d74ec29a9074618a15777478f752b48fc874a58240d3eae7e8ecfdf8"
+   ]
+  ],
+  "OBO007:blank reason": [
+   [
+    "OBO007",
+    "https://example.test/onto#A",
+    [],
+    "a5a6f5e4c749d01b9184306342964811d6bd5f6db21e89ae56f5da5f88ad47c4"
+   ]
+  ],
+  "OBO007:deprecated datatype property": [
+   [
+    "OBO007",
+    "https://example.test/onto#p",
+    [],
+    "47e4748be64924814ce7e66c7342861cde274e1c16888796b6bb17d923d0a33c"
+   ]
+  ],
+  "OBO007:lexical 1": [
+   [
+    "OBO007",
+    "https://example.test/onto#A",
+    [],
+    "a5a6f5e4c749d01b9184306342964811d6bd5f6db21e89ae56f5da5f88ad47c4"
+   ]
+  ],
+  "OBO007:obsolete class bare": [
+   [
+    "OBO007",
+    "https://example.test/onto#A",
+    [],
+    "a5a6f5e4c749d01b9184306342964811d6bd5f6db21e89ae56f5da5f88ad47c4"
+   ]
+  ],
+  "OBO007:obsolete property": [
+   [
+    "OBO007",
+    "https://example.test/onto#p",
+    [],
+    "47e4748be64924814ce7e66c7342861cde274e1c16888796b6bb17d923d0a33c"
+   ]
+  ],
+  "OBO007:plain true literal": [
+   [
+    "OBO007",
+    "https://example.test/onto#A",
+    [],
+    "a5a6f5e4c749d01b9184306342964811d6bd5f6db21e89ae56f5da5f88ad47c4"
+   ]
+  ],
+  "OBO008:BFO-like IRI in another namespace": [
+   [
+    "OBO008",
+    "http://purl.obolibrary.org/obo/BFX_0000001",
+    [],
+    "2ecd4a24f5f9b14ee9eeebc9fd7db53d09f3342700ff887188bab1b0dd2935f2"
+   ]
+  ],
+  "OBO008:class with no parent": [
+   [
+    "OBO008",
+    "https://example.test/onto#A",
+    [],
+    "b0c40d55e1b0762ab225f6e278ba410135d045040182d89b7ecdc64d5cc803b1"
+   ]
+  ],
+  "OBO008:only restriction parents": [
+   [
+    "OBO008",
+    "https://example.test/onto#A",
+    [],
+    "b0c40d55e1b0762ab225f6e278ba410135d045040182d89b7ecdc64d5cc803b1"
+   ]
+  ],
+  "OBO008:parent chain ends at a declared root": [
+   [
+    "OBO008",
+    "https://example.test/onto#B",
+    [],
+    "dd7fffa5164cc133cca7dd644e66e33d7dc2496b0ecf35fae19d444230a5f340"
+   ]
+  ],
+  "OBO008:under owl:Thing only": [
+   [
+    "OBO008",
+    "https://example.test/onto#A",
+    [],
+    "b0c40d55e1b0762ab225f6e278ba410135d045040182d89b7ecdc64d5cc803b1"
+   ]
+  ],
+  "OBO009:oboInOwl:hasSynonym": [
+   [
+    "OBO009",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasSynonym",
+     "alias"
+    ],
+    "a9b5ad98dbf131fa9384864ce8077db882bbd8fb414a0b2cad95a95d398d5bfd"
+   ]
+  ],
+  "OBO009:skos:altLabel": [
+   [
+    "OBO009",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#altLabel",
+     "alias"
+    ],
+    "45e7c75405c5308a757bc426c5c1cdd6cc3a1a456fc1523d26c7886d80fe3973"
+   ]
+  ],
+  "OBO010:released whole ontology": [
+   [
+    "OBO010",
+    "https://example.test/onto#o",
+    [
+     "http://purl.obolibrary.org/obo/uberon/releases/2020-01-01/uberon.owl"
+    ],
+    "fb487fa9910c64d8f20f14dc09b21d09d02ae0faa5bded0af756a67ad11152ea"
+   ]
+  ],
+  "OBO010:whole chebi": [
+   [
+    "OBO010",
+    "https://example.test/onto#o",
+    [
+     "http://purl.obolibrary.org/obo/chebi.owl"
+    ],
+    "ac2a414a043bc2378fd9280afea37c741ea36090e0fab0f88feadf094a20f175"
+   ]
+  ],
+  "OBO010:whole ontology": [
+   [
+    "OBO010",
+    "https://example.test/onto#o",
+    [
+     "http://purl.obolibrary.org/obo/uberon.owl"
+    ],
+    "a833cf107b87ae9c288793a19caf49f7aa17a0e5ad96160234f6ff6913d8f62b"
+   ]
+  ],
+  "OBO011:empty id": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/.owl",
+    [],
+    "8980b7020e7eb0ded87d843cf39f6336ab799709c3ca1928ba36bcf9d5880720"
+   ]
+  ],
+  "OBO011:example.org ontology": [
+   [
+    "OBO011",
+    "http://example.org/x.owl",
+    [],
+    "bcb9edab86ff438c5adfea7d96141b7ca179448c3f2685877d36c29515ec2cef"
+   ]
+  ],
+  "OBO011:missing .owl": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/xyz",
+    [],
+    "048bb83dc24b66b77c6284a4ad99ccd9716ba67b4d0e0522bb8fdcb123faa27f"
+   ]
+  ],
+  "OBO011:non-OBO ontology IRI": [
+   [
+    "OBO011",
+    "https://example.test/onto#o",
+    [],
+    "d6e8ae9a2fe526a23b9249a672d0985553f394e44dff7a21b64dfdf28d55caa5"
+   ]
+  ],
+  "OBO011:upper-case id": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/XYZ.owl",
+    [],
+    "1ea50f161432a1490af124c4d0e264695b8d908d93b66125c350d43769ad4ac2"
+   ]
+  ],
+  "OBO011:version IRI for a non-OBO ontology": [
+   [
+    "OBO011",
+    "https://example.test/onto#o",
+    [],
+    "d6e8ae9a2fe526a23b9249a672d0985553f394e44dff7a21b64dfdf28d55caa5"
+   ],
+   [
+    "OBO011",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2002/07/owl#versionIRI",
+     "http://example.org/v/1"
+    ],
+    "1aa4566d25df2b720afa16073138fae873fb8d865dda9474f58717397d68e0c2"
+   ]
+  ],
+  "OBO011:version IRI naming another ontology": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/foo.owl",
+    [
+     "http://www.w3.org/2002/07/owl#versionIRI",
+     "http://purl.obolibrary.org/obo/bar/releases/2020-01-01/bar.owl"
+    ],
+    "5da23befe0c8b4744a5c6b5c7d4e8d9152201143c84ac45c77d81298ab134b0f"
+   ]
+  ],
+  "OBO011:version IRI of another ontology": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/xyz.owl",
+    [
+     "http://www.w3.org/2002/07/owl#versionIRI",
+     "http://purl.obolibrary.org/obo/abc/releases/2020-01-01/abc.owl"
+    ],
+    "23b951232d9fa71b4666d28e9cf95733f547337153db5ffefd7d469be85ded81"
+   ]
+  ],
+  "OBO011:version IRI that is not an OBO PURL": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/xyz.owl",
+    [
+     "http://www.w3.org/2002/07/owl#versionIRI",
+     "http://example.org/v/1"
+    ],
+    "fdc6a54c1699168c8ba01bce168f6711a6223c4260bfde3040f4d5afe1ab2dc2"
+   ]
+  ],
+  "OBO011:version IRI with a bad date": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/xyz.owl",
+    [
+     "http://www.w3.org/2002/07/owl#versionIRI",
+     "http://purl.obolibrary.org/obo/xyz/releases/2020-1-1/xyz.owl"
+    ],
+    "08ab216832039239d87f428ceb32acea9efdad0acdb14b18ba3e6267095ba6f3"
+   ]
+  ],
+  "OBO012:leading whitespace": [
+   [
+    "OBO012",
+    "https://example.test/onto#A",
+    [
+     " cell",
+     "whitespace"
+    ],
+    "7f58f3f6c41d358aacdfc708e6faf8dd4a8faab574065701e49aca389bd12d58"
+   ]
+  ],
+  "OBO012:property label": [
+   [
+    "OBO012",
+    "https://example.test/onto#p",
+    [
+     "part_of",
+     "underscore"
+    ],
+    "459986a1a2c5325df907fa396b1877bbd0613b8f06b3bc8d599df5497bd19042"
+   ]
+  ],
+  "OBO012:repeated whitespace": [
+   [
+    "OBO012",
+    "https://example.test/onto#A",
+    [
+     "cell  membrane",
+     "whitespace"
+    ],
+    "22d099b3dbdd6ccdf5be2ee5358748e76027cb028ed75018f51369d796616798"
+   ]
+  ],
+  "OBO012:trailing whitespace": [
+   [
+    "OBO012",
+    "https://example.test/onto#A",
+    [
+     "cell ",
+     "whitespace"
+    ],
+    "ed7630f779d0ea7dfcf8eae3ad45970037f643e49cea3c995e22a2f0c5437301"
+   ]
+  ],
+  "OBO012:two spaces": [
+   [
+    "OBO012",
+    "https://example.test/onto#A",
+    [
+     "two  spaces",
+     "whitespace"
+    ],
+    "690a443a3127743741edacbebb7ed30fc55e1daba43613183bea010eb1e22960"
+   ]
+  ],
+  "OBO012:underscore": [
+   [
+    "OBO012",
+    "https://example.test/onto#A",
+    [
+     "cell_membrane",
+     "underscore"
+    ],
+    "843e0799283462b3fa820c3fdddfce7c2e63780ec75ed5b5ef02463e4c9e5bfd"
+   ]
+  ],
+  "OBO012:underscore in a short label": [
+   [
+    "OBO012",
+    "https://example.test/onto#A",
+    [
+     "a_b",
+     "underscore"
+    ],
+    "cdc1890847bdbc8323217b035bd133c1ca7f4fe7305bf7cdc71b6f67d73398c1"
+   ]
+  ],
+  "ONT001:no owl:Ontology": [
+   [
+    "ONT001",
+    "(ontology)",
+    [],
+    "00bfd949de17a538d6fa5c304f44f35f349e2121a8a8b9336768e963f1f147fe"
+   ]
+  ],
+  "ONT002:two ontologies": [
+   [
+    "ONT002",
+    "(ontology)",
+    [],
+    "326fb2629d0d32d380c2093a4709913d17640b4960dbe4616882bb938d3a4121"
+   ]
+  ],
+  "ONT003:no license": [
+   [
+    "ONT003",
+    "https://example.test/onto",
+    [],
+    "5640b9e3f1cc4a6ff6d226e23ae09779215d5dac6567d32b916018a2ff7cc270"
+   ]
+  ],
+  "ONT004:no version": [
+   [
+    "ONT004",
+    "https://example.test/onto",
+    [],
+    "63d85c2f61a9db10856c38a857a3519d5640633a123a171085bbd93bf2403719"
+   ]
+  ],
+  "ONT005:creator without created": [
+   [
+    "ONT005",
+    "https://example.test/onto",
+    [
+     "http://purl.org/dc/terms/created"
+    ],
+    "b1b63f33e9169434a42c1b6e1ab442d2427b7420b53f3b009289ff6ecb9fca3e"
+   ]
+  ],
+  "ONT005:no provenance": [
+   [
+    "ONT005",
+    "https://example.test/onto",
+    [
+     "http://purl.org/dc/terms/creator",
+     "http://purl.org/dc/terms/created"
+    ],
+    "c87737992b3e70d69821681443b630ebe8f6ac5ac8fb299d6341977a08713dbe"
+   ]
+  ],
+  "ONT006:no description": [
+   [
+    "ONT006",
+    "https://example.test/onto",
+    [],
+    "44d8a5ba92a9417da278e53bb20d32f70cf7d58159a2f2fcf6f59a91dded9ec9"
+   ]
+  ],
+  "ONT007:a closure module an import did not load": [
+   [
+    "ONT007",
+    "https://example.test/onto",
+    [
+     "closure",
+     "ontology"
+    ],
+    "e85238642e5cafba545b1124c82511e94b828ad7aefa784ed4d93b4f45c70eb8"
+   ]
+  ],
+  "ONT007:an --import-dir with two candidates": [
+   [
+    "ONT007",
+    "https://example.test/onto",
+    [
+     "import-dir",
+     "ontology"
+    ],
+    "5b84f7cb64037763f88263b630861705745f1588219f099a5fce735fc8fb5618"
+   ]
+  ],
+  "ONT007:two graphs of a dataset": [
+   [
+    "ONT007",
+    "https://example.test/onto",
+    [
+     "graphs",
+     "ontology"
+    ],
+    "c268be7a5dcdae2f23cda408007a92faaa200ca6177f9a13a7c014e36b0fffbf"
+   ]
+  ],
+  "ONT007:two inputs, one version IRI, different content": [
+   [
+    "ONT007",
+    "https://example.test/onto/1.0",
+    [
+     "inputs",
+     "version"
+    ],
+    "d90382693f130a87fcd622664189f7f8353e733440096fe7c74d21a8e5fd1d74"
+   ]
+  ],
+  "ONT007:two modules of one closure": [
+   [
+    "ONT007",
+    "https://example.test/onto",
+    [
+     "closure",
+     "ontology"
+    ],
+    "e85238642e5cafba545b1124c82511e94b828ad7aefa784ed4d93b4f45c70eb8"
+   ]
+  ],
+  "ONT007:two unversioned inputs, one ontology IRI, different content": [
+   [
+    "ONT007",
+    "https://example.test/onto",
+    [
+     "inputs",
+     "ontology"
+    ],
+    "b5d96700a8e26822065edeb3627d331ba9066cd6e3580ea3d660485f344c41ab"
+   ]
+  ],
+  "ONT008:an --import-dir holding an identical copy": [
+   [
+    "ONT008",
+    "https://example.test/onto",
+    [
+     "import-dir",
+     "ontology"
+    ],
+    "383e22bcdcfac9e75a3121c2fd8dcc7a319a93476d6f38df846237d637e4c721"
+   ]
+  ],
+  "ONT008:two inputs with identical content": [
+   [
+    "ONT008",
+    "https://example.test/onto/1.0",
+    [
+     "inputs",
+     "version"
+    ],
+    "31b0ba8cf03909fb30dc5ab9daab31f46a3b9dc6f12eaeb1da103a0612d91db0"
+   ]
+  ],
+  "OWL001:declared only as a property": [
+   [
+    "OWL001",
+    "https://example.test/onto#p",
+    [],
+    "cfb3b9b1b6795138f32f6b8cbefa13aabd0c4a6bb8cb7afdae006eb36140902b"
+   ]
+  ],
+  "OWL001:undeclared subclass": [
+   [
+    "OWL001",
+    "https://example.test/onto#Undeclared",
+    [],
+    "7fc961ad4a1539c1cd3ea5bd9d55d1d939f04f843f46e303608b2ae81acb0e5c"
+   ]
+  ],
+  "OWL001:undeclared superclass": [
+   [
+    "OWL001",
+    "https://example.test/onto#Undeclared",
+    [],
+    "7fc961ad4a1539c1cd3ea5bd9d55d1d939f04f843f46e303608b2ae81acb0e5c"
+   ]
+  ],
+  "OWL002:domain on an undeclared property": [
+   [
+    "OWL002",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#domain"
+    ],
+    "e81a5f6dc847e92e114c579c023b8b23c6bf1a9aa6db783aa9ba5efa82473e2f"
+   ]
+  ],
+  "OWL002:range on an undeclared property": [
+   [
+    "OWL002",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#range"
+    ],
+    "7c43610138bc4483eef9c3d29fad6e90297d14556d667de5cea77a992c78b252"
+   ]
+  ],
+  "OWL002:typed only by a characteristic": [
+   [
+    "OWL002",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#domain"
+    ],
+    "e81a5f6dc847e92e114c579c023b8b23c6bf1a9aa6db783aa9ba5efa82473e2f"
+   ]
+  ],
+  "OWL003:foreign property typed both": [
+   [
+    "OWL003",
+    "https://other.example.test/vocab#p",
+    [],
+    "3ca08c30503629fcedfcde1b094cd8ccf1c09d53490bf97e0257b8c85cca8d0d"
+   ]
+  ],
+  "OWL003:object and datatype property": [
+   [
+    "OWL003",
+    "https://example.test/onto#p",
+    [],
+    "e2ef81e6b8a87565ed58ff5cbea18c876d701d505bba4d2dacdcd4e31770a9ec"
+   ]
+  ],
+  "OWL004:a named and an anonymous domain": [
+   [
+    "OWL004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#domain"
+    ],
+    "263261fcae8b1dfadd16891cfe79cbf3a46975155f83fcb6975643824dd2f048"
+   ]
+  ],
+  "OWL004:two domains": [
+   [
+    "OWL004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#domain"
+    ],
+    "263261fcae8b1dfadd16891cfe79cbf3a46975155f83fcb6975643824dd2f048"
+   ]
+  ],
+  "OWL004:two ranges": [
+   [
+    "OWL004",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#range"
+    ],
+    "62405449237866e1b4288f1daa33fe8e6f0ab49579b58c264a77ef0ddaf7affb"
+   ]
+  ],
+  "OWL005:annotation property also typed object property": [
+   [
+    "OWL005",
+    "https://example.test/onto#p",
+    [],
+    "693020b614037ccecaeea07b5fa9679201cee2739893a334db03041982e2d14b"
+   ]
+  ],
+  "OWL005:datatype property without domain": [
+   [
+    "OWL005",
+    "https://example.test/onto#d",
+    [],
+    "e3055f27c9cf9b7fc0e70aa7efec843ddbd849672735470ad766f0f423e87fc8"
+   ]
+  ],
+  "OWL005:no domain": [
+   [
+    "OWL005",
+    "https://example.test/onto#p",
+    [],
+    "693020b614037ccecaeea07b5fa9679201cee2739893a334db03041982e2d14b"
+   ]
+  ],
+  "OWL005:rdf:Property without domain": [
+   [
+    "OWL005",
+    "https://example.test/onto#p",
+    [],
+    "693020b614037ccecaeea07b5fa9679201cee2739893a334db03041982e2d14b"
+   ]
+  ],
+  "OWL006:datatype property without range": [
+   [
+    "OWL006",
+    "https://example.test/onto#d",
+    [],
+    "14c0d78618f6c0bc4271a685c8fbd7ed85993fb9b930b852ad87b2f909965b25"
+   ]
+  ],
+  "OWL006:no range": [
+   [
+    "OWL006",
+    "https://example.test/onto#p",
+    [],
+    "4cbd7e42daf642195a3f8fcaa0de9820f17d901a700f43879be4d7d952ea9d7a"
+   ]
+  ],
+  "OWL006:rdf:Property without range": [
+   [
+    "OWL006",
+    "https://example.test/onto#p",
+    [],
+    "4cbd7e42daf642195a3f8fcaa0de9820f17d901a700f43879be4d7d952ea9d7a"
+   ]
+  ],
+  "OWL007:inverse of itself": [
+   [
+    "OWL007",
+    "https://example.test/onto#p",
+    [],
+    "8e7e1e4a82757c5039ca32865b2bc540f1f60703cadfc4c7799ab65593805693"
+   ]
+  ],
+  "OWL007:undeclared property inverse of itself": [
+   [
+    "OWL007",
+    "https://example.test/onto#p",
+    [],
+    "8e7e1e4a82757c5039ca32865b2bc540f1f60703cadfc4c7799ab65593805693"
+   ]
+  ],
+  "OWL008:symmetric named as the inverse": [
+   [
+    "OWL008",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#q"
+    ],
+    "6735b8cbd116dc6113d9f53fbb17f55f483c05ca143f0ea646a4af90c7b9d0c7"
+   ]
+  ],
+  "OWL008:symmetric with inverse": [
+   [
+    "OWL008",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#q"
+    ],
+    "6735b8cbd116dc6113d9f53fbb17f55f483c05ca143f0ea646a4af90c7b9d0c7"
+   ]
+  ],
+  "OWL009:asymmetric datatype property": [
+   [
+    "OWL009",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#AsymmetricProperty"
+    ],
+    "a59e76fa5805c77cbf814078c6edbc091a7de0099248ab70eb0a8a02f6a7d1e3"
+   ]
+  ],
+  "OWL009:datatype property named as the inverse": [
+   [
+    "OWL009",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2002/07/owl#inverseOf"
+    ],
+    "63b599102cfa37ac9b2182a3f27faf98b87c6bb93818f380a85f3a11b1db6d87"
+   ]
+  ],
+  "OWL009:inverse of a datatype property": [
+   [
+    "OWL009",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#inverseOf"
+    ],
+    "c907ef64861e77376dcebbac9b9858c59ed18041fc20d45f9a08d796538b17c8"
+   ]
+  ],
+  "OWL009:inverse-functional datatype property": [
+   [
+    "OWL009",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#InverseFunctionalProperty"
+    ],
+    "e8134374a68b176ade313b56ec74211f04f29af4ca0f3fee5beed92a06fb59a4"
+   ]
+  ],
+  "OWL009:symmetric datatype property": [
+   [
+    "OWL009",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#SymmetricProperty"
+    ],
+    "bb2b1f36ff7260004898becafa96d1301f0c65c6b6db8cbfb74f04ac00d3340c"
+   ]
+  ],
+  "OWL009:transitive datatype property": [
+   [
+    "OWL009",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#TransitiveProperty"
+    ],
+    "065f9e327529f1ad0d72faaada16d64688fb01475ddff79e97ea09f028ba02f1"
+   ]
+  ],
+  "OWL010:chain is a literal": [
+   [
+    "OWL010",
+    "https://example.test/onto#p",
+    [
+     "malformed"
+    ],
+    "dc86126b0a0a320e4e295d6fba47a9e9b93abdf35f7d2c627181bea7249a0621"
+   ]
+  ],
+  "OWL010:cyclic chain list": [
+   [
+    "OWL010",
+    "https://example.test/onto#p",
+    [
+     "malformed"
+    ],
+    "dc86126b0a0a320e4e295d6fba47a9e9b93abdf35f7d2c627181bea7249a0621"
+   ]
+  ],
+  "OWL010:empty chain": [
+   [
+    "OWL010",
+    "https://example.test/onto#p",
+    [
+     "empty"
+    ],
+    "b8853e7d5ba333762bddbb286ce4e6991ba68b773b2300839d4e62e891616969"
+   ]
+  ],
+  "OWL010:malformed list (not an RDF list)": [
+   [
+    "OWL010",
+    "https://example.test/onto#p",
+    [
+     "malformed"
+    ],
+    "dc86126b0a0a320e4e295d6fba47a9e9b93abdf35f7d2c627181bea7249a0621"
+   ]
+  ],
+  "OWL010:one-operand chain": [
+   [
+    "OWL010",
+    "https://example.test/onto#p",
+    [],
+    "e051944c87a08ad5a2488b326ef1d0f98ab8579b207a1689da89cc7227d99943"
+   ]
+  ],
+  "OWL010:one-operand chain on an undeclared property": [
+   [
+    "OWL010",
+    "https://example.test/onto#p",
+    [],
+    "e051944c87a08ad5a2488b326ef1d0f98ab8579b207a1689da89cc7227d99943"
+   ]
+  ],
+  "OWL011:allValuesFrom alone (blank-node focus)": [
+   [
+    "OWL011",
+    "_:a0a7e9b9f90e",
+    [],
+    "ece4d03b1b288a37f62ee48c8685969cdf91b516beb3a2d5c670dad39cea4654"
+   ]
+  ],
+  "OWL011:existence on another property": [
+   [
+    "OWL011",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#p"
+    ],
+    "2ba7d956db25daf3cbc11c11045bfdcd7b90b33e64b8b2a706f78754fa4bde9f"
+   ]
+  ],
+  "OWL011:general class axiom": [
+   [
+    "OWL011",
+    "https://example.test/onto#A",
+    [
+     "general class axiom",
+     "https://example.test/onto#p"
+    ],
+    "ca62a627acb6c86fc9610ff339e7045627d9788e79969f86d989c35ac4a61190"
+   ]
+  ],
+  "OWL011:minimum cardinality 0 is no existence": [
+   [
+    "OWL011",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#p"
+    ],
+    "2ba7d956db25daf3cbc11c11045bfdcd7b90b33e64b8b2a706f78754fa4bde9f"
+   ]
+  ],
+  "OWL011:superclass restriction of a named class": [
+   [
+    "OWL011",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#p"
+    ],
+    "2ba7d956db25daf3cbc11c11045bfdcd7b90b33e64b8b2a706f78754fa4bde9f"
+   ]
+  ],
+  "OWL012:class equivalent to itself": [
+   [
+    "OWL012",
+    "https://example.test/onto#A",
+    [],
+    "5c4345fa9c7aeebec1497a4478073148edb899eaa35bbba41b977267afe47c05"
+   ]
+  ],
+  "OWL013:foreign object property with a typed literal": [
+   [
+    "OWL013",
+    "https://example.test/onto#i",
+    [
+     "https://other.example.test/vocab#p",
+     "\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "3d4efa6ed7c4b7ae08aa1305484eac4e78eb264972d75c03e64e39a541092edc"
+   ]
+  ],
+  "OWL013:object property with literal value": [
+   [
+    "OWL013",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#p",
+     "\"text\""
+    ],
+    "f1df5ce4e3388b57ed6f90d4b87aaaff10f6a99bbe9072d5fb11c2c2097d2112"
+   ]
+  ],
+  "OWL014:datatype property with blank-node value": [
+   [
+    "OWL014",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "_:304928c2ed93"
+    ],
+    "f92c9af0eab5625959c651043a416dfa4983d3fde2da30c79c694f6a27f2bf91"
+   ]
+  ],
+  "OWL014:datatype property with resource value": [
+   [
+    "OWL014",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#d",
+     "https://example.test/onto#j"
+    ],
+    "6da7a9a682c93653c1fe3136c4668e27f825b2fc69188dea9f3295bc7c1f3bef"
+   ]
+  ],
+  "OWL015:typed only by a characteristic": [
+   [
+    "OWL015",
+    "https://example.test/onto#q",
+    [],
+    "cc7933f9846b839c10bcda2ed2d67c3311eeeee96ebce1d427f277c1b62cb3c4"
+   ]
+  ],
+  "OWL015:undeclared local predicate": [
+   [
+    "OWL015",
+    "https://example.test/onto#q",
+    [],
+    "cc7933f9846b839c10bcda2ed2d67c3311eeeee96ebce1d427f277c1b62cb3c4"
+   ]
+  ],
+  "OWL016:irreflexive datatype property": [
+   [
+    "OWL016",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#IrreflexiveProperty"
+    ],
+    "a3893a3098aa64a3a838383f2ba34c13b9f22b1c8f7c33c93c3289f55a16d213"
+   ]
+  ],
+  "OWL016:reflexive datatype property": [
+   [
+    "OWL016",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#ReflexiveProperty"
+    ],
+    "32ad3ffa0e1352b51e6749940a0488ff7d101afab9ace959ff266db7a37ac647"
+   ]
+  ],
+  "OWL017:no kind declaration needed": [
+   [
+    "OWL017",
+    "https://example.test/onto#p",
+    [],
+    "3725f87ef311c1f7a8a0fdfd9ef4530973d787c7b4760af2db1f19f768615666"
+   ]
+  ],
+  "OWL017:symmetric and asymmetric": [
+   [
+    "OWL017",
+    "https://example.test/onto#p",
+    [],
+    "3725f87ef311c1f7a8a0fdfd9ef4530973d787c7b4760af2db1f19f768615666"
+   ]
+  ],
+  "OWL018:reflexive and asymmetric": [
+   [
+    "OWL018",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#ReflexiveProperty",
+     "http://www.w3.org/2002/07/owl#AsymmetricProperty"
+    ],
+    "b8ed367f2890414e102fe140128d36f2b4ced6ecd149fb76dde373a9a01be1e0"
+   ]
+  ],
+  "OWL018:reflexive and irreflexive": [
+   [
+    "OWL018",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#ReflexiveProperty",
+     "http://www.w3.org/2002/07/owl#IrreflexiveProperty"
+    ],
+    "9f0b2d6868a141b1436f474427651fca0554a4340c5885d3d19d3e46a55de6be"
+   ]
+  ],
+  "OWL019:asymmetric property two sub-property steps above a transitive one": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#AsymmetricProperty"
+    ],
+    "7e3e830ea385d3c0f55c786b12f04efd92e5f92d912c81fd1a76e1854e816b23"
+   ]
+  ],
+  "OWL019:cardinality on the inverse of a transitive property": [
+   [
+    "OWL019",
+    "_:52f54fdda130",
+    [
+     "_:ecf10a8e7175",
+     "http://www.w3.org/2002/07/owl#cardinality"
+    ],
+    "a6fcaa6bfd636c258dead518b39274c3e3eaeb1404bd68944e03506050548955"
+   ]
+  ],
+  "OWL019:chain-defined functional": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "decb06c1335ef750dc0af2b4b561832e1cc8c5504c598a351a8d4bcdcb77cfa6"
+   ]
+  ],
+  "OWL019:chain-defined irreflexive": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#IrreflexiveProperty"
+    ],
+    "763114d9e2a5ef935d918166f621bf3f3094fb37465f1599eb756081efeab548"
+   ]
+  ],
+  "OWL019:chain-defined member of owl:AllDisjointProperties": [
+   [
+    "OWL019",
+    "_:10f9dea1716c",
+    [
+     "https://example.test/onto#c"
+    ],
+    "8149793c69854a38da3c933f564e21d5f3dd5b223c1be8b0ff6e41a3bcd13c84"
+   ]
+  ],
+  "OWL019:functional property whose inverse is a sub-property's inverse": [
+   [
+    "OWL019",
+    "https://example.test/onto#q",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "f444e2ebb576898ff057dde44d2894e62f9e03149df7cdf58b673b0cdf8dad14"
+   ]
+  ],
+  "OWL019:functional super-property of a transitive property": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "decb06c1335ef750dc0af2b4b561832e1cc8c5504c598a351a8d4bcdcb77cfa6"
+   ]
+  ],
+  "OWL019:hasSelf on a chain-defined property": [
+   [
+    "OWL019",
+    "_:fa0278aec340",
+    [
+     "https://example.test/onto#c",
+     "http://www.w3.org/2002/07/owl#hasSelf"
+    ],
+    "80d66751f0cd2e04a31c76726cf112dd0d06b81e636e86285065724743e2188d"
+   ]
+  ],
+  "OWL019:inverse-functional inverse of a transitive property": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#InverseFunctionalProperty"
+    ],
+    "9677d6aa3ef6a68cb0309504273b34939903a4312e9caa701ff2a16718c2a90d"
+   ]
+  ],
+  "OWL019:irreflexive equivalent of a chain-defined property": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#IrreflexiveProperty"
+    ],
+    "763114d9e2a5ef935d918166f621bf3f3094fb37465f1599eb756081efeab548"
+   ]
+  ],
+  "OWL019:max cardinality on a transitive property": [
+   [
+    "OWL019",
+    "_:cb11b1726de3",
+    [
+     "https://example.test/onto#t",
+     "http://www.w3.org/2002/07/owl#maxCardinality"
+    ],
+    "64eefc96d39ced5c45bffd22977a91f2045f5bb7fbc4f94559e5f65305494b3e"
+   ]
+  ],
+  "OWL019:property equivalent to the top object property": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "decb06c1335ef750dc0af2b4b561832e1cc8c5504c598a351a8d4bcdcb77cfa6"
+   ]
+  ],
+  "OWL019:property whose inverse expression is transitive": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "decb06c1335ef750dc0af2b4b561832e1cc8c5504c598a351a8d4bcdcb77cfa6"
+   ]
+  ],
+  "OWL019:qualified min cardinality on a super-property of a transitive property": [
+   [
+    "OWL019",
+    "_:22c82bba4321",
+    [
+     "https://example.test/onto#p",
+     "http://www.w3.org/2002/07/owl#minQualifiedCardinality"
+    ],
+    "b513adbbbc5cc8eb29fb39e8447a40df9cf98452ccb8f521643a87528f77e5d6"
+   ]
+  ],
+  "OWL019:simple property declared disjoint with a transitive one": [
+   [
+    "OWL019",
+    "https://example.test/onto#t",
+    [
+     "http://www.w3.org/2002/07/owl#propertyDisjointWith",
+     "https://example.test/onto#q"
+    ],
+    "69d8ca24c09c28e92a4ded6a053f0ee59adff8b3f4bf921786215ed4992c6395"
+   ]
+  ],
+  "OWL019:super-property of a transitive inverse expression (INV rule)": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "decb06c1335ef750dc0af2b4b561832e1cc8c5504c598a351a8d4bcdcb77cfa6"
+   ]
+  ],
+  "OWL019:transitive asymmetric": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#AsymmetricProperty"
+    ],
+    "7e3e830ea385d3c0f55c786b12f04efd92e5f92d912c81fd1a76e1854e816b23"
+   ]
+  ],
+  "OWL019:transitive functional": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#FunctionalProperty"
+    ],
+    "decb06c1335ef750dc0af2b4b561832e1cc8c5504c598a351a8d4bcdcb77cfa6"
+   ]
+  ],
+  "OWL019:transitive inverse-functional": [
+   [
+    "OWL019",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#InverseFunctionalProperty"
+    ],
+    "9677d6aa3ef6a68cb0309504273b34939903a4312e9caa701ff2a16718c2a90d"
+   ]
+  ],
+  "OWL019:transitive property declared disjoint": [
+   [
+    "OWL019",
+    "https://example.test/onto#t",
+    [
+     "http://www.w3.org/2002/07/owl#propertyDisjointWith",
+     "https://example.test/onto#q"
+    ],
+    "69d8ca24c09c28e92a4ded6a053f0ee59adff8b3f4bf921786215ed4992c6395"
+   ]
+  ],
+  "OWL020:three-property cycle": [
+   [
+    "OWL020",
+    "https://example.test/onto#a",
+    [],
+    "6683d63525771f1d750bb4f696231f66cce26fbd03885d9ba38ccffcdfc6b15c"
+   ]
+  ],
+  "OWL020:two-property cycle": [
+   [
+    "OWL020",
+    "https://example.test/onto#a",
+    [],
+    "6683d63525771f1d750bb4f696231f66cce26fbd03885d9ba38ccffcdfc6b15c"
+   ]
+  ],
+  "OWL021:datatype sub-property of object property": [
+   [
+    "OWL021",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+     "https://example.test/onto#o"
+    ],
+    "03e916e0063e53b66471fc4772b6e028cef7c823bbc35b5a260c545164d71e38"
+   ]
+  ],
+  "OWL021:equivalent across kinds": [
+   [
+    "OWL021",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2002/07/owl#equivalentProperty",
+     "https://example.test/onto#d"
+    ],
+    "8078824c532b8510da702013f3983667c51f1825ee800837df3446d9448b662d"
+   ]
+  ],
+  "OWL021:object sub-property of datatype property": [
+   [
+    "OWL021",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+     "https://example.test/onto#d"
+    ],
+    "3353a80feb55c46ff4c9a63ff8c6519effacb58dd7dc23a90c72bba6305accc4"
+   ]
+  ],
+  "OWL022:datatype property with class range": [
+   [
+    "OWL022",
+    "https://example.test/onto#d",
+    [
+     "https://example.test/onto#C"
+    ],
+    "476bb3561f3d7ef529a61951716c0e321742784556e8ce7484bf0ec615d4ef50"
+   ]
+  ],
+  "OWL022:datatype property with owl:Thing range": [
+   [
+    "OWL022",
+    "https://example.test/onto#d",
+    [
+     "http://www.w3.org/2002/07/owl#Thing"
+    ],
+    "41ad192517a4b6c5b9a2d19eb6899aa15b3baa6c7e3b0b204a09621965106ddc"
+   ]
+  ],
+  "OWL022:object property with declared datatype": [
+   [
+    "OWL022",
+    "https://example.test/onto#o",
+    [
+     "https://example.test/onto#T"
+    ],
+    "72bcb3a0463a1e6509b357e37855c3b8316733b9863cce6e37e4959f02c79e79"
+   ]
+  ],
+  "OWL022:object property with owl:real range": [
+   [
+    "OWL022",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2002/07/owl#real"
+    ],
+    "8d68a3a36e69ab04678ff51eb2dd27311d79b2e7b9f747e33a33dd19d63beffd"
+   ]
+  ],
+  "OWL022:object property with rdf:JSON range": [
+   [
+    "OWL022",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON"
+    ],
+    "70ab5b54e71b3ce306ff15cd91f9d3287322b9981d61f8b141ba87ff2478014a"
+   ]
+  ],
+  "OWL022:object property with rdf:PlainLiteral range": [
+   [
+    "OWL022",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral"
+    ],
+    "2c6ab3df23573d1efb98cebb014d167ac3648432a689c62a43edf47491b1de92"
+   ]
+  ],
+  "OWL022:object property with rdfs:Literal range": [
+   [
+    "OWL022",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    "625ff938301acd348dd761a91b8b939a75220b82f103044c836bf2682bf68d2b"
+   ]
+  ],
+  "OWL022:object property with xsd range": [
+   [
+    "OWL022",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2001/XMLSchema#string"
+    ],
+    "38fd21214062e77a89418167b83dc632e53a87b5952c54bf3236ff97d3c23d12"
+   ]
+  ],
+  "OWL023:inverses in both directions": [
+   [
+    "OWL023",
+    "https://example.test/onto#p",
+    [],
+    "f51483bf435a125b8157d6535770e4942696cf2bd8692f343ed519e89465c971"
+   ]
+  ],
+  "OWL023:two inverses": [
+   [
+    "OWL023",
+    "https://example.test/onto#p",
+    [],
+    "f51483bf435a125b8157d6535770e4942696cf2bd8692f343ed519e89465c971"
+   ]
+  ],
+  "OWL024:all disjoint properties with equivalent members": [
+   [
+    "OWL024",
+    "https://example.test/onto#q",
+    [
+     "https://example.test/onto#r"
+    ],
+    "fbc4747168594f36987fcd2ef4a9b57189f9970f9ef4fe0949bcc377553f7a94"
+   ]
+  ],
+  "OWL024:disjoint equivalent property": [
+   [
+    "OWL024",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#q"
+    ],
+    "e7ddb907163f44c8e34a94fd5b02f06c06d5892d0700e782d9e0a31ae2a24685"
+   ]
+  ],
+  "OWL024:disjoint sub-property": [
+   [
+    "OWL024",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#q"
+    ],
+    "e7ddb907163f44c8e34a94fd5b02f06c06d5892d0700e782d9e0a31ae2a24685"
+   ]
+  ],
+  "OWL024:disjoint super-property": [
+   [
+    "OWL024",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#q"
+    ],
+    "e7ddb907163f44c8e34a94fd5b02f06c06d5892d0700e782d9e0a31ae2a24685"
+   ]
+  ],
+  "OWL024:disjoint with itself": [
+   [
+    "OWL024",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#p"
+    ],
+    "b3c52596254d00dae90b5ec5ba55ebedf021b39fc0a2f31618690b91cc48e5ae"
+   ]
+  ],
+  "OWL024:repeated member of all disjoint properties": [
+   [
+    "OWL024",
+    "https://example.test/onto#p",
+    [
+     "https://example.test/onto#p"
+    ],
+    "b3c52596254d00dae90b5ec5ba55ebedf021b39fc0a2f31618690b91cc48e5ae"
+   ]
+  ],
+  "OWL025:all disjoint classes with a subclass pair": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#B"
+    ],
+    "b1490a9c0537dabb21c67956f425e644f9a5a38c7c5ccd64f313df16a3b248b1"
+   ]
+  ],
+  "OWL025:disjoint with its equivalent": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#B"
+    ],
+    "b1490a9c0537dabb21c67956f425e644f9a5a38c7c5ccd64f313df16a3b248b1"
+   ]
+  ],
+  "OWL025:disjoint with its superclass": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#B"
+    ],
+    "b1490a9c0537dabb21c67956f425e644f9a5a38c7c5ccd64f313df16a3b248b1"
+   ]
+  ],
+  "OWL025:disjoint with itself": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#A"
+    ],
+    "2cf5c2839d22588422ccb2d07b6dcdcf0880e431d4d16bc1835d6404be72b916"
+   ]
+  ],
+  "OWL025:equivalence stated in reverse": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#B"
+    ],
+    "b1490a9c0537dabb21c67956f425e644f9a5a38c7c5ccd64f313df16a3b248b1"
+   ]
+  ],
+  "OWL025:group of exactly 200 members is read": [
+   [
+    "OWL025",
+    "https://example.test/onto#m0",
+    [
+     "https://example.test/onto#m199"
+    ],
+    "d9afe0024796ddaefab2e81662c74a65155db93bc32f09efaec055427a959d82"
+   ]
+  ],
+  "OWL025:repeated member of all disjoint classes (also OWL045)": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#A"
+    ],
+    "2cf5c2839d22588422ccb2d07b6dcdcf0880e431d4d16bc1835d6404be72b916"
+   ]
+  ],
+  "OWL026:different from itself": [
+   [
+    "OWL026",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#a"
+    ],
+    "a87c68037823cc46b352e80b59387f28f4ff4aa4ffea3a5f41e0d9f1e6c100b0"
+   ]
+  ],
+  "OWL026:reversed same": [
+   [
+    "OWL026",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "5a16194d88d5925104eafdec2af2d7d3e122c1e0543f0489059db5ab9e78d942"
+   ]
+  ],
+  "OWL026:same and different": [
+   [
+    "OWL026",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "5a16194d88d5925104eafdec2af2d7d3e122c1e0543f0489059db5ab9e78d942"
+   ]
+  ],
+  "OWL027:negated individual assertion that is asserted": [
+   [
+    "OWL027",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p",
+     "https://example.test/onto#b"
+    ],
+    "29011a8705be4a91a5c56e6ecbf0d8e8cb1e1c72ea835cd3ae925ebce2654b7f"
+   ]
+  ],
+  "OWL027:negated integer with another lexical form": [
+   [
+    "OWL027",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p",
+     "\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "037fe858a49f2189ae2fcbd273a34c28811aaf6f4ebb4ffdf250ddd03b0bd56d"
+   ]
+  ],
+  "OWL027:negated value assertion that is asserted": [
+   [
+    "OWL027",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p",
+     "\"v\""
+    ],
+    "46f1921663185b423f699bcd50a186d6e584737b41a2c3835b7e12f2725ea60b"
+   ]
+  ],
+  "OWL028:irreflexive property used reflexively": [
+   [
+    "OWL028",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p"
+    ],
+    "aef88b1dfc5a69d84c26f9964c3ff33eecfab5e6bdfffbf43239125eeec0a2d6"
+   ]
+  ],
+  "OWL029:both directions": [
+   [
+    "OWL029",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p",
+     "https://example.test/onto#b"
+    ],
+    "1c5a3b74f24e941f6506f9c8ae57e7e8f47a6a934cf3245d211c08699e538e45"
+   ]
+  ],
+  "OWL029:self assertion": [
+   [
+    "OWL029",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p"
+    ],
+    "df9057db542c0aadc00d05e026deaaaa4968db2270d3f29dc980198ae5e450be"
+   ]
+  ],
+  "OWL030:annotation and datatype property": [
+   [
+    "OWL030",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#AnnotationProperty"
+    ],
+    "4d2c583917dd1572da7ea6c7a69fdbd786eab4ce486a46e0484b1f62009f85e4"
+   ]
+  ],
+  "OWL030:annotation and object property": [
+   [
+    "OWL030",
+    "https://example.test/onto#p",
+    [
+     "http://www.w3.org/2002/07/owl#AnnotationProperty"
+    ],
+    "4d2c583917dd1572da7ea6c7a69fdbd786eab4ce486a46e0484b1f62009f85e4"
+   ]
+  ],
+  "OWL030:class and datatype": [
+   [
+    "OWL030",
+    "https://example.test/onto#T",
+    [
+     "http://www.w3.org/2002/07/owl#Class",
+     "http://www.w3.org/2000/01/rdf-schema#Datatype"
+    ],
+    "33f4ecf1987466096b5f91c10fdf9bbb38734110691855532b9688470ca4b993"
+   ]
+  ],
+  "OWL031:anonymous expression with an empty list": [
+   [
+    "OWL031",
+    "_:ad34f791ad89",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "empty"
+    ],
+    "29312ebd091b45c24b673510fd5d4c91489a0d2ccfe3618a3439485aa7971f5c"
+   ]
+  ],
+  "OWL031:cyclic list": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "malformed"
+    ],
+    "6b136d3703c398d1ea5c01ada1028623431247848cbc4273c612c75983c75c07"
+   ]
+  ],
+  "OWL031:empty data range union": [
+   [
+    "OWL031",
+    "https://example.test/onto#D",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "empty"
+    ],
+    "203732b384e249c807a6240b290eb7431d29b708d1478b25c7c1e148cb0b2148"
+   ]
+  ],
+  "OWL031:empty disjointUnionOf": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#disjointUnionOf",
+     "empty"
+    ],
+    "f5df23d57e1c2f8dee1e28a71d0619838e28ea86994df8bd76d79455c7855514"
+   ]
+  ],
+  "OWL031:empty intersection": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "empty"
+    ],
+    "eb82d3d28a2c65d90224159b43be12fde4f28fc9354a4a5c0f96c5ebaecb6709"
+   ]
+  ],
+  "OWL031:empty oneOf": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#oneOf",
+     "empty"
+    ],
+    "adfc9c56b8f8ad2cd7f2a716a1b0ced64215c476812563d0506756ea38262a8f"
+   ]
+  ],
+  "OWL031:empty union": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "empty"
+    ],
+    "ac5b277299521b74a2cf62fc0f802419777d4897ef2b23ab35a784679012be4f"
+   ]
+  ],
+  "OWL031:list node with two rdf:first": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "malformed"
+    ],
+    "1d9b8edc42edfea611c0263b29fa9f6de573ed2a1adbf1a5711204bd48d25491"
+   ]
+  ],
+  "OWL031:list node without rest": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "malformed"
+    ],
+    "1d9b8edc42edfea611c0263b29fa9f6de573ed2a1adbf1a5711204bd48d25491"
+   ]
+  ],
+  "OWL031:union points to a class": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "malformed"
+    ],
+    "1d9b8edc42edfea611c0263b29fa9f6de573ed2a1adbf1a5711204bd48d25491"
+   ]
+  ],
+  "OWL031:union points to a literal": [
+   [
+    "OWL031",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "malformed"
+    ],
+    "1d9b8edc42edfea611c0263b29fa9f6de573ed2a1adbf1a5711204bd48d25491"
+   ]
+  ],
+  "OWL032:one-operand intersection": [
+   [
+    "OWL032",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "https://example.test/onto#A"
+    ],
+    "09eea4e20d169b9f6e28714c640731c7b6801984c0bd29dec0501ddbc201e161"
+   ]
+  ],
+  "OWL032:one-operand union": [
+   [
+    "OWL032",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "https://example.test/onto#A"
+    ],
+    "cd0feaa60fbb01a782cf837f9af7f54728380eb092154a099e0af0ac34a557f8"
+   ]
+  ],
+  "OWL032:single-member disjointUnionOf": [
+   [
+    "OWL032",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#disjointUnionOf",
+     "https://example.test/onto#A"
+    ],
+    "cec8f3e30fec079fe2564395d3216ff0e20ffe8e641bf3f3606cdd19a8cbbcab"
+   ]
+  ],
+  "OWL033:disjointUnionOf repeats a member": [
+   [
+    "OWL033",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#disjointUnionOf"
+    ],
+    "7c56ca8b0cc4b09196a984011ce9fd994b81dec189883df6a021ed9b4c58bbfb"
+   ]
+  ],
+  "OWL033:duplicate intersection member": [
+   [
+    "OWL033",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf"
+    ],
+    "6f31eff93e1ea2742d3bb7289d991fcb308eef8f6f33f63278318aa807756e78"
+   ]
+  ],
+  "OWL033:duplicate literal in a data oneOf": [
+   [
+    "OWL033",
+    "https://example.test/onto#D",
+    [
+     "http://www.w3.org/2002/07/owl#oneOf"
+    ],
+    "19f96a33f636932fda56d7ab1cdba4a0e0e1dd3822bdb248ba80094f4d950195"
+   ]
+  ],
+  "OWL033:duplicate oneOf individual": [
+   [
+    "OWL033",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#oneOf"
+    ],
+    "3909ab4f5105f27da0daf9768ea8850cd48caf6e599021a752e7df21f193ffdb"
+   ]
+  ],
+  "OWL033:duplicate union member": [
+   [
+    "OWL033",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf"
+    ],
+    "3fea02e1eb532cfd217756eeac7407b0a3feaf517c0956af386b3d74eeec8302"
+   ]
+  ],
+  "OWL034:anonymous restriction of a class": [
+   [
+    "OWL034",
+    "_:532ef54953da",
+    [
+     "http://www.w3.org/2002/07/owl#onProperty",
+     "none"
+    ],
+    "abfa014a700ca5243437f58db93c7d938a0a13e98030a7092e1bf03f1cf103fe"
+   ]
+  ],
+  "OWL034:both onProperty and onProperties": [
+   [
+    "OWL034",
+    "_:3576467887ff",
+    [
+     "http://www.w3.org/2002/07/owl#onProperty",
+     "http://www.w3.org/2002/07/owl#onProperties"
+    ],
+    "15b558c35f4f97d0c0c42c7ee8544cd044fc0e4a9b3ee8354ea3db312a8105c2"
+   ]
+  ],
+  "OWL034:literal onProperty": [
+   [
+    "OWL034",
+    "_:1fb16f3e7f37",
+    [
+     "http://www.w3.org/2002/07/owl#onProperty",
+     "\"p\""
+    ],
+    "32edc091b6d0385fc7bb69284f8cc3e66240047c0d837cbdb77e9a421d3f4e42"
+   ]
+  ],
+  "OWL034:no onProperty": [
+   [
+    "OWL034",
+    "_:e0b5635e79bf",
+    [
+     "http://www.w3.org/2002/07/owl#onProperty",
+     "none"
+    ],
+    "78098e0d8da112b961c3cf9428589ec5ea210d1cbfc5a923090215838f0a395a"
+   ]
+  ],
+  "OWL034:two onProperties lists": [
+   [
+    "OWL034",
+    "_:722cc22d021d",
+    [
+     "http://www.w3.org/2002/07/owl#onProperties",
+     "several"
+    ],
+    "891a53526157b3696a30e372ccf39dcbb91a20ec18b558a9669595b8e4174f63"
+   ]
+  ],
+  "OWL034:two onProperty": [
+   [
+    "OWL034",
+    "_:205c6cc014f4",
+    [
+     "http://www.w3.org/2002/07/owl#onProperty",
+     "several"
+    ],
+    "6aa8845f4ff0ccb9f2811dcdb69582f359608bd4bd78b9bb95cc876072d0acea"
+   ]
+  ],
+  "OWL035:bare restriction": [
+   [
+    "OWL035",
+    "_:dfd11a52c8c7",
+    [],
+    "e6217a06895f1ed3d447aff61262dd24083502f85e9e200294c0bd5cda160d29"
+   ]
+  ],
+  "OWL035:hasSelf a plain string": [
+   [
+    "OWL035",
+    "_:57e7e9b0ed24",
+    [
+     "http://www.w3.org/2002/07/owl#hasSelf",
+     "\"true\""
+    ],
+    "39e370b6cf7b8c0795b98c84d37ac4149e6df614b10cd577eb0a304c7fe76265"
+   ]
+  ],
+  "OWL035:hasSelf an IRI": [
+   [
+    "OWL035",
+    "_:a988bb0e9974",
+    [
+     "http://www.w3.org/2002/07/owl#hasSelf",
+     "https://example.test/onto#yes"
+    ],
+    "01925d4d38d0d09a08e9e2612688ab7193d1ac930c0c742709f1be8504ce59d1"
+   ]
+  ],
+  "OWL035:hasSelf an integer": [
+   [
+    "OWL035",
+    "_:ef996444a282",
+    [
+     "http://www.w3.org/2002/07/owl#hasSelf",
+     "\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "0592b26172eef5770cfda1b575e164ae055c4c8416622349b44d2bbe4b0b3daf"
+   ]
+  ],
+  "OWL035:hasSelf false": [
+   [
+    "OWL035",
+    "_:ac41b7d3fbba",
+    [
+     "http://www.w3.org/2002/07/owl#hasSelf",
+     "\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+    ],
+    "c34e57f31ff3010c6b8837f66ac0ef1aef7f68b545b8fa4f1cab1add0922297f"
+   ]
+  ],
+  "OWL035:hasSelf false written 0": [
+   [
+    "OWL035",
+    "_:ac41b7d3fbba",
+    [
+     "http://www.w3.org/2002/07/owl#hasSelf",
+     "\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+    ],
+    "c34e57f31ff3010c6b8837f66ac0ef1aef7f68b545b8fa4f1cab1add0922297f"
+   ]
+  ],
+  "OWL035:min and max cardinality on one node": [
+   [
+    "OWL035",
+    "_:3b3b597b59b9",
+    [
+     "several"
+    ],
+    "102b630b53d1a93c1784295bc50ae2b01719d8c5873731094b84eef871523bfc"
+   ]
+  ],
+  "OWL035:only onClass": [
+   [
+    "OWL035",
+    "_:91c24c806ac9",
+    [],
+    "423257d9457fd10adaa32bf0c423a7faf31a00414b213ffdedd57cbbe9895e8c"
+   ]
+  ],
+  "OWL035:only onDataRange": [
+   [
+    "OWL035",
+    "_:c2b7777854ff",
+    [],
+    "250369e2f25953122f32032bd25828edeb8274b42eae405ecf99b3ca58fb010c"
+   ]
+  ],
+  "OWL035:someValuesFrom and allValuesFrom": [
+   [
+    "OWL035",
+    "_:d853e43d85a0",
+    [
+     "several"
+    ],
+    "5495ba2a147b1980fdfd68d50d955e045ee840d5d6683653b5dd8878db2d6837"
+   ]
+  ],
+  "OWL035:two someValuesFrom values": [
+   [
+    "OWL035",
+    "_:331a018a9321",
+    [
+     "several"
+    ],
+    "77b69a22d343a261b616e49f670c157e931df8884ded5b65e7b8e4ef2d43101d"
+   ]
+  ],
+  "OWL036:decimal cardinality": [
+   [
+    "OWL036",
+    "_:d9a9a334f4b7",
+    [
+     "http://www.w3.org/2002/07/owl#cardinality",
+     "\"1.5\"^^<http://www.w3.org/2001/XMLSchema#decimal>"
+    ],
+    "262c14084aba82769721473ff0837e84cf9f960406943ef96b7ab5e71b6fbdb1"
+   ]
+  ],
+  "OWL036:exact qualified without class or data range": [
+   [
+    "OWL036",
+    "_:925f32c955b2",
+    [
+     "http://www.w3.org/2002/07/owl#onClass",
+     "http://www.w3.org/2002/07/owl#onDataRange"
+    ],
+    "fc938a533ab4d8fafe7d1b84e3d1d400ce3800ea2bca1897f722538fd8816a9b"
+   ]
+  ],
+  "OWL036:language-tagged word": [
+   [
+    "OWL036",
+    "_:c30428da9a4f",
+    [
+     "http://www.w3.org/2002/07/owl#cardinality",
+     "\"one\"@en"
+    ],
+    "45728be7f9fc16722874e57c1fb597b073016b735a9a5a4e722c8d9710c076ed"
+   ]
+  ],
+  "OWL036:negative cardinality": [
+   [
+    "OWL036",
+    "_:e7e0e4beb360",
+    [
+     "http://www.w3.org/2002/07/owl#minCardinality",
+     "\"-1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "8c00db2c2939d0170f8b088925230e6fcf305da175b502728f7aa0cfa1c70cd1"
+   ]
+  ],
+  "OWL036:negative qualified cardinality": [
+   [
+    "OWL036",
+    "_:360af3f0ba5c",
+    [
+     "http://www.w3.org/2002/07/owl#maxQualifiedCardinality",
+     "\"-2\""
+    ],
+    "7b35a39541022bb765823401f0133d61ae2271d89d7b53173c39a83834fbf21b"
+   ]
+  ],
+  "OWL036:qualified with both onClass and onDataRange": [
+   [
+    "OWL036",
+    "_:b5179732d07f",
+    [
+     "several fillers"
+    ],
+    "9ee0757451f6d2b5276dba1c50d12df4807c965c4f584c3a2ff68d9f4e86dc21"
+   ]
+  ],
+  "OWL036:qualified with two onClass values": [
+   [
+    "OWL036",
+    "_:815e2ca06688",
+    [
+     "several fillers"
+    ],
+    "23394ec74206b84accd7438e6d2e4270b1977a5b80be9c2825666a7968176580"
+   ]
+  ],
+  "OWL036:qualified without class": [
+   [
+    "OWL036",
+    "_:5229ab35a3ed",
+    [
+     "http://www.w3.org/2002/07/owl#onClass",
+     "http://www.w3.org/2002/07/owl#onDataRange"
+    ],
+    "fee136e37af4c5dcdfe57022623fda13989c28a5289bfc4fe4c4529952339c93"
+   ]
+  ],
+  "OWL036:resource cardinality": [
+   [
+    "OWL036",
+    "_:6a7ac2a9285c",
+    [
+     "http://www.w3.org/2002/07/owl#maxCardinality",
+     "https://example.test/onto#two"
+    ],
+    "c1608dcd48c3ac7873f83bfcc224b7a555cd6073d3a8eceb33b9134e7d7a6a07"
+   ]
+  ],
+  "OWL036:word cardinality": [
+   [
+    "OWL036",
+    "_:c0dd6114337b",
+    [
+     "http://www.w3.org/2002/07/owl#maxCardinality",
+     "\"two\""
+    ],
+    "e51cada564739c1b319f2fd55fd129730fd841e83ea445f510b9d128222a40fe"
+   ]
+  ],
+  "OWL037:exact above max": [
+   [
+    "OWL037",
+    "_:4f943552b8af",
+    [
+     "unqualified"
+    ],
+    "c18bed75b7e88f0df59ca4873d1c219be912a58b9264f153eb54ae2485d23109"
+   ]
+  ],
+  "OWL037:exact below min": [
+   [
+    "OWL037",
+    "_:2f8fefbeb7f3",
+    [
+     "unqualified"
+    ],
+    "47e3b0485cd2e8ce49c55c55b4f02e92d36a7deab3e8f39a7362b184b6f3910f"
+   ]
+  ],
+  "OWL037:exact conflicting": [
+   [
+    "OWL037",
+    "_:562828b75e2c",
+    [
+     "unqualified"
+    ],
+    "1b8652908f89ea28e899710a29df0782c8819d270d7b25e68fc5bd7371a85630"
+   ]
+  ],
+  "OWL037:min above max": [
+   [
+    "OWL037",
+    "_:89271aa1044b",
+    [
+     "unqualified"
+    ],
+    "118962ac6be375e5314e7ca6c3ecb2aebfe881e214296a9f8bdf3ab48aad5b50"
+   ]
+  ],
+  "OWL037:qualified exact conflicting": [
+   [
+    "OWL037",
+    "_:cdeb0a129a75",
+    [
+     "qualified"
+    ],
+    "2399f0df3955a472cb123e5442fa9001f296d85a149ebdccf16ee8346201e651"
+   ]
+  ],
+  "OWL037:qualified min above max": [
+   [
+    "OWL037",
+    "_:020fa61b65af",
+    [
+     "qualified"
+    ],
+    "34efd5721d4012f1ac4471631b6a2f853f89e8b90cf228a1be74e051c7b89198"
+   ]
+  ],
+  "OWL037:unqualified exact below a qualified exact": [
+   [
+    "OWL037",
+    "_:0e94f21d08e0",
+    [
+     "qualified against unqualified"
+    ],
+    "615fcc1692b7c59ba12049475d6640d2ab19c8fc50f63b454dfce33707d434e7"
+   ]
+  ],
+  "OWL037:unqualified max 0 against a qualified min": [
+   [
+    "OWL037",
+    "_:a371077c7560",
+    [
+     "qualified against unqualified"
+    ],
+    "c0561a88c763ea6d15ee0cb12542768163a180b21b1d6fbf5fbcacb3a9ad9e60"
+   ]
+  ],
+  "OWL038:exact 2 on Nothing": [
+   [
+    "OWL038",
+    "_:e57a3c0dc276",
+    [
+     "http://www.w3.org/2002/07/owl#qualifiedCardinality"
+    ],
+    "df11b7ed81ec40e2b23397067adb9c519ba7612601e68acde790059b332fb68f"
+   ]
+  ],
+  "OWL038:min 1 on Nothing": [
+   [
+    "OWL038",
+    "_:fa84ace7fc76",
+    [
+     "http://www.w3.org/2002/07/owl#minQualifiedCardinality"
+    ],
+    "8788f4f19b6d9f408ba4bf8b1bb9086ad1c5a80f2616efe332c8041a81808b08"
+   ]
+  ],
+  "OWL038:restriction used as a superclass": [
+   [
+    "OWL038",
+    "_:78078698f607",
+    [
+     "http://www.w3.org/2002/07/owl#someValuesFrom"
+    ],
+    "a458354744e1e0e0516f62ddf0aad761c928d431eb92cab175194477c459bfc9"
+   ]
+  ],
+  "OWL038:someValuesFrom Nothing": [
+   [
+    "OWL038",
+    "_:699e27ec9c47",
+    [
+     "http://www.w3.org/2002/07/owl#someValuesFrom"
+    ],
+    "5d14c45ae8ffbb6aff2bc2f9675ef54a3ac4d4a88d1bcfa4d85577db9f7d4dc2"
+   ]
+  ],
+  "OWL039:allValuesFrom Thing": [
+   [
+    "OWL039",
+    "_:e5d278de1aa2",
+    [
+     "http://www.w3.org/2002/07/owl#allValuesFrom"
+    ],
+    "2acf4817dd47b6436a8f18bdff06b402760330bd649e938e1480059803dd43bc"
+   ]
+  ],
+  "OWL039:min cardinality 0": [
+   [
+    "OWL039",
+    "_:509d1a47df76",
+    [
+     "http://www.w3.org/2002/07/owl#minCardinality"
+    ],
+    "62e6f5dc83425dc5d96e771246ae877484b93fd7c4623a3565b486f63a2d2417"
+   ]
+  ],
+  "OWL039:min cardinality written -0": [
+   [
+    "OWL039",
+    "_:79f4d6b12c04",
+    [
+     "http://www.w3.org/2002/07/owl#minCardinality"
+    ],
+    "95574b2119821d56347b0487af51b17dfce0c8982142119b0cf308b34ae1460c"
+   ]
+  ],
+  "OWL039:qualified min 0": [
+   [
+    "OWL039",
+    "_:b9be0d9aab3f",
+    [
+     "http://www.w3.org/2002/07/owl#minQualifiedCardinality"
+    ],
+    "b5af226a6a5d8845c0295e6eff9be5d2ab22fbfb84e1f29af39372a12989b7d4"
+   ]
+  ],
+  "OWL040:class filler on datatype property": [
+   [
+    "OWL040",
+    "_:3ce8a4744ee6",
+    [
+     "https://example.test/onto#DP",
+     "filler",
+     "https://example.test/onto#A"
+    ],
+    "de12502376a75b4ef764d6e169e7ac90cf3ef3efc865e639e59e98d080476ccd"
+   ]
+  ],
+  "OWL040:datatype filler on object property": [
+   [
+    "OWL040",
+    "_:8a6ee3fbebc8",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/2001/XMLSchema#string"
+    ],
+    "e869f7d1b02f89904a91ad1fdc59cf500aa13c56cf84f408ced3255ca497eb8a"
+   ]
+  ],
+  "OWL040:declared datatype filler on object property": [
+   [
+    "OWL040",
+    "_:b3d58fb4cc40",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "https://example.test/onto#Dt"
+    ],
+    "e29a66d0150f60e5e2438b332c1a9b68da417ebb2145e4926b4564167ed85b44"
+   ]
+  ],
+  "OWL040:literal hasValue on object property": [
+   [
+    "OWL040",
+    "_:b6bc3a0fa189",
+    [
+     "https://example.test/onto#p",
+     "http://www.w3.org/2002/07/owl#hasValue",
+     "\"x\""
+    ],
+    "2a37b6c756d7447464018b762cef774f76416b1313908c5fc1359852de4b3a25"
+   ]
+  ],
+  "OWL040:onClass on datatype property": [
+   [
+    "OWL040",
+    "_:9f19a73ec1db",
+    [
+     "https://example.test/onto#DP",
+     "http://www.w3.org/2002/07/owl#onClass",
+     "https://example.test/onto#A"
+    ],
+    "e682e9a27c67118b4d721d3745ea09e0449ee3734fb72f2c9d8bd8ff6a3c643b"
+   ]
+  ],
+  "OWL040:onDataRange on object property": [
+   [
+    "OWL040",
+    "_:e53cf9d5f42e",
+    [
+     "https://example.test/onto#p",
+     "http://www.w3.org/2002/07/owl#onDataRange",
+     "http://www.w3.org/2001/XMLSchema#string"
+    ],
+    "f0cd61e3fe2a7b60304dbde9c4b20ac3787184dd6a9ffa9c5c70b453798624ae"
+   ]
+  ],
+  "OWL040:owl:Thing filler on datatype property": [
+   [
+    "OWL040",
+    "_:c2e79d8d672a",
+    [
+     "https://example.test/onto#DP",
+     "filler",
+     "http://www.w3.org/2002/07/owl#Thing"
+    ],
+    "e89fb99bd617795cc059570efbde566f3c43e98d28ea4bac232c229b2159ea93"
+   ]
+  ],
+  "OWL040:owl:rational filler on object property": [
+   [
+    "OWL040",
+    "_:72194e059e53",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/2002/07/owl#rational"
+    ],
+    "a6e776148c25de875ff0cd5a9c98b97614eb300a4cc3fb5381e41edbf97c5ada"
+   ]
+  ],
+  "OWL040:owl:real filler on object property": [
+   [
+    "OWL040",
+    "_:bd2bb1ad0cb4",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/2002/07/owl#real"
+    ],
+    "da12e34f4c2c6512d9da57cd19747a361e14a7af2efcc60f8659342a7bb87eb6"
+   ]
+  ],
+  "OWL040:rdf:HTML filler on object property": [
+   [
+    "OWL040",
+    "_:a7de1c34f01f",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML"
+    ],
+    "d301a962603a42296d1066721e2d3cf445f212cdd93a91f8cc6b8c400821032a"
+   ]
+  ],
+  "OWL040:rdf:JSON filler on object property": [
+   [
+    "OWL040",
+    "_:ef38ace8dfc7",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON"
+    ],
+    "7e70360fb8d70940bfc5d75776299240c0605e4439073bd00f7d2a304a96f0dc"
+   ]
+  ],
+  "OWL040:rdf:PlainLiteral filler on object property": [
+   [
+    "OWL040",
+    "_:49a7765a9150",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral"
+    ],
+    "f57fca9f9a7b89c3cc0f9b776243b95d6bd9abc0c89e409f969ad800a6be46ff"
+   ]
+  ],
+  "OWL040:rdf:XMLLiteral filler on object property": [
+   [
+    "OWL040",
+    "_:4a0af7233a5f",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral"
+    ],
+    "abc003c79cd2c7a5c7768f13bad971f045a239d997168668111a2b207673c033"
+   ]
+  ],
+  "OWL040:rdf:langString filler on object property": [
+   [
+    "OWL040",
+    "_:e5ca348fc85c",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
+    ],
+    "ed9db7df9277bff2a2934c120b081fcbb60365d9c448540ab728c303a4ea2a24"
+   ]
+  ],
+  "OWL040:rdfs:Literal filler on object property": [
+   [
+    "OWL040",
+    "_:52b77b72c234",
+    [
+     "https://example.test/onto#p",
+     "filler",
+     "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    "e20f7d40f6819738e7d3af65288af4e79eb26c0b44e2200e9431db3ec9827f7d"
+   ]
+  ],
+  "OWL040:resource hasValue on datatype property": [
+   [
+    "OWL040",
+    "_:de8c481715ef",
+    [
+     "https://example.test/onto#DP",
+     "http://www.w3.org/2002/07/owl#hasValue",
+     "https://example.test/onto#i"
+    ],
+    "748fbbee01ce3ed2688ba34578bfd4db900a8459598d0a338d78fda515dc9fd8"
+   ]
+  ],
+  "OWL040:restriction filler on datatype property": [
+   [
+    "OWL040",
+    "_:b252c542c53b",
+    [
+     "https://example.test/onto#DP",
+     "filler",
+     "_:466e3447c60e"
+    ],
+    "010e67873e0747d60a267409911c4b60652e839febf8ff8df4203e1ea8a43d6c"
+   ]
+  ],
+  "OWL041:anonymous self complement": [
+   [
+    "OWL041",
+    "_:04a3a096f156",
+    [],
+    "78bf14016dedf00ce61b188c3936c284abeae2d445e196f2507e79234ebb4253"
+   ]
+  ],
+  "OWL041:five-cycle": [
+   [
+    "OWL041",
+    "https://example.test/onto#C",
+    [],
+    "58f99453e919881f4196dfdb599dbd076d5feb2cb46aa8f8c0700add155ac0f9"
+   ]
+  ],
+  "OWL041:self complement": [
+   [
+    "OWL041",
+    "https://example.test/onto#A",
+    [],
+    "d217297083b77ff766fe3745ded735d4e5401b1b205ff051ce605fb8b5efa17c"
+   ]
+  ],
+  "OWL041:three-cycle": [
+   [
+    "OWL041",
+    "https://example.test/onto#C",
+    [],
+    "58f99453e919881f4196dfdb599dbd076d5feb2cb46aa8f8c0700add155ac0f9"
+   ]
+  ],
+  "OWL041:triangle through one class with two complements": [
+   [
+    "OWL041",
+    "https://example.test/onto#C",
+    [],
+    "58f99453e919881f4196dfdb599dbd076d5feb2cb46aa8f8c0700add155ac0f9"
+   ]
+  ],
+  "OWL042:anonymous class": [
+   [
+    "OWL042",
+    "_:24ff6973f760",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+     "_:53372c24a74d"
+    ],
+    "0d4ddfdede635661828786c3756edcdde272a2901c736154d8317d9badc27b5e"
+   ]
+  ],
+  "OWL042:complement equivalent to the class": [
+   [
+    "OWL042",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2002/07/owl#equivalentClass",
+     "_:1c7316e52103"
+    ],
+    "8a58f1c5610232b0b9df27cfb8fdcdf51281f39318a53eb4809ae7e822d06a1d"
+   ]
+  ],
+  "OWL042:equivalent to own complement": [
+   [
+    "OWL042",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2002/07/owl#equivalentClass",
+     "_:638b3292dcb1"
+    ],
+    "f4b0d48fd2d25e0c3abae9d2943299df47e3c879127ba93686e82bfd157b62fa"
+   ]
+  ],
+  "OWL042:named complement": [
+   [
+    "OWL042",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+     "https://example.test/onto#N"
+    ],
+    "4ca0887408c8ac54bf752baba5699065af964f796892d289e42f9d81061fa464"
+   ]
+  ],
+  "OWL042:subclass of own complement": [
+   [
+    "OWL042",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+     "_:4a41d5eb1f2f"
+    ],
+    "c1ec3ad988b3955869639c9c8be7170d4a7dcc482c899b4881738f604a1c7821"
+   ]
+  ],
+  "OWL043:anonymous intersection in a superclass": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "https://example.test/onto#C",
+     "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+     "_:c42fe1c44183",
+     "https://example.test/onto#A"
+    ],
+    "5521e966238a21b958bc2236511387ec8328bec5a5fc6fa53e4fe414de93f789"
+   ]
+  ],
+  "OWL043:disjointness asserted the other way": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "https://example.test/onto#A",
+     "https://example.test/onto#B"
+    ],
+    "f60faf496f29068456493628fa9c84a11b1e3448226dd2cde30049e76704bd7b"
+   ]
+  ],
+  "OWL043:intersection of disjoint classes": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "https://example.test/onto#A",
+     "https://example.test/onto#B"
+    ],
+    "f60faf496f29068456493628fa9c84a11b1e3448226dd2cde30049e76704bd7b"
+   ]
+  ],
+  "OWL043:intersection with Nothing": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "http://www.w3.org/2002/07/owl#Nothing"
+    ],
+    "cabe3fa0069dd9ef95d9b7f0783126eaec28ef681f83431170eb61de35af81c2"
+   ]
+  ],
+  "OWL043:intersection with complement": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "_:c42fe1c44183",
+     "https://example.test/onto#A"
+    ],
+    "6e2f3d03e71e45aca79e92d6934bb918d8eaf2ce57f29c730596efcbe8134b4c"
+   ]
+  ],
+  "OWL043:single-operand intersection of Nothing": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#intersectionOf",
+     "http://www.w3.org/2002/07/owl#Nothing"
+    ],
+    "cabe3fa0069dd9ef95d9b7f0783126eaec28ef681f83431170eb61de35af81c2"
+   ]
+  ],
+  "OWL043:union with Thing": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "http://www.w3.org/2002/07/owl#Thing"
+    ],
+    "b2e30f765af8f087583751f0b08456601cf53895e86bdd06ed401760127d3c2c"
+   ]
+  ],
+  "OWL043:union with complement": [
+   [
+    "OWL043",
+    "https://example.test/onto#C",
+    [
+     "http://www.w3.org/2002/07/owl#unionOf",
+     "_:c42fe1c44183",
+     "https://example.test/onto#A"
+    ],
+    "627d4710c37f4186aa8c06c2cf694f63f633e895e0f8ffe8c17f1cba226d0466"
+   ]
+  ],
+  "OWL044:AllDifferent distinctMembers same through a chain": [
+   [
+    "OWL044",
+    "_:398265ca1210",
+    [
+     "https://example.test/onto#a",
+     "https://example.test/onto#b"
+    ],
+    "982eb60c19034c37a2833d160c2a744a3486cf0ad064c50c9196cb8878a0722d"
+   ]
+  ],
+  "OWL044:AllDifferent with same members": [
+   [
+    "OWL044",
+    "_:4c91b3957816",
+    [
+     "https://example.test/onto#a",
+     "https://example.test/onto#b"
+    ],
+    "f51ea983227ba7b32f970e15d7863b1066a7133ac7ae9286a9f742f8d50dff3b"
+   ]
+  ],
+  "OWL044:same through a blank-node individual": [
+   [
+    "OWL044",
+    "https://example.test/onto#b",
+    [
+     "https://example.test/onto#a"
+    ],
+    "dfe20778f92a944c275406f65b83fd795f092f3df0042328e9898d4a2c72bc53"
+   ]
+  ],
+  "OWL044:same through a shared individual": [
+   [
+    "OWL044",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "f07e57a0e50a96dc05e13d2a43c701fe9f22c743e86b051bb8b0d73cafa27b9d"
+   ]
+  ],
+  "OWL044:transitive same": [
+   [
+    "OWL044",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#c"
+    ],
+    "7dc09b4b701d67fc8cc6f6dd931f454c536683a1317cda1d6774b581767d93db"
+   ]
+  ],
+  "OWL045:AllDifferent duplicate": [
+   [
+    "OWL045",
+    "_:3a0782e08204",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "repeated member"
+    ],
+    "f44cfa9da9211df08eed2c1c1e7f8f5701d4310313d198c66762cd653701cb09"
+   ]
+  ],
+  "OWL045:AllDifferent empty": [
+   [
+    "OWL045",
+    "_:af380cd680d0",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "fewer than two members"
+    ],
+    "65f02c41bafcc98d10bcefb523ad3c21d0cdcfad8ec0c08219325fd340088d64"
+   ]
+  ],
+  "OWL045:AllDifferent malformed": [
+   [
+    "OWL045",
+    "_:d5680f87e658",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "malformed"
+    ],
+    "6ef91fa732ee4431854da0658c533cc2738a9c485c269c8533ee3dd9db443b73"
+   ]
+  ],
+  "OWL045:AllDifferent members literal": [
+   [
+    "OWL045",
+    "_:741be40e9f7c",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "malformed"
+    ],
+    "d9726adeca1c797c1168f38b882fe4335f287dc82318bc6efcfc680c368ba62f"
+   ]
+  ],
+  "OWL045:AllDifferent one member": [
+   [
+    "OWL045",
+    "_:0ea421120821",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "fewer than two members"
+    ],
+    "3d8dfc1dfc615ece095346be83390640b065667a45a8e504220cf8943ecfe6dc"
+   ]
+  ],
+  "OWL045:AllDifferent two lists": [
+   [
+    "OWL045",
+    "_:ecca4b11717f",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "several member lists"
+    ],
+    "3bc987ff27d7cd34e137307dd9532d8d7f7e78bd3f328b6ba8af712556d2e2cd"
+   ]
+  ],
+  "OWL045:AllDifferent without list": [
+   [
+    "OWL045",
+    "_:354d1b13d14a",
+    [
+     "http://www.w3.org/2002/07/owl#AllDifferent",
+     "no member list"
+    ],
+    "6a69cbf184b23bfd0e8b174b79e7007e6e9e0a57c9b7d54613cd95fc8373620e"
+   ]
+  ],
+  "OWL045:AllDisjointClasses duplicate": [
+   [
+    "OWL045",
+    "_:5a4b443af200",
+    [
+     "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+     "repeated member"
+    ],
+    "48a99c27f62f05ad3464740a11cfb71828179ebcecb273a56338839fa90be351"
+   ]
+  ],
+  "OWL045:AllDisjointClasses empty": [
+   [
+    "OWL045",
+    "_:688aeb8f3526",
+    [
+     "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+     "fewer than two members"
+    ],
+    "3781b8cf3cd1efba19bd595875dc8713108cbf9a576f5f1f4add2d092c50e68f"
+   ]
+  ],
+  "OWL045:AllDisjointClasses one member": [
+   [
+    "OWL045",
+    "_:e3868caece13",
+    [
+     "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+     "fewer than two members"
+    ],
+    "ef7f4fde06351188045c45ef354e98f16d5b09078d5271db8c0063d4082eea38"
+   ]
+  ],
+  "OWL045:AllDisjointClasses takes owl:members, not owl:distinctMembers": [
+   [
+    "OWL045",
+    "_:eab24bea65e6",
+    [
+     "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+     "no member list"
+    ],
+    "e211239e28b7b67f5f6c3fbd80c2609f57b0ee24dc3d13ba915ce21d76bafd83"
+   ]
+  ],
+  "OWL045:AllDisjointClasses two lists": [
+   [
+    "OWL045",
+    "_:8176b2889488",
+    [
+     "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+     "several member lists"
+    ],
+    "bb20558fe57a38456ae60e81afb9c3e1ca1c5db5c148fee3a84aaa8b76716747"
+   ]
+  ],
+  "SEC004:101 nested blank nodes": [
+   [
+    "SEC004",
+    "https://example.test/onto#a",
+    [
+     "nesting"
+    ],
+    "65ad717d30308ce4247fa3329ff29c15396b60e94aabeeeb5edf6f98b3bc04ce"
+   ]
+  ],
+  "SEC004:list of 5001 members": [
+   [
+    "SEC004",
+    "https://example.test/onto#a",
+    [
+     "list"
+    ],
+    "57f7c61287ed61d2f4bacaf374dc90ada0c6133178f171a708a916bbd8035f74"
+   ]
+  ],
+  "SEC005:literal of 100001 characters": [
+   [
+    "SEC005",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p"
+    ],
+    "bbcd17bacaa5cbfaabfa81cfc6d163f4d855023100419f29f5b1ae450c84e7d2"
+   ]
+  ],
+  "SEC007:imports declared on a second ontology": [
+   [
+    "SEC007",
+    "(imports)",
+    [],
+    "2668f70f97d010de04bc2f5e5a20e6fe8596900f2bd4e47cda6899fd3e1cf39a"
+   ]
+  ],
+  "SEC007:literal import target": [
+   [
+    "SEC007",
+    "(imports)",
+    [],
+    "2668f70f97d010de04bc2f5e5a20e6fe8596900f2bd4e47cda6899fd3e1cf39a"
+   ]
+  ],
+  "SEC007:one IRI import": [
+   [
+    "SEC007",
+    "(imports)",
+    [],
+    "2668f70f97d010de04bc2f5e5a20e6fe8596900f2bd4e47cda6899fd3e1cf39a"
+   ]
+  ],
+  "SEC008:data IRI in subject": [
+   [
+    "SEC008",
+    "data:text/plain;base64,AAAA",
+    [],
+    "e3fcc0fef843062e0b8627205a6338d9e5b4c116b881c22817c20c5d9c4d5cb1"
+   ]
+  ],
+  "SEC008:file IRI": [
+   [
+    "SEC008",
+    "file:///etc/passwd",
+    [],
+    "19202783c16cda9fd9061547a298794d683fc4f5dcca8c0f1c0b5b949ce95974"
+   ]
+  ],
+  "SEC008:ftp IRI uppercase": [
+   [
+    "SEC008",
+    "FTP://example.test/x",
+    [],
+    "11788dcadd76e34f16fd3a1cb9939140b4940c51824a7e027af2229ce37b68b2"
+   ]
+  ],
+  "SEC008:javascript IRI": [
+   [
+    "SEC008",
+    "javascript:alert(1)",
+    [],
+    "39895ceadce997c30281ca4cdddfb086c3edfff5dde4ae689451ece77c795183"
+   ]
+  ],
+  "SEC008:leading space": [
+   [
+    "SEC008",
+    " javascript:alert(1)",
+    [],
+    "bca382db793d3ebc83ac2ea65140773b1d64ce4de9668223e4b431f95514c5d8"
+   ]
+  ],
+  "SEC008:obfuscated scheme": [
+   [
+    "SEC008",
+    "java\tscript:alert(1)",
+    [],
+    "da2f0a5599c525eedf5ffc36f50ba39cb5ccc2f09eb5e8fb2c8a99853f7e0877"
+   ]
+  ],
+  "SEC012:C1 control in label": [
+   [
+    "SEC012",
+    "https://example.test/onto#a",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "c2a8fe0e974e1f2ae5f8e4a47d9586b706c4901bb4f1ba56df57032d61adbaab"
+   ]
+  ],
+  "SEC012:NUL in label": [
+   [
+    "SEC012",
+    "https://example.test/onto#a",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "c2a8fe0e974e1f2ae5f8e4a47d9586b706c4901bb4f1ba56df57032d61adbaab"
+   ]
+  ],
+  "SEC012:bidi in IRI": [
+   [
+    "SEC012",
+    "https://example.test/onto#a‮b",
+    [],
+    "db0f1f2d413c2196d1e87a8cb78801bd78c1acb4fe168729bc64b4b6200be96a"
+   ]
+  ],
+  "SEC012:bidi isolate in label": [
+   [
+    "SEC012",
+    "https://example.test/onto#a",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "c2a8fe0e974e1f2ae5f8e4a47d9586b706c4901bb4f1ba56df57032d61adbaab"
+   ]
+  ],
+  "SEC012:bidi override in label": [
+   [
+    "SEC012",
+    "https://example.test/onto#a",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "c2a8fe0e974e1f2ae5f8e4a47d9586b706c4901bb4f1ba56df57032d61adbaab"
+   ]
+  ],
+  "SEC012:escape in label": [
+   [
+    "SEC012",
+    "https://example.test/onto#a",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#label"
+    ],
+    "c2a8fe0e974e1f2ae5f8e4a47d9586b706c4901bb4f1ba56df57032d61adbaab"
+   ]
+  ],
+  "SEC012:tab in IRI": [
+   [
+    "SEC012",
+    "https://example.test/onto#a\tb",
+    [],
+    "ca2cd4686cb1cd74298394a30f9df3cbdda69a87a0dbcb9e9f5d9efb7b4807d5"
+   ]
+  ],
+  "SEC014:brace in the password": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:colon inside the password": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:empty user name": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:line break in the password": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:nested in a query": [
+   [
+    "SEC014",
+    "https://example.test/r?to=https://****@h.test/",
+    [],
+    "a5acc0f57bbb0db1ea918583ab473ac80b98b1493ee7e9a88ff46e154afc9265"
+   ]
+  ],
+  "SEC014:other scheme": [
+   [
+    "SEC014",
+    "ftp://****@example.test/file",
+    [],
+    "425b8efe8cb11cea8fd1a586406a8c3eeef4a1168f96fc0e935daaf2701a563c"
+   ]
+  ],
+  "SEC014:password after an at sign of the user": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:predicate IRI": [
+   [
+    "SEC014",
+    "https://****@example.test/p",
+    [],
+    "b138d4cb9b175581bac648b0bf78f05d9a8e660049eb80350ded15adb376aac4"
+   ]
+  ],
+  "SEC014:special scheme with one slash": [
+   [
+    "SEC014",
+    "https:/****@example.test/x",
+    [],
+    "616d0417c7c795129b969248ffde77287f131cf5fe925c915b1c8b4fe7ab0765"
+   ]
+  ],
+  "SEC014:special scheme without slashes": [
+   [
+    "SEC014",
+    "https:****@example.test/x",
+    [],
+    "3a2c2b5c7de3d372bcd847ea44d968ecc4fcec510b9916d4e3e0c4ddc272661a"
+   ]
+  ],
+  "SEC014:subject IRI": [
+   [
+    "SEC014",
+    "https://****@example.test/",
+    [],
+    "0dfa5f25c0f842216b5b14faa6142df82db15a47c9cd6e024fd29bf38d13f63f"
+   ]
+  ],
+  "SEC014:token as user name, placeholder password": [
+   [
+    "SEC014",
+    "https://****@github.com/x",
+    [],
+    "29042626d0bddebf66efb6ea63a95e9fe0435d327f11b7d6252cffd5381aef33"
+   ]
+  ],
+  "SEC014:upper-case scheme": [
+   [
+    "SEC014",
+    "HTTP://****@example.test/x",
+    [],
+    "15d7310df113c5fb9c4f9a72a922d44f579619703b5309f00f05e8d4ca98d351"
+   ]
+  ],
+  "SEC014:user and password": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:white space in the password": [
+   [
+    "SEC014",
+    "https://****@example.test/x",
+    [],
+    "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
+   ]
+  ],
+  "SEC014:with a port": [
+   [
+    "SEC014",
+    "https://****@example.test:8443/x",
+    [],
+    "0d108222e0211b18a936fe03041306eb1bdc68c9b7687188bb992fb3256bf845"
+   ]
+  ],
+  "SHACL001:a blank property shape": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "_:281076e7f519",
+     "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+     "https://example.test/name",
+     "",
+     ""
+    ],
+    "4e39fe43928cbe1600ad7d5aae5e03ad9ff7f35f35d80de8ce729ba08f0f186e"
+   ]
+  ],
+  "SHACL001:a nested sh:node result": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#NodeConstraintComponent",
+     "https://example.test/knows",
+     "https://example.test/b",
+     ""
+    ],
+    "68cc1fae26471074157fc917c9c2f0418338f58f6d8456c5f7d0fbbc5ecd86f2"
+   ],
+   [
+    "SHACL001",
+    "https://example.test/b",
+    [
+     "https://example.test/Q",
+     "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+     "https://example.test/name",
+     "",
+     ""
+    ],
+    "88fb07046c9ba45e5a41b94cc44bdbb9b64d384b9ca81cd05540c8cf5d43ce80"
+   ]
+  ],
+  "SHACL001:class": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#ClassConstraintComponent",
+     "https://example.test/knows",
+     "https://example.test/b",
+     ""
+    ],
+    "3cc399a5fce08d94414e2e03323af439d1d44c0dfc2ac978d8896293ebd1f88a"
+   ]
+  ],
+  "SHACL001:datatype": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#DatatypeConstraintComponent",
+     "https://example.test/age",
+     "\"x\"",
+     ""
+    ],
+    "211274c237b4f27b4baefce5ad93be40fd484118756aadadd1785da7c8a34533"
+   ]
+  ],
+  "SHACL001:disjoint": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#DisjointConstraintComponent",
+     "https://example.test/start",
+     "\"5\"^^<http://www.w3.org/2001/XMLSchema#integer>",
+     ""
+    ],
+    "e7048260b14c6c09281c74de57d6f051f054a01f85450c1f82fac0e0d6aa7cd1"
+   ]
+  ],
+  "SHACL001:equals": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#EqualsConstraintComponent",
+     "https://example.test/start",
+     "\"6\"^^<http://www.w3.org/2001/XMLSchema#integer>",
+     ""
+    ],
+    "550cd072bd72b6c514856eea8e8309a16c0538394960b565525725dd6b6e5226"
+   ]
+  ],
+  "SHACL001:lessThan": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#LessThanConstraintComponent",
+     "https://example.test/start",
+     "\"5\"^^<http://www.w3.org/2001/XMLSchema#integer>",
+     ""
+    ],
+    "c132b367ff2df1dbae07150f0e8cbd1924dbfed0e4fee95bf935bc18f30b1614"
+   ]
+  ],
+  "SHACL001:maxCount": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#MaxCountConstraintComponent",
+     "https://example.test/name",
+     "",
+     ""
+    ],
+    "db8015ce30daf07fc1db2206eb35c569b450455cf57b3c59a8405cca4d6c400b"
+   ]
+  ],
+  "SHACL001:minCount": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+     "https://example.test/name",
+     "",
+     ""
+    ],
+    "9acc0f1afeb5aacb0499ee4c995395ca40ed8dd9a4843a97f8441bedc7de9ddb"
+   ]
+  ],
+  "SHACL001:not": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/S",
+     "http://www.w3.org/ns/shacl#NotConstraintComponent",
+     "",
+     "https://example.test/a",
+     ""
+    ],
+    "c4a6661cecec612909471ee276a37d46ba52628923f89021435df67970d9e097"
+   ]
+  ],
+  "SHACL001:or": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/S",
+     "http://www.w3.org/ns/shacl#OrConstraintComponent",
+     "",
+     "https://example.test/a",
+     ""
+    ],
+    "bd314a4b5f56446aab75972d8515d984d9d556fe411f99f9df6cd40701df559d"
+   ]
+  ],
+  "SHACL001:sparql": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/S",
+     "http://www.w3.org/ns/shacl#SPARQLConstraintComponent",
+     "",
+     "\"5\"^^<http://www.w3.org/2001/XMLSchema#integer>",
+     "https://example.test/Big"
+    ],
+    "de16e4683d45cadd906fcfdfae0f2b3018f9aa39cdcabd6c54d1a45cf0372207"
+   ]
+  ],
+  "SHACL001:two values of one shape with one sh:message": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#DatatypeConstraintComponent",
+     "https://example.test/age",
+     "\"x\"",
+     ""
+    ],
+    "211274c237b4f27b4baefce5ad93be40fd484118756aadadd1785da7c8a34533"
+   ],
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/P",
+     "http://www.w3.org/ns/shacl#DatatypeConstraintComponent",
+     "https://example.test/age",
+     "\"y\"",
+     ""
+    ],
+    "bbc2f68d1359c6233f5114309b63964cb51312c077ca2c97b673e4f301f57a65"
+   ]
+  ],
+  "SHACL001:xone": [
+   [
+    "SHACL001",
+    "https://example.test/a",
+    [
+     "https://example.test/S",
+     "http://www.w3.org/ns/shacl#XoneConstraintComponent",
+     "",
+     "https://example.test/a",
+     ""
+    ],
+    "ccd0b2dcfd5e7bf4157b64295298e389063a38fb4c5e17adaf9008084230c66a"
+   ]
+  ],
+  "SHQ001:no sh:name": [
+   [
+    "SHQ001",
+    "https://example.test/onto#P",
+    [],
+    "2d6e03a950fedd8ab0540e40aa3093b76b38885d8b8bf9b84ad2ff5b2d0f0d16"
+   ]
+  ],
+  "SHQ002:no sh:description": [
+   [
+    "SHQ002",
+    "https://example.test/onto#P",
+    [],
+    "bb45c254c9679c1aaef666349433825905adff46dea99e78b9e05cb6ec859aa6"
+   ]
+  ],
+  "SHQ003:constraint without sh:message": [
+   [
+    "SHQ003",
+    "https://example.test/onto#P",
+    [],
+    "4aa1940c77cffc9abf5ece5f19be3eef24eff40b5fd903e4b35be327a676f5ff"
+   ]
+  ],
+  "SHQ003:sh:closed is a constraint": [
+   [
+    "SHQ003",
+    "https://example.test/onto#S",
+    [],
+    "46f31b48a846e609c46c9393e0b204c77d67a849c73d817608422feb19e642f5"
+   ]
+  ],
+  "SHQ003:sh:maxLength is a constraint": [
+   [
+    "SHQ003",
+    "https://example.test/onto#P",
+    [],
+    "4aa1940c77cffc9abf5ece5f19be3eef24eff40b5fd903e4b35be327a676f5ff"
+   ]
+  ],
+  "SHQ004:node shape without label/comment": [
+   [
+    "SHQ004",
+    "https://example.test/onto#S",
+    [],
+    "55c7c85fe71e9fa9639c8c1d1b10b5b7cfe0b9672116792cd8badf6dac542c1e"
+   ]
+  ],
+  "SHQ005:two names in one language": [
+   [
+    "SHQ005",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#name"
+    ],
+    "80b3c70a0f0c4b82dbbd5886b191639eb5ec5525aee4d3da4764dd3a9ef99725"
+   ]
+  ],
+  "SHQ006:class with instances but no target": [
+   [
+    "SHQ006",
+    "https://example.test/onto#A",
+    [],
+    "97cbd9fd3a8740c36669e29c03d452f799f153da2f7bb7d3d2b8d8ac511e3cce"
+   ]
+  ],
+  "SHQ007:derived integer types": [
+   [
+    "SHQ007",
+    "https://example.test/onto#P",
+    [],
+    "0c9fe80da89c984fe0eaa6926cfa3976ccac87e11f76a1aab1ef62d714ab15cc"
+   ]
+  ],
+  "SHQ007:leading-zero lexical form": [
+   [
+    "SHQ007",
+    "https://example.test/onto#P",
+    [],
+    "0c9fe80da89c984fe0eaa6926cfa3976ccac87e11f76a1aab1ef62d714ab15cc"
+   ]
+  ],
+  "SHQ007:max zero": [
+   [
+    "SHQ007",
+    "https://example.test/onto#P",
+    [],
+    "0c9fe80da89c984fe0eaa6926cfa3976ccac87e11f76a1aab1ef62d714ab15cc"
+   ]
+  ],
+  "SHQ007:min above max": [
+   [
+    "SHQ007",
+    "https://example.test/onto#P",
+    [],
+    "0c9fe80da89c984fe0eaa6926cfa3976ccac87e11f76a1aab1ef62d714ab15cc"
+   ]
+  ],
+  "SHQ007:on a node shape": [
+   [
+    "SHQ007",
+    "https://example.test/onto#S",
+    [],
+    "1359638fa34b2521ceeb89e748a60d13f6f303a1a2458dc1e8692c2005c6459b"
+   ]
+  ],
+  "SHQ008:IRI": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxCount",
+     "https://example.test/onto#one"
+    ],
+    "8ebe928599e10ef89e3198805856c318b4a1d0d759d851307b67eb384750090e"
+   ]
+  ],
+  "SHQ008:IRI length": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minLength",
+     "https://example.test/onto#two"
+    ],
+    "7372219b97805664e222a8de003b84752162ca80e637eb3b43b081a2bd9f477c"
+   ]
+  ],
+  "SHQ008:boolean": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+    ],
+    "b351409a687e14aa05342906e364f2abc3cc67d4820ae09c2088b697e7631205"
+   ]
+  ],
+  "SHQ008:decimal": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"1.0\"^^<http://www.w3.org/2001/XMLSchema#decimal>"
+    ],
+    "f47e25d7ee60f1429be49463ca012f5a2ba9fa7f552f78c941aab6dacb2e67fc"
+   ]
+  ],
+  "SHQ008:decimal length": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minLength",
+     "\"1.5\"^^<http://www.w3.org/2001/XMLSchema#decimal>"
+    ],
+    "aabd69e96129e7a54549568a5bb368deeed6181a23f401261643a0f9a6cef30a"
+   ]
+  ],
+  "SHQ008:derived integer length": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxLength",
+     "\"2\"^^<http://www.w3.org/2001/XMLSchema#int>"
+    ],
+    "ca7e18201ab1476723e35ebd2051000513304c219ac97f34108da6b7b915a10b"
+   ]
+  ],
+  "SHQ008:derived integer type": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"1\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger>"
+    ],
+    "a1ac221d1c1cb3407477a5edddaa510b92cdcaa3a24dc9306c78eb83eab3d344"
+   ]
+  ],
+  "SHQ008:double": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxCount",
+     "\"1.0\"^^<http://www.w3.org/2001/XMLSchema#double>"
+    ],
+    "fef7aea98ca389286daee169333d7a68ea53a6c26c7fcc36522c2281a86c9c69"
+   ]
+  ],
+  "SHQ008:ill-typed derived integer": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"-1\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger>"
+    ],
+    "079afafd2302dfc24299a16f40f6b5704a943c1f9b39b17022a667cf7e69d655"
+   ]
+  ],
+  "SHQ008:ill-typed integer": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"one\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "0616b71e28410d96d735d9a70bc09a3c6fac3432d06942be1533793a4aef1cb3"
+   ]
+  ],
+  "SHQ008:negative": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"-1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "da07a6629bc039a52c3965811b52ee66259b9a3b30fd49cfee2d9de374d6970d"
+   ]
+  ],
+  "SHQ008:negative length": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minLength",
+     "\"-1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "41ee964b100129e772ed792f6ccedb37a24ca4c5ff514620a6a753c7904a3bcb"
+   ]
+  ],
+  "SHQ008:negative max": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxCount",
+     "\"-2\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "3191ac893eda161c3459ffd8c508df4a06afc6060a2852c8a161ef5b8b72af5d"
+   ]
+  ],
+  "SHQ008:one bad value among good ones": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxCount",
+     "\"-1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "ad9c61cd2205529ef6e1fb4cc27ebcfd2a69082c07f14fd8e1448e9bccbebde4"
+   ]
+  ],
+  "SHQ008:string": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"1\""
+    ],
+    "d786273e069dd8d55dca2dcf6975e62cfd7579061cf9e69c1bcf2e714e67f90d"
+   ]
+  ],
+  "SHQ008:string length": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxLength",
+     "\"2\""
+    ],
+    "aff88e8c030ae0dcfc5e9d64ec9e35f1b4c3bf6a50556fcd367d5f389aaef861"
+   ]
+  ],
+  "SHQ008:xsd:int count": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#maxCount",
+     "\"1\"^^<http://www.w3.org/2001/XMLSchema#int>"
+    ],
+    "bc3a2267bd5fbd6a0caf2a770adc2af32ac3e5127ca27de98659952daba36d30"
+   ]
+  ],
+  "SHQ008:xsd:unsignedByte count": [
+   [
+    "SHQ008",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#minCount",
+     "\"0\"^^<http://www.w3.org/2001/XMLSchema#unsignedByte>"
+    ],
+    "6ec48e12f722faee75531ae16eeef460f5c25bd5edf699bf9566ca7c09976dd2"
+   ]
+  ],
+  "SHQ009:duplicate member": [
+   [
+    "SHQ009",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#in",
+     "repeated"
+    ],
+    "e596e2377820a0453455206b1e136e26c81a80cf6bd674e884baa6ef0dd9cc3f"
+   ]
+  ],
+  "SHQ009:empty list": [
+   [
+    "SHQ009",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#in",
+     "empty"
+    ],
+    "518a887eab1dc7d22eb57e0e8b00299807dc5e5816c9578e010ec660e2fa286a"
+   ]
+  ],
+  "SHQ010:IRI member": [
+   [
+    "SHQ010",
+    "https://example.test/onto#P",
+    [
+     "https://example.test/onto#fr"
+    ],
+    "deb4ba3b9f6710c72222b52bd2dba77ed92284de781e8b200dd296d0480e8d11"
+   ]
+  ],
+  "SHQ010:language-tagged member": [
+   [
+    "SHQ010",
+    "https://example.test/onto#P",
+    [
+     "\"en\"@en"
+    ],
+    "5e325d8900cb0f9b6cef004f28703d3265afa324f41a8425f30955aa825f55e3"
+   ]
+  ],
+  "SHQ010:underscore tag": [
+   [
+    "SHQ010",
+    "https://example.test/onto#P",
+    [
+     "\"en_US\""
+    ],
+    "438d5bb118e8daf7a48e306cea11e52d92bd92b8fb8cb3d58792fc920f7777a5"
+   ]
+  ],
+  "SHQ011:category escape without braces": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"\\\\pL\""
+    ],
+    "94405d634f41954bb039435944463a3ca6be77dbdc9b8109cf98ee25f1263b1d"
+   ]
+  ],
+  "SHQ011:escaped slash": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"^https?:\\\\/\\\\/\""
+    ],
+    "e9b55ef3e0b0a17a8d12490ae765669999c9be899fd5cd8054caa9a16db1f4e6"
+   ]
+  ],
+  "SHQ011:inverted repetition": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"a{2,1}\""
+    ],
+    "d5cb595019bcc8c6964327d9a5abf25fd79c15b5bf4ea505958fc27e4f17080d"
+   ]
+  ],
+  "SHQ011:leading ] in a class": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"[]a]\""
+    ],
+    "236fbdbed31b2e4e95ecea357fd19f644b9d7b457a1f170fb99e743764fec1c0"
+   ]
+  ],
+  "SHQ011:lookahead": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"a(?=b)\""
+    ],
+    "7868c027eef8173abb5b77db3f168696c2582cba4cb02a69e7b5e8985aa3b5dd"
+   ]
+  ],
+  "SHQ011:one bad pattern among good ones": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"(b\""
+    ],
+    "e29a13c7bcc988887898a20fb9ac36c1fba24ea51e09a6b8f628896f778f7d4d"
+   ]
+  ],
+  "SHQ011:possessive quantifier": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"a*+\""
+    ],
+    "7fe1d1a3169b470c065b0fa709c32f24bdb04c140a083aff1e91ac348bb60b10"
+   ]
+  ],
+  "SHQ011:unbalanced group beside an XPath-only escape": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"\\\\p{L}(\""
+    ],
+    "611ae1d560c21cf342d5c6895e9e92b85d5f812236139d4a3b5b588164c61b6c"
+   ]
+  ],
+  "SHQ011:unbalanced paren": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"(abc\""
+    ],
+    "59cafcb3e9e1eb71a2fc02b5d1f2de8986adb8f8cf761c5adeb88e4068e493b6"
+   ]
+  ],
+  "SHQ011:unbalanced with flags": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"[a-z\""
+    ],
+    "603fe7e78487a8a894fafa305ade2ae9da17db4989fbe11b5908c571b9a70772"
+   ]
+  ],
+  "SHQ011:unescaped [ inside a class": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"[[:alpha:]]+\""
+    ],
+    "9117fd0185315e9e2adc177dd8110737b9707318a2224e0f94da77c763c91f2f"
+   ]
+  ],
+  "SHQ011:unknown category name": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"\\\\p{Letter}+\""
+    ],
+    "fe334a481b17878eef8f005a89bde5886cc6bdb99c9ecc7e77c8ce32ec6a89d7"
+   ]
+  ],
+  "SHQ011:word-boundary escape": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"\\\\bword\""
+    ],
+    "993765e9c7a3747ac886be6c55366da5cc2563bb6e1c6ef1ada1fd81b37f1113"
+   ]
+  ],
+  "SHQ011:x flag keeps a stray brace": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"a b{\""
+    ],
+    "ce50be802e95f10d5cfb699aa3118d005e7ce05e9a3e05cd2c4daa389337ab48"
+   ]
+  ],
+  "SHQ011:x flag keeps the error": [
+   [
+    "SHQ011",
+    "https://example.test/onto#P",
+    [
+     "\"a b (\""
+    ],
+    "44abe9706312c73a69a7e2b8e2667e4bdf36e5c979388266feb3039dcaf4049f"
+   ]
+  ],
+  "SHQ012:unique lang on string": [
+   [
+    "SHQ012",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/2001/XMLSchema#string"
+    ],
+    "70932fbc0b688c32b47cf1a5400fd1d5866c518911e497ec9d9490c772664dd6"
+   ]
+  ],
+  "SHQ013:datatype and class": [
+   [
+    "SHQ013",
+    "https://example.test/onto#P",
+    [],
+    "3db98a29059f3e3b21c8e9bbf0cc30f1607ff328795ead9f0d0c8f0c99bb83f6"
+   ]
+  ],
+  "SHQ014:literal severity": [
+   [
+    "SHQ014",
+    "https://example.test/onto#P",
+    [
+     "\"warning\""
+    ],
+    "419d90d8a0bb10b54be6db14f33c40927abb2d54026af6c5ca6ea309f99912a7"
+   ]
+  ],
+  "SHQ014:typo severity": [
+   [
+    "SHQ014",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#Warn"
+    ],
+    "c261bc9ad49fa3fe32d693d047575314ce8752bc149e44187dde6fe107c9ef3c"
+   ]
+  ],
+  "SHQ015:flags without pattern": [
+   [
+    "SHQ015",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#pattern"
+    ],
+    "4b14180355eddb5ec2713314133abd80cdfd47438adf2874ea0cf0e20c47c093"
+   ]
+  ],
+  "SHQ015:unknown flag": [
+   [
+    "SHQ015",
+    "https://example.test/onto#P",
+    [
+     "\"ig\""
+    ],
+    "30dd8af43b7fc76849bef35f031e80e2dbfa8f1d27f48a25fdca0175e53477e5"
+   ]
+  ],
+  "SHQ015:unknown flag letter (SHQ011 compiles without it)": [
+   [
+    "SHQ015",
+    "https://example.test/onto#P",
+    [
+     "\"z\""
+    ],
+    "817108fdc055d56b8b23dc66a4fa982a83943ef6947089a7a01ec549b6618133"
+   ]
+  ],
+  "SHQ016:cycle through a property shape": [
+   [
+    "SHQ016",
+    "https://example.test/onto#P",
+    [],
+    "dfc156a507ad55d4317155623f8fc205d54b3a3b6cf9712539c9a7b40559e284"
+   ],
+   [
+    "SHQ016",
+    "https://example.test/onto#S",
+    [],
+    "56f4591ffddb4e8b524983a5e0734f966a291f48aa1e8a560691b0732bb1ccd1"
+   ]
+  ],
+  "SHQ016:self reference": [
+   [
+    "SHQ016",
+    "https://example.test/onto#S",
+    [],
+    "56f4591ffddb4e8b524983a5e0734f966a291f48aa1e8a560691b0732bb1ccd1"
+   ]
+  ],
+  "SHQ016:two shapes referencing each other": [
+   [
+    "SHQ016",
+    "https://example.test/onto#S",
+    [],
+    "56f4591ffddb4e8b524983a5e0734f966a291f48aa1e8a560691b0732bb1ccd1"
+   ],
+   [
+    "SHQ016",
+    "https://example.test/onto#T",
+    [],
+    "cea6480d8063ddc58a3dd369ea5a0ad4b62d30d2f9230641d169e48709aa2947"
+   ]
+  ],
+  "SHQ017:derived integer types": [
+   [
+    "SHQ017",
+    "https://example.test/onto#P",
+    [],
+    "d16813cff5b82e8d730651bd4bdd9e717fd3ddb39ed181ff09c5bdd698770989"
+   ]
+  ],
+  "SHQ017:max length zero": [
+   [
+    "SHQ017",
+    "https://example.test/onto#P",
+    [],
+    "d16813cff5b82e8d730651bd4bdd9e717fd3ddb39ed181ff09c5bdd698770989"
+   ]
+  ],
+  "SHQ017:min length above max": [
+   [
+    "SHQ017",
+    "https://example.test/onto#P",
+    [],
+    "d16813cff5b82e8d730651bd4bdd9e717fd3ddb39ed181ff09c5bdd698770989"
+   ]
+  ],
+  "SHQ018:decimal vs integer": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "2.5",
+     "2"
+    ],
+    "d6d6de1ad550a1036c9aa8c7640f9676d5ffe3ad2b91dd501fdb16df4af919ec"
+   ]
+  ],
+  "SHQ018:double vs integer": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "10.0",
+     "2"
+    ],
+    "81db8a0567fd16e27c4b16cb8c7221edf7ec4502719fe2afed671de1f195d856"
+   ]
+  ],
+  "SHQ018:equal but exclusive": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "3",
+     "3"
+    ],
+    "0617144082c3ffaee066fbb286e078f89f213273453e860071b54fedf3e26617"
+   ]
+  ],
+  "SHQ018:equal, both exclusive": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "3",
+     "3.0"
+    ],
+    "7465199300548cb1e792dfebfb2ca52e693460378b299f56e670a8dabcca2b2e"
+   ]
+  ],
+  "SHQ018:inclusive inverted": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "10",
+     "1"
+    ],
+    "bee3e704981fcae3d27b78bddc092d2a3ed040f88ff1c0c9f79e5372b046735e"
+   ]
+  ],
+  "SHQ018:minus infinity, exclusive": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "-inf",
+     "-inf"
+    ],
+    "ae1295cbde3b8997a43cbf05b62493280817f828f6415f1acc48a2c7956610c0"
+   ]
+  ],
+  "SHQ018:on a node shape": [
+   [
+    "SHQ018",
+    "https://example.test/onto#S",
+    [
+     "10",
+     "1"
+    ],
+    "0cc0a6e70d748188302c05e12ebe7d063a13c01cff4103a59ec07ff8ec012ed5"
+   ]
+  ],
+  "SHQ018:one lower bound conflicts": [
+   [
+    "SHQ018",
+    "https://example.test/onto#P",
+    [
+     "5",
+     "3"
+    ],
+    "2beb77a98d9bc4f6a09dfaa511b086cfa5a81d7ce286c2a838804ea7931f1d4e"
+   ]
+  ],
+  "SHQ019:undefined sh:node": [
+   [
+    "SHQ019",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#node",
+     "https://example.test/onto#Missing"
+    ],
+    "17b64cd80eb8db1406bc7bdf6a13d5602bb8d4743f3b0d2107dd7bed5cc5ac9b"
+   ]
+  ],
+  "SHQ020:deactivated": [
+   [
+    "SHQ020",
+    "https://example.test/onto#S",
+    [],
+    "a0d1edc24f6cc6e78b173614b32dfbea8916cd694a88f7181cad7c938b279245"
+   ]
+  ],
+  "SHQ021:floating node shape": [
+   [
+    "SHQ021",
+    "https://example.test/onto#S",
+    [],
+    "c4aa25614fe90167a9436713ba7c0442340ce89c538061a7d54403f30535ed15"
+   ]
+  ],
+  "SHQ021:untargeted shape beside a targeted one": [
+   [
+    "SHQ021",
+    "https://example.test/onto#S",
+    [],
+    "c4aa25614fe90167a9436713ba7c0442340ce89c538061a7d54403f30535ed15"
+   ]
+  ],
+  "SHQ022:blank target subjects-of": [
+   [
+    "SHQ022",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#targetSubjectsOf",
+     "_:4acc4af6d71d"
+    ],
+    "1662f4743c856bc5f0dee9102ad77f4fee198e1ce984571b755600246b6833b8"
+   ]
+  ],
+  "SHQ022:literal target class": [
+   [
+    "SHQ022",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#targetClass",
+     "\"A\""
+    ],
+    "3b10393dfc94d367a0cb722eba0dd0a9d1a5019324ca101b9f255a494bda8a1d"
+   ]
+  ],
+  "SHQ022:literal target objects-of": [
+   [
+    "SHQ022",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#targetObjectsOf",
+     "\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "3c7a6b38c38fe9ca5e49e4b5ea1800db3816d4295c1e44a67b198eefd39b6af2"
+   ]
+  ],
+  "SHQ023:missing path": [
+   [
+    "SHQ023",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#path",
+     "none"
+    ],
+    "fbd0daa27fb9c0f983cc84c5ff6216f1604ef9436d0f138c43e63c169f6b8762"
+   ]
+  ],
+  "SHQ023:two paths": [
+   [
+    "SHQ023",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#path",
+     "several"
+    ],
+    "76186bad5db35edef7d3697cbb7d05c95312fab38dd2d785b68a16c25cf47e06"
+   ]
+  ],
+  "SHQ023:typed property shape without path": [
+   [
+    "SHQ023",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#path",
+     "none"
+    ],
+    "fbd0daa27fb9c0f983cc84c5ff6216f1604ef9436d0f138c43e63c169f6b8762"
+   ]
+  ],
+  "SHQ023:untyped, unreferenced shape with two paths": [
+   [
+    "SHQ023",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#path",
+     "several"
+    ],
+    "76186bad5db35edef7d3697cbb7d05c95312fab38dd2d785b68a16c25cf47e06"
+   ]
+  ],
+  "SHQ024:closed without ignore": [
+   [
+    "SHQ024",
+    "https://example.test/onto#S",
+    [],
+    "75bf2925eb5e421091dca74e275411226f47686ffd032c64fc6d3ec6bc35fa8c"
+   ]
+  ],
+  "SHQ024:ignore list lacks rdf:type": [
+   [
+    "SHQ024",
+    "https://example.test/onto#S",
+    [],
+    "75bf2925eb5e421091dca74e275411226f47686ffd032c64fc6d3ec6bc35fa8c"
+   ]
+  ],
+  "SHQ025:single-member or": [
+   [
+    "SHQ025",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#or"
+    ],
+    "ddcd304d0a789db383f7cfc1e514671f65e770b996edbe5fb3c2153ef9338b30"
+   ]
+  ],
+  "SHQ026:same path twice": [
+   [
+    "SHQ026",
+    "https://example.test/onto#S",
+    [
+     "https://example.test/onto#p"
+    ],
+    "78b5fe6ffdd3dc8882459fa995021009b92adef67f20aa9b5e16e91d4d6d4f62"
+   ]
+  ],
+  "SHQ027:typo in target class": [
+   [
+    "SHQ027",
+    "https://example.test/onto#S",
+    [
+     "https://example.test/onto#Typo"
+    ],
+    "12b14f9c60953f794762528ed693046ce58647181920e158ffda0e944c53b05f"
+   ]
+  ],
+  "SKOS001:tags differ only in case": [
+   [
+    "SKOS001",
+    "https://example.test/onto#c",
+    [
+     "en"
+    ],
+    "f8ad5f3ea25d8b121814447baa0be624f78bedfe958cb71b73d94644fb0f751f"
+   ]
+  ],
+  "SKOS001:two prefLabels in a language": [
+   [
+    "SKOS001",
+    "https://example.test/onto#c",
+    [
+     "en"
+    ],
+    "f8ad5f3ea25d8b121814447baa0be624f78bedfe958cb71b73d94644fb0f751f"
+   ]
+  ],
+  "SKOS001:two untagged prefLabels": [
+   [
+    "SKOS001",
+    "https://example.test/onto#c",
+    [
+     "und"
+    ],
+    "9c471969f8decc5c4f26f779c22ebfd6870719c6781d0787391b6f1c7420888a"
+   ]
+  ],
+  "SKOS002:alt and hidden label of a non-concept": [
+   [
+    "SKOS002",
+    "https://example.test/onto#x",
+    [
+     "\"a\"@en"
+    ],
+    "f6f443c526b793ec24da2944cb654225542bbac04949de3ea83da59efadfaecd"
+   ]
+  ],
+  "SKOS002:blank node": [
+   [
+    "SKOS002",
+    "_:03cd52069d41",
+    [
+     "\"a\""
+    ],
+    "9ce80656ad894206621b8409a6322ae4626050282fb1254abc89227ba4cc0bf9"
+   ]
+  ],
+  "SKOS002:plain and xsd:string": [
+   [
+    "SKOS002",
+    "https://example.test/onto#c",
+    [
+     "\"a\""
+    ],
+    "c63a63b6c39fc775dc58527f5b31afd40554ffd66d11d4bd20b402e7b285e1a6"
+   ]
+  ],
+  "SKOS002:same literal as pref and alt label": [
+   [
+    "SKOS002",
+    "https://example.test/onto#c",
+    [
+     "\"a\"@en"
+    ],
+    "dbc0cada8c0af79afeaac556cf629bfb338d35f8e19960a5845ba564380665b6"
+   ]
+  ],
+  "SKOS002:tag case differs": [
+   [
+    "SKOS002",
+    "https://example.test/onto#c",
+    [
+     "\"a\"@en"
+    ],
+    "dbc0cada8c0af79afeaac556cf629bfb338d35f8e19960a5845ba564380665b6"
+   ]
+  ],
+  "SKOS002:untagged pref and hidden label": [
+   [
+    "SKOS002",
+    "https://example.test/onto#c",
+    [
+     "\"a\""
+    ],
+    "c63a63b6c39fc775dc58527f5b31afd40554ffd66d11d4bd20b402e7b285e1a6"
+   ]
+  ],
+  "SKOS003:broader cycle": [
+   [
+    "SKOS003",
+    "https://example.test/onto#a",
+    [],
+    "ebd5ba058100015e87a43b9e65620b6111c92a214fdedd18ad2b1abecf253cb0"
+   ]
+  ],
+  "SKOS003:self broader": [
+   [
+    "SKOS003",
+    "https://example.test/onto#a",
+    [],
+    "ebd5ba058100015e87a43b9e65620b6111c92a214fdedd18ad2b1abecf253cb0"
+   ]
+  ],
+  "SKOS004:no prefLabel": [
+   [
+    "SKOS004",
+    "https://example.test/onto#c",
+    [],
+    "9353a66c87fb48c5857d1faa902b1e57287d97f4dc88e44a321a89b8aab800be"
+   ]
+  ],
+  "SKOS005:not in a scheme": [
+   [
+    "SKOS005",
+    "https://example.test/onto#c",
+    [],
+    "fbe98339794cabbba969deec3e90937194347f110ae1e64cc57dcc16d7aa61fe"
+   ]
+  ],
+  "SKOS006:top concept with broader": [
+   [
+    "SKOS006",
+    "https://example.test/onto#c",
+    [
+     "https://example.test/onto#s"
+    ],
+    "95dea2046d6a09bf87d53e09f33f4fa61e085a80a2c44caee82b527524e3f226"
+   ]
+  ],
+  "SKOS007:concept and scheme": [
+   [
+    "SKOS007",
+    "https://example.test/onto#x",
+    [],
+    "6dcc938f22ed03a7cf01cd4437384736bf94e8c1976cfd8168cf1afe3f6b91de"
+   ]
+  ],
+  "SKOS008:collection and concept": [
+   [
+    "SKOS008",
+    "https://example.test/onto#x",
+    [],
+    "8ccf972f03ec206f9819712cc06bebdfcb46a188843a3f91d64974f354dde4a3"
+   ]
+  ],
+  "SKOS008:collection and scheme": [
+   [
+    "SKOS008",
+    "https://example.test/onto#x",
+    [],
+    "8ccf972f03ec206f9819712cc06bebdfcb46a188843a3f91d64974f354dde4a3"
+   ]
+  ],
+  "SKOS008:ordered collection and concept": [
+   [
+    "SKOS008",
+    "https://example.test/onto#x",
+    [],
+    "8ccf972f03ec206f9819712cc06bebdfcb46a188843a3f91d64974f354dde4a3"
+   ]
+  ],
+  "SKOS009:related and broadMatch": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "62bd86070eac5b970bca59e22127a2a14d2af1e6b1fb4aab81199ca761e5676d"
+   ]
+  ],
+  "SKOS009:related and broader": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "62bd86070eac5b970bca59e22127a2a14d2af1e6b1fb4aab81199ca761e5676d"
+   ]
+  ],
+  "SKOS009:related and inverse narrowMatch": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "62bd86070eac5b970bca59e22127a2a14d2af1e6b1fb4aab81199ca761e5676d"
+   ]
+  ],
+  "SKOS009:related and inverse narrower": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "62bd86070eac5b970bca59e22127a2a14d2af1e6b1fb4aab81199ca761e5676d"
+   ]
+  ],
+  "SKOS009:related and narrowerTransitive": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "62bd86070eac5b970bca59e22127a2a14d2af1e6b1fb4aab81199ca761e5676d"
+   ]
+  ],
+  "SKOS009:related to a grandchild, mixed predicates": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#c"
+    ],
+    "9ee9e5821797910d7cbe7f937e7174dd25296c84b56eacde156bde5caf6c2257"
+   ]
+  ],
+  "SKOS009:related to a grandparent": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#c"
+    ],
+    "9ee9e5821797910d7cbe7f937e7174dd25296c84b56eacde156bde5caf6c2257"
+   ]
+  ],
+  "SKOS009:related to an ancestor through broader then broadMatch": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#c"
+    ],
+    "9ee9e5821797910d7cbe7f937e7174dd25296c84b56eacde156bde5caf6c2257"
+   ]
+  ],
+  "SKOS009:relatedMatch and broader": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "62bd86070eac5b970bca59e22127a2a14d2af1e6b1fb4aab81199ca761e5676d"
+   ]
+  ],
+  "SKOS009:relatedMatch to an ancestor through broadMatch": [
+   [
+    "SKOS009",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#c"
+    ],
+    "9ee9e5821797910d7cbe7f937e7174dd25296c84b56eacde156bde5caf6c2257"
+   ]
+  ],
+  "SKOS010:self related": [
+   [
+    "SKOS010",
+    "https://example.test/onto#a",
+    [],
+    "622c4c8f8e0938cadb34044c6aba9f525def5f4d83d51a7ffca55232d43342bb"
+   ]
+  ],
+  "SKOS011:exactMatch inside a scheme": [
+   [
+    "SKOS011",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "6e78529fb9746f3d59aee1b9599b83d3a9107ad60bd43c21ab137dfba4258d7d"
+   ]
+  ],
+  "SKOS012:exact and broad": [
+   [
+    "SKOS012",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "14264e03d578a3f7c3e14c942cae4298cd017a427a4c0a2f4a4a55d91c41c685"
+   ]
+  ],
+  "SKOS012:exact and inverse related": [
+   [
+    "SKOS012",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "14264e03d578a3f7c3e14c942cae4298cd017a427a4c0a2f4a4a55d91c41c685"
+   ]
+  ],
+  "SKOS012:exact and narrow": [
+   [
+    "SKOS012",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "14264e03d578a3f7c3e14c942cae4298cd017a427a4c0a2f4a4a55d91c41c685"
+   ]
+  ],
+  "SKOS012:inverse exact and broad": [
+   [
+    "SKOS012",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "14264e03d578a3f7c3e14c942cae4298cd017a427a4c0a2f4a4a55d91c41c685"
+   ]
+  ],
+  "SKOS013:IRI label": [
+   [
+    "SKOS013",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#altLabel",
+     "https://example.test/onto#other"
+    ],
+    "3ba5d09db94834eac67636d9330abb3df7aed61bab1e4be68b64e1605717b29a"
+   ]
+  ],
+  "SKOS013:custom datatype": [
+   [
+    "SKOS013",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#hiddenLabel",
+     "\"x\"^^<https://example.test/onto#custom>"
+    ],
+    "0f2b6c03a788a57cd24f862fcd0ce0447d321b55eb61624b299dd368f5fb5fb4"
+   ]
+  ],
+  "SKOS013:integer label": [
+   [
+    "SKOS013",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#prefLabel",
+     "\"42\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    ],
+    "626d1f6f509146cfda9a14e51bef97e00b9e08dca7095b6002e031c73d9ab72e"
+   ]
+  ],
+  "SKOS014:empty label": [
+   [
+    "SKOS014",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#altLabel"
+    ],
+    "44309d19613c2cc88b88e6a1a0b3594d07f0df1ccee0c604cfc7c9b99b543ef1"
+   ]
+  ],
+  "SKOS014:padded label": [
+   [
+    "SKOS014",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#prefLabel"
+    ],
+    "7a3c0d7e01a236a5020fa706ee771847ed5f59360438e091b1504ec74a23da4d"
+   ]
+  ],
+  "SKOS014:whitespace-only huge label": [
+   [
+    "SKOS014",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#prefLabel"
+    ],
+    "7a3c0d7e01a236a5020fa706ee771847ed5f59360438e091b1504ec74a23da4d"
+   ]
+  ],
+  "SKOS015:scheme without top": [
+   [
+    "SKOS015",
+    "https://example.test/onto#s",
+    [],
+    "f07620bda764b2a65c21ce39322663fb6fc6f247a406c6227069da9258ec2687"
+   ]
+  ],
+  "SKOS016:literal broader": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#broader"
+    ],
+    "80fb30c957f299739582c004d2d12c228846e26de1de361f0e08b29e58bd6d44"
+   ]
+  ],
+  "SKOS016:literal exactMatch": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#exactMatch"
+    ],
+    "a4aec0cfbce8442ca46533d96da42c87c1a92a9e5f6098ff8832b374695ef069"
+   ]
+  ],
+  "SKOS016:literal inScheme": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#inScheme"
+    ],
+    "0e1ccd8a3bc40a79ec0139892e08c90b0cf5c98520e417d3c359f42fb4846968"
+   ]
+  ],
+  "SKOS016:literal mappingRelation": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#mappingRelation"
+    ],
+    "0f7fb0c4e2876fca768272470b2da141634ae6582db2ba4ce594cf0030ddc745"
+   ]
+  ],
+  "SKOS016:literal relations": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#broader"
+    ],
+    "80fb30c957f299739582c004d2d12c228846e26de1de361f0e08b29e58bd6d44"
+   ]
+  ],
+  "SKOS016:literal semanticRelation": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#semanticRelation"
+    ],
+    "cd25178c9f3346cdde297d25e229bb6cc3ed1505f7dbbe646a63bc91e30e86e8"
+   ]
+  ],
+  "SKOS016:literal topConceptOf": [
+   [
+    "SKOS016",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#topConceptOf"
+    ],
+    "4d8ee214ce99ac1ddcbe2be6163a87ff981596a9e261df90a04b9343dc20a64b"
+   ]
+  ],
+  "SKOS017:dangling broader": [
+   [
+    "SKOS017",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#broader",
+     "https://example.test/onto#missing"
+    ],
+    "5384d59cdc430b2b102198b105ecd314d186922d0989d8417b5b11ea6776105b"
+   ]
+  ],
+  "SKOS018:shortcut": [
+   [
+    "SKOS018",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#c",
+     "https://example.test/onto#b"
+    ],
+    "d1a82963067f933c3da9bb950cf3d286599c6d8741c75bff36d0ea43d00e773f"
+   ]
+  ],
+  "SKOS019:cross-scheme broader": [
+   [
+    "SKOS019",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "c30ecc784f33552173dc758cf1d99b81b73aff27a1fd3c44696d9c6fb4fe1520"
+   ]
+  ],
+  "SKOS019:cross-scheme narrower": [
+   [
+    "SKOS019",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#b"
+    ],
+    "c30ecc784f33552173dc758cf1d99b81b73aff27a1fd3c44696d9c6fb4fe1520"
+   ]
+  ],
+  "SKOS020:duplicate notation": [
+   [
+    "SKOS020",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#s",
+     "1^^None"
+    ],
+    "93f354ec8003ef406534df3b8fe036031e2fa8f354debee445470d432362b191"
+   ],
+   [
+    "SKOS020",
+    "https://example.test/onto#b",
+    [
+     "https://example.test/onto#s",
+     "1^^None"
+    ],
+    "4cd16635a749b2aad41bbb763092e9e2c75e85a4cd32f772e33d1d5c6a5f9752"
+   ]
+  ],
+  "SKOS021:duplicate prefLabel": [
+   [
+    "SKOS021",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#s",
+     "en",
+     "cat"
+    ],
+    "2ceefa11eb6257beef8788cc2443a1ea1df4bb06fb4225d033b27f4d6395ec40"
+   ],
+   [
+    "SKOS021",
+    "https://example.test/onto#b",
+    [
+     "https://example.test/onto#s",
+     "en",
+     "cat"
+    ],
+    "48fd9213b32cb83639a1f6b72a5571016bf7c478b8845af77a15f531c39f0d45"
+   ]
+  ]
+ },
+ "identity_tag": "ontolint-identity-2"
+}
