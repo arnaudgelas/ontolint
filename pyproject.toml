@@ -103,6 +103,7 @@ line-ending = "auto"
 # performs its own coverage-guided selection before executing mutations.
 paths = [
     "src/ontolint/baseline.py",
+    "src/ontolint/context.py",
     "src/ontolint/engine.py",
     "src/ontolint/linter.py",
     "src/ontolint/cli.py",
