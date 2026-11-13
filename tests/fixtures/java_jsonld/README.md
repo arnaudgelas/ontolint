@@ -13,11 +13,15 @@ Both files are committed as `riot` wrote them; do not reformat them. What the te
 
 - in every run: each file's SHA-256 (the committed bytes, not who wrote them); the traits of its
   writer's layout that the table lists, plus spaces-only indentation and `@context` after `@graph`
-  (a fingerprint, not a model of the printer); and that it loads to the same graph as `pets.ttl`;
-- only with `ONTOLINT_JENA_HOME` set (CI has no Java): that a fresh `riot` export of `pets.ttl`
-  equals the file as data (the same context and the same nodes, in any order) and has the same
-  layout. This is the check of provenance that anyone with Jena 4.10.0 can rerun. It does not
-  prove the bytes: neither writer reproduces them (see below).
+  (a fingerprint, not a model of the printer); and that it loads to the same graph as `pets.ttl`,
+  with each node written once;
+- only with `ONTOLINT_JENA_HOME` set (CI has no Java, and nothing runs it on a schedule yet, #30):
+  that the installation's `jena-arq`, `jsonld-java`, `jackson-core` and `titanium-json-ld` jars
+  have the SHA-256 of the 4.10.0 distribution and that `riot --version` says 4.10.0; then that a
+  fresh `riot` export of `pets.ttl` equals the file as data (the same context and the same nodes,
+  each written once, in any order) and has the same layout. This corroborates the files' origin
+  for whoever runs it; it is not enforced, it trusts the `bin/riot` script it runs, and it does
+  not prove the bytes, which neither writer reproduces (see below).
 
 ## Regenerating
 
