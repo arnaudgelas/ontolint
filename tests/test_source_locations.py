@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -668,25 +669,35 @@ def test_the_export_comparison_ignores_value_order_but_not_list_order() -> None:
     assert _graph_nodes_by_id(export(["a", "b"], ["m", "n"])) != _graph_nodes_by_id(export(["a", "b"], ["n", "m"]))
 
 
-# The jars of the apache-jena-4.10.0.zip whose SHA-512 the fixture README gives (each also matches the SHA-1
-# that Maven Central publishes for it). Checked before the riot test trusts the installation.
-JENA_JARS = {
-    "jena-arq-4.10.0.jar": "b091b4ddb5f0bf6de9d843b351bf6145899fab249ca754ac683453f969dd3137",
-    "jsonld-java-0.13.4.jar": "d8101c31cb4d6d07e87f03855c32ed67dbf29174b1a1a3a38cff8246290d3dcf",
-    "jackson-core-2.15.3.jar": "51fab7aad51ed588482edc507fd542747936c5094d1ab76ed21ddb63b96b610d",
-    "titanium-json-ld-1.3.2.jar": "a6f86da74bb4f6d4e3252f8b019157628f888ebc9c62b16bd2104a3f5725aed4",
-}
+# What riot runs, from the apache-jena-4.10.0.zip whose SHA-512 the fixture README gives: the SHA-256 of each
+# file of lib/ and of log4j2.properties, one "path digest" line each, sorted. The test runs Java on exactly
+# these files, as bin/riot would, so it does not depend on bin/riot or on CLASSPATH.
+JENA_FILES_DIGEST = "b468c814526d32dfd6d98581aa8fcf4c9c9779017b1dfacaaff89fd9ec150f6d"
+JENA_FILES_COUNT = 46
+# Read by the JVM at start-up: each could add a class or an agent ahead of the verified jars.
+JVM_ENVIRONMENT = ("CLASSPATH", "JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")
 
 
-def _riot(*args: str) -> str:
-    home = os.environ["ONTOLINT_JENA_HOME"]
-    return subprocess.run(  # noqa: S603 -- the maintainer's own Jena, named by ONTOLINT_JENA_HOME
-        [str(Path(home) / "bin" / "riot"), *args],
+def _jena_files(home: Path) -> list[Path]:
+    files = [*sorted((home / "lib").iterdir()), home / "log4j2.properties"]
+    listing = "".join(f"{f.relative_to(home).as_posix()} {hashlib.sha256(f.read_bytes()).hexdigest()}\n" for f in files)
+    assert (len(files), hashlib.sha256(listing.encode()).hexdigest()) == (JENA_FILES_COUNT, JENA_FILES_DIGEST)
+    return files
+
+
+def _riot(home: Path, *args: str) -> str:
+    """Run Jena's riot command on the verified jars only, with the JVM of JAVA_HOME or else of PATH."""
+    *jars, logging = _jena_files(home)
+    java = Path(os.environ["JAVA_HOME"]) / "bin" / "java" if "JAVA_HOME" in os.environ else shutil.which("java")
+    assert java is not None, "no java on PATH and no JAVA_HOME"
+    argv = [str(java), f"-Dlog4j.configurationFile={logging.as_uri()}", "-cp", os.pathsep.join(map(str, jars))]
+    return subprocess.run(  # noqa: S603 -- the maintainer's own JVM, on jars whose digests were just checked
+        [*argv, "riotcmd.riot", *args],
         capture_output=True,
         check=True,
         text=True,
         encoding="utf-8",
-        env={**os.environ, "JENA_HOME": home},
+        env={key: value for key, value in os.environ.items() if key not in JVM_ENVIRONMENT},
     ).stdout
 
 
@@ -695,15 +706,14 @@ def _riot(*args: str) -> str:
     ("fixture", "variant"), [("pets.jsonld10.jsonld", "JSONLD10"), ("pets.jsonld11.jsonld", "JSONLD")]
 )
 def test_a_java_jsonld_fixture_is_what_riot_writes_today(fixture: str, variant: str) -> None:
-    """Corroborates the fixtures' origin: a fresh export by Jena 4.10.0 equals the fixture up to order.
+    """Corroborates the fixtures' origin: Jena 4.10.0's own jars, run now, write the fixture up to order.
 
     Neither writer reproduces its bytes (member and node order vary between runs), so the bytes are compared
-    as data, and the layout by the same test as the committed file. The installation is identified by its
-    jars' digests and riot's version; the bin/riot script itself is trusted. Not run in CI, which has no Java.
+    as data, and the layout by the same test as the committed file. The jars are the distribution's, checked
+    file by file; the JVM is trusted, as the Python running the tests is. Not run in CI, which has no Java.
     """
-    lib = Path(os.environ["ONTOLINT_JENA_HOME"]) / "lib"
-    assert {jar: hashlib.sha256((lib / jar).read_bytes()).hexdigest() for jar in JENA_JARS} == JENA_JARS
-    assert _riot("--version").strip() == "Apache Jena RIOT version 4.10.0"
-    fresh = _riot(f"--formatted={variant}", str(JAVA_JSONLD / "pets.ttl"))
+    home = Path(os.environ["ONTOLINT_JENA_HOME"])
+    assert _riot(home, "--version").strip() == "Apache Jena RIOT version 4.10.0"
+    fresh = _riot(home, f"--formatted={variant}", str(JAVA_JSONLD / "pets.ttl"))
     assert _graph_nodes_by_id(fresh) == _graph_nodes_by_id((JAVA_JSONLD / fixture).read_text(encoding="utf-8"))
     _assert_writers_layout(fixture, fresh)

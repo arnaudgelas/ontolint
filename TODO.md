@@ -47,9 +47,11 @@ Nothing open: 0.11.0 is released (see "Recently done").
     - Left open: none. Neither writer is deterministic (1.0 orders its `@context` members, 1.1 its
       `@graph` nodes, differently between runs), so a regeneration passes the layout and graph tests
       but needs a new digest; that the committed bytes came from `riot` rests on the README.
-    - Follow-up (reviews of #58 and #69): an opt-in test (`ONTOLINT_JENA_HOME`) checks the
-      installation's jar digests and `riot --version`, then that a fresh `riot` export equals each
-      fixture as data (each node once) and has its layout; the layout fingerprint also checks
+    - Follow-up (reviews of #58 and #69): an opt-in test (`ONTOLINT_JENA_HOME`) checks one digest
+      over the installation's 45 jars and `log4j2.properties`, runs Java on exactly those jars (not
+      `bin/riot`, and without `CLASSPATH` or JVM option variables), checks `riot --version`, then
+      that a fresh export equals each fixture as data (each node once; node and value order
+      ignored, `@list` order kept) and has its layout; the layout fingerprint also checks
       spaces-only indentation and `@context` after `@graph`; the SARIF test checks each result's URI
       and that regions carry no end. The README names the printer from Jena's classes (`javap`):
       `JsonLD10Writer` -> `JsonUtils.writePrettyPrint` -> `useDefaultPrettyPrinter` ->

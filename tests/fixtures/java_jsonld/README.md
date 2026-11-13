@@ -16,12 +16,18 @@ Both files are committed as `riot` wrote them; do not reformat them. What the te
   (a fingerprint, not a model of the printer); and that it loads to the same graph as `pets.ttl`,
   with each node written once;
 - only with `ONTOLINT_JENA_HOME` set (CI has no Java, and nothing runs it on a schedule yet, #30):
-  that the installation's `jena-arq`, `jsonld-java`, `jackson-core` and `titanium-json-ld` jars
-  have the SHA-256 of the 4.10.0 distribution and that `riot --version` says 4.10.0; then that a
-  fresh `riot` export of `pets.ttl` equals the file as data (the same context and the same nodes,
-  each written once, in any order) and has the same layout. This corroborates the files' origin
-  for whoever runs it; it is not enforced, it trusts the `bin/riot` script it runs, and it does
-  not prove the bytes, which neither writer reproduces (see below).
+  that every file of the installation's `lib/`, and its `log4j2.properties`, has the SHA-256 it has
+  in the 4.10.0 zip (one digest over the 46 files, so a changed, missing or extra jar fails). The
+  test then runs Java itself on exactly those jars, as `bin/riot` would, and never runs `bin/riot`;
+  it clears `CLASSPATH`, `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` and `_JAVA_OPTIONS`, which could
+  put another class or an agent ahead of them. It checks that `riot --version` says 4.10.0, then
+  that a fresh export of `pets.ttl` equals the file as data and has the same layout. "As data":
+  the same context and the same nodes, each written once, with the nodes and each node's values in
+  any order (only an `@list` keeps its order).
+
+  This corroborates the files' origin for whoever runs it. It is not enforced. It trusts the JVM
+  (`JAVA_HOME`, else `java` on `PATH`), as the tests trust their Python. It does not prove the
+  bytes, which neither writer reproduces (see below).
 
 ## Regenerating
 
