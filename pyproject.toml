@@ -175,6 +175,7 @@ build-backend = "uv_build"
 dev = [
     "hypothesis>=6.0",
     "jsonschema>=4.23.0",
+    "markdown-it-py>=4.2.0",
     "mypy>=2.4.1",
     "pip-audit>=2.10.1",
     "pyright>=1.1.414",
