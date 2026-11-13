@@ -60,6 +60,8 @@ from ontolint.models import ExecutionStatus
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
 from ontolint.profiles import PROFILES
+from ontolint.redaction import redact_rendered
+from ontolint.reporting import MARKDOWN_MAX_BYTES
 from ontolint.rules.registry import default_registry
 
 HERE = Path(__file__).resolve().parent
@@ -766,11 +768,18 @@ def _opt_baseline(rng: random.Random, o: _Options) -> list[str]:
     return out
 
 
+# The formats a lint run draws from: the three of 0.13.  A saved CLI case stores only its optseed and replays the
+# argv built from it, so a longer choice here would change every draw after it and the argv of saved cases
+# (cli__jsonld__71506165 among them).  An info command draws from ``cli.FORMATS``, as its last draw, so it does
+# try ``--format markdown``.  A summary is checked by ``_check_markdown_report`` whenever an argv asks for one, and
+# the summary's robustness by its property tests (tests/test_properties_markdown.py).
+_DRAWN_FORMATS = ("text", "json", "sarif")
+
 _OPTION_BUILDERS: tuple[tuple[float, Callable[[random.Random, _Options], list[str]]], ...] = (
     (0.5, lambda r, o: ["--select", _selectors(r)]),
     (0.4, lambda r, o: ["--ignore", _selectors(r)]),
     (0.3, lambda r, o: ["--profile", r.choice(sorted(PROFILES))]),
-    (0.6, lambda r, o: ["--format", r.choice(cli.FORMATS)]),
+    (0.6, lambda r, o: ["--format", r.choice(_DRAWN_FORMATS)]),
     (0.4, lambda r, o: ["--fail-on", r.choice(["error", "warning", "info", "never"])]),
     (0.4, lambda r, o: ["--base", r.choice(_BASES)]),
     (0.3, lambda r, o: ["--language", r.choice(_LANGS)]),
@@ -820,17 +829,41 @@ def _invoke_cli(argv: list[str]) -> tuple[int, str, str]:
     return code, out.getvalue(), err.getvalue()
 
 
-def _check_json_report(argv: list[str], code: int, out: str, work: Workdir) -> None:
+def _report(argv: list[str], code: int, out: str, formats: tuple[str, ...]) -> tuple[str, str] | None:
+    """``(format, report)`` of a lint run that wrote a report in one of ``formats``, else ``None``."""
     fmt = argv[argv.index("--format") + 1] if "--format" in argv else "text"
-    if fmt == "text" or code not in (0, 1) or _INFO_FLAGS.intersection(argv):
-        return
+    if fmt not in formats or code not in (0, 1) or _INFO_FLAGS.intersection(argv):
+        return None
     text = Path(argv[argv.index("--output") + 1]).read_text(encoding="utf-8") if "--output" in argv else out
+    return fmt, text
+
+
+def _check_json_report(argv: list[str], code: int, out: str, work: Workdir) -> None:
+    report = _report(argv, code, out, ("json", "sarif"))
+    if report is None:
+        return
+    fmt, text = report
     try:
         document = json.loads(text)
     except ValueError as exc:
         raise InvariantViolation(f"cli:invalid-{fmt}", str(exc)[:100]) from exc
     if fmt == "sarif" and not (isinstance(document, dict) and "runs" in document and document.get("version")):
         raise InvariantViolation("cli:invalid-sarif", "missing version/runs")
+
+
+def _check_markdown_report(argv: list[str], code: int, out: str) -> None:
+    """A summary is within its size bound, holds what the CLI's mask leaves (no userinfo) and has its heading."""
+    report = _report(argv, code, out, ("markdown",))
+    if report is None:
+        return
+    summary = report[1].removesuffix("\n")
+    size = len(summary.encode("utf-8"))  # a summary UTF-8 cannot hold raises, and the case fails as a crash
+    if size > MARKDOWN_MAX_BYTES:
+        raise InvariantViolation("cli:invalid-markdown", f"{size} bytes")
+    if redact_rendered(summary) != summary:
+        raise InvariantViolation("cli:invalid-markdown", "a userinfo the mask would hide")
+    if not summary.startswith("## ontolint "):
+        raise InvariantViolation("cli:invalid-markdown", summary[:100])
 
 
 def check_cli(argv: list[str], work: Workdir) -> str:
@@ -855,6 +888,7 @@ def check_cli(argv: list[str], work: Workdir) -> str:
         kind = f"cli:rule-{broken.group(2)}:{_family(broken.group(1))}:{broken.group(3)}"
         raise InvariantViolation(kind, err[-300:])
     _check_json_report(argv, code, out, work)
+    _check_markdown_report(argv, code, out)
     return f"cli-exit{code}"
 
 

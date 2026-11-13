@@ -69,7 +69,7 @@ from .selection import (
     unknown_selector_help,
 )
 
-FORMATS = ["text", "json", "sarif"]
+FORMATS = ["text", "json", "sarif", "markdown"]
 
 
 def _positive_int(text: str) -> int:
@@ -810,9 +810,13 @@ def _flush_standard_streams() -> None:
 
 
 def _info_command(args: argparse.Namespace) -> int | None:
-    """Handle --version, --list-rules and --explain; ``None`` means a normal lint run."""
+    """Handle --version, --list-rules and --explain; ``None`` means a normal lint run.
+
+    ``--format json`` and ``--format sarif`` print the rules as JSON; every other format, ``markdown`` included,
+    prints the text form, since a rule list is no run to summarise.
+    """
     registry = default_registry()
-    kind = "json" if args.format != "text" else "text"
+    kind = "json" if args.format in ("json", "sarif") else "text"
     try:
         if args.version:
             _write_stdout(f"ontolint {package_version()}\n")

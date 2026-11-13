@@ -62,6 +62,7 @@ def _with_stdout_reader_gone(*args: str) -> subprocess.CompletedProcess[str]:
         pytest.param(True, (), id="text-report"),
         pytest.param(True, ("--format", "json"), id="json-report"),
         pytest.param(True, ("--format", "sarif"), id="sarif-report"),
+        pytest.param(True, ("--format", "markdown"), id="markdown-report"),
         pytest.param(False, ("--version",), id="version"),
         pytest.param(False, ("--list-rules",), id="list-rules"),
         pytest.param(False, ("--list-rules", "--format", "json"), id="list-rules-json"),

@@ -2,7 +2,7 @@
 
 > An offline ontology-quality linter for RDF, OWL, SKOS and SHACL. It reads ontology files, reports findings with a rule id, severity, focus, message, suggestion and confidence, and exits 0 (no finding reached --fail-on), 1 (findings) or 2 (tool failure). Python 3.13+, Apache-2.0, on PyPI as `ontolint`. Findings are review prompts, not proofs of inconsistency. The project is Alpha: pin a version.
 
-Install and run: `uv tool install ontolint`, then `ontolint ontology.ttl`. Machine-readable output: `--format json` (key `schema_version`, currently 1) or `--format sarif` (SARIF 2.1.0); `ontolint --list-rules --format json` lists every rule; `ontolint --explain RULE_ID` explains one.
+Install and run: `uv tool install ontolint`, then `ontolint ontology.ttl`. Machine-readable output: `--format json` (key `schema_version`, currently 1) or `--format sarif` (SARIF 2.1.0); `ontolint --list-rules --format json` lists every rule; `ontolint --explain RULE_ID` explains one. For people, `--format markdown` writes a bounded pull-request summary (for `$GITHUB_STEP_SUMMARY`), which is not a parsing contract.
 
 ## Start here
 

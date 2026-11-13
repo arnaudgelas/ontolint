@@ -19,10 +19,10 @@ Status values: **exists** (implemented and tested), **partial** (some of it exis
 | OPS009 | Report ignores or severity overrides that name unknown rules | exists | Unknown `--select`/`--ignore` selectors are errors (`TOOL001`), and so are selectors that name only pipeline rules (the safe-loader refusals, `INPUT001`, `TOOL001`), which no selection changes; unknown or pipeline-rule IDs in the policy file's `ignored_rules` or `severity_overrides` are rejected with `GOV020` (exit 2). |
 | OPS010 | Report a run that exceeds its time or resource budget | partial | `--max-parse-seconds` and the size limits reject an input (`SEC003`, `SEC001`, `SEC002`); `--max-validation-seconds` stops SHACL validation (a `failed` `SHACL001`, exit `2`); the rule families have no time budget. |
 | OPS011 | Per-rule timing in the report | TODO | |
-| OPS012 | Additional report formats (JUnit, Markdown, HTML) | TODO | `text`, `json` and `sarif` exist. |
+| OPS012 | Additional report formats (JUnit, Markdown, HTML) | partial | `text`, `json`, `sarif` and `markdown` exist. `markdown` is a summary of the run for a pull request, not a parsing contract (README "Pull-request summary (Markdown)"). JUnit and HTML are not planned without a consumer; CTRF-REPORT takes JUnit's place (TODO.md). |
 | OPS013 | Aggregated report across several files | exists | Several inputs are linted independently and reported with per-file totals. |
 | OPS014 | Lint only files or lines changed in a git diff | TODO | |
 | OPS015 | Inline suppression with a mandatory reason | TODO | Needs a way to attach a suppression to an RDF term. |
 | OPS016 | Suppressions that expire after a date | TODO | Depends on OPS015. |
 | OPS017 | Result cache keyed by graph content | TODO | |
-| OPS018 | Explain the reasons behind exit code 2 | partial | Failed and unsupported rules are listed in the report with their detail. |
+| OPS018 | Explain the reasons behind exit code 2 | partial | Failed and unsupported rules are listed in the report with their detail. The Markdown summary says that the run exits `2` because N rule runs delivered no verdict, and lists the first 20 of them; the JSON and SARIF reports do not state the reason for the exit code as a whole. |
