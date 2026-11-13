@@ -11,7 +11,13 @@ from hypothesis import strategies as st
 from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
-from ontolint.graph import hierarchy_depths, reachable, strongly_connected_components, transitively_redundant_edges
+from ontolint.graph import (
+    hierarchy_depths,
+    reachable,
+    strongly_connected_components,
+    transitively_redundant_edges,
+    weakly_connected_components,
+)
 from ontolint.ontolint import FIXES, SEVERITY, Linter, main
 from ontolint.rules.classes import _chain_lengths
 
@@ -213,6 +219,23 @@ def test_hierarchy_depths_handles_100k_deep_chain() -> None:
 
     assert depths[0] == size
     assert depths[size - 1] == 1
+
+
+def test_weakly_connected_components_ignore_direction_and_outside_endpoints() -> None:
+    a, b, c, d, e, x = (URIRef(f"https://example.test/{n}") for n in "abcdex")
+    # b and c share a parent; d is linked only through x, which is not a node; e has a self-loop only.
+    edges = {(b, a), (c, a), (d, x), (e, e)}
+    assert weakly_connected_components([e, d, c, b, a], edges) == [{a, b, c}, {d}, {e}]
+    assert weakly_connected_components([a, b, c], {(a, b), (b, c), (c, a)}) == [{a, b, c}]
+    assert weakly_connected_components([], edges) == []
+
+
+def test_weakly_connected_components_handle_100k_deep_chain() -> None:
+    size = 100_000
+    components = weakly_connected_components(range(size), ((i + 1, i) for i in range(size - 1)))
+
+    assert len(components) == 1
+    assert len(components[0]) == size
 
 
 @st.composite

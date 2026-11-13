@@ -65,6 +65,36 @@ def strongly_connected_components[N: Hashable](  # noqa: C901, PLR0912 -- iterat
     return components
 
 
+def weakly_connected_components[N: Hashable](nodes: Iterable[N], edges: Iterable[tuple[N, N]]) -> list[set[N]]:
+    """Return the components of ``nodes`` connected by ``edges`` read in either direction, iteratively.
+
+    Endpoints outside ``nodes`` are ignored, so a node reached only through one connects nothing, and a node
+    with no edge is a component of its own.  Each node is expanded once, so cycles and self-loops end the walk
+    and 100k-deep chains are safe.  Components come in the order of their least node by ``repr``.
+    """
+    node_set = set(nodes)
+    neighbours: dict[N, set[N]] = defaultdict(set)
+    for source, target in edges:
+        if source in node_set and target in node_set:
+            neighbours[source].add(target)
+            neighbours[target].add(source)
+    seen: set[N] = set()
+    components: list[set[N]] = []
+    for root in sorted(node_set, key=repr):
+        if root in seen:
+            continue
+        seen.add(root)
+        component, stack = {root}, [root]
+        while stack:
+            for neighbour in neighbours[stack.pop()]:
+                if neighbour not in seen:
+                    seen.add(neighbour)
+                    component.add(neighbour)
+                    stack.append(neighbour)
+        components.append(component)
+    return components
+
+
 def reachable[N: Hashable](
     adjacency: Mapping[N, Iterable[N]], source: N, target: N, *, ignore: tuple[N, N] | None = None
 ) -> bool:

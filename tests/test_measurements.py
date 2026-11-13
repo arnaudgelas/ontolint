@@ -11,20 +11,23 @@ runs leave the slow tests out.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 from typing import Any
 
 import pytest
 from rdflib import BNode, Graph, URIRef
-from rdflib.namespace import OWL, RDF, SKOS
+from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rule_harness import BASE, graph
 
 from ontolint import main
 from ontolint.context import GraphContext
 from ontolint.engine import build_context
+from ontolint.graph import hierarchy_depths
 from ontolint.policy import Policy
 from ontolint.rules import measurements
+from ontolint.rules import shapes as shapes_rules
 from ontolint.rules.measurements import (
     Absent,
     Count,
@@ -40,6 +43,7 @@ from ontolint.rules.measurements import (
     require,
 )
 from ontolint.rules.runtime import RuleContext
+from ontolint.rules.support import directed_edges
 
 FIXTURES = Path(__file__).parent / "fixtures"
 KITCHEN = FIXTURES / "kitchen_sink.ttl"
@@ -449,3 +453,80 @@ def test_skos_concepts_are_not_in_any_term_population() -> None:
     assert ratio(ctx, "label_language_coverage") == (0, 0)
     assert ratio(ctx, "class_label_coverage") == (0, 0)
     assert SKOS.Concept in ctx.context.subjects_by_type
+
+
+# --- the measurements no rule thresholds ---------------------------------------------------------------------
+
+
+def _depths(turtle: str) -> dict[str, int]:
+    found = measure(_ctx(turtle), "class_depth")
+    assert isinstance(found, TermValues)
+    return {str(k).removeprefix(BASE): v for k, v in found.values.items()}
+
+
+def test_class_depth_counts_the_classes_on_the_longest_chain_from_the_top() -> None:
+    chain = "ex:A a owl:Class . ex:B a owl:Class ; rdfs:subClassOf ex:A . ex:C a owl:Class ; rdfs:subClassOf ex:B ."
+    assert _depths(chain) == {"A": 1, "B": 2, "C": 3}
+    # A diamond takes the longer way down; an external or blank superclass and a self-loop add no level.
+    diamond = chain + (
+        " ex:D a owl:Class ; rdfs:subClassOf ex:A , ex:C , ex:D , <https://other.example/X> , [ a owl:Restriction ] ."
+    )
+    assert _depths(diamond) == {"A": 1, "B": 2, "C": 3, "D": 4}
+    assert _depths("ex:A a owl:Class ; rdfs:subClassOf ex:A .") == {"A": 1}
+    assert _depths("") == {}
+
+
+def test_class_depth_is_0_on_a_subclass_cycle_and_the_cycle_adds_no_level_below_it() -> None:
+    cycle = "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A ."
+    assert _depths(cycle + " ex:C a owl:Class ; rdfs:subClassOf ex:A .") == {"A": 0, "B": 0, "C": 1}
+
+
+def test_the_deepest_class_is_as_deep_as_the_highest_subtree_cls005_measures() -> None:
+    data = Graph().parse(KITCHEN)
+    ctx = build_context(data, None, Policy())
+    found = measure(ctx, "class_depth")
+    assert isinstance(found, TermValues)
+    heights = hierarchy_depths(ctx.classes, directed_edges(data, RDFS.subClassOf, ctx.classes))
+    assert max(found.values.values()) == max(heights.values()) == 6
+    assert sorted(Counter(found.values.values()).items()) == [(0, 2), (1, 22), (2, 4), (3, 2), (4, 1), (5, 1), (6, 1)]
+
+
+def test_hierarchy_components_join_owned_classes_through_subclass_edges_only() -> None:
+    two_trees = (
+        "ex:A a owl:Class . ex:B a owl:Class ; rdfs:subClassOf ex:A . ex:C a owl:Class ; rdfs:subClassOf ex:A ."
+        " ex:D a owl:Class . ex:E a owl:Class ; rdfs:subClassOf ex:D ."
+    )
+    assert count(_ctx(two_trees), "hierarchy_components") == 2
+    # owl:Thing, an external superclass and other links connect nothing; an isolated class is a component.
+    shared = (
+        "owl:Thing a owl:Class . ex:A a owl:Class ; rdfs:subClassOf owl:Thing , <https://other.example/X> ;"
+        " owl:equivalentClass ex:B . ex:B a owl:Class ; rdfs:subClassOf owl:Thing , <https://other.example/X> ."
+    )
+    assert count(_ctx(shared), "hierarchy_components") == 2
+    assert count(_ctx("ex:A a owl:Class ; rdfs:subClassOf ex:A ."), "hierarchy_components") == 1
+    assert count(_ctx(""), "hierarchy_components") == 0
+    assert count(build_context(Graph().parse(KITCHEN), None, Policy()), "hierarchy_components") == 20
+
+
+def test_shacl_class_target_coverage_is_absent_without_shapes_and_counts_reached_owned_classes() -> None:
+    data = "ex:A a owl:Class . ex:B a owl:Class ; rdfs:subClassOf ex:A . ex:C a owl:Class . ex:i a ex:C ."
+    assert measure(_ctx(data), "shacl_class_target_coverage") == Absent("no SHACL shapes graph was supplied")
+    empty = build_context(graph(data), Graph(), Policy())
+    assert ratio(empty, "shacl_class_target_coverage") == (0, 3)
+    shapes = graph("ex:S a sh:NodeShape ; sh:targetClass ex:A , <https://other.example/X> .")
+    found = measure(build_context(graph(data), shapes, Policy()), "shacl_class_target_coverage")
+    assert isinstance(found, TermRatio)
+    # The target reaches A and its subclass B, and an external class, which is not in the population.
+    assert (_names(found.numerator), _names(found.denominator)) == (["A", "B"], ["A", "B", "C"])
+
+
+def test_shq006_reports_the_instantiated_owned_classes_the_shacl_coverage_leaves_out() -> None:
+    shapes = Graph().parse(FIXTURES / "kitchen_shapes.ttl")
+    ctx = build_context(Graph().parse(KITCHEN), shapes, Policy())
+    found = measure(ctx, "shacl_class_target_coverage")
+    assert isinstance(found, TermRatio)
+    assert (len(found.numerator), len(found.denominator)) == (1, 33)
+    with ctx.naming_shapes():
+        shapes_rules.run(ctx)
+    instantiated = {c for c in found.denominator if ctx.context.subjects_by_type.get(c)}
+    assert {f.focus for f in ctx.findings if f.rule == "SHQ006"} == {str(c) for c in instantiated - found.numerator}
