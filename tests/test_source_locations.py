@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import subprocess
 import time
 from pathlib import Path
 
@@ -562,10 +564,16 @@ def test_a_java_jsonld_fixture_is_the_committed_export(fixture: str) -> None:
 @pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
 def test_a_java_jsonld_fixture_has_its_writers_layout(fixture: str) -> None:
     """Checked on the layout, not the bytes, so that a regenerated file is held to what the README describes."""
-    text = (JAVA_JSONLD / fixture).read_text(encoding="utf-8")
+    _assert_writers_layout(fixture, (JAVA_JSONLD / fixture).read_text(encoding="utf-8"))
+
+
+def _assert_writers_layout(fixture: str, text: str) -> None:
+    """The traits of ``fixture``'s writer that the README's table lists; not a full model of its printer."""
     separator, jackson = JAVA_LAYOUTS[fixture], fixture == "pets.jsonld10.jsonld"
     assert separator in text
     assert not any(other in text for other in set(JAVA_LAYOUTS.values()) - {separator})
+    assert "\t" not in text  # indented with spaces only (a raw tab cannot occur inside a JSON string)
+    assert list(json.loads(text)) == ["@graph", "@context"]  # both writers put the context last
     lines = text.splitlines()
     indents = {len(line) - len(line.lstrip(" ")) for line in lines}
     assert {indent % JAVA_INDENTS[fixture] for indent in indents} == {0}
@@ -615,3 +623,38 @@ def test_a_java_jsonld_finding_has_a_region_at_its_focus(capsys: pytest.CaptureF
         assert focus is not None, message
         spelled, _end = json.JSONDecoder().raw_decode(lines[region["startLine"] - 1], region["startColumn"] - 1)
         assert spelled == focus[1], (message, region)
+    # A region is a start position only (no SARIF output has an end); it must sit in the file that was linted.
+    main([str(path), "--format", "sarif", "--fail-on", "never"])
+    results = json.loads(capsys.readouterr().out)["runs"][0]["results"]
+    uris = {r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] for r in results}
+    assert {(Path.cwd() / uri).resolve() for uri in uris} == {path.resolve()}  # relative to the working directory
+    assert not any({"endLine", "endColumn"} & set(r["locations"][0]["physicalLocation"]["region"]) for r in results)
+
+
+def _graph_nodes_by_id(text: str) -> dict[str, object]:
+    """The export as data (its context, and its ``@graph`` nodes by ``@id``), so member and node order do not count."""
+    data = json.loads(text)
+    return {"@context": data["@context"], **{node["@id"]: node for node in data["@graph"]}}
+
+
+@pytest.mark.skipif("ONTOLINT_JENA_HOME" not in os.environ, reason="set ONTOLINT_JENA_HOME to an Apache Jena 4.10.0")
+@pytest.mark.parametrize(
+    ("fixture", "variant"), [("pets.jsonld10.jsonld", "JSONLD10"), ("pets.jsonld11.jsonld", "JSONLD")]
+)
+def test_a_java_jsonld_fixture_is_what_riot_writes_today(fixture: str, variant: str) -> None:
+    """The fixtures' provenance, checkable by anyone with Jena: a fresh export equals the fixture up to order.
+
+    Neither writer reproduces its bytes (member and node order vary between runs), so the bytes are compared
+    as data, and the layout by the same test as the committed file. Not run in CI, which has no Java.
+    """
+    riot = Path(os.environ["ONTOLINT_JENA_HOME"]) / "bin" / "riot"
+    fresh = subprocess.run(  # noqa: S603 -- the maintainer's own Jena, named by ONTOLINT_JENA_HOME
+        [str(riot), f"--formatted={variant}", str(JAVA_JSONLD / "pets.ttl")],
+        capture_output=True,
+        check=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "JENA_HOME": os.environ["ONTOLINT_JENA_HOME"]},
+    ).stdout
+    assert _graph_nodes_by_id(fresh) == _graph_nodes_by_id((JAVA_JSONLD / fixture).read_text(encoding="utf-8"))
+    _assert_writers_layout(fixture, fresh)
