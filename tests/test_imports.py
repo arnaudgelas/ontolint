@@ -553,3 +553,50 @@ def test_only_rdf_files_count_towards_max_imported_files(tmp_path: Path) -> None
     (mirror / "folder.ttl").mkdir()  # a directory with an RDF suffix is not a file
     catalog = index_directory(mirror, Policy(max_imported_files=1))
     assert (set(catalog.entries), catalog.refused) == ({"https://e.test/m"}, ())
+
+
+# --- prefixes ------------------------------------------------------------------------------------
+
+_ALIASED_OWL = """@prefix o: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <https://example.test/onto#> .
+<https://example.test/root> a o:Ontology ; o:imports <https://example.test/other> .
+ex:x a ex:Thing ; ex:size o:Thing .
+"""
+
+
+def _aliased_owl(tmp_path: Path) -> Path:
+    # `o:` names the OWL namespace, which rdflib binds to `owl:` in every new graph.
+    root = tmp_path / "root.ttl"
+    root.write_text(_ALIASED_OWL)
+    (tmp_path / "other.ttl").write_text("<https://example.test/other> a <http://www.w3.org/2002/07/owl#Ontology> .\n")
+    (tmp_path / "catalog-v001.xml").write_text(
+        '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+        '<uri name="https://example.test/other" uri="other.ttl"/></catalog>'
+    )
+    return root
+
+
+def test_the_merged_closure_keeps_the_root_document_prefixes(tmp_path: Path) -> None:
+    root = _aliased_owl(tmp_path)
+    policy = Policy()
+    document = load_document(resolve_inputs([str(root)], tmp_path)[0], policy, tmp_path)
+    catalog = read_catalog(tmp_path / "catalog-v001.xml", policy.max_input_bytes)
+    closure = load_closure(LoadedGraph(document.graph, document.source_index), root, policy, catalog)
+    assert closure.resolved == {"https://example.test/other"}
+    assert sorted(closure.loaded.graph.namespaces()) == sorted(document.graph.namespaces())
+
+
+def test_a_shacl_message_reads_the_same_with_its_imports(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    root = _aliased_owl(tmp_path)
+    shapes = tmp_path / "shapes.ttl"
+    shapes.write_text(
+        "@prefix sh: <http://www.w3.org/ns/shacl#> .\n@prefix ex: <https://example.test/onto#> .\n"
+        "ex:S a sh:NodeShape ; sh:targetClass ex:Thing ; sh:property [ sh:path ex:size ; sh:in ( ex:a ) ] .\n"
+    )
+    messages = []
+    for extra in ((), ("--follow-imports", "--catalog", str(tmp_path / "catalog-v001.xml"))):
+        _, report, _ = _report(capsys, str(root), "--shapes", str(shapes), "--select", "SHACL001", *extra)
+        messages.append([f["message"] for f in _findings(report, "SHACL001")])
+    assert messages[0] == messages[1]
+    assert len(messages[0]) == 1
+    assert "o:Thing" in messages[0][0]
