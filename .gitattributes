@@ -15,5 +15,6 @@ tests/fuzz/regressions/** -text
 
 # Generated or machine-written files: collapse them in diffs and language stats.
 docs/rules.md linguist-generated=true
+docs/rules/*.md linguist-generated=true
 tests/golden/*.json linguist-generated=true
 uv.lock linguist-generated=true -diff
