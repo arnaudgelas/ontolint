@@ -43,9 +43,11 @@ by the line it decorates) and the mutant with the source.
 | `src/ontolint/worker.py` | `receiver, sender = context.Pipe(duplex=False)` | boolean: False to True | The parent only reads `receiver` and the worker only writes `sender`; a duplex pipe offers a direction nothing uses. |
 | `src/ontolint/worker.py` | `process = context.Process(target=_worker_main, args=(sender, task, rdflib_level), daemon=True)` | boolean: True to False | `run_bounded` stops and reaps the worker in `finally`, so `daemon` only matters when the parent dies, which a test of the parent cannot observe. |
 
-A class decorator runs when its module is imported, so every test covers its mutant. pytest-gremlins
-then selects the whole suite, whose unmutated run exceeds the 30 s mutant timeout, and reports
-the mutant as an error that counts against the score, however fast a test would kill it.
+These are the `untestable` pardons of `docs/mutation-policy.md`: observable mutants, pardoned
+because of a tool limitation and until issue #71's expiry (2027-02-13), not because they are
+equivalent. A class decorator runs when its module is imported, so every test covers its mutant.
+pytest-gremlins then selects the whole suite, whose unmutated run exceeds the 30 s mutant timeout,
+and reports the mutant as an error that counts against the score, however fast a test would kill it.
 `test_value_objects_are_frozen` in `tests/test_mutation_pardon_audit.py` kills each of these in
 the normal suite (`frozen` is a contract of these values: they are handed between stages, cached
 or sent to a worker). A frozen decorator without a pardon shows up as such an error; pardon it the
