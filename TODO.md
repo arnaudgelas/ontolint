@@ -83,6 +83,21 @@ Nothing open: 0.11.0 is released (see "Recently done").
       0.3 s on an idle laptop) and stays in the mutation run, where it runs for each mutant no
       narrower test kills (see `docs/mutation-policy.md`): the next hosted mutation run (#19) must
       show that the job still fits its 120-minute timeout.
+  - **MARKDOWN-SUMMARY** (P1; issue #23; the measurement deltas moved to QUALITY-TRENDS, #21):
+    `--format markdown` writes a pull-request summary (`reporting.render_markdown`): the verdict,
+    the counts per severity (new and baselined with `--baseline`, from `RunReport.baselined`), the
+    execution counts, the first 20 rule runs without a verdict, the first 50 findings most severe
+    first with a pointer to SARIF, and the stale-baseline note. Every report text is in a
+    CommonMark code span (`reporting.markdown_code`: mask and clip, invisible characters, every
+    default-ignorable code point included, as escapes, mask again, fence), never in a table; field
+    and list caps keep the widest summary at 482 KB, under 512 KiB. Text, JSON and SARIF do not
+    change. Tests: hostile reports against a benign twin with markdown-it-py
+    as the oracle, the worst-case size, three hash seeds, hostile SKOS labels, SHACL messages and
+    IRIs end to end, the userinfo and SEC014 matrices.
+    - Moved: the measurement deltas wait for a snapshot, so QUALITY-TRENDS (#21) renders them.
+      Left open: one run that writes both SARIF and the summary is GITHUB-ACTION's (#24); the
+      fuzzer does not draw `--format markdown` for a lint run, since that would change the argv of
+      saved CLI cases.
 - Unreleased (after 0.12.0):
   - **PREDICATE-CLOSURE** (P1 audit, issue 15; the LEX002-CLOSURE follow-ups): one cached
     `PropertyClosure` (`rules/runtime.py`) indexes the graph's `rdfs:subPropertyOf` and
@@ -894,9 +909,14 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   A renamed term counts as one removal plus one new term until COMP's rename detection exists; the
   report says so. Measurements whose definition version or population differs between the two
   snapshots are reported as not comparable, each one separately, never silently diffed. This needs
-  no COMP ADR, because it compares measurements, not graphs. *Done when:* a fixture pair with a
-  regression, a dilution and a removal is classified correctly, a snapshot round-trips, and an
-  incompatible pair is refused measurement by measurement.
+  no COMP ADR, because it compares measurements, not graphs. The Markdown summary
+  (`reporting.render_markdown`, MARKDOWN-SUMMARY) shows the four counts and the ratio delta of each
+  measurement when a quality baseline is given, and "not comparable" for the others: this item owns
+  that part of #23, since it defines the snapshot. Each value goes in a code span or a fixed-text
+  table cell, as the summary's other values do, within its size bound. *Done when:* a fixture pair
+  with a regression, a dilution and a removal is classified correctly, a snapshot round-trips, an
+  incompatible pair is refused measurement by measurement, and the Markdown summary shows the
+  split for that pair.
 
 - [ ] **DQV-REPORT: the measurements as W3C DQV.** One `dqv:QualityMeasurement` per value, with
   `dqv:isMeasurementOf` a `dqv:Metric`, `dqv:computedOn` the ontology (its version IRI when it has
@@ -911,10 +931,10 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   assessment that reads DQV) before calling this done. *Done when:* the output parses, lints clean
   with ontolint's own rules, is byte-stable across runs, and the namespace decision is recorded.
 
-- [ ] **MARKDOWN-SUMMARY: a human-readable pull-request summary.** It shows:
+- [x] **MARKDOWN-SUMMARY: a human-readable pull-request summary.** It shows:
   - counts per severity, and new findings against baselined ones;
   - the rules that delivered no verdict, which cause exit 2 (OPS018);
-  - with a quality baseline, the measurement deltas split as above;
+  - with a quality baseline, the measurement deltas split as above (moved to QUALITY-TRENDS, #21);
   - the first findings, with a pointer to the full SARIF.
 
   Messages quote ontology literals, so the renderer escapes Markdown and HTML (a label must not
@@ -922,6 +942,13 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   step summary has a size limit. This is the consumer that OPS012's deferral asked for, for
   Markdown only. *Done when:* escaping is property-tested against hostile labels and the output is
   deterministic.
+
+  Built in 0.14.0 (issue #23, see "Recently done"). The measurement deltas moved to QUALITY-TRENDS
+  (#21), in its text and its *Done when*: there is no snapshot to compare yet (METRICS-ENGINE, then
+  QUALITY-BASELINE and QUALITY-TRENDS, #20 and #21), and rendering deltas before the snapshot exists
+  would fix a format #21 must define. Writing SARIF and the summary in one run, and appending to
+  `$GITHUB_STEP_SUMMARY`, are GITHUB-ACTION's decisions (#24); until then a job runs ontolint once
+  per format.
 
 - [ ] **GITHUB-ACTION: a maintained, version-pinned Action.** This replaces the P2 ADR on
   `--format github` by answering its question: SARIF upload for annotations, which workflow
@@ -934,6 +961,10 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   ruleset already protects that tag. Decide:
   - whether SARIF upload is the Action's job, which needs `security-events: write`, or the
     caller's;
+  - whether one run writes both SARIF and the summary (a flag such as `--markdown-summary FILE`,
+    which appends to the file as `$GITHUB_STEP_SUMMARY` expects), or the Action runs ontolint once
+    per format as `--format markdown` needs today, and what the summary's pointer to SARIF names
+    (the uploaded analysis, or an artifact);
   - whether the ROBOT image is in scope. It is not at first.
 
   The release instructions gain a step that proves the Action at the new tag. `src/ontolint/github.py`
@@ -1146,9 +1177,9 @@ moves from `proposed` merely because it has an attractive title.
   is complete and a source-region accuracy contract is stable; otherwise they hide findings using
   unreliable location data.
 - **More report formats (OPS012):** do not create JUnit or HTML outputs without an identified
-  consumer. JSON and SARIF are the integration contracts to keep sound first. Markdown now has its
-  consumer (MARKDOWN-SUMMARY, P1) and a CI test format is CTRF-REPORT (P2), which takes JUnit's
-  place.
+  consumer. JSON and SARIF are the integration contracts to keep sound first. Markdown had its
+  consumer (MARKDOWN-SUMMARY, P1) and exists since 0.14.0 (`--format markdown`), as a summary for
+  people, not a parsing contract; a CI test format is CTRF-REPORT (P2), which takes JUnit's place.
 - **Automatic fixes (`--fix`):** defer until findings carry structured evidence (SHACL001 does
   since 0.11.0, and every finding names its subject for its baseline identity); only
   round-trip-verified, meaning-preserving edits would ever qualify, and modelling or logical corrections (deleting an
