@@ -18,6 +18,18 @@ Nothing open: 0.11.0 is released (see "Recently done").
 
 ## Recently done
 
+- Unreleased (after 0.13.1):
+  - **LEGAL-PROVENANCE** (P1; issue 18): the maintainer's answers are written down. `NOTICE` names
+    the copyright holder (Copyright 2026 Arnaud Gelas, the `pyproject.toml` author; 2026 is the
+    first commit's year) and ships with `LICENSE` in the sdist and in the wheel's
+    `dist-info/licenses/` (`license-files`, pinned by `tests/test_cli_install.py`). `LICENSE` stays
+    the verbatim licence text, as the ASF does, so its appendix placeholder is not filled in. The
+    README's License section records the logo's origin: an AI image generator (which one is not
+    recorded), added by the maintainer in `84045cc`; it does not ship in either distribution.
+    Checked again: no vendored third-party code, so `NOTICE` carries no attributions (the
+    crosswalks' sources, answered on 2026-11-09, stay in `data/README.md`: identifiers and short
+    smell names only, no copied text; no dependency is copyleft beyond file-level MPL-2.0; the
+    ROBOT jar is downloaded at image build with a pinned checksum).
 - Unreleased (after 0.12.0):
   - **PREDICATE-CLOSURE** (P1 audit, issue 15; the LEX002-CLOSURE follow-ups): one cached
     `PropertyClosure` (`rules/runtime.py`) indexes the graph's `rdfs:subPropertyOf` and
@@ -718,20 +730,6 @@ Validation corpus (public; licences per repository):
   - *Documentation:* `docs/rules.md` shows only each rule's first positive and negative case, so
     the new cases and the specifications are visible only in the source. Render the module
     specifications (or all cases) in the generator.
-
-- [ ] **Close the remaining legal and provenance gaps.** Still open:
-  - the copyright holder for the Apache-2.0 notice (`pyproject.toml` names the author; `LICENSE`
-    names nobody, and there is no `NOTICE` file). The maintainer's decision, not code;
-  - the crosswalk question is answered (2026-11-09, `data/README.md`): neither catalogue states a
-    licence for its text (OOPS!'s software is Apache-2.0, OntoInk's code MIT); the crosswalks
-    reuse only identifiers and, for OntoSniff, one-to-three-word smell names; the OOPS! titles are
-    ontolint's own paraphrases, and no description is copied. `data/README.md` now gives the sources,
-    what is reused and the citations each project asks for. Also checked then: tests hold
-    third-party IRIs only, no copied definitions; no dependency is copyleft beyond file-level
-    MPL-2.0 (certifi, pathspec, hypothesis); the ROBOT jar is downloaded at image build with a
-    pinned checksum, never committed. `logo.png` was added by the maintainer (`84045cc`); its
-    origin is not recorded;
-  *Done when:* the copyright-holder question has a written answer in the repository.
 
 - [ ] **Approve a current mutation baseline before making it blocking.** Existing mutation-policy
   thresholds and pardon-review rules are useful only if a clean GitHub run establishes that the
