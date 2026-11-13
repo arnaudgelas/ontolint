@@ -63,4 +63,5 @@ same way only together with a row here and that test.
   `baseline.py` pragma now covers only its `strict=True`, and the `daemon=True` pragma, which had
   drifted onto a line inserted above it, is back on its line. The audit was made by an AI agent
   (Claude), not by a human reviewer other than the author; the approval the policy requires is
-  the maintainer's review of that pull request.
+  the maintainer's review of that pull request. The same change added two: the `frozen=True` of
+  `GraphContext`, when `context.py` entered the scope, and the run-level `zip` of `cli.py`.
