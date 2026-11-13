@@ -21,7 +21,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from functools import partial
 from pathlib import Path
-from typing import TextIO, cast
+from typing import NamedTuple, TextIO, cast
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
@@ -355,7 +355,8 @@ def _lint_file(
     _definition_hint(item, graph, ctx, findings)
     # Only SARIF renders regions, and the index is computed on first use, so other formats skip it.
     sarif = args.format == "sarif"
-    modules = _file_modules(item, loaded, plan.policy, findings)
+    grouping = _module_grouping(item, loaded, plan.policy)
+    modules = finding_modules(graph, findings, grouping.predicate) if grouping is not None else {}
     executions_sorted = tuple(sorted(executions, key=lambda x: x.rule_id))
     if loaded.modules:
         origins, locations, problem, owners = _module_origins(loaded.modules, graph, findings, sarif)
@@ -442,14 +443,19 @@ def _library_origins(library: PatternLibrary | None, findings: Sequence[Finding]
     return {f: files[f.focus] for f in findings if f.focus in files}
 
 
-def _file_modules(
-    item: InputFile, loaded: LoadedGraph, policy: Policy, findings: Sequence[Finding]
-) -> dict[Finding, tuple[str, ...]]:
-    """The modules inside the file each finding belongs to (``--module-annotation``, ``--module-by``)."""
+class _ModuleGrouping(NamedTuple):
+    """How the terms of one file are grouped into modules (``--module-annotation``, ``--module-by``)."""
+
+    predicate: URIRef | None
+    """The module annotation, or ``None`` to group by namespace."""
+
+
+def _module_grouping(item: InputFile, loaded: LoadedGraph, policy: Policy) -> _ModuleGrouping | None:
+    """How to group the file's findings into modules; ``None`` when they are not grouped (TOOL006 says why)."""
     if policy.module_by == "namespace":
-        return finding_modules(loaded.graph, findings, None)
+        return _ModuleGrouping(None)
     if policy.module_annotation is None:
-        return {}
+        return None
     graph = loaded.graph
     # The file's own declarations win over RDFLib's default bindings.
     prefixes = [
@@ -464,14 +470,14 @@ def _file_modules(
             "declares no such prefix; findings are not grouped by module",
             file=sys.stderr,
         )
-        return {}
+        return None
     if (None, predicate, None) not in graph:
         print(
             f"TOOL006: note: no term in {item.display} carries <{predicate}>; findings are not grouped by module",
             file=sys.stderr,
         )
-        return {}
-    return finding_modules(graph, findings, predicate)
+        return None
+    return _ModuleGrouping(predicate)
 
 
 def _module_origins(
@@ -484,12 +490,12 @@ def _module_origins(
     Also returns the position in ``modules`` of each finding's file.
     """
     located = [module.source_index.for_findings(graph, findings) for module in modules]
-    declared = [frozenset(map(redact_userinfo, module.declared)) for module in modules]  # foci are masked
+    declared = _declared_terms(modules)
     origins: dict[Finding, Origin] = {}
     locations: dict[Finding, Location] = {}
     owners: dict[Finding, int] = {}
     for finding in findings:
-        owner = next((i for i, names in enumerate(declared) if finding.focus in names), None)
+        owner = _declaring_module(declared, finding.focus)
         if owner is None:
             owner = next((i for i, found in enumerate(located) if finding in found), 0)
         owners[finding] = owner
@@ -499,6 +505,16 @@ def _module_origins(
             locations[finding] = located[owner][finding]
     problems = [f"{m.display}: {m.source_index.problem}" for m in modules if sarif and m.source_index.problem]
     return origins, locations, "; ".join(problems) or None, owners
+
+
+def _declared_terms(modules: Sequence[Module]) -> list[frozenset[str]]:
+    """Per file of a closure, the terms it declares, masked as a finding's focus is."""
+    return [frozenset(map(redact_userinfo, module.declared)) for module in modules]
+
+
+def _declaring_module(declared: Sequence[frozenset[str]], term: str) -> int | None:
+    """The position of the first closure file that declares ``term`` (a focus text), if any does."""
+    return next((i for i, names in enumerate(declared) if term in names), None)
 
 
 def _closure_graphs(
