@@ -33,7 +33,8 @@ passwords = st.text("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@:!$&'()*+,;=", min_siz
     lambda p: any(c.isalnum() for c in p)
 )
 rests = st.text(LOWER + "./?#=@:", max_size=16).map(lambda r: "/" + r if r else r)
-texts = st.text(LOWER + " ./:@#?<>\"'\\\n{}|", max_size=40)
+# Digits and signs too: a run of scheme characters may start with them, before its scheme (#55).
+texts = st.text(LOWER + "0123456789+-" + " ./:@#?<>\"'\\\n{}|", max_size=40)
 # Any userinfo an authority can hold: every character but "/ ? #", white space and line breaks included.
 any_userinfo = st.text(
     st.characters(blacklist_characters="/?#", blacklist_categories=("Cs",)), min_size=1, max_size=100
@@ -138,7 +139,9 @@ def test_a_credential_after_any_text_is_masked(text: str, separator: str, scheme
 
 
 fragments = st.lists(
-    st.sampled_from(["https:", "git+https:", "ftp:", "//", "/", "\\", "u:p", "@", "h", " ", "\n", "\t", "?", "#"]),
+    st.sampled_from(
+        ["https:", "git+https:", "ftp:", "//", "/", "\\", "u:p", "@", "h", " ", "\n", "\t", "?", "#", "1", "-"]
+    ),
     max_size=16,
 ).map("".join)
 
@@ -146,6 +149,7 @@ fragments = st.lists(
 @budget()
 @given(fragments, st.lists(st.integers(min_value=0, max_value=40), max_size=6))
 @example("https://alice:Line\nTail@h/x\n", [19])  # a write ends at the userinfo's line break
+@example("1git+https:\n//u:p@h\n", [12])  # a write ends after a scheme whose run starts with a digit (#55)
 def test_the_stream_writes_the_mask_of_all_its_text_however_it_is_split(text: str, cuts: list[int]) -> None:
     target = io.StringIO()
     stream = RedactingStream(target)

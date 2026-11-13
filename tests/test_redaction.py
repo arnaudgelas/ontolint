@@ -81,6 +81,14 @@ def test_the_lenient_forms_of_an_authority_are_masked(text: str, masked: str) ->
         "https://:@h/x",
         '"x"@en',
         "@prefix ex: <https://h/> .",
+        # A run of scheme characters without a letter holds no scheme; one with a letter needs its authority.
+        "123://bob:pw@h/x",
+        "x1https:bob:pw@h/x",
+        "1mailto:bob:pw@example.test",
+        "1urn:x:a:b@c",
+        "-https://h/a@b",
+        "1https://@h/x",
+        "1git+https:/bob:pw@h/x",
     ],
 )
 def test_text_without_a_userinfo_is_unchanged(text: str) -> None:
@@ -232,6 +240,23 @@ def test_the_stream_holds_lines_behind_an_open_authority_in_linear_time() -> Non
     stream.write("/x\n")  # the authority ends: everything held is written
     assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
     assert target.getvalue().startswith("see https://example.test\na note") and target.getvalue().endswith("/x\n")
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["a" * 400_000 + "@", "1" * 400_000 + "@", "-.+1" * 100_000 + "a:"],
+    ids=["scheme-run", "digit-run", "sign-tail"],
+)
+def test_the_stream_scan_is_linear(text: str) -> None:
+    # The stream looks for a scheme at the end of what it holds: anchored like an authority, it never restarts
+    # inside a run of scheme characters.
+    target = io.StringIO()
+    stream = RedactingStream(target)
+    started = time.perf_counter()
+    stream.write(text)
+    stream.drain()
+    assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
+    assert target.getvalue() == text
 
 
 def test_the_stream_still_answers_what_the_wrapped_stream_answers() -> None:
