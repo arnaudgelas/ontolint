@@ -283,7 +283,7 @@ def _definition_hint(item: InputFile, graph: Graph, ctx: RuleContext, findings: 
     masked = {focus for focus in foci if REDACTED_USERINFO in focus}
     undefined = [URIRef(focus) for focus in foci if focus not in masked]
     if masked:  # a masked focus (ontolint.redaction) stands for every term that masks to it
-        subjects = {s for s in graph.subjects(unique=True) if isinstance(s, URIRef)}
+        subjects = {s for s in graph.subjects() if isinstance(s, URIRef)}
         undefined += sorted(s for s in subjects if redact_userinfo(str(s)) in masked)
     counts: dict[URIRef, int] = {}
     for term in undefined:
@@ -966,9 +966,9 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         if any(spec.rule_id in SET_RULES for spec in plan.selection.run)
         else [()] * len(inputs)
     )
-    files = [
-        _lint_file(item, graph, plan, args, found) for item, graph, found in zip(inputs, graphs, shared, strict=True)
-    ]
+    # gremlin: pardon[equivalent] shared holds one entry per input, like graphs, so strict never fires
+    rows = zip(inputs, graphs, shared, strict=True)
+    files = [_lint_file(item, graph, plan, args, found) for item, graph, found in rows]
     files, stale = _apply_baselines(files, args)
     return RunReport(tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale)
 
