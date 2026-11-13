@@ -8,7 +8,10 @@
 No corpus file is committed: ``docs/validation/metric-corpus.json`` names each one by URL, commit and checksum,
 and ``fetch`` refuses a file whose checksum differs.  ``load_manifest`` refuses a manifest that could make the
 script read or write outside DIR (an id that is not a plain file name), an entry that is not pinned or licensed,
-and an id given twice, so a custom manifest is held to the rules the committed one follows.
+and an id given twice, so a custom manifest is held to the rules the committed one follows.  A corpus file
+that is a symbolic link or not a regular file is refused, so neither command reads or writes through one;
+``fetch`` writes by renaming a new file into place, which replaces a link instead of following it, and
+``measure`` lints a private copy of the bytes it verified.
 
 Each file is linted twice with ``--select METRIC``:
 
@@ -31,7 +34,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -210,19 +215,42 @@ def label_status(path: Path = MANIFEST) -> str:
     return str(json.loads(path.read_text(encoding="utf-8"))["label_status"])
 
 
+def _read(directory: Path, entry: Entry) -> bytes | None:
+    """Return the bytes of ``entry``'s file in ``directory``, ``None`` if there is none; refuse a link or a non-file."""
+    target = directory / safe_name(entry.id)
+    try:
+        mode = target.lstat().st_mode
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(mode):
+        raise SystemExit(f"{entry.id}: {target} is a symbolic link or not a regular file; remove it")
+    # O_NOFOLLOW (POSIX) also refuses a link swapped in after the check above.
+    descriptor = os.open(target, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0))
+    with os.fdopen(descriptor, "rb") as handle:
+        return handle.read()
+
+
 def fetch(directory: Path, entries: list[Entry]) -> None:
     """Download every entry into ``directory`` (named by its id) unless a file with its checksum is there."""
     directory.mkdir(parents=True, exist_ok=True)
     for entry in entries:
         target = directory / safe_name(entry.id)
-        if target.is_file() and _sha256(target.read_bytes()) == entry.sha256:
+        current = _read(directory, entry)
+        if current is not None and _sha256(current) == entry.sha256:
             continue
         with urllib.request.urlopen(entry.url, timeout=120) as response:
             body = response.read()
         digest = _sha256(body)
         if digest != entry.sha256:
             raise SystemExit(f"{entry.id}: SHA-256 {digest} differs from the manifest's {entry.sha256} ({entry.url})")
-        target.write_bytes(body)
+        # A new file renamed over the target replaces the directory entry: it never writes through a link.
+        with tempfile.NamedTemporaryFile(dir=directory, prefix=".fetch-", delete=False) as handle:
+            handle.write(body)
+        try:
+            os.replace(handle.name, target)
+        except OSError:
+            Path(handle.name).unlink()
+            raise
         print(f"{entry.id}: {len(body)} bytes", flush=True)
 
 
@@ -276,10 +304,15 @@ def measure(directory: Path, entries: list[Entry]) -> dict[str, Any]:
     with tempfile.TemporaryDirectory() as scratch:
         forced = Path(scratch) / "forced.json"
         forced.write_text(json.dumps(FORCED_POLICY), encoding="utf-8")
+        copies = Path(scratch) / "corpus"  # apart from forced.json, which an entry may be named
+        copies.mkdir()
         for entry in entries:
-            path = directory / safe_name(entry.id)
-            if not path.is_file() or _sha256(path.read_bytes()) != entry.sha256:
+            body = _read(directory, entry)
+            if body is None or _sha256(body) != entry.sha256:
                 raise SystemExit(f"{entry.id}: missing or changed in {directory}; run fetch first")
+            # ontolint reads the copy it is given, so the file it lints is the one whose checksum was checked.
+            path = copies / entry.id
+            path.write_bytes(body)
             fired = _lint(path, None)
             measured = parse_forced(_lint(path, forced))
             for rule in RULES:

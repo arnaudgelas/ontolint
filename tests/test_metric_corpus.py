@@ -353,3 +353,60 @@ def test_fetch_refuses_a_download_whose_checksum_differs(tmp_path: Path, monkeyp
     with pytest.raises(SystemExit, match="differs from the manifest"):
         metric_corpus.fetch(tmp_path, [entry])
     assert not (tmp_path / "x.ttl").exists()
+
+
+def _link(link: Path, target: Path, *, hard: bool = False) -> None:
+    try:
+        link.hardlink_to(target) if hard else link.symlink_to(target)
+    except OSError as error:  # Windows without the symlink privilege, or a file system without links
+        pytest.skip(f"cannot create a link here: {error}")
+
+
+def test_fetch_never_writes_through_a_symbolic_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A link already in DIR, under a valid id, is refused whether or not its target has the manifest's checksum."""
+    outside = tmp_path / "outside.ttl"
+    outside.write_bytes(b"precious")
+    (tmp_path / "corpus").mkdir()
+    _link(tmp_path / "corpus" / "x.ttl", outside)
+    body = b"attacker bytes"
+    monkeypatch.setattr(metric_corpus.urllib.request, "urlopen", _body_response(body))
+    for digest in (metric_corpus._sha256(body), metric_corpus._sha256(b"precious")):
+        entry = metric_corpus.Entry("x.ttl", "https://example.test/x", digest, {})
+        with pytest.raises(SystemExit, match="symbolic link or not a regular file"):
+            metric_corpus.fetch(tmp_path / "corpus", [entry])
+    assert outside.read_bytes() == b"precious"
+
+
+def test_fetch_replaces_a_hard_link_instead_of_writing_through_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    outside = tmp_path / "outside.ttl"
+    outside.write_bytes(b"precious")
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    _link(corpus / "x.ttl", outside, hard=True)
+    body = b"pinned bytes"
+    monkeypatch.setattr(metric_corpus.urllib.request, "urlopen", _body_response(body))
+    metric_corpus.fetch(
+        corpus, [metric_corpus.Entry("x.ttl", "https://example.test/x", metric_corpus._sha256(body), {})]
+    )
+    assert outside.read_bytes() == b"precious"
+    assert (corpus / "x.ttl").read_bytes() == body
+    assert sorted(p.name for p in corpus.iterdir()) == ["x.ttl"], "no temporary file is left behind"
+
+
+def test_measure_never_reads_through_a_symbolic_link(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.ttl"
+    outside.write_text(FIXTURE, encoding="utf-8")
+    (tmp_path / "corpus").mkdir()
+    _link(tmp_path / "corpus" / "x.ttl", outside)
+    entry = metric_corpus.Entry("x.ttl", "https://example.test/x", metric_corpus._sha256(outside.read_bytes()), {})
+    with pytest.raises(SystemExit, match="symbolic link or not a regular file"):
+        metric_corpus.measure(tmp_path / "corpus", [entry])
+
+
+def test_measure_refuses_a_directory_under_an_entrys_name(tmp_path: Path) -> None:
+    (tmp_path / "x.ttl").mkdir()
+    entry = metric_corpus.Entry("x.ttl", "https://example.test/x", "0" * 64, {})
+    with pytest.raises(SystemExit, match="not a regular file"):
+        metric_corpus.measure(tmp_path, [entry])
