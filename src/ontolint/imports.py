@@ -336,9 +336,10 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         catalog if catalog is not None else Catalog(root_path.parent.resolve(), {}), policy, import_dirs
     )
     merged = Graph()
-    for prefix, namespace in root_document.graph.namespaces():  # pySHACL renders nodes with these prefixes
-        # gremlin: pardon[equivalent] the merged graph is new: only rdflib's own default prefixes could clash
-        merged.bind(prefix, namespace, override=False)
+    # pySHACL renders nodes with these prefixes. override=True replaces rdflib's own default bindings, so a
+    # document that names a core namespace with its own prefix (`xs:` for XSD) reads the same with its imports.
+    for prefix, namespace in root_document.graph.namespaces():
+        merged.bind(prefix, namespace, override=True)
     merged += root_document.graph
     root = root_item or resolve_inputs([str(root_path)], Path.cwd())[0]
     walk = _Walk(
