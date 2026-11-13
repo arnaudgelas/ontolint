@@ -15,7 +15,7 @@ from rule_harness import BASE
 from ontolint import engine
 from ontolint.models import Finding
 from ontolint.policy import Policy
-from ontolint.rules import metrics
+from ontolint.rules import measurements, metrics
 
 
 def _run(data: Graph, rule: str, **thresholds: Any) -> list[Finding]:
@@ -39,11 +39,11 @@ def _cls(g: Graph, name: str) -> URIRef:
     [("http://a.test/b#c", "http://a.test/b#"), ("http://a.test/b", "http://a.test/"), ("/a", "/"), ("urn", "urn")],
 )
 def test_namespace_cuts_after_the_last_separator(iri: str, expected: str) -> None:
-    assert metrics._namespace(URIRef(iri)) == expected
+    assert measurements._namespace(URIRef(iri)) == expected
 
 
 def test_hierarchy_is_immutable() -> None:
-    h = metrics._Hierarchy({}, {})
+    h = measurements._Hierarchy({}, {})
     with pytest.raises(FrozenInstanceError):
         h.parents = {}  # type: ignore[misc]
 
