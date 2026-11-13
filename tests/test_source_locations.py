@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import time
@@ -11,6 +12,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from rdflib import Graph, URIRef
+from rdflib.compare import isomorphic
 from timing_support import LINEAR_SCAN_SECONDS
 
 from ontolint import source_locations
@@ -541,12 +543,43 @@ JAVA_LAYOUTS = {"pets.jsonld10.jsonld": '"@id" : ', "pets.jsonld11.jsonld": '"@i
 _FOCUS = re.compile(r"Focus: (\S+)\. Suggestion: ")
 
 
-@pytest.mark.parametrize(("fixture", "separator"), JAVA_LAYOUTS.items(), ids=JAVA_LAYOUTS.keys())
-def test_a_java_jsonld_fixture_keeps_its_writers_layout(fixture: str, separator: str) -> None:
+# The committed bytes (.gitattributes checks them out with LF everywhere). A regeneration changes them, since
+# both writers may order members and nodes differently on each run: update the digest with the files.
+JAVA_DIGESTS = {
+    "pets.jsonld10.jsonld": "015e37d13af4219297d73122c27811871657609082a7e1fefea9acc06fddd275",
+    "pets.jsonld11.jsonld": "6f1d8ceb9db44a7d6a4405f0d33f9faf4dad90055c8f19a2331ac9dc5bfa5841",
+}
+# What each writer's layout looks like (the fixture README's table): indent unit, and Jackson's `[ {` / `}, {`.
+JAVA_INDENTS = {"pets.jsonld10.jsonld": 2, "pets.jsonld11.jsonld": 4}
+
+
+@pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
+def test_a_java_jsonld_fixture_is_the_committed_export(fixture: str) -> None:
     """The fixtures are worth keeping only as written: a reformatted copy no longer tests Jackson's layout."""
+    assert hashlib.sha256((JAVA_JSONLD / fixture).read_bytes()).hexdigest() == JAVA_DIGESTS[fixture]
+
+
+@pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
+def test_a_java_jsonld_fixture_has_its_writers_layout(fixture: str) -> None:
+    """Checked on the layout, not the bytes, so that a regenerated file is held to what the README describes."""
     text = (JAVA_JSONLD / fixture).read_text(encoding="utf-8")
+    separator, jackson = JAVA_LAYOUTS[fixture], fixture == "pets.jsonld10.jsonld"
     assert separator in text
     assert not any(other in text for other in set(JAVA_LAYOUTS.values()) - {separator})
+    lines = text.splitlines()
+    indents = {len(line) - len(line.lstrip(" ")) for line in lines}
+    assert {indent % JAVA_INDENTS[fixture] for indent in indents} == {0}
+    assert JAVA_INDENTS[fixture] in indents
+    assert ("[ {" in text) is jackson
+    assert any(line.strip() == "}, {" for line in lines) is jackson
+    # The other writer's arrays: one value per line, never an object opened on the bracket's line.
+    assert any(line.rstrip().endswith("[") for line in lines) is not jackson
+
+
+@pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
+def test_a_java_jsonld_fixture_is_an_export_of_the_turtle_next_to_it(tmp_path: Path, fixture: str) -> None:
+    exported = _document(tmp_path, "a.jsonld", (JAVA_JSONLD / fixture).read_text(encoding="utf-8")).graph
+    assert isomorphic(exported, Graph().parse(JAVA_JSONLD / "pets.ttl", format="turtle"))
 
 
 @pytest.mark.parametrize("fixture", JAVA_LAYOUTS)
