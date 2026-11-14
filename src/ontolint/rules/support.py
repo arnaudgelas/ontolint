@@ -233,8 +233,8 @@ def term_text(node: Node) -> str:
 def value_text(node: Node) -> str:
     """``node`` for a message as ``str()`` spells it, but a blank node as ``_:label``, as :func:`term_text` does.
 
-    ``RuleContext`` rewrites ``_:label`` to the blank node's stable identity; in the shapes graph it rewrites
-    nothing else, so a shape rule that put a bare label in its message would depend on the parser's labels.
+    ``RuleContext`` rewrites ``_:label`` to the blank node's stable identity and nothing else, in the data graph as
+    in the shapes graph, so a rule that put a bare label in its message would depend on the parser's labels.
     """
     return f"_:{node}" if isinstance(node, BNode) else str(node)
 

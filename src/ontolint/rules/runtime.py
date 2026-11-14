@@ -74,16 +74,16 @@ class PropertyClosure:
 
 
 class _BlankNames:
-    """The stable identities of one graph's blank nodes, and the rewriting of their labels inside messages.
+    """The stable identities of one graph's blank nodes, and the rewriting of their ``_:label`` inside messages.
 
-    With ``bare``, a label is also rewritten without its ``_:`` prefix when it holds a digit (see :meth:`rewrite`);
-    the data-graph rules still spell some blank nodes that way.  Without it, only ``_:label`` is rewritten, so a
-    message never depends on the labels a parser chose.
+    Every rule writes a blank node of its message ``_:label`` (:func:`~ontolint.rules.support.term_text`,
+    :func:`~ontolint.rules.support.value_text`, :func:`~ontolint.rules.support.quoted_text`), and only that
+    spelling is rewritten (see :meth:`rewrite`), so a message never depends on the labels a parser or an API
+    caller chose: neither a label left in it nor a label such as JSON-LD's ``_:2`` rewriting a count or a word.
     """
 
-    def __init__(self, graph: Graph, *, bare: bool) -> None:
+    def __init__(self, graph: Graph) -> None:
         self.graph = graph
-        self.bare = bare
         self._ids: dict[BNode, str] = {}
         self._nodes: dict[str, BNode] | None = None  # label -> node, built on first use
         self._pattern: re.Pattern[str] | None = None
@@ -94,32 +94,31 @@ class _BlankNames:
         return self._ids[node]
 
     def rewrite(self, message: str) -> str:
-        """Replace the graph's parser-assigned blank-node labels inside ``message`` by their stable identity.
+        """Replace each ``_:label`` of a blank node of the graph inside ``message`` by the node's stable identity.
 
-        A label after the ``_:`` prefix is always replaced.  With ``bare``, a label alone is replaced too when it
-        contains a digit, as generated labels do, so a hand-written label such as ``a`` cannot rewrite an ordinary
-        word of the message; JSON-LD keeps document labels, though, and one such as ``_:2`` would rewrite a count.
-        A message that cannot hold a label (no ``_:``, and with ``bare`` no digit either) never builds the pattern
-        (one alternative per blank node of the graph).
+        The labels are those of the nodes in subject or object position; a node used only as a predicate, which
+        RDF does not allow, is left as written.  ``_:label`` is replaced where it is neither preceded nor followed
+        by a word character, ``/``, ``#``, ``:`` or ``-``, nor followed by ``.`` and a word character, so a label
+        inside an IRI or a longer name stays; where labels of several lengths fit, the longest is taken.  A bare
+        label is text, even one that holds a digit.
+
+        Nothing tells ``_:label`` written by a rule from the same text copied into the message from a literal or
+        an IRI (``"_:x"``, ``?q=_:x``) when ``x`` labels a node of the graph: that text is replaced too, as is an
+        identity a rule wrote itself (``_:`` and 12 hex digits) when a label of the graph is those 12 digits.
+        A message without ``_:`` never builds the pattern (one alternative per blank node of the graph).
         """
-        if "_:" not in message and not (self.bare and any(c.isdigit() for c in message)):
+        if "_:" not in message:
             return message
         if self._nodes is None:
             self._nodes = {str(n): n for t in self.graph for n in (t[0], t[2]) if isinstance(n, BNode)}
             labels = sorted(self._nodes, key=lambda label: (-len(label), label))
-            bare = [label for label in labels if any(c.isdigit() for c in label)] if self.bare else []
             if labels:
-                prefixed = "|".join(re.escape(label) for label in labels)
-                alone = "|".join(re.escape(label) for label in bare) or "(?!)"
-                self._pattern = re.compile(
-                    rf"(?<![\w/#:-])(?:_:(?P<prefixed>{prefixed})|(?P<bare>{alone}))(?![\w/#:-]|\.\w)"
-                )
+                alternatives = "|".join(re.escape(label) for label in labels)
+                self._pattern = re.compile(rf"(?<![\w/#:-])_:({alternatives})(?![\w/#:-]|\.\w)")
         if self._pattern is None:
             return message
         nodes = self._nodes
-        return self._pattern.sub(
-            lambda match: self.identity(nodes[match.group("prefixed") or match.group("bare")]), message
-        )
+        return self._pattern.sub(lambda match: self.identity(nodes[match.group(1)]), message)
 
 
 class RuleContext:
@@ -137,10 +136,10 @@ class RuleContext:
         self.seen: set[tuple[str, str, str]] = set()
         self._emitted: dict[tuple[str, str, str], int] = {}  # each seen key's position in ``findings``
         # Blank nodes are named by their content in the graph the running rules report on: the data graph,
-        # or the shapes graph inside :meth:`naming_shapes`.  The shape rules spell every blank node of a message
-        # ``_:label`` (:func:`~ontolint.rules.support.value_text`), so only those are rewritten there.
-        self._data_names = _BlankNames(graph, bare=True)
-        self._shape_names = _BlankNames(shapes, bare=False) if shapes is not None else None
+        # or the shapes graph inside :meth:`naming_shapes`.  Every rule spells a blank node of a message ``_:label``
+        # (:func:`~ontolint.rules.support.value_text`), and only that spelling is rewritten, in either graph.
+        self._data_names = _BlankNames(graph)
+        self._shape_names = _BlankNames(shapes) if shapes is not None else None
         self._names = self._data_names
         # The configured definition and label predicates, then every IRI below one of them (sorted).
         # ``labels`` says whether a term has a label and which values are judged as labels;
@@ -215,6 +214,10 @@ class RuleContext:
 
         Focus, message, related terms and subject are masked (:func:`~ontolint.redaction.redact_userinfo`) before
         duplicates are removed, so IRIs that differ only in their userinfo give one finding.
+
+        A blank node in ``message`` is written ``_:label`` (:func:`~ontolint.rules.support.value_text`), which is
+        replaced by the node's stable identity when the node is a subject or an object of the graph the running
+        rules report on; a bare label is left as text (see ``_BlankNames.rewrite``).
 
         ``related`` names the other terms a finding is about (the rest of a collision); they place the
         finding in every module involved (``--module-by``) and never change its identity or text.

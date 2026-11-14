@@ -122,6 +122,7 @@ def _relabelled(data: Graph, scheme: Callable[[int], str]) -> Graph:
 
 SCHEMES: dict[str, Callable[[int], str]] = {
     "letters": lambda i: "abcdefg"[i % 7] * (1 + i // 7),
+    "digits": str,
     "json-ld": lambda i: f"b{i}",
 }
 
@@ -145,7 +146,8 @@ def test_every_blank_value_count_and_literal_in_a_data_message_is_spelled_as_exp
 @pytest.mark.parametrize("scheme", sorted(SCHEMES))
 def test_data_findings_do_not_depend_on_the_labels_of_blank_nodes(scheme: str) -> None:
     # Letters (``a``) were left raw in OWL008, OWL014, OWL021, OWL024-OWL027, OWL029, GOV001, GOV002, SKOS002,
-    # SKOS006, SKOS013, OBO011 and DATA002.
+    # SKOS006, SKOS013, OBO011 and DATA002; digits (``2``) rewrote the counts of ONT002 and LEX003, the literal of
+    # OWL013 and the "OWL 2" of DATA004.
     data = graph(FAULTS)
     expected = _exact(_relabelled(data, _reference), FAULT_RULES)
     assert _exact(_relabelled(data, SCHEMES[scheme]), FAULT_RULES) == expected
@@ -157,13 +159,63 @@ def _json_ld(document: object, path: Path) -> Graph:
     return load_graph(resolve_inputs([path.name], path.parent)[0], Policy(), path.parent)
 
 
-def _alt_label(label: str, value: str = "v") -> dict[str, object]:
+def _alt_label(label: str) -> dict[str, object]:
     """A JSON-LD concept whose skos:altLabel is the blank node ``label``, which has one property."""
     return {
         "@id": BASE + "C",
         str(SKOS.altLabel): {"@id": label},
-        "@included": [{"@id": label, BASE + "p": value}],
+        "@included": [{"@id": label, BASE + "p": "v"}],
     }
+
+
+def _messages(data: Graph, rules: list[str]) -> list[str]:
+    return [message for _rule, _severity, _focus, message, _subject, _related in _exact(data, rules)]
+
+
+@pytest.mark.parametrize("label", ["_:x", "_:2", "_:b0"])
+def test_a_label_elsewhere_in_a_json_ld_file_does_not_rewrite_a_count(label: str, tmp_path: Path) -> None:
+    document = [
+        {"@id": "https://example.test/a", "@type": str(OWL.Ontology)},
+        {"@id": "https://example.test/b", "@type": str(OWL.Ontology)},
+        {"@id": label, BASE + "p": "v"},
+    ]
+    data = _json_ld(document, tmp_path / "data.jsonld")
+    assert BNode(label.removeprefix("_:")) in set(data.subjects())
+    assert _messages(data, ["ONT002"]) == ["2 owl:Ontology declarations found."]
+
+
+def test_a_digit_label_rewrites_neither_a_literal_nor_an_iri_nor_the_wording() -> None:
+    # Bare rewriting replaced the ``2`` of ``"2"^^xsd:integer``, of ``ex:q=2`` and of "OWL 2" by a node identity.
+    data = graph(
+        "ex:n a owl:ObjectProperty . ex:i ex:n 2 . <https://example.test/onto#q=2> a owl:ObjectProperty .\n"
+        "ex:i <https://example.test/onto#q=2> 'v' . ex:R a owl:Restriction ; owl:onDatatype xsd:gYear .\n"
+    )
+    data.add((BNode("2"), URIRef(BASE + "v"), Literal("v")))
+    assert _messages(data, ["DATA004", "OWL013"]) == [
+        "xsd:gYear (used as owl:onDatatype) is not in the OWL 2 datatype map, so OWL 2 DL tools reject it; "
+        "xsd:dateTime is.",
+        f'Object property {BASE}n points to literal "2"^^<http://www.w3.org/2001/XMLSchema#integer>.',
+        f'Object property {BASE}q=2 points to literal "v".',
+    ]
+
+
+def test_a_label_copied_from_a_literal_or_an_iri_is_the_known_residual() -> None:
+    # Documented limit (``_BlankNames.rewrite``): ``_:x`` written in a literal or an IRI is read as the blank node
+    # ``x`` when the graph has one, unless a word character, ``/``, ``#``, ``:`` or ``-`` touches it.
+    data = graph(
+        "ex:n a owl:ObjectProperty . ex:i ex:n '_:x' . ex:L a owl:Class ; rdfs:label ' see _:x here' .\n"
+        "<https://example.test/onto?q=_:x> a owl:ObjectProperty . ex:i <https://example.test/onto?q=_:x> 'v' .\n"
+        "<https://example.test/onto#_:x> a owl:ObjectProperty . ex:i <https://example.test/onto#_:x> 'v' .\n"
+    )
+    x = BNode("x")
+    data.add((x, URIRef(BASE + "v"), Literal("v")))
+    identity = stable_blank_id(data, x)
+    assert _messages(data, ["LEX005", "OWL013"]) == [
+        f"Blank or padded label: ' see {identity} here'.",
+        f'Object property {BASE}_:x points to literal "v".',
+        f'Object property {BASE}n points to literal "{identity}".',
+        f'Object property https://example.test/onto?q={identity} points to literal "v".',
+    ]
 
 
 @pytest.mark.parametrize("label", ["_:a", "_:2", "_:b1"])
@@ -187,7 +239,7 @@ def test_a_quoted_blank_value_is_its_whole_identity_whatever_its_label(label: st
     document[str(SKOS.prefLabel)] = {"@id": label}
     data = _json_ld(document, tmp_path / "data.jsonld")
     identity = stable_blank_id(data, BNode(label.removeprefix("_:")))
-    assert [message for _r, _s, _f, message, _subject, _related in _exact(data, ["SKOS002", "SKOS013"])] == [
+    assert _messages(data, ["SKOS002", "SKOS013"]) == [
         f"Literal '{identity}' (no language) appears in skos:prefLabel and skos:altLabel.",
         f"skos:altLabel value '{identity}' is not a string literal.",
         f"skos:prefLabel value '{identity}' is not a string literal.",
@@ -196,7 +248,7 @@ def test_a_quoted_blank_value_is_its_whole_identity_whatever_its_label(label: st
 
 def test_a_quoted_literal_is_still_cut_and_quoted_by_python() -> None:
     data = graph(f"ex:C skos:altLabel '{'y' * 80}'^^xsd:integer , \"it's\"^^xsd:integer .")
-    assert sorted(message for _r, _s, _f, message, _subject, _related in _exact(data, ["SKOS013"])) == [
+    assert _messages(data, ["SKOS013"]) == [
         'skos:altLabel value "it\'s" is not a string literal.',
         f"skos:altLabel value '{'y' * 60}' is not a string literal.",
     ]
@@ -348,8 +400,7 @@ def test_a_blank_property_of_an_api_graph_is_named_by_its_identity(case: str, la
     # A blank property is not RDF, but rdflib accepts one; a label holding a digit was rewritten, ``pa`` stayed.
     build, rule, template = API_CASES[case]
     data = build(BNode(label))
-    messages = [message for found, _s, _f, message, _subject, _related in _exact(data, [rule]) if found == rule]
-    assert messages == [template.format(p=stable_blank_id(data, BNode(label)))]
+    assert _messages(data, [rule]) == [template.format(p=stable_blank_id(data, BNode(label)))]
 
 
 def test_a_blank_range_whose_label_spells_an_xsd_iri_is_named_by_its_identity() -> None:
@@ -358,5 +409,16 @@ def test_a_blank_range_whose_label_spells_an_xsd_iri_is_named_by_its_identity() 
     data.add((p, RDF.type, OWL.DatatypeProperty))
     data.add((p, RDFS.range, datatype))
     data.add((SOURCE, p, Literal(True)))
-    ((_rule, _severity, _focus, message, _subject, _related),) = _exact(data, ["DATA001"])
-    assert message == f"{p} has range {stable_blank_id(data, datatype)} but value has datatype {XSD.boolean}."
+    assert _messages(data, ["DATA001"]) == [
+        f"{p} has range {stable_blank_id(data, datatype)} but value has datatype {XSD.boolean}."
+    ]
+
+
+def test_a_blank_node_used_only_as_a_predicate_keeps_its_label() -> None:
+    # Documented limit (``_BlankNames.rewrite``): only subjects and objects are looked up, as RDF has no blank
+    # predicate; such a node has no content to be named by either.
+    data = Graph()
+    data.add((SOURCE, BNode("pa"), Literal("a" + chr(0x202E) + "b")))
+    assert _messages(data, ["SEC012"]) == [
+        "Literal on _:pa contains control or bidirectional-override characters (U+202E)."
+    ]
