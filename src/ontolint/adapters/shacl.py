@@ -284,10 +284,17 @@ def _results(report: Graph) -> set[Node]:
     """The validation results of ``report``: the ``sh:result`` values of its ``sh:ValidationReport`` (SHACL 3.6.1.2).
 
     A result nested with ``sh:detail`` explains another (SHACL 3.5, 4.7.1) and is only that result's evidence,
-    although pySHACL types it ``sh:ValidationResult`` too.  A report that links no result (never pySHACL's) falls
-    back to every node typed ``sh:ValidationResult``.
+    although pySHACL types it ``sh:ValidationResult`` too.  Only a report node that is the object of no triple is
+    read: pySHACL copies into the report every triple reachable from a blank ``sh:value`` or ``sh:focusNode``,
+    so a data value shaped like a report (always the object of the triple that holds it) must not add findings.
+    A report that links no result (never pySHACL's) falls back to every node typed ``sh:ValidationResult``.
     """
-    listed = {r for node in report.subjects(RDF.type, SH.ValidationReport) for r in report.objects(node, SH.result)}
+    listed = {
+        r
+        for node in report.subjects(RDF.type, SH.ValidationReport)
+        if (None, None, node) not in report
+        for r in report.objects(node, SH.result)
+    }
     return listed or set(report.subjects(RDF.type, SH.ValidationResult))
 
 

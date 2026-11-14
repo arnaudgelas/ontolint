@@ -15,7 +15,9 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   ``detail``, the linted file mentions, as a subject or an object) is validated with
   ``inference="none"``, ``advanced=True``, ``meta_shacl=True``, with the network disabled (a socket or DNS attempt,
   even one pySHACL catches, makes the rule ``failed``).  One finding per value of the report's ``sh:result``
-  (SHACL 3.6.1.2), or per typed ``sh:ValidationResult`` when the report links none, focused on
+  (SHACL 3.6.1.2) of the report node that is the object of no triple (a blank data value shaped like a report,
+  which pySHACL copies into its report, adds no finding), or per typed ``sh:ValidationResult`` when the report
+  links none, focused on
   its ``sh:focusNode`` (a blank node by its content-stable id), with the result messages joined by ``; `` and
   ``[shape: <source shape>]``.  The severity is that result's, so for an ``sh:node`` violation its referencing
   shape's: ``sh:Violation`` error, ``sh:Warning`` warning,
