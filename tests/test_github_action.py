@@ -9,6 +9,7 @@ hand the child process the caller's secrets, or write outside the workspace.
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -16,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -86,38 +88,128 @@ def test_only_an_exact_release_version_is_installed(tmp_path: Path, version: str
         entrypoint.pinned_version(tmp_path)
 
 
-def test_ontolint_is_installed_from_the_index_by_exact_version_without_its_dependencies() -> None:
-    argv = entrypoint.install_command("uv", "/venv/bin/python", "1.2.3")
-    assert argv == [
+def _pypi(version: str, wheel: bytes, **changes: object) -> Callable[[str], bytes]:
+    """A stand-in for the network: PyPI's JSON for ``version`` and the wheel it lists."""
+    name = f"ontolint-{version}-py3-none-any.whl"
+    url = f"https://files.pythonhosted.org/packages/ab/cd/{name}"
+    entry = {
+        "filename": name,
+        "packagetype": "bdist_wheel",
+        "url": url,
+        "digests": {"sha256": hashlib.sha256(wheel).hexdigest()},
+    } | changes
+    page = json.dumps({"urls": [entry]}).encode()
+    return lambda requested: {entrypoint.PYPI_JSON.format(version=version): page, url: wheel}[requested]
+
+
+def test_the_wheel_is_downloaded_from_pypi_and_checked_against_the_digest_it_lists(tmp_path: Path) -> None:
+    path = entrypoint.release_wheel("1.2.3", tmp_path, _pypi("1.2.3", b"wheel bytes"))
+    assert path == tmp_path / "ontolint-1.2.3-py3-none-any.whl"
+    assert path.read_bytes() == b"wheel bytes"
+
+
+def test_a_wheel_that_differs_from_the_listed_digest_is_refused(tmp_path: Path) -> None:
+    fetch = _pypi("1.2.3", b"wheel bytes", digests={"sha256": "0" * 64})
+    with pytest.raises(entrypoint.InputError, match="does not match the sha256"):
+        entrypoint.release_wheel("1.2.3", tmp_path, fetch)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        ({"url": "https://evil.test/ontolint-1.2.3-py3-none-any.whl"}, "not from https://files.pythonhosted.org/"),
+        ({"packagetype": "sdist"}, "expected exactly one"),
+        ({"filename": "ontolint-1.2.3-cp313-cp313-linux_x86_64.whl"}, "expected exactly one"),
+    ],
+)
+def test_only_the_universal_wheel_on_the_pypi_file_host_is_taken(tmp_path: Path, changes: dict, message: str) -> None:
+    with pytest.raises(entrypoint.InputError, match=re.escape(message)):
+        entrypoint.release_wheel("1.2.3", tmp_path, _pypi("1.2.3", b"x", **changes))
+
+
+def test_the_attestation_must_name_this_repository_and_the_file_that_is_installed(tmp_path: Path) -> None:
+    wheel = tmp_path / "ontolint-1.2.3-py3-none-any.whl"
+    assert entrypoint.verify_command("/v/pypi-attestations", wheel) == [
+        "/v/pypi-attestations",
+        "verify",
+        "pypi",
+        "--repository",
+        "https://github.com/arnaudgelas/ontolint",
+        str(wheel),
+    ]
+    assert entrypoint.install_command("uv", "/venv/bin/python", wheel) == [
         "uv",
         "pip",
         "install",
         "--python",
         "/venv/bin/python",
-        "--default-index",
-        "https://pypi.org/simple",
         "--no-deps",
-        "--only-binary",
-        ":all:",
-        "ontolint==1.2.3",
+        "--no-index",
+        str(wheel),
     ]
 
 
-def test_dependencies_come_from_the_hash_locked_file_and_it_matches_the_lock() -> None:
+def _install(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, verify_code: int) -> tuple[int, list[list[str]]]:
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    monkeypatch.setattr(entrypoint, "_fetch", _pypi(VERSION, b"wheel bytes"))
+    ran: list[list[str]] = []
+
+    def run(argv: list[str]) -> int:
+        ran.append(list(argv))
+        return verify_code if "verify" in argv else 0
+
+    return entrypoint.install(ROOT, "/venv/bin/python", "/v/pypi-attestations", run), ran
+
+
+def test_the_wheel_is_installed_only_after_its_attestation_verified_and_from_the_verified_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    code, ran = _install(tmp_path, monkeypatch, 0)
+    assert code == 0
+    assert [argv[1] for argv in ran] == ["verify", "pip"]
+    assert ran[0][-1] == ran[1][-1]  # the file checked is the file installed
+    assert ran[1][-1].endswith(f"ontolint-{VERSION}-py3-none-any.whl")
+
+
+def test_a_wheel_whose_attestation_does_not_verify_is_never_installed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, ran = _install(tmp_path, monkeypatch, 1)
+    assert code == 1
+    assert [argv[1] for argv in ran] == ["verify"]
+    assert "::error::ontolint action: the PyPI attestation of ontolint-" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("file", "selection", "excluded"),
+    [
+        ("requirements.txt", ["--no-dev"], "ontolint"),
+        ("verify-requirements.txt", ["--only-group", "release"], "pypi-attestations"),
+    ],
+)
+def test_dependencies_come_from_the_hash_locked_files_and_they_match_the_lock(
+    file: str, selection: list[str], excluded: str
+) -> None:
     if shutil.which("uv") is None:
         pytest.skip("uv is not installed")
     exported = subprocess.run(  # noqa: S603 -- fixed argv.
-        ["uv", "export", "--frozen", "--no-dev", "--no-emit-project", "--format", "requirements-txt", "--no-header"],  # noqa: S607
+        ["uv", "export", "--frozen", *selection, "--no-emit-project", "--format", "requirements-txt", "--no-header"],  # noqa: S607
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=True,
     ).stdout
-    assert (ROOT / "action" / "requirements.txt").read_text() == exported
+    assert (ROOT / "action" / file).read_text() == exported
     assert "--hash=sha256:" in exported
-    assert not [line for line in exported.splitlines() if line.startswith("ontolint")], (
-        "the project itself is not in it"
-    )
+    # Every requirement line carries hashes, so --require-hashes accepts the file.
+    hashed = r"^[A-Za-z][^\n]*==[^\n]*\\\n(?:    --hash=sha256:[0-9a-f]{64}(?: \\)?\n)+"
+    entries = re.findall(hashed, exported, re.MULTILINE)
+    assert len(entries) == len(re.findall(r"^[A-Za-z][^\n]*==", exported, re.MULTILINE))
+    if excluded == "ontolint":
+        assert not [line for line in exported.splitlines() if line.startswith("ontolint")], "not the project itself"
+    else:
+        assert exported.count(f"\n{excluded}==") + exported.startswith(f"{excluded}==") == 1
 
 
 # -- the inputs ----------------------------------------------------------------------------------
@@ -365,19 +457,29 @@ def test_main_refuses_an_unknown_command(capsys: pytest.CaptureFixture[str]) -> 
     assert "usage" in capsys.readouterr().err
 
 
-def test_main_install_runs_the_exact_install_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    ran: list[list[str]] = []
-    monkeypatch.setattr(entrypoint, "_run", lambda argv: ran.append(argv) or 0)
+def test_main_install_needs_the_verifier(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     monkeypatch.setenv("ONTOLINT_ACTION_ROOT", str(ROOT))
-    assert entrypoint.main(["install"]) == 0
-    assert ran[0][-1] == f"ontolint=={VERSION}"
-    assert ran[0][:3] == ["uv", "pip", "install"]
+    monkeypatch.delenv("ONTOLINT_VERIFIER", raising=False)
+    assert entrypoint.main(["install"]) == 2
+    assert "ONTOLINT_VERIFIER" in capsys.readouterr().out
 
 
-def test_main_install_stops_at_the_installer_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(entrypoint, "_run", lambda argv: 7)
+def test_main_install_reports_a_network_failure_as_an_error_annotation(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def down(url: str) -> bytes:
+        raise OSError("network is down")
+
+    monkeypatch.setattr(entrypoint, "_fetch", down)
     monkeypatch.setenv("ONTOLINT_ACTION_ROOT", str(ROOT))
-    assert entrypoint.main(["install"]) == 7
+    monkeypatch.setenv("ONTOLINT_VERIFIER", "/v/pypi-attestations")
+    assert entrypoint.main(["install"]) == 2
+    assert capsys.readouterr().out.startswith("::error::ontolint action: network is down")
+
+
+def test_fetch_refuses_a_url_that_is_not_https() -> None:
+    with pytest.raises(entrypoint.InputError, match="not https"):
+        entrypoint._fetch("http://pypi.org/pypi/ontolint/1.2.3/json")
 
 
 # -- the definition ------------------------------------------------------------------------------
@@ -443,6 +545,8 @@ def test_the_action_asks_for_no_secret_and_echoes_none() -> None:
 def test_the_action_never_installs_the_latest_or_from_anywhere_but_the_lock_and_the_pin() -> None:
     assert "--require-hashes" in ACTION
     assert "action/requirements.txt" in ACTION
+    assert "action/verify-requirements.txt" in ACTION
+    assert "ONTOLINT_VERIFIER" in ACTION
     assert "--upgrade" not in ACTION
     assert "git+" not in ACTION
     assert "@latest" not in ACTION
