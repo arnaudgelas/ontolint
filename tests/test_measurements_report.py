@@ -7,7 +7,7 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +18,7 @@ from test_differential import CLI_CASES, _fake_robot
 
 from ontolint import main
 from ontolint.engine import build_context
-from ontolint.models import Measurement, MeasurementKind
+from ontolint.models import Measurement, MeasurementKind, MeasurementPartition
 from ontolint.policy import Policy
 from ontolint.reporting import FileReport, RunReport, to_json
 from ontolint.rules import measurements, metrics
@@ -368,6 +368,15 @@ def test_a_record_emits_only_the_fields_it_has() -> None:
         "m", 2, MeasurementKind.RATIO, "p", numerator=1, denominator=1, by_namespace=(("https://a:b@x.test/", 1),)
     )
     assert masked.by_namespace == (("https://****@x.test/", 1),)
+
+
+def test_records_are_immutable() -> None:
+    # A record masks its reason and namespaces once, in __post_init__; nothing may change it afterwards.
+    record = Measurement("m", 1, MeasurementKind.COUNT, "p", value=0)
+    partition = MeasurementPartition("file", "o.ttl", None, (record,))
+    for value, name in ((record, "reason"), (partition, "name")):
+        with pytest.raises(FrozenInstanceError):
+            setattr(value, name, "https://a:b@x.test/")
 
 
 # --- the documentation --------------------------------------------------------------------------------------------
