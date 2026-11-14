@@ -227,8 +227,8 @@ def test_the_vector_does_not_depend_on_metric_thresholds(tmp_path: Path, capsys:
 
 @pytest.mark.parametrize(
     "argv",
-    [[KITCHEN], [KITCHEN, "--format", "text"], [KITCHEN, "--format", "sarif"]],
-    ids=["default", "text", "sarif"],
+    [[KITCHEN], [KITCHEN, "--format", "text"], [KITCHEN, "--format", "sarif"], [KITCHEN, "--format", "markdown"]],
+    ids=["default", "text", "sarif", "markdown"],
 )
 def test_the_flag_needs_the_json_format(argv: list[str], capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as raised:
