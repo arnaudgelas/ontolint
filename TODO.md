@@ -72,7 +72,7 @@ Nothing open: 0.11.0 is released (see "Recently done").
       files give the 0.10.2 results, report and finding order change no count, and against a copy
       of the 0.13.1 `apply` nothing is accepted that was not, and the stale entries are equal).
       `tests/golden/identities.json` pins the rule, focus, subject and identity of the 778
-      positive graph cases and of 14 SHACL001 shape and data pairs (807 findings), so a subject
+      positive graph cases and of 14 SHACL001 shape and data pairs (806 findings), so a subject
       refinement, or a pySHACL upgrade that changes a SHACL001 subject, shows in review
       (`docs/adding-rules.md`); probe cases (SEM001, INPUT001, TOOL001) are not pinned.
     - Measured: 16 of the new tests fail on `main` (the CLI reproduction exits 0 with no new
