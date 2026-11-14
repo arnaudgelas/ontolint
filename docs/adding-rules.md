@@ -30,6 +30,10 @@ guarantees that proposed rules are never reported as executed.
      `tests/test_subject_contract.py` fails for an add site with a computed message, or of a rule
      with several add sites, that does not pass `subject=`.
      `subject=()` says that the rule reports at most one finding per focus.
+     In `message`, write a term that may be a blank node with `term_text` (an RDF term),
+     `value_text` (as `str()` would, but a blank node `_:label`) or `quoted_text` (a quoted value),
+     never with `{node}` or `str(node)`: `RuleContext` rewrites only `_:label` to the node's stable
+     identity, so a bare label would leave the parser's own label in the message.
      Use `ctx.context` (pre-built indexes), `ctx.classes`, `ctx.local(...)`, and helpers in
      `rules/support.py`; do not re-scan the graph per term.
    * Import `RuleContext` under `if TYPE_CHECKING:` (the module must not import `runtime` at run
@@ -65,6 +69,10 @@ guarantees that proposed rules are never reported as executed.
    }
    ```
 
+   A rule whose message names a value that may be a blank node needs a positive case where it is one
+   (`ex:p rdfs:range [ ... ]`): `tests/test_rule_cases.py` runs every case with every rule and fails
+   when a message holds a parser's blank-node label, but only for the messages a case reaches.
+
    Use `built(...)` for inputs Turtle cannot express, `with_shapes(...)` for shape rules,
    `probed(...)` for adapter/CLI rules, and `threshold_cases(option, limit, factory)` for any
    `> limit` policy threshold (it emits the at-limit negative and limit+1 positive).  Odd inputs
@@ -86,7 +94,7 @@ guarantees that proposed rules are never reported as executed.
 | Test | Guarantees |
 | --- | --- |
 | `test_rule_modules.py` | module list consistent (`validate_modules`), each module emits only its own `SPECS`, catalogue status matches registration, proposed rules are never reported as executed |
-| `test_rule_cases.py` | every implemented rule has positive and negative cases, positives fire exactly the rule, negatives do not, no rule module crashes on odd inputs, large hierarchies do not recurse |
+| `test_rule_cases.py` | every implemented rule has positive and negative cases, positives fire exactly the rule, negatives do not, no message prints a parser's blank-node label, no rule module crashes on odd inputs, large hierarchies do not recurse |
 | `test_registry.py` | reachability of every graph rule, spec/catalogue field agreement, execution-status semantics |
 | `test_subject_contract.py` | every add site that needs a `subject=` passes one, and no two findings of a corpus or random run share rule, focus and subject |
 | `test_rule_docs.py` | the rule reference is current, lists every catalogue rule, and shows every case and every specification bullet under each rule it names; no page exceeds 500,000 bytes |
