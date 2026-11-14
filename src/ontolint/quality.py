@@ -486,7 +486,7 @@ def render_text(comparison: Comparison) -> str:
         if r.reasons or r.before is None or r.after is None:  # a compared result has both sides
             lines.append(f"{r.id}: not comparable: {'; '.join(r.reasons)}")
             continue
-        lines.append(f"{r.id}: {_show(r.before)} -> {_show(r.after)}{_delta_text(r)}")
+        lines.append(f"{r.id}: {show(r.before)} -> {show(r.after)}{_delta_text(r)}")
         if r.change is not None:
             counts = r.change.counts()
             lines.append("  " + ", ".join(f"{name.replace('_', ' ')} {counts[name]}" for name in CHANGES))
@@ -494,7 +494,7 @@ def render_text(comparison: Comparison) -> str:
     return "\n".join(lines)
 
 
-def _show(m: Measurement) -> str:
+def show(m: Measurement) -> str:
     if m.kind is MeasurementKind.RATIO:
         return f"{m.numerator}/{m.denominator}"
     if m.kind is MeasurementKind.COUNT:

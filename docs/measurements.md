@@ -42,7 +42,8 @@ The engine is `src/ontolint/rules/measurements.py`; the METRIC specification at 
   `OWL005` and `OWL006` both report, and `SHQ006` reports the instantiated owned classes outside the
   SHACL coverage.
 - Which terms are in a numerator (term-level values) is not in the report; the report carries
-  counts only.
+  counts only. The quality snapshot (`--write-quality-snapshot`, [quality.md](quality.md)) keeps the
+  term sets of the coverage measures.
 
 ## Catalogue
 

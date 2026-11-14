@@ -33,6 +33,8 @@ from .models import (
     plain_evidence,
 )
 from .modules import module_summary
+from .quality import CHANGES, Comparison, Result, Snapshot, show
+from .quality import render_text as render_quality_text
 from .redaction import clip, redact_rendered
 from .rules.registry import default_registry
 
@@ -91,6 +93,8 @@ class FileReport:
     measurements: tuple[Measurement, ...] | None = None
     # With --measurements, per closure file, named graph or in-file module: the measurements of its terms.
     measurement_partitions: tuple[MeasurementPartition, ...] = ()
+    # With --write-quality-snapshot or --quality-baseline: the file's quality snapshot (:mod:`ontolint.quality`).
+    quality: Snapshot | None = None
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -116,6 +120,8 @@ class RunReport:
     # For each file, in the order of ``files``, the findings the baseline accepted (removed from the file);
     # ``None`` when no baseline was read.  Only the Markdown summary renders them.
     baselined: tuple[tuple[Finding, ...], ...] | None = None
+    # With --quality-baseline: the run's measurements compared with the committed quality snapshot; else ``None``.
+    quality: Comparison | None = None
 
     @property
     def findings(self) -> tuple[Finding, ...]:
@@ -233,6 +239,8 @@ def to_json(report: RunReport) -> dict[str, Any]:
             if report.stale_baseline is not None
             else {}
         ),
+        # Present only with --quality-baseline: the trend against the committed quality snapshot.
+        **({"quality_comparison": report.quality.to_dict()} if report.quality is not None else {}),
     }
 
 
@@ -663,6 +671,61 @@ def _markdown_findings(report: RunReport) -> list[str]:
     return ["### Findings", f"{lead} {pointer}", "\n".join(items)]
 
 
+MARKDOWN_QUALITY_SHOWN = 20
+"""How many measurements of a quality comparison the summary lists; the JSON comparison lists every one."""
+_QUALITY_REASON_LIMIT = 80
+"""How many characters of a measurement's reasons (joined by ``; ``) the summary keeps: the summary's size bound
+leaves this much room after its other lists, which a test proves."""
+_SPLIT_LABELS = {
+    "regressed": "regressed",
+    "diluted": "diluted",
+    "removed": "removed",
+    "improved": "improved",
+    "added_good": "new and fine",
+}
+"""How the summary names each part of a coverage change (:data:`ontolint.quality.CHANGES`)."""
+
+
+def _markdown_quality_line(result: Result) -> str:
+    """One measurement of a comparison: its change and split, or why it was not compared.
+
+    The id and reasons come from a snapshot file that anybody may have edited, so they go in code spans; the
+    rest is integers and the delta, which :mod:`ontolint.quality` computes as a signed decimal.
+    """
+    name = markdown_code(result.id, _QUOTE_LIMITS["rule"])
+    if result.reasons or result.before is None or result.after is None:  # a compared result has both sides
+        return f"- {name}: not comparable: {markdown_code('; '.join(result.reasons), _QUALITY_REASON_LIMIT)}"
+    if result.changed is not None:
+        change = "changed" if result.changed else "unchanged"
+    elif result.delta is None:
+        change = "no delta, a population is empty"
+    else:
+        change = f"delta {result.delta}"
+    line = f"- {name}: {show(result.before)} -> {show(result.after)}, {change}"
+    if result.change is not None:
+        counts = result.change.counts()
+        line += "; " + ", ".join(f"{_SPLIT_LABELS[part]} {counts[part]}" for part in CHANGES)
+    return line
+
+
+def _markdown_quality(comparison: Comparison, heading: str) -> list[str]:
+    """The quality comparison: a line per measurement (the first :data:`MARKDOWN_QUALITY_SHOWN`), then its notes."""
+    results = comparison.results
+    blocks = [f"### {heading}", "\n".join(_markdown_quality_line(r) for r in results[:MARKDOWN_QUALITY_SHOWN])]
+    if len(results) > MARKDOWN_QUALITY_SHOWN:
+        blocks.append(f"{len(results) - MARKDOWN_QUALITY_SHOWN} more not shown.")
+    return [*blocks, *comparison.notes]
+
+
+def render_comparison(comparison: Comparison, output_format: str) -> str:
+    """Render a quality comparison (``--compare-quality``) as ``text`` (default), ``json`` or ``markdown``."""
+    if output_format == "json":
+        return json.dumps(comparison.to_dict(), indent=2)
+    if output_format == "markdown":
+        return "\n\n".join([f"## ontolint {package_version()}", *_markdown_quality(comparison, "Quality comparison")])
+    return render_quality_text(comparison)
+
+
 def render_markdown(report: RunReport, exit_status: int | None = None) -> str:
     """Render ``report`` as a GitHub-flavoured Markdown summary of the run, for a pull request.
 
@@ -679,6 +742,8 @@ def render_markdown(report: RunReport, exit_status: int | None = None) -> str:
         blocks.append(_markdown_verdict(report, exit_status))
     blocks += [_markdown_counts(report), _execution_counts(_all_executions(report))]
     blocks += [*_markdown_broken(report), *_markdown_findings(report)]
+    if report.quality is not None:
+        blocks += _markdown_quality(report.quality, "Quality against the baseline")
     if report.stale_baseline:
         blocks.append(stale_baseline_message(len(report.stale_baseline)))
     # A blank line between blocks: a line just after a list would continue its last item.

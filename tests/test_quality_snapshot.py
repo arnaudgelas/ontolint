@@ -6,6 +6,7 @@ new ``SNAPSHOT_VERSION``.  ``docs/quality.md`` documents the same schema.
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import json
 from dataclasses import replace
@@ -391,3 +392,44 @@ def test_a_snapshot_nested_too_deeply_is_refused_and_does_not_crash() -> None:
 def test_the_good_document_is_not_refused() -> None:
     assert loads(json.dumps(good())) == fixture_snapshot("before.ttl")
     assert copy.deepcopy(good()) == good()
+
+
+JSON = st.recursive(
+    st.none() | st.booleans() | st.integers(-3, 3) | st.floats() | st.text(max_size=4),
+    lambda inner: st.lists(inner, max_size=3) | st.dictionaries(st.text(max_size=6), inner, max_size=3),
+    max_leaves=12,
+)
+
+
+def paths(node: Any, prefix: tuple[Any, ...] = ()) -> list[tuple[Any, ...]]:
+    """Every place of a JSON document, as the keys and indexes leading to it."""
+    if isinstance(node, dict):
+        return [prefix] + [p for k, v in node.items() for p in paths(v, (*prefix, k))]
+    if isinstance(node, list):
+        return [prefix] + [p for i, v in enumerate(node) for p in paths(v, (*prefix, i))]
+    return [prefix]
+
+
+GOOD_PATHS = [p for p in paths(good()) if p]
+
+
+@given(value=JSON)
+def test_loading_arbitrary_json_gives_a_snapshot_or_a_snapshot_error(value: Any) -> None:
+    with contextlib.suppress(SnapshotError):
+        loads(json.dumps(value))
+
+
+@given(place=st.sampled_from(GOOD_PATHS), value=JSON)
+def test_a_good_snapshot_with_one_place_replaced_is_a_snapshot_or_a_snapshot_error(
+    place: tuple[Any, ...], value: Any
+) -> None:
+    document = good()
+    parent = document
+    for step in place[:-1]:
+        parent = parent[step]
+    parent[place[-1]] = value
+    try:
+        snap = loads(json.dumps(document))
+    except SnapshotError:
+        return
+    assert loads(dumps(snap)) == snap  # whatever is accepted is a snapshot that round-trips

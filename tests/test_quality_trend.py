@@ -62,6 +62,16 @@ def test_a_new_term_without_the_property_is_dilution_and_not_a_regression() -> N
     assert split(coverage("AB", "ABC"), coverage("AB", "ABCDEF")) == counts(diluted=3)
 
 
+def test_a_rise_in_the_documented_terms_can_still_be_a_fall_in_coverage() -> None:
+    # 1,000 new terms without a definition: the numerator rises by one and the ratio falls, which no aggregate explains.
+    old = coverage("AB", "ABC")
+    new = coverage("ABC", "ABC" + "".join(chr(0x100 + i) for i in range(1000)))
+    (result,) = compare(snapshot(old), snapshot(new)).results
+    assert result.after is not None and result.after.numerator == len("ABC")
+    assert result.delta is not None and str(result.delta).startswith("-")
+    assert result.change is not None and result.change.counts() == counts(diluted=1000, improved=1)
+
+
 def test_a_removed_term_is_neither_a_regression_nor_dilution() -> None:
     assert split(coverage("AB", "ABC"), coverage("A", "AC")) == counts(removed=1)
 

@@ -21,6 +21,7 @@ PIPELINE = (
     "ontolint.linter",
     "ontolint.reporting",
     "ontolint.baseline",
+    "ontolint.quality",
     "ontolint.loader",
     "ontolint.imports",
     "ontolint.library",
