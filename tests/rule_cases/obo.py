@@ -347,6 +347,7 @@ CASES = {
                 "version IRI for a non-OBO ontology",
                 "ex:o a owl:Ontology ; owl:versionIRI <http://example.org/v/1> .",
             ),
+            _ttl("blank version IRI", _header("[ ex:p 1 ]")),
         ],
         [
             _ttl("plain ontology", "obo:xyz.owl a owl:Ontology ."),

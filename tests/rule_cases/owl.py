@@ -141,6 +141,10 @@ CASES = {
                 "symmetric named as the inverse",
                 "ex:q a owl:ObjectProperty ; owl:inverseOf ex:p . ex:p a owl:ObjectProperty, owl:SymmetricProperty .",
             ),
+            ttl(
+                "symmetric with a blank inverse",
+                "ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf [ a owl:ObjectProperty ] .",
+            ),
         ],
         [
             ttl("inverse only", "ex:p a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty."),
@@ -395,7 +399,11 @@ CASES = {
             ttl(
                 "usage implies a disjoint domain",
                 "ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:A owl:disjointWith ex:B . ex:i a ex:B ; ex:p ex:j .",
-            )
+            ),
+            ttl(
+                "blank domain and type",
+                "ex:p a owl:ObjectProperty ; rdfs:domain _:a . _:a owl:disjointWith _:b . ex:i a _:b ; ex:p ex:j .",
+            ),
         ],
         [ttl("no disjointness axiom", "ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .")],
     ),

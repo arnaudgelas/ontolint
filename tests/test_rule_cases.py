@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 import pytest
-from rdflib import Graph
+from rdflib import BNode, Graph
 from rule_cases import load_cases
 from rule_harness import ODD_INPUTS, ODD_SHAPES, Case, chain_turtle, graph
 
@@ -70,6 +70,22 @@ def test_cases_neither_crash_nor_print_python_reprs_under_a_full_run(rule_id: st
     # Messages and foci print RDF terms (``support.term_text``), never ``rdflib.term.Literal('x')``.
     reprs = [(f.rule, text) for f in result.findings for text in (f.focus, f.message) if PYTHON_REPR.search(text)]
     assert not reprs, reprs
+
+
+@pytest.mark.parametrize(
+    ("rule_id", "case"), [p for p in _params("positive") + _params("negative") if not p.values[1].probe]
+)
+def test_cases_never_print_a_parsers_blank_node_label(rule_id: str, case: Case) -> None:
+    # A message names a blank node by its content (``_:`` and 12 hex digits): a rule writes it ``_:label``
+    # (``support.value_text``), the only spelling rewritten, so a node printed with ``str()`` leaves the parser's
+    # label (32 hex digits, never a word of a message) in the text (#54).  Every rule runs, opt-in ones included,
+    # so a case with a blank value guards the message of each rule it reaches.
+    data = case.build() if case.build else graph(case.turtle)
+    shapes = graph(case.shapes) if case.shapes is not None else None
+    labels = {str(n) for g in (data, shapes) if g is not None for t in g for n in t if isinstance(n, BNode)}
+    findings = Linter(data, shapes, **case.options).execute(IMPLEMENTED).findings
+    leaks = [(f.rule, text) for f in findings for text in (f.focus, f.message) if any(x in text for x in labels)]
+    assert not leaks, leaks
 
 
 # --- odd inputs ------------------------------------------------------------------------------
