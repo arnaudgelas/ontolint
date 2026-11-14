@@ -37,7 +37,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [LIB](#lib) | 3 | 0 |
 | [METRIC](#metric) | 13 | 0 |
 | [OBO](#obo) | 12 | 0 |
-| [ONT](#ont) | 8 | 0 |
+| [ONT](#ont) | 9 | 0 |
 | [OWL](#owl) | 45 | 0 |
 | [SEC](#sec) | 16 | 0 |
 | [SEM](#sem) | 1 | 7 |
@@ -329,6 +329,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [ONT006](rules/ont.md) | Missing ontology description | warning |
 | [ONT007](rules/ont.md) | Ontology or version IRI declared by several documents with different content | warning |
 | [ONT008](rules/ont.md) | Identical copies of one ontology in several documents | info |
+| [ONT009](rules/ont.md) | Imported file does not declare the imported IRI | warning |
 
 ## OWL
 

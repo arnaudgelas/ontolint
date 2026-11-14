@@ -39,6 +39,7 @@ from .loader import (
     dtd_problem,
     load_document,
 )
+from .models import ImportMismatch
 from .paths import InputFile, display_path, file_identity, resolve_inputs
 from .policy import Policy
 from .redaction import redact_userinfo
@@ -170,11 +171,19 @@ def _ontologies(graph: Graph) -> set[str]:
     return {str(s) for s in graph.subjects(RDF.type, OWL.Ontology) if isinstance(s, URIRef)}
 
 
+def _versions(graph: Graph, ontology: str) -> set[str]:
+    return {str(v) for v in graph.objects(URIRef(ontology), OWL.versionIRI) if isinstance(v, URIRef)}
+
+
 def _identities(graph: Graph) -> set[str]:
     """The IRIs an import may use to name this document: its ontology IRIs and their version IRIs."""
     ontologies = _ontologies(graph)
-    versions = {str(v) for o in ontologies for v in graph.objects(URIRef(o), OWL.versionIRI) if isinstance(v, URIRef)}
-    return ontologies | versions
+    return ontologies.union(*(_versions(graph, o) for o in ontologies))
+
+
+def _declarations(graph: Graph) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """``(ontology IRI, version IRIs)`` for each ontology the document declares, sorted."""
+    return tuple((o, tuple(sorted(_versions(graph, o)))) for o in sorted(_ontologies(graph)))
 
 
 def _directory(path: Path) -> str:
@@ -311,6 +320,12 @@ class _Walk:
     """Ontology and version IRIs of the files already loaded: importing one again loads nothing more."""
     shadowed: list[ImportShadow] = field(default_factory=list[ImportShadow])
     """Imports served by a loaded file that declares their IRI, although they resolve to another file."""
+    declared: dict[str, tuple[tuple[str, tuple[str, ...]], ...]] = field(
+        default_factory=dict[str, tuple[tuple[str, tuple[str, ...]], ...]]
+    )
+    """What each file read so far (the root included), by real path, declares: :func:`_declarations`."""
+    mismatched: list[ImportMismatch] = field(default_factory=list[ImportMismatch])
+    """Imports a catalog maps to a file that does not declare their IRI, in walk order."""
 
 
 def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, the policy and two lookup inputs.
@@ -366,6 +381,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         set(),
         _identities(root_document.graph),
     )
+    walk.declared[os.path.realpath(root_path)] = _declarations(root_document.graph)
     directory = root_path.parent.resolve()
     queue = deque((iri, 1, directory) for iri in _imports(root_document.graph))
     while queue:
@@ -391,6 +407,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         if os.path.realpath(path) not in walk.seen_files:
             document = _load_module(walk, iri, path, depth)
             queue.extend((child, depth + 1, path.parent.resolve()) for child in _imports(document.graph))
+        _note_mismatch(walk, iri, path)
     walk.imported -= _ontologies(root_document.graph)
     loaded = LoadedGraph(
         walk.merged,
@@ -403,6 +420,7 @@ def load_closure(  # noqa: PLR0913 -- the root document, its path and identity, 
         tuple(resolver.choices),
         # A file named for a known IRI may still be loaded later, under another IRI: then it is no shadow.
         tuple(shadow for shadow in walk.shadowed if os.path.realpath(shadow.path) not in walk.seen_files),
+        tuple(walk.mismatched),
     )
     return Closure(
         loaded,
@@ -430,6 +448,18 @@ def _note_shadow(walk: _Walk, resolver: _Resolver, iri: str, directory: Path) ->
         walk.shadowed.append(ImportShadow(iri, path, root))
 
 
+def _note_mismatch(walk: _Walk, iri: str, path: Path) -> None:
+    """Record that ``iri`` resolved to a loaded file that declares neither it nor a version IRI of it (ONT009).
+
+    The file is loaded all the same, as before.  A ``file:`` IRI names a document, not an ontology, so what the
+    file declares is no concern of the import; an ``--import-dir`` file declares its IRI by construction.
+    """
+    declared = walk.declared[os.path.realpath(path)]
+    if urlsplit(iri).scheme == "file" or any(iri == o or iri in versions for o, versions in declared):
+        return
+    walk.mismatched.append(ImportMismatch(iri, resolve_inputs([str(path)], Path.cwd())[0].display, declared))
+
+
 def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
     """Load one imported file into ``walk``, enforcing the closure limits (SEC015)."""
     policy, sandbox = walk.policy, walk.sandbox
@@ -454,6 +484,7 @@ def _load_module(walk: _Walk, iri: str, path: Path, depth: int) -> LoadedGraph:
             document.graphs,
         )
     )
+    walk.declared[os.path.realpath(path)] = _declarations(document.graph)
     walk.imported |= _ontologies(document.graph)
     walk.known |= _identities(document.graph)
     walk.merged += document.graph

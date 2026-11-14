@@ -385,6 +385,23 @@ class SharedIdentity:
 
 
 @dataclass(frozen=True)
+class ImportMismatch:
+    """An ``owl:imports`` IRI a catalog maps to a file that does not declare it (rule ``ONT009``).
+
+    The closure still loads the file; the CLI hands the root file the ones of its closure as
+    ``Policy.import_mismatches``.
+    """
+
+    iri: str
+    """The imported IRI."""
+    document: str
+    """The report path of the file the catalog names for it."""
+    ontologies: tuple[tuple[str, tuple[str, ...]], ...]
+    """``(ontology IRI, its version IRIs)`` for each IRI ontology the file declares, in IRI order; empty when it
+    declares none (blank-node ontologies declare nothing)."""
+
+
+@dataclass(frozen=True)
 class PatternLibrary:
     """The member ontologies of a pattern library, whose index is the linted file (rules ``LIB001``-``LIB003``)."""
 
