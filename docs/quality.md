@@ -17,7 +17,7 @@ exactly what it did.
 > definition coverage still passes CI. The only quality gate today is the
 > findings of the METRIC rules (their absolute thresholds, [metric-thresholds.md](metric-thresholds.md),
 > and `--fail-on`): they judge one run, not a change from the baseline. A gate on the
-> comparison itself (a budget on regressions, dilution or removals) is QUALITY-BUDGET (issue #23); it needs
+> comparison itself (a budget on regressions, dilution or removals) is QUALITY-BUDGET (issue #26); it needs
 > decisions this format does not take (removed terms, dilution, measurements that are not comparable,
 > definition-version changes), so it is not part of this feature.
 
@@ -111,7 +111,7 @@ the four counts, `new and fine`, and the delta, or `not comparable` with the rea
 a code span, at most 20 measurements. `--quality-baseline` takes `--format json` or `markdown` only.
 
 Exit codes: a comparison exits `0` whatever it finds, by design: it is not a gate (see the top of this page;
-a threshold is QUALITY-BUDGET's job, issue #23). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
+a threshold is QUALITY-BUDGET's job, issue #26). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
 (`TOOL001: quality snapshot FILE cannot be used: ...`).
 
 ## The snapshot file (version 1)

@@ -382,7 +382,7 @@ term. A measurement whose definition version, kind, population or policy differs
 not take, is reported as not comparable, measurement by measurement, never diffed. **This reports; it does
 not gate.** Neither option changes a finding or the exit code (a comparison exits `0` whatever it finds;
 `2` for an unusable snapshot), so a committed quality baseline does not stop a regression from passing CI;
-failing a build on the comparison is QUALITY-BUDGET (issue #23); the METRIC rules' findings and
+failing a build on the comparison is QUALITY-BUDGET (issue #26); the METRIC rules' findings and
 `--fail-on` judge one run against absolute thresholds, not a change from the baseline. A run without these options is unchanged. [docs/quality.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md)
 documents the versioned snapshot format and the comparison.
 
