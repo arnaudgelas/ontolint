@@ -1195,8 +1195,8 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
     goldens moved only by the two rules' metadata and executions.
   - Left open: `--shapes-from-profile` resolving through an `--import-dir` with two candidates;
     an unreadable file in an `--import-dir` is still skipped silently; the message does not list
-    each member's version IRI; a catalog entry naming a file that does not declare the imported
-    IRI is not reported.
+    each member's version IRI. A catalog entry naming a file that does not declare the imported
+    IRI is reported by ONT009 (#60).
 
 ## P2 — platform reliability and useful integration
 
