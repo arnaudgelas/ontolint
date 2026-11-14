@@ -245,15 +245,15 @@ def test_the_shapes_graph_rewrites_only_prefixed_labels() -> None:
     assert {f.focus for f in ctx.findings} == {identity["2"]}
 
 
-def test_the_data_graph_still_rewrites_bare_generated_labels() -> None:
-    # Data-graph rules still spell some blank nodes without ``_:``; only the shapes graph is prefix-only.
+def test_the_data_graph_rewrites_only_prefixed_labels() -> None:
+    # As in the shapes graph, a bare label is text, even one holding a digit as the generated ones do (#54).
     data = Graph()
     node = BNode("N1x")
     data.add((node, SH.path, node))
     ctx = RuleContext(data, None, Policy(), Linter(data).rule_context.context)
     ctx.add("CLS001", node, "Blank N1x and _:N1x.")
     identity = stable_blank_id(data, node)
-    assert ctx.findings[0].message == f"Blank {identity} and {identity}."
+    assert ctx.findings[0].message == f"Blank N1x and {identity}."
 
 
 def test_shapes_with_the_same_content_and_owner_share_one_identity() -> None:
