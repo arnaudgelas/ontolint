@@ -73,6 +73,12 @@ class PropertyClosure:
         return self._cache[key]
 
 
+# A ``_:`` that may start a blank-node label of a message, and what continues a label past its end: ``_:x`` inside
+# an IRI or a longer name (``#_:x``, ``_:x-y``, ``_:x.y``) is not the blank node ``x``.
+_LABEL_START = re.compile(r"(?<![\w/#:-])_:")
+_LABEL_GOES_ON = re.compile(r"[\w/#:-]|\.\w")
+
+
 class _BlankNames:
     """The stable identities of one graph's blank nodes, and the rewriting of their ``_:label`` inside messages.
 
@@ -86,7 +92,7 @@ class _BlankNames:
         self.graph = graph
         self._ids: dict[BNode, str] = {}
         self._nodes: dict[str, BNode] | None = None  # label -> node, built on first use
-        self._pattern: re.Pattern[str] | None = None
+        self._lengths: list[int] = []  # the labels' distinct lengths, longest first
 
     def identity(self, node: BNode) -> str:
         if node not in self._ids:
@@ -105,20 +111,31 @@ class _BlankNames:
         Nothing tells ``_:label`` written by a rule from the same text copied into the message from a literal or
         an IRI (``"_:x"``, ``?q=_:x``) when ``x`` labels a node of the graph: that text is replaced too, as is an
         identity a rule wrote itself (``_:`` and 12 hex digits) when a label of the graph is those 12 digits.
-        A message without ``_:`` never builds the pattern (one alternative per blank node of the graph).
+
+        Each ``_:`` is looked up once per distinct label length, longest first, so its cost never grows with the
+        number of labels; a message without ``_:`` never indexes the graph.
         """
         if "_:" not in message:
             return message
         if self._nodes is None:
             self._nodes = {str(n): n for t in self.graph for n in (t[0], t[2]) if isinstance(n, BNode)}
-            labels = sorted(self._nodes, key=lambda label: (-len(label), label))
-            if labels:
-                alternatives = "|".join(re.escape(label) for label in labels)
-                self._pattern = re.compile(rf"(?<![\w/#:-])_:({alternatives})(?![\w/#:-]|\.\w)")
-        if self._pattern is None:
-            return message
+            self._lengths = sorted({len(label) for label in self._nodes}, reverse=True)
         nodes = self._nodes
-        return self._pattern.sub(lambda match: self.identity(nodes[match.group(1)]), message)
+        parts: list[str] = []
+        done = 0  # ``parts`` holds ``message[:done]``, rewritten
+        for prefix in _LABEL_START.finditer(message):
+            if prefix.start() < done:  # inside a label just replaced
+                continue
+            begin = prefix.end()
+            for length in self._lengths:
+                end = begin + length
+                node = nodes.get(message[begin:end])
+                if node is not None and not _LABEL_GOES_ON.match(message, end):
+                    parts += (message[done : prefix.start()], self.identity(node))
+                    done = end
+                    break
+        parts.append(message[done:])
+        return "".join(parts)
 
 
 class RuleContext:
