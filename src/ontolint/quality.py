@@ -255,7 +255,7 @@ def _measurement(raw: object) -> Measurement:
             f"a measurement has a kind of {[k.value for k in MeasurementKind]}, not {raw.get('kind')!r}"
         ) from None
     allowed = _IDENTITY | _VALUES[kind] | {"reason"} | _COVERAGE_KEYS
-    _refuse(set(raw) <= allowed, f"a measurement of kind {kind.value} has no key {sorted(set(raw) - allowed)}")
+    _refuse(not set(raw) - allowed, f"a measurement of kind {kind.value} has no key {sorted(set(raw) - allowed)}")
     fields: dict[str, Any] = {k: raw[k] for k in _IDENTITY - {"kind"} if k in raw}
     _refuse(_IDENTITY - {"kind"} <= set(fields), "a measurement has an id, a definition_version and a population")
     for key in ("numerator", "denominator", "value", "reason"):
@@ -382,7 +382,7 @@ def _values(m: Measurement) -> dict[str, Any]:
 
 
 def _result_dict(result: Result) -> dict[str, Any]:
-    if result.reasons or result.before is None or result.after is None:  # a compared result has both sides
+    if result.before is None or result.after is None:  # only a compared result has both sides
         return {"id": result.id, "status": "not_comparable", "reasons": list(result.reasons)}
     data: dict[str, Any] = {
         "id": result.id,
@@ -483,7 +483,7 @@ def render_text(comparison: Comparison) -> str:
     total = len(comparison.results)
     lines = [f"{total} measurement(s): {total - refused} compared, {refused} not comparable"]
     for r in comparison.results:
-        if r.reasons or r.before is None or r.after is None:  # a compared result has both sides
+        if r.before is None or r.after is None:  # only a compared result has both sides
             lines.append(f"{r.id}: not comparable: {'; '.join(r.reasons)}")
             continue
         lines.append(f"{r.id}: {show(r.before)} -> {show(r.after)}{_delta_text(r)}")
