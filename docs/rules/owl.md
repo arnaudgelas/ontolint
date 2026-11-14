@@ -504,6 +504,14 @@ ex:q a owl:ObjectProperty ; owl:inverseOf ex:p . ex:p a owl:ObjectProperty, owl:
 
 Reported: `Symmetric property also declared inverse of https://example.test/onto#q.`
 
+*Flagged:* `symmetric with a blank inverse`
+
+```turtle
+ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf [ a owl:ObjectProperty ] .
+```
+
+Reported: `Symmetric property also declared inverse of _:bfb2ea384c8f.`
+
 *Clean:* `inverse only`
 
 ```turtle
@@ -1504,6 +1512,14 @@ ex:d a owl:DatatypeProperty ; rdfs:subPropertyOf ex:o . ex:o a owl:ObjectPropert
 
 Reported: `Datatype property is related by http://www.w3.org/2000/01/rdf-schema#subPropertyOf to object property https://example.test/onto#o.`
 
+*Flagged:* `object sub-property of a blank datatype property`
+
+```turtle
+ex:o a owl:ObjectProperty ; rdfs:subPropertyOf [ a owl:DatatypeProperty ] .
+```
+
+Reported: `Object property is related by http://www.w3.org/2000/01/rdf-schema#subPropertyOf to datatype property _:77636dd0e4b4.`
+
 *Clean:* `same kind`
 
 ```turtle
@@ -1766,6 +1782,14 @@ Reported: `The property is declared disjoint with itself.`
 
 Reported: `The property is disjoint with https://example.test/onto#r but also asserted a subproperty of or equivalent to it.`
 
+*Flagged:* `disjoint blank sub-property`
+
+```turtle
+ex:p owl:propertyDisjointWith _:q ; rdfs:subPropertyOf _:q . _:q a owl:ObjectProperty .
+```
+
+Reported: `The property is disjoint with _:4a7c0c7f4fd0 but also asserted a subproperty of or equivalent to it.`
+
 *Clean:* `unrelated disjoint properties`
 
 ```turtle
@@ -1874,6 +1898,14 @@ Reported: `The class is declared disjoint with itself.`
 
 Reported: `The class is disjoint with https://example.test/onto#m199 but also asserted a subclass of or equivalent to it.`
 
+*Flagged:* `disjoint with a blank superclass`
+
+```turtle
+ex:A a owl:Class ; owl:disjointWith _:c ; rdfs:subClassOf _:c . _:c owl:complementOf ex:Z .
+```
+
+Reported: `The class is disjoint with _:753f98bf63b7 but also asserted a subclass of or equivalent to it.`
+
 *Clean:* `unrelated disjoint classes`
 
 ```turtle
@@ -1950,6 +1982,14 @@ ex:a owl:differentFrom ex:a .
 
 Reported: `Individual is declared different from itself.`
 
+*Flagged:* `same as and different from a blank node`
+
+```turtle
+ex:a owl:sameAs _:b ; owl:differentFrom _:b . _:b ex:p 1 .
+```
+
+Reported: `Individual is both owl:sameAs and owl:differentFrom _:ad2769e14c2c.`
+
 *Clean:* `same only`
 
 ```turtle
@@ -2013,6 +2053,14 @@ ex:a ex:p "1"^^xsd:integer . [] a owl:NegativePropertyAssertion ; owl:sourceIndi
 ```
 
 Reported: `Negative assertion on https://example.test/onto#p with 1 contradicts an asserted triple.`
+
+*Flagged:* `negated assertion on a blank individual that is asserted`
+
+```turtle
+ex:a ex:p _:b . _:b ex:q 1 . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ; owl:assertionProperty ex:p ; owl:targetIndividual _:b .
+```
+
+Reported: `Negative assertion on https://example.test/onto#p with _:3353cb6faae0 contradicts an asserted triple.`
 
 *Clean:* `negated assertion that is absent`
 
@@ -2105,6 +2153,14 @@ ex:p a owl:AsymmetricProperty . ex:a ex:p ex:a .
 ```
 
 Reported: `Asymmetric property https://example.test/onto#p relates the individual to itself.`
+
+*Flagged:* `both directions between blank nodes`
+
+```turtle
+ex:p a owl:AsymmetricProperty . _:a ex:p _:b . _:b ex:p _:a .
+```
+
+Reported: `Asymmetric property https://example.test/onto#p is asserted in both directions with _:cc459cadfd51.`
 
 *Clean:* `one direction`
 

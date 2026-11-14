@@ -183,6 +183,14 @@ Reported: `Literal 'a' (no language) appears in skos:prefLabel and skos:altLabel
 
 Reported: `Literal 'a' (no language) appears in skos:prefLabel and skos:altLabel.`
 
+*Flagged:* `blank value`
+
+```turtle
+ex:c skos:prefLabel _:v ; skos:altLabel _:v . _:v ex:p 1 .
+```
+
+Reported: `Literal '_:24201837b53a' (no language) appears in skos:prefLabel and skos:altLabel.`
+
 *Clean:* `distinct literals`
 
 ```turtle
@@ -331,6 +339,14 @@ ex:c a skos:Concept ; skos:topConceptOf ex:s ; skos:broader ex:d . ex:d a skos:C
 ```
 
 Reported: `Top concept of https://example.test/onto#s also has an asserted broader concept.`
+
+*Flagged:* `top concept of a blank scheme`
+
+```turtle
+ex:c a skos:Concept ; skos:topConceptOf [ ex:p 1 ] ; skos:broader ex:d .
+```
+
+Reported: `Top concept of _:c1f247fd46fb also has an asserted broader concept.`
 
 *Clean:* `top concept without broader`
 
@@ -735,6 +751,14 @@ ex:c skos:hiddenLabel "x"^^ex:custom .
 ```
 
 Reported: `skos:hiddenLabel value 'x' is not a string literal.`
+
+*Flagged:* `blank label`
+
+```turtle
+ex:c a skos:Concept ; skos:altLabel [ ex:p 1 ] .
+```
+
+Reported: `skos:altLabel value '_:4133a1b10640' is not a string literal.`
 
 *Clean:* `string labels`
 

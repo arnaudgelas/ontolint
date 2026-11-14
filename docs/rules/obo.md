@@ -1340,6 +1340,16 @@ ex:o a owl:Ontology ; owl:versionIRI <http://example.org/v/1> .
 
 Reported: `Ontology IRI https://example.test/onto#o does not follow the OBO PURL pattern http://purl.obolibrary.org/obo/<id>.owl.`
 
+*Flagged:* `blank version IRI`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+<http://purl.obolibrary.org/obo/xyz.owl> a owl:Ontology ; owl:versionIRI [ ex:p 1 ] .
+```
+
+Reported: `Version IRI _:b86b3a472ac5 does not follow http://purl.obolibrary.org/obo/<id>/releases/YYYY-MM-DD/<id>.owl.`
+
 *Clean:* `plain ontology`
 
 ```turtle
