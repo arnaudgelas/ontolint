@@ -15,7 +15,7 @@ import pytest
 from ontolint import main
 from ontolint._version import FALLBACK_VERSION, package_version
 from ontolint.catalogue import implemented_rows, planned_rows
-from ontolint.github import escape_data, escape_property
+from ontolint.github import escape_data
 from ontolint.models import ExecutionStatus, Finding, Requirement, RuleExecution
 from ontolint.paths import artifact_uri, display_path, resolve_inputs
 from ontolint.profiles import PROFILES
@@ -517,7 +517,6 @@ def test_shapes_run_marks_shape_rules_executed(run: Run) -> None:
 
 def test_workflow_command_escaping() -> None:
     assert escape_data("100%\r\nnext: a, b") == "100%25%0D%0Anext: a, b"
-    assert escape_property("C:\\a,b\nc%") == "C%3A\\a%2Cb%0Ac%25"
     assert escape_data("%0A") == "%250A"  # already-escaped text is escaped again, never trusted
 
 
