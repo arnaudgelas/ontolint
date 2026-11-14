@@ -91,10 +91,12 @@ specifications share. Each rule's own specification is shown under the rule."""
 SPEC_BULLET = re.compile(r"\* \*\*(?P<ids>[A-Z]+\d{3}(?: / [A-Z]+\d{3})*)\.\*\*(?: (?P<first>.*))?")
 NEAR_BULLET = re.compile(r"\* \*\*[A-Z]+\d{3}")  # a header that SPEC_BULLET misses would lose its text
 ROLE = re.compile(r":[a-z]+:`~?\.?(?P<target>[^`]+)`")  # :mod:`ontolint.ownership`, :func:`~.support.x`
-# A note starting like this would render as a heading, quote, list, fence, table, HTML block, link
-# reference definition, thematic break or setext underline instead of as text.
+# A CommonMark code span: a backtick run, then text, then the next run of exactly as many backticks.
+CODE_SPAN = re.compile(r"(?<!`)(`+)(?!`).*?(?<!`)\1(?!`)")
+# A note starting like this would render as a heading, quote, list, fence, table, link reference
+# definition, thematic break or setext underline instead of as text (a ``<`` is escaped, see _markdown).
 BLOCK_START = re.compile(
-    r"#{1,6}(?:[ \t]|$)|>|[-+*](?:[ \t]|$)|\d{1,9}[.)](?:[ \t]|$)|```|~~~|\||<|\[[^\]]*\]:"
+    r"#{1,6}(?:[ \t]|$)|>|[-+*](?:[ \t]|$)|\d{1,9}[.)](?:[ \t]|$)|```|~~~|\||\[[^\]]*\]:"
     r"|(?:\*[ \t]*){3,}$|(?:-[ \t]*){3,}$|(?:_[ \t]*){3,}$|=+[ \t]*$"
 )
 
@@ -145,14 +147,24 @@ def _reflow(lines: Sequence[str]) -> str:
 
 
 def _markdown(text: str) -> str:
-    """Return docstring text as Markdown: each Sphinx role becomes a code span of its target."""
+    """Return docstring text as Markdown: each Sphinx role becomes a code span of its target.
+
+    Outside code spans, ``\\`` and ``<`` are escaped as in :func:`_prose`; inside, where a backslash
+    would show, they are kept as they are.
+    """
 
     def role(match: re.Match[str]) -> str:
         if "<" in match["target"]:
             raise ValueError(f"a Sphinx role with an explicit title cannot be rendered: {match[0]!r}")
         return _code(match["target"])
 
-    return ROLE.sub(role, text)
+    converted = ROLE.sub(role, text)
+    parts: list[str] = []
+    start = 0
+    for span in CODE_SPAN.finditer(converted):
+        parts += [_prose(converted[start : span.start()]), span[0]]
+        start = span.end()
+    return "".join([*parts, _prose(converted[start:])])
 
 
 def _note(module: str, lines: Sequence[str]) -> str:

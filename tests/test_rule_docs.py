@@ -26,6 +26,7 @@ from planned_rule_intents import INTENTS
 from rdflib import Graph
 from rule_cases import load_cases
 from rule_docs_generator import (
+    CODE_SPAN,
     DOC,
     PAGES,
     SPEC_BULLET,
@@ -224,20 +225,44 @@ def test_names_messages_and_turtle_cannot_break_out_of_their_code(monkeypatch: p
         render({"OWL001": rule_cases([case], [case])}, spec_modules())
 
 
-def test_titles_fixes_and_intents_keep_their_angle_brackets() -> None:
+def test_titles_fixes_intents_specifications_and_notes_keep_their_angle_brackets() -> None:
     assert _prose("Use .../obo/<id>.owl") == "Use .../obo/\\<id>.owl"
     assert _prose("Encode < > \\ ^") == "Encode \\< > \\\\ ^"
+    pages = _committed().values()
     entries = [
         line
-        for page in _committed().values()
+        for page in pages
         for line in page.splitlines()
-        if line.startswith(("#### ", "- **Fix:** ", "| "))
+        if line.startswith(("#### ", "- **Fix:** ", "| ", "**Specification.** "))
     ]
+    entries += [line for page in pages for line in _notes(page).splitlines()]
     assert (
         "- **Fix:** Use .../obo/\\<id>.owl and a version IRI such as .../obo/\\<id>/releases/YYYY-MM-DD/\\<id>.owl."
         in (entries)
     )
-    assert not [line for line in entries if re.search(r"(?<!\\)<", re.sub(r"`[^`]*`", "", line))]
+    unescaped = re.compile(r"(?<!\\)(?:\\\\)*<")  # after an even run of backslashes, none escaping it
+    assert not [line for line in entries if unescaped.search(CODE_SPAN.sub("", line))]
+
+
+def test_specifications_and_notes_escape_angle_brackets_and_backslashes_outside_code() -> None:
+    assert _markdown("``<b>`` and `<c>`, <d> and \\") == "``<b>`` and `<c>`, \\<d> and \\\\"
+    assert _markdown("an unclosed ` and <e>") == "an unclosed ` and \\<e>"
+    assert _markdown(":data:`~.support.X` <f>") == "`support.X` \\<f>"
+    doc = read_module(
+        _fake(
+            "Fake rules about .../obo/<id>.owl.\n\n"
+            "* **A001.** Use .../obo/<id>.owl, not\n  ``<IRI>``; a\\_b.\n\n"
+            "<div>x</div>\n"
+        )
+    )
+    assert doc.specs == {"A001": "Use .../obo/\\<id>.owl, not ``<IRI>``; a\\\\_b."}
+    assert doc.notes == (
+        "Fake rules about .../obo/\\<id>.owl.",
+        "",
+        "*Specified under each rule: A001.*",
+        "",
+        "\\<div>x\\</div>",
+    )
 
 
 def test_a_bullet_ends_at_its_first_unindented_line() -> None:
@@ -418,7 +443,7 @@ def test_a_random_docstring_round_trips(
             lines += [f"* **{rule_id}.** {body[0]}", *[f"  {line}" for line in body[1:]]]
     lines += ["Fixtures: none."] if fixtures else []
     doc = read_module(_fake("\n".join(lines)))
-    assert doc.specs == {rule_id: " ".join(words) for rule_id, words in specs.items()}
+    assert doc.specs == {rule_id: _prose(" ".join(words)) for rule_id, words in specs.items()}  # no code span
     assert f"*Specified under each rule: {', '.join(specs)}.*" in doc.notes
     assert ("Fixtures: none." in doc.notes) is fixtures
 
@@ -439,7 +464,6 @@ def test_reflowing_is_idempotent(lines: list[str]) -> None:
         "## heading",
         "1. first",
         "1) first",
-        "<div>x</div>",
         "---",
         "***",
         "> quote",

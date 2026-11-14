@@ -69,7 +69,9 @@ Nothing open: 0.11.0 is released (see "Recently done").
     of each of the 778 flagged graph cases (249 before). Probed and empty-graph cases are no longer
     labelled "built programmatically", options are printed for every graph case and only where they
     differ from the defaults (sets sorted), and names, options and messages are code spans that
-    nothing in them can close (OBO006's names hold `<http://...>`). The generator refuses a near-miss
+    nothing in them can close (OBO006's names hold `<http://...>`); outside code spans, titles,
+    fixes, intents, specifications and notes escape `\` and `<`, which github.com would otherwise
+    read as HTML and drop (OBO010's fix names `.../obo/<id>.owl`). The generator refuses a near-miss
     bullet header, a rule bulleted twice or not implemented, a note that would start a Markdown block
     and a module without docstring; it deletes the Markdown orphans of `docs/rules/`, and `--check`
     names the stale, missing and orphan pages. Nothing under `src/` or `data/` changed.
