@@ -19,6 +19,21 @@ Nothing open: 0.11.0 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (after 0.13.1):
+  - **GLUED-PUNCTUATION** (P1; issue #61): a prefixed name followed by a `.`, `;` or `,` written
+    straight after it (`ex:B.`) is located, as it is with a space before. The scanner's
+    `_PREFIXED_NAME` took the punctuation as part of the local name, so `ex:B.` named no node and a
+    finding on a term spelled only that way had no SARIF region. The local name now follows Turtle's
+    PN_LOCAL: dots are inner only (a run of them ends the name unless a name character follows), and
+    the characters that end a name unescaped (`;` `,` `)` `]` `#` `!` `=` and the rest of RDFLib's
+    own set, `}` included) end it here too; `\`-escapes and `%` escapes stay part of it, `ex:.` is
+    the empty local name. Findings, fingerprints and baselines are unchanged; only SARIF regions
+    appear where they were missing.
+    - Verified: unit tests for a glued `.`, `;` and `,` after a prefixed name and an IRI in Turtle,
+      TriG and N3, inner dots, escapes, `ex:.`, TriG `}`, and the issue's reproduction (5:21);
+      linear-time tests on runs of dots; the region property test now glues the writer's
+      punctuation at random and checks every IRI object has a region.
+    - Left open: a prefix with an inner `.` or a non-ASCII letter (see TRIG-REGIONS); a name RDFLib
+      accepts against the grammar (`ex:a..`, a leading `.`) keeps no region of its own.
   - **SHACL-EVIDENCE-DECISIONS** (P1; issue #9): the three SHACL001 evidence contract choices that
     SHACL-EVIDENCE left to the maintainer are decided, each with its fixtures.
     - *Nested results* (dropped, `fix!:`): findings are the values of the report's `sh:result`
@@ -338,7 +353,8 @@ Nothing open: 0.11.0 is released (see "Recently done").
       not the file's directives in source order, so a file's own `schema:` loses to rdflib's
       default binding and a prefix redefined mid-file takes its last namespace (both can give a
       wrong region); `@base` is skipped but never applied; a prefix with an inner `.` or a
-      non-ASCII first letter is matched from its tail; `ex:B.` keeps the `.` in the name.
+      non-ASCII first letter is matched from its tail (`ex:B.` kept the `.` in the name until
+      GLUED-PUNCTUATION).
   - **Broken pipe** (P1 audit; issue 14): `ontolint ... | head` no longer ends in a traceback and
     exit 1 (a write that fails) or in the interpreter's shutdown warning and exit 120 (a short
     output left in the buffer). The report, `--version`, `--list-rules` and `--explain` write and
