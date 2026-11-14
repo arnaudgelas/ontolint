@@ -230,6 +230,14 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:A owl:disjointWith ex:B . ex:i
 
 Reported: `Usage of https://example.test/onto#p infers https://example.test/onto#A but subject is explicitly typed https://example.test/onto#B, declared disjoint.`
 
+*Flagged:* `blank domain and type`
+
+```turtle
+ex:p a owl:ObjectProperty ; rdfs:domain _:a . _:a owl:disjointWith _:b . ex:i a _:b ; ex:p ex:j .
+```
+
+Reported: `Usage of https://example.test/onto#p infers _:e81236e7bc27 but subject is explicitly typed _:eff8e795a834, declared disjoint.`
+
 *Clean:* `no disjointness axiom`
 
 ```turtle

@@ -72,6 +72,26 @@ ex:old a owl:ObjectProperty ; owl:deprecated true . ex:i ex:old ex:j .
 
 Reported: `Deprecated property https://example.test/onto#old used in assertion.`
 
+*Flagged:* `deprecated blank node used`
+
+```turtle
+_:old owl:deprecated true . ex:A a owl:Class ; ex:p _:old .
+```
+
+Reported: `Deprecated term _:77279e1952b3 appears as object of https://example.test/onto#p.`
+
+*Flagged:* `deprecated blank node in a list`
+
+```turtle
+_:old owl:deprecated true . ex:A a owl:Class ; ex:p ( _:old ) .
+```
+
+Reported: `Deprecated term _:c4a1040d91d2 appears in a list of https://example.test/onto#p.`
+
+*Flagged:* `deprecated blank property used` (built programmatically; see `tests/rule_cases/`)
+
+Reported: `Deprecated property _:8f5865a7a328 used in assertion.`
+
 *Clean:* `deprecated but unused`
 
 ```turtle
@@ -101,6 +121,14 @@ ex:New a owl:Class . ex:A a owl:Class ; rdfs:subClassOf ex:New .
 ```
 
 Reported: `Non-IRI import target: not an iri.`
+
+*Flagged:* `blank import target`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports [ ex:p 1 ] .
+```
+
+Reported: `Non-IRI import target: _:5f8c7bc43f2e.`
 
 *Clean:* `IRI import target`
 
