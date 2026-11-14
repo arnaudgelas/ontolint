@@ -614,8 +614,8 @@ The layout is for people and may change in a minor release; parse JSON or SARIF 
 
 `action.yml` at the root of this repository is a composite Action. `uses: arnaudgelas/ontolint@vX.Y.Z`
 runs ontolint X.Y.Z: the Action reads the version from the `pyproject.toml` of the commit the tag
-points to and installs exactly that release from PyPI (never the latest), with its dependencies from
-`action/requirements.txt`, a hash-locked export of `uv.lock`. One step lints the files and writes both
+points to and installs exactly that release from PyPI (never the latest) after checking its PyPI
+attestation, with its dependencies from `action/requirements.txt`, a hash-locked export of `uv.lock`. One step lints the files and writes both
 reports, so a job needs no second run of its own:
 
 ```yaml
@@ -644,7 +644,7 @@ jobs:
 
 | Input | Meaning |
 | --- | --- |
-| `files` (required) | Files or directories, one per line, relative to the workspace. |
+| `files` (required) | Files or directories, one per line, inside the workspace (symlinks resolved; anything outside is refused). |
 | `args` | More ontolint options, one argument per line (`--profile` and `strict` on two lines). `--format`, `--output`, `--measurements`, `--list-rules`, `--explain`, `--version` and `--help` are refused, abbreviations included: the Action chooses the report format and file. |
 | `fail-on` | `error`, `warning`, `info` or `never`; empty keeps ontolint's default. |
 | `sarif-file` | Where to write the SARIF report (default `ontolint.sarif`); it must resolve inside the workspace. |
@@ -666,9 +666,22 @@ What the Action does and does not do:
   everything ontolint prints is wrapped in `::stop-commands::` with a token drawn for that run, so text from an
   ontology cannot become a workflow command.
 - Every action it uses and the uv version are pinned; Renovate keeps them current. `uv` installs the
-  dependencies with `--require-hashes` and `ontolint==X.Y.Z` from `https://pypi.org/simple` whatever the
-  caller's index settings are. The ontolint wheel itself is not hash-checked, since its hash cannot be in the
-  commit that is tagged before it is published; the release workflow attests the PyPI files instead.
+  dependencies, and the program that checks the attestation (`action/verify-requirements.txt`), with
+  `--require-hashes`, from `https://pypi.org/simple` whatever the caller's index settings are.
+- The ontolint wheel is verified, not hash-pinned: a wheel's hash cannot be in the commit that is tagged
+  before the wheel is published. The Action downloads the one `ontolint-X.Y.Z-py3-none-any.whl` that PyPI
+  lists (from `files.pythonhosted.org`, against the sha256 PyPI lists, which only shows the download is whole),
+  runs `pypi-attestations verify pypi --repository https://github.com/arnaudgelas/ontolint` on it, and
+  installs that same file, offline, only when it passes. The attestation (PEP 740, a Sigstore signature that
+  Trusted Publishing makes at upload) shows that these bytes were published by this repository's release
+  workflow through PyPI's Trusted Publisher, so a file that someone with a PyPI token uploaded, or that PyPI
+  or a mirror altered, is refused. What you still trust: the Sigstore trust root and this repository's
+  release workflow and PyPI Trusted Publisher configuration (an attestation names the repository, not the tag
+  or the commit), the hash-locked verifier and dependencies, and the tag itself, which selects the
+  version. If PyPI or Sigstore is unreachable the step fails; it never installs an unverified wheel.
+- `files` (and `sarif-file`) must resolve inside `GITHUB_WORKSPACE`, symlinks included, and ontolint runs
+  from the workspace. A file outside it (`../x`, an absolute path, a link that leaves) is refused; copy or
+  check out what you lint into the workspace first.
 - Code scanning ignores SARIF property bags, so `properties.evidence` and the suggestions do not reach its
   interface (the SARIF file and the `--format json` report keep them). ontolint writes no
   `partialFingerprints` yet, so code scanning computes its own from the source line, and results that

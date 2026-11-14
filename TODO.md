@@ -1164,9 +1164,12 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   the Action's error annotations; `escape_property` was deleted, having no caller.
   - Left open: the `partialFingerprints` design above (it changes the default SARIF and its goldens,
     and its Done-when tests need an observed upload); whether one run should write both reports
-    (`--markdown-summary FILE`); the Action's pin of the ontolint wheel by hash (not possible before
-    the wheel exists); Windows runners; the Renovate lock-file refresh now has to regenerate
-    `action/requirements.txt` by hand, or its pull request fails the test that compares the two.
+    (`--markdown-summary FILE`); Windows runners; the Renovate lock-file refresh now has to regenerate
+    `action/requirements.txt` and `action/verify-requirements.txt` by hand, or its pull request fails the
+    test that compares them with the lock.
+  - The ontolint wheel is not hash-pinned (impossible before it exists); the Action verifies its PyPI
+    attestation (`pypi-attestations`, repository-bound) and installs the verified file. `files` must be
+    inside the workspace.
 
 - [x] **DUPLICATE-ONTOLOGY-ID: one ontology IRI declared by two files.** Nothing checked this
   across files. A multi-file run lints each file alone, and `--import-dir` maps an IRI to the first
