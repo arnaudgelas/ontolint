@@ -49,6 +49,7 @@ from rule_harness import built, probed, rule_cases, ttl, with_shapes
 from ontolint.catalogue import load_catalogue
 from ontolint.models import LibraryMember, PatternLibrary, SharedIdentity
 from ontolint.policy import Policy
+from ontolint.rules import measurements
 from ontolint.rules.builtin import RULE_MODULES
 from ontolint.rules.registry import default_registry
 
@@ -571,3 +572,8 @@ def test_readme_rule_counts_match_the_catalogue() -> None:
     assert f"rules-{done}%2F{len(rows)}_implemented" in readme
     assert f"{done} of the {len(rows)} catalogue rules are implemented" in readme
     assert f"{done} executable diagnostics and {len(rows) - done} proposed" in readme
+
+
+def test_a_module_whose_specs_are_not_rule_specifications_is_left_out() -> None:
+    assert measurements.SPECS
+    assert measurements not in spec_modules()
