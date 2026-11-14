@@ -62,8 +62,9 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   otherwise.  JSON and SARIF carry the lines as
   ``results`` of the execution (``executions[].results``, the notification's ``properties.results``), only when
   there are some.  The shapes graph is meta-validated a second time, to read the results, only when pySHACL
-  reported the failure; a failure that is not a verdict on the shapes graph (a crash, pySHACL's own load errors,
-  such as a typed ``sh:NodeShape`` with ``sh:path``) keeps its ``<ExceptionType>: <message>`` detail.
+  reported the failure, inside the worker and the ``max_validation_seconds`` budget when there is one.  A
+  failure that is not a verdict on the shapes graph (a crash, pySHACL's own load errors, such as a typed
+  ``sh:NodeShape`` with ``sh:path``) keeps its ``<ExceptionType>: <message>`` detail.
 * **INPUT001.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or
   unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without
   ``--convert-with-robot`` (``UnsupportedSyntax``; the message names the flag and suggests ``robot convert``) or
