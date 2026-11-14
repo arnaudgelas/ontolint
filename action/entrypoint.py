@@ -1,6 +1,6 @@
 """The steps of the ontolint GitHub Action (``action.yml``): install the pinned release, run it.
 
-    python action/entrypoint.py install   # ontolint == the version of this checkout, from the package index
+    python action/entrypoint.py install   # ontolint == the version of this checkout, attested by this repository
     python action/entrypoint.py run       # one Markdown report for the step summary, one SARIF report
 
 ``action.yml`` runs both with the Python of a fresh virtual environment, after it has installed the
@@ -11,6 +11,9 @@ inside a shell command, and is checked before anything runs.
 What the Action refuses to do, because it runs in the caller's CI:
 
 * install anything but the one version in the ``pyproject.toml`` of the commit the caller pinned;
+* install that release's wheel unless PyPI's attestation (PEP 740) says this repository's release workflow
+  published those very bytes: the wheel is downloaded, checked with ``pypi-attestations`` (itself installed by
+  hash from ``action/verify-requirements.txt``) and only then installed, from the file that was checked;
 * hand ontolint the caller's secrets: the child process gets an allow-list of environment variables;
 * let ontolint's output become a workflow command: every run is wrapped in ``::stop-commands::``, with a token
   drawn for that run, and stderr is merged into stdout so the runner sees one ordered stream;
@@ -21,6 +24,8 @@ The standard library only, apart from ``ontolint.github``, which escapes the ann
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 import secrets
@@ -29,11 +34,14 @@ import sys
 import tempfile
 import tomllib
 import unicodedata
-from collections.abc import Mapping, Sequence
+import urllib.request
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-INDEX = "https://pypi.org/simple"  # never the caller's UV_INDEX_URL or PIP_INDEX_URL
+REPOSITORY = "https://github.com/arnaudgelas/ontolint"  # the one publisher whose attestation is accepted
+PYPI_JSON = "https://pypi.org/pypi/ontolint/{version}/json"
+FILES_HOST = "https://files.pythonhosted.org/"
 RELEASE = re.compile(r"\d+\.\d+\.\d+")
 FAIL_ON = ("error", "warning", "info", "never")
 # Options that would change what the Action writes or stop ontolint from writing a report.  argparse accepts any
@@ -76,12 +84,67 @@ def pinned_version(root: Path) -> str:
     return version
 
 
-def install_command(uv: str, python: str, version: str) -> list[str]:
-    """Install ``ontolint==version`` into the environment of ``python``; its dependencies are already there."""
-    return [
-        *(uv, "pip", "install", "--python", python, "--default-index", INDEX),
-        *("--no-deps", "--only-binary", ":all:", f"ontolint=={version}"),
-    ]
+def _fetch(url: str) -> bytes:
+    """The body of an https URL; no redirect to another scheme, no unbounded read (the wheel is under 2 MiB)."""
+    if not url.startswith("https://"):
+        raise InputError(f"refusing to fetch {url!r}: not https")
+    with urllib.request.urlopen(url, timeout=60) as response:  # noqa: S310 -- https only, checked above.
+        data: bytes = response.read(64 * 1024 * 1024 + 1)
+    if len(data) > 64 * 1024 * 1024:
+        raise InputError(f"{url} is larger than 64 MiB")
+    return data
+
+
+def release_wheel(version: str, directory: Path, fetch: Callable[[str], bytes] | None = None) -> Path:
+    """Download the one wheel of ``ontolint==version`` into ``directory`` and check it against PyPI's own digest.
+
+    That digest only shows the download is whole; the attestation, checked by ``verify_command``, is what
+    shows who published the bytes.  The file URL must be on ``files.pythonhosted.org``.
+    """
+    fetch = fetch or _fetch
+    files = json.loads(fetch(PYPI_JSON.format(version=version)))["urls"]
+    name = f"ontolint-{version}-py3-none-any.whl"
+    matches = [f for f in files if f.get("filename") == name and f.get("packagetype") == "bdist_wheel"]
+    if len(matches) != 1:
+        raise InputError(f"PyPI lists {len(matches)} files named {name}, expected exactly one")
+    url, digest = matches[0]["url"], matches[0]["digests"]["sha256"]
+    if not url.startswith(FILES_HOST):
+        raise InputError(f"the wheel of ontolint {version} is served from {url!r}, not from {FILES_HOST}")
+    data = fetch(url)
+    if hashlib.sha256(data).hexdigest() != digest:
+        raise InputError(f"{name} does not match the sha256 PyPI lists for it")
+    path = directory / name
+    path.write_bytes(data)
+    return path
+
+
+def verify_command(verifier: str, wheel: Path) -> list[str]:
+    """``pypi-attestations`` checks that this repository's workflow signed these bytes; it exits non-zero if not."""
+    return [verifier, "verify", "pypi", "--repository", REPOSITORY, str(wheel)]
+
+
+def install_command(uv: str, python: str, wheel: Path) -> list[str]:
+    """Install the verified ``wheel`` file, and nothing from an index, into the environment of ``python``.
+
+    Its dependencies are already there, installed by hash.
+    """
+    return [*(uv, "pip", "install", "--python", python), *("--no-deps", "--no-index", str(wheel))]
+
+
+def install(root: Path, python: str, verifier: str, run: Callable[[Sequence[str]], int] | None = None) -> int:
+    """Download, verify, then install the release this checkout is pinned to; stop at the first failure."""
+    run = run or _run
+    version = pinned_version(root)
+    directory = Path(tempfile.mkdtemp(prefix="ontolint-wheel-", dir=os.environ.get("RUNNER_TEMP")))
+    wheel = release_wheel(version, directory)
+    code = run(verify_command(verifier, wheel))
+    if code != 0:
+        print(
+            f"::error::{_escape_data(f'ontolint action: the PyPI attestation of {wheel.name} does not verify')}",
+            flush=True,
+        )
+        return code
+    return run(install_command("uv", python, wheel))
 
 
 def _lines(name: str, value: str) -> list[str]:
@@ -209,9 +272,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args[0] == "install":
             root = Path(os.environ.get("ONTOLINT_ACTION_ROOT") or Path(__file__).resolve().parent.parent)
-            return _run(install_command("uv", sys.executable, pinned_version(root)))
+            verifier = os.environ.get("ONTOLINT_VERIFIER", "")
+            if not verifier:
+                raise InputError("ONTOLINT_VERIFIER, the pypi-attestations program, is not set")
+            return install(root, sys.executable, verifier)
         return run(read_settings(os.environ))
-    except InputError as exc:
+    except (InputError, OSError, ValueError, KeyError) as exc:
         print(f"::error::{_escape_data(f'ontolint action: {exc}')}", flush=True)
         return 2
 

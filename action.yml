@@ -5,13 +5,15 @@ description: >-
 author: Arnaud Gelas
 
 # `uses: arnaudgelas/ontolint@vX.Y.Z` runs ontolint X.Y.Z: the Action reads the version from the pyproject.toml of
-# the commit the tag points to and installs exactly that release from PyPI, never the latest. Its dependencies come
-# from action/requirements.txt, a hash-locked export of uv.lock. The Action asks for no token and no permission; it
+# the commit the tag points to and installs exactly that release from PyPI, never the latest, after PyPI's PEP 740
+# attestation shows this repository's release workflow published those bytes. Its dependencies come from
+# action/requirements.txt and the attestation check's from action/verify-requirements.txt, hash-locked exports of
+# uv.lock. The Action asks for no token and no permission; it
 # does not upload the SARIF report (the README shows the step that does).
 
 inputs:
   files:
-    description: Files or directories to lint, one per line, relative to the workspace.
+    description: Files or directories to lint, one per line, inside the workspace (symlinks resolved).
     required: true
   args:
     description: >-
@@ -59,11 +61,18 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
       run: |
         set -euo pipefail
+        index=https://pypi.org/simple
+        # The program that checks the attestation has its own environment, installed by hash.
+        verify="$RUNNER_TEMP/ontolint-verify-venv"
+        uv venv --python 3.13 "$verify"
+        uv pip install --python "$verify/bin/python" --default-index "$index" \
+          --require-hashes --no-deps -r "$ACTION_PATH/action/verify-requirements.txt"
         venv="$RUNNER_TEMP/ontolint-venv"
         uv venv --python 3.13 "$venv"
-        uv pip install --python "$venv/bin/python" --default-index https://pypi.org/simple \
+        uv pip install --python "$venv/bin/python" --default-index "$index" \
           --require-hashes --no-deps -r "$ACTION_PATH/action/requirements.txt"
-        ONTOLINT_ACTION_ROOT="$ACTION_PATH" "$venv/bin/python" "$ACTION_PATH/action/entrypoint.py" install
+        ONTOLINT_ACTION_ROOT="$ACTION_PATH" ONTOLINT_VERIFIER="$verify/bin/pypi-attestations" \
+          "$venv/bin/python" "$ACTION_PATH/action/entrypoint.py" install
 
     - name: Lint
       id: lint
