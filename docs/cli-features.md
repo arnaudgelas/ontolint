@@ -9,7 +9,7 @@ Status values: **exists** (implemented and tested), **partial** (some of it exis
 | ID | Feature | Status | Notes |
 | --- | --- | --- | --- |
 | OPS001 | Run summary with counts per severity and per rule | partial | JSON and SARIF carry per-severity and execution summaries; per-rule counts are not reported. |
-| OPS002 | Baseline file that suppresses known findings | exists | `--write-baseline` and `--baseline`. A finding is matched by its version 1 fingerprint (rule, focus, message) or by its identity (rule, focus, subject) under its report path, so a reworded message stays baselined and one-file and multi-file baselines carry over (README "Policy and baselines"). |
+| OPS002 | Baseline file that suppresses known findings | exists | `--write-baseline` and `--baseline`. A finding is matched by its identity (rule, focus, subject) under its report path or by its version 1 fingerprint (rule, focus, message), so a reworded message stays baselined and one-file and multi-file baselines carry over; a fingerprint that a version 2 file pairs with an identity accepts a finding only in place of an accepted one that is gone (README "Policy and baselines"). |
 | OPS003 | Report baseline entries that no longer match any finding | exists | Reported in text, JSON (`baseline.stale_fingerprints`) and SARIF; `--fail-on-stale-baseline` exits 1. An entry is stale when neither its fingerprint nor its identity matched. Entries of rules not selected in the run count as stale. |
 | OPS004 | Fail only on new findings | exists | Findings in the baseline do not gate the exit code. |
 | OPS005 | SARIF output with complete rule metadata | exists | `--format sarif`; every report shape is validated against the vendored OASIS SARIF 2.1.0 schema in the tests. |

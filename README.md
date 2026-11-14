@@ -652,9 +652,11 @@ grows accordingly.
 Findings with the same message are ordered by their evidence, so the output no longer depends on
 pySHACL's hash-seed-dependent result order. The message, focus, severity and fingerprint are
 unchanged. A baseline identity is made of the source shape, constraint component, path, value and
-SPARQL constraint, so a pySHACL upgrade that rewords its messages keeps results accepted. Because
-the version 1 fingerprint (by message) is still accepted too, a new result whose message equals an
-accepted one's is accepted as well.
+SPARQL constraint, so a pySHACL upgrade that rewords its messages keeps results accepted. The
+version 1 fingerprint (by message) still accepts a result, but only in place of an accepted one that
+is gone: a new result whose message equals an accepted one's (another bad value of the same shape
+on the same node) is reported while that one is still found, and a bad value replaced by another
+with the same message stays accepted, as in 0.10 (see "Policy and baselines").
 
 Text prints part of the evidence after the `Fix:` line and any `In:` line: `Path:` (the
 `resultPath`), `Value:` (the `value`, left out only for a node-level result, one without a path,
@@ -775,7 +777,7 @@ ontolint 0.10 wrote it. `identities` maps each report path to the finding's *ide
 its rule, focus and subject. The subject is what the finding is about besides its focus: the
 predicate, the other term, the literal, the language. It never includes the message, counts,
 ratios or thresholds. `files` lists the report paths of the run. `--baseline` accepts a finding
-when either hash is recorded, so:
+when its identity is recorded for its report path, or its fingerprint is recorded, so:
 
 * rewording a message, a pySHACL upgrade, or a measurement that changes (a `METRIC*` ratio, an
   `OWL004` count, ROBOT's `SEM001` summary) no longer reopens an accepted finding. This loosens
@@ -785,8 +787,23 @@ when either hash is recorded, so:
   baselines carry over to each other.
 
 Two findings of one file that share an identity are recorded and matched by fingerprint only, so
-a new problem is never hidden behind an accepted one. A baseline written by 0.10 (no `version`,
-only `fingerprints`) keeps its old behaviour until it is regenerated once with `--write-baseline`.
+an incomplete subject does not let an accepted finding hide another with a different message.
+
+A fingerprint that the file pairs with an identity accepts a finding only in place of an entry of
+that fingerprint whose identity no finding of the run holds, each such entry once, in report order.
+So a finding whose subject a later release refines stays accepted (its old identity is gone, and
+its fingerprint takes the place), but a new finding whose message equals an accepted one's, such as
+a second bad value of one SHACL shape on one node, is reported while the accepted one is still
+found. Fingerprints the file pairs with no identity (a 0.10 file, or findings that shared an
+identity) accept every finding with them, as before. The limits: a problem fixed and another with
+its message introduced in one change stay accepted, as in 0.10; findings that shared an identity
+when the file was written, and that become unique (a later release tells them apart, or all but one
+of them is fixed), are reported once when a unique finding has their message; when a refined finding
+and a new one with its message coincide, report order decides which one is reported; and new
+findings that share an identity are still matched by fingerprint.
+
+A baseline written by 0.10 (no `version`, only `fingerprints`) keeps its old behaviour until it is
+regenerated once with `--write-baseline`.
 ontolint 0.10 reads a version 2 file's `fingerprints` and ignores the rest, but drops `identities`
 if it rewrites the file. Deleting a line from `fingerprints` withdraws that finding's identity too.
 A file whose `fingerprints`, `files`, `version` or `identities` has the wrong shape (a `version`

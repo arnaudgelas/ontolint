@@ -8,17 +8,32 @@ A baseline file (version 2) holds:
 * ``identities``: per report path, the message-independent identity of each finding
   (:func:`ontolint.reporting.identity`: rule, focus and subject), mapped to its version 1 hash.
 
-A finding is accepted when its version 1 hash is recorded, or when its identity is recorded for its report
-path; for any path when both the baseline and the run have exactly one file, so a one-file baseline keeps
-following a renamed file, as version 1 does.  Rewording a message therefore keeps a finding accepted, and a
-one-file baseline applies to that file in a multi-file run (and the reverse).  An identity shared by two
-findings of one report means a rule's subject is incomplete: such findings are recorded and matched by
-version 1 only, so a missing subject never hides a new problem.
+A finding is accepted when its identity is recorded for its report path (for any path when both the baseline
+and the run have exactly one file, so a one-file baseline keeps following a renamed file, as version 1 does), or
+when its version 1 hash is recorded.  Rewording a message therefore keeps a finding accepted, and a one-file
+baseline applies to that file in a multi-file run (and the reverse).  An identity shared by two findings of one
+report means a rule's subject is incomplete: such findings are recorded and matched by version 1 only.
+
+A version 1 hash that the file pairs with an identity accepts a finding only in place of an entry of that hash
+whose identity no finding of the run holds (shared identities included), each such entry once, in report order
+(issue #10).  So a finding whose subject a later release refines stays accepted, but a new problem whose message
+equals an accepted one's (a second bad value of one SHACL shape on one node) is reported while the accepted one
+is still found.  A hash the file pairs with no identity (a version 1 file, or findings that shared an identity)
+accepts every finding with it, as in version 1, and so does a finding whose identity is shared in its report.
+Its limits:
+
+* a problem fixed and another with its message introduced in one change: the second takes the freed entry, as in
+  version 1;
+* findings that shared an identity when the file was written, and that become unique (a later release tells them
+  apart, or all but one of them is fixed), reopen once when their hash is also paired with a unique finding: the
+  file never recorded their identity, and the unique finding holds the hash's only entry;
+* when a refined finding and a new one with its message coincide, report order decides which one is reported.
 
 A finding of a rule that compares the files of a run (``roaming``: ONT007, ONT008) is reported on one of
 the files it names, which another file of the run can displace (a copy added that sorts first).  Its identity
 is therefore also accepted under another report path, when it is unambiguous: the run reports it once, and the
-baseline records it under one path.
+baseline records it under one path.  This is decided for every finding before any version 1 hash is spent, so the
+result does not depend on the order of the reports, and the entry it takes is stale or not exactly as before.
 
 A recorded entry (a version 1 hash and its identity) is stale when neither matched a finding of the run.
 ``fingerprints`` stays the list of entries: an identity whose version 1 hash is not listed is ignored, so
@@ -146,39 +161,101 @@ def loads(text: str) -> Baseline:
     return Baseline(fingerprints, files, identities)
 
 
+type _Entry = tuple[str | None, str]
+"""A recorded entry's report path (``None`` when the run is path-free) and identity."""
+
+
+@dataclass
+class _Matcher:
+    """A baseline indexed for the reports of one run, and what pass 1 of :func:`apply` learns about the run.
+
+    Not frozen: pass 1 adds to ``held`` and ``seen``, and a ``frozen=True`` would only give the mutation run a decorator
+    mutant that it cannot execute in time (``docs/mutation-pardons.md``)."""
+
+    baseline: Baseline
+    path_free: bool
+    roamers: Counter[str]
+    """How many findings of a roaming rule the run reports with each identity."""
+    held: set[_Entry]
+    """Every (place, identity) a finding of the run holds, shared or not, and the entries roaming findings take."""
+    everywhere: dict[str, str] = field(default_factory=dict[str, str])
+    recorded: dict[str, list[str]] = field(default_factory=dict[str, list[str]])
+    """Identity -> the report paths the baseline records it under."""
+    entries: dict[str, list[_Entry]] = field(default_factory=dict[str, list[_Entry]])
+    """Version 1 hash -> the entries the file pairs it with."""
+    seen: set[_Entry] = field(default_factory=set[_Entry])
+    """For staleness only, as before: the (place, identity) of each unique finding, and the entry a roaming finding
+    takes when its version 1 hash is not recorded."""
+
+    @classmethod
+    def of(cls, baseline: Baseline, reports: Sequence[FileReport], roaming: frozenset[str]) -> _Matcher:
+        path_free = len(baseline.files) == 1 and len(reports) == 1
+        roamers = Counter(identity(f) for report in reports for f in report.findings if f.rule in roaming)
+        held = {(None if path_free else r.path, identity(f)) for r in reports for f in r.findings}
+        matcher = cls(baseline, path_free, roamers, held)
+        for path, pairs in baseline.identities.items():
+            for ident, v1 in pairs.items():
+                matcher.everywhere[ident] = v1
+                matcher.recorded.setdefault(ident, []).append(path)
+                matcher.entries.setdefault(v1, []).append((matcher.place(path), ident))
+        return matcher
+
+    def place(self, path: str) -> str | None:
+        return None if self.path_free else path
+
+    def verdict(self, path: str, v1: str, ident: str, unique: bool) -> bool | None:
+        """Whether the baseline accepts a finding; ``None`` when only an entry no finding holds can accept it."""
+        candidates = self.everywhere if self.path_free else self.baseline.identities.get(path, {})
+        if unique and ident in candidates:
+            return True
+        recorded = v1 in self.baseline.fingerprints
+        if recorded and not (unique and v1 in self.entries):
+            return True  # a hash paired with no identity, or a shared identity: version 1, as before
+        elsewhere = self.recorded.get(ident, [])
+        if not self.path_free and self.roamers[ident] == 1 and len(elsewhere) == 1:
+            self.held.add((elsewhere[0], ident))
+            if not recorded:
+                self.seen.add((elsewhere[0], ident))
+            return True
+        return None if recorded else False
+
+    def spare(self) -> Counter[str]:
+        """For each paired version 1 hash, how many of its entries no finding of the run holds."""
+        return Counter({v1: sum(e not in self.held for e in entries) for v1, entries in self.entries.items()})
+
+
 def apply(baseline: Baseline, reports: Sequence[FileReport], roaming: frozenset[str] = frozenset()) -> Applied:
     """Remove the findings ``baseline`` accepts from ``reports`` (the reports of one run).
 
     A finding of a ``roaming`` rule may be accepted under another report path than its own (see above).
     """
     multi = len(reports) > 1
-    path_free = len(baseline.files) == 1 and len(reports) == 1
-    everywhere = {ident: v1 for pairs in baseline.identities.values() for ident, v1 in pairs.items()}
-    recorded: dict[str, list[str]] = {}  # identity -> the report paths the baseline records it under
-    for path, pairs in baseline.identities.items():
-        for ident in pairs:
-            recorded.setdefault(ident, []).append(path)
-    roamers = Counter(identity(f) for report in reports for f in report.findings if f.rule in roaming)
+    matcher = _Matcher.of(baseline, reports, roaming)
+    path_free, seen = matcher.path_free, matcher.seen
     current: set[str] = set()  # version 1 hashes of the run
-    seen: set[tuple[str | None, str]] = set()  # (report path, or None when path-free; identity), unambiguous only
-    files: list[FileReport] = []
-    removed: list[tuple[Finding, ...]] = []
+    verdicts: list[list[bool | None]] = []
+    pending: list[tuple[list[bool | None], int, str]] = []  # (verdicts of a report, index, version 1 hash)
     for report in reports:
-        candidates = everywhere if path_free else baseline.identities.get(report.path, {})
-        kept: list[Finding] = []
-        dropped: list[Finding] = []
+        row: list[bool | None] = []
         for finding, ident, unique in _unique(report):
             v1 = _v1(finding, report, multi)
             current.add(v1)
             if unique:
-                seen.add((None if path_free else report.path, ident))
-            accepted = v1 in baseline.fingerprints or (unique and ident in candidates)
-            if not (accepted or path_free) and roamers[ident] == 1 and len(elsewhere := recorded.get(ident, [])) == 1:
-                accepted = True
-                seen.add((elsewhere[0], ident))
-            (dropped if accepted else kept).append(finding)
-        files.append(replace(report, findings=tuple(kept)))
-        removed.append(tuple(dropped))
+                seen.add((matcher.place(report.path), ident))
+            verdict = matcher.verdict(report.path, v1, ident, unique)
+            if verdict is None:
+                pending.append((row, len(row), v1))
+            row.append(verdict)
+        verdicts.append(row)
+    spare = matcher.spare()  # after every roaming finding has taken its entry
+    for row, index, v1 in pending:
+        row[index] = spare[v1] > 0
+        spare[v1] -= 1
+    files = [
+        replace(r, findings=tuple(f for i, f in enumerate(r.findings) if not verdicts[n][i]))
+        for n, r in enumerate(reports)
+    ]
+    removed = [tuple(f for i, f in enumerate(r.findings) if verdicts[n][i]) for n, r in enumerate(reports)]
     paired = {v1 for pairs in baseline.identities.values() for v1 in pairs.values()}
     stale = {v1 for v1 in baseline.fingerprints - paired if v1 not in current}
     for path, pairs in baseline.identities.items():

@@ -3,7 +3,8 @@
 A version 1 fingerprint hashes ``(rule, focus, message)`` (and the path in a multi-file run), so a reworded
 message, a pySHACL upgrade or a ratio that moves makes a baselined finding reappear, and a baseline written
 from one file matches nothing in a multi-file run. ``--write-baseline`` now also records, per report path,
-the message-independent identity of each finding next to its version 1 hash; ``--baseline`` accepts either.
+the message-independent identity of each finding next to its version 1 hash; ``--baseline`` accepts either, but a
+version 1 hash paired with an identity only in place of a finding that is gone (``test_baseline_paired_hashes.py``).
 """
 
 from __future__ import annotations
