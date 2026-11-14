@@ -17,8 +17,8 @@ from ontolint.reporting import (
     FileReport,
     RunReport,
     _escape,
-    _one_line,
     fingerprint,
+    one_line,
     render_report,
     to_json,
     to_sarif_report,
@@ -224,12 +224,12 @@ def test_the_evidence_lines_are_masked_like_the_rest_of_the_finding() -> None:
 )
 def test_one_line_escapes_exactly_the_invisible_and_line_breaking_characters(char: str, escaped: str) -> None:
     text = f"a{char}b"
-    line = _one_line(text)
+    line = one_line(text)
     assert line == f"a{escaped}b"
     assert line.splitlines() == [line]
     assert line.encode("utf-8")  # strict: a lone surrogate would raise
     if not 0xD800 <= ord(char) <= 0xDFFF:  # noqa: PLR2004 -- the surrogate block
-        term = _one_line(ntriples_literal(Literal(text)))
+        term = one_line(ntriples_literal(Literal(text)))
         parsed = Graph().parse(data=f"<https://e.test/s> <https://e.test/p> {term} .", format="nt")
         assert set(parsed.objects()) == {Literal(text)}
 
@@ -241,7 +241,7 @@ def test_escape_writes_four_hex_digits_up_to_ffff_and_eight_above() -> None:
 def test_the_escaped_categories_are_fixed() -> None:
     """Not ``str.isprintable``: unassigned code points (Cn) change with each Unicode version."""
     assert frozenset({"Cc", "Cf", "Cs", "Co", "Zl", "Zp", "Zs"}) == _ESCAPED_CATEGORIES
-    assert _one_line("a\U000e0080b") == "a\U000e0080b"  # unassigned (Cn): kept
+    assert one_line("a\U000e0080b") == "a\U000e0080b"  # unassigned (Cn): kept
 
 
 def _shown(char: str) -> bool:
@@ -251,7 +251,7 @@ def _shown(char: str) -> bool:
 @pytest.mark.slow
 @given(st.text())
 def test_any_text_becomes_one_strict_utf8_line_of_visible_characters(text: str) -> None:
-    line = _one_line(text)
+    line = one_line(text)
     assert all(_shown(char) for char in line)
     assert line.splitlines() in ([line], [])
     line.encode("utf-8")  # strict: raises on a lone surrogate
@@ -269,6 +269,6 @@ def _pairs_surrogates(text: str) -> bool:
 @given(st.text())
 def test_an_escaped_literal_parses_back_to_itself(text: str) -> None:
     assume(not _pairs_surrogates(text))
-    term = _one_line(ntriples_literal(Literal(text)))
+    term = one_line(ntriples_literal(Literal(text)))
     parsed = Graph().parse(data=f"<https://e.test/s> <https://e.test/p> {term} .", format="nt")
     assert [str(o) for o in parsed.objects()] == [text]

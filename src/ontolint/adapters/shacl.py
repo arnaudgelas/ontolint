@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
@@ -24,6 +25,7 @@ from rdflib.term import Node
 from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
 from ontolint.redaction import clip
+from ontolint.rules.shacl_quality import has_path_defect, property_shape_nodes
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import ntriples_literal, stable_blank_id
 from ontolint.worker import WorkerFailed, WorkerGone, WorkerTimeout, decode_graph, encode_graph, run_bounded
@@ -77,6 +79,42 @@ _PATH_LINKS = (SH.inversePath, SH.alternativePath, SH.zeroOrMorePath, SH.oneOrMo
 
 class ShapesRejected(ValueError):
     """An input graph would make pySHACL crash or run for minutes; it is refused before validation."""
+
+
+META_SHACL_PREFIX = "SHACL File does not validate against the SHACL Shapes SHACL (MetaSHACL) file."
+"""The first line of the error pySHACL raises when ``meta_shacl=True`` finds the shapes graph ill-formed; it then
+appends its whole validation report, and logs the same text at ERROR on :data:`PYSHACL_LOGGER`."""
+PYSHACL_LOGGER = "pyshacl-validate"
+"""The logger ``pyshacl.validate`` writes to stderr with (it replaces the handlers of this name on every call)."""
+MAX_RESULT_LINES = 20
+"""Most MetaSHACL results :class:`ShapesNotWellFormed` lists; the rest are counted."""
+MAX_RESULT_LINE = 300
+"""Longest result line before its pointer, as many characters as a rule run's detail takes in the Markdown summary."""
+ELLIPSIS = "..."
+_SHQ_COMPONENT_PATHS: dict[tuple[str, URIRef], str] = {
+    **{("DatatypeConstraintComponent", p): "SHQ008" for p in (SH.minCount, SH.maxCount, SH.minLength, SH.maxLength)},
+    **{("NodeKindConstraintComponent", p): "SHQ022" for p in (SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf)},
+    ("NodeKindConstraintComponent", SH.severity): "SHQ014",
+}
+"""``(constraint component, result path)`` of a MetaSHACL result and the SHQ rule that reports the same defect on the
+same shape (see :func:`_pointer`); a pair that is not here has no rule, or one that does not always fire."""
+
+
+class ShapesNotWellFormed(RuntimeError):
+    """The shapes graph does not conform to SHACL-SHACL (SHACL's own shapes for shapes graphs).
+
+    pySHACL refuses it before validating any data, so SHACL001 has no verdict (the rule is ``failed``, exit ``2``),
+    but the defect is the user's, not a tool crash: the message is :attr:`summary` and one line per result, so the
+    report prints each result once instead of pySHACL's whole validation report.  A line is ``<focus>: <path>:
+    <message>`` (no path for a node-level result), masked, cut at :data:`MAX_RESULT_LINE` characters and ended by
+    ``(SHQnnn)`` when that rule reports the same defect.
+    """
+
+    summary = "the shapes graph does not conform to SHACL-SHACL"
+
+    def __init__(self, results: tuple[str, ...]) -> None:
+        super().__init__("\n".join((self.summary, *results)))
+        self.results = results
 
 
 def _first_unserialisable_iri(graph: Graph) -> str | None:
@@ -298,26 +336,114 @@ def _results(report: Graph) -> set[Node]:
     return listed or set(report.subjects(RDF.type, SH.ValidationResult))
 
 
+def _short(iri: str) -> str:
+    """A result path as the SHACL vocabulary's ``sh:`` name when it is one."""
+    return "sh:" + iri.removeprefix(str(SH)) if iri.startswith(str(SH)) else iri
+
+
+def _pointer(
+    sg: Graph, focus: Node | None, component: str, path: Node | None, property_shapes: set[Node]
+) -> str | None:
+    """The SHQ rule that reports the defect of one MetaSHACL result on its shape, or ``None``.
+
+    A shapes graph that breaks SHACL-SHACL through a pair of :data:`_SHQ_COMPONENT_PATHS` breaks the condition of
+    exactly that rule.  SHQ023 is told by its own condition (:func:`has_path_defect`), because the results that
+    follow from a property shape's paths also arise where SHQ023 keeps a gap: a node shape with a path
+    (``sh:maxCount 0`` of SHACL 2.2) has the same result as a property shape with two.  They are the ``sh:path``
+    cardinality results and the ``sh:xone`` of a shape that is neither a node nor a property shape, which has no path.
+    """
+    if focus is None:
+        return None
+    if path is None:
+        follows = component == "XoneConstraintComponent"
+    else:
+        follows = path == SH.path and component in ("MinCountConstraintComponent", "MaxCountConstraintComponent")
+    if follows and has_path_defect(sg, focus, property_shapes):
+        return "SHQ023"
+    return _SHQ_COMPONENT_PATHS.get((component, path)) if isinstance(path, URIRef) else None
+
+
+def _local(report: Graph, result: Node) -> str:
+    """The local name of a result's constraint component (``MinCountConstraintComponent``), ``""`` if it has none."""
+    component = next(report.objects(result, SH.sourceConstraintComponent), None)
+    return str(component).rpartition("#")[2] if component is not None else ""
+
+
+def _metashacl_lines(report: Graph, sg: Graph) -> tuple[str, ...]:
+    """One sorted line per MetaSHACL result of ``report``, at most :data:`MAX_RESULT_LINES` and a count of the rest."""
+    property_shapes = property_shape_nodes(sg)
+    lines: list[str] = []
+    for result in _results(report):
+        path_node = next(report.objects(result, SH.resultPath), None)
+        path = _short(_path_text(report, sg, path_node)) if path_node is not None else None
+        component = _local(report, result)
+        message = "; ".join(sorted(map(str, report.objects(result, SH.resultMessage)))) or component or "(no message)"
+        focus_node = next(report.objects(result, SH.focusNode), None)
+        parts = (_name(sg, focus_node), path, " ".join(message.split()))  # one line, whatever pySHACL wrote
+        line = clip(": ".join(part for part in parts if part), MAX_RESULT_LINE, ELLIPSIS)
+        rule = _pointer(sg, focus_node, component, path_node, property_shapes)
+        lines.append(line if rule is None else f"{line} ({rule})")
+    lines.sort()
+    if len(lines) > MAX_RESULT_LINES:
+        lines[MAX_RESULT_LINES:] = [f"... and {len(lines) - MAX_RESULT_LINES} more result(s) not shown"]
+    return tuple(lines)
+
+
+class _WithoutMetaShaclReport(logging.Filter):
+    """Drops the record pySHACL logs with the whole MetaSHACL report: :class:`ShapesNotWellFormed` says it once."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not record.getMessage().startswith(META_SHACL_PREFIX)
+
+
+def _metashacl_failure(sg: Graph, failure: Exception) -> ShapesNotWellFormed | None:
+    """``failure`` as a :class:`ShapesNotWellFormed` when it is pySHACL's MetaSHACL error and the shapes graph does
+    not conform to SHACL-SHACL; ``None`` otherwise.
+
+    The text only says where to look: the shapes graph is meta-validated again, so a pass leaves the failure what it
+    is.  The second run is the price of a structured report (the exception holds pySHACL's text); it happens only
+    when the first one failed.
+    """
+    if not str(failure).startswith(META_SHACL_PREFIX):
+        return None
+    try:
+        from pyshacl.entrypoints import meta_validate  # noqa: PLC0415 -- the same module as ``validate``.
+    except ImportError:  # a pySHACL that does not export it: no result to list, the failure keeps its text
+        return None
+    conforms, report, _ = meta_validate(sg, inference="none", advanced=True, abort_on_first=False)
+    if conforms or not isinstance(report, Graph):
+        return None
+    return ShapesNotWellFormed(_metashacl_lines(report, sg))
+
+
 def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, object]:
     """``(conforms, report)`` from pySHACL, run with the network disabled; a failure is diagnosed, then re-raised.
 
     Shapes are input too: a SPARQL constraint or SHACL-AF function must not reach the network, and an attempt
-    fails the rule even when pySHACL swallowed the refusal.
+    fails the rule even when pySHACL swallowed the refusal.  A shapes graph that breaks SHACL-SHACL is raised as
+    :class:`ShapesNotWellFormed`, with pySHACL's own copy of its report kept off stderr.
     """
     failure: Exception | None = None
-    with network_disabled() as attempts:
+    quiet = _WithoutMetaShaclReport()
+    pyshacl_log = logging.getLogger(PYSHACL_LOGGER)
+    with network_disabled() as attempts:  # serialised: the logger filter below is process-global
+        pyshacl_log.addFilter(quiet)
         try:
             conforms, report, _ = validate(
                 g, shacl_graph=sg, inference="none", advanced=True, meta_shacl=True, abort_on_first=False
             )
         except Exception as exc:  # noqa: BLE001 -- classified below, once the network guard is lifted.
             failure = exc
+        finally:
+            pyshacl_log.removeFilter(quiet)
     if attempts.network:
         raise RuntimeError(
             f"SHACL validation tried to use the network ({attempts.network[0]}); the network is disabled"
         ) from failure
     if failure is None:
         return bool(conforms), report
+    if (not_well_formed := _metashacl_failure(sg, failure)) is not None:
+        raise not_well_formed from failure
     if not isinstance(failure, ShapesRejected):
         # The data graph may hold large enumerations, odd IRIs (IRI001 reports those) or malformed lists, and
         # pySHACL fails on them only when a violation message has to describe such a node: diagnose it then.

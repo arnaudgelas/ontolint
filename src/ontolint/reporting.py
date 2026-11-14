@@ -7,7 +7,7 @@ finding's focus (:mod:`ontolint.source_locations`); other formats do not use loc
 The Markdown summary (:func:`render_markdown`) is a bounded view of a run for a pull request,
 in which no text of the report can become markup.
 JSON and SARIF carry a finding's ``evidence`` in full; text prints its path, value and nested causes on lines of
-their own after ``Fix:`` (and any ``In:``), each escaped to one visible line (:func:`_one_line`).
+their own after ``Fix:`` (and any ``In:``), each escaped to one visible line (:func:`one_line`).
 """
 
 from __future__ import annotations
@@ -177,8 +177,13 @@ def _severity_summary(findings: Sequence[Finding]) -> dict[str, int]:
     return dict(Counter(x.severity for x in findings))
 
 
-def _execution_dicts(executions: Sequence[RuleExecution]) -> list[dict[str, str]]:
-    return [{"rule": x.rule_id, "status": x.status.value, "detail": x.detail} for x in executions]
+def _execution_dicts(executions: Sequence[RuleExecution]) -> list[dict[str, str | list[str]]]:
+    """Each execution as JSON; ``results`` only when the execution has some, so no other record changes."""
+    return [
+        {"rule": x.rule_id, "status": x.status.value, "detail": x.detail}
+        | ({"results": list(x.results)} if x.results else {})
+        for x in executions
+    ]
 
 
 def summarise_executions(executions: Sequence[RuleExecution]) -> dict[str, int]:
@@ -313,7 +318,7 @@ def _sarif_notification(file: FileReport, x: RuleExecution) -> dict[str, Any]:
         "message": {"text": f"Rule {x.rule_id} {x.status.value}: {x.detail}"},
         "associatedRule": {"id": x.rule_id},
         "locations": [{"physicalLocation": {"artifactLocation": {"uri": file.uri}}}],
-        "properties": {"status": x.status.value},
+        "properties": {"status": x.status.value} | ({"results": list(x.results)} if x.results else {}),
     }
 
 
@@ -411,7 +416,7 @@ def _escape(char: str) -> str:
     return f"\\u{code:04X}" if code <= 0xFFFF else f"\\U{code:08X}"  # noqa: PLR2004 -- the BMP's last code point
 
 
-def _one_line(text: str) -> str:
+def one_line(text: str) -> str:
     """``text`` with each character of :data:`_ESCAPED_CATEGORIES` but a space escaped (:func:`_escape`).
 
     The line then survives ``str.splitlines`` whole, encodes as strict UTF-8 (a lone surrogate is written as its
@@ -427,7 +432,7 @@ def _one_line(text: str) -> str:
 
 def _text_value(evidence: Evidence, key: str) -> str | None:
     value = evidence.get(key)
-    return _one_line(value) if isinstance(value, str) else None
+    return one_line(value) if isinstance(value, str) else None
 
 
 def _detail_line(evidence: Evidence) -> str:
@@ -436,7 +441,7 @@ def _detail_line(evidence: Evidence) -> str:
     message = messages if isinstance(messages, str) else "; ".join(m for m in messages if isinstance(m, str))
     focus = _text_value(evidence, "focusNode") or "(unknown)"
     shape = _text_value(evidence, "sourceShape") or "(unknown)"
-    return f"Detail: {focus}: {_one_line(message) or 'SHACL constraint violation'} [shape: {shape}]"
+    return f"Detail: {focus}: {one_line(message) or 'SHACL constraint violation'} [shape: {shape}]"
 
 
 def _evidence_lines(evidence: Evidence | None) -> str:

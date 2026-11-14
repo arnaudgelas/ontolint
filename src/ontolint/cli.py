@@ -59,7 +59,16 @@ from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
 from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
-from .reporting import TOOL_FAILURE_EXIT, FileReport, Location, Origin, RunReport, render_report, run_exit_code
+from .reporting import (
+    TOOL_FAILURE_EXIT,
+    FileReport,
+    Location,
+    Origin,
+    RunReport,
+    one_line,
+    render_report,
+    run_exit_code,
+)
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules import measurements
 from .rules.duplicate_ids import SET_RULES, finding_key
@@ -1190,6 +1199,8 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
             print(failure, file=sys.stderr)
         for path, x in report.broken:
             print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
+            for line in x.results:  # one per result, escaped to one visible line each
+                print(f"  {one_line(line)}", file=sys.stderr)
     except BrokenPipeError:  # the report is out and the exit status says what these lines would have: keep it
         _release(sys.stderr)
     return EXIT_PIPE_CLOSED if closed and code != TOOL_FAILURE_EXIT else code

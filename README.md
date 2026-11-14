@@ -630,6 +630,21 @@ features are not guaranteed to be supported. Shapes can make validation run for 
 `--max-validation-seconds` (or `max_validation_seconds` in the policy) stops it, and `SHACL001`
 then fails (exit `2`).
 
+A shapes graph that breaks SHACL-SHACL (SHACL's own shapes for shapes graphs: a property shape
+without `sh:path`, a non-IRI `sh:targetClass`, a `sh:minCount` that is not an `xsd:integer`, ...) is
+refused by pySHACL before any data is validated, so `SHACL001` has no verdict: it is `failed` and the
+run exits `2`, as for any rule run without a verdict. The rule-execution line says only
+`the shapes graph does not conform to SHACL-SHACL`; stderr has the `TOOL001` line and, under it, one
+line per MetaSHACL result (`<shape>: <path>: <message>`, at most 20 then a count, each cut at 300
+characters, userinfo masked, control characters escaped), once. A line ends with `(SHQ023)`, `(SHQ008)`,
+`(SHQ014)` or `(SHQ022)` when that rule reports the same defect, so
+`--select SHQ,SHACL` shows the finding that names it; the other defects, which no SHQ rule
+reports (`sh:uniqueLang` on a node shape, several `sh:severity` values), have no pointer, and neither
+has a typed `sh:NodeShape` with `sh:path`, which SHACL-SHACL accepts and pySHACL then refuses with its
+own load error. JSON and SARIF keep the same lines as `results` of the execution
+(`executions[].results`, `toolExecutionNotifications[].properties.results`), present only when there are
+some; the text summary and the Markdown summary show the one line. Fix the shapes graph and run again.
+
 When a [W3C PROF](https://www.w3.org/TR/dx-prof/) profile names the shapes (`prof:hasResource [
 prof:hasRole role:validator ; prof:hasArtifact <…/validator> ]`), let the profile say which:
 
