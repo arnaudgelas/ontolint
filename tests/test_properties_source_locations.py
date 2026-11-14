@@ -22,7 +22,7 @@ import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis_strategies import BASE, budget, roundtrip_triple_lists
-from rdflib import RDFS, BNode, Dataset, Graph, Literal, URIRef
+from rdflib import RDF, RDFS, BNode, Dataset, Graph, Literal, URIRef
 from rdflib.term import Node
 
 from ontolint.cli import main
@@ -39,9 +39,12 @@ SUFFIXES = {"turtle": "ttl", "nt": "nt", "xml": "rdf", "json-ld": "jsonld", "tri
 DATASET_FORMATS = frozenset({"trig", "nquads"})
 GRAPH_NAMES: tuple[URIRef | BNode | None, ...] = (None, URIRef(BASE + "g1"), URIRef("https://g.test/g2"), BNode("G3"))
 DESCRIBED_GRAPH_NAME = (URIRef(BASE + "g1"), RDFS.label, Literal("g1"))  # a graph name that is also a node
-_PREFIXED = re.compile(
-    r"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:\\.|[^\s<>\"{}|^`\\;,.])*(?:\.(?:\\.|[^\s<>\"{}|^`\\;,.])+)*)"
-)
+# Turtle's PN_LOCAL as a reader applies it: name characters and escapes, dots only between them, and none of the
+# characters that end a name (``;`` ``,`` brackets ``#``...).  Written apart from the locator's pattern on purpose.
+_NAME_CHAR = r"(?:\\.|[^\s<>\"{}|^`\\;,()\[\]#!~=@'&*+?/$.])"
+_PREFIXED = re.compile(rf"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:{_NAME_CHAR}+(?:\.+{_NAME_CHAR}+)*)?)")
+# rdflib's writers put a space before the ``.``, ``;`` and ``,`` that end a line; hand-written files often do not.
+_BEFORE_PUNCTUATION = re.compile(r"(?<=[>A-Za-z_]) (?=[.;,]\n)")
 _XML_REFERENCE = re.compile(r'rdf:(?:about|resource)="([^"]*)"')
 
 
@@ -134,6 +137,8 @@ def test_every_region_points_at_text_that_spells_its_node(fmt: str, triples: lis
         for triple in triples:
             graph.add(triple)
         text = _serialise(graph, fmt)
+    if fmt in {"turtle", "trig"}:  # hand-written Turtle glues the punctuation to the name (issue #61)
+        text = _BEFORE_PUNCTUATION.sub(lambda match: "" if rnd.random() < 0.5 else match[0], text)  # noqa: PLR2004
     index, parsed, public_id = _index(text, SUFFIXES[fmt])
     assert index.problem is None
     for node, location in index.locations.items():
@@ -145,6 +150,9 @@ def test_every_region_points_at_text_that_spells_its_node(fmt: str, triples: lis
     if fmt in {"turtle", "nt", *DATASET_FORMATS}:
         subjects = {s for s in parsed.subjects() if isinstance(s, URIRef) and _splittable(s, public_id)}
         assert subjects <= set(index.locations), (fmt, subjects - set(index.locations), text)
+        # An object is the term the glued punctuation follows: ``ex:B.``, ``ex:B;``, ``<...>,`` and ``ex:B}``.
+        objects = {o for o in parsed.objects() if isinstance(o, URIRef) and o != RDF.nil and _splittable(o, public_id)}
+        assert objects <= set(index.locations), (fmt, objects - set(index.locations), text)
 
 
 def _relayout(value: object, rnd: random.Random) -> str:

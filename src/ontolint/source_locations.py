@@ -37,7 +37,15 @@ _TEXT_FORMATS = frozenset({"turtle", "n3", "trig", "nt", "nquads"})
 _PREFIXED_FORMATS = frozenset({"turtle", "n3", "trig"})
 _XML_FORMATS = frozenset({"xml", "application/rdf+xml"})
 _JSON_FORMATS = frozenset({"json-ld", "application/ld+json"})
-_PREFIXED_NAME = re.compile(r"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:\\.|[^\s<>\"{}|^`\\])*)")
+# A local name (Turtle's PN_LOCAL) is runs of name characters and ``\``-escapes joined by runs of dots, so it never
+# ends with a dot: ``ex:B.`` is ``ex:B`` and the end of the statement.  A name character is anything but whitespace
+# and the characters that end a name unescaped (``;`` ``,`` the brackets, ``#``, ``{}``...: RDFLib's own set), so
+# ``ex:B;``, ``ex:B,``, ``ex:B)``, ``ex:B}`` and ``ex:B#comment`` end at ``B``.  Each dot run is committed to its
+# name character or given up whole, so the match is linear however many dots a run holds.
+_LOCAL_UNIT = r"(?:\\.|[^\s<>\"{}|^`\\;,()\[\]#!~=@'&*+?/$.])"
+_PREFIXED_NAME = re.compile(
+    rf"(?P<prefix>[A-Za-z][A-Za-z0-9_-]*|):(?P<local>(?:{_LOCAL_UNIT}++(?:\.++{_LOCAL_UNIT}++)*+)?)"
+)
 _BNODE = re.compile(r"_:(?P<label>[A-Za-z][A-Za-z0-9_-]*)")
 _NAME_RUN = re.compile(r"[A-Za-z0-9_-]+")
 # Turtle/N3/TriG directives declare namespaces; the IRIs they mention are not statements about a node.

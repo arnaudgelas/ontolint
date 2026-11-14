@@ -99,6 +99,15 @@ Deliberate golden update (issue #9, SHACL001 evidence in text): each SHACL001 bl
 a Value line) and ``text_node_shacl_violation`` (Path, Value and two Detail blocks) changed; every other text,
 JSON and SARIF output, legacy view and exit code is unchanged (JSON-tree diff), and ``legacy_rules.json`` did not
 move.
+
+Deliberate golden update (issue #61, punctuation glued to a prefixed name): ``kitchen_sink.ttl`` writes
+``ex:R2, ex:R3`` and ``ex:S1, ex:S2, ex:S3, ex:S4``, so the locator read ``ex:R2,`` and the like as names of no
+node and located those terms at a later spelling.  Five terms are now located at the spelling the file has
+first (``ex:R2`` 29:1 to 28:55, ``ex:S1`` to ``ex:S3`` likewise, and ``owl:ObjectProperty`` 53:18 to 52:15), which
+moves the regions of four results of ``kitchen_sink.ttl``; only the
+three SARIF outputs of the kitchen sink (``sarif_default``, ``sarif_shapes``, ``multi_file_sarif``, each as file
+and stdout) changed.  Rendered with the old and the new pattern, they are equal once every ``region`` is left out,
+and no finding, message, fingerprint, text or JSON report, exit code or ``legacy_rules.json`` entry moved.
 """
 
 from __future__ import annotations

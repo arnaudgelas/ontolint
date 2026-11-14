@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from rdflib import Graph, URIRef
 from rdflib.compare import isomorphic
+from rdflib.term import Node
 from timing_support import LINEAR_SCAN_SECONDS
 
 from ontolint import source_locations
@@ -536,6 +538,187 @@ def test_a_trig_finding_has_the_region_of_its_turtle_twin(
     assert regions == _regions(tmp_path / "a.ttl", capsys)
     assert regions
     assert all(region is not None for _rule, _message, region in regions)
+
+
+# --- Punctuation glued to a name (issue #61) ------------------------------------------------------
+
+GLUE_HEADER = "@prefix ex: <https://example.test/> .\n"
+B_IRI = f"{EX}B"
+
+
+def _offset_location(text: str, offset: int) -> Location:
+    line_start = text.rfind("\n", 0, offset) + 1
+    return Location(text.count("\n", 0, offset) + 1, offset - line_start + 1)
+
+
+def _glue_text(suffix: str, statements: str, header: str = GLUE_HEADER) -> str:
+    """``statements`` as a Turtle/N3 file, or inside a TriG graph block."""
+    return header + ("{\n" + statements + "\n}\n" if suffix == "trig" else statements)
+
+
+# A statement whose only mention of ex:B / <.../B> is followed, with no space, by the punctuation under test.
+GLUED_STATEMENTS = {
+    ".": "ex:A ex:p {b}.\n",
+    ";": "ex:A ex:p {b};\n    ex:q ex:C.\n",
+    ",": "ex:A ex:p {b},\n    ex:C.\n",
+}
+SPELLINGS = ["ex:B", f"<{B_IRI}>"]
+
+
+@pytest.mark.parametrize("suffix", ["ttl", "trig", "n3"])
+@pytest.mark.parametrize("spelling", SPELLINGS, ids=["prefixed", "iri"])
+@pytest.mark.parametrize("punctuation", sorted(GLUED_STATEMENTS))
+def test_a_punctuation_glued_to_a_name_does_not_cost_its_region(
+    tmp_path: Path, suffix: str, spelling: str, punctuation: str
+) -> None:
+    """Turtle's PN_LOCAL has no trailing ``.`` and no ``;`` or ``,``: the name ends before them (issue #61)."""
+    text = _glue_text(suffix, GLUED_STATEMENTS[punctuation].format(b=spelling))
+    index = _document(tmp_path, f"a.{suffix}", text).source_index
+    assert index.problem is None
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index(spelling))
+
+
+@pytest.mark.parametrize("suffix", ["ttl", "trig"])
+@pytest.mark.parametrize(
+    "statements",
+    [
+        "ex:A ex:p ex:B.",  # the end of the file (or of the block) right after the dot
+        "ex:A ex:p ex:B.# the comment starts at once\n",
+        "ex:A ex:p ex:B.\n",
+        "ex:A ex:p ex:B;ex:q ex:C,ex:D.\n",  # nothing but punctuation between the names
+    ],
+    ids=["eof", "comment", "newline", "no-space"],
+)
+def test_glued_punctuation_is_no_part_of_a_name_whatever_follows_it(
+    tmp_path: Path, suffix: str, statements: str
+) -> None:
+    text = _glue_text(suffix, statements)
+    index = _document(tmp_path, f"a.{suffix}", text).source_index
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"))
+
+
+@pytest.mark.parametrize(
+    "tail", ["}\n", ".}\n", ";}\n", " }\n"], ids=["brace", "dot-brace", "semicolon-brace", "space"]
+)
+def test_a_trig_block_closed_straight_after_a_name_keeps_the_region(tmp_path: Path, tail: str) -> None:
+    text = GLUE_HEADER + "ex:g {\n    ex:A ex:p ex:B" + tail
+    index = _document(tmp_path, "a.trig", text).source_index
+    assert index.locations[URIRef(B_IRI)] == Location(3, 15)
+
+
+@pytest.mark.parametrize(
+    "statement",
+    ["ex:A ex:p ( ex:C ex:B).\n", "ex:A ex:p [ ex:q ex:B].\n", "ex:A ex:p ex:B#a comment\n    .\n"],
+    ids=["paren", "bracket", "comment"],
+)
+def test_a_closing_bracket_or_comment_glued_to_a_name_is_no_part_of_it(tmp_path: Path, statement: str) -> None:
+    # PN_LOCAL has none of ``)``, ``]`` and ``#`` unescaped either; the old pattern swallowed them all.
+    text = GLUE_HEADER + statement
+    index = _document(tmp_path, "a.ttl", text).source_index
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"))
+
+
+@pytest.mark.parametrize(
+    ("name", "local"),
+    [
+        ("ex:a.b", "a.b"),  # a dot inside a local name is part of it
+        ("ex:a.b.c", "a.b.c"),
+        ("ex:a:b.c", "a:b.c"),
+        ("ex:a%2Eb", "a%2Eb"),  # a percent escape stays as spelled
+        ("ex:a%2E", "a%2E"),  # ... also at the end of the name
+        ("ex:a\\,b", "a,b"),  # an escaped , or ; is part of the name
+        ("ex:a\\;b", "a;b"),
+        ("ex:a\\.b", "a.b"),
+        ("ex:a-", "a-"),
+        ("ex:1.2", "1.2"),
+    ],
+)
+@pytest.mark.parametrize("suffix", ["ttl", "trig"])
+@pytest.mark.parametrize("punctuation", sorted(GLUED_STATEMENTS))
+def test_a_local_name_keeps_its_inner_dots_and_escapes_before_glued_punctuation(
+    tmp_path: Path, suffix: str, name: str, local: str, punctuation: str
+) -> None:
+    text = _glue_text(suffix, GLUED_STATEMENTS[punctuation].format(b=name))
+    index = _document(tmp_path, f"a.{suffix}", text).source_index
+    assert index.locations[URIRef(EX + local)] == _offset_location(text, text.index(name))
+
+
+@pytest.mark.parametrize("punctuation", [".", ";", ","])
+def test_an_empty_local_name_ends_before_the_punctuation_glued_to_it(tmp_path: Path, punctuation: str) -> None:
+    # ``ex:.`` is the empty local name, then the end of the statement: the node is the namespace itself.
+    statements = {".": "ex:A ex:p ex:.\n", ";": "ex:A ex:p ex:;\n    ex:q ex:C.\n", ",": "ex:A ex:p ex:,\n    ex:C.\n"}
+    text = GLUE_HEADER + statements[punctuation]
+    index = _document(tmp_path, "a.ttl", text).source_index
+    assert index.locations[URIRef(EX)] == _offset_location(text, text.index("ex:" + punctuation))
+
+
+@pytest.mark.parametrize("header", ["PREFIX ex: <https://example.test/>\n", "prefix ex: <https://example.test/>\n"])
+def test_a_sparql_style_prefix_declaration_is_no_obstacle_to_a_glued_name(tmp_path: Path, header: str) -> None:
+    text = header + "GRAPH ex:g { ex:A ex:p ex:B. }\n"
+    index = _document(tmp_path, "a.trig", text).source_index
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("ex:a\\. .", {"a.": 1}),  # an escaped trailing dot belongs to the name; the next one ends it
+        ("ex:a\\.. .", {"a.": 1}),
+        ("ex:a..b .", {"a..b": 1}),  # a run of dots inside a name
+        ("ex:a. ex:b.", {"a": 1, "b": 7}),
+        ("ex:a.ex:b.", {"a.ex:b": 1}),  # a dot between two words is inner, whatever the words hold
+        ("ex:a...", {"a": 1}),  # a run of dots after a name is no part of it
+        ("ex:.a", {"": 1}),  # a local name cannot start with a dot
+    ],
+)
+def test_the_local_name_follows_the_turtle_grammar_even_where_rdflib_is_lenient(
+    text: str, expected: dict[str, int]
+) -> None:
+    nodes: set[Node] = {URIRef(EX + local) for local in [*expected, "other"]}
+    found = source_locations._scan(text, "turtle", "", nodes, {"ex": EX})  # noqa: SLF001 -- no parse: some inputs are invalid
+    assert found == {URIRef(EX + local): Location(1, column) for local, column in expected.items()}
+
+
+def test_the_reproduction_of_issue_61_is_located_in_the_sarif_report(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "glued.ttl"
+    path.write_text(
+        "@prefix ex: <https://example.test/onto#> .\n"
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+        "ex:A a owl:Class ;\n"
+        "    rdfs:subClassOf ex:B.\n",
+        encoding="utf-8",
+    )
+    main([str(path), "--select", "OWL001", "--format", "sarif", "--fail-on", "never"])
+    results = json.loads(capsys.readouterr().out)["runs"][0]["results"]
+    regions = [r["locations"][0]["physicalLocation"].get("region") for r in results if "onto#B" in r["message"]["text"]]
+    assert regions == [{"startLine": 5, "startColumn": 21}]
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        lambda n: "ex:a" + "." * n + " .",  # a name, then a very long run of dots
+        lambda n: "ex:" + "." * n + " .",  # an empty name, then the run
+        lambda n: "ex:a" + ".a" * n + " .",  # many inner dots
+        lambda n: "ex:a" + ".b." * n + " .",  # dot-name-dot, repeated
+        lambda n: "ex:a." * n,  # many names, each glued to its dot
+        lambda n: "ex:a" + "\\." * n + " .",  # escaped dots
+        lambda n: "ex:a" + "..a" * n + " .",  # double dots inside the name
+        lambda n: "ex:a" + "." * n + "\n" + "ex:" * n,  # the run, then many empty-name attempts
+    ],
+    ids=["trailing", "empty-name", "inner", "dot-name-dot", "many-names", "escaped", "double", "run-then-names"],
+)
+def test_the_scan_is_linear_on_long_runs_of_dots(build: Callable[[int], str]) -> None:
+    # A name pattern that backtracked over the run for each of its dots would be quadratic on these inputs: minutes
+    # at this size, against milliseconds when linear.
+    text = build(200_000)
+    started = time.perf_counter()
+    nodes: set[Node] = {URIRef(EX + "a")}
+    source_locations._scan(text, "turtle", "", nodes, {"ex": EX})  # noqa: SLF001
+    assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
 
 
 # --- JSON-LD written by a Java tool (issue #7): Jena's riot, see tests/fixtures/java_jsonld/README.md ----
