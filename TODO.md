@@ -60,21 +60,23 @@ Nothing open: 0.11.0 is released (see "Recently done").
     and every case. `docs/rules.md` is an index (the counts, and per family a table of its rules
     linked to the family's page; the `#family` anchors kept) and `docs/rules/<family>.md` holds the
     21 family pages, since one file with everything would be about 650 KB, past what github.com
-    renders (the largest page, OWL, is about 130 KB; a test keeps each under 500,000 bytes). An entry
-    adds its home module and its specification: the `* **ID.**` bullet of the module docstring,
-    verbatim but reflowed to one paragraph, Sphinx roles turned into code (115 rules from 114
-    bullets; the 134 others say that none is written yet, see #64). Each page opens with the
+    renders (the largest page, OWL, is about 130 KB; a test keeps each under 500,000 bytes). An
+    entry adds its home module and its specification: the `* **ID.**` bullet of the module
+    docstring, verbatim but reflowed to one paragraph, Sphinx roles turned into code (115 rules from
+    114 bullets; the 134 others say that none is written yet, see #64). Each page opens with the
     notes of its rules' modules, the rest of their docstrings, the bullets replaced by one line
-    naming the rules. Then come all 1,847 cases, in order, with their options, and the first message
-    of each of the 778 flagged graph cases (249 before). Probed and empty-graph cases are no longer
-    labelled "built programmatically", options are printed for every graph case and only where they
-    differ from the defaults (sets sorted), and names, options and messages are code spans that
-    nothing in them can close (OBO006's names hold `<http://...>`); outside code spans, titles,
-    fixes, intents, specifications and notes escape `\` and `<`, which github.com would otherwise
-    read as HTML and drop (OBO010's fix names `.../obo/<id>.owl`). The generator refuses a near-miss
-    bullet header, a rule bulleted twice or not implemented, a note that would start a Markdown block
-    and a module without docstring; it deletes the Markdown orphans of `docs/rules/`, and `--check`
-    names the stale, missing and orphan pages. Nothing under `src/` or `data/` changed.
+    naming the rules, each linked to its family page when it is on another (`owl.py` is home to
+    DATA001, so the DATA page names OWL001 to OWL015). Then come all 1,847 cases, in order, with
+    their options, and the first message of each of the 778 flagged graph cases (249 before). Probed
+    and empty-graph cases are no longer labelled "built programmatically", options are printed for
+    every graph case and only where they differ from the defaults (sets sorted), and names, options
+    and messages are code spans that nothing in them can close (OBO006's names hold `<http://...>`);
+    outside code spans, titles, fixes, intents, specifications and notes escape `\` and `<`, which
+    github.com would otherwise read as HTML and drop (OBO010's fix names `.../obo/<id>.owl`). The
+    generator refuses a near-miss bullet header, a rule bulleted twice or not implemented, a note
+    that would start a Markdown block and a module without docstring; it deletes the Markdown
+    orphans of `docs/rules/`, and `--check` names the stale, missing and orphan pages. Nothing under
+    `src/` or `data/` changed.
     - Left open: the specification is not shown by `--explain`; no stable per-rule anchors yet (an
       index row links to the family page); no test requires a bullet per rule until #64 lands.
 - Unreleased (after 0.12.0):

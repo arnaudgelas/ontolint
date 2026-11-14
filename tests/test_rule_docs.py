@@ -259,7 +259,7 @@ def test_specifications_and_notes_escape_angle_brackets_and_backslashes_outside_
     assert doc.notes == (
         "Fake rules about .../obo/\\<id>.owl.",
         "",
-        "*Specified under each rule: A001.*",
+        ("A001",),
         "",
         "\\<div>x\\</div>",
     )
@@ -286,11 +286,11 @@ def test_a_bullet_ends_at_its_first_unindented_line() -> None:
     assert doc.notes == (
         "Fake rules.",
         "",
-        "*Specified under each rule: A001.*",
+        ("A001",),
         "",
         "Fixtures: none.",
         "",
-        "*Specified under each rule: A002, A003, A004.*",
+        ("A002", "A003", "A004"),
         "",
         "Closing words.",
     )
@@ -371,6 +371,23 @@ def test_module_notes_are_complete_and_every_module_link_resolves() -> None:
     assert "](#module-owl)" in sections["OWL012"]  # its bullet is in owl.py, its RuleSpec in classes.py
 
 
+def test_a_run_of_bullets_links_each_rule_it_names_that_is_on_another_page() -> None:
+    family = {spec.rule_id: spec.family.lower() for spec in default_registry().all()}
+    pages = _committed()
+    for name, page in pages.items():
+        here = set(re.findall(r"^#### (\w+):", page, flags=re.MULTILINE))
+        for run in re.findall(r"^\*Specified under each rule: (.*)\.\*$", _notes(page), flags=re.MULTILINE):
+            for named in run.split(", "):
+                link = re.fullmatch(r"\[(\w+)\]\((\w+)\.md\)", named)
+                if link is None:
+                    assert named in here, (name, named)
+                else:
+                    assert link[1] not in here and link[2] == family[link[1]], (name, named)
+                    assert f"#### {link[1]}:" in pages[f"rules/{link[2]}.md"], (name, named)
+    data = _notes(pages["rules/data.md"])
+    assert "*Specified under each rule: [OWL001](owl.md), [OWL002](owl.md)," in data  # owl.py is home to DATA001
+
+
 def _rewrap(doc: str, width: int) -> str:
     """Rewrap every paragraph and item of a docstring after its summary line at ``width``."""
     lines = inspect.cleandoc(doc).splitlines()
@@ -413,7 +430,9 @@ def test_the_rendering_does_not_depend_on_how_docstrings_are_wrapped(width: int)
         assert {key: collapsed(text) for key, text in rewrapped.specs.items()} == {
             key: collapsed(text) for key, text in original.specs.items()
         }, module.__name__
-        assert [collapsed(line) for line in rewrapped.notes] == [collapsed(line) for line in original.notes]
+        assert [note if isinstance(note, tuple) else collapsed(note) for note in rewrapped.notes] == [
+            note if isinstance(note, tuple) else collapsed(note) for note in original.notes
+        ]
 
 
 WORDS = st.text(string.ascii_letters + string.digits + ".,;:()/'-_<>[]&|#=+!?*", min_size=1, max_size=9).filter(
@@ -444,7 +463,7 @@ def test_a_random_docstring_round_trips(
     lines += ["Fixtures: none."] if fixtures else []
     doc = read_module(_fake("\n".join(lines)))
     assert doc.specs == {rule_id: _prose(" ".join(words)) for rule_id, words in specs.items()}  # no code span
-    assert f"*Specified under each rule: {', '.join(specs)}.*" in doc.notes
+    assert tuple(specs) in doc.notes
     assert ("Fixtures: none." in doc.notes) is fixtures
 
 
@@ -501,7 +520,7 @@ def test_every_note_block_is_separated_so_no_paragraph_joins_an_item() -> None:
         "",
         "Paragraph after.",
         "",
-        "*Specified under each rule: A001.*",
+        ("A001",),
         "",
         "* item three",
     )

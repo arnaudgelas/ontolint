@@ -40,7 +40,7 @@ OWL012 (self-equivalence) is emitted by `ontolint.rules.classes`.
 
 All rules read the asserted graph only: no import is followed and nothing is inferred (no ``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means ``ctx.local`` (`ontolint.ownership`); "declared" means typed by the named class in an asserted ``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``, ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
 
-*Specified under each rule: OWL001, OWL002, OWL003, OWL004, OWL005, OWL006, OWL007, OWL008, OWL009, OWL010, OWL011, OWL012, OWL013, OWL014, OWL015.*
+*Specified under each rule: [OWL001](owl.md), [OWL002](owl.md), [OWL003](owl.md), [OWL004](owl.md), [OWL005](owl.md), [OWL006](owl.md), [OWL007](owl.md), [OWL008](owl.md), [OWL009](owl.md), [OWL010](owl.md), [OWL011](owl.md), [OWL012](owl.md), [OWL013](owl.md), [OWL014](owl.md), [OWL015](owl.md).*
 
 ## Rules
 
