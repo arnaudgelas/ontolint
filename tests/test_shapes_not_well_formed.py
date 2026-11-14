@@ -423,3 +423,23 @@ def test_a_node_shape_with_a_path_is_a_pyshacl_load_error_not_a_metashacl_verdic
     assert execution.status is ExecutionStatus.FAILED
     assert execution.detail.startswith("ShapeLoadError: A shape defined as a NodeShape cannot be the subject")
     assert execution.results == ()
+
+
+@pytest.mark.parametrize(("extra", "last"), [(0, None), (1, "... and 1 more result(s) not shown")])
+def test_the_cap_applies_after_exactly_twenty_results(extra: int, last: str | None) -> None:
+    count = shacl.MAX_RESULT_LINES + extra
+    shapes = PREFIXES + "".join(f":P{i} a sh:PropertyShape ; sh:minCount 1 .\n" for i in range(count))
+
+    shown = _raised(shapes).results
+
+    assert len(shown) == shacl.MAX_RESULT_LINES + (1 if last else 0)
+    assert (shown[-1] == last) if last else all(line.endswith("(SHQ023)") for line in shown)
+
+
+def test_a_result_line_ends_with_its_pointer_even_when_the_text_is_cut() -> None:
+    shapes = PREFIXES + f"<https://example.test/{'y' * 500}> a sh:PropertyShape ; sh:minCount 1 .\n"
+
+    (line,) = _raised(shapes).results
+
+    assert line.endswith(f"{shacl.ELLIPSIS} (SHQ023)")
+    assert len(line) == shacl.MAX_RESULT_LINE + len(shacl.ELLIPSIS) + len(" (SHQ023)")
