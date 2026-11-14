@@ -353,6 +353,25 @@ def test_a_digit_led_iri_resolved_as_relative_repeats_no_userinfo(run: Any, tmp_
         assert _leaks(out) == []
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="known limit: RDF/XML resolves a scheme-less '1git+https://u:p@h' to '.../1git+https:/u:p@h', "
+    "which no generic-scheme branch masks (documented in README Security; tracked outside #55)",
+)
+def test_a_digit_led_generic_scheme_resolved_as_relative_repeats_no_userinfo(run: Any, tmp_path: Path) -> None:
+    (tmp_path / "generic.rdf").write_text(
+        '<?xml version="1.0"?>\n'
+        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:owl="http://www.w3.org/2002/07/owl#">\n'
+        '  <owl:Ontology rdf:about="https://example.test/onto"/>\n'
+        f'  <owl:Class rdf:about="1git+https://alice:{PASSWORD}@example.test/y"/>\n'
+        "</rdf:RDF>\n",
+        encoding="utf-8",
+    )
+    for output_format in FORMATS:
+        _code, out = run("generic.rdf", "--format", output_format, "--profile", "strict")
+        assert _leaks(out) == []
+
+
 def test_a_catalog_entry_for_a_credentialed_url_repeats_no_userinfo(run: Any, tmp_path: Path) -> None:
     # os.path.normpath turns "https://" into "https:/"; the git+https form is no URL a WHATWG parser reads either.
     (tmp_path / "imports" / "catalog-v001.xml").write_text(
