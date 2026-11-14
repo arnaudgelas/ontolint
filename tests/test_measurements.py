@@ -121,7 +121,7 @@ def test_kitchen_sink_values() -> None:
     assert found.by_namespace == ()
 
 
-@pytest.mark.parametrize("kind", [TermRatio, TermValues, CountRatio, Count, Absent])
+@pytest.mark.parametrize("kind", [TermRatio, TermValues, CountRatio, Count, Absent, measurements.MeasurementSpec])
 def test_values_are_immutable(kind: type[Any]) -> None:
     value = {
         TermRatio: lambda: TermRatio(frozenset(), frozenset()),
@@ -129,6 +129,7 @@ def test_values_are_immutable(kind: type[Any]) -> None:
         CountRatio: lambda: CountRatio(0, 0),
         Count: lambda: Count(0),
         Absent: lambda: Absent("r"),
+        measurements.MeasurementSpec: lambda: measurements.SPECS[0],
     }[kind]()
     name = next(iter(vars(value)))
     with pytest.raises(FrozenInstanceError):
