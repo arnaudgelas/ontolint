@@ -25,8 +25,8 @@ documented in ``docs/measurements.md``.  Every measurement keeps to these rules:
 * A numerator that a per-term rule also reports is *exactly* that rule's set, through the rule's own helper
   (LEX001's :func:`~ontolint.rules.lexical.is_unlabelled`, CLS001's
   :func:`~ontolint.rules.classes.orphan_classes`, OWL005's and OWL006's).
-* Term-level values (which terms lack a definition) are kept here as sets, for the snapshot a later item
-  builds; what is published holds counts only.
+* Term-level values (which terms lack a definition) are kept here as sets, for the quality snapshot
+  (:mod:`ontolint.quality`); what ``--measurements`` publishes holds counts only.
 * A change to what a measurement counts, a bug fix included, increments its definition version.
 """
 
@@ -119,6 +119,11 @@ class MeasurementSpec:
     """The METRIC rules that threshold it."""
     partitioned: bool = False
     """Whether its value is of owned terms, so a module, file or graph partition can restrict it (:func:`partition`)."""
+    better: str | None = None
+    """For a coverage measure, ``"higher"`` when more of its numerator is an improvement (the terms have the
+    property) and ``"lower"`` when it is a decline (the terms have a defect).  A coverage measure is a
+    :class:`TermRatio` whose numerator is a subset of its denominator, so the quality snapshot keeps its term
+    sets (:mod:`ontolint.quality`); a measurement without it keeps its counts only."""
 
 
 class MeasurementUnavailable(Exception):
@@ -538,7 +543,14 @@ RATIO, COUNT, HISTOGRAM = MeasurementKind.RATIO, MeasurementKind.COUNT, Measurem
 
 SPECS: tuple[MeasurementSpec, ...] = (
     MeasurementSpec(
-        "class_label_coverage", 1, RATIO, "owned_classes", _class_label_coverage, rules=("METRIC001",), partitioned=True
+        "class_label_coverage",
+        1,
+        RATIO,
+        "owned_classes",
+        _class_label_coverage,
+        rules=("METRIC001",),
+        partitioned=True,
+        better="higher",
     ),
     MeasurementSpec(
         "class_definition_coverage",
@@ -548,6 +560,7 @@ SPECS: tuple[MeasurementSpec, ...] = (
         _class_definition_coverage,
         rules=("METRIC002",),
         partitioned=True,
+        better="higher",
     ),
     MeasurementSpec(
         "property_documentation_coverage",
@@ -557,12 +570,20 @@ SPECS: tuple[MeasurementSpec, ...] = (
         _property_documentation_coverage,
         rules=("METRIC003",),
         partitioned=True,
+        better="higher",
     ),
     MeasurementSpec(
         "class_fanout", 1, RATIO, "owned_parent_classes", _class_fanout, rules=("METRIC004",), partitioned=True
     ),
     MeasurementSpec(
-        "orphan_classes", 1, RATIO, "owned_classes", _orphan_classes, rules=("METRIC005",), partitioned=True
+        "orphan_classes",
+        1,
+        RATIO,
+        "owned_classes",
+        _orphan_classes,
+        rules=("METRIC005",),
+        partitioned=True,
+        better="lower",
     ),
     MeasurementSpec(
         "relation_properties_per_class",
@@ -581,6 +602,7 @@ SPECS: tuple[MeasurementSpec, ...] = (
         _unsigned_properties,
         rules=("METRIC008",),
         partitioned=True,
+        better="lower",
     ),
     MeasurementSpec(
         "label_language_coverage",
@@ -590,6 +612,7 @@ SPECS: tuple[MeasurementSpec, ...] = (
         _label_language_coverage,
         rules=("METRIC009",),
         partitioned=True,
+        better="higher",
     ),
     MeasurementSpec("foreign_references", 1, RATIO, "structural_references", _foreign_references, rules=("METRIC010",)),
     MeasurementSpec("unresolved_imports", 1, COUNT, "graph", _unresolved_imports, rules=("METRIC011",)),
@@ -604,10 +627,16 @@ SPECS: tuple[MeasurementSpec, ...] = (
     ),
     MeasurementSpec("blank_subjects", 1, RATIO, "non_structural_subjects", _blank_subjects, rules=("METRIC013",)),
     MeasurementSpec("class_depth", 1, HISTOGRAM, "acyclic_owned_classes", _class_depth, partitioned=True),
-    MeasurementSpec("cyclic_classes", 1, RATIO, "owned_classes", _cyclic_classes, partitioned=True),
+    MeasurementSpec("cyclic_classes", 1, RATIO, "owned_classes", _cyclic_classes, partitioned=True, better="lower"),
     MeasurementSpec("hierarchy_components", 1, COUNT, "owned_classes", _hierarchy_components),
     MeasurementSpec(
-        "shacl_class_target_coverage", 1, RATIO, "owned_classes", _shacl_class_target_coverage, partitioned=True
+        "shacl_class_target_coverage",
+        1,
+        RATIO,
+        "owned_classes",
+        _shacl_class_target_coverage,
+        partitioned=True,
+        better="higher",
     ),
 )
 """The catalogue, in publication order."""
