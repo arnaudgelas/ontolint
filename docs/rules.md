@@ -20,7 +20,7 @@ Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 and `--list-rules --format json` reports them with `"selectable": false`.
 
 
-**250 of 305 catalogue rules are implemented; 55 are TODO.**
+**251 of 306 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |

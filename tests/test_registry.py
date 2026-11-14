@@ -41,7 +41,7 @@ ROBOT_REPORT = (
 ROOT = Path(__file__).parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
 BASE = "https://example.test/onto#"
-CATALOGUE_ROW_COUNT = 305
+CATALOGUE_ROW_COUNT = 306
 IMPLEMENTED_COUNT = len(implemented_rows())  # derived: rule groups flip catalogue rows independently
 EXECUTED, SKIPPED, UNSUPPORTED, FAILED = (
     ExecutionStatus.EXECUTED,
