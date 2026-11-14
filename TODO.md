@@ -1156,6 +1156,21 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   repository uses the Action at the released tag on a fixture, and its SARIF and its summary both
   appear.
 
+  Built (issue #24; to be proven at the first release that contains it, 0.15.0): `action.yml`,
+  `action/entrypoint.py` and the hash-locked `action/requirements.txt`; the `Action` job of
+  `release.yml` runs it at the new tag on the kitchen-sink fixture. Decided: the caller uploads the
+  SARIF (the Action needs no permission; the README shows the step), the Action runs ontolint once
+  per format (no CLI change), the ROBOT image is out of scope. `ontolint.github.escape_data` serves
+  the Action's error annotations; `escape_property` was deleted, having no caller.
+  - Left open: the `partialFingerprints` design above (it changes the default SARIF and its goldens,
+    and its Done-when tests need an observed upload); whether one run should write both reports
+    (`--markdown-summary FILE`); Windows runners; the Renovate lock-file refresh now has to regenerate
+    `action/requirements.txt` and `action/verify-requirements.txt` by hand, or its pull request fails the
+    test that compares them with the lock.
+  - The ontolint wheel is not hash-pinned (impossible before it exists); the Action verifies its PyPI
+    attestation (`pypi-attestations`, repository-bound) and installs the verified file. `files` must be
+    inside the workspace.
+
 - [x] **DUPLICATE-ONTOLOGY-ID: one ontology IRI declared by two files.** Nothing checked this
   across files. A multi-file run lints each file alone, and `--import-dir` maps an IRI to the first
   file in path order (`imports.index_directory`, `entries.setdefault`) with no note when another
@@ -1379,9 +1394,10 @@ moves from `proposed` merely because it has an attractive title.
 
 ## Documentation debt to close with the affected work
 
-- [ ] Correct stale source comments: `src/ontolint/github.py` says findings "carry no source
-  locations" (false since 0.3.0) and the module has no caller outside its own test until a
-  formatter exists. Either make it earn its place in GITHUB-ACTION (P1) or delete it.
+- [x] Correct stale source comments: `src/ontolint/github.py` said findings "carry no source
+  locations" (false since 0.3.0) and had no caller outside its own test. Done (issue #40, with
+  GITHUB-ACTION): the comment is gone, `escape_data` is called by the Action's entry point, and
+  the unused `escape_property` was deleted.
 - [ ] Keep README, release instructions, policy schema, and report examples in the same change as
   any CLI/report-contract modification. Documentation-only corrections do not need a feature
   release, but behavior changes do.

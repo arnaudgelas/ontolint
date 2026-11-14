@@ -1,0 +1,590 @@
+"""The GitHub Action (``action.yml`` and ``action/entrypoint.py``): its inputs, its run, its pins.
+
+The Action runs in other people's CI, so these tests pin what it must never do: install anything but one
+hashed, exact version, interpolate an input into a shell, let ontolint's output become a workflow command,
+hand the child process the caller's secrets, or write outside the workspace.
+"""
+
+# ruff: noqa: PLR2004
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import re
+import shutil
+import subprocess
+import sys
+import tomllib
+from collections.abc import Callable
+from pathlib import Path
+
+import pytest
+
+from ontolint import main
+
+ROOT = Path(__file__).parent.parent
+FIXTURES = Path(__file__).parent / "fixtures"
+SCRIPT = ROOT / "action" / "entrypoint.py"
+spec = importlib.util.spec_from_file_location("entrypoint", SCRIPT)
+assert spec is not None
+assert spec.loader is not None
+entrypoint = importlib.util.module_from_spec(spec)
+sys.modules["entrypoint"] = entrypoint
+spec.loader.exec_module(entrypoint)
+
+ACTION = (ROOT / "action.yml").read_text()
+WORKFLOWS = ROOT / ".github" / "workflows"
+SHA_PIN = re.compile(r"uses: (?P<repo>[\w./-]+)@(?P<sha>[0-9a-f]{40}) # v\d+\.\d+\.\d+\n")
+USES = re.compile(r"^\s*(?:- )?uses: (?P<what>\S+)", re.MULTILINE)
+VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+KITCHEN, CLEAN = str(FIXTURES / "kitchen_sink.ttl"), str(FIXTURES / "clean.ttl")  # the files, to lint directly
+KITCHEN_NAME, CLEAN_NAME = "kitchen_sink.ttl", "clean.ttl"  # their copies in a workspace
+
+
+def _env(workspace: Path, **inputs: str) -> dict[str, str]:
+    """The environment a step gets: one ``INPUT_*`` per input, plus the files the runner points at."""
+    for name in (KITCHEN_NAME, CLEAN_NAME):  # `files` must be inside the workspace
+        shutil.copy(FIXTURES / name, workspace / name)
+    env = {
+        "INPUT_FILES": CLEAN_NAME,
+        "INPUT_ARGS": "",
+        "INPUT_FAIL_ON": "",
+        "INPUT_SARIF_FILE": "ontolint.sarif",
+        "INPUT_SUMMARY": "true",
+        "GITHUB_WORKSPACE": str(workspace),
+        "RUNNER_TEMP": str(workspace),
+        "GITHUB_OUTPUT": str(workspace / "github_output"),
+        "GITHUB_STEP_SUMMARY": str(workspace / "step_summary"),
+    }
+    env.update({f"INPUT_{name.upper()}": value for name, value in inputs.items()})
+    return env
+
+
+def _outputs(workspace: Path) -> dict[str, str]:
+    text = (workspace / "github_output").read_text()
+    return dict(line.split("=", 1) for line in text.splitlines())
+
+
+def _stub(tmp_path: Path, body: str) -> list[str]:
+    """A stand-in for ``python -m ontolint``: it receives the argv the Action builds."""
+    script = tmp_path / "stub.py"
+    script.write_text("import os, sys\n" + body)
+    return [sys.executable, str(script)]
+
+
+# -- the version the Action installs -------------------------------------------------------------
+
+
+def test_the_action_installs_the_version_of_the_checkout_it_was_pinned_to() -> None:
+    assert entrypoint.pinned_version(ROOT) == VERSION
+
+
+@pytest.mark.parametrize("version", ["0.1", "1.2.3rc1", "1.2.3.dev0", "latest", "1.2.3 --pre", ">=1"])
+def test_only_an_exact_release_version_is_installed(tmp_path: Path, version: str) -> None:
+    (tmp_path / "pyproject.toml").write_text(f'[project]\nname = "ontolint"\nversion = "{version}"\n')
+    with pytest.raises(entrypoint.InputError, match="exact release version"):
+        entrypoint.pinned_version(tmp_path)
+
+
+def _pypi(version: str, wheel: bytes, **changes: object) -> Callable[[str], bytes]:
+    """A stand-in for the network: PyPI's JSON for ``version`` and the wheel it lists."""
+    name = f"ontolint-{version}-py3-none-any.whl"
+    url = f"https://files.pythonhosted.org/packages/ab/cd/{name}"
+    entry = {
+        "filename": name,
+        "packagetype": "bdist_wheel",
+        "url": url,
+        "digests": {"sha256": hashlib.sha256(wheel).hexdigest()},
+    } | changes
+    page = json.dumps({"urls": [entry]}).encode()
+    return lambda requested: {entrypoint.PYPI_JSON.format(version=version): page, url: wheel}[requested]
+
+
+def test_the_wheel_is_downloaded_from_pypi_and_checked_against_the_digest_it_lists(tmp_path: Path) -> None:
+    path = entrypoint.release_wheel("1.2.3", tmp_path, _pypi("1.2.3", b"wheel bytes"))
+    assert path == tmp_path / "ontolint-1.2.3-py3-none-any.whl"
+    assert path.read_bytes() == b"wheel bytes"
+
+
+def test_a_wheel_that_differs_from_the_listed_digest_is_refused(tmp_path: Path) -> None:
+    fetch = _pypi("1.2.3", b"wheel bytes", digests={"sha256": "0" * 64})
+    with pytest.raises(entrypoint.InputError, match="does not match the sha256"):
+        entrypoint.release_wheel("1.2.3", tmp_path, fetch)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        ({"url": "https://evil.test/ontolint-1.2.3-py3-none-any.whl"}, "not from https://files.pythonhosted.org/"),
+        ({"packagetype": "sdist"}, "expected exactly one"),
+        ({"filename": "ontolint-1.2.3-cp313-cp313-linux_x86_64.whl"}, "expected exactly one"),
+    ],
+)
+def test_only_the_universal_wheel_on_the_pypi_file_host_is_taken(tmp_path: Path, changes: dict, message: str) -> None:
+    with pytest.raises(entrypoint.InputError, match=re.escape(message)):
+        entrypoint.release_wheel("1.2.3", tmp_path, _pypi("1.2.3", b"x", **changes))
+
+
+def test_the_attestation_must_name_this_repository_and_the_file_that_is_installed(tmp_path: Path) -> None:
+    wheel = tmp_path / "ontolint-1.2.3-py3-none-any.whl"
+    assert entrypoint.verify_command("/v/pypi-attestations", wheel) == [
+        "/v/pypi-attestations",
+        "verify",
+        "pypi",
+        "--repository",
+        "https://github.com/arnaudgelas/ontolint",
+        str(wheel),
+    ]
+    assert entrypoint.install_command("uv", "/venv/bin/python", wheel) == [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/venv/bin/python",
+        "--no-deps",
+        "--no-index",
+        str(wheel),
+    ]
+
+
+def _install(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, verify_code: int) -> tuple[int, list[list[str]]]:
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    monkeypatch.setattr(entrypoint, "_fetch", _pypi(VERSION, b"wheel bytes"))
+    ran: list[list[str]] = []
+
+    def run(argv: list[str]) -> int:
+        ran.append(list(argv))
+        return verify_code if "verify" in argv else 0
+
+    return entrypoint.install(ROOT, "/venv/bin/python", "/v/pypi-attestations", run), ran
+
+
+def test_the_wheel_is_installed_only_after_its_attestation_verified_and_from_the_verified_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    code, ran = _install(tmp_path, monkeypatch, 0)
+    assert code == 0
+    assert [argv[1] for argv in ran] == ["verify", "pip"]
+    assert ran[0][-1] == ran[1][-1]  # the file checked is the file installed
+    assert ran[1][-1].endswith(f"ontolint-{VERSION}-py3-none-any.whl")
+
+
+def test_a_wheel_whose_attestation_does_not_verify_is_never_installed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, ran = _install(tmp_path, monkeypatch, 1)
+    assert code == 1
+    assert [argv[1] for argv in ran] == ["verify"]
+    assert "::error::ontolint action: the PyPI attestation of ontolint-" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("file", "selection", "excluded"),
+    [
+        ("requirements.txt", ["--no-dev"], "ontolint"),
+        ("verify-requirements.txt", ["--only-group", "release"], "pypi-attestations"),
+    ],
+)
+def test_dependencies_come_from_the_hash_locked_files_and_they_match_the_lock(
+    file: str, selection: list[str], excluded: str
+) -> None:
+    if shutil.which("uv") is None:
+        pytest.skip("uv is not installed")
+    exported = subprocess.run(  # noqa: S603 -- fixed argv.
+        ["uv", "export", "--frozen", *selection, "--no-emit-project", "--format", "requirements-txt", "--no-header"],  # noqa: S607
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert (ROOT / "action" / file).read_text() == exported
+    assert "--hash=sha256:" in exported
+    # Every requirement line carries hashes, so --require-hashes accepts the file.
+    hashed = r"^[A-Za-z][^\n]*==[^\n]*\\\n(?:    --hash=sha256:[0-9a-f]{64}(?: \\)?\n)+"
+    entries = re.findall(hashed, exported, re.MULTILINE)
+    assert len(entries) == len(re.findall(r"^[A-Za-z][^\n]*==", exported, re.MULTILINE))
+    if excluded == "ontolint":
+        assert not [line for line in exported.splitlines() if line.startswith("ontolint")], "not the project itself"
+    else:
+        assert exported.count(f"\n{excluded}==") + exported.startswith(f"{excluded}==") == 1
+
+
+# -- the inputs ----------------------------------------------------------------------------------
+
+
+def test_a_default_run_asks_for_one_markdown_and_one_sarif_report(tmp_path: Path) -> None:
+    settings = entrypoint.read_settings(_env(tmp_path, files="a.ttl\nb.ttl", args="--profile\nstrict"))
+    assert settings.files == ["a.ttl", "b.ttl"]
+    assert entrypoint.report_command(["py", "-m", "ontolint"], settings, "markdown", Path("out.md")) == [
+        "py",
+        "-m",
+        "ontolint",
+        "a.ttl",
+        "b.ttl",
+        "--profile",
+        "strict",
+        "--format",
+        "markdown",
+        "--output",
+        "out.md",
+    ]
+
+
+def test_fail_on_is_passed_only_when_set(tmp_path: Path) -> None:
+    unset = entrypoint.read_settings(_env(tmp_path))
+    assert "--fail-on" not in entrypoint.report_command(["x"], unset, "sarif", Path("o"))
+    chosen = entrypoint.read_settings(_env(tmp_path, fail_on="warning"))
+    assert entrypoint.report_command(["x"], chosen, "sarif", Path("o"))[-6:-4] == ["--fail-on", "warning"]
+
+
+@pytest.mark.parametrize(
+    ("name", "value", "message"),
+    [
+        ("files", "", "files"),
+        ("files", "  \n\n", "files"),
+        ("files", "-x.ttl", "starts with '-'"),
+        ("files", "a.ttl\n--select", "starts with '-'"),
+        ("files", "a\x00b.ttl", "control character"),
+        ("files", "a\x1b[31m.ttl", "control character"),
+        ("fail_on", "sometimes", "fail-on"),
+        ("summary", "yes", "summary"),
+        ("sarif_file", "", "sarif-file"),
+        ("sarif_file", "../escape.sarif", "outside the workspace"),
+        ("sarif_file", "/etc/cron.d/x", "outside the workspace"),
+        ("sarif_file", "out/../../x", "outside the workspace"),
+        ("sarif_file", "a\nb", "exactly one path"),
+        ("args", "--format\njson", "--format"),
+        ("args", "--format=json", "--format"),
+        ("args", "--form=json", "is not allowed"),
+        ("args", "--output=x", "--output"),
+        ("args", "--out\nx", "is not allowed"),
+        ("args", "--list-rules", "--list-rules"),
+        ("args", "--explain\nSEC001", "--explain"),
+        ("args", "--version", "--version"),
+        ("args", "--measurements", "--measurements"),
+    ],
+)
+def test_inputs_that_would_break_the_action_are_refused(tmp_path: Path, name: str, value: str, message: str) -> None:
+    with pytest.raises(entrypoint.InputError, match=re.escape(message)):
+        entrypoint.read_settings(_env(tmp_path, **{name: value}))
+
+
+def test_a_report_inside_the_workspace_is_accepted_even_when_nested(tmp_path: Path) -> None:
+    settings = entrypoint.read_settings(_env(tmp_path, sarif_file="reports/out.sarif"))
+    assert settings.sarif_file == (tmp_path / "reports" / "out.sarif").resolve()
+
+
+@pytest.mark.parametrize("name", ["../outside.ttl", "/etc/hosts", "sub/../../outside.ttl", "ok.ttl\n../outside.ttl"])
+def test_an_input_file_outside_the_workspace_is_refused(tmp_path: Path, name: str) -> None:
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    (tmp_path / "outside.ttl").write_text("")
+    with pytest.raises(entrypoint.InputError, match="outside the workspace"):
+        entrypoint.read_settings(_env(workspace, files=name))
+
+
+def test_a_symlink_cannot_carry_an_input_file_out_of_the_workspace(tmp_path: Path) -> None:
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    (tmp_path / "secret.ttl").write_text("")
+    (workspace / "link.ttl").symlink_to(tmp_path / "secret.ttl")
+    (workspace / "dir").symlink_to(tmp_path, target_is_directory=True)
+    for name in ("link.ttl", "dir/secret.ttl", "dir"):
+        with pytest.raises(entrypoint.InputError, match="outside the workspace"):
+            entrypoint.read_settings(_env(workspace, files=name))
+
+
+def test_input_files_inside_the_workspace_are_accepted_as_written(tmp_path: Path) -> None:
+    (tmp_path / "modules").mkdir()
+    settings = entrypoint.read_settings(_env(tmp_path, files="./a.ttl\nmodules/\nnot/yet/there.ttl\n."))
+    assert settings.files == ["./a.ttl", "modules/", "not/yet/there.ttl", "."]
+
+
+def test_a_symlink_cannot_carry_the_report_out_of_the_workspace(tmp_path: Path) -> None:
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    (workspace / "link").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(entrypoint.InputError, match="outside the workspace"):
+        entrypoint.read_settings(_env(workspace, sarif_file="link/out.sarif"))
+
+
+# -- the run -------------------------------------------------------------------------------------
+
+
+def test_a_run_writes_the_sarif_report_the_summary_and_the_outputs(tmp_path: Path) -> None:
+    code = entrypoint.run(entrypoint.read_settings(_env(tmp_path, files=KITCHEN_NAME, fail_on="error")))
+    assert code == main([KITCHEN, "--fail-on", "error", "--format", "json", "--output", str(tmp_path / "j")]) == 1
+    sarif = json.loads((tmp_path / "ontolint.sarif").read_text())
+    assert sarif["version"] == "2.1.0"
+    assert sarif["runs"][0]["results"]
+    summary = (tmp_path / "step_summary").read_text()
+    assert summary.startswith("## ontolint ")
+    assert "**Failed**" in summary
+    outputs = _outputs(tmp_path)
+    assert outputs["exit-code"] == "1"
+    assert outputs["sarif-file"] == str(tmp_path / "ontolint.sarif")
+    assert Path(outputs["summary-file"]).read_text() == summary
+
+
+def test_a_clean_run_exits_zero(tmp_path: Path) -> None:
+    assert entrypoint.run(entrypoint.read_settings(_env(tmp_path, fail_on="never"))) == 0
+    assert _outputs(tmp_path)["exit-code"] == "0"
+
+
+def test_the_summary_is_appended_not_replaced(tmp_path: Path) -> None:
+    (tmp_path / "step_summary").write_text("earlier step\n")
+    entrypoint.run(entrypoint.read_settings(_env(tmp_path)))
+    text = (tmp_path / "step_summary").read_text()
+    assert text.startswith("earlier step\n")
+    assert "## ontolint " in text
+
+
+def test_the_summary_can_be_switched_off_and_the_sarif_report_stays(tmp_path: Path) -> None:
+    entrypoint.run(entrypoint.read_settings(_env(tmp_path, summary="false")))
+    assert not (tmp_path / "step_summary").exists()
+    assert (tmp_path / "ontolint.sarif").exists()
+    assert _outputs(tmp_path)["summary-file"] == ""
+
+
+def test_without_a_summary_file_the_run_still_lints_and_says_so(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    env = _env(tmp_path)
+    del env["GITHUB_STEP_SUMMARY"]
+    assert entrypoint.run(entrypoint.read_settings(env)) == 0
+    assert "GITHUB_STEP_SUMMARY is not set" in capsys.readouterr().out
+
+
+def test_ontolint_runs_in_the_workspace_the_input_files_were_checked_against(tmp_path: Path) -> None:
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    command = _stub(tmp_path, f"open({str(tmp_path / 'cwd')!r}, 'w').write(os.getcwd())\nsys.exit(0)\n")
+    entrypoint.run(entrypoint.read_settings(_env(workspace)), command)
+    assert Path((tmp_path / "cwd").read_text()).resolve() == workspace.resolve()
+
+
+def test_a_tool_failure_is_exit_two_and_still_writes_the_outputs(tmp_path: Path) -> None:
+    code = entrypoint.run(entrypoint.read_settings(_env(tmp_path, files=str(tmp_path / "missing.ttl"))))
+    assert code == 2
+    assert _outputs(tmp_path)["exit-code"] == "2"
+
+
+def test_both_reports_are_attempted_even_when_the_first_run_fails(tmp_path: Path) -> None:
+    command = _stub(
+        tmp_path,
+        "out = sys.argv[sys.argv.index('--output') + 1]\n"
+        "open(out, 'w').write('x')\n"
+        f"open({str(tmp_path / 'log')!r}, 'a').write(sys.argv[sys.argv.index('--format') + 1] + '\\n')\n"
+        "sys.exit(2 if 'markdown' in sys.argv else 1)\n",
+    )
+    settings = entrypoint.read_settings(_env(tmp_path))
+    assert entrypoint.run(settings, command, {}) == 2
+    assert (tmp_path / "log").read_text().split() == ["markdown", "sarif"]
+
+
+def test_ontolint_output_cannot_inject_workflow_commands(tmp_path: Path, capfd: pytest.CaptureFixture[str]) -> None:
+    command = _stub(
+        tmp_path,
+        "print('::set-env name=PWNED::1', flush=True)\nprint('::error::hostile', file=sys.stderr, flush=True)\n"
+        "out = sys.argv[sys.argv.index('--output') + 1]\nopen(out, 'w').write('x')\n",
+    )
+    entrypoint.run(entrypoint.read_settings(_env(tmp_path)), command)
+    captured = capfd.readouterr()
+    assert captured.err == "", "stderr is merged into stdout so the runner sees one ordered stream"
+    lines = captured.out.splitlines()
+    stops = [line for line in lines if line.startswith("::stop-commands::")]
+    assert len(stops) == 2  # one around each report
+    assert len(set(stops)) == 2  # a fresh token every time
+    for stop in stops:
+        token = stop.removeprefix("::stop-commands::")
+        assert len(token) >= 32
+        begin, end = lines.index(stop), lines.index(f"::{token}::")
+        assert lines[begin + 1 : end] == ["::set-env name=PWNED::1", "::error::hostile"]
+
+
+def test_the_child_gets_no_secret_of_the_caller(tmp_path: Path) -> None:
+    command = _stub(
+        tmp_path,
+        "out = sys.argv[sys.argv.index('--output') + 1]\n"
+        "open(out, 'w').write(repr(sorted(k for k in os.environ if k.startswith(('GITHUB_', 'INPUT_', 'ACTIONS_')))"
+        " + [os.environ.get('TOKEN', '-'), os.environ.get('PATH', '-')]))\n",
+    )
+    env = _env(tmp_path) | {
+        "TOKEN": "s3cret",
+        "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc",
+        "GITHUB_TOKEN": "t",
+        "PATH": "/p",
+    }
+    entrypoint.run(entrypoint.read_settings(env), command, env)
+    seen = (tmp_path / "ontolint.sarif").read_text()
+    assert seen == "[" + "'-', '/p'" + "]"
+
+
+def test_the_environment_given_to_the_child_is_an_allow_list() -> None:
+    env = {"PATH": "/bin", "HOME": "/h", "LANG": "C", "SECRET": "x", "GITHUB_TOKEN": "y", "INPUT_FILES": "z"}
+    assert entrypoint.child_environment(env) == {"PATH": "/bin", "HOME": "/h", "LANG": "C", "PYTHONUTF8": "1"}
+
+
+# -- the entry point -----------------------------------------------------------------------------
+
+
+def test_main_reports_a_bad_input_as_an_escaped_error_annotation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for key, value in _env(tmp_path, files="-100%\nx").items():
+        monkeypatch.setenv(key, value)
+    assert entrypoint.main(["run"]) == 2
+    assert (
+        capsys.readouterr().out
+        == "::error::ontolint action: files: '-100%25' starts with '-' and would be read as an option\n"
+    )
+
+
+def test_a_message_that_would_start_a_command_is_escaped(capsys: pytest.CaptureFixture[str]) -> None:
+    assert entrypoint._escape_data("a%b\r\nc") == "a%25b%0D%0Ac"
+    assert capsys.readouterr().out == ""
+
+
+def test_main_refuses_an_unknown_command(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as raised:
+        entrypoint.main(["publish"])
+    assert raised.value.code == 2
+    assert "usage" in capsys.readouterr().err
+
+
+def test_main_install_needs_the_verifier(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    monkeypatch.setenv("ONTOLINT_ACTION_ROOT", str(ROOT))
+    monkeypatch.delenv("ONTOLINT_VERIFIER", raising=False)
+    assert entrypoint.main(["install"]) == 2
+    assert "ONTOLINT_VERIFIER" in capsys.readouterr().out
+
+
+def test_main_install_reports_a_network_failure_as_an_error_annotation(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def down(url: str) -> bytes:
+        raise OSError("network is down")
+
+    monkeypatch.setattr(entrypoint, "_fetch", down)
+    monkeypatch.setenv("ONTOLINT_ACTION_ROOT", str(ROOT))
+    monkeypatch.setenv("ONTOLINT_VERIFIER", "/v/pypi-attestations")
+    assert entrypoint.main(["install"]) == 2
+    assert capsys.readouterr().out.startswith("::error::ontolint action: network is down")
+
+
+def test_fetch_refuses_a_url_that_is_not_https() -> None:
+    with pytest.raises(entrypoint.InputError, match="not https"):
+        entrypoint._fetch("http://pypi.org/pypi/ontolint/1.2.3/json")
+
+
+# -- the definition ------------------------------------------------------------------------------
+
+
+def test_action_yml_is_a_composite_action_with_documented_inputs_and_outputs() -> None:
+    assert re.search(r"^runs:\n  using: composite$", ACTION, re.MULTILINE)
+    for name in ("files", "args", "fail-on", "sarif-file", "summary"):
+        assert re.search(rf"^  {name}:\n    description: .+", ACTION, re.MULTILINE), name
+    for name in ("sarif-file", "summary-file", "exit-code"):
+        assert re.search(rf"^  {name}:\n    description: .+\n    value: .+", ACTION, re.MULTILINE), name
+    assert re.search(r"^  files:\n(?:    .+\n)*    required: true", ACTION, re.MULTILINE)
+
+
+def test_every_action_the_definition_uses_is_pinned_to_a_commit() -> None:
+    used = [m["what"] for m in USES.finditer(ACTION)]
+    assert used, "the Action uses setup-uv"
+    assert len(SHA_PIN.findall(ACTION)) == len(used)
+
+
+def test_action_yml_pins_the_same_uv_as_the_workflows() -> None:
+    ci = (WORKFLOWS / "ci.yml").read_text()
+    pin = re.search(r"astral-sh/setup-uv@\w{40} # v[\d.]+", ci)
+    assert pin is not None
+    assert pin.group(0) in ACTION
+    version = re.search(r'uv-version: "([\d.]+)"|version: "([\d.]+)"', ci)
+    assert version is not None
+    assert f'version: "{version.group(1) or version.group(2)}"' in ACTION
+
+
+def _run_scripts() -> list[str]:
+    return re.findall(r"^ +run: \|\n((?:(?: {8,}).*\n|\n)+)", ACTION, re.MULTILINE)
+
+
+def test_no_expression_is_interpolated_into_a_shell_script() -> None:
+    scripts = _run_scripts()
+    assert len(scripts) == 2
+    assert all("${{" not in script for script in scripts)
+    assert len(re.findall(r"^ +run: ", ACTION, re.MULTILINE)) == len(scripts), "every run is a block scalar"
+
+
+def test_inputs_reach_the_entry_point_only_through_the_environment() -> None:
+    expressions = re.findall(r"\$\{\{ (.+?) \}\}", ACTION)
+    assert sorted(e for e in expressions if e.startswith("inputs.")) == [
+        "inputs.args",
+        "inputs.fail-on",
+        "inputs.files",
+        "inputs.sarif-file",
+        "inputs.summary",
+    ]
+    for name in re.findall(r"^ +(\w+): \$\{\{ inputs\.", ACTION, re.MULTILINE):
+        assert name.startswith("INPUT_")
+
+
+def test_the_action_asks_for_no_secret_and_echoes_none() -> None:
+    assert "secrets." not in ACTION
+    assert "github.token" not in ACTION
+    assert "GITHUB_TOKEN" not in ACTION
+    assert "set -x" not in ACTION
+    assert not re.search(r"\becho\b.*\$\{?(INPUT|GITHUB_TOKEN)", ACTION)
+
+
+def test_the_action_never_installs_the_latest_or_from_anywhere_but_the_lock_and_the_pin() -> None:
+    assert "--require-hashes" in ACTION
+    assert "action/requirements.txt" in ACTION
+    assert "action/verify-requirements.txt" in ACTION
+    assert "ONTOLINT_VERIFIER" in ACTION
+    assert "--upgrade" not in ACTION
+    assert "git+" not in ACTION
+    assert "@latest" not in ACTION
+
+
+def test_the_release_proves_the_action_at_the_tag_it_is_publishing() -> None:
+    release = (WORKFLOWS / "release.yml").read_text()
+    pin = re.search(r"uses: arnaudgelas/ontolint@v(\d+\.\d+\.\d+)\n", release)
+    assert pin is not None, "release.yml must run the Action at the new tag"
+    assert pin.group(1) == VERSION, "scripts/bump_version.py rewrites this pin; run it for the release"
+    assert re.search(r"^  action:\n(?:.*\n)*?    needs: verify$", release, re.MULTILINE)
+
+
+def test_the_release_job_that_runs_the_action_has_read_only_permissions() -> None:
+    release = (WORKFLOWS / "release.yml").read_text()
+    job = re.search(r"^  action:\n((?:    .*\n|\n)+)", release, re.MULTILINE)
+    assert job is not None
+    assert "security-events" not in job.group(1)
+    assert "write" not in job.group(1)
+
+
+@pytest.mark.skipif(shutil.which("actionlint") is None, reason="actionlint is not installed")
+def test_the_workflows_pass_actionlint() -> None:
+    result = subprocess.run(  # noqa: S603 -- fixed argv.
+        ["actionlint", *map(str, sorted(WORKFLOWS.glob("*.yml")))],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.skipif(shutil.which("shellcheck") is None, reason="shellcheck is not installed")
+def test_the_shell_in_the_action_passes_shellcheck(tmp_path: Path) -> None:
+    scripts = _run_scripts()
+    assert scripts
+    for index, script in enumerate(scripts):
+        path = tmp_path / f"step{index}.sh"
+        path.write_text("#!/usr/bin/env bash\n" + "\n".join(line[8:] for line in script.splitlines()) + "\n")
+        result = subprocess.run(["shellcheck", str(path)], capture_output=True, text=True, check=False)  # noqa: S603, S607
+        assert result.returncode == 0, result.stdout

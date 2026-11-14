@@ -2,7 +2,8 @@
 
 The version lives in `pyproject.toml` and, as a fallback for uninstalled use, in
 `src/ontolint/_version.py` (a test keeps them equal); `uv.lock` records it too. Do not edit them by
-hand: `scripts/bump_version.py` changes all three and writes the changelog.
+hand: `scripts/bump_version.py` changes all three, moves the pin of the Action in `release.yml` (step 6 of
+the release run, below) and writes the changelog.
 
 ```bash
 uv run python scripts/bump_version.py patch --dry-run   # show what would change
@@ -53,6 +54,25 @@ Pushing the tag starts `.github/workflows/release.yml`:
    attestation must name this repository and sign those exact bytes. PyPI's JSON and provenance
    APIs lag an upload too, so both checks retry (20 attempts, 30 s apart) and fail only when the
    file list still differs, or an attestation still does not verify, after the last one.
+6. **Action** runs the GitHub Action at the new tag, as a user resolves it
+   (`uses: arnaudgelas/ontolint@vX.Y.Z`), on `tests/fixtures/kitchen_sink.ttl`, and checks that the step exited
+   `0` and wrote a SARIF 2.1.0 report with results and a Markdown summary. The pin is in
+   `.github/workflows/release.yml`; `scripts/bump_version.py` moves it with the version, and a test fails when
+   it differs from `pyproject.toml`. The Action installs `ontolint==X.Y.Z` from PyPI, so it runs after
+   **Verify**. The Action has no release of its own (no Marketplace listing): the tag is the release.
 
 PyPI refuses to overwrite a version, so a failed publish needs a new version. A failure in
-**Verify** means the release is on PyPI but broken: fix it and release the next patch version.
+**Verify** or **Action** means the release is on PyPI but broken: fix it and release the next patch version.
+
+`action/requirements.txt` and `action/verify-requirements.txt` are the Action's hash-locked dependency lists
+(what ontolint needs, and what checks the PyPI attestation of the ontolint wheel). Regenerate them whenever
+`uv.lock` moves (a test compares each with the lock):
+
+```bash
+uv export --frozen --no-dev --no-emit-project --format requirements-txt --no-header > action/requirements.txt
+uv export --frozen --only-group release --no-emit-project --format requirements-txt --no-header > action/verify-requirements.txt
+```
+
+The Action cannot pin the wheel it installs by hash: the hash does not exist when the tag's commit is made.
+It checks the wheel's PyPI attestation instead (see the README, "GitHub Action"), so the **Action** job above is
+also the first proof that the attestation of the release just published verifies from a fresh runner.
