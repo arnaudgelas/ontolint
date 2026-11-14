@@ -136,7 +136,12 @@ def test_hierarchy_measurements_keep_their_invariants(graph: Graph) -> None:
     classes = owned_classes(ctx)
     depth = measure(ctx, "class_depth")
     assert isinstance(depth, TermValues)
-    assert set(depth.values) == classes  # every owned class is in one bucket
+    cyclic = measure(ctx, "cyclic_classes")
+    assert isinstance(cyclic, TermRatio)
+    # Every owned class is in one bucket, or on a cycle and in none.
+    assert set(depth.values) == classes - cyclic.numerator
+    assert cyclic.numerator <= cyclic.denominator == classes
+    assert min(depth.values.values(), default=1) >= 1
     edges = directed_edges(ctx.g, RDFS.subClassOf, ctx.classes)
     assert max(depth.values.values(), default=0) == max(hierarchy_depths(ctx.classes, edges).values(), default=0)
     within = classes - {OWL.Thing}

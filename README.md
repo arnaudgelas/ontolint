@@ -348,8 +348,8 @@ ontolint onto.ttl --format json --measurements
 ```
 
 Each `files[]` entry gains `measurements`: every measurement behind `METRIC001`-`METRIC013`, plus the
-hierarchy-depth histogram, the number of disconnected parts of the asserted hierarchy and the SHACL
-class-target coverage. A record has an `id`, a `definition_version`, a `kind` and a `population`; a
+hierarchy-depth histogram (with the classes on a subclass cycle, which have no depth, counted apart),
+the number of disconnected parts of the asserted hierarchy and the SHACL class-target coverage. A record has an `id`, a `definition_version`, a `kind` and a `population`; a
 ratio is a `numerator` and a `denominator`, never a float, and a measurement that could not be
 taken (the SHACL coverage without `--shapes`) has a `reason` instead of a value, never 0. Findings,
 fingerprints, baselines and the exit code are the same with and without the flag, and it works with
