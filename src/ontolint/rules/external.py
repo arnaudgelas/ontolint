@@ -49,6 +49,22 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   time budget of <s> seconds (max_validation_seconds)``, the report written, exit ``2``.  Confidence ``certain``:
   the verdict is pySHACL's, on the user's own shapes.
   Why error: a violated shape is a contract the user wrote; a shape that means less says so with ``sh:severity``.
+  A shapes graph that breaks SHACL-SHACL (pySHACL's ``meta_shacl=True`` refuses it before any data is validated)
+  gives no verdict on the data: the rule is ``failed`` and the exit code ``2``, as for any crash, but the run
+  does not print pySHACL's report (which it prints in the exception and logs at ERROR).  The rule-execution line
+  reads ``the shapes graph does not conform to SHACL-SHACL``; the ``TOOL001`` line is followed by one two-space
+  indented line per MetaSHACL result, sorted, ``<focus>: <path>: <message>`` (no path for a node-level result),
+  masked and cut at 300 characters, with control, format and separator characters escaped, at most 20 and then
+  ``... and N more result(s) not shown``, each printed once.  A line ends with ``(SHQ023)``, ``(SHQ008)``,
+  ``(SHQ014)`` or ``(SHQ022)`` when that rule fires on the same shape for the same defect (a property shape
+  with no or several ``sh:path``, a count or length that is no ``xsd:integer``, a non-IRI ``sh:severity``, a
+  non-IRI ``sh:targetClass``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), and has no pointer
+  otherwise.  JSON and SARIF carry the lines as
+  ``results`` of the execution (``executions[].results``, the notification's ``properties.results``), only when
+  there are some.  The shapes graph is meta-validated a second time, to read the results, only when pySHACL
+  reported the failure, inside the worker and the ``max_validation_seconds`` budget when there is one.  A
+  failure that is not a verdict on the shapes graph (a crash, pySHACL's own load errors, such as a typed
+  ``sh:NodeShape`` with ``sh:path``) keeps its ``<ExceptionType>: <message>`` detail.
 * **INPUT001.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or
   unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without
   ``--convert-with-robot`` (``UnsupportedSyntax``; the message names the flag and suggests ``robot convert``) or
