@@ -94,10 +94,11 @@ ROLE = re.compile(r":[a-z]+:`~?\.?(?P<target>[^`]+)`")  # :mod:`ontolint.ownersh
 # A CommonMark code span: a backtick run, then text, then the next run of exactly as many backticks.
 CODE_SPAN = re.compile(r"(?<!`)(`+)(?!`).*?(?<!`)\1(?!`)")
 # A note starting like this would render as a heading, quote, list, fence, table, link reference
-# definition, thematic break or setext underline instead of as text (a ``<`` is escaped, see _markdown).
+# definition or thematic break instead of as text (a ``<`` is escaped, see _markdown).  Notes are
+# blank-separated and an item's text starts its own block, so none can be a setext underline.
 BLOCK_START = re.compile(
     r"#{1,6}(?:[ \t]|$)|>|[-+*](?:[ \t]|$)|\d{1,9}[.)](?:[ \t]|$)|```|~~~|\||\[[^\]]*\]:"
-    r"|(?:\*[ \t]*){3,}$|(?:-[ \t]*){3,}$|(?:_[ \t]*){3,}$|=+[ \t]*$"
+    r"|(?:\*[ \t]*){3,}$|(?:-[ \t]*){3,}$|(?:_[ \t]*){3,}$"
 )
 
 type _Unit = tuple[str, list[str]]  # "spec", "item" or "paragraph", and its docstring lines

@@ -471,13 +471,22 @@ def test_reflowing_is_idempotent(lines: list[str]) -> None:
         "+ plus",
         "| a |",
         "```",
+        "~~~",
+        "~~~ turtle",
+        "___",
+        "_ _ _",
         "[x]: https://example.test/",
         "* # item",
+        "* ***",
     ],
 )
 def test_a_note_that_would_not_render_as_text_is_refused(note: str) -> None:
     with pytest.raises(ValueError, match="fake"):
         read_module(_fake(f"Fake.\n\n{note}\n"))
+
+
+def test_a_note_of_equals_signs_is_text_since_no_note_follows_a_paragraph_line() -> None:
+    assert read_module(_fake("Fake.\n\n===\n\n* ===\n")).notes == ("Fake.", "", "===", "", "* ===")
 
 
 def test_every_note_block_is_separated_so_no_paragraph_joins_an_item() -> None:
