@@ -463,7 +463,7 @@ ex:a rdfs:label "abc\u206Adef" .
 - **Module:** [`safety`](#module-safety)
 - **Fix:** Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it at the SARIF region or in the source.
 
-**Specification.** An IRI in subject, predicate or object position of the data graph (not the shapes graph, not an ``xsd:anyURI`` literal) that holds a userinfo with a password.  Where a userinfo is, is decided by the parser that also masks it (`ontolint.redaction`, which specifies it), so SEC014 reports exactly the passwords the mask hides: after a scheme (any, case-insensitive: ``https``, ``HTTP``, ``ftp``, ``x+y.z-1``) and ``//`` (for ``http``, ``https``, ``ws``, ``wss`` and ``ftp``, any run of ``/`` and ``\``, none included, as a WHATWG parser reads ``https:/u:p@h``), an authority runs to the first ``/ ? #``, whatever its characters (white space, braces, a line break), and its userinfo to its last ``@``; the part after the first ``:`` of that userinfo is not empty (``https://alice:secret@...``, ``https://:pw@...``, ``https://u:p@ss@...``, ``https://alice:pw SPACE@...``).  An IRI nested in the IRI (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too.  Excluded: a user without a password (``https://alice@...``) or with an empty one (``https://alice:@...``), so a bare token used as the user name is not caught (it is still masked); a percent-encoded colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in the path, query or fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a relative reference resolved against the document (GOV002's concern).  The focus is the IRI with its whole userinfo, user name included, replaced by ``****`` (``https://****@example.test/x``), like every IRI in every finding and output of ontolint (RFC 3986 section 3.2.1 says not to render the password, and a token sent as the user name cannot be told from a name), and the message names no part of the userinfo, so no report or baseline repeats a secret; the SARIF region is the credentialed IRI's.  One finding per distinct IRI once masked, so IRIs that differ only in their userinfo give one finding, located at the first of them: the finding stays until the last is removed.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the syntactic test has no false positive; a published credential must be rotated.
+**Specification.** An IRI in subject, predicate or object position of the data graph (not the shapes graph, not an ``xsd:anyURI`` literal) that holds a userinfo with a password.  Where a userinfo is, is decided by the parser that also masks it (`ontolint.redaction`, which specifies it), so SEC014 reports exactly the passwords the mask hides: after a scheme (any, case-insensitive: ``https``, ``HTTP``, ``ftp``, ``x+y.z-1``) and ``//`` (for ``http``, ``https``, ``ws``, ``wss`` and ``ftp``, any run of ``/`` and ``\``, none included, as a WHATWG parser reads ``https:/u:p@h``), an authority runs to the first ``/ ? #``, whatever its characters (white space, braces, a line break), and its userinfo to its last ``@``; the part after the first ``:`` of that userinfo is not empty (``https://alice:secret@...``, ``https://:pw@...``, ``https://u:p@ss@...``, ``https://alice:pw SPACE@...``).  An IRI nested in the IRI (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too, and so does a scheme read after the digits or signs that start its run of scheme characters (``1https://u:p@h``, ``urn:x:1https://u:p@h``).  Excluded: a user without a password (``https://alice@...``) or with an empty one (``https://alice:@...``), so a bare token used as the user name is not caught (it is still masked); a percent-encoded colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in the path, query or fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a relative reference resolved against the document (GOV002's concern), such as ``1https://u:p@h`` in RDF/XML, which resolves it as a relative path because a scheme starts with a letter (it is still masked).  The focus is the IRI with its whole userinfo, user name included, replaced by ``****`` (``https://****@example.test/x``), like every IRI in every finding and output of ontolint (RFC 3986 section 3.2.1 says not to render the password, and a token sent as the user name cannot be told from a name), and the message names no part of the userinfo, so no report or baseline repeats a secret; the SARIF region is the credentialed IRI's.  One finding per distinct IRI once masked, so IRIs that differ only in their userinfo give one finding, located at the first of them: the finding stays until the last is removed.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the syntactic test has no false positive; a published credential must be rotated.
 
 *Flagged:* `user and password`
 
@@ -593,6 +593,30 @@ ex:a ex:p <https://example.test/r?to=https://alice:fake-pw@h.test/> .
 
 Reported: `IRI embeds a password in its userinfo.`
 
+*Flagged:* `scheme after a digit`
+
+```turtle
+ex:a ex:p <1https://alice:fake-pw@example.test/x> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `nested after a digit`
+
+```turtle
+ex:a ex:p <urn:x:1https://alice:fake-pw@h.test/> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
+*Flagged:* `nested after a sign in a query`
+
+```turtle
+ex:a ex:p <https://example.test/r?to=-https://alice:fake-pw@h.test/> .
+```
+
+Reported: `IRI embeds a password in its userinfo.`
+
 *Clean:* `user without password`
 
 ```turtle
@@ -657,6 +681,18 @@ ex:a ex:p <https://example.test:8080/x> .
 
 ```turtle
 ex:a ex:p "https://alice:fake-pw@example.test/"^^xsd:anyURI .
+```
+
+*Clean:* `no letter, no scheme`
+
+```turtle
+ex:a ex:p <urn:x:123://a:b@h.test/> .
+```
+
+*Clean:* `a scheme with a digit that is not special`
+
+```turtle
+ex:a ex:p <urn:x:x1https:a:b@h.test/> .
 ```
 
 #### SEC015: Import closure exceeds its limits
