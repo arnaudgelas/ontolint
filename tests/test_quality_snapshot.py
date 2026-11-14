@@ -142,17 +142,32 @@ def test_the_policy_that_shaped_the_populations_is_recorded_sorted_and_masked() 
     assert snapshot_of("").shaping == Shaping()
 
 
-def test_term_iris_that_differ_only_in_their_userinfo_are_one_term() -> None:
-    turtle = """
-    <https://example.test/q> a owl:Ontology .
-    <https://a:x@example.test/q#T> a owl:Class ; rdfs:label "T" .
-    <https://b:y@example.test/q#T> a owl:Class ; rdfs:label "T" .
-    """
-    coverage = entry(snapshot_of(turtle), "class_label_coverage")
-    assert coverage.coverage is not None
-    assert len(coverage.coverage.denominator) == 1 and coverage.measurement.denominator == 1
-    text = dumps(snapshot_of(turtle))
-    assert "a:x" not in text and "b:y" not in text and "https://****@example.test/q#T" in text
+COLLIDING = """
+<https://example.test/q> a owl:Ontology .
+<https://a:x@example.test/q#T> a owl:Class ; rdfs:label "T" .
+<https://b:y@example.test/q#T> a owl:Class .
+"""
+
+
+def test_the_counts_are_the_engines_when_distinct_iris_mask_to_one_text() -> None:
+    ctx = build_context(graph(COLLIDING), None, Policy())
+    expected = {spec.id: measurements.record(spec, value) for spec, value in measurements.taken(ctx)}
+    snap = build(ctx)
+    covered = [e for e in snap.entries if e.coverage is not None]
+    assert covered and all(e.measurement == expected[e.measurement.id] for e in covered)
+    labels = entry(snap, "class_label_coverage")
+    assert (labels.measurement.numerator, labels.measurement.denominator) == (1, 2)
+
+
+def test_distinct_iris_that_mask_to_one_text_are_written_once_each_and_without_their_userinfo() -> None:
+    labels = entry(snapshot_of(COLLIDING), "class_label_coverage")
+    masked = "https://****@example.test/q#T"
+    assert labels.coverage == Coverage("higher", (masked,), (masked, masked))
+    text = dumps(snapshot_of(COLLIDING))
+    assert "a:x@" not in text and "b:y@" not in text
+    written = next(m for m in json.loads(text)["measurements"] if m["id"] == "class_label_coverage")
+    assert (written["numerator_terms"], written["denominator_terms"]) == ([masked], [masked, masked])
+    assert loads(text) == snapshot_of(COLLIDING)
 
 
 def test_an_empty_ontology_has_a_snapshot_of_empty_sets() -> None:
@@ -354,6 +369,17 @@ REFUSED = {
     "a repeated term": (
         mutated(lambda d: first(d, "class_label_coverage").update(numerator_terms=[Q + "A", Q + "A"], numerator=2)),
         "sorted, each once",
+    ),
+    "a masked term more often in the numerator than in the denominator": (
+        mutated(
+            lambda d: first(d, "class_label_coverage").update(
+                numerator_terms=["https://****@x/A"] * 2,
+                denominator_terms=["https://****@x/A"],
+                numerator=2,
+                denominator=1,
+            )
+        ),
+        "among the denominator",
     ),
     "terms that are not text": (
         mutated(lambda d: first(d, "class_label_coverage").update(numerator_terms=[1], numerator=1)),

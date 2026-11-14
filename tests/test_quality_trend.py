@@ -332,3 +332,35 @@ def test_a_refused_measurement_is_published_with_its_reasons_only() -> None:
     assert comparison["measurements"] == [
         {"id": "m", "status": "not_comparable", "reasons": ["definition version 1 -> 2"]}
     ]
+
+
+def test_a_regression_among_terms_that_mask_to_one_text_is_still_a_regression() -> None:
+    masked = "https://****@example.test/q#T"
+
+    def side(numerator: int) -> Entry:
+        n, d = (masked,) * numerator, (masked, masked)
+        return Entry(
+            Measurement("m", 1, RATIO, "owned_classes", numerator=len(n), denominator=2), Coverage("higher", n, d)
+        )
+
+    assert split(side(2), side(1))["regressed"] == 1
+    assert split(side(1), side(2))["improved"] == 1
+    assert split(side(1), side(1)) == dict.fromkeys(KEYS, 0)
+    lower = Entry(
+        Measurement("m", 1, RATIO, "owned_classes", numerator=1, denominator=2),
+        Coverage("lower", (masked,), (masked, masked)),
+    )
+    clean = Entry(
+        Measurement("m", 1, RATIO, "owned_classes", numerator=0, denominator=2), Coverage("lower", (), (masked, masked))
+    )
+    assert split(clean, lower)["regressed"] == 1
+
+
+def test_a_term_that_masks_with_others_and_is_new_is_diluted_when_any_of_it_is_bad() -> None:
+    masked = "https://****@example.test/q#T"
+    old = Entry(Measurement("m", 1, RATIO, "owned_classes", numerator=0, denominator=0), Coverage("higher", (), ()))
+    new = Entry(
+        Measurement("m", 1, RATIO, "owned_classes", numerator=1, denominator=2),
+        Coverage("higher", (masked,), (masked, masked)),
+    )
+    assert split(old, new)["diluted"] == 1
