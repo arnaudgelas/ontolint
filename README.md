@@ -449,7 +449,11 @@ Imports resolve through an OASIS XML catalog (the Protégé, ROBOT and ODK `cata
 entries, also inside `group`, and `rewriteURI` prefixes) or as `file:` IRIs; the network is never
 used, and imports that do not resolve stay listed by `SEC007`. The catalog next to each imported
 file is consulted before the root catalog, as Protégé does, and an import naming a file already in
-the closure by its ontology or version IRI needs no entry. A catalog entry whose file does not exist
+the closure by its ontology or version IRI needs no entry. A catalog entry whose file declares neither
+the imported IRI nor a version IRI of it (a stale or mistyped entry, a file with no ontology header) is
+still loaded as the import, so no other finding moves, but `ONT009` (warning) reports it once, naming the
+imported IRI, the file and the ontology IRIs the file does declare; `file:` IRIs, which name a document, and
+`--import-dir` files, matched by what they declare, are not checked. A catalog entry whose file does not exist
 leaves the import unresolved, with a `TOOL004` note, rather than failing the run. Every resolved
 file must lie inside the import root after symlinks are followed (`SEC009`): by default the
 enclosing git repository of the catalog (or of the input without a catalog), so catalogs may point
