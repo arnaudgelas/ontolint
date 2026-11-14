@@ -221,14 +221,21 @@ def read_module(module: ModuleType) -> ModuleDoc:
 
 
 def spec_modules() -> tuple[ModuleType, ...]:
-    """Return every module of :mod:`ontolint.rules` that declares ``SPECS``, in name order.
+    """Return every module of :mod:`ontolint.rules` that declares rule ``SPECS``, in name order.
 
     These are the rule-family modules and those declaring rules that no graph module runs
     (``external``, ``safe_loader``), so a new one is found without a change here.
     """
     names = sorted(info.name for info in pkgutil.iter_modules(rule_package.__path__))
     modules = [importlib.import_module(f"{rule_package.__name__}.{name}") for name in names]
-    return tuple(module for module in modules if hasattr(module, "SPECS"))
+    declaring = [module for module in modules if hasattr(module, "SPECS")]
+    rule_modules = [module for module in declaring if all(isinstance(spec, RuleSpec) for spec in module.SPECS)]
+    # A module whose SPECS are not rule specifications (``measurements``) documents something else, in
+    # ``docs/measurements.md``; a module mixing the two would be ambiguous, so it is refused.
+    mixed = [m.__name__ for m in declaring if m not in rule_modules and any(isinstance(s, RuleSpec) for s in m.SPECS)]
+    if mixed:
+        raise ValueError(f"{mixed}: SPECS mixes rule specifications with other specifications")
+    return tuple(rule_modules)
 
 
 def specifications(docs: Sequence[ModuleDoc]) -> dict[str, tuple[str, str]]:
