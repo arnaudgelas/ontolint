@@ -15,6 +15,7 @@ Install and run: `uv tool install ontolint`, then `ontolint ontology.ttl`. Machi
 - [Command-line and report features](https://github.com/arnaudgelas/ontolint/blob/main/docs/cli-features.md): the reporting and execution features that are not lint rules.
 - [Metric thresholds](https://github.com/arnaudgelas/ontolint/blob/main/docs/metric-thresholds.md): the METRIC rules' defaults, rationale and how to override them.
 - [Measurements](https://github.com/arnaudgelas/ontolint/blob/main/docs/measurements.md): the measurement vector `--format json --measurements` publishes, with each population and exclusion.
+- [Quality snapshots](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md): the versioned snapshot file (`--write-quality-snapshot`), a committed quality baseline (`--quality-baseline`) and the trend between two snapshots (`--compare-quality`).
 - [Performance](https://github.com/arnaudgelas/ontolint/blob/main/docs/performance.md): resource budgets and benchmarks.
 - [Changelog](https://github.com/arnaudgelas/ontolint/blob/main/CHANGELOG.md): releases, with upgrade notes.
 - [Security policy](https://github.com/arnaudgelas/ontolint/blob/main/SECURITY.md): supported versions and how to report a vulnerability.
