@@ -59,7 +59,7 @@ file and any imports you point it at.
   - [Datasets: named graphs](#datasets-named-graphs)
   - [Pattern libraries](#pattern-libraries)
   - [Pull-request summary (Markdown)](#pull-request-summary-markdown)
-  - [GitHub annotations](#github-annotations)
+  - [GitHub Action](#github-action)
   - [Optional SHACL validation](#optional-shacl-validation)
   - [OWL profile validation with ROBOT in Docker](#owl-profile-validation-with-robot-in-docker)
 - [Policy and baselines](#policy-and-baselines)
@@ -86,7 +86,7 @@ the report has no published JSON Schema yet, so pin the version you parse agains
 | Every rule, with its id, status, severity, family, scope and backend | `ontolint --list-rules --format json` | [Discovering rules](#discovering-rules) |
 | One rule's title, severity, fix and requirements | `ontolint --explain RULE_ID` | [Discovering rules](#discovering-rules) |
 | The findings of a run | `ontolint FILE --format json` (keys `schema_version`, `summary`, `findings`, `execution_summary`, `rules`, `files`) | [Run the linter](#run-the-linter) |
-| Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub annotations](#github-annotations) |
+| Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub Action](#github-action) |
 | Which rules ran, were skipped or failed | `files[].executions` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
 | The measurements behind the METRIC rules, as numerators and denominators | `ontolint FILE --format json --measurements` (`files[].measurements`) | [Measurements](#measurements) |
 | A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
@@ -582,7 +582,8 @@ missing may be in one of the skipped files. Without the option the `LIB` rules a
 ### Pull-request summary (Markdown)
 
 `--format markdown` writes a summary of the run for the people who review a pull request, for
-example as the summary of a GitHub Actions step:
+example as the summary of a GitHub Actions step (the [GitHub Action](#github-action) does this
+for you, and writes the SARIF report in the same step):
 
 ```yaml
 - run: ontolint ontology.ttl --baseline baseline.json --format markdown >> "$GITHUB_STEP_SUMMARY"
@@ -609,12 +610,74 @@ summary never exceeds 512 KiB, half of GitHub's limit of 1 MiB per step. It is b
 across runs for one Python version (a later Unicode database may show more characters as escapes).
 The layout is for people and may change in a minor release; parse JSON or SARIF instead.
 
-### GitHub annotations
+### GitHub Action
 
-`--format github` is not available yet. The escaping helpers (`%`, CR, LF and, for properties,
-`:` and `,`) already exist in `ontolint.github`; a formatter has not yet been added. Upload SARIF
-for annotations on the changed lines, and write the [Markdown summary](#pull-request-summary-markdown)
-to `$GITHUB_STEP_SUMMARY` for an overview of the run.
+`action.yml` at the root of this repository is a composite Action. `uses: arnaudgelas/ontolint@vX.Y.Z`
+runs ontolint X.Y.Z: the Action reads the version from the `pyproject.toml` of the commit the tag
+points to and installs exactly that release from PyPI (never the latest), with its dependencies from
+`action/requirements.txt`, a hash-locked export of `uv.lock`. One step lints the files and writes both
+reports, so a job needs no second run of its own:
+
+```yaml
+permissions:
+  contents: read
+  security-events: write # only for the upload step below
+jobs:
+  ontolint:
+    runs-on: ubuntu-latest # Linux or macOS runners; the Action's shell steps are bash
+    steps:
+      - uses: actions/checkout@<sha> # pin every action by commit
+        with:
+          persist-credentials: false
+      - id: ontolint
+        uses: arnaudgelas/ontolint@vX.Y.Z # or the commit the tag points to
+        with:
+          files: |
+            ontology.ttl
+            modules/
+          fail-on: error
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        if: ${{ !cancelled() && hashFiles('ontolint.sarif') != '' }}
+        with:
+          sarif_file: ${{ steps.ontolint.outputs.sarif-file }}
+```
+
+| Input | Meaning |
+| --- | --- |
+| `files` (required) | Files or directories, one per line, relative to the workspace. |
+| `args` | More ontolint options, one argument per line (`--profile` and `strict` on two lines). `--format`, `--output`, `--measurements`, `--list-rules`, `--explain`, `--version` and `--help` are refused, abbreviations included: the Action chooses the report format and file. |
+| `fail-on` | `error`, `warning`, `info` or `never`; empty keeps ontolint's default. |
+| `sarif-file` | Where to write the SARIF report (default `ontolint.sarif`); it must resolve inside the workspace. |
+| `summary` | `true` (default) appends the [Markdown summary](#pull-request-summary-markdown) to the job summary. |
+
+Outputs are `sarif-file`, `summary-file` (the Markdown summary, kept until the job ends) and
+`exit-code` (`0`, `1` on findings at or above `fail-on`, `2` on a tool failure). The Action runs
+ontolint twice, once per format (`--format markdown`, then `--format sarif`), and writes both reports
+before the step fails, so run the upload with `!cancelled()`. A tool failure (exit `2`) can leave
+no SARIF file, hence the `hashFiles` guard above.
+
+What the Action does and does not do:
+
+- It asks for no token and needs no permission. It does **not** upload the SARIF report: uploading needs
+  `security-events: write`, which a caller grants to the one job that needs it, and a caller can also keep the
+  report as an artifact. The upload step above is the caller's.
+- Every input reaches the Action as an environment variable, never inside a shell command. The child
+  process gets only `PATH`, `HOME`, locale and temporary-directory variables, not the job's secrets, and
+  everything ontolint prints is wrapped in `::stop-commands::` with a token drawn for that run, so text from an
+  ontology cannot become a workflow command.
+- Every action it uses and the uv version are pinned; Renovate keeps them current. `uv` installs the
+  dependencies with `--require-hashes` and `ontolint==X.Y.Z` from `https://pypi.org/simple` whatever the
+  caller's index settings are. The ontolint wheel itself is not hash-checked, since its hash cannot be in the
+  commit that is tagged before it is published; the release workflow attests the PyPI files instead.
+- Code scanning ignores SARIF property bags, so `properties.evidence` and the suggestions do not reach its
+  interface (the SARIF file and the `--format json` report keep them). ontolint writes no
+  `partialFingerprints` yet, so code scanning computes its own from the source line, and results that
+  share a rule and a line may be shown as one alert.
+- `--convert-with-robot` (Docker) is not available in the Action.
+
+There is no `--format github`: workflow commands cap the annotations per step and job, so findings reach
+GitHub as SARIF and as the summary. The one workflow-command helper, `ontolint.github.escape_data`, escapes the
+Action's own error annotations.
 
 ### Optional SHACL validation
 
@@ -924,7 +987,8 @@ budget per target and uploads any crashing input.
 workflow, requires a green CodeQL scan of the tagged commit, checks that the
 tag matches the version in `pyproject.toml`, builds the distributions,
 publishes them to PyPI with Trusted Publishing from the `pypi` environment,
-and finally installs the published version from PyPI and lints a file with it.
+installs the published version from PyPI and lints a file with it, and
+finally runs the [GitHub Action](#github-action) at the new tag on a fixture.
 
 `.github/workflows/validation.yml` runs weekly and on manual dispatch:
 
