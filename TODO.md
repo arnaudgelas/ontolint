@@ -1037,7 +1037,10 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   unchanged findings, JSON carries the vector with numerators and denominators, and each
   measurement's population and exclusions are documented in `docs/`.
 
-- [ ] **QUALITY-BASELINE and QUALITY-TRENDS: one snapshot format, two uses.** A snapshot holds:
+- [x] **QUALITY-BASELINE and QUALITY-TRENDS: one snapshot format, two uses.** Done (issue #21):
+  `--write-quality-snapshot`, `--quality-baseline`, `--compare-quality`, `docs/quality.md`. Open for
+  the maintainer: the three flag names, the all-or-nothing policy comparison, and `added_good` as a
+  fifth count (see the PR). A snapshot holds:
   - one run's measurement vector;
   - for every coverage measure, the sorted IRIs in its numerator and denominator;
   - the measurement definition versions and the policy that shaped each population.
