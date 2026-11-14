@@ -384,9 +384,10 @@ def _foreign(ctx: RuleContext, subject: URIRef, target: URIRef) -> bool:
     them.  Without any ownership information (``OwnershipMode.ALL``) every IRI counts as owned, so the
     namespace comparison alone decides.
     """
-    if _namespace(target) == _namespace(subject):
-        return False
-    return ctx.context.ownership.mode is OwnershipMode.ALL or not ctx.local(target)
+    # One expression: an early ``return False`` read by an ``if`` would make its ``None`` mutant equivalent.
+    return _namespace(target) != _namespace(subject) and (
+        ctx.context.ownership.mode is OwnershipMode.ALL or not ctx.local(target)
+    )
 
 
 def _foreign_references(ctx: RuleContext) -> CountRatio:
