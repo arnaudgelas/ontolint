@@ -45,6 +45,18 @@ Two versions of one ontology series share the ontology IRI under different versi
 
 One fact is reported once: a finding whose documents are all documents of another finding on the same IRI is dropped (the closure of an input that is also an input; two inputs importing one IRI from one ``--import-dir``).  A finding is reported on the first input in report-path order (so the argument order changes nothing), or on the input whose closure, import or dataset holds the documents.  It belongs to the first document's file in that order (JSON ``path``), which is deterministic but says nothing about which document is the original.  SARIF gives that file as the location and every other file as a related location (SARIF 2.1.0, section 3.27.12: removing any one copy fixes the finding).  Its baseline identity is the rule, the IRI, the place and the kind, never the documents: paths depend on the machine and the working directory, and another copy is the same problem, not a new one; a copy that starts or stops differing changes the rule, so it is a new finding.
 
+### Module import_identity
+
+Source: `src/ontolint/rules/import_identity.py`.
+
+Run-level rule about the files an import closure loads: ONT009.
+
+With ``--follow-imports`` or ``--catalog``, an ``owl:imports`` resolves to the file an OASIS XML catalog names for the imported IRI, and that file is loaded as the import (`ontolint.imports`).  Nothing makes the catalog right: a stale entry, a mistyped name or a copied line leaves the closure holding another ontology than the one imported, whose terms join the linted graph and whose findings are reported as the import's. Protege and the OWL API report an ontology IRI mismatch in this case.  The closure is unchanged by this rule (the file is still loaded, so no other finding moves); the CLI hands the root file the mismatches of its closure as ``Policy.import_mismatches``, and ``run`` turns them into findings.
+
+A file *declares* the imported IRI when one of its ``owl:Ontology`` subjects is that IRI or has it as an ``owl:versionIRI``; a file that declares several ontologies needs only one of them to match.  Blank-node ontologies declare nothing.  An ontology that gives no version IRI (an ODK edit file) matches its ontology IRI, and its release matches both, so those pairs are clean.  A ``file:`` IRI import is not checked: it names a document, not an ontology, and so does an import resolved through ``--import-dir``, whose files are matched by the IRIs they declare.
+
+*Specified under each rule: ONT009.*
+
 ### Module metadata
 
 Source: `src/ontolint/rules/metadata.py`.
@@ -336,3 +348,71 @@ Linter options: `policy=Policy()`.
 ```
 
 Linter options: `policy=Policy(shared_identities=(SharedIdentity(iri='https://example.test/onto', kind='ontology', scope='inputs', members=('release.ttl', 'working.ttl'), identical=False),))`.
+
+#### ONT009: Imported file does not declare the imported IRI
+
+- **Severity:** warning
+- **Scope:** ontology
+- **Category:** deterministic
+- **Module:** [`import_identity`](#module-import_identity)
+- **Fix:** Correct the catalog entry (or the owl:imports IRI) so the file declares the imported IRI, or give the file that ontology or version IRI.
+
+**Specification.** An ``owl:imports`` IRI that a catalog maps to a file declaring neither it nor a version IRI of it.  The focus is the imported IRI; the message names the file and the ontology IRIs it does declare (with their version IRIs), or says that it declares no ontology.  The finding is reported once per imported IRI, on the file of the closure that states the ``owl:imports``.  Its baseline identity is the rule and the imported IRI, never the file or what it declares: repointing the entry at another wrong file is the same problem.  Why warning: the closure lints a different ontology than the one imported, which changes what every other rule sees; it is not an error because the file is still read and the result is deterministic.  A file with no ontology header is reported the same way, since nothing says which ontology it is.  Confidence ``certain``.
+
+*Flagged:* `a file declaring another ontology`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/lib> .
+```
+
+Linter options: `policy=Policy(import_mismatches=(ImportMismatch(iri='https://example.test/lib', document='wrong.ttl', ontologies=(('https://example.test/other', ()),)),))`.
+
+Reported: `owl:imports <https://example.test/lib> is loaded from wrong.ttl, which declares ontology <https://example.test/other>, not <https://example.test/lib>.`
+
+*Flagged:* `a file declaring another ontology and its version`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/lib> .
+```
+
+Linter options: `policy=Policy(import_mismatches=(ImportMismatch(iri='https://example.test/lib', document='wrong.ttl', ontologies=(('https://example.test/other', ('https://example.test/other/1',)),)),))`.
+
+Reported: `owl:imports <https://example.test/lib> is loaded from wrong.ttl, which declares ontology <https://example.test/other> (version <https://example.test/other/1>), not <https://example.test/lib>.`
+
+*Flagged:* `a file declaring no ontology`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/lib> .
+```
+
+Linter options: `policy=Policy(import_mismatches=(ImportMismatch(iri='https://example.test/lib', document='wrong.ttl', ontologies=()),))`.
+
+Reported: `owl:imports <https://example.test/lib> is loaded from wrong.ttl, which declares no ontology, not <https://example.test/lib>.`
+
+*Flagged:* `a file declaring several ontologies`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/lib> .
+```
+
+Linter options: `policy=Policy(import_mismatches=(ImportMismatch(iri='https://example.test/lib', document='wrong.ttl', ontologies=(('https://example.test/other/a', ()), ('https://example.test/other/b', ('https://example.test/other/b/1', 'https://example.test/other/b/2')))),))`.
+
+Reported: `owl:imports <https://example.test/lib> is loaded from wrong.ttl, which declares ontologies <https://example.test/other/a>, <https://example.test/other/b> (versions <https://example.test/other/b/1>, <https://example.test/other/b/2>), not <https://example.test/lib>.`
+
+*Flagged:* `two imports`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/lib> .
+```
+
+Linter options: `policy=Policy(import_mismatches=(ImportMismatch(iri='https://example.test/lib', document='wrong.ttl', ontologies=()), ImportMismatch(iri='https://example.test/lib2', document='wrong2.ttl', ontologies=(('https://example.test/other', ()),))))`.
+
+Reported: `owl:imports <https://example.test/lib> is loaded from wrong.ttl, which declares no ontology, not <https://example.test/lib>.`
+
+*Clean:* `nothing mismatched`
+
+```turtle
+<https://example.test/onto> a owl:Ontology ; owl:imports <https://example.test/lib> .
+```
+
+Linter options: `policy=Policy()`.

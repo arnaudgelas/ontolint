@@ -33,6 +33,7 @@ from . import (
     governance_metadata,
     hierarchy_quality,
     identifiers,
+    import_identity,
     imports_note,
     iri_lexical_extras,
     iri_quality,
@@ -103,6 +104,7 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     literals,
     library,
     duplicate_ids,
+    import_identity,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).

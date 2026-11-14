@@ -3651,6 +3651,52 @@
     "31b0ba8cf03909fb30dc5ab9daab31f46a3b9dc6f12eaeb1da103a0612d91db0"
    ]
   ],
+  "ONT009:a file declaring another ontology": [
+   [
+    "ONT009",
+    "https://example.test/lib",
+    [],
+    "99263a82424e4a08c13bd822db8363a4ef901d39ac87782f7149d065902b05fc"
+   ]
+  ],
+  "ONT009:a file declaring another ontology and its version": [
+   [
+    "ONT009",
+    "https://example.test/lib",
+    [],
+    "99263a82424e4a08c13bd822db8363a4ef901d39ac87782f7149d065902b05fc"
+   ]
+  ],
+  "ONT009:a file declaring no ontology": [
+   [
+    "ONT009",
+    "https://example.test/lib",
+    [],
+    "99263a82424e4a08c13bd822db8363a4ef901d39ac87782f7149d065902b05fc"
+   ]
+  ],
+  "ONT009:a file declaring several ontologies": [
+   [
+    "ONT009",
+    "https://example.test/lib",
+    [],
+    "99263a82424e4a08c13bd822db8363a4ef901d39ac87782f7149d065902b05fc"
+   ]
+  ],
+  "ONT009:two imports": [
+   [
+    "ONT009",
+    "https://example.test/lib",
+    [],
+    "99263a82424e4a08c13bd822db8363a4ef901d39ac87782f7149d065902b05fc"
+   ],
+   [
+    "ONT009",
+    "https://example.test/lib2",
+    [],
+    "750cc23b66c6446c1a5a4421b9fa32629ba1280d4b3986ec7f578ad9c4deeee0"
+   ]
+  ],
   "OWL001:declared only as a property": [
    [
     "OWL001",

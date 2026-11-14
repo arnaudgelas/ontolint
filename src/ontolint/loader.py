@@ -43,7 +43,7 @@ from rdflib.util import guess_format
 
 from . import datasets, syntax, worker
 from .datasets import EMPTY_INDEX, GraphIndex
-from .models import SourceFacts
+from .models import ImportMismatch, SourceFacts
 from .paths import InputFile
 from .policy import Policy
 from .redaction import withheld_parser_message
@@ -152,6 +152,8 @@ class LoadedGraph:
     """With ``--import-dir``: the imports of the closure that the import dirs held in several files."""
     shadowed: tuple[ImportShadow, ...] = ()
     """The imports of the closure served by a file already loaded that declares their IRI, in walk order."""
+    mismatched: tuple[ImportMismatch, ...] = ()
+    """The imports of the closure a catalog maps to a file that does not declare their IRI, in walk order."""
 
 
 class NetworkAccessBlocked(Exception):  # noqa: N818 -- not an OSError on purpose: urllib must not wrap it.

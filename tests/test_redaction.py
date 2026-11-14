@@ -400,6 +400,8 @@ _LIST_OR_KEY_SLICES = {
     "sorted(relative)[:RELATIVE_IMPORTS_SHOWN]",
     "sorted(map(str, iris))[:5]",
     "imports[:MAX_LISTED]",
+    "items[:MAX_LISTED]",
+    "found[:MAX_LISTED]",
     "rule_id[:3]",
     "sorted(opaque[namespace])[:EXAMPLE_LIMIT]",
     "sorted(readable[namespace])[:EXAMPLE_LIMIT]",

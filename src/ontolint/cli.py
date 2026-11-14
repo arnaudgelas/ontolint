@@ -334,6 +334,7 @@ def _lint_file(
         root_terms=loaded.modules[0].declared if loaded.modules else frozenset(),
         source=loaded.source,
         shared_identities=tuple(found.identity for found in shared),
+        import_mismatches=loaded.mismatched,
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background

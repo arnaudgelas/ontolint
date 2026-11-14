@@ -9,7 +9,7 @@ from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any
 
-from .models import PatternLibrary, Severity, SharedIdentity, SourceFacts
+from .models import ImportMismatch, PatternLibrary, Severity, SharedIdentity, SourceFacts
 
 _ABSOLUTE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+")
 DEFAULT_DEPTH_LIMIT = 10
@@ -121,6 +121,9 @@ class Policy:
     # Set by the CLI for one file, never by a policy file: the ontology and version IRIs that several documents
     # of the run declare and that are reported on this file (ONT007, ONT008; see ontolint.declarations).
     shared_identities: tuple[SharedIdentity, ...] = ()
+    # Set by the CLI for the linted file, never by a policy file: the imports of its closure that a catalog maps
+    # to a file declaring another ontology (ONT009; see ontolint.imports).
+    import_mismatches: tuple[ImportMismatch, ...] = ()
 
     def __post_init__(self) -> None:
         for name in LOADER_LIMIT_DEFAULTS:
@@ -196,6 +199,7 @@ class Policy:
             owl_converter=None,
             library=None,
             shared_identities=(),
+            import_mismatches=(),
         )
 
 
@@ -218,6 +222,7 @@ _RUNTIME_FIELDS = frozenset(
         "owl_converter",
         "library",
         "shared_identities",
+        "import_mismatches",
     }
 )
 """Policy fields filled in while linting, not accepted from a policy file."""
