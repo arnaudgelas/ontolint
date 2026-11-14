@@ -79,6 +79,10 @@ Nothing open: 0.11.0 is released (see "Recently done").
     `src/` or `data/` changed.
     - Left open: the specification is not shown by `--explain`; no stable per-rule anchors yet (an
       index row links to the family page); no test requires a bullet per rule until #64 lands.
+      The staleness test now runs the linter on every flagged graph case (about 7 s instead of
+      0.3 s on an idle laptop) and stays in the mutation run, where it runs for each mutant no
+      narrower test kills (see `docs/mutation-policy.md`): the next hosted mutation run (#19) must
+      show that the job still fits its 120-minute timeout.
 - Unreleased (after 0.12.0):
   - **PREDICATE-CLOSURE** (P1 audit, issue 15; the LEX002-CLOSURE follow-ups): one cached
     `PropertyClosure` (`rules/runtime.py`) indexes the graph's `rdfs:subPropertyOf` and
