@@ -1,0 +1,15 @@
+@prefix q: <https://example.test/q#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://example.test/q> a owl:Ontology .
+
+# Against before.ttl: B lost its definition (a regression), D gained one, C and E are removed, and
+# F, G and H are new without one (dilution).  Definition coverage is 2 of 6.
+q:A a owl:Class ; rdfs:label "A"@en ; skos:definition "The root of the fixture."@en .
+q:B a owl:Class ; rdfs:label "B"@en ; rdfs:subClassOf q:A .
+q:D a owl:Class ; rdfs:label "D"@en ; skos:definition "Defined only after."@en ; rdfs:subClassOf q:A .
+q:F a owl:Class ; rdfs:label "F"@en ; rdfs:subClassOf q:A .
+q:G a owl:Class ; rdfs:label "G"@en ; rdfs:subClassOf q:A .
+q:H a owl:Class ; rdfs:label "H"@en ; rdfs:subClassOf q:A .
