@@ -50,6 +50,62 @@ Nothing open: 0.11.0 is released (see "Recently done").
       ESC, which split a finding's header line, and lists its members in hash-seed order; marking
       evidence truncated at depth 8; placing a background-focused finding by its linted nested
       foci; escaping the header line (focus and message) as the evidence lines are.
+  - **BASELINE-IDENTITY-DECISIONS** (P1; issue #10): the four questions left by version 2
+    baselines are decided.
+    - *Release sequencing and the upgrade note*: settled by 0.11.0, which shipped identity v2 with
+      the OWL034/036/040, SEC014-focus and METRIC message fixes under "Regenerate your baseline
+      once"; no note for them in 0.14.0. Before tagging, check every `src/` change and
+      `tests/golden/identities.json`, not only `baseline.py`.
+    - *Version 1 leniency* (`fix(baseline)!`): `--baseline` accepted any finding whose version 1
+      hash (rule, focus, message) was recorded, so a second bad value of an accepted SHACL shape on
+      an accepted node was hidden whenever pySHACL worded it alike (11 of 16 common constraint
+      components do, and every one under `sh:message`), even under `--fail-on-stale-baseline`: the
+      run exited 0 with nothing new and nothing stale. Now a hash the file pairs with an identity
+      accepts at most one finding for each of its entries whose identity no finding of the run
+      holds (shared identities included, so an accepted finding that becomes duplicated, a
+      `sh:node` reached from two parents, still holds its entry). Roaming acceptances (ONT007,
+      ONT008) are decided before any allowance is spent and claim their entry, so the result does
+      not depend on report order; `seen` and the stale formula are unchanged. Specification and
+      tests: `tests/test_baseline_paired_hashes.py` (unit cases S1-S8, the duplicated and the
+      reworded accepted finding, the roaming claim in both report orders, two CLI reproductions;
+      properties: paired-hash additions are all reported, refined runs stay accepted, version 1
+      files give the 0.10.2 results, report and finding order change no count, and against a copy
+      of the 0.13.1 `apply` nothing is accepted that was not, and the stale entries are equal).
+      `tests/golden/identities.json` pins the rule, focus, subject and identity of the 778
+      positive graph cases and of 14 SHACL001 shape and data pairs (807 findings), so a subject
+      refinement, or a pySHACL upgrade that changes a SHACL001 subject, shows in review
+      (`docs/adding-rules.md`); probe cases (SEM001, INPUT001, TOOL001) are not pinned.
+    - Measured: 16 of the new tests fail on `main` (the CLI reproduction exits 0 with no new
+      finding); over 40,000 random runs against `main`'s `apply`, the stale entries are equal in
+      every run, no finding `main` reports is accepted, report and finding order change nothing,
+      and 1,266 runs report more; the version 2 baselines written by 0.11.0, 0.12.0, 0.13.0 and
+      0.13.1 over the metric corpus, the kitchen sink and the kitchen sink with
+      its shapes give the same results as `main` (240 applications, version 1 views included);
+      the kitchen sink with a second bad `ex:dataInt` value exits 0 on `main` and 1 on the branch
+      with exactly that result; `apply` takes 2 ms on `cco-merged.ttl` either way.
+    - Limits, documented in `baseline.py` and README "Policy and baselines" and pinned: a bad
+      value replaced by another with the same message stays accepted, as in 0.10 (S3); findings
+      that shared an identity when the file was written and that become unique (a later release
+      tells them apart, or all but one of them is fixed) reopen once when a unique finding has their
+      message (M1); when a refined finding and a new one with its message coincide, report order
+      decides which is reported (S6); new findings that share an identity still match by version 1
+      (D1); an entry of a shared hash is not stale while the hash is found (S7).
+    - Rejected: keeping the leniency (new problems hidden for the life of the baseline); refusing
+      every paired version 1 match (reopens every refined subject, and the refused entry would not
+      go stale); a per-rule subject revision in the file (machinery for S3 alone); adding the value
+      and `sourceConstraint` to the SHACL001 message suffix (it would close S3 without touching
+      `apply`, but changes the message and text contracts, breaks 0.10 baselines once and protects
+      no other rule; a possible follow-up); allowing roaming only for unrecorded hashes (falsely
+      reopens a displaced finding whose hash is paired on its new path); a lazy roaming claim
+      (order-dependent); adding every roaming claim to `seen` (moves stale output in 171 of 40,000
+      random runs).
+    - *SARIF `partialFingerprints`*: none in 0.14.0; the design (`ontolintIdentity/v2`, a
+      conditional `ontolintFingerprint/v1`, the versioning rule, its disclosed cost and open
+      questions) and its tests are under GITHUB-ACTION (#24).
+    - Follow-up, for a separate decision: a displaced ONT007/ONT008 finding whose hash is also
+      paired on its new path leaves its old entry stale (as on `main`; pinned by
+      `test_a_displaced_roaming_finding_is_accepted_and_its_old_entry_is_stale_as_before`).
+      Adding that claim to `seen` fixes it, but moves stale output in about 0.4% of random runs.
   - **LEGAL-PROVENANCE** (P1; issue 18): the maintainer's answers are written down. `NOTICE` names
     the copyright holder (Copyright 2026 Arnaud Gelas, the `pyproject.toml` author; 2026 is the
     first commit's year) and ships with `LICENSE` in the sdist and in the wheel's
@@ -476,9 +532,9 @@ Nothing open: 0.11.0 is released (see "Recently done").
     renamed-and-reworded test (each of the four shifts checked by hand to fail a test), and two
     equivalents are pardoned (`zip(strict=True)` over lists built from one another; `<` or `<=`
     when keeping the least subject). The run was not repeated after those changes.
-    Left open, under P1 "Baseline identity": release sequencing and the upgrade note to paste at
-    release (both since settled by this release itself, issue #10), the lenient version 1 match;
-    SARIF `partialFingerprints` was since decided too (issue #10: designed under GITHUB-ACTION). Messages this release
+    Left open, under P1 "Baseline identity": release sequencing, the upgrade note to paste at
+    release, the lenient version 1 match, SARIF `partialFingerprints`; all four since decided
+    (issue #10, see BASELINE-IDENTITY-DECISIONS above). Messages this release
     changes for an unchanged input (list each later rule here as it lands): METRIC002, METRIC003
     and METRIC012 counts (LEX002-CLOSURE); OWL034, OWL036 and OWL040, and OWL032 and
     OWL042-OWL045 with a literal operand, OWL013 with a line break in its literal, and SEC014's
@@ -718,8 +774,9 @@ Validation corpus (public; licences per repository):
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
 
-- [ ] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
-  (0.11.0, see "Recently done"). Left open, each a decision rather than code:
+- [x] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
+  (0.11.0, see "Recently done"). Decided (issue #10, see "Recently done",
+  BASELINE-IDENTITY-DECISIONS):
   - *Release sequencing* (decided by 0.11.0, issue #10). Identity v2 shipped together with the
     OWL034, OWL036 and OWL040, SEC014-focus and METRIC message fixes (`77b8f84` is an ancestor of
     `v0.11.0`), under the CHANGELOG's 0.11.0 upgrade note "Regenerate your baseline once". A
@@ -736,11 +793,14 @@ Validation corpus (public; licences per repository):
     README "Policy and baselines". 0.14.0 needs no note for them. Before tagging any release,
     re-check `git diff --stat vPREV..HEAD -- src/` and `tests/golden/identities.json`, not only
     `baseline.py` and `reporting.py`: a change to any rule's message, focus or subject moves a hash.
-  - *Version 1 acceptance stays lenient.* `--baseline` accepts a finding when either hash is
-    recorded, so a new SHACL001 result whose message equals an accepted one's is still accepted
-    by its fingerprint. Refusing version 1 matches for paths a version 2 file covers would close
-    that, but would also reopen findings whenever a later release refines a rule's subject:
-    decide which risk to take.
+  - *Version 1 acceptance* (decided, issue #10: consume once). A version 1 hash that a version 2
+    file pairs with an identity accepts a finding only in place of an entry of that hash whose
+    identity no finding of the run holds, each such entry once, so a new SHACL001 result whose
+    message equals an accepted one's is reported while the accepted one is still found, and a
+    finding whose subject a later release refines stays accepted. Unpaired hashes (version 1
+    files, findings that shared an identity) and findings with a shared identity match by version
+    1 as before; stale entries are unchanged. `tests/golden/identities.json` makes a later subject
+    refinement visible in review.
   - *SARIF `partialFingerprints`* (decided, issue #10): not emitted in 0.14.0. Nothing in this
     repository can check what code scanning does with them before the Action uploads a report, and
     waiting takes nothing away from today's users. The design, the failure modes it answers and
