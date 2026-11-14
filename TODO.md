@@ -34,8 +34,10 @@ Nothing open: 0.11.0 is released (see "Recently done").
       nested entries go stale.
     - *Evidence in text* (added, `feat:`): `Path:`, `Value:` and nested `Detail:` lines after `Fix:`
       and any `In:` line, escaped by a fixed set of Unicode categories (Cc, Cf, Cs, Co, Zl, Zp, Zs
-      but a space) so a lone surrogate no longer fails a text report (TOOL001, exit 2) and bidi
-      and zero-width characters show. Rendering is iterative and generic over evidence keys.
+      but a space), so the new lines stay encodable as UTF-8 (a lone surrogate in a value adds no
+      TOOL001 case) and bidi and zero-width characters show. The finding's header is printed as
+      before: a lone surrogate in its focus or message still gives TOOL001, exit 2, as
+      `rules/external.py` documents. Rendering is iterative and generic over evidence keys.
     - *SHACL-AF `sh:resultAnnotation`* (documented): pySHACL 0.40.2 does not implement it; three
       canary `DONE_WHEN` cases (node validator, property validator, `sh:sparql`) fail when an
       upgrade writes annotations, as a scratch plugin simulating that showed.
@@ -47,7 +49,7 @@ Nothing open: 0.11.0 is released (see "Recently done").
     - Left open (drafted as issues in the PR): pySHACL's `sh:in` message holds raw newlines and
       ESC, which split a finding's header line, and lists its members in hash-seed order; marking
       evidence truncated at depth 8; placing a background-focused finding by its linted nested
-      foci.
+      foci; escaping the header line (focus and message) as the evidence lines are.
   - **LEGAL-PROVENANCE** (P1; issue 18): the maintainer's answers are written down. `NOTICE` names
     the copyright holder (Copyright 2026 Arnaud Gelas, the `pyproject.toml` author; 2026 is the
     first commit's year) and ships with `LICENSE` in the sdist and in the wheel's
