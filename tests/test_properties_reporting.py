@@ -146,6 +146,46 @@ def _unique_identities(report: FileReport) -> set[str]:
     return {i for i, n in counts.items() if n == 1}
 
 
+def _expected_after_baseline(report: FileReport, old: FileReport, multi: bool) -> tuple[Finding, ...]:
+    """What the baseline written from ``old`` leaves of ``report``, by the documented policy (issue #10): a unique
+    identity the file records is accepted; a version 1 hash the file pairs with no identity (or that a shared
+    identity holds) is accepted for every finding; a hash paired with an identity is accepted for a unique finding
+    of another identity only once per entry whose identity no finding of the run holds."""
+    place = report.path if multi else None
+    shared = {i for i, n in Counter(baseline_identity(f) for f in old.findings).items() if n > 1}
+    recorded = {baseline_identity(f): fingerprint(f, place) for f in old.findings if baseline_identity(f) not in shared}
+    hashes = {fingerprint(f, place) for f in old.findings}
+    spare = Counter(h for i, h in recorded.items() if i not in {baseline_identity(f) for f in report.findings})
+    unique = _unique_identities(report)
+    kept: list[Finding] = []
+    for f in report.findings:
+        ident, h = baseline_identity(f), fingerprint(f, place)
+        if ident in unique and ident in recorded:
+            continue
+        if h in hashes and not (ident in unique and h in recorded.values()):
+            continue
+        if h in recorded.values() and spare[h] > 0:
+            spare[h] -= 1
+            continue
+        kept.append(f)
+    return tuple(kept)
+
+
+def test_a_repeated_message_with_another_subject_is_not_hidden_by_the_baseline() -> None:
+    """REGRESSION (issue #10; found by the property below): subjects () and ('',) give one version 1 hash but two
+    identities, so a baseline of the first must not accept the second while the first is still found."""
+    plain = Finding("ALIGN002", "error", "", "", "", "certain", None, (), None, ())
+    empty = replace(plain, subject=("",))
+    assert fingerprint(plain, None) == fingerprint(empty, None) and baseline_identity(plain) != baseline_identity(empty)
+    report = FileReport("a.ttl", "a.ttl", (plain, empty))
+    with tempfile.TemporaryDirectory() as folder:
+        baseline = Path(folder) / "baseline.json"
+        _apply_baselines([replace(report, findings=(plain,))], _baseline_args(write=baseline))
+        kept, _stale, _removed = _apply_baselines([report], _baseline_args(baseline=baseline))
+    assert kept[0].findings == (empty,)
+    assert _expected_after_baseline(report, replace(report, findings=(plain,)), False) == (empty,)
+
+
 @budget(0.5)
 @given(finding_lists, st.randoms(use_true_random=False), st.booleans())
 def test_baseline_removes_exactly_the_baselined_findings(items: list[Finding], rnd: random.Random, multi: bool) -> None:
@@ -161,21 +201,13 @@ def test_baseline_removes_exactly_the_baselined_findings(items: list[Finding], r
         kept, _stale, removed = _apply_baselines(reports, _baseline_args(baseline=baseline))
         kept_reworded, _stale, removed_reworded = _apply_baselines(reworded, _baseline_args(baseline=baseline))
 
-    prints = {fingerprint(f, r.path if multi else None) for r in known for f in r.findings}
-    accepted = {(r.path, i) for r in known for i in _unique_identities(r)}
     assert removed is not None and removed_reworded is not None
-    rows = zip(reports, kept, removed, reworded, kept_reworded, removed_reworded, strict=True)
-    for before, after, dropped, again, after_again, dropped_again in rows:
+    rows = zip(reports, kept, removed, reworded, kept_reworded, removed_reworded, known, strict=True)
+    for before, after, dropped, again, after_again, dropped_again, old in rows:
         for report, result, baselined in ((before, after, dropped), (again, after_again, dropped_again)):
-            unique = _unique_identities(report)
-
-            def is_accepted(f: Finding, report: FileReport = report, unique: set[str] = unique) -> bool:
-                return fingerprint(f, report.path if multi else None) in prints or (
-                    baseline_identity(f) in unique and (report.path, baseline_identity(f)) in accepted
-                )
-
-            assert result.findings == tuple(f for f in report.findings if not is_accepted(f))
-            assert baselined == tuple(f for f in report.findings if is_accepted(f))
+            expected = _expected_after_baseline(report, old, multi)
+            assert result.findings == expected
+            assert Counter(baselined) + Counter(result.findings) == Counter(report.findings)
 
 
 @budget(0.5)
