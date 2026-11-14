@@ -1,13 +1,15 @@
-"""SHACL001 keeps every SHACL result property pySHACL writes as its ``evidence`` (JSON and SARIF only).
+"""SHACL001 keeps every SHACL result property pySHACL writes as its ``evidence``.
 
-The message, focus, severity and fingerprint stay as they were; the evidence is what tells two violations of
-one shape on one node apart, and what a fix has to change.
+JSON and SARIF carry it in full; text prints its path, value and nested causes after the ``Fix:`` line.  The
+message, focus, severity and fingerprint stay as they were; the evidence is what tells two violations of one shape
+on one node apart, and what a fix has to change.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -116,13 +118,166 @@ def test_the_evidence_reaches_json_and_sarif(tmp_path: Path, capsys: pytest.Capt
     assert [e["value"] for e in _reported_evidence(document, fmt)] == ['"x"', '"y"']
 
 
-def test_text_output_is_unchanged_by_the_evidence(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    data_file, shapes_file = _files(tmp_path, TWO_VALUES.removeprefix(PREFIXES), INTEGER_AGE.removeprefix(PREFIXES))
+# --- text: Path, Value and Detail lines ---------------------------------------------------------------
+
+FIX = "    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report."
+
+
+def _text(tmp_path: Path, capsys: pytest.CaptureFixture[str], data: str, shapes: str) -> str:
+    data_file, shapes_file = _files(tmp_path, data, shapes)
     assert main([data_file, "--shapes", shapes_file, "--select", "SHACL001", "--fail-on", "never"]) == 0
-    text = capsys.readouterr().out
-    assert '"x"' not in text
-    assert "evidence" not in text
-    assert text.count("Value is not Literal with datatype xsd:integer") == len(["x", "y"])
+    return capsys.readouterr().out
+
+
+def _blocks(text: str) -> list[list[str]]:
+    """The lines of each finding of a text report, its header first."""
+    blocks: list[list[str]] = []
+    for line in text.splitlines()[1:]:
+        if line.startswith("["):
+            blocks.append([line])
+        else:
+            blocks[-1].append(line)
+    return blocks
+
+
+def _evidence_lines(block: list[str]) -> list[str]:
+    """The lines of a finding block after its ``Fix:`` (and any ``In:``) line."""
+    return [line for line in block[2:] if not line.startswith("    In: ")]
+
+
+def test_text_shows_the_path_and_value_of_each_result(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """The two blocks that read alike now say which value to fix; header and Fix lines are as before."""
+    text = _text(tmp_path, capsys, TWO_VALUES.removeprefix(PREFIXES), INTEGER_AGE.removeprefix(PREFIXES))
+    header = "[ERROR  ] SHACL001 https://example.test/a: Value is not Literal with datatype xsd:integer"
+    header += " [shape: https://example.test/Age]"
+    block = [header, FIX, "    Path: https://example.test/age"]
+    assert (
+        text == "\n".join(["Ontology linter: 2 finding(s)", *block, '    Value: "x"', *block, '    Value: "y"']) + "\n"
+    )
+
+
+def test_two_closed_results_on_one_value_differ_by_their_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shapes = f"{ON_T} sh:closed true ; sh:ignoredProperties ( <{RDF.type}> ) ."
+    first, second = _blocks(_text(tmp_path, capsys, "ex:a a ex:T ; ex:q ex:b ; ex:r ex:b .", shapes))
+    assert first[:2] == second[:2]
+    assert _evidence_lines(first) == ["    Path: https://example.test/q", "    Value: https://example.test/b"]
+    assert _evidence_lines(second) == ["    Path: https://example.test/r", "    Value: https://example.test/b"]
+
+
+def test_a_node_level_result_on_its_focus_has_no_value_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (block,) = _blocks(_text(tmp_path, capsys, "ex:a a ex:T .", f"{ON_T} sh:class ex:U ."))
+    assert _evidence_lines(block) == []
+
+
+def test_a_property_value_equal_to_its_focus_keeps_its_value_line(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A self-loop is a property value like any other, not a node-level result."""
+    text = _text(tmp_path, capsys, "ex:a a ex:T ; ex:p ex:a, ex:b .", f"{PROPERTY}p ; sh:class ex:U .")
+    assert [_evidence_lines(b) for b in _blocks(text)] == [
+        ["    Path: https://example.test/p", f"    Value: {A}"],
+        ["    Path: https://example.test/p", "    Value: https://example.test/b"],
+    ]
+
+
+def test_a_cardinality_result_has_a_path_line_only(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (block,) = _blocks(_text(tmp_path, capsys, "ex:a a ex:T .", f"{PROPERTY}name ; sh:minCount 1 ."))
+    assert _evidence_lines(block) == ["    Path: https://example.test/name"]
+
+
+def test_a_value_with_userinfo_is_masked_in_text(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    text = _text(
+        tmp_path,
+        capsys,
+        "ex:a a ex:T ; ex:link <https://u:pw@h.test/x> .",
+        f"{PROPERTY}link ; sh:nodeKind sh:Literal .",
+    )
+    (block,) = _blocks(text)
+    assert _evidence_lines(block) == ["    Path: https://example.test/link", "    Value: https://****@h.test/x"]
+    assert "pw" not in text
+
+
+def test_a_blank_value_is_named_by_its_stable_identity_in_text(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (block,) = _blocks(
+        _text(tmp_path, capsys, "ex:a a ex:T ; ex:knows [ ex:x 1 ] .", f"{PROPERTY}knows ; sh:nodeKind sh:IRI .")
+    )
+    path, value = _evidence_lines(block)
+    assert path == "    Path: https://example.test/knows"
+    assert re.fullmatch(r"    Value: _:[0-9a-f]{12}", value)
+
+
+def test_the_evidence_lines_follow_the_graph_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    data_file, shapes_file = _files(tmp_path, "", INTEGER_AGE.removeprefix(PREFIXES))
+    trig = tmp_path / "data.trig"
+    trig.write_text(PREFIXES + 'ex:g { ex:a a ex:T ; ex:age "x" . }\n', encoding="utf-8")
+    assert main([str(trig), "--shapes", shapes_file, "--select", "SHACL001", "--fail-on", "never"]) == 0
+    (block,) = _blocks(capsys.readouterr().out)
+    assert block[1:] == [
+        FIX,
+        "    In: graph https://example.test/g",
+        "    Path: https://example.test/age",
+        '    Value: "x"',
+    ]
+
+
+def test_nested_causes_are_detail_lines_in_evidence_order(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    shapes = f"{PROPERTY}knows ; sh:node ex:N . ex:N a sh:NodeShape ; sh:property ex:Q, ex:R . "
+    shapes += "ex:Q sh:path ex:name ; sh:minCount 1 . ex:R sh:path ex:age ; sh:minCount 1 ."
+    (block,) = _blocks(_text(tmp_path, capsys, "ex:a a ex:T ; ex:knows ex:b .", shapes))
+    assert block[0].startswith(f"[ERROR  ] SHACL001 {A}: Value does not conform to Shape ")
+    assert _evidence_lines(block) == [
+        "    Path: https://example.test/knows",
+        "    Value: https://example.test/b",
+        "    Detail: https://example.test/b: Less than 1 values on ex:b-><https://example.test/age> [shape: https://example.test/R]",
+        "      Path: https://example.test/age",
+        "    Detail: https://example.test/b: Less than 1 values on ex:b-><https://example.test/name> [shape: https://example.test/Q]",
+        "      Path: https://example.test/name",
+    ]
+
+
+def test_each_nesting_level_indents_its_lines_two_more_spaces(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (block,) = _blocks(_text(tmp_path, capsys, "ex:a a ex:T ; ex:knows ex:b . ex:b ex:knows ex:c .", CHAIN_SHAPES))
+    lines = _evidence_lines(block)
+    assert [(len(line) - len(line.lstrip()), line.split(":")[0].strip()) for line in lines] == [
+        (4, "Path"),
+        (4, "Value"),
+        (4, "Detail"),
+        (6, "Path"),
+        (6, "Value"),
+        (6, "Detail"),
+        (8, "Path"),
+    ]
+    assert lines[2].startswith("    Detail: https://example.test/b: Value does not conform to Shape ")
+    assert lines[5].startswith(
+        "      Detail: https://example.test/c: Less than 1 values on ex:c-><https://example.test/name> [shape: _:"
+    )
+
+
+def test_a_lone_surrogate_value_is_escaped_so_the_report_is_still_written(tmp_path: Path) -> None:
+    """A text report that UTF-8 cannot encode fails the run (TOOL001, exit 2); the escape keeps the exit code."""
+    data = tmp_path / "data.nt"
+    data.write_text(f'<{A}> <{RDF.type}> <{EX}T> .\n<{A}> <{EX}age> "x\\uD800y" .\n', encoding="utf-8")
+    _data, shapes = _files(tmp_path, "", INTEGER_AGE.removeprefix(PREFIXES))
+    out = tmp_path / "report.txt"
+    argv = [str(data), "--shapes", shapes, "--select", "SHACL001", "--output", str(out)]
+    assert main(argv) == 1
+    assert '    Value: "x\\uD800y"' in out.read_text(encoding="utf-8").splitlines()
+    assert main([*argv, "--fail-on", "never"]) == 0
+    done = subprocess.run(  # noqa: S603 -- a real stdout, strict UTF-8
+        [sys.executable, "-m", "ontolint", *argv[:-2]],
+        capture_output=True,
+        check=False,
+        env={**os.environ, "PYTHONUTF8": "0"},
+    )
+    assert done.returncode == 1, done.stderr
+    assert b"TOOL001" not in done.stderr
+    assert b'    Value: "x\\uD800y"' in done.stdout
 
 
 # --- one fixture per constraint component family ------------------------------------------------------
@@ -634,10 +789,11 @@ def test_findings_sort_by_focus_and_message_before_evidence(monkeypatch: pytest.
     ]
 
 
-def test_json_bytes_do_not_depend_on_the_hash_seed(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fmt", ["json", "text"])
+def test_json_bytes_do_not_depend_on_the_hash_seed(tmp_path: Path, fmt: str) -> None:
     """pySHACL's own result order changes with PYTHONHASHSEED: on this input, seeds 1 and 2 give opposite orders."""
     data, shapes = _files(tmp_path, TWO_VALUES.removeprefix(PREFIXES), INTEGER_AGE.removeprefix(PREFIXES))
-    command = [sys.executable, "-m", "ontolint", data, "--shapes", shapes, "--select", "SHACL001", "--format", "json"]
+    command = [sys.executable, "-m", "ontolint", data, "--shapes", shapes, "--select", "SHACL001", "--format", fmt]
 
     def run(seed: int) -> bytes:
         env = {**os.environ, "PYTHONHASHSEED": str(seed)}
@@ -901,6 +1057,28 @@ def test_a_listed_result_need_not_be_typed(monkeypatch: pytest.MonkeyPatch) -> N
     _result(report, "typed")
     _listing(report, untyped)
     assert _values(_issues(monkeypatch, report)) == ['"untyped"']
+
+
+@pytest.mark.parametrize(
+    ("data", "shapes"),
+    [
+        (TWO_VALUES.removeprefix(PREFIXES), INTEGER_AGE.removeprefix(PREFIXES)),
+        ("ex:a a ex:T ; ex:knows ex:b .", NODE_SHAPES),
+    ],
+)
+def test_a_baseline_written_from_text_equals_one_written_from_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], data: str, shapes: str
+) -> None:
+    """Baselines hash findings, never their rendering: the evidence lines of text change no baseline byte."""
+    data_file, shapes_file = _files(tmp_path, data, shapes)
+    written = []
+    for fmt in ("text", "json"):
+        target = tmp_path / f"{fmt}.baseline.json"
+        argv = [data_file, "--shapes", shapes_file, "--select", "SHACL001", "--format", fmt]
+        assert main([*argv, "--write-baseline", str(target)]) == 1
+        written.append(target.read_bytes())
+    capsys.readouterr()
+    assert written[0] == written[1]
 
 
 # --- the structured identity BASELINE-V2 builds on ----------------------------------------------------

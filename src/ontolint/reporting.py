@@ -6,6 +6,8 @@ for a clean pass.  SARIF results carry a source region when the loader could loc
 finding's focus (:mod:`ontolint.source_locations`); other formats do not use locations.
 The Markdown summary (:func:`render_markdown`) is a bounded view of a run for a pull request,
 in which no text of the report can become markup.
+JSON and SARIF carry a finding's ``evidence`` in full; text prints its path, value and nested causes on lines of
+their own after ``Fix:`` (and any ``In:``), each escaped to one visible line (:func:`_one_line`).
 """
 
 from __future__ import annotations
@@ -20,7 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ._version import package_version
-from .models import ExecutionStatus, Finding, RuleExecution, RuleSpec, plain_evidence
+from .models import Evidence, ExecutionStatus, Finding, RuleExecution, RuleSpec, plain_evidence
 from .modules import module_summary
 from .redaction import clip, redact_rendered
 from .rules.registry import default_registry
@@ -377,9 +379,75 @@ def _where(f: Finding, file: FileReport) -> str:
     return f"\n    In: {', '.join(parts)}" if parts else ""
 
 
+_ESCAPED_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Co", "Zl", "Zp", "Zs"})
+"""The Unicode general categories an evidence line escapes (U+0020 excepted): controls, format characters (bidi
+controls, zero-width characters), surrogates, private use, and line, paragraph and space separators.  A fixed set,
+not :meth:`str.isprintable`, which also refuses unassigned code points (Cn), a set each Unicode version changes."""
+
+
+def _escape(char: str) -> str:
+    """``char`` as an N-Triples escape: ``\\uXXXX`` up to U+FFFF, ``\\UXXXXXXXX`` above, in uppercase hex."""
+    code = ord(char)
+    return f"\\u{code:04X}" if code <= 0xFFFF else f"\\U{code:08X}"  # noqa: PLR2004 -- the BMP's last code point
+
+
+def _one_line(text: str) -> str:
+    """``text`` with each character of :data:`_ESCAPED_CATEGORIES` but a space escaped (:func:`_escape`).
+
+    The line then survives ``str.splitlines`` whole, encodes as strict UTF-8 (a lone surrogate is written as its
+    code unit) and shows bidi and zero-width characters.  A literal in N-Triples stays a term that parses back to
+    itself, except for a lone surrogate: an escaped high and low surrogate side by side read back as one character.
+    """
+    if text.isprintable():  # False for every escaped character (C* and Z*, but a space), so nothing to escape
+        return text
+    return "".join(
+        _escape(char) if char != " " and unicodedata.category(char) in _ESCAPED_CATEGORIES else char for char in text
+    )
+
+
+def _text_value(evidence: Evidence, key: str) -> str | None:
+    value = evidence.get(key)
+    return _one_line(value) if isinstance(value, str) else None
+
+
+def _detail_line(evidence: Evidence) -> str:
+    """A nested result as its finding's header would read: ``<focus>: <messages> [shape: <source shape>]``."""
+    messages = evidence.get("resultMessage", ())
+    message = messages if isinstance(messages, str) else "; ".join(m for m in messages if isinstance(m, str))
+    focus = _text_value(evidence, "focusNode") or "(unknown)"
+    shape = _text_value(evidence, "sourceShape") or "(unknown)"
+    return f"Detail: {focus}: {_one_line(message) or 'SHACL constraint violation'} [shape: {shape}]"
+
+
+def _evidence_lines(evidence: Evidence | None) -> str:
+    """The text lines of a finding's evidence, each after a newline: ``Path:``, ``Value:``, and one ``Detail:`` line
+    per nested result, in evidence order, followed by that result's own lines two spaces further in.
+
+    ``Value:`` is left out for a node-level result whose value is its focus (no ``resultPath``); a property value
+    equal to its focus keeps it.  The walk is iterative, so evidence of any depth renders.
+    """
+    lines: list[str] = []
+    stack: list[tuple[Evidence, int]] = [(evidence, 0)] if evidence is not None else []
+    while stack:
+        current, depth = stack.pop()
+        indent = " " * (4 + 2 * depth)
+        if depth:
+            lines.append(indent[2:] + _detail_line(current))
+        path, value = _text_value(current, "resultPath"), _text_value(current, "value")
+        if path is not None:
+            lines.append(f"{indent}Path: {path}")
+        if value is not None and (path is not None or value != _text_value(current, "focusNode")):
+            lines.append(f"{indent}Value: {value}")
+        nested = current.get("detail", ())
+        stack.extend((item, depth + 1) for item in reversed(nested) if not isinstance(item, str))
+    return "".join(f"\n{line}" for line in lines)
+
+
 def _finding_lines(file: FileReport) -> list[str]:
     lines = [
-        f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}" + _where(f, file)
+        f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}"
+        + _where(f, file)
+        + _evidence_lines(f.evidence)
         for f in file.findings
     ]
     summary = module_summary(_shown_modules(file))
