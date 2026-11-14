@@ -480,3 +480,12 @@ MESSAGE_PARTS = st.sampled_from(["_:", "a", "b", "1", "_", ":", " ", ".", "-", "
 def test_labels_are_always_found_as_one_pattern_over_every_label_found_them(labels: set[str], parts: list[str]) -> None:
     data, message = _labelled(sorted(labels)), "".join(parts)
     assert _BlankNames(data).rewrite(message) == _pattern_rewrite(data, message)
+
+
+@pytest.mark.parametrize("tail", ["·t", "́", "‿t", "⁀t", ".·t"])
+def test_a_label_continued_by_a_non_word_turtle_label_character_is_a_longer_name(tail: str) -> None:
+    """The middle dot, combining marks and undertie are Turtle label characters that ``\\w`` does not match."""
+    data = Graph()
+    data.add((BNode("x"), URIRef(f"{BASE}p"), URIRef(f"{BASE}o")))
+    rewritten = _BlankNames(data).rewrite(f"literal _:x{tail}")
+    assert rewritten == f"literal _:x{tail}"

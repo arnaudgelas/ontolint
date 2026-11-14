@@ -76,7 +76,8 @@ class PropertyClosure:
 # A ``_:`` that may start a blank-node label of a message, and what continues a label past its end: ``_:x`` inside
 # an IRI or a longer name (``#_:x``, ``_:x-y``, ``_:x.y``) is not the blank node ``x``.
 _LABEL_START = re.compile(r"(?<![\w/#:-])_:")
-_LABEL_GOES_ON = re.compile(r"[\w/#:-]|\.\w")
+# ``\w`` misses the Turtle PN_CHARS that are not letters or digits: the middle dot, the combining marks, the undertie.
+_LABEL_GOES_ON = re.compile("[\\w/#:\\-\u00b7\u0300-\u036f\u203f\u2040]|\\.[\\w\u00b7\u0300-\u036f\u203f\u2040]")
 
 
 class _BlankNames:
