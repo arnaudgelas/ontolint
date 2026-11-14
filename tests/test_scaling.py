@@ -4,12 +4,12 @@
 for every term, and CLS017 recomputed a set difference over all classes for every class.  A
 40,000-class file took 30 s.  A draft of SHQ011's rewriting of a pattern for Python searched the rest
 of the text for the ``}`` of every ``\\p{``, so a megabyte of unclosed ``\\p{`` took seconds.  Messages
-found their blank-node labels with one pattern over every label of the graph, so each message cost as much
-as the labels.  Each
-test times only its step (no parsing, which is linear and would hide the quadratic term) at two sizes
-and compares them, so it holds on slow runners: multiplying the input by eight must cost well under
-the sixty-four-fold time of a quadratic step.  The time is CPU time, alternated between the sizes, as a
-run beside other workers is slowed by them as a whole and the larger input more.
+found their blank-node labels with one pattern over every label of the graph, so each message cost as
+much as the labels.  Each test times only its step (no parsing, which is linear and would hide the
+quadratic term) at two sizes and compares them, so it holds on slow runners: multiplying the input by
+eight must cost well under the sixty-four-fold time of a quadratic step.  The time is CPU time,
+alternated between the sizes, as a run beside other workers is slowed by them as a whole and the
+larger input more.
 """
 
 from __future__ import annotations
