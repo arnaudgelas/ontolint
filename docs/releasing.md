@@ -22,6 +22,13 @@ section by hand if a subject reads badly; the script will not touch earlier sect
 ## Steps
 
 1. Run the script, then review `git diff` and edit `CHANGELOG.md` if needed.
+   Write the upgrade notes by hand from the `Upgrade note` paragraphs and `BREAKING CHANGE`
+   trailers of the `!` commits. A commit that changes a finding's focus or subject changes its
+   baseline identity: name each such rule under the baseline entries that stop matching once. A
+   commit that changes only a message breaks only version 1 (0.10.x) baselines: say so.
+   `git diff vPREV..HEAD -- tests/golden/identities.json` lists the changed identities, SHACL001's
+   included; it does not cover the probe cases of SEM001, INPUT001 and TOOL001, so check a change
+   to their subject by hand.
 2. `git commit -am 'chore: release X.Y.Z'`
 3. `git tag -a vX.Y.Z -m 'ontolint X.Y.Z'`
 4. `git push && git push origin vX.Y.Z`, with the release commit as the head of `main`: do not push
