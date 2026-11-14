@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, XSD
 from rule_cases.safety import bnode_chain, iri_graph, literal_graph, long_list
 from rule_harness import BASE, graph
 
@@ -257,3 +257,58 @@ def test_sec014_both_operands_and_forms() -> None:
         assert redact_userinfo(iri) != iri, iri
     for iri in clean:
         assert redact_userinfo(iri) == iri, iri
+
+
+# --- SEC016 ----------------------------------------------------------------------------------
+
+SEC016_MESSAGE = "IRI has a user name in its userinfo, which may be a credential."
+
+
+def test_sec016_reports_the_user_name_only_userinfo_and_masks_it() -> None:
+    (finding,) = _run("SEC016", iri_graph("https://ghp_abcdefghijklmnopqrstuvwxyz0123456789@github.com/o/r"))
+    assert finding.focus == "https://****@github.com/o/r"
+    assert finding.message == SEC016_MESSAGE
+    assert "ghp_" not in finding.focus + finding.message + (finding.details or "") + "".join(finding.subject)
+    assert finding.severity == "warning"
+    assert finding.confidence == "heuristic"
+
+
+@pytest.mark.parametrize(
+    ("iri", "focus"),
+    [
+        ("https://alice@h/", "https://****@h/"),
+        ("ssh://git@github.com/o/r.git", "ssh://****@github.com/o/r.git"),
+        ("https://alice:@h/x", "https://****@h/x"),
+        ("HTTPS://t@h:8443/x?q=1#f", "HTTPS://****@h:8443/x?q=1#f"),
+        ("https://u@x@h/x", "https://****@h/x"),
+        ("https://h/r?next=-https://t@g/x", "https://h/r?next=-https://****@g/x"),
+    ],
+)
+def test_sec016_focus_is_the_iri_with_its_whole_userinfo_masked(iri: str, focus: str) -> None:
+    assert [f.focus for f in _run("SEC016", iri_graph(iri))] == [focus]
+    assert _run("SEC014", iri_graph(iri)) == []
+
+
+def test_sec016_and_sec014_split_what_the_mask_hides() -> None:
+    for iri in ("https://u:p@h/", "https://:p@h/", "https://u:p:q@h/", "https://u@x:p@h/"):
+        assert _run("SEC016", iri_graph(iri)) == [], iri
+        assert len(_run("SEC014", iri_graph(iri))) == 1, iri
+    # An IRI that holds both reports both: they are different risks with different remedies.
+    both = iri_graph("https://h/r?a=https://t@g/&b=https://u:p@j/")
+    assert [f.focus for f in _run("SEC016", both)] == ["https://h/r?a=https://****@g/&b=https://****@j/"]
+    assert [f.focus for f in _run("SEC014", both)] == ["https://h/r?a=https://****@g/&b=https://****@j/"]
+
+
+def test_sec016_iris_differing_only_in_the_userinfo_are_one_finding() -> None:
+    data = iri_graph("https://a@h/x")
+    data += iri_graph("https://b@h/x")
+    assert [f.focus for f in _run("SEC016", data)] == ["https://****@h/x"]
+
+
+def test_sec016_does_not_read_a_literal_or_a_userinfo_less_iri() -> None:
+    data = Graph()
+    data.add((_ex("a"), _ex("p"), Literal("https://fake-token@h/", datatype=XSD.anyURI)))
+    data.add((_ex("a"), _ex("q"), Literal("https://fake-token@h/")))
+    assert _run("SEC016", data) == []
+    for iri in ("https://@h/", "https://:@h/", "https://h/p?q=u@h", "mailto:u@h", "file:///u@h", "//u@h"):
+        assert _run("SEC016", iri_graph(iri)) == [], iri

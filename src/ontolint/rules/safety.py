@@ -1,4 +1,4 @@
-"""Graph-local security hygiene rules: SEC004, SEC005, SEC008, SEC012 and SEC014.
+"""Graph-local security hygiene rules: SEC004, SEC005, SEC008, SEC012, SEC014 and SEC016.
 
 These rules inspect the already-parsed RDFLib graph only; parser, network and file-system policy
 belong to the loader.  Every traversal is iterative so hostile inputs cannot exhaust the stack.
@@ -15,8 +15,9 @@ belong to the loader.  Every traversal is iterative so hostile inputs cannot exh
   (``urn:x:https://u:p@h``, a query ``?to=https://u:p@h``) counts too, and so does a scheme read after
   the digits or signs that start its run of scheme characters (``1https://u:p@h``,
   ``urn:x:1https://u:p@h``).  Excluded: a user without a password (``https://alice@...``) or with an
-  empty one (``https://alice:@...``), so a bare token used as the user name is not caught (it is still
-  masked); a percent-encoded colon (``alice%3Asecret@``), which is data, not the separator; an ``@`` in
+  empty one (``https://alice:@...``), which SEC016 reports, so a bare token used as the user name is
+  SEC014's no more than a plain user name is (it is masked); a percent-encoded colon
+  (``alice%3Asecret@``), which is data, not the separator; an ``@`` in
   the path, query or fragment; a scheme without an authority (``mailto:u:p@h``, ``file:///``); and a
   relative reference resolved against the document (GOV002's concern), such as ``1https://u:p@h`` in
   RDF/XML, which resolves it as a relative path because a scheme starts with a letter (it is still
@@ -28,6 +29,22 @@ belong to the loader.  Every traversal is iterative so hostile inputs cannot exh
   only in their userinfo give one finding, located at the first of them: the finding stays until the last
   is removed.  Error, certain: RFC 3986 section 3.2.1 deprecates ``user:password`` and the syntactic
   test has no false positive; a published credential must be rotated.
+
+* **SEC016.** An IRI in subject, predicate or object position of the data graph (not the shapes graph,
+  not an ``xsd:anyURI`` literal, like SEC014) that holds a userinfo with data and no password: no ``:``, or
+  nothing after the first one (``https://alice@...``, ``https://<token>@github.com/...``,
+  ``ssh://git@github.com/...``, ``https://alice:@...``).  It is read by the parser of SEC014 and of the mask
+  (:mod:`ontolint.redaction`), so the two rules split what the mask hides: a userinfo with a password is
+  SEC014's, one without is SEC016's, and an IRI holding one of each (a nested IRI) is reported by both.  Not
+  reported: an empty userinfo (``https://@...``, ``https://:@...``), a percent-encoded ``%40``, which is no
+  ``@``, an ``@`` in the path, query or fragment, a scheme without an authority (``mailto:u@h``, ``urn:x:a@b``,
+  ``file:///``) and a relative reference resolved against the document.  A user name only is a token (GitHub,
+  GitLab and Bitbucket accept one as the user name) or a plain name, and the two cannot be told apart, so the
+  rule reports both: RFC 3986 section 3.2.1 deprecates credentials in the userinfo and a public ontology has
+  no reason to carry a user name in an IRI.  It does not guess from the name's length or prefix.  The focus is
+  the IRI with its whole userinfo replaced by ``****`` and the message names no part of it, as for SEC014;
+  the SARIF region is the IRI's, and IRIs that differ only in their userinfo give one finding.  Warning,
+  heuristic: the userinfo is certain, that it is a secret is not.
 """
 
 from __future__ import annotations
@@ -41,7 +58,7 @@ from rdflib.namespace import RDF
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
-from ontolint.redaction import userinfo_password
+from ontolint.redaction import userinfo_password, userinfo_without_password
 
 from .support import relative_reference, value_text
 
@@ -127,6 +144,18 @@ SPECS: tuple[RuleSpec, ...] = (
         "Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it "
         "at the SARIF region or in the source.",
         "deterministic",
+        RuleBackend.RDFLIB,
+        RuleScope.INPUT,
+        "safety",
+    ),
+    RuleSpec(
+        "SEC016",
+        "SEC",
+        "User name embedded in an IRI",
+        Severity.WARNING,
+        "Remove the user@ part of the IRI; if it is a token, rotate it and keep it out of the ontology. The report "
+        "masks it, so find it at the SARIF region or in the source.",
+        "context-dependent",
         RuleBackend.RDFLIB,
         RuleScope.INPUT,
         "safety",
@@ -302,3 +331,12 @@ def _check_iri(ctx: RuleContext, iri: str) -> None:
     if userinfo_password(iri) is not None:
         # RuleContext.add masks the userinfo of the focus (ontolint.redaction).
         ctx.add("SEC014", iri, "IRI embeds a password in its userinfo.", confidence="certain", subject=())
+    if userinfo_without_password(iri):
+        # A token sent as the user name cannot be told from a name; the focus is masked all the same.
+        ctx.add(
+            "SEC016",
+            iri,
+            "IRI has a user name in its userinfo, which may be a credential.",
+            confidence="heuristic",
+            subject=(),
+        )

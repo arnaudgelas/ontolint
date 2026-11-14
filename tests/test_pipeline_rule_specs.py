@@ -473,7 +473,7 @@ def test_a_robot_timeout_is_a_failed_rule_and_exit_2(tmp_path: Path, run: Any, m
 # --- selection cannot change the pipeline rules ---------------------------------------------------------------
 
 PIPELINE_IDS = tuple(sorted(spec.rule_id for spec in RULE_SPECS if spec.backend is RuleBackend.CLI))
-GRAPH_SEC_IDS = ["SEC004", "SEC005", "SEC007", "SEC008", "SEC012", "SEC014"]
+GRAPH_SEC_IDS = ["SEC004", "SEC005", "SEC007", "SEC008", "SEC012", "SEC014", "SEC016"]
 PIPELINE_ERROR = "TOOL001: configuration failed: PipelineSelectorError: "
 PIPELINE_REASON = (
     ": these name only pipeline rules (safe-loader refusals and front-end diagnostics, never findings), "

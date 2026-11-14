@@ -24,6 +24,7 @@ from ontolint.redaction import (
     redact_rendered,
     redact_userinfo,
     userinfo_password,
+    userinfo_without_password,
     withheld_parser_message,
 )
 
@@ -104,6 +105,61 @@ def test_sec014_reads_the_password_of_the_userinfo_that_is_masked() -> None:
     # The last "@" of the authority ends the userinfo, for SEC014 as for the mask: the password is "y".
     assert userinfo_password("https://u@x:y@example.test/x") == "y"
     assert userinfo_password("https://h/x?to=https://u:p@g/") == "p"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "https://alice@example.test/x",
+        "https://ghp_abcdefghijklmnopqrstuvwxyz0123456789@github.com/o/r",
+        "ssh://git@github.com/o/r.git",
+        "https://alice:@example.test/x",  # an empty password
+        "https://alice%3Apw@example.test/x",  # an encoded colon is data of the user name
+        "https://u@x@example.test/x",
+        "https:/alice@example.test/x",
+        "https:alice@example.test/x",
+        "https://example.test/r?to=https://alice@g/",
+        "https://h/r?to=https://alice@g/&b=https://u:pw@j/",  # a password elsewhere does not hide it
+    ],
+)
+def test_sec016_reads_a_userinfo_without_a_password(text: str) -> None:
+    assert userinfo_without_password(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "https://alice:pw@example.test/x",
+        "https://:pw@example.test/x",
+        "https://u@x:y@example.test/x",  # the password is "y"
+        "https://@example.test/x",
+        "https://:@example.test/x",
+        "https://::@example.test/x",
+        "https://example.test/a@b",
+        "https://example.test/?q=a@b",
+        "https://example.test/#a@b",
+        "mailto:alice@example.test",
+        "urn:x:a@b",
+        "file:///a@b",
+        "git+https:/alice@example.test/x",
+        "x1https:alice@example.test/x",
+        "",
+    ],
+)
+def test_sec016_does_not_read_these(text: str) -> None:
+    assert not userinfo_without_password(text)
+
+
+def test_every_masked_userinfo_is_a_password_or_a_user_name_only() -> None:
+    # SEC014 and SEC016 together cover what the mask hides, and a userinfo is in one of them.
+    for text in ("https://a:b@h/", "https://a@h/", "https://a:@h/", "https://h/", "https://:@h/", "https://:b@h/"):
+        masked = redact_userinfo(text) != text
+        assert masked == (userinfo_password(text) is not None or userinfo_without_password(text)), text
+        assert not (userinfo_password(text) is not None and userinfo_without_password(text)), text
+
+
+def test_a_userinfo_already_spelled_as_the_mask_is_still_a_user_name() -> None:
+    assert userinfo_without_password(f"https://{REDACTED_USERINFO}@h/x")
 
 
 def test_a_rendered_report_is_masked_without_crossing_a_token() -> None:
@@ -234,6 +290,7 @@ def test_the_scan_is_linear(text: str) -> None:
     redact_rendered(text)
     has_userinfo(text)
     userinfo_password(text)
+    userinfo_without_password(text)
     assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
 
 

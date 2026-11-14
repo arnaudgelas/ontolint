@@ -137,7 +137,8 @@ def test_generated_cli_options_are_accepted_by_the_real_parser(runner: fuzzer.Ru
 
 # The argv each saved CLI case replays, as 0.13 built it from its optseed (``WORK`` is the work directory): a
 # change to the option builders that moved a draw would replay a saved crasher with other options, and so would
-# no longer test what it was saved for.
+# no longer test what it was saved for.  Optseed 7 is no saved crasher: it draws rule identifiers, so a rule added to
+# the catalogue moves it (SEC016 did), and its entry is then re-pinned.
 SAVED_CLI_ARGV = {
     1954055657: [
         "--profile", "obo", "--base", "x" * 500, "--inheritance-limit", "9223372036854775808",
@@ -156,7 +157,7 @@ SAVED_CLI_ARGV = {
         "--shapes", "WORK/input.ttl", "WORK/input.ttl",
     ],
     7: [
-        "--select", "CLS014,DATA002,GOV004", "--ignore", "OBO", "--profile", "ci", "--format", "text",
+        "--select", "CLS014,DATA002,ALL", "--ignore", "CLS019,METRIC,METRIC005", "--profile", "obo", "--format", "text",
         "--fail-on", "never", "--base", "http://example.org/", "--inheritance-limit",
         "1000000000000000000000000000000", "--max-triples", "5", "--shapes", "WORK/input.ttl",
         "--config", "WORK/config.json", "WORK/input.ttl",

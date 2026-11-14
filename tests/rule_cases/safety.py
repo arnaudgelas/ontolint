@@ -1,4 +1,4 @@
-"""Cases for SEC004, SEC005, SEC008, SEC012 and SEC014 (graph-local security hygiene)."""
+"""Cases for SEC004, SEC005, SEC008, SEC012, SEC014 and SEC016 (graph-local security hygiene)."""
 
 from __future__ import annotations
 
@@ -140,6 +140,45 @@ CASES = {
             ttl("anyURI literal is not an IRI", 'ex:a ex:p "https://alice:fake-pw@example.test/"^^xsd:anyURI .'),
             ttl("no letter, no scheme", "ex:a ex:p <urn:x:123://a:b@h.test/> ."),
             ttl("a scheme with a digit that is not special", "ex:a ex:p <urn:x:x1https:a:b@h.test/> ."),
+        ],
+    ),
+    "SEC016": rule_cases(
+        [
+            ttl("user name only", "ex:a ex:p <https://alice@example.test/x> ."),
+            ttl("token as user name", "ex:a ex:p <https://fake-token@example.test/x> ."),
+            ttl("git over ssh", "ex:a ex:p <ssh://git@example.test/org/repo.git> ."),
+            ttl("empty password", "ex:a ex:p <https://alice:@example.test/x> ."),
+            ttl("user name with a port", "ex:a ex:p <https://alice@example.test:8443/x> ."),
+            ttl("subject IRI", "<https://fake-token@example.test/> a owl:Class ."),
+            ttl("predicate IRI", "ex:a <https://fake-token@example.test/p> ex:b ."),
+            ttl("upper-case scheme", "ex:a ex:p <HTTPS://fake-token@example.test/x> ."),
+            ttl("percent-encoded colon is part of the user name", "ex:a ex:p <https://alice%3Afake@example.test/x> ."),
+            ttl("at sign in the user name", "ex:a ex:p <https://u@x@example.test/x> ."),
+            ttl("white space in the user name", "ex:a ex:p <https://fake\\u0020token@example.test/x> ."),
+            ttl("special scheme with one slash", "ex:a ex:p <https:/fake-token@example.test/x> ."),
+            ttl("special scheme without slashes", "ex:a ex:p <https:fake-token@example.test/x> ."),
+            ttl("nested in a query", "ex:a ex:p <https://example.test/r?to=https://fake-token@h.test/> ."),
+            ttl("scheme after a digit", "ex:a ex:p <1https://fake-token@example.test/x> ."),
+            ttl(
+                "user name only beside a password",
+                "ex:a ex:p <https://example.test/r?to=https://fake-token@h.test/&b=https://u:fake-pw@g.test/> .",
+            ),
+        ],
+        [
+            ttl("user and password is SEC014's", "ex:a ex:p <https://alice:fake-pw@example.test/x> ."),
+            ttl("empty user name, password", "ex:a ex:p <https://:fake-pw@example.test/x> ."),
+            ttl("empty userinfo", "ex:a ex:p <https://@example.test/x> ."),
+            ttl("only a colon", "ex:a ex:p <https://:@example.test/x> ."),
+            ttl("at sign in path", "ex:a ex:p <https://example.test/a@b> ."),
+            ttl("at sign in query", "ex:a ex:p <https://example.test/x?u=a@b> ."),
+            ttl("at sign in fragment", "ex:a ex:p <https://example.test/x#a@b> ."),
+            ttl("mailto", "ex:a ex:p <mailto:a@example.test> ."),
+            ttl("urn", "ex:a ex:p <urn:x:a@b> ."),
+            ttl("no authority for a scheme that is not special", "ex:a ex:p <git+https:/a@example.test/x> ."),
+            ttl("empty authority", "ex:a ex:p <file:///a@c> ."),
+            ttl("plain", "ex:a ex:p <https://example.test:8080/x> ."),
+            ttl("anyURI literal is not an IRI", 'ex:a ex:p "https://fake-token@example.test/"^^xsd:anyURI .'),
+            ttl("a scheme with a digit that is not special", "ex:a ex:p <urn:x:x1https:a@h.test/> ."),
         ],
     ),
 }

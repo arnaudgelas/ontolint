@@ -6358,6 +6358,134 @@
     "0d108222e0211b18a936fe03041306eb1bdc68c9b7687188bb992fb3256bf845"
    ]
   ],
+  "SEC016:at sign in the user name": [
+   [
+    "SEC016",
+    "https://****@example.test/x",
+    [],
+    "a133fd4acb9a107ea2bd40002251c950e7b69ac63c15bb70c693d351e9b5f2f0"
+   ]
+  ],
+  "SEC016:empty password": [
+   [
+    "SEC016",
+    "https://****@example.test/x",
+    [],
+    "a133fd4acb9a107ea2bd40002251c950e7b69ac63c15bb70c693d351e9b5f2f0"
+   ]
+  ],
+  "SEC016:git over ssh": [
+   [
+    "SEC016",
+    "ssh://****@example.test/org/repo.git",
+    [],
+    "4cf9e73a33679a606cf29eba209b3ba1a98f2abb90214dfeca50e5395cec80ae"
+   ]
+  ],
+  "SEC016:nested in a query": [
+   [
+    "SEC016",
+    "https://example.test/r?to=https://****@h.test/",
+    [],
+    "9e8a663646a7980a137bd100f297205b794816be42b124d8a2c58e6fb7c0a6d7"
+   ]
+  ],
+  "SEC016:percent-encoded colon is part of the user name": [
+   [
+    "SEC016",
+    "https://****@example.test/x",
+    [],
+    "a133fd4acb9a107ea2bd40002251c950e7b69ac63c15bb70c693d351e9b5f2f0"
+   ]
+  ],
+  "SEC016:predicate IRI": [
+   [
+    "SEC016",
+    "https://****@example.test/p",
+    [],
+    "f5911b13c5edd56ce49fdf2df280af1850b2faaafb930a57172d4a9c7894488d"
+   ]
+  ],
+  "SEC016:scheme after a digit": [
+   [
+    "SEC016",
+    "1https://****@example.test/x",
+    [],
+    "ff0eb9c77aa40860a9ab0be9f01a7cf38a3e88667e86693ee4aace0d23e5a77e"
+   ]
+  ],
+  "SEC016:special scheme with one slash": [
+   [
+    "SEC016",
+    "https:/****@example.test/x",
+    [],
+    "87867f471bdf7c78f5d382fc187c7ec722ad3bc6edc36a1a9c1d07fcc0958bf2"
+   ]
+  ],
+  "SEC016:special scheme without slashes": [
+   [
+    "SEC016",
+    "https:****@example.test/x",
+    [],
+    "6dd1cb164f8d7ead2fe12062f071f43fa51a4a7e7031305f92415370ebdfb791"
+   ]
+  ],
+  "SEC016:subject IRI": [
+   [
+    "SEC016",
+    "https://****@example.test/",
+    [],
+    "d3a7142cb44739c0e57e54b76b2861bd34c260147b25147bcf2702c7abae4ea7"
+   ]
+  ],
+  "SEC016:token as user name": [
+   [
+    "SEC016",
+    "https://****@example.test/x",
+    [],
+    "a133fd4acb9a107ea2bd40002251c950e7b69ac63c15bb70c693d351e9b5f2f0"
+   ]
+  ],
+  "SEC016:upper-case scheme": [
+   [
+    "SEC016",
+    "HTTPS://****@example.test/x",
+    [],
+    "ed9fd2f109ffccce79144f0418d96c542ebf143b5f77cf5d822f17a2ee354146"
+   ]
+  ],
+  "SEC016:user name only": [
+   [
+    "SEC016",
+    "https://****@example.test/x",
+    [],
+    "a133fd4acb9a107ea2bd40002251c950e7b69ac63c15bb70c693d351e9b5f2f0"
+   ]
+  ],
+  "SEC016:user name only beside a password": [
+   [
+    "SEC016",
+    "https://example.test/r?to=https://****@h.test/&b=https://****@g.test/",
+    [],
+    "5ce8157c0e7d996299df39c45d4f1dc59d7f502d3b354528c04b0890cbaa20ac"
+   ]
+  ],
+  "SEC016:user name with a port": [
+   [
+    "SEC016",
+    "https://****@example.test:8443/x",
+    [],
+    "5599842f349622154ead9caf68dce78adaa5a1487f3e7d16c7192a678177c50f"
+   ]
+  ],
+  "SEC016:white space in the user name": [
+   [
+    "SEC016",
+    "https://****@example.test/x",
+    [],
+    "a133fd4acb9a107ea2bd40002251c950e7b69ac63c15bb70c693d351e9b5f2f0"
+   ]
+  ],
   "SHACL001:a blank property shape": [
    [
     "SHACL001",

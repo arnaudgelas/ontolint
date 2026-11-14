@@ -20,7 +20,7 @@ Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 and `--list-rules --format json` reports them with `"selectable": false`.
 
 
-**249 of 304 catalogue rules are implemented; 55 are TODO.**
+**250 of 305 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [OBO](#obo) | 12 | 0 |
 | [ONT](#ont) | 8 | 0 |
 | [OWL](#owl) | 45 | 0 |
-| [SEC](#sec) | 15 | 0 |
+| [SEC](#sec) | 16 | 0 |
 | [SEM](#sem) | 1 | 7 |
 | [SHACL](#shacl) | 1 | 0 |
 | [SHQ](#shq) | 27 | 0 |
@@ -403,6 +403,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [SEC013](rules/sec.md) | Network access attempted while disabled | error |
 | [SEC014](rules/sec.md) | Credentials embedded in an IRI | error |
 | [SEC015](rules/sec.md) | Import closure exceeds its limits | error |
+| [SEC016](rules/sec.md) | User name embedded in an IRI | warning |
 
 ## SEM
 

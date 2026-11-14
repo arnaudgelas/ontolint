@@ -3,7 +3,7 @@
 ``SEC001``, ``SEC002``, ``SEC003``, ``SEC006``, ``SEC009``, ``SEC010``, ``SEC011``, ``SEC013`` and ``SEC015`` are
 raised as :class:`ontolint.loader.InputRejected` by :mod:`ontolint.loader` and :mod:`ontolint.imports`
 (``module=""``): no graph exists yet when they apply, so there is no ``run(ctx)``.  The other SEC rules
-(``SEC004``, ``SEC005``, ``SEC007``, ``SEC008``, ``SEC012``, ``SEC014``) are graph rules in
+(``SEC004``, ``SEC005``, ``SEC007``, ``SEC008``, ``SEC012``, ``SEC014``, ``SEC016``) are graph rules in
 :mod:`ontolint.rules.safety` and :mod:`ontolint.rules.imports_note`.
 
 What every one of them does to the run (``cli._lint``):
