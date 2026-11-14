@@ -28,13 +28,14 @@ diffed.  A rename is one removal and one new term (there is no rename detection)
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_EVEN, Decimal
 from fractions import Fraction
 from typing import Any, cast
 
 from .models import Measurement, MeasurementKind
-from .redaction import redact_userinfo
+from .redaction import REDACTED_USERINFO, redact_userinfo
 from .rules import measurements as engine
 from .rules.measurements import Absent, TermRatio
 from .rules.runtime import RuleContext
@@ -92,7 +93,12 @@ _SHAPING_FIELDS = tuple(Shaping.__dataclass_fields__)
 
 @dataclass(frozen=True)
 class Coverage:
-    """The terms behind a coverage measure: both sets sorted, each IRI once, the numerator within the denominator."""
+    """The terms behind a coverage measure: both lists sorted, one entry per term, the numerator within the denominator.
+
+    A term is written as its masked text (:func:`ontolint.redaction.redact_userinfo`), so distinct IRIs that differ
+    only in their userinfo repeat the one text (``https://****@h/T`` twice): the count of a list is the engine's.
+    Only a masked text may repeat.
+    """
 
     better: str
     numerator: tuple[str, ...]
@@ -102,14 +108,25 @@ class Coverage:
         _refuse(self.better in BETTER, f"a coverage measure is better higher or lower, not {self.better!r}")
         for name, iris in (("numerator", self.numerator), ("denominator", self.denominator)):
             _refuse(
-                all(isinstance(i, str) for i in iris) and all(a < b for a, b in zip(iris, iris[1:], strict=False)),
-                f"the {name} terms are IRIs, sorted, each once",
+                all(isinstance(i, str) for i in iris)
+                and all(a < b or (a == b and REDACTED_USERINFO in a) for a, b in zip(iris, iris[1:], strict=False)),
+                f"the {name} terms are IRIs, sorted, each once unless its userinfo is masked",
             )
-        _refuse(set(self.numerator) <= set(self.denominator), "the numerator terms are among the denominator terms")
+        _refuse(
+            not Counter(self.numerator) - Counter(self.denominator),
+            "the numerator terms are among the denominator terms",
+        )
 
-    def fine(self, term: str) -> bool:
-        """Whether ``term`` (of the denominator) is in the good state: in the numerator if ``higher``, else not."""
-        return (term in self.numerator) == (self.better == "higher")
+    def bad(self) -> dict[str, int]:
+        """Per term of the denominator, how many of the IRIs it stands for are in the bad state.
+
+        The bad state is out of the numerator if ``higher``, in it if ``lower``.  A term of one IRI is 0 or 1; a
+        masked text that stands for several IRIs counts each, so one more bad IRI is a worse term.
+        """
+        numerator, denominator = Counter(self.numerator), Counter(self.denominator)
+        if self.better == "lower":
+            return {t: numerator[t] for t in denominator}
+        return {t: n - numerator[t] for t, n in denominator.items()}
 
 
 @dataclass(frozen=True)
@@ -149,16 +166,18 @@ class Snapshot:
 
 
 def _masked(iris: frozenset[Any]) -> tuple[str, ...]:
-    """``iris`` as sorted text, each userinfo masked and the IRIs that mask to one text counted once."""
-    return tuple(sorted({redact_userinfo(str(i)) for i in iris}))
+    """``iris`` as sorted text, each userinfo masked: an IRI is one entry, so IRIs that mask alike repeat."""
+    return tuple(sorted(redact_userinfo(str(i)) for i in iris))
 
 
 def build(ctx: RuleContext) -> Snapshot:
     """The snapshot of ``ctx``: every measurement of the catalogue, in its order, as it stood after the rules ran.
 
-    A coverage measure (one with ``better``) keeps the sorted, masked IRIs of its numerator and denominator, and
-    its counts are theirs: two IRIs that differ only in their userinfo are one term here, as they are one finding.
-    Raises :class:`SnapshotError` if a coverage measure's numerator is not within its denominator.
+    A coverage measure (one with ``better``) keeps the sorted IRIs of its numerator and denominator, each masked
+    where it is written, and its record is the engine's (:func:`ontolint.rules.measurements.record`), counted over
+    the unmasked IRIs: two IRIs that differ only in their userinfo are two terms of the count, and the one masked
+    text is written twice.  Raises :class:`SnapshotError` if a coverage measure's numerator is not within its
+    denominator.
     """
     policy = ctx.policy
     shaping = Shaping(
@@ -169,20 +188,13 @@ def build(ctx: RuleContext) -> Snapshot:
     )
     entries: list[Entry] = []
     for spec, value in engine.taken(ctx):
+        record = engine.record(spec, value)
         if spec.better is None or isinstance(value, Absent):
-            entries.append(Entry(engine.record(spec, value)))
+            entries.append(Entry(record))
             continue
         if not isinstance(value, TermRatio):
             raise SnapshotError(f"{spec.id} is a coverage measure of terms")
         coverage = Coverage(spec.better, _masked(value.numerator), _masked(value.denominator))
-        record = Measurement(
-            spec.id,
-            spec.version,
-            spec.kind,
-            spec.population,
-            numerator=len(coverage.numerator),
-            denominator=len(coverage.denominator),
-        )
         entries.append(Entry(record, coverage))
     return Snapshot(shaping, tuple(entries))
 
@@ -411,15 +423,19 @@ def _ratio_delta(old: Measurement, new: Measurement) -> str | None:
 
 
 def _split(old: Coverage, new: Coverage) -> Change:
-    kept = set(old.denominator) & set(new.denominator)
-    added = set(new.denominator) - set(old.denominator)
+    """The terms by how they changed.  A masked text that stands for several IRIs is one term whose badness is the
+    number of its bad IRIs: it regressed when that rose, improved when it fell, and a swap of one bad IRI for
+    another is not seen."""
+    before, after = old.bad(), new.bad()
+    kept = before.keys() & after.keys()
+    added = after.keys() - before.keys()
     return Change(
         old.better,
-        regressed=tuple(sorted(t for t in kept if old.fine(t) and not new.fine(t))),
-        diluted=tuple(sorted(t for t in added if not new.fine(t))),
-        removed=tuple(sorted(set(old.denominator) - set(new.denominator))),
-        improved=tuple(sorted(t for t in kept if not old.fine(t) and new.fine(t))),
-        added_good=tuple(sorted(t for t in added if new.fine(t))),
+        regressed=tuple(sorted(t for t in kept if after[t] > before[t])),
+        diluted=tuple(sorted(t for t in added if after[t])),
+        removed=tuple(sorted(before.keys() - after.keys())),
+        improved=tuple(sorted(t for t in kept if after[t] < before[t])),
+        added_good=tuple(sorted(t for t in added if not after[t])),
     )
 
 
