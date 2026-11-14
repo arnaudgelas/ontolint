@@ -33,6 +33,7 @@ from ontolint.rules.measurements import Absent, Count, CountRatio, TermRatio, Te
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 TWO_GRAPHS = str(FIXTURES / "datasets" / "one_term_two_graphs.trig")
 MODULAR = str(FIXTURES / "modular" / "umbrella.ttl")
+DATASET_CLOSURE = str(FIXTURES / "datasets" / "closure" / "root.ttl")
 PARTITIONED = [spec.id for spec in measurements.SPECS if spec.partitioned]
 UNPARTITIONED = {"foreign_references", "unresolved_imports", "blank_subjects", "hierarchy_components"}
 PREFIXES = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -122,6 +123,22 @@ def test_closure_files_partition_the_terms_they_declare(capsys: pytest.CaptureFi
     ]
     assert next(iter(partitions))[1] == entry["path"]
     assert [_value(p, "class_label_coverage") for p in partitions.values()] == [(0, 0), (2, 2), (0, 0), (1, 1)]
+    _sums_equal_the_file(entry)
+
+
+def test_an_imported_dataset_partitions_its_terms_by_its_own_graphs(capsys: pytest.CaptureFixture[str]) -> None:
+    (entry,) = _report([DATASET_CLOSURE, "--follow-imports"], capsys)["files"]
+    partitions = _partitions(entry)
+    # The graphs are the imported file's, under its path; the root, a Turtle file, has none.
+    assert [(by, Path(path or "").name, name) for by, path, name in partitions] == [
+        ("file", "root.ttl", None),
+        ("file", "part.trig", None),
+        ("graph", "part.trig", "(default graph)"),
+        ("graph", "part.trig", "http://example.org/g1"),
+        ("graph", "part.trig", "http://example.org/g2"),
+    ]
+    # ex:R is declared by the root, so it is in no graph of part.trig, though g2 mentions it.
+    assert [_value(p, "class_label_coverage") for p in partitions.values()] == [(0, 1), (1, 2), (0, 0), (1, 1), (0, 1)]
     _sums_equal_the_file(entry)
 
 
@@ -303,8 +320,9 @@ def assert_partitions_restrict(entry: Mapping[str, Any]) -> None:
         [MODULAR, "--follow-imports", "--module-by", "namespace"],
         [str(FIXTURES / "kitchen_sink.ttl"), "--module-by", "namespace"],
         [str(FIXTURES / "datasets" / "single_graph.trig"), "--module-by", "namespace"],
+        [DATASET_CLOSURE, "--follow-imports", "--module-by", "namespace"],
     ],
-    ids=["graphs", "closure", "kitchen", "trig"],
+    ids=["graphs", "closure", "kitchen", "trig", "dataset-closure"],
 )
 def test_terms_are_placed_like_their_findings(argv: list[str]) -> None:
     assert_partitions_restrict(assert_placed_like_findings(argv))

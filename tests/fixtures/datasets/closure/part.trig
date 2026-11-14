@@ -1,0 +1,16 @@
+# An imported dataset: ex:A is described in g1, ex:B in g2, where ex:R (declared by the root) is mentioned.
+@prefix ex: <http://example.org/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://example.org/part> a owl:Ontology .
+
+ex:g1 {
+    ex:A a owl:Class ;
+        rdfs:label "A"@en .
+}
+
+ex:g2 {
+    ex:B a owl:Class ;
+        rdfs:subClassOf ex:R .
+}
