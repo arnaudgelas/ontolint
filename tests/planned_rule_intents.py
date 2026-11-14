@@ -1,7 +1,8 @@
 """High-level intent of every catalogue rule that is not implemented yet.
 
-These one-line drafts feed the TODO tables of ``docs/rules.md``. They describe what a rule is
-meant to detect, not a final specification: the exact definition is fixed when the rule is built.
+These one-line drafts feed the TODO tables of the family pages, ``docs/rules/<family>.md``. They
+describe what a rule is meant to detect, not a final specification: the exact definition is fixed
+when the rule is built.
 ``tests/test_rule_docs.py`` requires one entry per proposed rule and none for implemented rules.
 """
 
