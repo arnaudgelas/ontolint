@@ -583,14 +583,14 @@
   "text_clean_shacl_violation": {
    "to_file": {
     "exit": 1,
-    "file": "Ontology linter: 5 finding(s)\n[INFO   ] SHQ001 https://example.test/clean#PS: Property shape lacks sh:name.\n    Fix: Add sh:name to property shapes to support generated forms and documentation.\n[INFO   ] SHQ002 https://example.test/clean#PS: Property shape lacks sh:description.\n    Fix: Add sh:description to non-trivial property shapes.\n[INFO   ] SHQ003 https://example.test/clean#PS: Constraint-bearing shape lacks sh:message.\n    Fix: Add sh:message to constraint-bearing shapes for better diagnostics.\n[INFO   ] SHQ004 https://example.test/clean#S: Node shape lacks rdfs:label or rdfs:comment.\n    Fix: Add label and comment to published node shapes.\n[ERROR  ] SHACL001 https://example.test/clean#t: Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n",
+    "file": "Ontology linter: 5 finding(s)\n[INFO   ] SHQ001 https://example.test/clean#PS: Property shape lacks sh:name.\n    Fix: Add sh:name to property shapes to support generated forms and documentation.\n[INFO   ] SHQ002 https://example.test/clean#PS: Property shape lacks sh:description.\n    Fix: Add sh:description to non-trivial property shapes.\n[INFO   ] SHQ003 https://example.test/clean#PS: Constraint-bearing shape lacks sh:message.\n    Fix: Add sh:message to constraint-bearing shapes for better diagnostics.\n[INFO   ] SHQ004 https://example.test/clean#S: Node shape lacks rdfs:label or rdfs:comment.\n    Fix: Add label and comment to published node shapes.\n[ERROR  ] SHACL001 https://example.test/clean#t: Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n    Path: https://example.test/clean#hasName\n    Value: \"n\"\n",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "Ontology linter: 5 finding(s)\n[INFO   ] SHQ001 https://example.test/clean#PS: Property shape lacks sh:name.\n    Fix: Add sh:name to property shapes to support generated forms and documentation.\n[INFO   ] SHQ002 https://example.test/clean#PS: Property shape lacks sh:description.\n    Fix: Add sh:description to non-trivial property shapes.\n[INFO   ] SHQ003 https://example.test/clean#PS: Constraint-bearing shape lacks sh:message.\n    Fix: Add sh:message to constraint-bearing shapes for better diagnostics.\n[INFO   ] SHQ004 https://example.test/clean#S: Node shape lacks rdfs:label or rdfs:comment.\n    Fix: Add label and comment to published node shapes.\n[ERROR  ] SHACL001 https://example.test/clean#t: Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n"
+    "stdout": "Ontology linter: 5 finding(s)\n[INFO   ] SHQ001 https://example.test/clean#PS: Property shape lacks sh:name.\n    Fix: Add sh:name to property shapes to support generated forms and documentation.\n[INFO   ] SHQ002 https://example.test/clean#PS: Property shape lacks sh:description.\n    Fix: Add sh:description to non-trivial property shapes.\n[INFO   ] SHQ003 https://example.test/clean#PS: Constraint-bearing shape lacks sh:message.\n    Fix: Add sh:message to constraint-bearing shapes for better diagnostics.\n[INFO   ] SHQ004 https://example.test/clean#S: Node shape lacks rdfs:label or rdfs:comment.\n    Fix: Add label and comment to published node shapes.\n[ERROR  ] SHACL001 https://example.test/clean#t: Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n    Path: https://example.test/clean#hasName\n    Value: \"n\"\n"
    }
   },
   "text_default": {
@@ -609,14 +609,14 @@
   "text_node_shacl_violation": {
    "to_file": {
     "exit": 1,
-    "file": "Ontology linter: 1 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n",
+    "file": "Ontology linter: 1 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n    Path: https://example.test/knows\n    Value: https://example.test/b\n    Detail: https://example.test/b: Value is not Literal with datatype xsd:integer [shape: https://example.test/Age]\n      Path: https://example.test/age\n      Value: \"old\"\n    Detail: https://example.test/b: Less than 1 values on ex:b-><https://example.test/name> [shape: https://example.test/Name]\n      Path: https://example.test/name\n",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "Ontology linter: 1 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n"
+    "stdout": "Ontology linter: 1 finding(s)\n[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]\n    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.\n    Path: https://example.test/knows\n    Value: https://example.test/b\n    Detail: https://example.test/b: Value is not Literal with datatype xsd:integer [shape: https://example.test/Age]\n      Path: https://example.test/age\n      Value: \"old\"\n    Detail: https://example.test/b: Less than 1 values on ex:b-><https://example.test/name> [shape: https://example.test/Name]\n      Path: https://example.test/name\n"
    }
   }
  },

@@ -19,6 +19,33 @@ Nothing open: 0.11.0 is released (see "Recently done").
 ## Recently done
 
 - Unreleased (after 0.13.1):
+  - **SHACL-EVIDENCE-DECISIONS** (P1; issue #9): the three SHACL001 evidence contract choices that
+    SHACL-EVIDENCE left to the maintainer are decided, each with its fixtures.
+    - *Nested results* (dropped, `fix!:`): findings are the values of the report's `sh:result`
+      (SHACL 3.6.1.2), every typed result only for a report that links none; a result nested with
+      `sh:detail` is only its parent's `evidence.detail`, and the severity is the reported
+      result's, so its referencing shape's. With an ontology background, a finding is kept when
+      its focus or a nested result's focus is a node the linted file mentions, compared masked in
+      the evidence spelling. Fixtures: counts, identities, the warning parent's `--fail-on`, the
+      selector's fallback, five background cases (worker too), and
+      `tests/fixtures/baselines/shacl_node.baseline.json`, written before the change: its two
+      nested entries go stale.
+    - *Evidence in text* (added, `feat:`): `Path:`, `Value:` and nested `Detail:` lines after `Fix:`
+      and any `In:` line, escaped by a fixed set of Unicode categories (Cc, Cf, Cs, Co, Zl, Zp, Zs
+      but a space) so a lone surrogate no longer fails a text report (TOOL001, exit 2) and bidi
+      and zero-width characters show. Rendering is iterative and generic over evidence keys.
+    - *SHACL-AF `sh:resultAnnotation`* (documented): pySHACL 0.40.2 does not implement it; three
+      canary `DONE_WHEN` cases (node validator, property validator, `sh:sparql`) fail when an
+      upgrade writes annotations, as a scratch plugin simulating that showed.
+    - Verified: the differential golden gained two text SHACL001 cases, then moved only there
+      (3 findings to 1; then the new lines); `--write-baseline` bytes are equal from text and
+      JSON runs and unchanged by the text commit; text and JSON bytes are equal under several hash
+      seeds. The upgrade notes for the release CHANGELOG are in the bodies of the `fix!:` and
+      `feat:` commits.
+    - Left open (drafted as issues in the PR): pySHACL's `sh:in` message holds raw newlines and
+      ESC, which split a finding's header line, and lists its members in hash-seed order; marking
+      evidence truncated at depth 8; placing a background-focused finding by its linted nested
+      foci.
   - **LEGAL-PROVENANCE** (P1; issue 18): the maintainer's answers are written down. `NOTICE` names
     the copyright holder (Copyright 2026 Arnaud Gelas, the `pyproject.toml` author; 2026 is the
     first commit's year) and ships with `LICENSE` in the sdist and in the wheel's
@@ -471,9 +498,8 @@ Nothing open: 0.11.0 is released (see "Recently done").
     `json_clean_shacl_violation`'s two full-output hashes changed (JSON-tree diff); JSON bytes
     are equal under seeds 1 and 2, which reversed pySHACL's order. Targeted mutation run
     (`adapters/shacl.py`, `models.py`, `reporting.py`): 137 mutants, none surviving, 1 pardoned
-    (older), 1 timeout and 5 errors from tests slower than half the mutant timeout. Left open,
-    under P1 "SHACL001 evidence": nested `sh:detail` results are still also findings of their
-    own (the maintainer's decision), evidence in text output, and SHACL-AF `sh:resultAnnotation`.
+    (older), 1 timeout and 5 errors from tests slower than half the mutant timeout. The three
+    choices it left open were decided under issue #9: see SHACL-EVIDENCE-DECISIONS.
   - **DATASET-PROVENANCE** (P0): each finding of a TriG, N-Quads or JSON-LD dataset names the
     graphs its terms come from, as JSON `graphs` (between `path` and `modules`), SARIF
     `properties.graphs` and text `In: graph X` / `In: graphs X, Y`. The loader records, before
@@ -686,22 +712,6 @@ Validation corpus (public; licences per repository):
   rerun.
   *Done when:* every metric threshold records its rationale, corpus results, and override behavior;
   any changed default has regression fixtures demonstrating the intended boundary.
-
-- [ ] **SHACL001 evidence: what is left to the maintainer.** The evidence itself is done
-  (0.11.0, see "Recently done"). Three choices were left out because each changes a contract:
-  - *Nested results reported twice*: decided (issue #9), dropped. Findings are the values of the
-    report's `sh:result`, with every typed result as the fallback for a report that links none;
-    the nested results are only their parent's `evidence.detail`. The background filter keeps a
-    finding when a nested result is about a node of the linted file. Fixtures pin the count, the
-    severity (`--fail-on` follows the referencing shape), the stale entries of a baseline written
-    before (`tests/fixtures/baselines/shacl_node.baseline.json`) and the background cases.
-  - *Evidence in text output* (a `Value:` line, say): the text format is a protected contract.
-  - *SHACL-AF `sh:resultAnnotation`*: decided (issue #9), documented, with canary fixtures.
-    pySHACL 0.40.2 does not implement it, so no annotation reaches its report or the evidence;
-    three `DONE_WHEN` cases of `tests/test_shacl_evidence.py` (a node validator, a property
-    validator and an `sh:sparql` constraint, each declaring annotations) fail the day a pySHACL
-    upgrade writes one, and the `_FIELDS` docstring says what to do then.
-  *Done when:* each of the three is decided, and a decided change has its fixture.
 
 - [ ] **Baseline identity: what is left to the maintainer.** Version 2 baselines are done
   (0.11.0, see "Recently done"). Left open, each a decision rather than code:

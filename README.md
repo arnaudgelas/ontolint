@@ -318,8 +318,9 @@ case a `Rule execution:` block is appended.
   finding whose message abbreviates a tool's output also carries the full output in `details`
   (`SEM001`: ROBOT's profile report, whose violations the message groups by kind). A finding
   whose backend returns a structured result carries it as an `evidence` object after `details`
-  (`SHACL001`: every SHACL result property listed in "Optional SHACL validation"); it is
-  not part of the finding's identity, so fingerprints and baselines ignore it. In a dataset with
+  (`SHACL001`: every SHACL result property listed in "Optional SHACL validation"; text prints
+  its path, value and nested causes); it is not part of the finding's identity, so fingerprints
+  and baselines ignore it. In a dataset with
   named graphs, a finding also lists its `graphs` (see "Datasets: named graphs").
 * SARIF 2.1.0 adds `tool.driver.rules` (name, short/full description, help,
   `defaultConfiguration.level`, category/backend/scope properties), `ruleIndex` and an
@@ -519,8 +520,9 @@ therefore share one name, and editing a blank graph renames it. An empty named g
 nothing.
 
 Text adds `In: graph X` (or `In: graphs X, Y`), after an imported module's file and before the
-modules inside the file; JSON adds `graphs` to each finding, between `path` and `modules`; SARIF
-adds `properties.graphs`. All three appear only for a file with at least one triple outside its
+modules inside the file (a `SHACL001` finding's `Path:`, `Value:` and `Detail:` lines follow
+it); JSON adds `graphs` to each finding, between `path` and `modules`; SARIF adds
+`properties.graphs`. All three appear only for a file with at least one triple outside its
 default graph, so every other file reports exactly as before. Like modules, graphs are presentation
 only: fingerprints, baselines and exit codes do not depend on them, and moving a triple to another
 graph keeps its findings baselined. The exception is `ONT007`/`ONT008`, which compare the graphs: an
@@ -621,7 +623,7 @@ reported as `error` and named in the message. Blank-node shapes and focus nodes
 are named by a content-stable identity, in the focus and in a finding's baseline identity alike,
 so baselines keep matching across runs.
 
-In JSON and SARIF (not in text), each `SHACL001` finding also carries every SHACL result property
+In JSON and SARIF, each `SHACL001` finding also carries every SHACL result property
 listed below as `evidence` (`properties.evidence` in SARIF), so two violations of one shape on one node, which
 share their message, still say which value or path to fix. Its keys are the SHACL names of the
 result's properties, in this order, each present only when the report has it: `focusNode`,
@@ -650,6 +652,36 @@ unchanged. A baseline identity is made of the source shape, constraint component
 SPARQL constraint, so a pySHACL upgrade that rewords its messages keeps results accepted. Because
 the version 1 fingerprint (by message) is still accepted too, a new result whose message equals an
 accepted one's is accepted as well.
+
+Text prints part of the evidence after the `Fix:` line and any `In:` line: `Path:` (the
+`resultPath`), `Value:` (the `value`, left out only for a node-level result, one without a path,
+whose value is its focus) and, for each result nested in `detail`, in evidence order, a `Detail:`
+line that reads like that result's own finding header (`<focus>: <messages> [shape: <source
+shape>]`, the focus spelled as in the evidence, so a literal is `"x"`), followed by that result's
+own lines two spaces further in:
+
+```text
+[ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]
+    Fix: Fix the supplied SHACL shapes or data, and inspect the SHACL report.
+    Path: https://example.test/knows
+    Value: https://example.test/b
+    Detail: https://example.test/b: Value is not Literal with datatype xsd:integer [shape: https://example.test/Age]
+      Path: https://example.test/age
+      Value: "old"
+    Detail: https://example.test/b: Less than 1 values on ex:b-><https://example.test/name> [shape: https://example.test/Name]
+      Path: https://example.test/name
+```
+
+Each of these lines is one line of visible characters: control, format (bidi, zero-width),
+surrogate, private-use and separator characters other than a space are written as N-Triples
+escapes, `\uXXXX` or `\UXXXXXXXX`, so a lone surrogate in a value no longer makes a text report
+unwritable. A literal value is then still an N-Triples term that reads back as itself, except a
+lone surrogate: it is not a valid RDF string, it is shown as its code unit, and an escaped high and
+low surrogate side by side read back as one character. IRIs and messages are printed bare, so a
+backslash in one (`\u001B` written literally in a JSON-LD IRI) reads like an escape. Text shows
+neither a nested result's severity nor `sourceConstraint`, so two SPARQL constraints of one shape
+whose results share path and value read alike in text; JSON tells them apart. Fingerprints,
+baselines and exit codes do not depend on these lines.
 
 The data graph of a TriG, N-Quads or JSON-LD dataset is the union of its graphs, as for every
 other rule: SHACL defines the validation of one data graph, and a value typed in one graph and

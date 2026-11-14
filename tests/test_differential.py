@@ -93,6 +93,12 @@ Deliberate golden update (issue #9, nested SHACL results dropped): SHACL001 repo
 report lists (``sh:result``), not their ``sh:detail`` causes, so ``text_node_shacl_violation`` reports 1 finding
 where it reported 3 (the two nested results are gone; the parent's lines are unchanged).  It is the only case that
 changed: no other fixture of the snapshot has an ``sh:node`` violation, and a JSON-tree diff shows nothing else.
+
+Deliberate golden update (issue #9, SHACL001 evidence in text): each SHACL001 block of a text report gains
+``Path:``, ``Value:`` and nested ``Detail:`` lines after ``Fix:``.  Only ``text_clean_shacl_violation`` (a Path and
+a Value line) and ``text_node_shacl_violation`` (Path, Value and two Detail blocks) changed; every other text,
+JSON and SARIF output, legacy view and exit code is unchanged (JSON-tree diff), and ``legacy_rules.json`` did not
+move.
 """
 
 from __future__ import annotations

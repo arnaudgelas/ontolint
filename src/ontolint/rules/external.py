@@ -20,8 +20,8 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   ``[shape: <source shape>]``.  The severity is that result's, so for an ``sh:node`` violation its referencing
   shape's: ``sh:Violation`` error, ``sh:Warning`` warning,
   ``sh:Info`` info, any other value error with ``(severity <value>)`` appended; the spec's ``error`` is only the
-  default shown in rule listings.  Each finding's ``evidence`` (JSON ``evidence``, SARIF ``properties.evidence``,
-  never text) holds every SHACL result property listed below, under its SHACL name, in this order and only when
+  default shown in rule listings.  Each finding's ``evidence`` (JSON ``evidence``, SARIF ``properties.evidence``)
+  holds every SHACL result property listed below, under its SHACL name, in this order and only when
   present: ``focusNode``, ``resultPath``, ``value``, ``sourceShape``, ``sourceConstraintComponent``,
   ``sourceConstraint``, ``detail``, ``resultMessage`` (sorted, without language tags), ``resultSeverity`` (the
   original IRI).  SHACL-AF result annotations (``sh:resultAnnotation`` on a SPARQL-based constraint or constraint
@@ -34,7 +34,11 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   8 deep, never around a cycle; nested results are their parent's ``detail``, not findings (SHACL 3.5), and one
   nested deeper than 8 appears in no output.  Findings tied on focus and message
   are ordered by their evidence, since pySHACL's result order depends on the hash seed.  The evidence is not part
-  of the finding's identity: messages and fingerprints are unchanged.  A non-conforming report without result
+  of the finding's identity: messages and fingerprints are unchanged.  Text prints it after ``Fix:`` and any
+  ``In:`` line: ``Path: <resultPath>``, ``Value: <value>`` (left out when there is no path and the value is the
+  focus) and one ``Detail: <focus>: <messages> [shape: <shape>]`` line per nested result, its own lines two spaces
+  further in; control, format, surrogate, private-use and non-space separator characters are written as
+  ``\\uXXXX`` or ``\\UXXXXXXXX``.  A non-conforming report without result
   nodes gives one error on ``(shapes)``, without evidence.  A shapes graph refused by the pre-check
   (unserialisable IRI, cyclic, shared or overlong ``rdf:list``) or a pySHACL crash makes the rule ``failed`` (no
   finding, TOOL001 line, exit ``2``).  With ``max_validation_seconds`` (``--max-validation-seconds``; default unset,
