@@ -11,7 +11,7 @@ from pathlib import Path
 from rdflib import BNode, Graph, Literal
 
 from .adapters.robot import robot_profile_issues
-from .adapters.shacl import bounded_shacl_issues, detail_foci, shacl_issues
+from .adapters.shacl import ShapesNotWellFormed, bounded_shacl_issues, detail_foci, shacl_issues
 from .context import GraphContext
 from .models import (
     ExecutionStatus,
@@ -115,6 +115,21 @@ def _failure(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
+def _failed(rule_id: str, exc: Exception) -> RuleExecution:
+    """The ``failed`` record of an adapter's exception.
+
+    A shapes graph that breaks SHACL-SHACL is not a crash: its detail is the one-line summary and its lines are the
+    execution's ``results``, which a failure inside a validation worker reports as the text it raised (the summary,
+    then one result per line).
+    """
+    if isinstance(exc, ShapesNotWellFormed):
+        return RuleExecution(rule_id, ExecutionStatus.FAILED, exc.summary, exc.results)
+    if isinstance(exc, WorkerFailed) and exc.cause_type == ShapesNotWellFormed.__name__:
+        summary, *results = exc.detail.split("\n")
+        return RuleExecution(rule_id, ExecutionStatus.FAILED, summary, tuple(results))
+    return RuleExecution(rule_id, ExecutionStatus.FAILED, _failure(exc))
+
+
 def _validate(data: Graph, shapes: Graph, seconds: float | None) -> list[Finding]:
     """Validate in this process, or with ``max_validation_seconds`` in a worker stopped at the budget."""
     if seconds is None:
@@ -163,7 +178,7 @@ def _run_adapter(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -
         else:  # pragma: no cover -- _not_run rules out adapters without their inputs.
             raise RuntimeError("adapter inputs missing")
     except Exception as exc:  # noqa: BLE001 -- a backend failure is a result, not a crash.
-        return RuleExecution(spec.rule_id, ExecutionStatus.FAILED, _failure(exc)), []
+        return _failed(spec.rule_id, exc), []
     return RuleExecution(spec.rule_id, ExecutionStatus.EXECUTED), found
 
 

@@ -312,15 +312,20 @@ class RuleExecution:
     """The outcome of attempting one rule, including non-execution states.
 
     ``detail`` is the reason for every non-executed status and is never empty for them; it holds no userinfo.
+    ``results`` are the lines that say more than the one-line ``detail`` does (one per MetaSHACL result of a shapes
+    graph that breaks SHACL-SHACL); they are printed once, after the ``TOOL001`` line, and are in JSON and SARIF
+    only when there are some.
     """
 
     rule_id: str
     status: ExecutionStatus
     detail: str = ""
+    results: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # A failed rule's detail is an exception's text, which may quote an IRI (see :mod:`ontolint.redaction`).
         object.__setattr__(self, "detail", redact_userinfo(self.detail))
+        object.__setattr__(self, "results", tuple(map(redact_userinfo, self.results)))
 
 
 @dataclass(frozen=True)
