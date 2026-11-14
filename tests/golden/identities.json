@@ -6384,18 +6384,6 @@
      ""
     ],
     "68cc1fae26471074157fc917c9c2f0418338f58f6d8456c5f7d0fbbc5ecd86f2"
-   ],
-   [
-    "SHACL001",
-    "https://example.test/b",
-    [
-     "https://example.test/Q",
-     "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
-     "https://example.test/name",
-     "",
-     ""
-    ],
-    "88fb07046c9ba45e5a41b94cc44bdbb9b64d384b9ca81cd05540c8cf5d43ce80"
    ]
   ],
   "SHACL001:class": [
