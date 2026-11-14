@@ -117,8 +117,9 @@ Nothing open: 0.11.0 is released (see "Recently done").
     put at 0), `cyclic_classes` (the owned classes it leaves out), `hierarchy_components` (weakly
     connected components of `rdfs:subClassOf` among owned classes, `owl:Thing` excluded) and
     `shacl_class_target_coverage` (SHQ006's class-target reach, shared as
-    `shapes.class_target_reach`; absent without `--shapes`). `--format json --measurements` adds `files[].measurements` (integers only: a
-    numerator and a denominator, a count or buckets; an absent one has a `reason`) and
+    `shapes.class_target_reach`; absent without `--shapes`). `--format json --measurements` adds
+    `files[].measurements` (integers only: a numerator and a denominator, a count or buckets; an
+    absent one has a `reason`) and
     `files[].measurement_partitions` per closure file, named graph and in-file module, each term
     placed where its findings are (`modules.term_modules`, `datasets.term_graphs`). Without the
     flag every output is byte-identical. `docs/measurements.md` gives each population, exclusion
