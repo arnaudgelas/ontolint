@@ -16,7 +16,7 @@ ROBOT_REPORT = (
 )
 
 CATALOGUE = Path(__file__).parents[1] / "data" / "rule_catalogue.csv"
-CATALOGUE_RULE_COUNT = 305
+CATALOGUE_RULE_COUNT = 306
 
 
 def test_catalogue_covers_all_registered_rules_and_has_unique_identifiers() -> None:
