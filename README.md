@@ -15,7 +15,7 @@ file, reports what looks wrong, and exits non-zero when a finding is serious eno
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
 </p>
 <p align="center">
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 249 of 304" src="https://img.shields.io/badge/rules-249%2F304_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 250 of 305" src="https://img.shields.io/badge/rules-250%2F305_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -101,7 +101,7 @@ agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.tx
 
 ## What it checks
 
-249 of the 304 catalogue rules are implemented; the rest are planned. The
+250 of the 305 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one, with its specification and test cases, on one page per family.
 
 - 236 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -270,7 +270,7 @@ PipelineSelectorError: ...`, before any input is read): the safe-loader refusals
 diagnostics `INPUT001` and `TOOL001`, and the `INPUT` and `TOOL` families. They are not findings
 and always apply, so no selection can change them (`--list-rules --format json` shows them with
 backend `cli` and `"selectable": false`). The `SEC` family is accepted: it selects or ignores the graph rules `SEC004`,
-`SEC005`, `SEC007`, `SEC008`, `SEC012` and `SEC014`.
+`SEC005`, `SEC007`, `SEC008`, `SEC012`, `SEC014` and `SEC016`.
 
 `--profile` picks a bundle of defaults:
 
@@ -1103,9 +1103,22 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   directory, are refused (`SEC009`).
 - Rejected inputs are reported as `SECxxx: ...` on stderr with exit code `2`,
   like a parse failure. Post-parse hygiene checks (`SEC004`, `SEC005`,
-  `SEC007`, `SEC008`, `SEC012`, `SEC014`) are ordinary findings; `SEC007` is an
-  info note naming the `owl:imports` that were not followed. `SEC014` reports an
-  IRI that embeds a password.
+  `SEC007`, `SEC008`, `SEC012`, `SEC014`, `SEC016`) are ordinary findings; `SEC007` is an
+  info note naming the `owl:imports` that were not followed. `SEC014` (error)
+  reports an IRI that embeds a password (`https://alice:secret@host`).
+  `SEC016` (warning) reports an IRI whose userinfo is a user name only
+  (`https://<token>@github.com/...`, `ssh://git@github.com/...`, an empty
+  password `https://alice:@host`): GitHub, GitLab and Bitbucket accept a token as
+  the user name, and a token cannot be told from a plain name, so every such
+  userinfo is reported, whatever its length or prefix; RFC 3986 section 3.2.1
+  deprecates credentials in the userinfo. Both rules read IRIs in subject,
+  predicate and object position of the data graph, not an `xsd:anyURI` literal
+  (`"https://u:pw@h"^^xsd:anyURI` is masked in every output but not reported),
+  not an empty userinfo (`https://@host`), not an `@` after the authority
+  (`https://host/a@b`) and not a scheme without an authority (`mailto:a@b`). An
+  IRI that holds both kinds is reported by both. A userinfo that is a plain name
+  is a false positive of `SEC016`: ignore it with `--ignore SEC016` or lower it
+  with `severity_overrides`.
 - No output ontolint writes repeats an IRI's userinfo, the `user:password@` or
   `token@` part of its authority. Every IRI ontolint prints, in any rule's focus
   or message, in text, JSON and SARIF reports, baselines and their hashes, blank
@@ -1115,9 +1128,9 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   (`https://<token>:x-oauth-basic@github.com/...`, `https://<token>@...`) cannot
   be told from a name. A userinfo is found by the authority's structure, up to
   the first `/ ? #`, whatever characters it holds (rdflib accepts white space,
-  braces or a line break in an IRI), and `SEC014` reports exactly the passwords
-  the mask hides. A message that quotes the start of a long value masks it
-  before cutting it. A parser error about a file that holds a userinfo keeps its
+  braces or a line break in an IRI), and `SEC014` and `SEC016` report exactly
+  what the mask hides: the passwords and the user names. A message that quotes
+  the start of a long value masks it before cutting it. A parser error about a file that holds a userinfo keeps its
   line number but withholds the parser's excerpt, which may quote part of one.
   The specification is in [`src/ontolint/redaction.py`](src/ontolint/redaction.py).
 - Limits. IRIs that differ only in their userinfo give one finding and one
@@ -1125,15 +1138,15 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   credential that replaces a baselined one at the same IRI is not reported. No
   output may hold a function of a secret that lets its reader test guesses of it
   offline, and only a key kept out of the repository could avoid that, so
-  review a change to a baselined `SEC014` finding's IRI in the source. Text
+  review a change to a baselined `SEC014` or `SEC016` finding's IRI in the source. Text
   that free prose mixes with an IRI may be over-masked (`https://h has 'a'@en`
   becomes `https://****@en`), and so may a scheme after a digit or a sign,
   which a reader takes for an IRI though no URL parser does (`1http:a@b`
   becomes `1http:****@b`). RDF/XML resolves an IRI that does not start with a
   scheme (`1git+https://u:p@h`, `_x://u:p@h`) as a relative path, which turns
   its `//` into `/`: there the userinfo of a scheme other than `http`, `https`,
-  `ws`, `wss` and `ftp` is not masked, and `SEC014` does not report a password
-  resolved against the file. Not
+  `ws`, `wss` and `ftp` is not masked, and `SEC014` and `SEC016` do not report
+  a userinfo resolved against the file. Not
   masked: writes straight to the stderr file descriptor (a crash of the
   interpreter itself), and a library caller's own logging handlers.
 
@@ -1142,7 +1155,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 304 entries: 249 executable diagnostics and 55 proposed
+catalogue. It records 305 entries: 250 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an

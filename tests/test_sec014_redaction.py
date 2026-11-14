@@ -130,3 +130,53 @@ def test_a_dataset_finding_names_the_graph_of_the_credentialed_iri(tmp_path: Pat
     assert PASSWORD not in out
     [result] = json.loads(out)["runs"][0]["results"]
     assert result["properties"]["graphs"] == [GRAPH]
+
+
+# SEC016: a token sent as the user name (https://<token>@host) is reported, and masked like a password (#59).
+TOKEN = "ghp_abcdefghijklmnopqrstuvwxyz0123456789"  # noqa: S105 -- a fake token the reports must not repeat
+TOKEN_ONTOLOGY = (
+    "@prefix ex: <https://example.test/onto#> .\n"
+    "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+    "ex: a owl:Ontology ;\n"
+    f"    owl:imports <https://{TOKEN}@github.com/org/repo/raw/main/x.ttl> .\n"
+)
+TOKEN_LINE = 4
+
+
+@pytest.mark.parametrize("output_format", ["text", "json", "sarif", "markdown"])
+def test_a_token_as_the_user_name_is_reported_and_never_printed(tmp_path: Path, run: Any, output_format: str) -> None:
+    (tmp_path / "token.ttl").write_text(TOKEN_ONTOLOGY, encoding="utf-8")
+    code, out, err = run("token.ttl", "--select", "SEC016", "--format", output_format)
+    assert code == 0, err  # a warning does not fail the run
+    assert TOKEN not in out + err
+    assert "SEC016" in out
+    assert "https://****@github.com/org/repo/raw/main/x.ttl" in out
+    # SEC014 keeps its contract: a user name without a password is not a password.
+    code, out, err = run("token.ttl", "--select", "SEC014")
+    assert (code, TOKEN not in out + err, "0 finding(s)" in out) == (0, True, True)
+
+
+def test_the_sarif_region_of_a_token_is_its_iri_and_the_baseline_holds_no_token(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "token.ttl").write_text(TOKEN_ONTOLOGY, encoding="utf-8")
+    _code, out, _err = run("token.ttl", "--select", "SEC016", "--format", "sarif")
+    [result] = json.loads(out)["runs"][0]["results"]
+    assert result["ruleId"] == "SEC016"
+    assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == TOKEN_LINE
+    code, _out, err = run("token.ttl", "--select", "SEC016", "--write-baseline", "base.json")
+    assert code == 0, err
+    assert TOKEN not in (tmp_path / "base.json").read_text(encoding="utf-8")
+    code, out, err = run("token.ttl", "--select", "SEC016", "--baseline", "base.json")
+    assert code == 0, err
+    assert "0 finding(s)" in out
+
+
+def test_the_default_run_reports_a_token_and_the_rule_is_ignorable(tmp_path: Path, run: Any) -> None:
+    (tmp_path / "token.ttl").write_text(TOKEN_ONTOLOGY, encoding="utf-8")
+    _code, out, _err = run("token.ttl", "--format", "json")
+    assert TOKEN not in out
+    assert [f["rule"] for f in json.loads(out)["findings"] if f["rule"] == "SEC016"] == ["SEC016"]
+    _code, out, _err = run("token.ttl", "--format", "json", "--ignore", "SEC016")
+    assert [f["rule"] for f in json.loads(out)["findings"] if f["rule"] == "SEC016"] == []
+    # The gating profiles fail on a warning, so a token as the user name fails them; the default gate does not.
+    assert run("token.ttl")[0] == 0
+    assert run("token.ttl", "--profile", "ci")[0] == 1

@@ -4,8 +4,8 @@ An IRI's authority may start with a *userinfo*, the part between ``scheme://`` a
 (``https://alice:s3cret@example.test/x``, RFC 3986 section 3.2.1).  The part after its first ``:`` is a
 password, and the part before it is a user name, or a token: GitHub, GitLab and Bitbucket accept a token
 sent as the user name (``https://<token>:x-oauth-basic@github.com/...``, ``https://<token>@github.com/...``).
-This module is the single place that decides where a userinfo is, for SEC014 (:func:`userinfo_password`)
-and for what ontolint may write (:func:`redact_userinfo`).
+This module is the single place that decides where a userinfo is, for SEC014 (:func:`userinfo_password`),
+SEC016 (:func:`userinfo_without_password`) and for what ontolint may write (:func:`redact_userinfo`).
 
 **Specification.**
 
@@ -32,6 +32,11 @@ and for what ontolint may write (:func:`redact_userinfo`).
   (``urn:x:https://u:p@h``, ``https://h/?to=https://u:p@g``) has its own authority.
 * *SEC014.*  A text embeds a password when one of its userinfos has a non-empty part after its first
   ``:`` (:func:`userinfo_password`); the mask hides it whatever SEC014 decides.
+* *SEC016.*  A text embeds a user name only when one of its userinfos has no ``:`` or an empty part after its
+  first one (:func:`userinfo_without_password`: ``https://alice@h``, ``ssh://git@h``, ``https://alice:@h``).
+  Such a userinfo is a token sent as the user name or a plain user name, and the two cannot be told apart, which
+  is why the mask hides both.  Every userinfo that holds data is a password (SEC014) or a user name only
+  (SEC016), exactly one of the two, and the mask hides both.
 * *What is masked.*  The whole userinfo, user name included, is replaced by :data:`REDACTED_USERINFO`
   (``https://****@example.test/x``).  RFC 3986 says not to render what follows the first ``:``; the user
   name is masked too because a token sent as the user name cannot be told from a name, whatever stands
@@ -184,6 +189,15 @@ def userinfo_password(text: str) -> str | None:
         if password:
             return password
     return None
+
+
+def userinfo_without_password(text: str) -> bool:
+    """Whether ``text`` holds a userinfo with data but no password: no ``:``, or nothing after the first one.
+
+    This is SEC016's test, on the same userinfos the mask hides and the complement of :func:`userinfo_password`
+    over each of them: a text with one userinfo of each kind is read by both.
+    """
+    return any(not text[begin:end].partition(":")[2] for begin, end in _userinfos(text))
 
 
 def clip(text: str, limit: int, ellipsis: str = "") -> str:

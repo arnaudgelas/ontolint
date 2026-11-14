@@ -21,6 +21,7 @@ from ontolint.redaction import (  # noqa: PLC2701 -- _ESCAPE is how has_userinfo
     redact_rendered,
     redact_userinfo,
     userinfo_password,
+    userinfo_without_password,
 )
 
 pytestmark = pytest.mark.slow
@@ -42,10 +43,14 @@ any_userinfo = st.text(
 )
 
 
-def _sec014_foci(iri: str) -> list[str]:
+def _foci(rule: str, iri: str) -> list[str]:
     data = Graph()
     data.add((URIRef(iri), RDF.type, URIRef("https://example.test/onto#T")))
-    return [f.focus for f in Linter(data).execute(["SEC014"]).findings]
+    return [f.focus for f in Linter(data).execute([rule]).findings]
+
+
+def _sec014_foci(iri: str) -> list[str]:
+    return _foci("SEC014", iri)
 
 
 @budget()
@@ -66,6 +71,19 @@ def test_the_userinfo_is_masked_and_nothing_else_changes(scheme: str, user: str,
     assert parts.username == REDACTED_USERINFO
     # SEC014 reports the IRI exactly when its own test finds a password, and its focus is the same mask.
     assert _sec014_foci(iri) == ([masked] if userinfo_password(iri) else [])
+    assert _foci("SEC016", iri) == []
+
+
+@budget()
+@given(schemes, users.filter(bool), rests)
+def test_a_user_name_only_is_masked_and_sec016_reports_it(scheme: str, user: str, rest: str) -> None:
+    iri = f"{scheme}://{user}@h{rest}"
+    masked = f"{scheme}://{REDACTED_USERINFO}@h{rest}"
+    assert redact_userinfo(iri) == masked
+    assert userinfo_without_password(iri)
+    assert userinfo_password(iri) is None
+    assert _foci("SEC016", iri) == [masked]
+    assert _sec014_foci(iri) == []
 
 
 @budget()
@@ -115,6 +133,9 @@ def test_any_userinfo_is_masked_whole_and_sec014_reads_its_password(userinfo: st
     assert redact_userinfo(iri) == masked
     assert userinfo_password(iri) == (password or None)
     assert _sec014_foci(iri) == ([masked] if password else [])
+    # What the mask hides is a password (SEC014) or a user name only (SEC016), never both for one userinfo.
+    assert userinfo_without_password(iri) == (not password)
+    assert _foci("SEC016", iri) == ([masked] if not password else [])
 
 
 @budget()
