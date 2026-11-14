@@ -25,6 +25,19 @@ fuzz tests). They exercise every rule, so gremlins would select them for almost 
 mutant and a run would take hours instead of minutes. They still run in the normal
 suite (`uv run pytest`) and in the scheduled fuzz job.
 
+One test that exercises every rule is not marked `slow`, on purpose:
+`tests/test_rule_docs.py::test_rule_reference_is_current` builds the rule
+reference, which runs the linter on each of the 778 flagged graph cases, and
+fails when a mutant changes a message any of them reports. The build takes
+about 7 s on an idle laptop (0.3 s when it ran one case per rule), most of it
+in the scale cases of CLS014, CLS021, CLS025 and SEC004. gremlins selects the
+test for nearly every mutant of `rules/`, but it runs a mutant's tests most
+specific first (those covering the fewest lines) and stops at the first
+failure, so this broad test runs only when no narrower one kills the mutant:
+chiefly for survivors. If the scheduled job nears its timeout, check its share
+with `--durations` before marking it `slow`, since that would give up the
+messages it pins.
+
 Do not run any other pytest session in the same checkout while a mutation run is in
 progress. The run pre-scans coverage into the repository-root `.coverage` (statement
 data), and a concurrent `pytest -n auto` writes branch-coverage worker files that
