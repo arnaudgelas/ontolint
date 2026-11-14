@@ -54,6 +54,7 @@ from rdflib import Graph
 from rdflib.exceptions import Error as RdflibError
 
 from ontolint import cli
+from ontolint.adapters.shacl import ShapesNotWellFormed
 from ontolint.linter import Linter
 from ontolint.loader import InputRejected, load_graph
 from ontolint.models import ExecutionStatus
@@ -660,7 +661,8 @@ def _run_loader(case: Case, work: Workdir) -> str:
 _SHAPES_ERRORS = frozenset(
     {"ReportableRuntimeError", "ShapeLoadError", "ConstraintLoadError", "ValidationFailure", "ShapesRejected"}
 )
-"""pySHACL's own refusals of malformed shapes (and ontolint's pre-check): a reported FAILED execution, not a crash."""
+"""pySHACL's own refusals of malformed shapes (and ontolint's pre-check): a reported FAILED execution, not a crash.
+A shapes graph that breaks SHACL-SHACL is one too: its detail is :attr:`ShapesNotWellFormed.summary`."""
 
 _LINT_KWARGS: dict[str, dict[str, Any]] = {
     "ont": {},
@@ -692,7 +694,8 @@ def _run_lint(case: Case, work: Workdir) -> str:
     first = Linter(graph, shapes, **kwargs).execute()
     for execution in first.with_status(ExecutionStatus.FAILED):
         error = execution.detail.split(":", 1)[0]
-        if not (execution.rule_id == "SHACL001" and error in _SHAPES_ERRORS):
+        refused = error in _SHAPES_ERRORS or execution.detail == ShapesNotWellFormed.summary
+        if not (execution.rule_id == "SHACL001" and refused):
             raise InvariantViolation(f"lint:rule-failed:{_family(execution.rule_id)}:{error}", execution.detail[:300])
     if Linter(graph, shapes, **kwargs).execute() != first:
         raise InvariantViolation("lint:execute-nondeterministic")
