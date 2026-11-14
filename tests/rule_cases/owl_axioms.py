@@ -242,6 +242,10 @@ CASES = {
                 "datatype sub-property of object property",
                 "ex:d a owl:DatatypeProperty ; rdfs:subPropertyOf ex:o . ex:o a owl:ObjectProperty .",
             ),
+            ttl(
+                "object sub-property of a blank datatype property",
+                "ex:o a owl:ObjectProperty ; rdfs:subPropertyOf [ a owl:DatatypeProperty ] .",
+            ),
         ],
         [
             ttl("same kind", "ex:o a owl:ObjectProperty ; rdfs:subPropertyOf ex:p . ex:p a owl:ObjectProperty ."),
@@ -330,6 +334,10 @@ CASES = {
                 "all disjoint properties with equivalent members",
                 "[] a owl:AllDisjointProperties ; owl:members ( ex:p ex:q ex:r ) . ex:q owl:equivalentProperty ex:r .",
             ),
+            ttl(
+                "disjoint blank sub-property",
+                "ex:p owl:propertyDisjointWith _:q ; rdfs:subPropertyOf _:q . _:q a owl:ObjectProperty .",
+            ),
         ],
         [
             ttl("unrelated disjoint properties", "ex:p owl:propertyDisjointWith ex:q ."),
@@ -381,6 +389,10 @@ CASES = {
                 + " ".join(f"ex:m{i}" for i in range(200))
                 + " ) . ex:m0 rdfs:subClassOf ex:m199 .",
             ),
+            ttl(
+                "disjoint with a blank superclass",
+                "ex:A a owl:Class ; owl:disjointWith _:c ; rdfs:subClassOf _:c . _:c owl:complementOf ex:Z .",
+            ),
         ],
         [
             ttl("unrelated disjoint classes", "ex:A owl:disjointWith ex:B ."),
@@ -410,6 +422,9 @@ CASES = {
             ttl("same and different", "ex:a owl:sameAs ex:b ; owl:differentFrom ex:b ."),
             ttl("reversed same", "ex:a owl:differentFrom ex:b . ex:b owl:sameAs ex:a ."),
             ttl("different from itself", "ex:a owl:differentFrom ex:a ."),
+            ttl(
+                "same as and different from a blank node", "ex:a owl:sameAs _:b ; owl:differentFrom _:b . _:b ex:p 1 ."
+            ),
         ],
         [
             ttl("same only", "ex:a owl:sameAs ex:b ."),
@@ -442,6 +457,11 @@ CASES = {
                 "negated integer with another lexical form",
                 'ex:a ex:p "1"^^xsd:integer . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ;'
                 ' owl:assertionProperty ex:p ; owl:targetValue "01"^^xsd:integer .',
+            ),
+            ttl(
+                "negated assertion on a blank individual that is asserted",
+                "ex:a ex:p _:b . _:b ex:q 1 . [] a owl:NegativePropertyAssertion ; owl:sourceIndividual ex:a ;"
+                " owl:assertionProperty ex:p ; owl:targetIndividual _:b .",
             ),
         ],
         [
@@ -491,6 +511,7 @@ CASES = {
         [
             ttl("both directions", "ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b . ex:b ex:p ex:a ."),
             ttl("self assertion", "ex:p a owl:AsymmetricProperty . ex:a ex:p ex:a ."),
+            ttl("both directions between blank nodes", "ex:p a owl:AsymmetricProperty . _:a ex:p _:b . _:b ex:p _:a ."),
         ],
         [
             ttl("one direction", "ex:p a owl:AsymmetricProperty . ex:a ex:p ex:b ."),

@@ -38,6 +38,7 @@ CASES = {
             ttl("tag case differs", 'ex:c skos:prefLabel "a"@en ; skos:altLabel "a"@EN .'),
             ttl("plain and xsd:string", 'ex:c skos:prefLabel "a" ; skos:altLabel "a"^^xsd:string .'),
             ttl("blank node", '[] skos:prefLabel "a" ; skos:altLabel "a" .'),
+            ttl("blank value", "ex:c skos:prefLabel _:v ; skos:altLabel _:v . _:v ex:p 1 ."),
         ],
         [
             ttl("distinct literals", 'ex:c a skos:Concept ; skos:prefLabel "a"@en ; skos:altLabel "b"@en .'),
@@ -76,7 +77,11 @@ CASES = {
             ttl(
                 "top concept with broader",
                 "ex:c a skos:Concept ; skos:topConceptOf ex:s ; skos:broader ex:d . ex:d a skos:Concept .",
-            )
+            ),
+            ttl(
+                "top concept of a blank scheme",
+                "ex:c a skos:Concept ; skos:topConceptOf [ ex:p 1 ] ; skos:broader ex:d .",
+            ),
         ],
         [ttl("top concept without broader", "ex:c a skos:Concept ; skos:topConceptOf ex:s .")],
     ),

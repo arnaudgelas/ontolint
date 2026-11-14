@@ -141,6 +141,7 @@ CASES = {
             ttl("integer label", "ex:c a skos:Concept ; skos:prefLabel 42 ."),
             ttl("IRI label", "ex:c a skos:Concept ; skos:altLabel ex:other ."),
             ttl("custom datatype", 'ex:c skos:hiddenLabel "x"^^ex:custom .'),
+            ttl("blank label", "ex:c a skos:Concept ; skos:altLabel [ ex:p 1 ] ."),
         ],
         [ttl("string labels", 'ex:c skos:prefLabel "a"@en, "b"^^xsd:string ; skos:altLabel "c" .')],
     ),
