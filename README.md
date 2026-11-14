@@ -677,14 +677,15 @@ own lines two spaces further in:
 
 Each of these lines is one line of visible characters: control, format (bidi, zero-width),
 surrogate, private-use and separator characters other than a space are written as N-Triples
-escapes, `\uXXXX` or `\UXXXXXXXX`, so a lone surrogate in a value no longer makes a text report
-unwritable. A literal value is then still an N-Triples term that reads back as itself, except a
-lone surrogate: it is not a valid RDF string, it is shown as its code unit, and an escaped high and
-low surrogate side by side read back as one character. IRIs and messages are printed bare, so a
-backslash in one (`\u001B` written literally in a JSON-LD IRI) reads like an escape. Text shows
-neither a nested result's severity nor `sourceConstraint`, so two SPARQL constraints of one shape
-whose results share path and value read alike in text; JSON tells them apart. Fingerprints,
-baselines and exit codes do not depend on these lines.
+escapes, `\uXXXX` or `\UXXXXXXXX`, so a lone surrogate in a value does not make the text report
+unwritable (one in a finding's focus or message, which the header prints as is, still gives
+`TOOL001`, exit 2). A literal value is then still an N-Triples term that reads back as itself,
+except a lone surrogate: it is not a valid RDF string, it is shown as its code unit, and an
+escaped high and low surrogate side by side read back as one character. IRIs and messages are
+printed bare, so a backslash in one (`\u001B` written literally in a JSON-LD IRI) reads like an
+escape. Text shows neither a nested result's severity nor `sourceConstraint`, so two SPARQL
+constraints of one shape whose results share path and value read alike in text; JSON tells them
+apart. Fingerprints, baselines and exit codes do not depend on these lines.
 
 The data graph of a TriG, N-Quads or JSON-LD dataset is the union of its graphs, as for every
 other rule: SHACL defines the validation of one data graph, and a value typed in one graph and
