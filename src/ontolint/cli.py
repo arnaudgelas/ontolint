@@ -27,7 +27,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
-from . import baseline, engine
+from . import baseline, engine, quality
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
@@ -59,7 +59,16 @@ from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
 from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
 from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
-from .reporting import TOOL_FAILURE_EXIT, FileReport, Location, Origin, RunReport, render_report, run_exit_code
+from .reporting import (
+    TOOL_FAILURE_EXIT,
+    FileReport,
+    Location,
+    Origin,
+    RunReport,
+    render_comparison,
+    render_report,
+    run_exit_code,
+)
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
 from .rules import measurements
 from .rules.duplicate_ids import SET_RULES, finding_key
@@ -200,6 +209,26 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add each file's measurement vector to the JSON report (files[].measurements: the ratios behind the "
         "METRIC rules and more, as numerators and denominators); requires --format json",
+    )
+    ap.add_argument(
+        "--write-quality-snapshot",
+        metavar="FILE",
+        help="Write the run's quality snapshot (its measurement vector, the term sets behind each coverage "
+        "measure, and the policy that shaped them) to FILE; one ONTOLOGY only (docs/quality.md)",
+    )
+    ap.add_argument(
+        "--quality-baseline",
+        metavar="FILE",
+        help="Compare the run's measurements with the quality snapshot FILE, committed as the accepted values: "
+        "JSON gains quality_comparison and the Markdown summary a section; findings and the exit code do not "
+        "change; one ONTOLOGY and --format json or markdown",
+    )
+    ap.add_argument(
+        "--compare-quality",
+        nargs=2,
+        metavar=("OLD", "NEW"),
+        help="Compare two quality snapshot files and print the trend (--format text, json or markdown); lints "
+        "nothing and takes no ONTOLOGY",
     )
     ap.add_argument("--output", help="Output file (default stdout)")
     ap.add_argument("--fail-on", choices=["error", "warning", "info", "never"], default=None)
@@ -383,6 +412,8 @@ def _lint_file(
     others = _shared_places((item, loaded), findings, shared, sarif, (origins, locations, graphs)) if shared else {}
     # Taken after the rules ran, so a measurement a METRIC rule read is the value it compared.
     measured, partitions = _measured(item, loaded, ctx, grouping) if args.measurements else (None, ())
+    # Likewise taken after the rules ran; only a run that writes or compares a quality snapshot builds one.
+    snapshot = quality.build(ctx) if args.write_quality_snapshot or args.quality_baseline else None
     return FileReport(
         item.display,
         item.uri,
@@ -396,6 +427,7 @@ def _lint_file(
         others,
         measured,
         partitions,
+        snapshot,
     )
 
 
@@ -625,6 +657,50 @@ def _apply_baselines(
         applied = baseline.apply(baseline.loads(Path(args.baseline).read_text(encoding="utf-8")), files, SET_RULES)
         return applied.files, applied.stale, tuple(applied.baselined)
     return files, None, None
+
+
+def _read_quality(path: str) -> quality.Snapshot:
+    """The quality snapshot in ``path``; :class:`~ontolint.quality.SnapshotError` names the file and the reason."""
+    try:
+        return quality.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, quality.SnapshotError) as exc:
+        raise quality.SnapshotError(f"quality snapshot {path} cannot be used: {exc}") from exc
+
+
+def _quality(
+    files: Sequence[FileReport], args: argparse.Namespace, accepted: quality.Snapshot | None
+) -> quality.Comparison | None | int:
+    """Write the run's quality snapshot and compare it with the quality baseline, as asked (one file, by usage).
+
+    Returns the comparison (``None`` without ``--quality-baseline``), or the exit code when the snapshot could
+    not be written.  Neither changes the findings or the exit status of the run.
+    """
+    snapshot = files[0].quality
+    if snapshot is None:
+        return None
+    if args.write_quality_snapshot:
+        failure = _write_text(args.write_quality_snapshot, quality.dumps(snapshot), what="quality snapshot")
+        if failure is not None:
+            print(failure, file=sys.stderr)
+            return TOOL_FAILURE_EXIT
+    return quality.compare(accepted, snapshot) if accepted is not None else None
+
+
+def _compare_quality(args: argparse.Namespace) -> int:
+    """``--compare-quality OLD NEW``: print the trend between two snapshot files; 2 if one cannot be used."""
+    try:
+        old, new = (_read_quality(path) for path in args.compare_quality)
+    except quality.SnapshotError as exc:
+        print(f"TOOL001: {exc}", file=sys.stderr)
+        return TOOL_FAILURE_EXIT
+    try:
+        failure = _emit(render_comparison(quality.compare(old, new), args.format), args)
+    except _StdoutClosed:
+        return EXIT_PIPE_CLOSED
+    if failure is not None:
+        print(failure, file=sys.stderr)
+        return TOOL_FAILURE_EXIT
+    return 0
 
 
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
@@ -1062,6 +1138,11 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
         return 2
     stage[0] = "RDF input parsing"
+    try:  # likewise: a quality baseline that cannot be read is no reason to parse anything
+        accepted = _read_quality(args.quality_baseline) if args.quality_baseline else None
+    except quality.SnapshotError as exc:
+        print(f"TOOL001: {exc}", file=sys.stderr)
+        return TOOL_FAILURE_EXIT
     inputs = resolve_inputs(args.ontology, Path.cwd())
     _LOADER_POLICY.set(limits)
     graphs, errors = _parse_inputs(inputs, imports)
@@ -1087,9 +1168,11 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     rows = zip(inputs, graphs, shared, strict=True)
     files = [_lint_file(item, graph, plan, args, found) for item, graph, found in rows]
     files, stale, baselined = _apply_baselines(files, args)
-    return RunReport(
-        tuple(files), plan.selection.run + plan.selection.ignored, plan.overrides, stale, baselined=baselined
-    )
+    trend = _quality(files, args, accepted)
+    if isinstance(trend, int):
+        return trend
+    rules = plan.selection.run + plan.selection.ignored
+    return RunReport(tuple(files), rules, plan.overrides, stale, baselined=baselined, quality=trend)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1128,16 +1211,38 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _usage_problem(args: argparse.Namespace) -> str | None:
     """The first usage error of a lint run's options, checked after the info commands; ``None`` if there is none."""
+    if (problem := _quality_usage_problem(args)) is not None or args.compare_quality:
+        return problem
     if not args.ontology:
         return "at least one ONTOLOGY path is required"
     if args.fail_on_stale_baseline and not args.baseline:
         return "--fail-on-stale-baseline requires --baseline"
+    if (problem := _alternatives_problem(args)) is not None:
+        return problem
+    if args.measurements and args.format != "json":
+        return "--measurements requires --format json"
+    return None
+
+
+def _alternatives_problem(args: argparse.Namespace) -> str | None:
+    """The first pair of options that are alternatives and were both given, if any."""
     if args.shapes and args.shapes_from_profile:
         return "--shapes and --shapes-from-profile are alternatives; give one"
     if args.module_annotation is not None and args.module_by is not None:
         return "--module-annotation and --module-by are alternatives; give one"
-    if args.measurements and args.format != "json":
-        return "--measurements requires --format json"
+    return None
+
+
+def _quality_usage_problem(args: argparse.Namespace) -> str | None:
+    """The first usage error of the quality snapshot options (``docs/quality.md``); ``None`` if there is none."""
+    if args.compare_quality:
+        if args.ontology or args.write_quality_snapshot or args.quality_baseline:
+            return "--compare-quality takes two snapshot files, and no ONTOLOGY or other quality option"
+        return "--compare-quality requires --format text, json or markdown" if args.format == "sarif" else None
+    if (args.write_quality_snapshot or args.quality_baseline) and len(args.ontology) != 1:
+        return "--write-quality-snapshot and --quality-baseline take exactly one ONTOLOGY: a snapshot is of one file"
+    if args.quality_baseline and args.format not in ("json", "markdown"):
+        return "--quality-baseline requires --format json or markdown"
     return None
 
 
@@ -1151,6 +1256,11 @@ def _main(argv: Sequence[str] | None) -> int:
         return info
     if (problem := _usage_problem(args)) is not None:
         parser.error(problem)
+    return _compare_quality(args) if args.compare_quality else _lint_and_finish(args)
+
+
+def _lint_and_finish(args: argparse.Namespace) -> int:
+    """Lint the inputs, report, and return the exit status; configuration and input failures are exit 2."""
     stage = ["configuration"]
     try:
         outcome = _lint(args, stage)

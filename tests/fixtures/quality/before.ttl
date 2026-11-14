@@ -1,0 +1,13 @@
+@prefix q: <https://example.test/q#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://example.test/q> a owl:Ontology .
+
+# Definition coverage 3 of 5: A, B and C are defined; D and E are not.
+q:A a owl:Class ; rdfs:label "A"@en ; skos:definition "The root of the fixture."@en .
+q:B a owl:Class ; rdfs:label "B"@en ; skos:definition "Defined here, and not after."@en ; rdfs:subClassOf q:A .
+q:C a owl:Class ; rdfs:label "C"@en ; skos:definition "Defined here, and removed after."@en ; rdfs:subClassOf q:A .
+q:D a owl:Class ; rdfs:label "D"@en ; rdfs:subClassOf q:A .
+q:E a owl:Class ; rdfs:label "E"@en ; rdfs:subClassOf q:A .

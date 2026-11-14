@@ -52,6 +52,7 @@ file and any imports you point it at.
   - [Selecting rules and profiles](#selecting-rules-and-profiles)
   - [Rule execution status](#rule-execution-status)
   - [Measurements](#measurements)
+  - [Quality snapshots and trends](#quality-snapshots-and-trends)
   - [Several files](#several-files)
   - [One ontology in several documents](#one-ontology-in-several-documents)
   - [Modular ontologies: following `owl:imports`](#modular-ontologies-following-owlimports)
@@ -89,6 +90,7 @@ the report has no published JSON Schema yet, so pin the version you parse agains
 | Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub annotations](#github-annotations) |
 | Which rules ran, were skipped or failed | `files[].executions` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
 | The measurements behind the METRIC rules, as numerators and denominators | `ontolint FILE --format json --measurements` (`files[].measurements`) | [Measurements](#measurements) |
+| One run's measurements with their term sets, a committed quality baseline, a trend between two snapshots | `--write-quality-snapshot FILE`, `--quality-baseline FILE`, `--compare-quality OLD NEW` | [Quality snapshots and trends](#quality-snapshots-and-trends) |
 | A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
 | Accepted findings that stay quiet | `--write-baseline FILE`, then `--baseline FILE` | [Policy and baselines](#policy-and-baselines) |
 | ontolint inside a Python program | `from ontolint import Linter` | [Run the linter](#run-the-linter) |
@@ -359,6 +361,30 @@ module grouping, named graphs or `--follow-imports`, `measurement_partitions` gi
 measurements per module, graph or imported file, each term placed where its findings are.
 [docs/measurements.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/measurements.md)
 gives each measurement's population and exclusions.
+
+### Quality snapshots and trends
+
+A quality snapshot is a file with one run's measurements and, for each coverage measure, the sorted
+IRIs of its numerator and denominator, with the policy that shaped them. It serves two uses. Committed
+to the repository, it is a *quality baseline* (the accepted values; not `--baseline`, which suppresses
+findings). Two of them, kept by CI as artifacts, are a *trend*; ontolint reads no git history.
+
+```bash
+ontolint onto.ttl --write-quality-snapshot quality.json
+ontolint onto.ttl --format json --quality-baseline quality.json   # also: --format markdown
+ontolint --compare-quality last-week.json today.json              # --format text (default), json, markdown
+```
+
+The comparison tells a regression from a change of population, which aggregates cannot: for each
+coverage measure it counts the terms that got worse, the new terms that are worse (dilution), the removed
+terms and the terms that got better, with the exact ratio delta. A renamed term is a removal and a new
+term. A measurement whose definition version, kind, population or policy differs, or that one snapshot could
+not take, is reported as not comparable, measurement by measurement, never diffed. **This reports; it does
+not gate.** Neither option changes a finding or the exit code (a comparison exits `0` whatever it finds;
+`2` for an unusable snapshot), so a committed quality baseline does not stop a regression from passing CI;
+failing a build on the comparison is QUALITY-BUDGET (issue #26); the METRIC rules' findings and
+`--fail-on` judge one run against absolute thresholds, not a change from the baseline. A run without these options is unchanged. [docs/quality.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md)
+documents the versioned snapshot format and the comparison.
 
 ### Several files
 
