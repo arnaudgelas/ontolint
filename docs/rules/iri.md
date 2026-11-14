@@ -36,7 +36,7 @@ Extra heuristics: IRI015 (opaque and readable local names in one namespace), LEX
 
 All three inspect only the asserted graph and never leave the process.  Their specifications:
 
-*Specified under each rule: IRI015, LEX018, LEX021.*
+*Specified under each rule: IRI015, [LEX018](lex.md), [LEX021](lex.md).*
 
 ### Module iri_quality
 

@@ -27,7 +27,7 @@ import pkgutil
 import re
 import sys
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
@@ -102,6 +102,7 @@ BLOCK_START = re.compile(
 )
 
 type _Unit = tuple[str, list[str]]  # "spec", "item" or "paragraph", and its docstring lines
+type _Note = str | tuple[str, ...]  # a paragraph or item as Markdown, or the rules a run of bullets specifies
 
 
 @dataclass(frozen=True)
@@ -110,7 +111,7 @@ class ModuleDoc:
 
     name: str  # "owl"
     specs: Mapping[str, str]  # rule id -> its specification, reflowed to one paragraph, roles converted
-    notes: tuple[str, ...]  # the rest, one line per paragraph or item, blocks blank-separated
+    notes: tuple[_Note, ...]  # the rest, one line per paragraph or item, blocks blank-separated
 
 
 def _kind(module: str, line: str) -> str | None:
@@ -195,8 +196,8 @@ def read_module(module: ModuleType) -> ModuleDoc:
     """Read a rule module's docstring: each rule's specification bullet, and everything else as notes.
 
     In the notes, each paragraph and item is one line and blocks are separated by a blank line, so no
-    paragraph can become the continuation of an item; a run of specification bullets becomes one line
-    naming the rules they specify, since each is shown under its rule instead.
+    paragraph can become the continuation of an item; a run of specification bullets becomes the tuple
+    of the rules they specify, since each is shown under its rule instead (see :func:`_specified`).
     """
     if not module.__doc__:
         raise ValueError(f"{module.__name__} has no docstring (Python run with -OO?): its specifications would vanish")
@@ -213,9 +214,9 @@ def read_module(module: ModuleType) -> ModuleDoc:
             blocks[-1][1].extend(content)
         else:
             blocks.append((kind, content))
-    notes: list[str] = []
+    notes: list[_Note] = []
     for kind, content in blocks:
-        notes += ["", f"*Specified under each rule: {', '.join(content)}.*"] if kind == "spec" else ["", *content]
+        notes += ["", tuple(content)] if kind == "spec" else ["", *content]
     return ModuleDoc(module_name(module), specs, tuple(notes[1:]))
 
 
@@ -419,15 +420,32 @@ def _page_name(family: str) -> str:
     return f"rules/{family.lower()}.md"
 
 
+def _specified(ids: Sequence[str], here: Collection[str], registry: RuleRegistry) -> str:
+    """Render a run of specification bullets as the rules it names, linking each that is on another page.
+
+    A module's notes open the page of every rule it is home to, so a run can name rules of other
+    families (``owl`` is home to DATA001, so the DATA page names OWL001 to OWL015).
+    """
+    named = [
+        rule_id if rule_id in here else f"[{rule_id}]({registry.get(rule_id).family.lower()}.md)" for rule_id in ids
+    ]
+    return f"*Specified under each rule: {', '.join(named)}.*"
+
+
 def _modules(rows: Sequence[CatalogueRow], sources: _Sources) -> list[str]:
     """Render the notes of every module home to an implemented rule of ``rows``, by module name."""
-    homes = sorted({sources.home(row.rule_id) for row in rows if row.status.value == "implemented"})
+    here = {row.rule_id for row in rows if row.status.value == "implemented"}
+    homes = sorted({sources.home(rule_id) for rule_id in here})
     if not homes:
         return []
     lines = ["## Modules", "", MODULES_INTRO, ""]
     for name in homes:
         source = f"Source: `src/ontolint/rules/{name}.py`."
-        lines += [f"### Module {name}", "", source, "", *sources.docs[name].notes, ""]
+        notes = [
+            _specified(note, here, sources.registry) if isinstance(note, tuple) else note
+            for note in sources.docs[name].notes
+        ]
+        lines += [f"### Module {name}", "", source, "", *notes, ""]
     return lines
 
 

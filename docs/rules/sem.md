@@ -32,7 +32,7 @@ SHACL001 and SEM001 are produced by adapters (pySHACL, ROBOT) and INPUT001/TOOL0
 
 SHACL001 and SEM001 are findings: they appear in the report, gate the exit code through ``--fail-on`` (``1``), and obey ``--select``/``--ignore``, baselines and ``severity_overrides``.  INPUT001 and TOOL001 are diagnostics printed on stderr as ``<ID>: <message>`` with exit code ``2``; the selection never affects them, so naming them in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) is a configuration error (``TOOL001``, exit ``2``), and naming them in the policy's ``ignored_rules`` or ``severity_overrides`` is ``GOV020``.
 
-*Specified under each rule: SHACL001, INPUT001, TOOL001, SEM001.*
+*Specified under each rule: [SHACL001](shacl.md), [INPUT001](input.md), [TOOL001](tool.md), SEM001.*
 
 ## Rules
 
