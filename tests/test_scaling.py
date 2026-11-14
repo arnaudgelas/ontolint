@@ -23,13 +23,15 @@ from rdflib import BNode, Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rdflib.plugins.stores.memory import Memory
 
-from ontolint import Linter
+from ontolint import Linter, cli
 from ontolint.datasets import build_graph_index, finding_graphs
 from ontolint.declarations import shared_identities
+from ontolint.engine import build_context
 from ontolint.loader import LoadedGraph
 from ontolint.models import Finding
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.rules import measurements
 from ontolint.rules.runtime import PropertyClosure, _BlankNames  # noqa: PLC2701 -- the rewriting is timed alone.
 from ontolint.rules.shacl_authoring import pattern_problem
 from ontolint.rules.support import DESCRIPTIONS, LABELS
@@ -168,6 +170,29 @@ def _blank_labels(count: int) -> Step:
     return step
 
 
+def _measurement_partitions(count: int) -> Step:
+    """The measurements of ``count`` owned classes, ten to a named graph and ten to a namespace module (the first
+    draft searched every term for each graph and each module, so the step grew with terms times partitions)."""
+    store, default = Memory(), BNode()
+    graph = Graph()
+    graph.add((URIRef("https://example.test/o"), RDF.type, OWL.Ontology))
+    for i in range(count):
+        term = URIRef(f"https://example.test/m{i // 10}/C{i}")
+        Graph(store=store, identifier=URIRef(f"https://example.test/g{i // 10}")).add((term, RDF.type, OWL.Class))
+        graph.add((term, RDF.type, OWL.Class))
+    index = build_graph_index(store, default, "file:///w/")
+    (item,) = resolve_inputs(["d.trig"], Path.cwd())
+    loaded = LoadedGraph(graph, build_source_index(b"", "nt", "file:///w/d.trig", Graph()), graphs=index)
+    ctx = build_context(graph, None, Policy())
+    measurements.taken(ctx)  # the rules take the vector; only its partitions are timed
+
+    def step() -> None:
+        _vector, partitions = cli._measured(item, loaded, ctx, cli._ModuleGrouping(None))
+        assert len(partitions) == 2 * (count // 10)  # each graph, then each module
+
+    return step
+
+
 @pytest.mark.parametrize(
     "step",
     [
@@ -179,6 +204,7 @@ def _blank_labels(count: int) -> Step:
         _shared_headers,
         _distinct_shared_headers,
         _blank_labels,
+        _measurement_partitions,
     ],
     ids=[
         "source-locator",
@@ -189,6 +215,7 @@ def _blank_labels(count: int) -> Step:
         "shared-headers",
         "distinct-shared-headers",
         "blank-labels",
+        "measurement-partitions",
     ],
 )
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], Step]) -> None:

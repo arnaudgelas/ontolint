@@ -240,13 +240,17 @@ def partition(vector: Iterable[tuple[MeasurementSpec, Value | Absent]], terms: S
 
 
 def restrict(value: Value | Absent, terms: Set[Node]) -> Value | Absent:
-    """``value`` with only the terms of ``terms`` in its sets (both of a ratio's); an absent value stays absent."""
+    """``value`` with only the terms of ``terms`` in its sets (both of a ratio's); an absent value stays absent.
+
+    The cost is that of ``terms``, not of ``value``: a file of many small partitions restricts in linear time.
+    """
     if isinstance(value, Absent):
         return value
     if isinstance(value, TermRatio):
-        return TermRatio(value.numerator & terms, value.denominator & terms)
+        return TermRatio(value.numerator & terms, value.denominator & terms)  # a set intersection walks the smaller
     if isinstance(value, TermValues):
-        return TermValues(MappingProxyType({term: n for term, n in value.values.items() if term in terms}))
+        values = value.values
+        return TermValues(MappingProxyType({term: values[term] for term in terms if term in values}))
     raise TypeError(f"a {type(value).__name__} is not of terms")
 
 
