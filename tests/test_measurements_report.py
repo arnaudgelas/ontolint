@@ -418,3 +418,31 @@ def test_every_metric_bullet_names_the_measurement_it_reads() -> None:
     for spec in measurements.SPECS:
         for rule in spec.rules:
             assert f"Reads ``{spec.id}``" in " ".join(bullets[rule].split()), rule
+
+
+@pytest.mark.parametrize(
+    "wrong",
+    [
+        {"definition_version": 0, "numerator": 1, "denominator": 1},
+        {"definition_version": True, "numerator": 1, "denominator": 1},
+        {"numerator": 1.0, "denominator": 2},
+        {"numerator": True, "denominator": 2},
+        {"kind": MeasurementKind.COUNT, "value": 1.5},
+        {"kind": MeasurementKind.HISTOGRAM, "buckets": ((2, 1), (1, 1))},
+        {"kind": MeasurementKind.HISTOGRAM, "buckets": ((1, 1), (1, 2))},
+        {"kind": MeasurementKind.HISTOGRAM, "buckets": ((1, 1.0),)},
+        {"numerator": 2, "denominator": 3, "by_namespace": (("a", 1),)},
+        {"numerator": 1, "denominator": 3, "by_namespace": (("a", 1.0),)},
+        {"id": "", "numerator": 1, "denominator": 1},
+        {"population": "", "numerator": 1, "denominator": 1},
+    ],
+)
+def test_a_measurement_refuses_what_the_published_schema_does_not_allow(wrong: dict[str, Any]) -> None:
+    fields: dict[str, Any] = {"id": "m", "definition_version": 1, "kind": MeasurementKind.RATIO, "population": "p"}
+    with pytest.raises(ValueError):
+        Measurement(**{**fields, **wrong})
+
+
+def test_a_measurement_that_fits_the_schema_is_accepted() -> None:
+    Measurement("m", 1, MeasurementKind.HISTOGRAM, "p", buckets=((0, 2), (3, 1)))
+    Measurement("m", 1, MeasurementKind.RATIO, "p", numerator=2, denominator=3, by_namespace=(("a", 1), ("b", 1)))
