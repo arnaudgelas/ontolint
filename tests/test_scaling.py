@@ -3,7 +3,9 @@
 0.4.0 shipped two quadratic steps: the source locator counted newlines from the start of the text
 for every term, and CLS017 recomputed a set difference over all classes for every class.  A
 40,000-class file took 30 s.  A draft of SHQ011's rewriting of a pattern for Python searched the rest
-of the text for the ``}`` of every ``\\p{``, so a megabyte of unclosed ``\\p{`` took seconds.  Each
+of the text for the ``}`` of every ``\\p{``, so a megabyte of unclosed ``\\p{`` took seconds.  Messages
+found their blank-node labels with one pattern over every label of the graph, so each message cost as much
+as the labels.  Each
 test times only its step (no parsing, which is linear and would hide the quadratic term) at two sizes
 and compares them, so it holds on slow runners: multiplying the input by eight must cost well under
 the sixty-four-fold time of a quadratic step.  The time is CPU time, alternated between the sizes, as a
@@ -28,7 +30,7 @@ from ontolint.loader import LoadedGraph
 from ontolint.models import Finding
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
-from ontolint.rules.runtime import PropertyClosure
+from ontolint.rules.runtime import PropertyClosure, _BlankNames  # noqa: PLC2701 -- the rewriting is timed alone.
 from ontolint.rules.shacl_authoring import pattern_problem
 from ontolint.rules.support import DESCRIPTIONS, LABELS
 from ontolint.source_locations import build_source_index
@@ -151,9 +153,33 @@ def _distinct_shared_headers(count: int) -> Step:
     return lambda: shared_identities([item], [loaded], Policy())
 
 
+def _blank_labels(count: int) -> Step:
+    """``count`` messages that each name one of ``count`` blank classes, labelled as a JSON-LD file labels them."""
+    graph = Graph()
+    for i in range(count):
+        graph.add((BNode(f"b{i}"), RDF.type, OWL.Class))
+    messages = [f"Class _:b{i} is blank." for i in range(count)]
+
+    def step() -> None:
+        names = _BlankNames(graph)
+        for message in messages:
+            names.rewrite(message)
+
+    return step
+
+
 @pytest.mark.parametrize(
     "step",
-    [_locate, _cls017, _graph_index, _finding_graphs, _closure, _shared_headers, _distinct_shared_headers],
+    [
+        _locate,
+        _cls017,
+        _graph_index,
+        _finding_graphs,
+        _closure,
+        _shared_headers,
+        _distinct_shared_headers,
+        _blank_labels,
+    ],
     ids=[
         "source-locator",
         "CLS017",
@@ -162,6 +188,7 @@ def _distinct_shared_headers(count: int) -> Step:
         "property-closure",
         "shared-headers",
         "distinct-shared-headers",
+        "blank-labels",
     ],
 )
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], Step]) -> None:

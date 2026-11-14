@@ -10,10 +10,13 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis_strategies import budget
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
@@ -24,6 +27,7 @@ from ontolint import Linter
 from ontolint.loader import load_graph
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.rules.runtime import _BlankNames  # noqa: PLC2701 -- the rewriting is compared alone with its reference.
 from ontolint.rules.support import stable_blank_id
 
 BLANK = r"_:[0-9a-f]{12}"
@@ -422,3 +426,57 @@ def test_a_blank_node_used_only_as_a_predicate_keeps_its_label() -> None:
     assert _messages(data, ["SEC012"]) == [
         "Literal on _:pa contains control or bidirectional-override characters (U+202E)."
     ]
+
+
+# --- the rewriting itself ---------------------------------------------------------------------------------------
+
+
+def _pattern_rewrite(data: Graph, message: str) -> str:
+    """The rewriting as one pattern over every label, as it was before labels were looked up: the reference."""
+    nodes = {str(n): n for t in data for n in (t[0], t[2]) if isinstance(n, BNode)}
+    if not nodes:
+        return message
+    alternatives = "|".join(re.escape(label) for label in sorted(nodes, key=lambda label: (-len(label), label)))
+    pattern = re.compile(rf"(?<![\w/#:-])_:({alternatives})(?![\w/#:-]|\.\w)")
+    return pattern.sub(lambda match: stable_blank_id(data, nodes[match.group(1)]), message)
+
+
+def _labelled(labels: Iterable[str]) -> Graph:
+    data = Graph()
+    for i, label in enumerate(labels):
+        data.add((BNode(label), URIRef(BASE + "v"), Literal(i)))
+    return data
+
+
+REWRITES: list[tuple[tuple[str, ...], str]] = [
+    (("a", "a b"), "_:a b and _:a c"),  # the longest label that fits is taken
+    (("a", "a.b"), "_:a.b, _:a.c, _:a. and _:a."),  # ``.`` and a word character continue a name
+    (("a",), "_:a"),
+    (("a",), "x_:a /_:a #_:a :_:a -_:a (_:a)"),
+    (("a",), "_:ab _:a_ _:a/ _:a# _:a: _:a- _:a, _:a's"),
+    (("a",), "_:_:a"),
+    (("_:a", "a"), "_:_:a _:a"),
+    (("x _:a", "a"), "_:x _:a then _:a"),  # a label holding ``_:`` is replaced whole, and only once
+    (("abc", "a"), "ends with _:a"),  # the longer label runs past the end of the message
+    (("", "a"), "_: and _:a"),
+    ((), "_:a"),
+    (("a",), "a, without the prefix"),
+]
+
+
+@pytest.mark.parametrize(("labels", "message"), REWRITES)
+def test_labels_are_found_as_one_pattern_over_every_label_found_them(labels: tuple[str, ...], message: str) -> None:
+    data = _labelled(labels)
+    assert _BlankNames(data).rewrite(message) == _pattern_rewrite(data, message)
+
+
+LABEL_TEXT = st.text(alphabet="ab1_:. -/#'\\é", max_size=4)
+MESSAGE_PARTS = st.sampled_from(["_:", "a", "b", "1", "_", ":", " ", ".", "-", "/", "#", "'", "\\", "é"])
+
+
+@pytest.mark.slow
+@budget()
+@given(labels=st.sets(LABEL_TEXT, max_size=6), parts=st.lists(MESSAGE_PARTS, max_size=16))
+def test_labels_are_always_found_as_one_pattern_over_every_label_found_them(labels: set[str], parts: list[str]) -> None:
+    data, message = _labelled(sorted(labels)), "".join(parts)
+    assert _BlankNames(data).rewrite(message) == _pattern_rewrite(data, message)
