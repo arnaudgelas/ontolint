@@ -643,9 +643,12 @@ A path other than a single predicate is written in SPARQL property-path syntax (
 similar) violation as evidence objects, sorted, at most 8 levels deep. A nested result explains
 its parent (SHACL 3.5): it is part of the parent's evidence, not a finding of its own, although
 pySHACL types it as a validation result too. Only a report that lists no result through
-`sh:result` (never pySHACL's) has each typed result as a finding. A result nested deeper than 8
-levels appears in no output; its top-level result still does, and still fails the run. The evidence
-copies each value in full, so a report with many results on long literals grows accordingly.
+`sh:result` (never pySHACL's) has each typed result as a finding. Only the report node pySHACL
+writes, the object of no triple, is read: pySHACL copies into its report every triple reachable
+from a blank value, so data shaped like a report or a result adds no finding. A result nested
+deeper than 8 levels appears in no output; its top-level result still does, and still fails the
+run. The evidence copies each value in full, so a report with many results on long literals
+grows accordingly.
 Findings with the same message are ordered by their evidence, so the output no longer depends on
 pySHACL's hash-seed-dependent result order. The message, focus, severity and fingerprint are
 unchanged. A baseline identity is made of the source shape, constraint component, path, value and

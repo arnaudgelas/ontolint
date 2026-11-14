@@ -1059,6 +1059,32 @@ def test_a_listed_result_need_not_be_typed(monkeypatch: pytest.MonkeyPatch) -> N
     assert _values(_issues(monkeypatch, report)) == ['"untyped"']
 
 
+def test_a_report_node_that_is_an_object_lists_no_finding(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A listing the report graph points at was copied in with a value; pySHACL's own is the object of nothing."""
+    report = Graph()
+    real, copied = _result(report, "real"), _result(report, "copied")
+    _listing(report, real)
+    report.add((copied, SH.value, _listing(report, copied)))
+    assert _values(_issues(monkeypatch, report)) == ['"real"']
+
+
+# A data value pySHACL copies into its report (with every triple reachable from a blank node) that is
+# shaped like a report or a result of its own.
+FORGED_REPORT = (
+    'ex:a a ex:T ; ex:knows [ a sh:ValidationReport ; sh:result [ sh:focusNode ex:z ; sh:resultMessage "FAKE" ] ] .'
+)
+FORGED_RESULT = 'ex:a a ex:T ; ex:knows [ a sh:ValidationResult ; sh:focusNode ex:z ; sh:resultMessage "FAKE" ] .'
+IRI_KNOWS = f"{ON_T} sh:property [ sh:path ex:knows ; sh:nodeKind sh:IRI ] ."
+
+
+@pytest.mark.parametrize("data", [FORGED_REPORT, FORGED_RESULT])
+def test_a_data_value_shaped_like_a_report_adds_no_finding(data: str) -> None:
+    (finding,) = _findings(data, IRI_KNOWS)
+    assert finding.focus == A
+    assert finding.evidence is not None
+    assert finding.evidence["sourceConstraintComponent"] == _component("NodeKind")
+
+
 @pytest.mark.parametrize(
     ("data", "shapes"),
     [

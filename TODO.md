@@ -22,7 +22,9 @@ Nothing open: 0.11.0 is released (see "Recently done").
   - **SHACL-EVIDENCE-DECISIONS** (P1; issue #9): the three SHACL001 evidence contract choices that
     SHACL-EVIDENCE left to the maintainer are decided, each with its fixtures.
     - *Nested results* (dropped, `fix!:`): findings are the values of the report's `sh:result`
-      (SHACL 3.6.1.2), every typed result only for a report that links none; a result nested with
+      (SHACL 3.6.1.2) of the report node that is the object of no triple (pySHACL's own: a blank data
+      value shaped like a report or a result is copied into the report and adds no finding), every
+      typed result only for a report that links none; a result nested with
       `sh:detail` is only its parent's `evidence.detail`, and the severity is the reported
       result's, so its referencing shape's. With an ontology background, a finding is kept when
       its focus or a nested result's focus is a node the linted file mentions, compared masked in
