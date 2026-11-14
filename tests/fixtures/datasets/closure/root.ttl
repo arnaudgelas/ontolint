@@ -1,0 +1,8 @@
+# The root of an import closure whose imported module is a dataset; ex:R is declared here and only mentioned there.
+@prefix ex: <http://example.org/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+<http://example.org/onto> a owl:Ontology ;
+    owl:imports <part.trig> .
+
+ex:R a owl:Class .
