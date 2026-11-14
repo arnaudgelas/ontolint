@@ -65,9 +65,10 @@ KITCHEN_VECTOR = [
         "id": "class_depth",
         "definition_version": 1,
         "kind": "histogram",
-        "population": "owned_classes",
-        "buckets": [{"value": v, "count": n} for v, n in ((0, 2), (1, 22), (2, 4), (3, 2), (4, 1), (5, 1), (6, 1))],
+        "population": "acyclic_owned_classes",
+        "buckets": [{"value": v, "count": n} for v, n in ((1, 22), (2, 4), (3, 2), (4, 1), (5, 1), (6, 1))],
     },
+    _ratio("cyclic_classes", "owned_classes", 2, 33),
     _count("hierarchy_components", "owned_classes", 20),
     NO_SHAPES,
 ]

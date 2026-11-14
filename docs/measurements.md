@@ -63,7 +63,8 @@ the SHACL coverage, an empty shapes graph).
 | `unresolved_imports` | 1 | count | `graph` | distinct `owl:imports` IRIs not loaded | METRIC011 | no | 0 |
 | `definition_length` | 1 | ratio | `defined_owned_classes` | words of the longest definition, summed over the defined classes | METRIC012 | yes | 0/0 |
 | `blank_subjects` | 1 | ratio | `non_structural_subjects` | blank subjects | METRIC013 | no | 0/0 |
-| `class_depth` | 1 | histogram | `owned_classes` | owned classes per depth | none | yes | [] |
+| `class_depth` | 1 | histogram | `acyclic_owned_classes` | owned classes off the subclass cycles, per depth | none | yes | [] |
+| `cyclic_classes` | 1 | ratio | `owned_classes` | owned classes on a subclass cycle | none | yes | 0/0 |
 | `hierarchy_components` | 1 | count | `owned_classes` | weakly connected parts of the asserted hierarchy | none | no | 0 |
 | `shacl_class_target_coverage` | 1 | ratio | `owned_classes` | owned classes a class target reaches | none | yes | 0/0 |
 
@@ -127,10 +128,16 @@ concepts and individuals are in no population.
   SHACL structure, as `METRIC013` defines them); the numerator is the blank ones.
 - **`class_depth`.** Per owned class, the number of classes on the longest chain of asserted
   `rdfs:subClassOf` triples between owned classes from a top class down to it: a class with no owned
-  superclass is at depth 1. A class on a subclass cycle (`CLS003`) is at depth 0 and adds no level to
-  its subclasses; a self-loop is ignored. `buckets` lists `{value: depth, count: classes}` in
-  ascending depth, and the counts sum to the population. The largest depth is the largest subtree
-  depth `CLS005` compares with `--depth-limit`.
+  superclass is at depth 1. A class on a subclass cycle (`cyclic_classes`) has no depth: it is left
+  out of the population, not counted at 0, and adds no level to its subclasses, so a class whose only
+  owned superclasses are on a cycle is at depth 1. A self-loop is ignored. `buckets` lists
+  `{value: depth, count: classes}` in ascending depth; the counts sum to the population, the owned
+  classes minus `cyclic_classes`' numerator, and no depth is below 1. The largest depth is the
+  largest subtree depth `CLS005` compares with `--depth-limit`.
+- **`cyclic_classes`.** The numerator is the owned classes on a cycle of asserted `rdfs:subClassOf`
+  triples between two or more owned classes (a strongly connected component of more than one class),
+  the classes `class_depth` leaves out. Exclusions: a self-loop, which `CLS003` reports too, is not a
+  cycle here; a cycle closed through a class that is not owned is not seen.
 - **`hierarchy_components`.** The weakly connected components (direction ignored) of the asserted
   `rdfs:subClassOf` triples between owned classes. `owl:Thing` and every class that is not owned are
   left out, so two subtrees under one external superclass are two components; a class with no owned
@@ -162,7 +169,7 @@ concepts and individuals are in no population.
       {"id": "unresolved_imports", "definition_version": 1, "kind": "count",
        "population": "graph", "value": 1},
       {"id": "class_depth", "definition_version": 1, "kind": "histogram",
-       "population": "owned_classes", "buckets": [{"value": 1, "count": 4}, {"value": 2, "count": 9}]},
+       "population": "acyclic_owned_classes", "buckets": [{"value": 1, "count": 4}, {"value": 2, "count": 9}]},
       {"id": "shacl_class_target_coverage", "definition_version": 1, "kind": "ratio",
        "population": "owned_classes", "reason": "no SHACL shapes graph was supplied"}
     ]

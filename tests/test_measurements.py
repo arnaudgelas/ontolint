@@ -486,9 +486,29 @@ def test_class_depth_counts_the_classes_on_the_longest_chain_from_the_top() -> N
     assert _depths("") == {}
 
 
-def test_class_depth_is_0_on_a_subclass_cycle_and_the_cycle_adds_no_level_below_it() -> None:
+def test_a_class_on_a_subclass_cycle_has_no_depth_and_the_cycle_adds_no_level_below_it() -> None:
     cycle = "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A ."
-    assert _depths(cycle + " ex:C a owl:Class ; rdfs:subClassOf ex:A .") == {"A": 0, "B": 0, "C": 1}
+    # Left out, not counted at 0: no class has a depth below 1.
+    assert _depths(cycle + " ex:C a owl:Class ; rdfs:subClassOf ex:A .") == {"C": 1}
+
+
+def test_cyclic_classes_are_the_owned_classes_on_a_cycle_of_two_or_more() -> None:
+    ctx = _ctx(
+        "ex:A a owl:Class ; rdfs:subClassOf ex:B . ex:B a owl:Class ; rdfs:subClassOf ex:A ."
+        " ex:C a owl:Class ; rdfs:subClassOf ex:D . ex:D a owl:Class ; rdfs:subClassOf ex:E ."
+        " ex:E a owl:Class ; rdfs:subClassOf ex:C . ex:F a owl:Class ; rdfs:subClassOf ex:F , ex:A ."
+        " ex:G a owl:Class ; rdfs:subClassOf <https://other.example/X> ."
+        " <https://other.example/X> rdfs:subClassOf ex:G ."
+    )
+    found = measure(ctx, "cyclic_classes")
+    assert isinstance(found, TermRatio)
+    # A self-loop is no cycle here, nor is one closed through an IRI that is not an owned class.
+    assert (_names(found.numerator), _names(found.denominator)) == (
+        ["A", "B", "C", "D", "E"],
+        ["A", "B", "C", "D", "E", "F", "G"],
+    )
+    assert _depths("ex:F a owl:Class ; rdfs:subClassOf ex:F .") == {"F": 1}
+    assert ratio(_ctx(""), "cyclic_classes") == (0, 0)
 
 
 def test_the_deepest_class_is_as_deep_as_the_highest_subtree_cls005_measures() -> None:
@@ -498,7 +518,8 @@ def test_the_deepest_class_is_as_deep_as_the_highest_subtree_cls005_measures() -
     assert isinstance(found, TermValues)
     heights = hierarchy_depths(ctx.classes, directed_edges(data, RDFS.subClassOf, ctx.classes))
     assert max(found.values.values()) == max(heights.values()) == 6
-    assert sorted(Counter(found.values.values()).items()) == [(0, 2), (1, 22), (2, 4), (3, 2), (4, 1), (5, 1), (6, 1)]
+    assert sorted(Counter(found.values.values()).items()) == [(1, 22), (2, 4), (3, 2), (4, 1), (5, 1), (6, 1)]
+    assert ratio(ctx, "cyclic_classes") == (2, 33)  # the two classes left out
 
 
 def test_hierarchy_components_join_owned_classes_through_subclass_edges_only() -> None:

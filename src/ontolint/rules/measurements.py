@@ -43,7 +43,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 from rdflib.term import Node
 
-from ontolint.graph import hierarchy_depths, weakly_connected_components
+from ontolint.graph import hierarchy_depths, strongly_connected_components, weakly_connected_components
 from ontolint.models import Measurement, MeasurementKind
 from ontolint.ownership import OwnershipMode
 from ontolint.redaction import redact_userinfo
@@ -485,16 +485,29 @@ def _blank_subjects(ctx: RuleContext) -> CountRatio:
 
 
 def _class_depth(ctx: RuleContext) -> TermValues:
-    """Per owned class, the number of classes on the longest asserted chain from a top class down to it.
+    """Per owned class off the subclass cycles, the number of classes on the longest asserted chain down to it.
 
-    A class with no owned superclass is 1.  A class on a subclass cycle (CLS003) is 0 and adds nothing to the
-    depth of its subclasses; a self-loop is ignored.  The chains are the asserted ``rdfs:subClassOf`` triples
-    between owned classes, read upwards: :func:`~ontolint.graph.hierarchy_depths` over the reversed edges, so
-    the deepest class is as deep as the highest subtree CLS005 measures with ``--depth-limit``.
+    A class with no owned superclass is 1.  A class on a cycle (``cyclic_classes``) has no depth and is left
+    out, not counted at 0; it adds no level to its subclasses, and a self-loop is ignored.  The chains are the
+    asserted ``rdfs:subClassOf`` triples between owned classes, read upwards:
+    :func:`~ontolint.graph.hierarchy_depths` over the reversed edges, so the deepest class is as deep as the
+    highest subtree CLS005 measures with ``--depth-limit``.
     """
     classes = owned_classes(ctx)
     upwards = ((parent, child) for child, parent in directed_edges(ctx.g, RDFS.subClassOf, classes))
-    return TermValues(MappingProxyType(hierarchy_depths(classes, upwards)))
+    # hierarchy_depths marks a class on a cycle with 0; every other class is at least 1.
+    return TermValues(MappingProxyType({c: depth for c, depth in hierarchy_depths(classes, upwards).items() if depth}))
+
+
+def _cyclic_classes(ctx: RuleContext) -> TermRatio:
+    """Owned classes on an asserted subclass cycle of two or more owned classes: those ``class_depth`` leaves out.
+
+    A cycle is a strongly connected component of the asserted ``rdfs:subClassOf`` triples between owned classes;
+    a self-loop is not one, though CLS003 reports it too.
+    """
+    classes = owned_classes(ctx)
+    components = strongly_connected_components(classes, directed_edges(ctx.g, RDFS.subClassOf, classes))
+    return TermRatio(frozenset(c for component in components if len(component) > 1 for c in component), classes)
 
 
 def _hierarchy_components(ctx: RuleContext) -> Count:
@@ -590,7 +603,8 @@ SPECS: tuple[MeasurementSpec, ...] = (
         partitioned=True,
     ),
     MeasurementSpec("blank_subjects", 1, RATIO, "non_structural_subjects", _blank_subjects, rules=("METRIC013",)),
-    MeasurementSpec("class_depth", 1, HISTOGRAM, "owned_classes", _class_depth, partitioned=True),
+    MeasurementSpec("class_depth", 1, HISTOGRAM, "acyclic_owned_classes", _class_depth, partitioned=True),
+    MeasurementSpec("cyclic_classes", 1, RATIO, "owned_classes", _cyclic_classes, partitioned=True),
     MeasurementSpec("hierarchy_components", 1, COUNT, "owned_classes", _hierarchy_components),
     MeasurementSpec(
         "shacl_class_target_coverage", 1, RATIO, "owned_classes", _shacl_class_target_coverage, partitioned=True

@@ -107,16 +107,17 @@ Nothing open: 0.11.0 is released (see "Recently done").
       `test_a_displaced_roaming_finding_is_accepted_and_its_old_entry_is_stale_as_before`).
       Adding that claim to `seen` fixes it, but moves stale output in about 0.4% of random runs.
   - **METRICS-ENGINE** (P1; issue #20): METRIC001-METRIC013 are thresholds over named
-    measurements. `rules/measurements.py` holds the catalogue (`SPECS`): fifteen measurements, each
+    measurements. `rules/measurements.py` holds the catalogue (`SPECS`): sixteen measurements, each
     with an ID, a definition version (1), a kind (ratio, count or histogram) and a population,
     taken once per run and cached on the `RuleContext`. The rules keep their limits, sample gates,
     messages and order and read their values before the gate, so one that could not be taken
     fails the run (exit 2) and never passes. Twelve measurements are the rules' own figures
-    (METRIC006 and METRIC007 share one); three are new: `class_depth` (a histogram, depth from the
-    top, whose maximum is CLS005's), `hierarchy_components` (weakly connected components of
-    `rdfs:subClassOf` among owned classes, `owl:Thing` excluded) and `shacl_class_target_coverage`
-    (SHQ006's class-target reach, shared as `shapes.class_target_reach`; absent without
-    `--shapes`). `--format json --measurements` adds `files[].measurements` (integers only: a
+    (METRIC006 and METRIC007 share one); four are new: `class_depth` (a histogram, depth from the
+    top, whose maximum is CLS005's; a class on a subclass cycle has no depth and is left out, not
+    put at 0), `cyclic_classes` (the owned classes it leaves out), `hierarchy_components` (weakly
+    connected components of `rdfs:subClassOf` among owned classes, `owl:Thing` excluded) and
+    `shacl_class_target_coverage` (SHQ006's class-target reach, shared as
+    `shapes.class_target_reach`; absent without `--shapes`). `--format json --measurements` adds `files[].measurements` (integers only: a
     numerator and a denominator, a count or buckets; an absent one has a `reason`) and
     `files[].measurement_partitions` per closure file, named graph and in-file module, each term
     placed where its findings are (`modules.term_modules`, `datasets.term_graphs`). Without the
