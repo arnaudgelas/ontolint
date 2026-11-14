@@ -435,25 +435,30 @@ def _term_places(
     order is the report's: files in closure order (the root first), each file's graphs (the default graph first,
     then sorted), then the modules, sorted.
     """
+    # Each term is added to the places it names, never each place searched for its terms: a dataset of one
+    # graph per term would make that quadratic.
     places: dict[_Place, set[str]] = {}
     if loaded.modules:
         declared = _declared_terms(loaded.modules)
-        owners = {text: _declaring_module(declared, text) or 0 for text in texts}  # else the root
-        files = []
-        for position, module in enumerate(loaded.modules):
-            owned = {text for text, owner in owners.items() if owner == position}
-            places["file", module.display, None] = owned
-            files.append((module.display, module.graphs, owned))
+        held: list[set[str]] = [set() for _module in loaded.modules]
+        for text in texts:
+            held[_declaring_module(declared, text) or 0].add(text)  # else the root
+        files = [(module.display, module.graphs, held[position]) for position, module in enumerate(loaded.modules)]
+        places.update((("file", path, None), owned) for path, _index, owned in files)
     else:
         files = [(item.display, loaded.graphs, set(texts))]
     for path, index, owned in files:
-        of_term = term_graphs(loaded.graph, index, owned)
-        for name in index.names:
-            places["graph", path, name] = {text for text in owned if name in of_term.get(text, ())}
+        in_graph: dict[_Place, set[str]] = {("graph", path, name): set() for name in index.names}
+        for text, names in term_graphs(loaded.graph, index, owned).items():
+            for name in names:
+                in_graph["graph", path, name].add(text)
+        places.update(in_graph)
     if grouping is not None:
-        of_term = term_modules(loaded.graph, texts, grouping.predicate)
-        for name in sorted({name for names in of_term.values() for name in names}):
-            places["module", None, name] = {text for text, names in of_term.items() if name in names}
+        in_module: dict[str, set[str]] = {}
+        for text, names in term_modules(loaded.graph, texts, grouping.predicate).items():
+            for name in names:
+                in_module.setdefault(name, set()).add(text)
+        places.update((("module", None, name), in_module[name]) for name in sorted(in_module))
     return places
 
 
