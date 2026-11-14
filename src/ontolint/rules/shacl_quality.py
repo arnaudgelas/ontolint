@@ -31,13 +31,15 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
 * **SHQ012.** Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an
   IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang``
   ``"true"`` (a string), no ``sh:datatype``, a literal datatype; ``sh:uniqueLang`` on a node shape, which 4.4.5
-  forbids, is not reported.  Info: the constraint only sees value nodes that already violate ``sh:datatype``,
+  forbids, is not reported on purpose (SHACL-SHACL rejects it: SHACL001 fails, ``the shapes graph does not
+  conform to SHACL-SHACL``).  Info: the constraint only sees value nodes that already violate ``sh:datatype``,
   so it is vacuous for conforming data.
 * **SHQ014.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity
   ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and
   ``sh:Violation``.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); several values,
-  which 2.1.4 allows only one of, are each judged alone.  Warning: a literal makes the shape ill-formed; an
-  unknown ``sh:`` IRI is most likely a typo, but processors accept it.
+  which 2.1.4 allows only one of, are each judged alone and not reported as several on purpose (SHACL-SHACL
+  rejects them: SHACL001 fails).  Warning: a literal makes the shape ill-formed; an unknown ``sh:`` IRI is most
+  likely a typo, but processors accept it.
 * **SHQ015.** Every value of ``sh:flags`` on a shape that is not a literal made only of ``s``, ``m``, ``i``,
   ``x`` and ``q`` (F&O 3.1 5.6.2; ``q`` is XPath 3.0, ``s``, ``m``, ``i`` and ``x`` XPath 2.0, which SPARQL
   1.1 REGEX cites), and every shape with ``sh:flags`` but no ``sh:pattern`` (4.4.3: an optional parameter of
@@ -60,7 +62,8 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of
   ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path)
   or a blank path is one value.  Excluded: a node typed ``sh:NodeShape`` with a path, which 2.2 forbids, is
-  not reported; the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a
+  not reported on purpose (pySHACL refuses it with its own load error: SHACL001 fails); the path is not checked
+  for well-formedness.  Warning: the shape is ill-formed, and a
   processor may reject the shapes graph or validate either path.
 
 Fixtures: ``tests/rule_cases/shacl_quality.py``, ``tests/test_mutation_shacl_quality.py`` and
@@ -267,8 +270,20 @@ def _targets(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 )
 
 
+def property_shape_nodes(sg: Graph) -> set[Node]:
+    """The property shapes of ``sg`` (SHQ023): a subject of ``sh:path`` is one (SHACL 2.3), and a node typed
+    ``sh:PropertyShape`` or an IRI or blank node value of ``sh:property`` must be."""
+    shapes = set(sg.subjects(RDF.type, SH.PropertyShape)) | set(sg.subjects(SH.path, None))
+    return shapes | {o for o in sg.objects(None, SH.property) if isinstance(o, URIRef | BNode)}
+
+
+def has_path_defect(sg: Graph, shape: Node, property_shapes: set[Node]) -> bool:
+    """Whether SHQ023 reports ``shape``: a property shape with no ``sh:path`` or with several."""
+    return shape in property_shapes and len(set(sg.objects(shape, SH.path))) != 1
+
+
 def _property_path(ctx: RuleContext, sg: Graph, shape: Node, property_shapes: set[Node]) -> None:
-    if shape not in property_shapes:
+    if not has_path_defect(sg, shape, property_shapes):
         return
     count = len(set(sg.objects(shape, SH.path)))
     if count == 0:
@@ -349,9 +364,7 @@ def run(ctx: RuleContext) -> None:
     if sg is None:
         return
     shapes = _shapes(sg)
-    # SHACL 2.3: a subject of sh:path is a property shape, and a declared one or a value of sh:property must be.
-    property_shapes = set(sg.subjects(RDF.type, SH.PropertyShape)) | set(sg.subjects(SH.path, None))
-    property_shapes |= {o for o in sg.objects(None, SH.property) if isinstance(o, URIRef | BNode)}
+    property_shapes = property_shape_nodes(sg)
     for shape in shapes:
         for check in SHAPE_CHECKS:
             check(ctx, sg, shape)

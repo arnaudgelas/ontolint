@@ -1517,7 +1517,7 @@ ex:P sh:path ex:p ; sh:pattern ex:regex .
 - **Module:** [`shacl_quality`](#module-shacl_quality)
 - **Fix:** Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag.
 
-**Specification.** Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang`` ``"true"`` (a string), no ``sh:datatype``, a literal datatype; ``sh:uniqueLang`` on a node shape, which 4.4.5 forbids, is not reported.  Info: the constraint only sees value nodes that already violate ``sh:datatype``, so it is vacuous for conforming data.
+**Specification.** Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang`` ``"true"`` (a string), no ``sh:datatype``, a literal datatype; ``sh:uniqueLang`` on a node shape, which 4.4.5 forbids, is not reported on purpose (SHACL-SHACL rejects it: SHACL001 fails, ``the shapes graph does not conform to SHACL-SHACL``).  Info: the constraint only sees value nodes that already violate ``sh:datatype``, so it is vacuous for conforming data.
 
 *Flagged:* `unique lang on string`
 
@@ -1645,7 +1645,7 @@ ex:P sh:path ex:p ; sh:class ex:A .
 - **Module:** [`shacl_quality`](#module-shacl_quality)
 - **Fix:** Use sh:Info, sh:Warning or sh:Violation, or a custom severity IRI outside the sh: namespace.
 
-**Specification.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and ``sh:Violation``.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); several values, which 2.1.4 allows only one of, are each judged alone.  Warning: a literal makes the shape ill-formed; an unknown ``sh:`` IRI is most likely a typo, but processors accept it.
+**Specification.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and ``sh:Violation``.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); several values, which 2.1.4 allows only one of, are each judged alone and not reported as several on purpose (SHACL-SHACL rejects them: SHACL001 fails).  Warning: a literal makes the shape ill-formed; an unknown ``sh:`` IRI is most likely a typo, but processors accept it.
 
 *Flagged:* `typo severity`
 
@@ -2662,7 +2662,7 @@ ex:S a sh:NodeShape ; sh:targetNode 'x' ; sh:targetSubjectsOf ex:p .
 - **Module:** [`shacl_quality`](#module-shacl_quality)
 - **Fix:** Give every property shape exactly one sh:path.
 
-**Specification.** Every property shape that has no ``sh:path`` ("none") or more than one distinct value ("several").  A property shape is a node typed ``sh:PropertyShape`` or an IRI or blank node value of ``sh:property``, which must have exactly one path (2.3: "SHACL instances of sh:PropertyShape have one value for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path) or a blank path is one value.  Excluded: a node typed ``sh:NodeShape`` with a path, which 2.2 forbids, is not reported; the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a processor may reject the shapes graph or validate either path.
+**Specification.** Every property shape that has no ``sh:path`` ("none") or more than one distinct value ("several").  A property shape is a node typed ``sh:PropertyShape`` or an IRI or blank node value of ``sh:property``, which must have exactly one path (2.3: "SHACL instances of sh:PropertyShape have one value for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path) or a blank path is one value.  Excluded: a node typed ``sh:NodeShape`` with a path, which 2.2 forbids, is not reported on purpose (pySHACL refuses it with its own load error: SHACL001 fails); the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a processor may reject the shapes graph or validate either path.
 
 *Flagged:* `missing path`
 
