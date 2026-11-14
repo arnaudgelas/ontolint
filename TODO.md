@@ -106,6 +106,50 @@ Nothing open: 0.11.0 is released (see "Recently done").
       paired on its new path leaves its old entry stale (as on `main`; pinned by
       `test_a_displaced_roaming_finding_is_accepted_and_its_old_entry_is_stale_as_before`).
       Adding that claim to `seen` fixes it, but moves stale output in about 0.4% of random runs.
+  - **METRICS-ENGINE** (P1; issue #20): METRIC001-METRIC013 are thresholds over named
+    measurements. `rules/measurements.py` holds the catalogue (`SPECS`): fifteen measurements, each
+    with an ID, a definition version (1), a kind (ratio, count or histogram) and a population,
+    taken once per run and cached on the `RuleContext`. The rules keep their limits, sample gates,
+    messages and order and read their values before the gate, so one that could not be taken
+    fails the run (exit 2) and never passes. Twelve measurements are the rules' own figures
+    (METRIC006 and METRIC007 share one); three are new: `class_depth` (a histogram, depth from the
+    top, whose maximum is CLS005's), `hierarchy_components` (weakly connected components of
+    `rdfs:subClassOf` among owned classes, `owl:Thing` excluded) and `shacl_class_target_coverage`
+    (SHQ006's class-target reach, shared as `shapes.class_target_reach`; absent without
+    `--shapes`). `--format json --measurements` adds `files[].measurements` (integers only: a
+    numerator and a denominator, a count or buckets; an absent one has a `reason`) and
+    `files[].measurement_partitions` per closure file, named graph and in-file module, each term
+    placed where its findings are (`modules.term_modules`, `datasets.term_graphs`). Without the
+    flag every output is byte-identical. `docs/measurements.md` gives each population, exclusion
+    and empty-population value; a test keeps its table equal to the catalogue.
+    - Verified: `tests/golden/*`, the catalogue and the report schemas did not move; text, JSON
+      and SARIF are byte-identical to `main` on 49 fixture runs and on 1623 rule cases through the
+      CLI, and with the flag only the two keys differ; the 21-file METRIC corpus `check` passes
+      with `metric-corpus-results.json` unchanged, its 273 cells equal the vector, and
+      `class_depth`'s maximum equals CLS005's worst depth on all 21 files. With `main`'s inline
+      `metrics.py` put back, the 24 absent-measurement cases fail (exit 0, not 2). Targeted
+      mutation run (`rules/measurements.py`, `rules/metrics.py`, `rules/shapes.py`,
+      `reporting.py`, `cli.py`, `datasets.py`, `models.py`, `modules.py`, `graph/algorithms.py`;
+      non-slow suite): 593 mutants, 549 killed, 4 pardoned (older), 42 timeouts on a loaded
+      machine and 2 survivors, both in older code (`cli._library`'s import-root fallback, and
+      `datasets._term_graphs`' `masks and isinstance(...)`, equivalent because only IRIs can carry
+      a userinfo). The 20 timeouts in the changed code, applied by hand, are all killed by the
+      non-slow suite, once two gaps were closed: `_foreign`'s early `return False`, read by an
+      `if`, had an equivalent `None` mutant and is now one boolean expression, and the frozen
+      decorators of `MeasurementSpec`, `Measurement` and `MeasurementPartition` gained a test. A
+      second run on `rules/measurements.py`, `rules/metrics.py` and `models.py` with a 900 s
+      mutant timeout: 191 mutants, 188 killed, no timeout, 3 survivors, all older frozen
+      decorators in `models.py` (`RunResult`, `LibraryMember`, `PatternLibrary`; outside `paths`).
+    - Deviations from this entry: `unresolved_imports` is METRIC011's set (distinct IRI objects
+      minus the resolved ones), not SEC007's list, which also lists a non-IRI object;
+      "externally referenced terms by namespace" is METRIC010's reference count split by target
+      namespace (`by_namespace`); `unresolved_imports` and `blank_subjects` count the whole graph,
+      as METRIC011 and METRIC013 do. The figures are published only with `--measurements`, so
+      `differential.json` stays unmoved.
+    - Left open: term-level values (QUALITY-BASELINE's snapshot; the engine keeps the term sets);
+      budgets (QUALITY-BUDGET); SARIF, text, DQV and Markdown renderings; the JSON Schema item must
+      describe `measurements`; `scripts/metric_corpus.py` could read the vector instead of forced
+      messages; fuzzing the flag; a `Linter` API for the vector.
   - **LEGAL-PROVENANCE** (P1; issue 18): the maintainer's answers are written down. `NOTICE` names
     the copyright holder (Copyright 2026 Arnaud Gelas, the `pyproject.toml` author; 2026 is the
     first commit's year) and ships with `LICENSE` in the sdist and in the wheel's
@@ -941,7 +985,9 @@ graphs), then METRICS-ENGINE, then the snapshot (QUALITY-BASELINE and QUALITY-TR
 QUALITY-BUDGET (P2). DQV-REPORT and MARKDOWN-SUMMARY render the same model and
 GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and can go first.
 
-- [ ] **METRICS-ENGINE: reusable graph- and term-level measurements.** Move each METRIC rule's
+- [x] **METRICS-ENGINE: reusable graph- and term-level measurements.** Done (issue #20, see
+  "Recently done", METRICS-ENGINE): `--format json --measurements`, `docs/measurements.md`.
+  Move each METRIC rule's
   computation into a named measurement and make the rule a threshold over it. `differential.json`
   and the legacy golden must not move, because the refactor changes no finding. Publish the vector
   in JSON (`measurements`, per file and per module or graph). The first set is all computable
