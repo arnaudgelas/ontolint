@@ -203,7 +203,8 @@ def test_a_scheme_after_a_digit_or_a_sign_is_masked_in_every_output(
         assert _leaks(text) == []
     _code, out = run("prefixed.trig", "--format", output_format, "--module-by", "namespace")
     assert _leaks(out) == []
-    assert "urn:x:1https://****@example.test/graph1" in out
+    if output_format != "markdown":  # the Markdown summary names no graph, so it has none to mask
+        assert "urn:x:1https://****@example.test/graph1" in out
 
 
 @pytest.mark.parametrize("name", ["broken.ttl", "broken-prefixed.ttl", "broken.nt", "remote.jsonld"])
