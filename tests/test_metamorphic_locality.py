@@ -31,10 +31,11 @@ from ontolint.rules.registry import default_registry
 
 pytestmark = pytest.mark.slow
 
-# PER_TERM: every rule whose spec declares ``scope: term`` (docs/rules.md "Scope: term"; ``RuleSpec.scope``).  The
-# scope is the rule's own statement that it reports on one declared term from what is asserted about that term, so
-# a term that is not mentioned by an added island keeps its findings.  Rules of scope ontology, vocabulary, axiom,
-# shapes or input compare terms, count them, or look at the header, and are only asserted weakly below.
+# PER_TERM: every rule whose spec declares ``scope: term`` (docs/rules/<family>.md "Scope: term";
+# ``RuleSpec.scope``).  The scope is the rule's own statement that it reports on one declared term from what is
+# asserted about that term, so a term that is not mentioned by an added island keeps its findings.  Rules of scope
+# ontology, vocabulary, axiom, shapes or input compare terms, count them, or look at the header, and are only
+# asserted weakly below.
 PER_TERM = frozenset(spec.rule_id for spec in default_registry().all() if spec.scope is RuleScope.TERM)
 # Whole-graph ratios and tallies (METRIC*): an island that is labelled and defined lowers the unlabelled and
 # undocumented ratios and raises the sample size, so these findings can legitimately disappear or reword.
