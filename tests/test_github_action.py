@@ -37,13 +37,16 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 SHA_PIN = re.compile(r"uses: (?P<repo>[\w./-]+)@(?P<sha>[0-9a-f]{40}) # v\d+\.\d+\.\d+\n")
 USES = re.compile(r"^\s*(?:- )?uses: (?P<what>\S+)", re.MULTILINE)
 VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
-KITCHEN, CLEAN = str(FIXTURES / "kitchen_sink.ttl"), str(FIXTURES / "clean.ttl")
+KITCHEN, CLEAN = str(FIXTURES / "kitchen_sink.ttl"), str(FIXTURES / "clean.ttl")  # the files, to lint directly
+KITCHEN_NAME, CLEAN_NAME = "kitchen_sink.ttl", "clean.ttl"  # their copies in a workspace
 
 
 def _env(workspace: Path, **inputs: str) -> dict[str, str]:
     """The environment a step gets: one ``INPUT_*`` per input, plus the files the runner points at."""
+    for name in (KITCHEN_NAME, CLEAN_NAME):  # `files` must be inside the workspace
+        shutil.copy(FIXTURES / name, workspace / name)
     env = {
-        "INPUT_FILES": CLEAN,
+        "INPUT_FILES": CLEAN_NAME,
         "INPUT_ARGS": "",
         "INPUT_FAIL_ON": "",
         "INPUT_SARIF_FILE": "ontolint.sarif",
@@ -182,6 +185,32 @@ def test_a_report_inside_the_workspace_is_accepted_even_when_nested(tmp_path: Pa
     assert settings.sarif_file == (tmp_path / "reports" / "out.sarif").resolve()
 
 
+@pytest.mark.parametrize("name", ["../outside.ttl", "/etc/hosts", "sub/../../outside.ttl", "ok.ttl\n../outside.ttl"])
+def test_an_input_file_outside_the_workspace_is_refused(tmp_path: Path, name: str) -> None:
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    (tmp_path / "outside.ttl").write_text("")
+    with pytest.raises(entrypoint.InputError, match="outside the workspace"):
+        entrypoint.read_settings(_env(workspace, files=name))
+
+
+def test_a_symlink_cannot_carry_an_input_file_out_of_the_workspace(tmp_path: Path) -> None:
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    (tmp_path / "secret.ttl").write_text("")
+    (workspace / "link.ttl").symlink_to(tmp_path / "secret.ttl")
+    (workspace / "dir").symlink_to(tmp_path, target_is_directory=True)
+    for name in ("link.ttl", "dir/secret.ttl", "dir"):
+        with pytest.raises(entrypoint.InputError, match="outside the workspace"):
+            entrypoint.read_settings(_env(workspace, files=name))
+
+
+def test_input_files_inside_the_workspace_are_accepted_as_written(tmp_path: Path) -> None:
+    (tmp_path / "modules").mkdir()
+    settings = entrypoint.read_settings(_env(tmp_path, files="./a.ttl\nmodules/\nnot/yet/there.ttl\n."))
+    assert settings.files == ["./a.ttl", "modules/", "not/yet/there.ttl", "."]
+
+
 def test_a_symlink_cannot_carry_the_report_out_of_the_workspace(tmp_path: Path) -> None:
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -196,7 +225,7 @@ def test_a_symlink_cannot_carry_the_report_out_of_the_workspace(tmp_path: Path) 
 
 
 def test_a_run_writes_the_sarif_report_the_summary_and_the_outputs(tmp_path: Path) -> None:
-    code = entrypoint.run(entrypoint.read_settings(_env(tmp_path, files=KITCHEN, fail_on="error")))
+    code = entrypoint.run(entrypoint.read_settings(_env(tmp_path, files=KITCHEN_NAME, fail_on="error")))
     assert code == main([KITCHEN, "--fail-on", "error", "--format", "json", "--output", str(tmp_path / "j")]) == 1
     sarif = json.loads((tmp_path / "ontolint.sarif").read_text())
     assert sarif["version"] == "2.1.0"
@@ -237,6 +266,14 @@ def test_without_a_summary_file_the_run_still_lints_and_says_so(
     del env["GITHUB_STEP_SUMMARY"]
     assert entrypoint.run(entrypoint.read_settings(env)) == 0
     assert "GITHUB_STEP_SUMMARY is not set" in capsys.readouterr().out
+
+
+def test_ontolint_runs_in_the_workspace_the_input_files_were_checked_against(tmp_path: Path) -> None:
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    command = _stub(tmp_path, f"open({str(tmp_path / 'cwd')!r}, 'w').write(os.getcwd())\nsys.exit(0)\n")
+    entrypoint.run(entrypoint.read_settings(_env(workspace)), command)
+    assert Path((tmp_path / "cwd").read_text()).resolve() == workspace.resolve()
 
 
 def test_a_tool_failure_is_exit_two_and_still_writes_the_outputs(tmp_path: Path) -> None:
