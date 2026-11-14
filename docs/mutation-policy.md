@@ -77,7 +77,7 @@ it by 5 points; lowering one requires the waiver process below.
 
 ## Scope
 
-In scope: the engine, linter, CLI, loader, the cached graph facts every rule reads (`context.py`), the bounded worker (`worker.py`), import closure, reporting, source locations, `adapters/` and `rules/`
+In scope: the engine, linter, CLI, loader, the cached graph facts every rule reads (`context.py`), the bounded worker (`worker.py`), import closure, reporting, the quality snapshot (`quality.py`), source locations, `adapters/` and `rules/`
 (the `paths` setting in `pyproject.toml`). Out of scope: tests, `docker/`,
 `.github/`, and modules not listed in `paths`. Adding a source module
 to `paths` is a policy change: it enters in advisory mode until it meets the
