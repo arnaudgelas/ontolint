@@ -971,6 +971,18 @@
     "ed74e591d92cfd8dcf680e771522c76407c4552a5608741d568bb2a5e957f4a1"
    ]
   ],
+  "DATA002:blank domain and type": [
+   [
+    "DATA002",
+    "https://example.test/onto#i",
+    [
+     "https://example.test/onto#p",
+     "_:e81236e7bc27",
+     "_:eff8e795a834"
+    ],
+    "b4fe2ac55eabfdd09451f93df07fdad23e73c0f903cd32be09b324fcaeec3456"
+   ]
+  ],
   "DATA002:usage implies a disjoint domain": [
    [
     "DATA002",
@@ -1571,6 +1583,41 @@
     "404f4b999a7610d93e9643b610c2fdd7b2525637440bdb1f7a504a73934e18ed"
    ]
   ],
+  "GOV001:deprecated blank node in a list": [
+   [
+    "GOV001",
+    "https://example.test/onto#A",
+    [
+     "_:c4a1040d91d2",
+     "list",
+     "https://example.test/onto#p"
+    ],
+    "8d1beaf8a51bef2dc49ba8662c3355a9ae93d4612802a0087528abcbee7cf745"
+   ]
+  ],
+  "GOV001:deprecated blank node used": [
+   [
+    "GOV001",
+    "https://example.test/onto#A",
+    [
+     "_:77279e1952b3",
+     "object",
+     "https://example.test/onto#p"
+    ],
+    "99ed264249b3b333adb1d0cbd3d53948aa1733034e8b9ce5f123002037e4e96f"
+   ]
+  ],
+  "GOV001:deprecated blank property used": [
+   [
+    "GOV001",
+    "https://example.test/onto#i",
+    [
+     "_:8f5865a7a328",
+     "predicate"
+    ],
+    "ff81456a26f1617a2fb8a5362374c8750bcf9e74dca0d35e01e77177591fef87"
+   ]
+  ],
   "GOV001:deprecated class used as superclass": [
    [
     "GOV001",
@@ -1592,6 +1639,16 @@
      "predicate"
     ],
     "ed18281216b01bfe2d9da7737ae2b59ce6bd26934ebd6002693466fbb5de69af"
+   ]
+  ],
+  "GOV002:blank import target": [
+   [
+    "GOV002",
+    "https://example.test/onto",
+    [
+     "_:5f8c7bc43f2e"
+    ],
+    "500f882205d4ca86c6bd681f9add42c506898316f414978accbe314d6f869e3a"
    ]
   ],
   "GOV002:literal import target": [
@@ -3256,6 +3313,17 @@
     "a833cf107b87ae9c288793a19caf49f7aa17a0e5ad96160234f6ff6913d8f62b"
    ]
   ],
+  "OBO011:blank version IRI": [
+   [
+    "OBO011",
+    "http://purl.obolibrary.org/obo/xyz.owl",
+    [
+     "http://www.w3.org/2002/07/owl#versionIRI",
+     "_:b86b3a472ac5"
+    ],
+    "eb612ba0164d51af243086458db61cf43420d97a3cde8b98c411e325a8666daf"
+   ]
+  ],
   "OBO011:empty id": [
    [
     "OBO011",
@@ -3763,6 +3831,16 @@
      "https://example.test/onto#q"
     ],
     "6735b8cbd116dc6113d9f53fbb17f55f483c05ca143f0ea646a4af90c7b9d0c7"
+   ]
+  ],
+  "OWL008:symmetric with a blank inverse": [
+   [
+    "OWL008",
+    "https://example.test/onto#p",
+    [
+     "_:bfb2ea384c8f"
+    ],
+    "3532fd156e2cfe694c23e0f046e67f8f80b636c02398038bb8f6cd57b9e38c53"
    ]
   ],
   "OWL008:symmetric with inverse": [
@@ -4310,6 +4388,17 @@
     "8078824c532b8510da702013f3983667c51f1825ee800837df3446d9448b662d"
    ]
   ],
+  "OWL021:object sub-property of a blank datatype property": [
+   [
+    "OWL021",
+    "https://example.test/onto#o",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+     "_:77636dd0e4b4"
+    ],
+    "699565d8899c757e37f0d4988e3619b289241d59810593f4c73ad51bd2a3b0c7"
+   ]
+  ],
   "OWL021:object sub-property of datatype property": [
    [
     "OWL021",
@@ -4427,6 +4516,16 @@
     "fbc4747168594f36987fcd2ef4a9b57189f9970f9ef4fe0949bcc377553f7a94"
    ]
   ],
+  "OWL024:disjoint blank sub-property": [
+   [
+    "OWL024",
+    "https://example.test/onto#p",
+    [
+     "_:4a7c0c7f4fd0"
+    ],
+    "624fbe0f2d0ee8f9420cd24bd5123916441a094c301e2c2204d029e559e30f4c"
+   ]
+  ],
   "OWL024:disjoint equivalent property": [
    [
     "OWL024",
@@ -4485,6 +4584,16 @@
      "https://example.test/onto#B"
     ],
     "b1490a9c0537dabb21c67956f425e644f9a5a38c7c5ccd64f313df16a3b248b1"
+   ]
+  ],
+  "OWL025:disjoint with a blank superclass": [
+   [
+    "OWL025",
+    "https://example.test/onto#A",
+    [
+     "_:753f98bf63b7"
+    ],
+    "3269c8c2ea7c8bce93bf684c5948e5018f06ccd74f1d19889e5e715074a991f8"
    ]
   ],
   "OWL025:disjoint with its equivalent": [
@@ -4577,6 +4686,27 @@
     "5a16194d88d5925104eafdec2af2d7d3e122c1e0543f0489059db5ab9e78d942"
    ]
   ],
+  "OWL026:same as and different from a blank node": [
+   [
+    "OWL026",
+    "https://example.test/onto#a",
+    [
+     "_:ad2769e14c2c"
+    ],
+    "e0adc54b2747266df9eea69c5a26affa568ed0d787e3c58847cf72c8e8072120"
+   ]
+  ],
+  "OWL027:negated assertion on a blank individual that is asserted": [
+   [
+    "OWL027",
+    "https://example.test/onto#a",
+    [
+     "https://example.test/onto#p",
+     "_:3353cb6faae0"
+    ],
+    "aaf748b597b5e6c98c16859fd279e94a47eca4fa0e3790a9d70bbe6f1584b13e"
+   ]
+  ],
   "OWL027:negated individual assertion that is asserted": [
    [
     "OWL027",
@@ -4629,6 +4759,17 @@
      "https://example.test/onto#b"
     ],
     "1c5a3b74f24e941f6506f9c8ae57e7e8f47a6a934cf3245d211c08699e538e45"
+   ]
+  ],
+  "OWL029:both directions between blank nodes": [
+   [
+    "OWL029",
+    "_:cc459cadfd51",
+    [
+     "https://example.test/onto#p",
+     "_:cc459cadfd51"
+    ],
+    "5df61ce5ab76e286d49d84088f760db163a23bfcfc8ad7beaba980457e866629"
    ]
   ],
   "OWL029:self assertion": [
@@ -6097,6 +6238,22 @@
     "3c3ed7775d217e93ec802432c8502b86175a1238c2ab1d1d4e831c502b2b1b35"
    ]
   ],
+  "SEC014:nested after a digit": [
+   [
+    "SEC014",
+    "urn:x:1https://****@h.test/",
+    [],
+    "f2a1cdfd080b9c55cae71bb91e7b8b76f6cf5ed84075b127f3e0de751beeabbe"
+   ]
+  ],
+  "SEC014:nested after a sign in a query": [
+   [
+    "SEC014",
+    "https://example.test/r?to=-https://****@h.test/",
+    [],
+    "8be3efc10a40e61c2b3d4bde16fd5ef81f79f3745a0822c587eef4c89330a41c"
+   ]
+  ],
   "SEC014:nested in a query": [
    [
     "SEC014",
@@ -6127,6 +6284,14 @@
     "https://****@example.test/p",
     [],
     "b138d4cb9b175581bac648b0bf78f05d9a8e660049eb80350ded15adb376aac4"
+   ]
+  ],
+  "SEC014:scheme after a digit": [
+   [
+    "SEC014",
+    "1https://****@example.test/x",
+    [],
+    "ceffd53eaaa20de2b2f9387778d919fe929f71868f7a92cca219b5d4d090675e"
    ]
   ],
   "SEC014:special scheme with one slash": [
@@ -7343,6 +7508,16 @@
     "9ce80656ad894206621b8409a6322ae4626050282fb1254abc89227ba4cc0bf9"
    ]
   ],
+  "SKOS002:blank value": [
+   [
+    "SKOS002",
+    "https://example.test/onto#c",
+    [
+     "_:24201837b53a"
+    ],
+    "e9c71c27ce249aaa3ed83ee500f571d618071ddc82774dd61a3896b43f61d8c4"
+   ]
+  ],
   "SKOS002:plain and xsd:string": [
    [
     "SKOS002",
@@ -7413,6 +7588,16 @@
     "https://example.test/onto#c",
     [],
     "fbe98339794cabbba969deec3e90937194347f110ae1e64cc57dcc16d7aa61fe"
+   ]
+  ],
+  "SKOS006:top concept of a blank scheme": [
+   [
+    "SKOS006",
+    "https://example.test/onto#c",
+    [
+     "_:c1f247fd46fb"
+    ],
+    "2052512d762a30e2c9b84af6fff3bee28966d3df291403363ce1a025f2e620aa"
    ]
   ],
   "SKOS006:top concept with broader": [
@@ -7624,6 +7809,17 @@
      "https://example.test/onto#other"
     ],
     "3ba5d09db94834eac67636d9330abb3df7aed61bab1e4be68b64e1605717b29a"
+   ]
+  ],
+  "SKOS013:blank label": [
+   [
+    "SKOS013",
+    "https://example.test/onto#c",
+    [
+     "http://www.w3.org/2004/02/skos/core#altLabel",
+     "_:4133a1b10640"
+    ],
+    "72c20d092f6aacd4fa95de2fffdd6956639b259393100170524b900b2c565480"
    ]
   ],
   "SKOS013:custom datatype": [
