@@ -557,16 +557,16 @@ def write_pages(pages: Mapping[str, str], root: Path = DOCS) -> None:
             path.unlink()
 
 
-def main(argv: Sequence[str]) -> int:
-    """Write the reference, or with ``--check`` only print the pages that are not current."""
+def main(argv: Sequence[str], root: Path = DOCS) -> int:
+    """Write the reference under ``root``, or with ``--check`` only print the pages that are not current."""
     logging.getLogger("rdflib").setLevel(logging.ERROR)  # odd-IRI examples make rdflib warn
     pages = build()
     if "--check" in argv:
-        stale = stale_pages(pages)
+        stale = stale_pages(pages, root)
         for problem in stale:
             print(problem)
         return 1 if stale else 0
-    write_pages(pages)
+    write_pages(pages, root)
     return 0
 
 

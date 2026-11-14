@@ -126,6 +126,26 @@ def test_stale_missing_and_orphan_pages_are_reported_and_other_files_ignored(tmp
     assert (tmp_path / "rules" / ".DS_Store").read_bytes() == b"\0"
 
 
+def test_main_writes_the_pages_and_check_only_names_those_not_current(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    pages = {"rules.md": "index\n", "rules/a.md": "a\n"}
+    monkeypatch.setattr(rule_docs_generator, "build", lambda: pages)
+    assert rule_docs_generator.main(["--check"], tmp_path) == 1
+    assert capsys.readouterr().out == "rules.md (missing)\nrules/a.md (missing)\n"
+    assert list(tmp_path.iterdir()) == []
+    (tmp_path / "rules").mkdir()
+    (tmp_path / "rules" / "old.md").write_text("orphan\n", encoding="utf-8")
+    assert rule_docs_generator.main([], tmp_path) == 0
+    assert capsys.readouterr().out == ""
+    assert sorted(path.relative_to(tmp_path).as_posix() for path in tmp_path.rglob("*.md")) == sorted(pages)
+    assert rule_docs_generator.main(["--check"], tmp_path) == 0
+    assert capsys.readouterr().out == ""
+    (tmp_path / "rules" / "a.md").write_text("edited\n", encoding="utf-8")
+    assert rule_docs_generator.main(["--check"], tmp_path) == 1
+    assert capsys.readouterr().out == "rules/a.md (stale)\n"
+
+
 def test_options_print_only_the_fields_a_case_sets_and_sets_sorted_at_every_depth() -> None:
     assert _value(Policy()) == "Policy()"
     assert _value(Policy(unknown_keys=("x",))) == "Policy(unknown_keys=('x',))"
