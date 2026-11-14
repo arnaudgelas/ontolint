@@ -258,6 +258,25 @@ def test_an_unknown_severity_is_refused_as_in_sarif_and_never_rendered() -> None
         to_sarif_report(report)
 
 
+def test_a_shacl001_finding_shows_its_message_in_a_code_span_and_never_its_evidence() -> None:
+    hostile = "[x](https://evil.test) <b>`|`</b>\n# h"
+    evidence = {
+        "focusNode": "https://example.test/a",
+        "resultPath": "https://example.test/p",
+        "value": "[v](https://evil.test)\n| a |",
+        "resultMessage": (hostile,),
+        "detail": ({"resultMessage": (hostile,), "value": "`<i>`"},),
+    }
+    finding = Finding("SHACL001", "error", "https://example.test/a", hostile, "x", evidence=evidence)
+    markdown = render_markdown(RunReport((FileReport("a.ttl", "a.ttl", (finding,)),)))
+    assert unexpected_tokens(markdown) == []
+    item = _items(markdown)
+    assert len(item) == 1
+    assert "`<i>`" not in markdown
+    assert "Path:" not in markdown
+    assert hostile not in markdown
+
+
 # --- the code span ----------------------------------------------------------------------------------
 
 
