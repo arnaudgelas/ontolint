@@ -14,7 +14,7 @@ What the Action refuses to do, because it runs in the caller's CI:
 * hand ontolint the caller's secrets: the child process gets an allow-list of environment variables;
 * let ontolint's output become a workflow command: every run is wrapped in ``::stop-commands::``, with a token
   drawn for that run, and stderr is merged into stdout so the runner sees one ordered stream;
-* write the SARIF report outside the workspace.
+* read a file, or write the SARIF report, outside the workspace (``GITHUB_WORKSPACE``, symlinks resolved).
 
 The standard library only, apart from ``ontolint.github``, which escapes the annotations this script prints.
 """
@@ -48,6 +48,7 @@ class InputError(Exception):
 
 @dataclass(frozen=True)
 class Settings:
+    workspace: Path  # where ``files`` are read from: the Action checked them against it, ontolint runs in it
     files: list[str]
     extra: list[str]
     fail_on: str
@@ -119,6 +120,10 @@ def read_settings(env: Mapping[str, str]) -> Settings:
     for name in files:
         if name.startswith("-"):
             raise InputError(f"files: {name!r} starts with '-' and would be read as an option")
+        # Symlinks included: a link in the workspace cannot name a file or directory outside it.  A name that does
+        # not exist yet resolves too, and ontolint reports it.
+        if not (workspace / name).resolve().is_relative_to(workspace):
+            raise InputError(f"files: {name!r} is outside the workspace")
     fail_on = env.get("INPUT_FAIL_ON", "").strip()
     if fail_on and fail_on not in FAIL_ON:
         raise InputError(f"fail-on: {fail_on!r} is not one of {', '.join(FAIL_ON)}")
@@ -127,6 +132,7 @@ def read_settings(env: Mapping[str, str]) -> Settings:
         raise InputError(f"summary: {summary!r} is not 'true' or 'false'")
     step_summary, github_output = env.get("GITHUB_STEP_SUMMARY"), env.get("GITHUB_OUTPUT")
     return Settings(
+        workspace=workspace,
         files=files,
         extra=_extra_arguments(env.get("INPUT_ARGS", "")),
         fail_on=fail_on,
@@ -150,13 +156,13 @@ def child_environment(env: Mapping[str, str]) -> dict[str, str]:
     return {**kept, "PYTHONUTF8": "1"}
 
 
-def _run_wrapped(argv: Sequence[str], env: Mapping[str, str]) -> int:
+def _run_wrapped(argv: Sequence[str], env: Mapping[str, str], cwd: Path) -> int:
     """Run one report with workflow commands switched off, so nothing it prints can be read as one."""
     token = secrets.token_hex(16)
     print(f"::stop-commands::{token}", flush=True)
     try:
         return subprocess.run(  # noqa: S603 -- argv is the interpreter, the module and checked inputs.
-            argv, env=child_environment(env), stderr=subprocess.STDOUT, check=False
+            argv, env=child_environment(env), cwd=cwd, stderr=subprocess.STDOUT, check=False
         ).returncode
     finally:
         print(f"::{token}::", flush=True)
@@ -177,12 +183,12 @@ def run(settings: Settings, command: Sequence[str] | None = None, env: Mapping[s
     if settings.summary:
         # A private directory (mode 0700) that the runner removes with its temporary directory at the job's end.
         markdown = Path(tempfile.mkdtemp(prefix="ontolint-action-", dir=settings.runner_temp)) / "summary.md"
-        codes.append(_run_wrapped(report_command(command, settings, "markdown", markdown), env))
+        codes.append(_run_wrapped(report_command(command, settings, "markdown", markdown), env, settings.workspace))
         if settings.step_summary is None:
             print("GITHUB_STEP_SUMMARY is not set; the Markdown summary was not appended.")
         elif markdown.exists():
             _append(settings.step_summary, markdown.read_bytes())
-    codes.append(_run_wrapped(report_command(command, settings, "sarif", settings.sarif_file), env))
+    codes.append(_run_wrapped(report_command(command, settings, "sarif", settings.sarif_file), env, settings.workspace))
     code = max(codes)
     if settings.github_output is not None:
         kept = markdown if markdown is not None and markdown.exists() else ""
