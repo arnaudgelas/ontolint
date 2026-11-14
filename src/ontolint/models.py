@@ -176,9 +176,30 @@ class Measurement:
         required, optional = _FIELDS[self.kind] if self.reason is None else (set[str](), set[str]())
         if not required <= present <= required | optional:
             raise ValueError(f"{self.id}: a {self.kind} measurement cannot have the fields {sorted(present)}")
+        self._check_shape()
         counts = [self.numerator, self.denominator, self.value, *(n for pair in self.buckets for n in pair)]
         if any(n is not None and n < 0 for n in [*counts, *(n for _ns, n in self.by_namespace or ())]):
             raise ValueError(f"{self.id}: a measurement counts, so it is never negative")
+
+    def _check_shape(self) -> None:
+        """Refuse the types and invariants the published schema relies on (integers, ascending buckets, a split)."""
+
+        def whole(n: object) -> bool:
+            return isinstance(n, int) and not isinstance(n, bool)
+
+        if not (isinstance(self.id, str) and self.id and isinstance(self.population, str) and self.population):
+            raise ValueError("a measurement has a non-empty id and population")
+        if not whole(self.definition_version) or self.definition_version < 1:
+            raise ValueError(f"{self.id}: a definition version is a positive integer")
+        numbers: list[object] = [n for n in (self.numerator, self.denominator, self.value) if n is not None]
+        numbers += [n for pair in self.buckets for n in pair]
+        by_namespace = self.by_namespace or ()
+        if not all(whole(n) for n in numbers) or not all(whole(n) for _ns, n in by_namespace):
+            raise ValueError(f"{self.id}: a measurement counts, so its numbers are integers")
+        if any(a >= b for (a, _), (b, _) in zip(self.buckets, self.buckets[1:], strict=False)):
+            raise ValueError(f"{self.id}: histogram buckets are ascending and distinct")
+        if self.by_namespace is not None and sum(n for _ns, n in by_namespace) != self.numerator:
+            raise ValueError(f"{self.id}: by_namespace splits the numerator, so it sums to it")
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-ready representation: the identity, then only the fields this measurement has."""
