@@ -212,7 +212,7 @@ jobs:
 
       - name: Lint a fixture with the Action
         id: ontolint
-        uses: arnaudgelas/ontolint@v0.13.1
+        uses: arnaudgelas/ontolint@v0.14.0
         with:
           files: tests/fixtures/kitchen_sink.ttl
           fail-on: never
