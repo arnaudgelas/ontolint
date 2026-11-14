@@ -391,6 +391,15 @@ def test_foreign_references_count_structural_references_and_split_the_foreign_on
     )
 
 
+def test_foreign_namespaces_are_sorted_whatever_the_order_of_the_triples() -> None:
+    later, earlier = "ex:A rdfs:subClassOf <https://z.example/X> .", "ex:B rdfs:subClassOf <https://a.example/Y> ."
+    for body in (f"{later} {earlier}", f"{earlier} {later}"):
+        ctx = _ctx(HEADER + "ex:A a owl:Class . ex:B a owl:Class . " + body)
+        found = measure(ctx, "foreign_references")
+        assert isinstance(found, CountRatio)
+        assert found.by_namespace == (("https://a.example/", 1), ("https://z.example/", 1)), body
+
+
 def test_without_ownership_information_the_namespace_alone_makes_a_reference_foreign() -> None:
     ctx = _ctx("ex:A a owl:Class ; rdfs:subClassOf ex:B , <https://other.example/X> . ex:B a owl:Class .")
     assert ratio(ctx, "foreign_references") == (1, 2)
