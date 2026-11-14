@@ -693,7 +693,7 @@ def _markdown_quality_line(result: Result) -> str:
     rest is integers and the delta, which :mod:`ontolint.quality` computes as a signed decimal.
     """
     name = markdown_code(result.id, _QUOTE_LIMITS["rule"])
-    if result.reasons or result.before is None or result.after is None:  # a compared result has both sides
+    if result.before is None or result.after is None:  # only a compared result has both sides
         return f"- {name}: not comparable: {markdown_code('; '.join(result.reasons), _QUALITY_REASON_LIMIT)}"
     if result.changed is not None:
         change = "changed" if result.changed else "unchanged"

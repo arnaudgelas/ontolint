@@ -109,6 +109,7 @@ paths = [
     "src/ontolint/cli.py",
     "src/ontolint/datasets.py",
     "src/ontolint/loader.py",
+    "src/ontolint/quality.py",
     "src/ontolint/imports.py",
     "src/ontolint/reporting.py",
     "src/ontolint/source_locations.py",

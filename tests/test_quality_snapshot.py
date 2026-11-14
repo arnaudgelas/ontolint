@@ -9,7 +9,7 @@ from __future__ import annotations
 import contextlib
 import copy
 import json
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +25,11 @@ from ontolint.policy import Policy
 from ontolint.quality import (
     SNAPSHOT_FORMAT,
     SNAPSHOT_VERSION,
+    Change,
+    Comparison,
     Coverage,
     Entry,
+    Result,
     Shaping,
     Snapshot,
     SnapshotError,
@@ -433,3 +436,29 @@ def test_a_good_snapshot_with_one_place_replaced_is_a_snapshot_or_a_snapshot_err
     except SnapshotError:
         return
     assert loads(dumps(snap)) == snap  # whatever is accepted is a snapshot that round-trips
+
+
+def test_the_snapshot_model_is_immutable_and_non_ascii_iris_are_written_as_they_are() -> None:
+    coverage = Coverage("higher", (), ())
+    for value, field in (
+        (Shaping(), "base"),
+        (coverage, "better"),
+        (Entry(Measurement("m", 1, MeasurementKind.COUNT, "p", value=1)), "coverage"),
+        (Snapshot(Shaping(), ()), "entries"),
+        (Change("higher", (), (), (), (), ()), "better"),
+        (Result("m"), "id"),
+        (Comparison(()), "results"),
+    ):
+        with pytest.raises(FrozenInstanceError):
+            setattr(value, field, None)
+    iri = "https://example.test/q#café"
+    snap = Snapshot(
+        Shaping(),
+        (
+            Entry(
+                Measurement("m", 1, MeasurementKind.RATIO, "p", numerator=1, denominator=1),
+                Coverage("higher", (iri,), (iri,)),
+            ),
+        ),
+    )
+    assert iri in dumps(snap) and "\\u00e9" not in dumps(snap)
