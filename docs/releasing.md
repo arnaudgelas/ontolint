@@ -64,6 +64,15 @@ Pushing the tag starts `.github/workflows/release.yml`:
 PyPI refuses to overwrite a version, so a failed publish needs a new version. A failure in
 **Verify** or **Action** means the release is on PyPI but broken: fix it and release the next patch version.
 
-`action/requirements.txt` is the Action's hash-locked dependency list. Regenerate it whenever `uv.lock` moves
-(a test compares the two): `uv export --frozen --no-dev --no-emit-project --format requirements-txt --no-header
-> action/requirements.txt`.
+`action/requirements.txt` and `action/verify-requirements.txt` are the Action's hash-locked dependency lists
+(what ontolint needs, and what checks the PyPI attestation of the ontolint wheel). Regenerate them whenever
+`uv.lock` moves (a test compares each with the lock):
+
+```bash
+uv export --frozen --no-dev --no-emit-project --format requirements-txt --no-header > action/requirements.txt
+uv export --frozen --only-group release --no-emit-project --format requirements-txt --no-header > action/verify-requirements.txt
+```
+
+The Action cannot pin the wheel it installs by hash: the hash does not exist when the tag's commit is made.
+It checks the wheel's PyPI attestation instead (see the README, "GitHub Action"), so the **Action** job above is
+also the first proof that the attestation of the release just published verifies from a fresh runner.
