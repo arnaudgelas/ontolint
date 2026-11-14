@@ -196,3 +196,41 @@ jobs:
             echo "::error::the PyPI attestation of $(basename "$file") does not verify"
             exit 1
           done
+
+  # Proves the Action as a user gets it: resolved from the tag, installing the release just published. The pin
+  # below must be the version being released; scripts/bump_version.py rewrites it, and a test checks it.
+  action:
+    name: Run the Action at the release tag
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Lint a fixture with the Action
+        id: ontolint
+        uses: arnaudgelas/ontolint@v0.13.1
+        with:
+          files: tests/fixtures/kitchen_sink.ttl
+          fail-on: never
+
+      - name: Check what the Action produced
+        env:
+          SARIF: ${{ steps.ontolint.outputs.sarif-file }}
+          SUMMARY: ${{ steps.ontolint.outputs.summary-file }}
+          EXIT_CODE: ${{ steps.ontolint.outputs.exit-code }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          assert os.environ["EXIT_CODE"] == "0", os.environ["EXIT_CODE"]
+          sarif = json.load(open(os.environ["SARIF"]))
+          assert sarif["version"] == "2.1.0"
+          results = sarif["runs"][0]["results"]
+          assert results, "no SARIF results"
+          summary = open(os.environ["SUMMARY"]).read()
+          assert summary.startswith("## ontolint "), summary[:80]
+          print(len(results), "SARIF results;", len(summary), "bytes of summary")
+          PY

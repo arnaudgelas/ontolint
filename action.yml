@@ -1,0 +1,80 @@
+name: ontolint
+description: >-
+  Lint RDF, OWL, SKOS and SHACL files with ontolint. Writes a SARIF report for code scanning and a Markdown
+  summary for the job, and installs the one ontolint release this version of the Action belongs to.
+author: Arnaud Gelas
+
+# `uses: arnaudgelas/ontolint@vX.Y.Z` runs ontolint X.Y.Z: the Action reads the version from the pyproject.toml of
+# the commit the tag points to and installs exactly that release from PyPI, never the latest. Its dependencies come
+# from action/requirements.txt, a hash-locked export of uv.lock. The Action asks for no token and no permission; it
+# does not upload the SARIF report (the README shows the step that does).
+
+inputs:
+  files:
+    description: Files or directories to lint, one per line, relative to the workspace.
+    required: true
+  args:
+    description: >-
+      More ontolint options, one argument per line (for example `--profile` and `strict` on two lines). The report
+      format and file are the Action's: `--format`, `--output` and the options that print instead of lint are refused.
+    required: false
+    default: ""
+  fail-on:
+    description: >-
+      Lowest severity that fails the step: `error`, `warning`, `info` or `never`. Empty keeps ontolint's own default.
+    required: false
+    default: ""
+  sarif-file:
+    description: Where to write the SARIF 2.1.0 report, relative to the workspace and inside it.
+    required: false
+    default: ontolint.sarif
+  summary:
+    description: Append the Markdown summary to the job summary (`true` or `false`).
+    required: false
+    default: "true"
+
+outputs:
+  sarif-file:
+    description: Absolute path of the SARIF report. It is written even when the step fails on findings.
+    value: ${{ steps.lint.outputs.sarif-file }}
+  summary-file:
+    description: Absolute path of the Markdown summary, empty when there is none. It lives until the job ends.
+    value: ${{ steps.lint.outputs.summary-file }}
+  exit-code:
+    description: ontolint's exit status, 0 when nothing fails, 1 on findings at or above fail-on, 2 on a tool failure.
+    value: ${{ steps.lint.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        enable-cache: false
+        version: "0.13.7"
+
+    - name: Install the pinned ontolint
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        venv="$RUNNER_TEMP/ontolint-venv"
+        uv venv --python 3.13 "$venv"
+        uv pip install --python "$venv/bin/python" --default-index https://pypi.org/simple \
+          --require-hashes --no-deps -r "$ACTION_PATH/action/requirements.txt"
+        ONTOLINT_ACTION_ROOT="$ACTION_PATH" "$venv/bin/python" "$ACTION_PATH/action/entrypoint.py" install
+
+    - name: Lint
+      id: lint
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        INPUT_FILES: ${{ inputs.files }}
+        INPUT_ARGS: ${{ inputs.args }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_SARIF_FILE: ${{ inputs.sarif-file }}
+        INPUT_SUMMARY: ${{ inputs.summary }}
+      run: |
+        set -euo pipefail
+        "$RUNNER_TEMP/ontolint-venv/bin/python" "$ACTION_PATH/action/entrypoint.py" run

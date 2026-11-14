@@ -194,3 +194,40 @@ def test_the_real_repository_has_the_expected_version_lines() -> None:
     assert bump.read_version(root) == bump.parse_version(
         bump.PYPROJECT_LINE.findall((root / "pyproject.toml").read_text())[0]
     )
+
+
+RELEASE_WORKFLOW = ".github/workflows/release.yml"
+PIN = "      - uses: arnaudgelas/ontolint@v0.1.0\n"
+
+
+def _with_release_workflow(repo: Path, text: str = PIN) -> None:
+    (repo / RELEASE_WORKFLOW).parent.mkdir(parents=True)
+    (repo / RELEASE_WORKFLOW).write_text(text)
+    _git(repo, "add", ".")
+    _commit(repo, "ci: prove the action")
+
+
+def test_the_release_workflow_pin_of_the_action_moves_with_the_version(repo: Path) -> None:
+    _with_release_workflow(repo)
+    plan = bump.apply(repo, "minor", today=TODAY, lock=None)
+    assert (repo / RELEASE_WORKFLOW).read_text() == "      - uses: arnaudgelas/ontolint@v0.2.0\n"
+    assert repo / RELEASE_WORKFLOW in plan.files
+
+
+def test_a_dry_run_leaves_the_release_workflow_alone(repo: Path) -> None:
+    _with_release_workflow(repo)
+    bump.apply(repo, "minor", today=TODAY, dry_run=True, lock=None)
+    assert (repo / RELEASE_WORKFLOW).read_text() == PIN
+
+
+@pytest.mark.parametrize("text", ["no pin\n", PIN * 2])
+def test_a_release_workflow_without_exactly_one_pin_is_refused(repo: Path, text: str) -> None:
+    _with_release_workflow(repo, text)
+    with pytest.raises(bump.BumpError, match="exactly one pin"):
+        bump.apply(repo, "minor", today=TODAY, lock=None)
+    assert 'version = "0.1.0"' in (repo / "pyproject.toml").read_text()
+
+
+def test_the_real_release_workflow_has_one_pin_of_the_action() -> None:
+    text = (SCRIPT.parent.parent / RELEASE_WORKFLOW).read_text()
+    assert len(bump.ACTION_PIN.findall(text)) == 1
