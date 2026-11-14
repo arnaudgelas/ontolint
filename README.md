@@ -15,7 +15,7 @@ file, reports what looks wrong, and exits non-zero when a finding is serious eno
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
 </p>
 <p align="center">
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 250 of 305" src="https://img.shields.io/badge/rules-250%2F305_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 251 of 306" src="https://img.shields.io/badge/rules-251%2F306_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -101,7 +101,7 @@ agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.tx
 
 ## What it checks
 
-250 of the 305 catalogue rules are implemented; the rest are planned. The
+251 of the 306 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one, with its specification and test cases, on one page per family.
 
 - 236 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -1159,7 +1159,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 305 entries: 250 executable diagnostics and 55 proposed
+catalogue. It records 306 entries: 251 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an
