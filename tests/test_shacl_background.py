@@ -311,3 +311,13 @@ def test_a_literal_cause_is_compared_in_its_ntriples_spelling(
     assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
     assert _nested_foci(findings[0]) == ['"x"']
     assert code == 1
+
+
+def test_a_literal_cause_with_userinfo_is_compared_masked(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """The evidence masks the userinfo of a literal's N-Triples spelling, so the linted literal is masked too."""
+    shapes = "sh:property [ sh:path ( ex:knows ex:age ) ; sh:node ex:Int ] . ex:Int sh:datatype xsd:integer ."
+    data = 'ex:c ex:age "https://u:pw@h.test/x" .'
+    code, findings = _background_run(tmp_path, capsys, data, "ex:bg a ex:T ; ex:knows ex:c .", shapes)
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0]) == ['"https://****@h.test/x"']
+    assert code == 1
