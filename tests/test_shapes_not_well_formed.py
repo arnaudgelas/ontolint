@@ -14,7 +14,9 @@ from __future__ import annotations
 import json
 import logging
 import re
+import sys
 import time
+import types
 from pathlib import Path
 from typing import Any
 
@@ -253,6 +255,17 @@ def test_a_metashacl_message_for_a_shapes_graph_that_conforms_is_not_believed(mo
     with pytest.raises(ReportableRuntimeError):
         shacl_issues(_graph(DATA), _graph(valid))
     execution = Linter(_graph(DATA), _graph(valid)).execute(["SHACL001"]).executions[0]
+    assert execution.detail.startswith("ReportableRuntimeError: ")
+    assert execution.results == ()
+
+
+def test_a_pyshacl_without_meta_validate_keeps_the_failure_it_raised(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The entry point is not in pySHACL's ``__all__``: a version that lacks it still fails the rule, as before."""
+    monkeypatch.setitem(sys.modules, "pyshacl.entrypoints", types.SimpleNamespace())  # no meta_validate
+
+    execution = Linter(_graph(DATA), _graph(NO_PATH)).execute(["SHACL001"]).executions[0]
+
+    assert execution.status is ExecutionStatus.FAILED
     assert execution.detail.startswith("ReportableRuntimeError: ")
     assert execution.results == ()
 
