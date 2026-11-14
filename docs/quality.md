@@ -12,6 +12,15 @@ This is not `--baseline`, which suppresses findings by fingerprint (README "Poli
 Nothing here changes a finding, a fingerprint or an exit code, and a run without these options reports
 exactly what it did.
 
+> **This is not a quality gate.** `--quality-baseline` and `--compare-quality` report; they exit `0`
+> whatever they find, so committing a quality baseline does not protect a branch: a run that loses
+> definition coverage still passes CI. The only quality gate today is the
+> findings of the METRIC rules (their absolute thresholds, [metric-thresholds.md](metric-thresholds.md),
+> and `--fail-on`): they judge one run, not a change from the baseline. A gate on the
+> comparison itself (a budget on regressions, dilution or removals) is QUALITY-BUDGET (issue #23); it needs
+> decisions this format does not take (removed terms, dilution, measurements that are not comparable,
+> definition-version changes), so it is not part of this feature.
+
 ```bash
 ontolint onto.ttl --write-quality-snapshot quality.json          # take a snapshot (commit it, or keep it in CI)
 ontolint onto.ttl --format json --quality-baseline quality.json  # the run against the accepted values
@@ -101,8 +110,8 @@ and `changed`. Measurements are listed in the old snapshot's order, then those o
 the four counts, `new and fine`, and the delta, or `not comparable` with the reasons, every id and reason in
 a code span, at most 20 measurements. `--quality-baseline` takes `--format json` or `markdown` only.
 
-Exit codes: a comparison exits `0` whatever it finds (a regression is not an error; a threshold is
-QUALITY-BUDGET's job). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
+Exit codes: a comparison exits `0` whatever it finds, by design: it is not a gate (see the top of this page;
+a threshold is QUALITY-BUDGET's job, issue #23). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
 (`TOOL001: quality snapshot FILE cannot be used: ...`).
 
 ## The snapshot file (version 1)
@@ -144,18 +153,26 @@ tool version or host). `--write-quality-snapshot` is for one ontology file (a cl
   (`id`, `definition_version`, `kind`, `population`, then the value fields of its kind, or `reason` when it
   could not be taken), plus, for a **coverage measure**, three keys that come together: `better`
   (`higher` or `lower`: whether more of the numerator is an improvement), `numerator_terms` and
-  `denominator_terms`. Both lists are sorted, hold each IRI once, and the numerator is within the
-  denominator; `numerator` and `denominator` are their lengths. The coverage measures are the eight with a
+  `denominator_terms`. Both lists are sorted, hold each IRI once (a masked text once per IRI it stands
+  for, see below), and the numerator is within the denominator; `numerator` and `denominator` are their lengths. The coverage measures are the eight with a
   `better` in `rules/measurements.py` (`SPECS`): the label, definition, property-documentation, language,
   orphan, unsigned-property, cycle and SHACL coverage ones.
 - `policy` is what besides the graph shaped the populations: `base` (`--base`), `extra_label_predicates`,
   `extra_definition_predicates` (sorted) and `imports` (the sorted IRIs of the imports the run resolved to
   files, the import closure). It does not hold thresholds, the rule selection or a profile: no measurement
   depends on them.
-- No IRI userinfo is written: IRIs, the policy and reasons are masked, and two IRIs that differ only in their
-  userinfo are one term, as they are one finding.
+- No IRI userinfo is written: IRIs, the policy and reasons are masked (the `SEC014` and `SEC016` notes in the README). The
+  `numerator` and `denominator` are the engine's counts, taken before masking, so they equal what
+  `--measurements` publishes. Distinct IRIs that differ only in their userinfo (`https://a:x@h/T` and
+  `https://b:y@h/T`) are written as the same masked text (`https://****@h/T`), once for each IRI: a masked
+  text may therefore repeat in a list, an unmasked one never, and a count is the length of its list.
+  In the comparison such a text is one term whose badness is the number of its IRIs that are in the bad
+  state: it is `regressed` when that number rises, `improved` when it falls, `diluted` or `added_good` when it
+  is new. A swap of one bad IRI for another under the same masked text is not seen, and the term does not
+  say which of its IRIs changed. The comparison therefore never hides a loss, and never shows a gain it did
+  not measure.
 - A file read back is validated in full: types, counts equal to the list lengths, sorted lists, the subset
-  rule, one entry per id. `dumps(loads(text)) == text` for every file ontolint writes.
+  rule (as multisets), one entry per id. `dumps(loads(text)) == text` for every file ontolint writes.
 
 The snapshot holds the file's whole vector and no partitions (`measurement_partitions`).
 
