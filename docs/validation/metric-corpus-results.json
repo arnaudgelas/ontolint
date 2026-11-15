@@ -1256,5 +1256,1288 @@
         "measured": "0"
       }
     }
+  },
+  "vectors": {
+    "automatce-base.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 465,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 309,
+        "numerator": 309
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 27,
+        "numerator": 46
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 309,
+        "numerator": 309
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 309,
+        "numerator": 5234
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 331,
+        "numerator": 271
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 320,
+        "numerator": 320
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 309,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 11,
+        "numerator": 11
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 309,
+        "numerator": 11
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 11,
+        "numerator": 0
+      }
+    },
+    "bfo-2020-core.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 88,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 36,
+        "numerator": 36
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 16,
+        "numerator": 35
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 36,
+        "numerator": 36
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 36,
+        "numerator": 1010
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 94,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 76,
+        "numerator": 76
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 36,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 40,
+        "numerator": 40
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 36,
+        "numerator": 40
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 40,
+        "numerator": 0
+      }
+    },
+    "cco-merged.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 2020,
+        "numerator": 1
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 1400,
+        "numerator": 1400
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 382,
+        "numerator": 1262
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 1400,
+        "numerator": 1400
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 1400,
+        "numerator": 30222
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 1667,
+        "numerator": 303
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 1572,
+        "numerator": 1572
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 1400,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 172,
+        "numerator": 171
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 1400,
+        "numerator": 148
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 148,
+        "numerator": 1
+      }
+    },
+    "dcterms.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 99,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 22,
+        "numerator": 22
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 8
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 22,
+        "numerator": 22
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 22,
+        "numerator": 240
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 11,
+        "numerator": 3
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 77,
+        "numerator": 77
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 22,
+        "numerator": 10
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 55,
+        "numerator": 55
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 22,
+        "numerator": 55
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "food-traceability.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 137,
+        "numerator": 58
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 43,
+        "numerator": 0
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 3,
+        "numerator": 18
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 43,
+        "numerator": 0
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 43,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 31,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 43,
+        "numerator": 31
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 31,
+        "numerator": 31
+      }
+    },
+    "iao.owl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 457,
+        "numerator": 16
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 210,
+        "numerator": 197
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 45,
+        "numerator": 183
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 210,
+        "numerator": 210
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 197,
+        "numerator": 4864
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 230,
+        "numerator": 16
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 267,
+        "numerator": 255
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 210,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 57,
+        "numerator": 47
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 210,
+        "numerator": 23
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 23,
+        "numerator": 6
+      }
+    },
+    "ids-ontology.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 16,
+        "numerator": 2
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 80
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "mfto.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 22,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 0
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 18
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 14
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 20,
+        "numerator": 20
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 4
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 2,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 2
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 2
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 2,
+        "numerator": 2
+      }
+    },
+    "mod.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 181,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 15
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 2,
+        "numerator": 4
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 15
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 222
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 104,
+        "numerator": 8
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 83,
+        "numerator": 83
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 68,
+        "numerator": 68
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 68
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 68,
+        "numerator": 9
+      }
+    },
+    "pao.owl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 134,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 93
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 7,
+        "numerator": 95
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 103
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 93,
+        "numerator": 1126
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 107,
+        "numerator": 12
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 114,
+        "numerator": 114
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 13
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 2
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 10
+      }
+    },
+    "pato-base.owl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 3012,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 2931,
+        "numerator": 1972
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 521,
+        "numerator": 2274
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 2931,
+        "numerator": 2931
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 1972,
+        "numerator": 38117
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 2274,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 2847,
+        "numerator": 0
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 2931,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 2931,
+        "numerator": 0
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "prov-o.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 30,
+        "numerator": 30
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 9,
+        "numerator": 28
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 30,
+        "numerator": 30
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 30,
+        "numerator": 1266
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 115,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 80,
+        "numerator": 1
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 30,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 65,
+        "numerator": 55
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 30,
+        "numerator": 50
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 50,
+        "numerator": 1
+      }
+    },
+    "rights-ontology.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 12
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 10
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 12
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 272
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 10,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 12
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 1
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 0
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "ro-core.owl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 76,
+        "numerator": 16
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 19,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 24,
+        "numerator": 24
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 25,
+        "numerator": 23
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 24
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 24,
+        "numerator": 10
+      }
+    },
+    "schemaorg-30.1.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 3256,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 939,
+        "numerator": 939
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 183,
+        "numerator": 982
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 939,
+        "numerator": 939
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 939,
+        "numerator": 20834
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 992,
+        "numerator": 10
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 2477,
+        "numerator": 7
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 939,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 1538,
+        "numerator": 1538
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 939,
+        "numerator": 1538
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "sdo-1.9.0.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 176,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 25,
+        "numerator": 25
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 8,
+        "numerator": 13
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 25,
+        "numerator": 25
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 25,
+        "numerator": 545
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 139,
+        "numerator": 8
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 128,
+        "numerator": 125
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 25,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 103
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 25,
+        "numerator": 103
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 103,
+        "numerator": 1
+      }
+    },
+    "skos-core.rdf": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 33,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 4
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 1,
+        "numerator": 1
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 4
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 40
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 10,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 32
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 28,
+        "numerator": 28
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 18
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 12
+      }
+    },
+    "sosa.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 55,
+        "numerator": 1
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 13
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 13
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 412
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 36,
+        "numerator": 36
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 23,
+        "numerator": 23
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 23
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 23,
+        "numerator": 0
+      }
+    },
+    "ssn.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 81,
+        "numerator": 10
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 6,
+        "numerator": 6
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 6,
+        "numerator": 6
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 6,
+        "numerator": 117
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 21,
+        "numerator": 21
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 6,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 15
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 6,
+        "numerator": 15
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 1
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 15,
+        "numerator": 15
+      }
+    },
+    "tractusx-ontology.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 199,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 32
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 10,
+        "numerator": 26
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 32
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 503
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 236,
+        "numerator": 6
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 186,
+        "numerator": 183
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 156,
+        "numerator": 154
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 139
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 139,
+        "numerator": 0
+      }
+    },
+    "tractusx-taxonomy.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 52,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    }
   }
 }
