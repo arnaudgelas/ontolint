@@ -519,7 +519,9 @@ only results about nodes the linted file mentions (as a subject or an object, so
 also counts when one of the results nested in its `detail` is about such a node: SHACL reports an
 `sh:node` violation on the referencing node, which may be the ontology's, with the linted node as
 its cause. Such a finding is focused on the ontology's node, at its shape's severity, with no source
-region in the linted file. A cause nested deeper than 8 levels is not looked at. An imported
+region in the linted file. Every cause is looked at, however deep: the filter reads the report's `sh:detail`
+links itself and not the evidence, which keeps 8 levels. A result whose walk would pass 100,000
+nested results in all (never pySHACL's) is kept, as nothing shows that it is the background's alone. An imported
 file that declares shapes is a shape library: its shapes are validated with too (a `TOOL009` note
 names it), and its other triples, if any, join the ontology background.
 
@@ -793,8 +795,11 @@ pySHACL types it as a validation result too. Only a report that lists no result 
 `sh:result` (never pySHACL's) has each typed result as a finding. Only the report node pySHACL
 writes, the object of no triple, is read: pySHACL copies into its report every triple reachable
 from a blank value, so data shaped like a report or a result adds no finding. A result nested
-deeper than 8 levels appears in no output; its top-level result still does, and still fails the
-run. The evidence copies each value in full, so a report with many results on long literals
+deeper than 8 levels is not copied: the evidence of the deepest result kept carries
+`detailTruncated: "true"` (after `detail`, before `resultMessage`; absent everywhere else, and
+absent when the only `sh:detail` left leads back to a result above it), so a reader knows a
+cause was dropped. The top-level result still is a finding, and still fails the run. The
+evidence copies each value in full, so a report with many results on long literals
 grows accordingly.
 Findings with the same message are ordered by their evidence, so the output no longer depends on
 pySHACL's hash-seed-dependent result order. The message, focus, severity and fingerprint are
@@ -810,7 +815,8 @@ Text prints part of the evidence after the `Fix:` line and any `In:` line: `Path
 whose value is its focus) and, for each result nested in `detail`, in evidence order, a `Detail:`
 line that reads like that result's own finding header (`<focus>: <messages> [shape: <source
 shape>]`, the focus spelled as in the evidence, so a literal is `"x"`), followed by that result's
-own lines two spaces further in:
+own lines two spaces further in, and `(further nested results omitted)` after the lines of a
+result whose evidence is `detailTruncated`:
 
 ```text
 [ERROR  ] SHACL001 https://example.test/a: Value does not conform to Shape <https://example.test/N>. See details for more information. [shape: https://example.test/Knows]
