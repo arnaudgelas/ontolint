@@ -1,4 +1,4 @@
-"""Best-effort source positions for RDF terms retained by RDFLib parsing.
+"""Best-effort source regions for RDF terms retained by RDFLib parsing.
 
 RDFLib graphs deliberately contain semantic nodes, not their lexical source positions. This
 module recovers positions from Turtle/N3/TriG, N-Triples/N-Quads and RDF/XML syntax, and from explicit
@@ -18,6 +18,7 @@ import json
 import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 from urllib.parse import urljoin
 from xml.sax import SAXException, handler, make_parser
 from xml.sax.xmlreader import AttributesNSImpl
@@ -114,8 +115,9 @@ class SourceIndex:
 
 
 def build_source_index(data: bytes, fmt: str, public_id: str, graph: Graph) -> SourceIndex:
-    """Index term starts in ``data`` when ``fmt`` is supported, otherwise return no locations.
+    """Index the regions of terms in ``data`` when ``fmt`` is supported, otherwise return no locations.
 
+    A region is the term's first spelling: its start, and its exclusive end when that is as certain as the start.
     Columns are one-based Unicode code points.  The SARIF renderer declares that unit explicitly.
     Parsing has already succeeded, so a token is retained only when it resolves to a node in ``graph``.
     Locations are auxiliary: the parse has already succeeded, so a locator error must never fail the
@@ -150,6 +152,14 @@ class _Lines:
         line = bisect.bisect_right(self.starts, index)
         return Location(line, index - self.starts[line - 1] + 1)
 
+    def span(self, index: int, end: int | None) -> Location:
+        """The region of the token at ``index`` that ends at ``end`` (exclusive); no end if ``end`` is ``None``."""
+        start = self.location(index)
+        if end is None:
+            return start
+        stop = self.location(end)
+        return Location(start.line, start.column, stop.line, stop.column)
+
 
 def _scan(
     text: str, fmt: str, public_id: str, graph_nodes: set[Node], prefixes: Mapping[str, str]
@@ -173,15 +183,18 @@ def _scan(
                 break
             node = _resolve_iri(public_id, text[index + 1 : end])
             if node is not None:
-                _record(locations, graph_nodes, node, lines, index)
+                _record(locations, graph_nodes, node, lines, (index, end + 1))
             index = end + 1
         elif (match := _BNODE.match(text, index)) is not None:
-            _record(locations, graph_nodes, BNode(match["label"]), lines, index)
+            # A label may go on past what the pattern reads (inner dots, non-ASCII letters): then its end is unknown.
+            stop = match.end() if _bnode_ends(text, match.end()) else None
+            _record(locations, graph_nodes, BNode(match["label"]), lines, (index, stop))
             index = match.end()
         elif fmt in _PREFIXED_FORMATS and (match := _PREFIXED_NAME.match(text, index)) is not None:
             namespace = prefixes.get(match["prefix"])
             if namespace is not None:
-                _record(locations, graph_nodes, URIRef(namespace + _unescape_local(match["local"])), lines, index)
+                node = URIRef(namespace + _unescape_local(match["local"]))
+                _record(locations, graph_nodes, node, lines, (index, match.end()))
             index = match.end()
         else:
             index = _past_non_term(text, index)
@@ -222,9 +235,26 @@ def _directive_end(text: str, index: int) -> int | None:
     return match.end() if match else None
 
 
-def _record(locations: dict[Node, Location], graph_nodes: set[Node], node: Node, lines: _Lines, index: int) -> None:
+# What may follow a blank-node label for it to end there: the end of the text, a space, a delimiter, or a dot
+# that ends the statement.  Anything else (a letter, a digit, ``.b``) may be part of a label the pattern cut short.
+_BNODE_END = re.compile(r"(?=$|[\s;,()\[\]{}<>#\"']|\.(?:$|[\s#}\])<]))")
+
+
+def _bnode_ends(text: str, end: int) -> bool:
+    """Whether the blank-node label read up to ``end`` certainly ends there."""
+    return _BNODE_END.match(text, end) is not None
+
+
+def _record(
+    locations: dict[Node, Location],
+    graph_nodes: set[Node],
+    node: Node,
+    lines: _Lines,
+    at: tuple[int, int | None],
+) -> None:
+    """Record ``node`` at ``at``, the offset of its token and the offset after it (``None``: its end is unknown)."""
     if node in graph_nodes and node not in locations:
-        locations[node] = lines.location(index)
+        locations[node] = lines.span(*at)
 
 
 def _join(base: str, reference: str) -> str | None:
@@ -276,14 +306,66 @@ def _unescape_local(value: str) -> str:
     return re.sub(r"\\(.)", r"\1", value)
 
 
+# The end of a start tag: the first ``>`` outside a quoted attribute value (a value may hold a ``>``).
+_TAG_END = re.compile(rb"""(?:[^>"']|"[^"]*"|'[^']*')*+>""")
+_XML_BREAK = re.compile(rb"\r\n|\r|\n")
+_XML_ENCODING = re.compile(rb"""\A(?:\xef\xbb\xbf)?<\?xml[^>]*?\sencoding\s*=\s*["']([^"']+)["']""")
+
+
+def _tag_end(data: bytes, start: int) -> int | None:
+    """The byte offset after the start tag that begins at ``start``, or ``None`` if it has no end."""
+    match = _TAG_END.match(data, start + 1)
+    return None if match is None else match.end()
+
+
+def _utf8_compatible(data: bytes) -> bool:
+    """Whether byte offsets of ``data`` can be turned into code-point columns (UTF-8 or ASCII, as declared)."""
+    if data.startswith((b"\xff\xfe", b"\xfe\xff", b"\x00<", b"<\x00")):
+        return False
+    declared = _XML_ENCODING.match(data)
+    return declared is None or declared[1].lower() in {b"utf-8", b"utf8", b"us-ascii", b"ascii"}
+
+
+class _ByteCursor:
+    """Turn increasing byte offsets of a UTF-8 document into XML line and column numbers, in linear time overall.
+
+    An XML parser counts a line break as ``\\n``, ``\\r\\n`` or a lone ``\\r``, and a column in code points.  The
+    cursor remembers the last position it answered and counts only the bytes since, so it cannot go backwards.
+    """
+
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+        self.offset = 3 if data.startswith(b"\xef\xbb\xbf") else 0  # a parser does not count the byte order mark
+        self.line = 1
+        self.column = 1
+
+    def move(self, offset: int) -> tuple[int, int] | None:
+        """The one-based line and column of byte ``offset`` (a character boundary), or ``None`` if it is behind."""
+        if offset < self.offset:
+            return None
+        end = self.data.rfind(b"\n", self.offset, offset)
+        end_cr = self.data.rfind(b"\r", self.offset, offset)
+        last = max(end, end_cr)
+        if last >= 0:
+            self.line += sum(1 for _ in _XML_BREAK.finditer(self.data, self.offset, offset))
+            self.offset = last + 1
+            self.column = 1
+        self.column += len(self.data[self.offset : offset].decode("utf-8"))
+        self.offset = offset
+        return self.line, self.column
+
+
 class _RDFXMLLocator(handler.ContentHandler):
     """Collect RDF/XML resource positions from SAX events without changing the RDF parser's semantics."""
 
-    def __init__(self, public_id: str, graph_nodes: set[Node]) -> None:
+    def __init__(self, public_id: str, graph_nodes: set[Node], data: bytes = b"") -> None:
         self.base = public_id
         self.bases: list[str] = []
         self.graph_nodes = graph_nodes
         self.locations: dict[Node, Location] = {}
+        self.data = data
+        self.cursor = _ByteCursor(data) if _utf8_compatible(data) else None
+        self.parser: Any = None
 
     def setDocumentLocator(self, locator: object) -> None:  # noqa: N802 -- SAX callback spelling.
         self.locator = locator
@@ -307,7 +389,26 @@ class _RDFXMLLocator(handler.ContentHandler):
 
     def _record(self, node: Node) -> None:
         if node in self.graph_nodes and node not in self.locations:
-            self.locations[node] = Location(self.locator.getLineNumber(), self.locator.getColumnNumber() + 1)  # type: ignore[attr-defined]
+            line, column = self.locator.getLineNumber(), self.locator.getColumnNumber() + 1  # type: ignore[attr-defined]
+            end = self._tag_end(line, column)
+            self.locations[node] = Location(line, column, *end) if end is not None else Location(line, column)
+
+    def _tag_end(self, line: int, column: int) -> tuple[int, int] | None:
+        """Where the start tag being read ends, as (line, column) one past its ``>``; ``None`` unless that is certain.
+
+        The parser's own start position is the check: the tag is trusted only when the bytes at the parser's byte
+        offset begin a tag and count to the same line and column the parser reports.
+        """
+        if self.cursor is None:
+            return None
+        try:
+            start = self.parser._parser.CurrentByteIndex  # noqa: SLF001 -- pyexpat's offset
+        except AttributeError:
+            return None
+        stop = _tag_end(self.data, start) if self.data[start : start + 1] == b"<" else None
+        if stop is None or self.cursor.move(start) != (line, column):
+            return None
+        return self.cursor.move(stop)
 
 
 def _xml_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, Location]:
@@ -318,7 +419,8 @@ def _xml_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, Loca
         for feature in (handler.feature_external_ges, handler.feature_external_pes):
             with contextlib.suppress(NotImplementedError, ValueError):
                 parser.setFeature(feature, False)
-        collector = _RDFXMLLocator(public_id, {node for triple in graph for node in triple})
+        collector = _RDFXMLLocator(public_id, {node for triple in graph for node in triple}, data)
+        collector.parser = parser
         parser.setContentHandler(collector)
         parser.parse(io.BytesIO(data))
     except SAXException:  # A successful RDFLib parse remains authoritative if the auxiliary scan disagrees.
@@ -336,10 +438,10 @@ def _jsonld_locations(data: bytes, public_id: str, graph: Graph) -> dict[Node, L
     locations: dict[Node, Location] = {}
     graph_nodes = {node for triple in graph for node in triple}
     lines = _Lines(text)
-    for value, offset in _json_id_values(text, document, public_id):
+    for value, offset, end in _json_id_values(text, document, public_id):
         node = _resolve_iri(public_id, value)
         if node is not None:
-            _record(locations, graph_nodes, node, lines, offset)
+            _record(locations, graph_nodes, node, lines, (offset, end))
     return locations
 
 
@@ -360,13 +462,15 @@ def _plain(value: object) -> object:
     return value
 
 
-def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[str, int]]:  # noqa: C901 -- mirrors JSON nesting.
-    """Return physical offsets of explicit ``@id`` values after simple local-context expansion.
+def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[str, int, int]]:  # noqa: C901 -- mirrors JSON nesting.
+    """Return the physical span (start offset, offset after the closing quote) of each explicit ``@id`` value.
+
+    The values are expanded by the simple local-context rules.
 
     ``document`` must be ``text`` decoded with ``object_pairs_hook=_Pairs``, so that the walk and
     the decoded tree agree member by member.  Any disagreement raises :class:`ValueError`.
     """
-    found: list[tuple[str, int]] = []
+    found: list[tuple[str, int, int]] = []
     decoder = json.JSONDecoder()
 
     def whitespace(index: int) -> int:
@@ -393,11 +497,12 @@ def _json_id_values(text: str, document: object, public_id: str) -> list[tuple[s
                 _key, index = decoder.raw_decode(text, index)
                 index = expect(whitespace(index), ":")
                 start = index
-                index = whitespace(value(index, child, base, terms, context or key == "@context"))
+                stop = value(index, child, base, terms, context or key == "@context")
+                index = whitespace(stop)
                 if key == "@id" and isinstance(child, str) and not context:
                     expanded = _expand_jsonld_id(child, base, terms)
                     if expanded is not None:
-                        found.append((expanded, start))
+                        found.append((expanded, start, stop))
             return expect(index, "}")
         if isinstance(current, list):
             index = expect(index, "[")

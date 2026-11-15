@@ -54,10 +54,27 @@ NOTIFICATION_LEVELS = {
 
 @dataclass(frozen=True)
 class Location:
-    """A one-based source position (line, and column in Unicode code points) inside a file."""
+    """A one-based source region (line, and column in Unicode code points) inside a file.
+
+    The start is the first character of the token a finding is about.  The end, when the locator can tell it as
+    surely as the start, is exclusive (SARIF 2.1.0, section 3.30.9): the position one past the token's last
+    character, on the line the token ends on.  A region has both ends of its column or neither; it never ends
+    at or before its start.
+    """
 
     line: int
     column: int | None = None
+    end_line: int | None = None
+    end_column: int | None = None
+
+    def __post_init__(self) -> None:
+        if (self.end_line is None) != (self.end_column is None):
+            raise ValueError("a region's end needs both an end line and an end column")
+        if self.end_line is not None and self.end_column is not None:
+            if self.column is None:
+                raise ValueError("a region's end needs a start column")
+            if (self.end_line, self.end_column) <= (self.line, self.column):
+                raise ValueError("a region's end must be after its start")
 
 
 # gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
@@ -285,6 +302,9 @@ def _sarif_location(uri: str, location: Location | None) -> dict[str, Any]:
         region: dict[str, int] = {"startLine": location.line}
         if location.column is not None:
             region["startColumn"] = location.column
+        if location.end_line is not None and location.end_column is not None:
+            region["endLine"] = location.end_line
+            region["endColumn"] = location.end_column
         physical["region"] = region
     return {"physicalLocation": physical}
 

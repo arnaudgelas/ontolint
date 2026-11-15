@@ -108,6 +108,13 @@ moves the regions of four results of ``kitchen_sink.ttl``; only the
 three SARIF outputs of the kitchen sink (``sarif_default``, ``sarif_shapes``, ``multi_file_sarif``, each as file
 and stdout) changed.  Rendered with the old and the new pattern, they are equal once every ``region`` is left out,
 and no finding, message, fingerprint, text or JSON report, exit code or ``legacy_rules.json`` entry moved.
+
+Deliberate golden update (issue #68, SARIF region ends): every located result gains ``endLine`` and ``endColumn``
+beside ``startLine`` and ``startColumn``, the span of the token the start points at.  Only the same three SARIF
+outputs (each as file and stdout) and the six SARIF entries of ``single_graph_reports.json`` changed; rendered
+before and after on every fixture file, the SARIF documents are equal once the two end keys are left out, and no
+finding, message, fingerprint, text or JSON report, exit code, ``identities.json`` or ``legacy_rules.json`` entry
+moved.
 """
 
 from __future__ import annotations

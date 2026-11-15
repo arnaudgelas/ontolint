@@ -29,6 +29,7 @@ from ontolint.cli import main
 from ontolint.loader import ParseFailure, load_document
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
+from ontolint.reporting import Location
 from ontolint.source_locations import SourceIndex
 
 pytestmark = pytest.mark.slow
@@ -78,6 +79,35 @@ def _index(text: str, suffix: str) -> tuple[SourceIndex, Graph, str]:
 
 def _offset(text: str, line: int, column: int) -> int:
     return sum(len(row) + 1 for row in text.split("\n")[: line - 1]) + column - 1
+
+
+def _assert_the_end_spans_the_token(doc: _Document, node: Node, location: Location) -> None:
+    """The end is after the start, and the text between them is the one token, which spells ``node`` on its own."""
+    assert location.column is not None
+    if location.end_line is None or location.end_column is None:
+        # An end is left out only where it is uncertain: a blank-node label (RDFLib relabels them, and a label
+        # may run on past what the locator reads). Every IRI of every syntax has one.
+        assert isinstance(node, BNode), (doc.fmt, node, location)
+        return
+    assert (location.end_line, location.end_column) > (location.line, location.column)
+    start = _offset(doc.text, location.line, location.column)
+    stop = _offset(doc.text, location.end_line, location.end_column)
+    token = doc.text[start:stop]
+    assert token, (doc.fmt, node, location)
+    alone = doc._replace(text=token)
+    assert _spells(alone, 0, node), (doc.fmt, node, location, token)
+    if doc.fmt == "xml":  # one start tag, whole
+        assert token.startswith("<") and token.endswith(">") and "<" not in token[1:], token
+    elif doc.fmt == "json-ld":  # one JSON string, whole
+        assert json.JSONDecoder().raw_decode(token)[1] == len(token), token
+    elif token.startswith("<"):  # an IRI reference, whole
+        assert token.endswith(">") and ">" not in token[:-1], token
+    elif isinstance(node, URIRef):  # a prefixed name, whole: it re-parses as a subject of its own
+        reparsed = Graph().parse(
+            data="".join(f"@prefix {p}: <{n}> .\n" for p, n in doc.graph.namespaces()) + f"{token} a <{BASE}K> .",
+            format="turtle",
+        )
+        assert set(reparsed.subjects()) == {node}, (token, node)
 
 
 class _Document(NamedTuple):
@@ -144,7 +174,9 @@ def test_every_region_points_at_text_that_spells_its_node(fmt: str, triples: lis
     for node, location in index.locations.items():
         assert location.column is not None
         at = _offset(text, location.line, location.column)
-        assert _spells(_Document(text, fmt, parsed, public_id), at, node), (fmt, node, location, text[at : at + 60])
+        document = _Document(text, fmt, parsed, public_id)
+        assert _spells(document, at, node), (fmt, node, location, text[at : at + 60])
+        _assert_the_end_spans_the_token(document, node, location)
     # A text syntax spells every IRI subject as a term, so a locator that silently skips a syntax (TriG before
     # issue #6) or a block of it leaves one out.
     if fmt in {"turtle", "nt", *DATASET_FORMATS}:
