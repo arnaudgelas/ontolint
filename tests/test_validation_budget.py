@@ -200,6 +200,26 @@ def test_findings_are_identical_in_the_worker(case: str) -> None:
     assert full(bounded_shacl_issues(_graph(data), _graph(shapes), GENEROUS)) == full(in_process)
 
 
+def test_the_foci_walked_for_the_background_filter_are_identical_in_the_worker() -> None:
+    """The ownership walk runs in the worker, next to the findings: its foci and completeness come back as JSON."""
+    nodes = "".join(f"ex:N{i} a sh:NodeShape ; sh:node ex:N{i + 1} . " for i in range(10))
+    shapes = (
+        SH
+        + nodes
+        + "ex:N10 a sh:NodeShape ; sh:property [ sh:path ex:next ; sh:node ex:M ] . ex:N0 sh:targetNode ex:x0 ."
+    )
+    shapes += "ex:M sh:property [ sh:path ex:name ; sh:minCount 1 ] ."
+    data = "@prefix ex: <https://example.test/> . ex:x0 ex:next ex:x1 ."
+    in_process = shacl.shacl_results(_graph(data), _graph(shapes))
+    (result,) = in_process
+    assert result.complete
+    assert "https://example.test/x1" in result.foci  # below the evidence bound
+    worker_results = shacl.bounded_shacl_results(_graph(data), _graph(shapes), GENEROUS)
+    assert [(full([r.finding]), r.foci, r.complete) for r in worker_results] == [
+        (full([r.finding]), r.foci, r.complete) for r in in_process
+    ]
+
+
 def test_background_filtering_is_identical_in_the_worker(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     corpus = Path(__file__).parent / "fixtures" / "modular"
     argv = [str(corpus / "examples" / "invalid.ttl"), "--shapes", str(corpus / "shapes.ttl"), "--follow-imports"]
@@ -415,8 +435,8 @@ def _data_graphs(draw: st.DrawFn) -> Graph:
 def test_the_worker_task_answers_with_the_in_process_findings(data: Graph) -> None:
     """No process: the task's ``run`` on the encoded graphs equals ``shacl_issues`` on the originals."""
     task = shacl._ValidationJob(worker.encode_graph(data), worker.encode_graph(_SHAPES_FOR_PROPERTY))
-    decoded = shacl._findings_from_json(json.loads(task.run())["findings"])
-    assert full(decoded) == full(shacl_issues(data, _SHAPES_FOR_PROPERTY))
+    decoded = shacl._results_from_json(json.loads(task.run())["results"])
+    assert decoded == shacl.shacl_results(data, _SHAPES_FOR_PROPERTY)
 
 
 # --- policy and CLI -----------------------------------------------------------------------------------------------

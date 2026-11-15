@@ -24,7 +24,7 @@ from rdflib.term import Node
 
 from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
-from ontolint.redaction import clip
+from ontolint.redaction import clip, redact_userinfo
 from ontolint.rules.shacl_quality import has_path_defect, property_shape_nodes
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import ntriples_literal, stable_blank_id
@@ -47,8 +47,12 @@ MAX_PATH_DEPTH = 32
 MAX_PATH_SIZE = 1_000
 """Most path nodes and list cells walked for one ``sh:resultPath``, counted again each time a shared part is."""
 MAX_DETAIL_DEPTH = 8
-"""Deepest ``sh:detail`` nesting copied into evidence; results below it appear in no output (their top-level result
-still does)."""
+"""Deepest ``sh:detail`` nesting copied into evidence; results below it are not copied: the evidence of the deepest
+one kept says ``detailTruncated`` and text says ``(further nested results omitted)``.  Their top-level result is
+still a finding, and the background filter still looks at them (:data:`MAX_DETAIL_WALK`)."""
+MAX_DETAIL_WALK = 100_000
+"""Most results the background filter walks through ``sh:detail`` for one report, all its results together; a result
+whose walk would exceed it is kept (:attr:`ShaclResult.complete`)."""
 MALFORMED_PATH = "(malformed path)"
 """The ``resultPath`` evidence of a path that is not a well-formed, bounded SHACL path."""
 
@@ -264,7 +268,7 @@ def _evidence(report: _Report, result: Node, depth: int = 0, above: frozenset[No
 
     Data terms (focus node, value) are named in the data graph and shapes terms in the shapes graph, as the
     finding names them.  ``sh:detail`` results are nested, sorted, at most :data:`MAX_DETAIL_DEPTH` deep and
-    never around a cycle.
+    never around a cycle; ``detailTruncated`` (``"true"``) marks the result whose nested results were cut at the bound.
     """
     evidence: dict[str, EvidenceValue] = {}
     for key, predicate in _FIELDS:
@@ -282,6 +286,8 @@ def _evidence(report: _Report, result: Node, depth: int = 0, above: frozenset[No
             )
             if nested:
                 evidence[key] = tuple(sorted(nested, key=_canonical))
+            if depth >= MAX_DETAIL_DEPTH and any(d not in inside for d in values):
+                evidence["detailTruncated"] = "true"  # a result was cut here; one only going back up is no cut
         # The single-valued fields below take one value, arbitrarily, if a (non-pySHACL) report gives several.
         elif key in ("focusNode", "value"):
             evidence[key] = _term(report.data, values[0])
@@ -301,21 +307,47 @@ def shacl_result_key(evidence: Evidence) -> tuple[str, ...]:
     return tuple(value if isinstance(value := evidence.get(key, ""), str) else "" for key in _RESULT_KEY)
 
 
-def detail_foci(evidence: Evidence | None) -> set[str]:
-    """The ``focusNode`` of every result nested in ``evidence``'s ``detail``, at any depth, spelled as the evidence
-    spells it (an IRI as is, a blank node by its content-stable id, a literal in N-Triples)."""
+@dataclass
+class _Walk:
+    """What is left of :data:`MAX_DETAIL_WALK` for one report."""
+
+    left: int = field(default_factory=lambda: MAX_DETAIL_WALK)
+
+
+@dataclass(frozen=True)
+class ShaclResult:
+    """A SHACL001 finding with the foci of the results nested in its ``sh:detail``, at every depth."""
+
+    finding: Finding
+    foci: frozenset[str]
+    """The ``sh:focusNode`` of each result nested below the finding's, spelled as the evidence spells a term and
+    masked as it is (an IRI as is, a blank node by its content-stable id, a literal in N-Triples)."""
+    complete: bool
+    """False when the walk ran over :data:`MAX_DETAIL_WALK`: ``foci`` then holds only what it reached."""
+
+
+def _detail_foci(report: _Report, result: Node, walk: _Walk) -> tuple[frozenset[str], bool]:
+    """The foci of every result below ``result`` through ``sh:detail``, read from the report and not from the
+    evidence, so the depth bound of the evidence does not hide any.
+
+    Iterative, each result once (a cycle ends), and bounded by what is left of ``walk``: ``False`` when it ran out.
+    """
     foci: set[str] = set()
-    stack = [evidence] if evidence is not None else []
+    seen = {result}
+    stack = [result]
     while stack:
-        current = stack.pop()
-        for nested in current.get("detail", ()):
-            if isinstance(nested, str):  # never in SHACL001 evidence: ``detail`` holds evidence objects
+        for nested in report.graph.objects(stack.pop(), SH.detail):
+            if nested in seen:
                 continue
-            focus = nested.get("focusNode")
-            if isinstance(focus, str):
-                foci.add(focus)
+            if walk.left <= 0:
+                return frozenset(foci), False
+            walk.left -= 1
+            seen.add(nested)
             stack.append(nested)
-    return foci
+            foci.update(
+                redact_userinfo(_term(report.data, focus)) for focus in report.graph.objects(nested, SH.focusNode)
+            )
+    return frozenset(foci), True
 
 
 def _results(report: Graph) -> set[Node]:
@@ -455,10 +487,15 @@ def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, o
 
 
 def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
+    """The findings of :func:`shacl_results`."""
+    return [result.finding for result in shacl_results(g, sg)]
+
+
+def shacl_results(g: Graph, sg: Graph) -> list[ShaclResult]:
     """Validate ``g`` against ``sg`` with pySHACL (imported lazily; required only with shapes).
 
     One finding per result the report lists (:func:`_results`), at that result's severity; the results nested in
-    its ``sh:detail`` are its evidence, not findings.
+    its ``sh:detail`` are its evidence, not findings.  Each comes with the foci of all those nested results.
     """
     try:
         from pyshacl import validate  # noqa: PLC0415 -- optional dependency, required only with --shapes.
@@ -470,8 +507,9 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
         return []
     if not isinstance(report, Graph):
         raise RuntimeError(f"pySHACL returned an unexpected report type: {type(report).__name__}")
-    keyed: list[tuple[tuple[str, str, str], Finding]] = []
+    keyed: list[tuple[tuple[str, str, str], ShaclResult]] = []
     graphs = _Report(report, g, sg)
+    walk = _Walk()
     for result in _results(report):
         focus = _name(g, next(report.objects(result, SH.focusNode), None))
         message = "; ".join(sorted(map(str, report.objects(result, SH.resultMessage)))) or "SHACL constraint violation"
@@ -493,20 +531,22 @@ def shacl_issues(g: Graph, sg: Graph) -> list[Finding]:
             subject=shacl_result_key(evidence),
         )
         # Sorted by what the finding holds, masked (ontolint.redaction): the order never depends on a password.
-        keyed.append(((finding.focus, finding.message, _canonical(finding.evidence or {})), finding))
-    # pySHACL's result order depends on the hash seed; findings tied on their message differ in evidence.
-    results = [finding for _key, finding in sorted(keyed, key=lambda pair: pair[0])]
-    if not results:
-        results.append(
-            Finding(
-                "SHACL001",
-                "error",
-                "(shapes)",
-                "SHACL returned nonconformant without individual result nodes.",
-                FIXES["SHACL001"],
-                "certain",
-            )
+        foci, complete = _detail_foci(graphs, result, walk)
+        keyed.append(
+            ((finding.focus, finding.message, _canonical(finding.evidence or {})), ShaclResult(finding, foci, complete))
         )
+    # pySHACL's result order depends on the hash seed; findings tied on their message differ in evidence.
+    results = [found for _key, found in sorted(keyed, key=lambda pair: pair[0])]
+    if not results:
+        empty = Finding(
+            "SHACL001",
+            "error",
+            "(shapes)",
+            "SHACL returned nonconformant without individual result nodes.",
+            FIXES["SHACL001"],
+            "certain",
+        )
+        results.append(ShaclResult(empty, frozenset(), True))
     return results
 
 
@@ -541,6 +581,24 @@ def _findings_to_json(findings: list[Finding]) -> list[dict[str, Any]]:
     return encoded
 
 
+def _results_to_json(results: list[ShaclResult]) -> list[dict[str, Any]]:
+    """Each result as its finding's JSON, with its sorted ``foci`` and whether the walk was ``complete``."""
+    findings = _findings_to_json([result.finding for result in results])
+    return [
+        {"finding": finding, "foci": sorted(result.foci), "complete": result.complete}
+        for finding, result in zip(findings, results, strict=True)
+    ]
+
+
+def _results_from_json(records: list[dict[str, Any]]) -> list[ShaclResult]:
+    """The results :func:`_results_to_json` wrote."""
+    findings = _findings_from_json([record["finding"] for record in records])
+    return [
+        ShaclResult(finding, frozenset(record["foci"]), record["complete"])
+        for finding, record in zip(findings, records, strict=True)
+    ]
+
+
 def _findings_from_json(records: list[dict[str, Any]]) -> list[Finding]:
     """The findings :func:`_findings_to_json` wrote, field for field."""
     findings = []
@@ -567,11 +625,16 @@ class _ValidationJob:
     def run(self) -> bytes:
         """Validate and answer with the findings; an exception becomes the worker's ``worker_error`` reply."""
         data, shapes = decode_graph(json.loads(self.data)), decode_graph(json.loads(self.shapes))
-        return json.dumps({"findings": _findings_to_json(shacl_issues(data, shapes))}).encode()
+        return json.dumps({"results": _results_to_json(shacl_results(data, shapes))}).encode()
 
 
 def bounded_shacl_issues(g: Graph, sg: Graph, seconds: float) -> list[Finding]:
-    """:func:`shacl_issues` in a worker process, stopped after ``seconds``: :class:`ValidationTimeout`.
+    """The findings of :func:`bounded_shacl_results`."""
+    return [result.finding for result in bounded_shacl_results(g, sg, seconds)]
+
+
+def bounded_shacl_results(g: Graph, sg: Graph, seconds: float) -> list[ShaclResult]:
+    """:func:`shacl_results` in a worker process, stopped after ``seconds``: :class:`ValidationTimeout`.
 
     The budget starts once the worker has imported pySHACL and includes decoding the two graphs there.  A shapes
     graph the pre-check refuses is refused here, before any worker starts.  A failure inside the worker is a
@@ -587,4 +650,4 @@ def bounded_shacl_issues(g: Graph, sg: Graph, seconds: float) -> list[Finding]:
         ) from None
     except WorkerGone as exc:
         raise WorkerFailed("WorkerError", str(exc)) from None
-    return _findings_from_json(reply["findings"])
+    return _results_from_json(reply["results"])

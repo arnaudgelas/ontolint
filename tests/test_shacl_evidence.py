@@ -24,15 +24,17 @@ from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
 from ontolint import Linter
+from ontolint.adapters import shacl
 from ontolint.adapters.shacl import (
     EVIDENCE_FIELDS,
     MALFORMED_PATH,
     MAX_DETAIL_DEPTH,
     MAX_PATH_DEPTH,
     MAX_PATH_SIZE,
-    detail_foci,
+    ShaclResult,
     shacl_issues,
     shacl_result_key,
+    shacl_results,
 )
 from ontolint.cli import main
 from ontolint.models import Evidence, Finding
@@ -977,13 +979,93 @@ def _nesting(evidence: Evidence) -> int:
     [(MAX_DETAIL_DEPTH, MAX_DETAIL_DEPTH - 1), (MAX_DETAIL_DEPTH + 1, MAX_DETAIL_DEPTH), (10, MAX_DETAIL_DEPTH)],
 )
 def test_details_nest_at_most_the_bound_deep(monkeypatch: pytest.MonkeyPatch, length: int, nested: int) -> None:
-    """Only the listed result is a finding; a result nested deeper than the bound appears in no output."""
+    """Only the listed result is a finding; a result nested deeper than the bound is cut, and its parent says so."""
     report = Graph()
     _detail_chain(report, length)
     (top,) = _issues(monkeypatch, report)
     assert top.focus == A
     assert top.evidence is not None
     assert _nesting(top.evidence) == nested
+
+
+def _levels(evidence: Evidence) -> list[Evidence]:
+    """The evidence of a chain, outermost first (each level has at most one nested result)."""
+    levels = [evidence]
+    while "detail" in levels[-1]:
+        levels.append(_details(levels[-1])[0])
+    return levels
+
+
+@pytest.mark.parametrize("length", [1, MAX_DETAIL_DEPTH, MAX_DETAIL_DEPTH + 1])
+def test_a_chain_within_the_bound_is_not_marked_truncated(monkeypatch: pytest.MonkeyPatch, length: int) -> None:
+    report = Graph()
+    _detail_chain(report, length)
+    (top,) = _issues(monkeypatch, report)
+    assert top.evidence is not None
+    assert not any("detailTruncated" in level for level in _levels(top.evidence))
+
+
+@pytest.mark.parametrize("length", [MAX_DETAIL_DEPTH + 2, MAX_DETAIL_DEPTH + 20])
+def test_the_level_whose_nested_results_were_cut_says_so(monkeypatch: pytest.MonkeyPatch, length: int) -> None:
+    """A result nested deeper than the bound is dropped, and the deepest kept result is marked; no other is."""
+    report = Graph()
+    _detail_chain(report, length)
+    (top,) = _issues(monkeypatch, report)
+    assert top.evidence is not None
+    levels = _levels(top.evidence)
+    assert len(levels) == MAX_DETAIL_DEPTH + 1
+    assert [level.get("detailTruncated") for level in levels] == [None] * MAX_DETAIL_DEPTH + ["true"]
+    assert "detail" not in levels[-1]
+    assert list(levels[-1]).index("detailTruncated") == list(levels[-1]).index("resultMessage") - 1
+
+
+def test_a_detail_that_leads_back_up_at_the_bound_is_no_truncation(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    _detail_chain(report, MAX_DETAIL_DEPTH + 1)
+    bottom = next(report.subjects(SH.value, Literal(str(MAX_DETAIL_DEPTH))))
+    top = next(report.subjects(SH.value, Literal("0")))
+    report.add((bottom, SH.detail, top))
+    (finding,) = _issues(monkeypatch, report)
+    assert finding.evidence is not None
+    assert not any("detailTruncated" in level for level in _levels(finding.evidence))
+
+
+def _deep_shapes(length: int) -> tuple[str, str]:
+    """Data and shapes whose one violation is ``length`` ``sh:node`` levels below ``ex:a`` (pySHACL refuses more than
+    about 11: ``Validation path too deep!``)."""
+    shapes = "ex:N0 a sh:NodeShape ; sh:targetNode ex:a ; sh:node ex:N1 . "
+    shapes += "".join(f"ex:N{i} a sh:NodeShape ; sh:node ex:N{i + 1} . " for i in range(1, length))
+    shapes += f"ex:N{length} a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."
+    return "ex:a a ex:T .", shapes
+
+
+@pytest.mark.parametrize("fmt", ["json", "sarif"])
+def test_a_real_deep_report_marks_its_truncation_in_json_and_sarif(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], fmt: str
+) -> None:
+    data, shapes = _deep_shapes(10)
+    (evidence,) = _reported_evidence(_cli(tmp_path, capsys, data, shapes, fmt), fmt)
+    levels = [evidence]
+    while "detail" in levels[-1]:
+        levels.append(levels[-1]["detail"][0])
+    assert len(levels) == MAX_DETAIL_DEPTH + 1
+    assert levels[-1]["detailTruncated"] == "true"
+    assert not any("detailTruncated" in level for level in levels[:-1])
+
+
+def test_text_marks_the_results_it_omits(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    data, shapes = _deep_shapes(10)
+    (block,) = _blocks(_text(tmp_path, capsys, data, shapes))
+    marker = [i for i, line in enumerate(block) if "omitted" in line]
+    assert len(marker) == 1
+    assert block[marker[0]].lstrip() == "(further nested results omitted)"
+    assert block[marker[0]].startswith(" " * 4)
+    assert marker[0] == len(block) - 1 or not block[marker[0] + 1].startswith("    Detail:")
+
+
+def test_text_shows_no_marker_for_a_report_that_fits(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    data, shapes = _deep_shapes(2)
+    assert "omitted" not in _text(tmp_path, capsys, data, shapes)
 
 
 def test_without_a_listing_every_typed_result_of_a_chain_is_a_finding(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1040,14 +1122,69 @@ def test_a_listed_result_that_is_also_a_detail_is_still_a_finding(monkeypatch: p
     assert [d["value"] for d in _details(findings[1].evidence)] == ['"child"']
 
 
-def test_detail_foci_names_every_nested_focus_at_any_depth() -> None:
-    """What the background filter compares: the nested foci only, as the evidence spells them."""
-    deep: Evidence = {"focusNode": '"x"', "detail": ({"focusNode": "c"},)}
-    evidence: Evidence = {"focusNode": "top", "detail": ({"focusNode": "a", "detail": (deep, {"value": "v"})},)}
-    assert detail_foci(evidence) == {"a", '"x"', "c"}
-    assert detail_foci({"focusNode": "top"}) == set()
-    assert detail_foci(None) == set()
-    assert detail_foci({"detail": ("text",)}) == set()  # a tuple of text is evidence too, but holds no result
+def _results_of(monkeypatch: pytest.MonkeyPatch, report: Graph) -> list[ShaclResult]:
+    monkeypatch.setattr(pyshacl, "validate", _fake_validate(report))
+    return shacl_results(Graph(), Graph())
+
+
+def test_the_foci_of_a_result_are_those_of_every_nested_result_whatever_the_depth(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """What the background filter compares: read from the report, so below the evidence bound too."""
+    report = Graph()
+    _detail_chain(report, MAX_DETAIL_DEPTH + 5)
+    (result,) = _results_of(monkeypatch, report)
+    assert result.complete
+    assert result.foci == {f"{EX}n{i}" for i in range(1, MAX_DETAIL_DEPTH + 5)}
+    assert _nesting(result.finding.evidence or {}) == MAX_DETAIL_DEPTH  # the evidence kept fewer
+
+
+def test_every_focus_of_a_nested_result_counts_and_is_spelled_as_the_evidence_does(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report = Graph()
+    top, below = _result(report, "t"), _result(report, "b")
+    _listing(report, top)
+    report.add((top, SH.detail, below))
+    report.add((below, SH.focusNode, Literal("x")))  # a second focus, a literal: N-Triples
+    report.add((below, SH.focusNode, URIRef("https://u:pw@h.test/b")))  # masked, as the evidence is
+    (result,) = _results_of(monkeypatch, report)
+    assert result.foci == {A, '"x"', "https://****@h.test/b"}
+
+
+def test_a_detail_cycle_ends_the_walk(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    top, below = _result(report, "t"), _result(report, "b")
+    _listing(report, top)
+    report.add((top, SH.detail, below))
+    report.add((below, SH.detail, top))
+    report.add((below, SH.detail, below))
+    (result,) = _results_of(monkeypatch, report)
+    assert result.complete
+
+
+def test_a_walk_over_its_budget_is_incomplete_and_the_same_every_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shacl, "MAX_DETAIL_WALK", 5)
+    report = Graph()
+    _detail_chain(report, 50)
+    outcomes = {
+        (r.complete, r.finding.evidence is not None) for _ in range(3) for r in _results_of(monkeypatch, report)
+    }
+    assert outcomes == {(False, True)}
+
+
+def test_the_walk_budget_is_shared_by_the_results_of_a_report(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shacl, "MAX_DETAIL_WALK", 10)
+    report = Graph()
+    tops = []
+    for _ in range(20):
+        top, below = _result(report, "t"), _result(report, "b")
+        report.add((top, SH.detail, below))
+        tops.append(top)
+    _listing(report, *tops)
+    results = _results_of(monkeypatch, report)
+    assert len(results) == len(tops)
+    assert {r.complete for r in results} == {True, False}
 
 
 def test_a_listed_result_need_not_be_typed(monkeypatch: pytest.MonkeyPatch) -> None:

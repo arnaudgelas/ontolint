@@ -471,6 +471,8 @@ def _evidence_lines(evidence: Evidence | None) -> str:
             lines.append(f"{indent}Path: {path}")
         if value is not None and (path is not None or value != _text_value(current, "focusNode")):
             lines.append(f"{indent}Value: {value}")
+        if "detailTruncated" in current:
+            lines.append(f"{indent}(further nested results omitted)")
         nested = current.get("detail", ())
         stack.extend((item, depth + 1) for item in reversed(nested) if not isinstance(item, str))
     return "".join(f"\n{line}" for line in lines)

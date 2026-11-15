@@ -11,7 +11,14 @@ from pathlib import Path
 from rdflib import BNode, Graph, Literal
 
 from .adapters.robot import robot_profile_issues
-from .adapters.shacl import ShapesNotWellFormed, bounded_shacl_issues, detail_foci, shacl_issues
+from .adapters.shacl import (
+    ShaclResult,
+    ShapesNotWellFormed,
+    bounded_shacl_issues,
+    bounded_shacl_results,
+    shacl_issues,
+    shacl_results,
+)
 from .context import GraphContext
 from .models import (
     ExecutionStatus,
@@ -137,6 +144,13 @@ def _validate(data: Graph, shapes: Graph, seconds: float | None) -> list[Finding
     return bounded_shacl_issues(data, shapes, seconds)
 
 
+def _validate_results(data: Graph, shapes: Graph, seconds: float | None) -> list[ShaclResult]:
+    """:func:`_validate`, each finding with the foci of the results nested in its ``sh:detail``."""
+    if seconds is None:
+        return shacl_results(data, shapes)
+    return bounded_shacl_results(data, shapes, seconds)
+
+
 def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
     """Validate ``ctx.g``, merged with the SHACL-only background when there is one.
 
@@ -144,9 +158,11 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
     vocabulary individuals: results about nodes that only the background mentions are not findings of
     the linted file.  A node the linted file mentions anywhere is its own, as an object too: a shape
     with ``sh:targetObjectsOf`` focuses on nodes that need not be subjects of anything.  A finding is kept
-    when its focus is the file's, or the focus of any result nested in its ``evidence.detail`` is: SHACL
+    when its focus is the file's, or the focus of any result nested in its ``sh:detail`` is: SHACL
     reports an ``sh:node`` violation on the referencing node, which may be the background's, while its
-    nested result is the cause in the linted file.  A finding's focus and evidence are masked
+    nested result is the cause in the linted file.  The nested foci are read from the report at every depth,
+    not from the evidence, which keeps eight levels; a finding whose walk ran over its budget is kept, since
+    nothing shows that it is the background's alone.  A finding's focus and the nested foci are masked
     (:mod:`ontolint.redaction`), so the file's nodes are compared masked too, each spelled as the finding
     or the evidence spells a term (the evidence writes a literal in N-Triples).
     """
@@ -162,9 +178,9 @@ def _shacl_with_background(ctx: RuleContext) -> list[Finding]:
         own.add(name)
         spelled.add(redact_userinfo(ntriples_literal(n)) if isinstance(n, Literal) else name)
     return [
-        finding
-        for finding in _validate(data, ctx.shapes, seconds)
-        if finding.focus in own or not spelled.isdisjoint(detail_foci(finding.evidence))
+        result.finding
+        for result in _validate_results(data, ctx.shapes, seconds)
+        if result.finding.focus in own or not result.complete or not spelled.isdisjoint(result.foci)
     ]
 
 
