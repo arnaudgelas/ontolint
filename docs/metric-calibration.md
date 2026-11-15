@@ -77,7 +77,8 @@ proposed labels, among the files that make a comparison. `[a, b)` means a limit 
 for a rule that fires above its limit; `(a, b]` means above a and at most b for one that fires below it;
 `none` means a silent and a fire label cross. The first column uses every counted label, including the
 presumed silent ones; the second only labels whose reason was checked in the file. The default is inside
-the interval only when it is marked yes. An interval is only as good as the labels.
+the interval only when it is marked yes, decided on the exact bounds and not on the four decimals printed
+here. An interval is only as good as the labels.
 
 | Rule | Default | All counted labels | Default inside | Checked labels only | Default inside |
 | --- | --- | --- | --- | --- | --- |

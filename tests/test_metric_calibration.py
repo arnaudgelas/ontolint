@@ -234,3 +234,34 @@ def test_the_calibration_page_states_what_it_cannot_decide() -> None:
         assert text in page
     for rule in metric_corpus.RULES:
         assert rule in page
+
+
+@pytest.mark.parametrize(
+    ("rule", "spec", "inside"),
+    [
+        # METRIC002 fires above 0.5: the interval is [silent max, fire min); both bounds print as 0.5000.
+        ("METRIC002", {"s": ("silent", Fraction(50004, 100000))}, "no"),  # exact lower bound is above the default
+        ("METRIC002", {"s": ("silent", Fraction(49996, 100000))}, "yes"),
+        ("METRIC002", {"f": ("fire", Fraction(50004, 100000))}, "yes"),  # exact upper bound is above the default
+        ("METRIC002", {"f": ("fire", Fraction(49996, 100000))}, "no"),
+        ("METRIC002", {"f": ("fire", Fraction(1, 2))}, "no"),  # the default itself is excluded from [., 0.5)
+        ("METRIC002", {"s": ("silent", Fraction(1, 2))}, "yes"),
+        # METRIC009 fires below 0.5: the interval is (fire max, silent min].
+        ("METRIC009", {"f": ("fire", Fraction(49996, 100000))}, "yes"),  # exact lower bound is below the default
+        ("METRIC009", {"f": ("fire", Fraction(50004, 100000))}, "no"),
+        ("METRIC009", {"s": ("silent", Fraction(50004, 100000))}, "yes"),
+        ("METRIC009", {"s": ("silent", Fraction(49996, 100000))}, "no"),  # exact upper bound is below the default
+        ("METRIC009", {"s": ("silent", Fraction(1, 2))}, "yes"),
+    ],
+)
+def test_the_default_is_judged_against_the_exact_interval_not_the_printed_one(
+    monkeypatch: pytest.MonkeyPatch, rule: str, spec: dict[str, tuple[str, Fraction]], inside: str
+) -> None:
+    """A default within half a unit of a printed bound is not rounded in or out of the interval."""
+    entries, values = _labelled(spec)
+    monkeypatch.setattr(metric_corpus, "values_of", lambda r, _results: values if r == rule else {})
+    results = {"results": {e.id: {r: {"fires": False} for r in metric_corpus.RULES} for e in entries}}
+    page = metric_corpus.render_calibration(entries, results)
+    limits_table = [line for line in page.splitlines() if line.startswith(f"| {rule} | ")][-1]  # the second table
+    cells = [cell.strip() for cell in limits_table.split("|")]
+    assert (cells[4], cells[6]) == (inside, inside)  # all counted labels, then checked labels only

@@ -667,13 +667,19 @@ def _bound(value: Fraction | None, infinity: str) -> str:
     return infinity if value is None else f"{float(value):.4f}"
 
 
-def consistent_limits(entries: list[Entry], rule: str, values: Mapping[str, Fraction], *, checked_only: bool) -> str:
-    """Return the interval of limits under which ``rule`` has no false positive and no false negative.
+Interval = tuple[Fraction | None, Fraction | None]  # exact (low, high); ``None`` is unbounded
 
-    Only files labelled ``fire`` or ``silent`` that have a value count (and, with ``checked_only``, only those
-    whose label was checked).  An upper limit fires above it, so it must be at least every silent value and
-    below every fire value; a lower limit fires below it, so it must be above every fire value and at most
-    every silent value.  Bounds are printed to four decimals; the exact values are in the results file.
+
+def limit_interval(
+    entries: list[Entry], rule: str, values: Mapping[str, Fraction], *, checked_only: bool
+) -> Interval | None:
+    """Return the exact interval of limits under which ``rule`` has no false positive and no false negative.
+
+    ``None`` means no limit does: a silent and a fire label cross.  Only files labelled ``fire`` or ``silent``
+    that have a value count (and, with ``checked_only``, only those whose label was checked).  An upper limit
+    fires above it, so it must be at least every silent value and below every fire value; a lower limit fires
+    below it, so it must be above every fire value and at most every silent value.  The ends are exact
+    fractions: membership is decided on them, and only the rendered text is rounded.
     """
     fire: list[Fraction] = []
     silent: list[Fraction] = []
@@ -682,15 +688,35 @@ def consistent_limits(entries: list[Entry], rule: str, values: Mapping[str, Frac
         if entry.id not in values or label["expect"] not in COUNTED or (checked_only and label["basis"] != "checked"):
             continue
         (fire if label["expect"] == "fire" else silent).append(values[entry.id])
+    low, high = (max(silent) if silent else None, min(fire) if fire else None)
+    if not READINGS[rule].upper:
+        low, high = (max(fire) if fire else None, min(silent) if silent else None)
+    return None if low is not None and high is not None and low >= high else (low, high)
+
+
+def render_interval(interval: Interval | None, rule: str) -> str:
+    """Return ``interval`` as text, its ends rounded to four decimals (the exact values are in the results file)."""
+    if interval is None:
+        return "none"
+    low, high = interval
     if READINGS[rule].upper:
-        low, high = (max(silent) if silent else None), (min(fire) if fire else None)
-        empty = low is not None and high is not None and low >= high
-        text = f"[{_bound(low, '-inf')}, {_bound(high, '+inf')})"
-    else:
-        low, high = (max(fire) if fire else None), (min(silent) if silent else None)
-        empty = low is not None and high is not None and low >= high
-        text = f"({_bound(low, '-inf')}, {_bound(high, '+inf')}{']' if high is not None else ')'}"
-    return "none" if empty else text
+        return f"[{_bound(low, '-inf')}, {_bound(high, '+inf')})"
+    return f"({_bound(low, '-inf')}, {_bound(high, '+inf')}{']' if high is not None else ')'}"
+
+
+def contains(interval: Interval | None, limit: Fraction, upper: bool) -> bool:
+    """Say whether ``limit`` lies in the exact ``interval`` (closed below and open above for an upper limit)."""
+    if interval is None:
+        return False
+    low, high = interval
+    above_low = low is None or (limit >= low if upper else limit > low)
+    below_high = high is None or (limit < high if upper else limit <= high)
+    return above_low and below_high
+
+
+def consistent_limits(entries: list[Entry], rule: str, values: Mapping[str, Fraction], *, checked_only: bool) -> str:
+    """Return :func:`limit_interval` as the text of the page."""
+    return render_interval(limit_interval(entries, rule, values, checked_only=checked_only), rule)
 
 
 def render_calibration(entries: list[Entry], results: Mapping[str, Any]) -> str:
@@ -725,7 +751,8 @@ def render_calibration(entries: list[Entry], results: Mapping[str, Any]) -> str:
         "for a rule that fires above its limit; `(a, b]` means above a and at most b for one that fires below it;",
         "`none` means a silent and a fire label cross. The first column uses every counted label, including the",
         "presumed silent ones; the second only labels whose reason was checked in the file. The default is inside",
-        "the interval only when it is marked yes. An interval is only as good as the labels.",
+        "the interval only when it is marked yes, decided on the exact bounds and not on the four decimals printed",
+        "here. An interval is only as good as the labels.",
         "",
         "| Rule | Default | All counted labels | Default inside | Checked labels only | Default inside |",
         "| --- | --- | --- | --- | --- | --- |",
@@ -735,21 +762,11 @@ def render_calibration(entries: list[Entry], results: Mapping[str, Any]) -> str:
         values = values_of(rule, results)
         cells = []
         for checked in (False, True):
-            interval = consistent_limits(entries, rule, values, checked_only=checked)
-            cells += [interval, "yes" if _inside(interval, limits[rule], READINGS[rule].upper) else "no"]
+            interval = limit_interval(entries, rule, values, checked_only=checked)
+            inside = contains(interval, limits[rule], READINGS[rule].upper)
+            cells += [render_interval(interval, rule), "yes" if inside else "no"]
         lines.append(f"| {rule} | {_num(limits[rule], rule)} | " + " | ".join(cells) + " |")
     return "\n".join(lines)
-
-
-def _inside(interval: str, limit: Fraction, upper: bool) -> bool:
-    """Say whether ``limit`` lies in a printed interval (a four-decimal comparison, as printed)."""
-    if interval == "none":
-        return False
-    low, high = (part.strip() for part in interval[1:-1].split(","))
-    value = float(limit)
-    above_low = low == "-inf" or (value >= float(low) if upper else value > float(low))
-    below_high = high == "+inf" or (value < float(high) if upper else value <= float(high))
-    return above_low and below_high
 
 
 def _dump(document: Mapping[str, Any]) -> str:
