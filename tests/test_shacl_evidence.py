@@ -1173,6 +1173,19 @@ def test_a_walk_over_its_budget_is_incomplete_and_the_same_every_time(monkeypatc
     assert outcomes == {(False, True)}
 
 
+@pytest.mark.parametrize(("budget", "complete"), [(0, False), (2, False), (3, True), (4, True)])
+def test_a_walk_is_complete_exactly_when_the_budget_covers_the_nested_results(
+    monkeypatch: pytest.MonkeyPatch, budget: int, complete: bool
+) -> None:
+    """Three results nested below the listed one: a budget of three suffices, two does not."""
+    monkeypatch.setattr(shacl, "MAX_DETAIL_WALK", budget)
+    report = Graph()
+    _detail_chain(report, 4)
+    (result,) = _results_of(monkeypatch, report)
+    assert result.complete is complete
+    assert (f"{EX}n3" in result.foci) is complete
+
+
 def test_the_walk_budget_is_shared_by_the_results_of_a_report(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shacl, "MAX_DETAIL_WALK", 10)
     report = Graph()
