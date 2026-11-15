@@ -189,6 +189,33 @@ def test_a_member_outside_the_import_root_is_refused(
     assert err.startswith("SEC009")
 
 
+def _linked_member(library: Path) -> None:
+    """A member that is a link to a file beside the library: inside the repository, outside the library."""
+    (library.parent / "shared").mkdir()
+    shared = library.parent / "shared" / "linked.ttl"
+    shared.write_text(_pattern(DOMAIN + "linked", "Linked"), encoding="utf-8")
+    (library / "link.ttl").symlink_to(shared)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlinks need privileges on Windows")
+def test_without_an_import_root_the_library_is_read_inside_the_repository(
+    library: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _linked_member(library)
+    code, document, err = _run(capsys, str(library / "index.ttl"), "--pattern-library", str(library))
+    assert (code, err) == (0, "")
+    assert any(rule == "LIB002" and focus == DOMAIN + "linked" for rule, focus, _ in _findings(document))
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlinks need privileges on Windows")
+def test_an_explicit_import_root_bounds_the_library(library: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    _linked_member(library)
+    index = str(library / "index.ttl")
+    code, _, err = _run(capsys, index, "--pattern-library", str(library), "--import-root", str(library))
+    assert code == TOOL_FAILURE
+    assert err.startswith("SEC009")
+
+
 def test_the_loader_reads_names_references_and_identities(library: Path) -> None:
     loaded = load_library(library, Policy(), library.parent, exclude=[library / "index.ttl"])
     by_iri = {m.ontology: m for m in loaded.members}
