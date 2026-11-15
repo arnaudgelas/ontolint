@@ -1,4 +1,4 @@
-"""Cases for OBO001-OBO012 (opt-in OBO Foundry convention rules)."""
+"""Cases for OBO001-OBO013 (opt-in OBO Foundry convention rules)."""
 
 from __future__ import annotations
 
@@ -389,6 +389,28 @@ CASES = {
             _ttl("hyphen is fine", 'ex:A a owl:Class ; rdfs:label "t-cell receptor" .'),
             _ttl("blank labels are OBO004's business", 'ex:A a owl:Class ; rdfs:label " " .'),
             _ttl("annotation properties are out of scope", 'ex:a a owl:AnnotationProperty ; rdfs:label "A_b" .'),
+        ],
+    ),
+    "OBO013": rule_cases(
+        [
+            _ttl("lowercase definition", 'ex:A a owl:Class ; obo:IAO_0000115 "a thing." .'),
+            _ttl("leading whitespace", 'ex:A a owl:Class ; obo:IAO_0000115 "  a thing." .'),
+            _ttl("tagged lowercase", 'ex:A a owl:Class ; obo:IAO_0000115 "une chose."@fr .'),
+            _ttl("non-ASCII lowercase", 'ex:A a owl:Class ; obo:IAO_0000115 "\u00e9l\u00e9ment." .'),
+            _ttl("one of two definitions", 'ex:A a owl:Class ; obo:IAO_0000115 "A thing.", "a thing." .'),
+            _ttl("property", 'ex:p a owl:ObjectProperty ; obo:IAO_0000115 "relates things." .'),
+        ],
+        [
+            _ttl("capital", 'ex:A a owl:Class ; obo:IAO_0000115 "A thing." .'),
+            _ttl("digit", 'ex:A a owl:Class ; obo:IAO_0000115 "3-methyl thing." .'),
+            _ttl("quote", "ex:A a owl:Class ; obo:IAO_0000115 '\"a\" thing.' ."),
+            _ttl("symbol", 'ex:A a owl:Class ; obo:IAO_0000115 "(a) thing." .'),
+            _ttl("CJK is uncased", 'ex:A a owl:Class ; obo:IAO_0000115 "\u4e00\u4e2a\u4e1c\u897f" .'),
+            _ttl("Arabic is uncased", 'ex:A a owl:Class ; obo:IAO_0000115 "\u0634\u064a\u0621" .'),
+            _ttl("non-ASCII capital", 'ex:A a owl:Class ; obo:IAO_0000115 "\u00c9l\u00e9ment." .'),
+            _ttl("blank definition", 'ex:A a owl:Class ; obo:IAO_0000115 "  " .'),
+            _ttl("obsolete term", 'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "a thing." .'),
+            _ttl("elucidation is not judged", 'ex:A a owl:Class ; obo:IAO_0000600 "a thing." .'),
         ],
     ),
 }

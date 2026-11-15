@@ -3546,6 +3546,66 @@
     "cdc1890847bdbc8323217b035bd133c1ca7f4fe7305bf7cdc71b6f67d73398c1"
    ]
   ],
+  "OBO013:leading whitespace": [
+   [
+    "OBO013",
+    "https://example.test/onto#A",
+    [
+     "\"  a thing.\""
+    ],
+    "ebdd093dee8166349feacd28ba227ec4207f0ce8b1ec7c12c18c01cb95792aa0"
+   ]
+  ],
+  "OBO013:lowercase definition": [
+   [
+    "OBO013",
+    "https://example.test/onto#A",
+    [
+     "\"a thing.\""
+    ],
+    "dedafa2d252a75b35ba292008837e058aba84a586f83e771d812b406c2d87524"
+   ]
+  ],
+  "OBO013:non-ASCII lowercase": [
+   [
+    "OBO013",
+    "https://example.test/onto#A",
+    [
+     "\"élément.\""
+    ],
+    "4089ed9e6dcbb8ea1a65205fc18a28680cda1df21b780d54e37a60d8f070665a"
+   ]
+  ],
+  "OBO013:one of two definitions": [
+   [
+    "OBO013",
+    "https://example.test/onto#A",
+    [
+     "\"a thing.\""
+    ],
+    "dedafa2d252a75b35ba292008837e058aba84a586f83e771d812b406c2d87524"
+   ]
+  ],
+  "OBO013:property": [
+   [
+    "OBO013",
+    "https://example.test/onto#p",
+    [
+     "\"relates things.\""
+    ],
+    "f92c08fc221d2f56ce1074cfbd1ea5eb1f75af0ac4026861912d2d45a8f31385"
+   ]
+  ],
+  "OBO013:tagged lowercase": [
+   [
+    "OBO013",
+    "https://example.test/onto#A",
+    [
+     "\"une chose.\"@fr"
+    ],
+    "3b350229bbfb348e5252f20a797fb2170aa456879b8aa3be4159d578a023ef5c"
+   ]
+  ],
   "ONT001:no owl:Ontology": [
    [
     "ONT001",

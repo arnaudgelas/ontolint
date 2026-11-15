@@ -1,4 +1,4 @@
-"""OBO Foundry convention rules: OBO001-OBO012.
+"""OBO Foundry convention rules: OBO001-OBO013.
 
 These rules encode conventions of the OBO Foundry (identifiers, textual definitions, obsolescence,
 scoped synonyms, PURLs, naming).  They only make sense for ontologies that follow those conventions,
@@ -9,6 +9,16 @@ Every rule is an asserted-graph check: nothing is entailed, no import is followe
 used.  Rules that would need outside data (a registry lookup, the full RO term list, a reasoner) are
 not implemented; ``OBO005`` is deliberately narrowed to a small embedded table of well-known RO and
 BFO relations.  Annotation properties are the IAO and oboInOwl ones used by OBO ontologies.
+
+Specifications:
+
+* **OBO013.** A non-obsolete term with an ``obo:IAO_0000115`` literal whose first character after leading
+  whitespace is a lowercase letter (a character Unicode says is lowercase, ``str.islower``).  A digit, a
+  quote, a symbol, an uncased letter (CJK, Arabic, Hebrew) or a titlecase letter does not count, so such a
+  definition is not reported, and neither is one that is blank.  ``obo:IAO_0000600`` is not judged.  One
+  finding per offending literal; its subject is the literal in N-Triples with its language.
+  *Info:* ROBOT's ``lowercase_definition`` is INFO; the capitalisation convention is a style norm, and a
+  definition may legitimately open with a symbol or a gene name such as ``p53``.
 """
 
 from __future__ import annotations
@@ -25,7 +35,7 @@ from rdflib.term import Node
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 from ontolint.redaction import clip
 
-from .support import META_LICENSE, list_items, value_text
+from .support import META_LICENSE, list_items, ntriples_literal, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -172,6 +182,13 @@ SPECS: tuple[RuleSpec, ...] = (
         "Label that breaks OBO naming conventions",
         Severity.INFO,
         "Use labels without leading, trailing or repeated whitespace and without underscores.",
+        RuleScope.TERM,
+    ),
+    _spec(
+        "OBO013",
+        "Definition starts with a lowercase letter",
+        Severity.INFO,
+        "Start the obo:IAO_0000115 definition with a capital letter, or with the digit or symbol the term needs.",
         RuleScope.TERM,
     ),
 )
@@ -431,8 +448,22 @@ def _label_conventions(ctx: RuleContext, terms: list[URIRef], deprecated: frozen
                 ctx.add("OBO012", term, f"Label {shown} contains an underscore.", subject=(text, "underscore"))
 
 
+def _definition_case(ctx: RuleContext, terms: list[URIRef], deprecated: frozenset[URIRef]) -> None:
+    for term in terms:
+        if term in deprecated:
+            continue
+        for definition in _texts(ctx.g, term, IAO_DEFINITION):
+            if str(definition).lstrip()[0].islower():
+                ctx.add(
+                    "OBO013",
+                    term,
+                    f"Definition {_quote(str(definition).strip())} starts with a lowercase letter.",
+                    subject=(ntriples_literal(definition),),
+                )
+
+
 def run(ctx: RuleContext) -> None:
-    """Emit OBO001-OBO012."""
+    """Emit OBO001-OBO013."""
     terms = _terms(ctx)
     deprecated = _deprecated(ctx)
     _identifier_pattern(ctx, terms, deprecated)
@@ -447,3 +478,4 @@ def run(ctx: RuleContext) -> None:
     _module_imports(ctx)
     _purl_pattern(ctx)
     _label_conventions(ctx, terms, deprecated)
+    _definition_case(ctx, terms, deprecated)
