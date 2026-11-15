@@ -45,11 +45,17 @@ _real(__import__('rdflib').Graph(), inference='none')  # load the SHACL-SHACL gr
 _slow.graph_cache = _real.graph_cache
 entrypoints.meta_validate = _slow
 """
-# The same wrapper as a ``python -c`` program: run the CLI, then say how much memory it and its worker used.
+# The same wrapper as a ``python -c`` program: run the CLI, then say how much memory it and its worker used.  On Linux
+# ``ru_maxrss`` of the process itself starts at the peak of the process that forked it (a test worker that ran a
+# large graph before reports that peak here), so its own high-water mark is read from ``VmHWM``, which exec resets.
 DRIVER = (
-    "import resource, sys; from ontolint.cli import main; code = main(sys.argv[1:]); "
-    "print(max(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, "
-    "resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss), file=sys.stderr); sys.exit(code)"
+    "import resource, sys; from ontolint.cli import main; code = main(sys.argv[1:])\n"
+    "own = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss\n"
+    "try:\n"
+    "    own = next(int(line.split()[1]) for line in open('/proc/self/status') if line.startswith('VmHWM:'))\n"
+    "except (OSError, StopIteration):\n"
+    "    pass\n"
+    "print(max(own, resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss), file=sys.stderr); sys.exit(code)"
 )
 MEGABYTE = 1_000_000 if sys.platform == "darwin" else 1_000  # ru_maxrss: bytes on macOS, kilobytes on Linux
 MEMORY_LIMIT = 500 * MEGABYTE
