@@ -61,7 +61,7 @@ def test_opt_in_data() -> None:
     assert is_opt_in("OBO") and is_opt_in("obo")
     assert not is_opt_in("LEX") and not is_opt_in("")
     assert {s.family for s in obo.SPECS} == {"OBO"}
-    assert [s.rule_id for s in obo.SPECS] == [f"OBO{n:03d}" for n in range(1, 14)]
+    assert [s.rule_id for s in obo.SPECS] == [f"OBO{n:03d}" for n in range(1, 15)]
     assert all(s.module == "obo" for s in obo.SPECS)
 
 
