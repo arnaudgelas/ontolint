@@ -1,4 +1,4 @@
-"""Cases for OBO001-OBO013 (opt-in OBO Foundry convention rules)."""
+"""Cases for OBO001-OBO014 (opt-in OBO Foundry convention rules)."""
 
 from __future__ import annotations
 
@@ -411,6 +411,22 @@ CASES = {
             _ttl("blank definition", 'ex:A a owl:Class ; obo:IAO_0000115 "  " .'),
             _ttl("obsolete term", 'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "a thing." .'),
             _ttl("elucidation is not judged", 'ex:A a owl:Class ; obo:IAO_0000600 "a thing." .'),
+        ],
+    ),
+    "OBO014": rule_cases(
+        [
+            _ttl("two untagged definitions", 'ex:A a owl:Class ; obo:IAO_0000115 "One.", "Two." .'),
+            _ttl("two definitions in one language", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@EN .'),
+            _ttl(
+                "obsolete term with two definitions",
+                'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "One.", "Two." .',
+            ),
+        ],
+        [
+            _ttl("one definition", f"ex:A a owl:Class ; {DEF} ."),
+            _ttl("translation", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Un."@fr .'),
+            _ttl("tagged and untagged", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "One." .'),
+            _ttl("definition and elucidation", 'ex:A a owl:Class ; obo:IAO_0000115 "One." ; obo:IAO_0000600 "Two." .'),
         ],
     ),
 }

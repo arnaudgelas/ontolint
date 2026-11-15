@@ -1,4 +1,4 @@
-"""OBO Foundry convention rules: OBO001-OBO013.
+"""OBO Foundry convention rules: OBO001-OBO014.
 
 These rules encode conventions of the OBO Foundry (identifiers, textual definitions, obsolescence,
 scoped synonyms, PURLs, naming).  They only make sense for ontologies that follow those conventions,
@@ -19,6 +19,15 @@ Specifications:
   finding per offending literal; its subject is the literal in N-Triples with its language.
   *Info:* ROBOT's ``lowercase_definition`` is INFO; the capitalisation convention is a style norm, and a
   definition may legitimately open with a symbol or a gene name such as ``p53``.
+
+* **OBO014.** A class, object property or datatype property has two or more distinct non-blank
+  ``obo:IAO_0000115`` values in the same language, where a value without a language tag is a
+  language of its own.  OBO policy is one textual definition per term.  The same text in two
+  languages is a translation, not a second definition, so only values sharing a language (or
+  all untagged) count together; language tags compare case-insensitively.  One finding per
+  term and language, identified by the language tag (empty for untagged).  Obsolete terms are
+  checked too, as ``robot report`` does for ``multiple_definitions``.  ``obo:IAO_0000600``
+  (elucidation) is not a definition for this rule.  The severity is a warning, not ROBOT's error.
 """
 
 from __future__ import annotations
@@ -189,6 +198,13 @@ SPECS: tuple[RuleSpec, ...] = (
         "Definition starts with a lowercase letter",
         Severity.INFO,
         "Start the obo:IAO_0000115 definition with a capital letter, or with the digit or symbol the term needs.",
+        RuleScope.TERM,
+    ),
+    _spec(
+        "OBO014",
+        "More than one textual definition in the same language",
+        Severity.WARNING,
+        "Keep one obo:IAO_0000115 per term and language; merge the texts or move the extra one to a comment.",
         RuleScope.TERM,
     ),
 )
@@ -462,8 +478,25 @@ def _definition_case(ctx: RuleContext, terms: list[URIRef], deprecated: frozense
                 )
 
 
+def _multiple_definitions(ctx: RuleContext, terms: list[URIRef]) -> None:
+    for term in terms:
+        by_language: dict[str, set[str]] = defaultdict(set)
+        for definition in _texts(ctx.g, term, IAO_DEFINITION):
+            by_language[(definition.language or "").lower()].add(str(definition))
+        for language, texts in sorted(by_language.items()):
+            if len(texts) > 1:
+                where = f"language {language!r}" if language else "no language tag"
+                ctx.add(
+                    "OBO014",
+                    term,
+                    f"Term has {len(texts)} distinct textual definitions (obo:IAO_0000115) with {where}.",
+                    confidence="certain",
+                    subject=(language,),
+                )
+
+
 def run(ctx: RuleContext) -> None:
-    """Emit OBO001-OBO013."""
+    """Emit OBO001-OBO014."""
     terms = _terms(ctx)
     deprecated = _deprecated(ctx)
     _identifier_pattern(ctx, terms, deprecated)
@@ -479,3 +512,4 @@ def run(ctx: RuleContext) -> None:
     _purl_pattern(ctx)
     _label_conventions(ctx, terms, deprecated)
     _definition_case(ctx, terms, deprecated)
+    _multiple_definitions(ctx, terms)
