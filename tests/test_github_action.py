@@ -494,6 +494,18 @@ def test_action_yml_is_a_composite_action_with_documented_inputs_and_outputs() -
     assert re.search(r"^  files:\n(?:    .+\n)*    required: true", ACTION, re.MULTILINE)
 
 
+MARKETPLACE_COLOURS = {"white", "black", "yellow", "blue", "green", "orange", "red", "purple", "gray-dark"}
+
+
+def test_action_yml_carries_the_branding_the_marketplace_listing_shows() -> None:
+    """The listing's icon (a Feather icon name) and badge colour (one of the nine the Marketplace accepts)."""
+    branding = re.search(
+        r"^branding:\n  icon: (?P<icon>[a-z0-9-]+)\n  color: (?P<color>[a-z-]+)$", ACTION, re.MULTILINE
+    )
+    assert branding, "action.yml has a branding block"
+    assert branding["color"] in MARKETPLACE_COLOURS
+
+
 def test_every_action_the_definition_uses_is_pinned_to_a_commit() -> None:
     used = [m["what"] for m in USES.finditer(ACTION)]
     assert used, "the Action uses setup-uv"

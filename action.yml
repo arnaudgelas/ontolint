@@ -4,6 +4,10 @@ description: >-
   summary for the job, and installs the one ontolint release this version of the Action belongs to.
 author: Arnaud Gelas
 
+branding:
+  icon: check-circle
+  color: blue
+
 # `uses: arnaudgelas/ontolint@vX.Y.Z` runs ontolint X.Y.Z: the Action reads the version from the pyproject.toml of
 # the commit the tag points to and installs exactly that release from PyPI, never the latest, after PyPI's PEP 740
 # attestation shows this repository's release workflow published those bytes. Its dependencies come from
