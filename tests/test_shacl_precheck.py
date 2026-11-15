@@ -182,10 +182,15 @@ def test_valid_inputs_pass_and_results_are_unchanged(data: str, shapes: str, mon
     assert shacl_issues(g, sg) == with_check
 
 
+REFUSAL_CPU_SECONDS = 5.0
+
+
 def test_engine_reports_rejected_shapes_quickly() -> None:
-    start = time.monotonic()
+    # CPU time, not wall clock: a run beside other workers is slowed as a whole (it took 1.2 s on a loaded CI runner,
+    # 0.1 s idle).  Unchecked, pySHACL took minutes on these shapes, so the limit only has to tell a refusal from that.
+    start = time.process_time()
     result = Linter(Graph().parse(FIXTURES / "clean.ttl"), _language_shapes(1735)).execute()
-    assert time.monotonic() - start < 1.0
+    assert time.process_time() - start < REFUSAL_CPU_SECONDS
     failed = [e for e in result.with_status(ExecutionStatus.FAILED) if e.rule_id == "SHACL001"]
     assert len(failed) == 1
     assert failed[0].detail.startswith("ShapesRejected:")
