@@ -27,7 +27,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
-from . import baseline, engine, quality
+from . import baseline, dqv, engine, quality
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
@@ -225,6 +225,13 @@ def build_parser() -> argparse.ArgumentParser:
         "change; one ONTOLOGY and --format json or markdown",
     )
     ap.add_argument(
+        "--write-dqv",
+        metavar="FILE",
+        help="Write the run's measurements to FILE as W3C Data Quality Vocabulary (DQV) Turtle: one "
+        "dqv:QualityMeasurement per integer value, computed on the ontology; deterministic, and dated only by "
+        "SOURCE_DATE_EPOCH; one ONTOLOGY only (docs/dqv.md)",
+    )
+    ap.add_argument(
         "--compare-quality",
         nargs=2,
         metavar=("OLD", "NEW"),
@@ -414,7 +421,7 @@ def _lint_file(
     # Taken after the rules ran, so a measurement a METRIC rule read is the value it compared.
     measured, partitions = _measured(item, loaded, ctx, grouping) if args.measurements else (None, ())
     # Likewise taken after the rules ran; only a run that writes or compares a quality snapshot builds one.
-    snapshot = quality.build(ctx) if args.write_quality_snapshot or args.quality_baseline else None
+    snapshot = quality.build(ctx) if args.write_quality_snapshot or args.quality_baseline or args.write_dqv else None
     return FileReport(
         item.display,
         item.uri,
@@ -429,6 +436,7 @@ def _lint_file(
         measured,
         partitions,
         snapshot,
+        dqv.subject(ctx) if args.write_dqv else None,
     )
 
 
@@ -684,7 +692,21 @@ def _quality(
         if failure is not None:
             print(failure, file=sys.stderr)
             return TOOL_FAILURE_EXIT
+    if args.write_dqv and (failure := _write_dqv(args.write_dqv, snapshot, files[0].dqv)) is not None:
+        print(failure, file=sys.stderr)
+        return TOOL_FAILURE_EXIT
     return quality.compare(accepted, snapshot) if accepted is not None else None
+
+
+def _write_dqv(path: str, snapshot: quality.Snapshot, on: dqv.Subject | None) -> str | None:
+    """Write the run's DQV report (:mod:`ontolint.dqv`) to ``path``; return the TOOL001 line when it cannot be."""
+    try:
+        text = dqv.dumps(
+            snapshot, on or dqv.Subject((), ()), tool_version=package_version(), generated=dqv.generated_at(os.environ)
+        )
+    except dqv.DqvError as exc:
+        return f"TOOL001: {exc}"
+    return _write_text(path, text, what="DQV report")
 
 
 def _compare_quality(args: argparse.Namespace) -> int:
@@ -1237,11 +1259,14 @@ def _alternatives_problem(args: argparse.Namespace) -> str | None:
 def _quality_usage_problem(args: argparse.Namespace) -> str | None:
     """The first usage error of the quality snapshot options (``docs/quality.md``); ``None`` if there is none."""
     if args.compare_quality:
-        if args.ontology or args.write_quality_snapshot or args.quality_baseline:
+        if args.ontology or args.write_quality_snapshot or args.quality_baseline or args.write_dqv:
             return "--compare-quality takes two snapshot files, and no ONTOLOGY or other quality option"
         return "--compare-quality requires --format text, json or markdown" if args.format == "sarif" else None
-    if (args.write_quality_snapshot or args.quality_baseline) and len(args.ontology) != 1:
-        return "--write-quality-snapshot and --quality-baseline take exactly one ONTOLOGY: a snapshot is of one file"
+    if (args.write_quality_snapshot or args.quality_baseline or args.write_dqv) and len(args.ontology) != 1:
+        return (
+            "--write-quality-snapshot, --quality-baseline and --write-dqv take exactly one ONTOLOGY: "
+            "a snapshot is of one file"
+        )
     if args.quality_baseline and args.format not in ("json", "markdown"):
         return "--quality-baseline requires --format json or markdown"
     return None

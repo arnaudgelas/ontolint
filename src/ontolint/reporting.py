@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ._version import package_version
+from .dqv import Subject
 from .models import (
     Evidence,
     ExecutionStatus,
@@ -95,6 +96,8 @@ class FileReport:
     measurement_partitions: tuple[MeasurementPartition, ...] = ()
     # With --write-quality-snapshot or --quality-baseline: the file's quality snapshot (:mod:`ontolint.quality`).
     quality: Snapshot | None = None
+    # With --write-dqv: what the file's DQV measurements are computed on (:mod:`ontolint.dqv`); else ``None``.
+    dqv: Subject | None = None
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
