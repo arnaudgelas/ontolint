@@ -1,14 +1,14 @@
 # Mutation baseline audit (issue #19)
 
 This is a **prepared audit, not an approval**. It was written by an AI agent (Claude) on 2026-11-15
-from `main` at `e96348d`, to make the maintainer's decision cheap. The policy
+from `main` at `74e38d2`, to make the maintainer's decision cheap. The policy
 (`docs/mutation-policy.md`) requires a reviewer other than the author to approve every pardon;
 an agent's reading does not replace that, and neither does this page. Approving the pardons,
 starting the hosted run and setting `MUTATION_GATE_MODE=blocking` remain the maintainer's.
 
 ## What the issue says and what is true now
 
-| Issue text | State at `e96348d` |
+| Issue text | State at `74e38d2` |
 | --- | --- |
 | 20 `gremlin: pardon` markers await audit | 14. The 2026-11-13 audit (`docs/mutation-pardons.md`) removed 19 of 31 and two were added (`GraphContext`, the run-level `zip`), 14 remain: 9 `untestable`, 5 `equivalent`. `tests/test_mutation_pardons.py` pins the list. |
 | `context.py` is outside the mutation scope | It is inside (commit `978248d`, `paths` in `pyproject.toml`). |
@@ -31,15 +31,15 @@ classes and asserts `__dataclass_params__.frozen`, so each mutant fails it in th
 
 | # | Location | Class | Verdict | Note |
 | --- | --- | --- | --- | --- |
-| 1 | `src/ontolint/adapters/shacl.py:554` | `_ValidationJob` | sound | Sent to a worker; immutability is a contract. In the test's list. |
+| 1 | `src/ontolint/adapters/shacl.py:612` | `_ValidationJob` | sound | Sent to a worker; immutability is a contract. In the test's list. |
 | 2 | `src/ontolint/context.py:55` | `GraphContext` | sound | Cached and shared by every rule. In the list. |
-| 3 | `src/ontolint/cli.py:710` | `ImportOptions` | sound | In the list. |
+| 3 | `src/ontolint/cli.py:732` | `ImportOptions` | sound | In the list. |
 | 4 | `src/ontolint/imports.py:55` | `Catalog` | sound | In the list. |
 | 5 | `src/ontolint/imports.py:146` | `Closure` | sound | In the list. |
 | 6 | `src/ontolint/loader.py:111` | `ImportChoice` | sound | In the list. |
 | 7 | `src/ontolint/loader.py:124` | `ImportShadow` | sound | In the list. |
 | 8 | `src/ontolint/loader.py:628` | `_ParseJob` | sound | Sent to a worker. In the list. |
-| 9 | `src/ontolint/reporting.py:63` | `Origin` | sound | In the list. |
+| 9 | `src/ontolint/reporting.py:81` | `Origin` | sound | In the list. |
 
 Caveat for all nine: the "too slow" claim is a property of pytest-gremlins and the suite size, not
 of the code, and the pardons count against the 5% limit. They must be renewed or replaced at the
@@ -50,9 +50,9 @@ maintainer can check the run for errors on these lines.
 
 | # | Location | Mutant | Stated reason | Verdict | Reading |
 | --- | --- | --- | --- | --- | --- |
-| 10 | `src/ontolint/cli.py:1168` | `zip(inputs, graphs, shared, strict=True)`: True to False | `shared` has one entry per input, like `graphs` | sound | `_lint` returns 2 when `_parse_inputs` reports any error (every input appends exactly one graph or one error), so `graphs` has `len(inputs)` entries here. `shared` is `shared_identities(...)`, which returns `[... for _ in inputs]` one tuple per input, or `[()] * len(inputs)`. `strict` is an assertion of an invariant that holds by construction. The same assertion in `shared_identities` (`declarations.py`, outside the scope) stays unpardoned and unmutated. |
+| 10 | `src/ontolint/cli.py:1190` | `zip(inputs, graphs, shared, strict=True)`: True to False | `shared` has one entry per input, like `graphs` | sound | `_lint` returns 2 when `_parse_inputs` reports any error (every input appends exactly one graph or one error), so `graphs` has `len(inputs)` entries here. `shared` is `shared_identities(...)`, which returns `[... for _ in inputs]` one tuple per input, or `[()] * len(inputs)`. `strict` is an assertion of an invariant that holds by construction. The same assertion in `shared_identities` (`declarations.py`, outside the scope) stays unpardoned and unmutated. |
 | 11 | `src/ontolint/baseline.py:96` | `zip(report.findings, ids, strict=True)`: True to False | `ids` is built from `report.findings` | sound | `ids` is a list comprehension over `report.findings` two lines above; `report` is not touched in between. |
-| 12 | `src/ontolint/datasets.py:330` | `zip(triples, of, strict=True)`: True to False | lengths were compared above | sound | The function raises `ValueError` when `len(of) != len(triples)` earlier, and has a test for that message. `strict` never fires. |
+| 12 | `src/ontolint/datasets.py:330` | `zip(triples, of, strict=True)`: True to False | lengths were compared above | sound | `decode_index` raises `ValueError` when `len(of) != len(triples)` earlier (`test_a_malformed_index_is_a_worker_error`, case `"of": []`, reaches that check). `strict` never fires. |
 | 13 | `src/ontolint/worker.py:108` | `Pipe(duplex=False)`: False to True | parent only reads, worker only writes | sound | A duplex pipe is a socket pair; the parent closes `sender` after `start()`, so EOF on `receiver` still means the worker is gone. Nothing calls `receiver.send` or `sender.recv_bytes`. No caller can see the difference (only the file descriptor kind). |
 | 14 | `src/ontolint/worker.py:111` | `Process(..., daemon=True)`: True to False | `_stop` runs in `finally`, so `daemon` matters only if the parent dies | weak | True for every path through the `try`. Two gaps: `sender.close()` runs between `process.start()` and the `try`, and `receiver.close()` runs before `_stop` in the `finally`; if either raised, a non-daemon worker would be left and keep the interpreter from exiting. `daemon` is observable (`process.daemon`), so a test that spies `Process` can pin it. The policy's own rule ("a mutant that changes anything a caller can observe is not equivalent") argues for a test, not a pardon. Not changed here: removing a pardon is a reviewed change of its own. |
 
@@ -97,32 +97,38 @@ fallback; the other survivors and errors of `cli.py` are in code added since:
 
 | Where | Mutant | Verdict | Handling |
 | --- | --- | --- | --- |
-| `cli.py:895` `_library` | `or` to `and` in the import-root fallback | testable | Killed by two tests in `tests/test_pattern_library.py`: by default a member that links to a file elsewhere in the repository is read (the mutant read under the working directory), and an explicit `--import-root` bounds the library (the mutant ignored it). This is the survivor `TODO.md` called an equivalent root fallback: it is not, the root decides which symlinks are refused. |
-| `cli.py:1146`, `_lint`, quality baseline refusal | `return TOOL_FAILURE_EXIT` to `None` | testable | Survived because the crash handler of `main` also exits 2, after the same message. Killed by asserting the refusal is the only stderr line. |
-| `cli.py:1174`, `_lint`, `return trend` (the snapshot write failure) | to `None` | testable | The same; killed by the same assertion on the unwritable snapshot. |
-| `cli.py:700`, `cli.py:703`, `_compare_quality` | `return EXIT_PIPE_CLOSED` and `return TOOL_FAILURE_EXIT` to `None` | testable | Reported as errors (timeouts under load); no test existed for a closed stdout or an unwritable `--output` of `--compare-quality`. Both added and each shown to fail against its mutant. |
-| `cli.py:286` `RunPlan` | `frozen=True` to `False` | untestable in a run | An error, like the nine pardoned decorators, but unpardoned and not in `test_value_objects_are_frozen`. See below. |
+| `cli.py:917` `_library` | `or` to `and` in the import-root fallback | testable | Killed by two tests in `tests/test_pattern_library.py`: by default a member that links to a file elsewhere in the repository is read (the mutant read under the working directory), and an explicit `--import-root` bounds the library (the mutant ignored it). This is the survivor `TODO.md` called an equivalent root fallback: it is not, the root decides which symlinks are refused. |
+| `cli.py:1168`, `_lint`, quality baseline refusal | `return TOOL_FAILURE_EXIT` to `None` | testable | Survived because the crash handler of `main` also exits 2, after the same message. Killed by asserting the refusal is the only stderr line. |
+| `cli.py:1196`, `_lint`, `return trend` (the snapshot write failure) | to `None` | testable | The same; killed by the same assertion on the unwritable snapshot. |
+| `cli.py:722`, `cli.py:725`, `_compare_quality` | `return EXIT_PIPE_CLOSED` and `return TOOL_FAILURE_EXIT` to `None` | testable | Reported as errors (timeouts under load); no test existed for a closed stdout or an unwritable `--output` of `--compare-quality`. Both added and each shown to fail against its mutant. |
+| `cli.py:294` `RunPlan` | `frozen=True` to `False` | untestable in a run | An error, like the nine pardoned decorators, but unpardoned and not in `test_value_objects_are_frozen`. See below. |
 | `context.py:80` `restrict_to_local=False` | default to `True` | killed outside the run | An error (timeout). `test_graph_context_is_asserted_scope_aware_and_immutable` fails on it when run alone; no change needed. |
+
+The mutation numbers above were measured on `e96348d`. `main` has since changed `cli.py` (the SARIF region
+work), so the line numbers were re-derived on `74e38d2` by reading, and the `cli.py` run was not repeated.
 
 The new and strengthened tests were seen to fail against their mutant before the commit (mutants applied by
 hand, then reverted). The two commits are test-only.
 
 ## What the maintainer should expect from the hosted run
 
-- **Unpardoned `@dataclass(frozen=True)` in the scope.** The pardon table lists nine. About 26
+- **Unpardoned `@dataclass(frozen=True)` in the scope.** The pardon table lists nine. About 28
   more frozen decorators sit in scope modules without a pardon (`baseline.py`, `datasets.py`,
-  `cli.py` `RunPlan`, `engine.py`, `quality.py`, `loader.py`, `reporting.py`, `adapters/shacl.py`,
+  `cli.py` `RunPlan`, `engine.py`, `dqv.py`, `quality.py`, `loader.py`, `reporting.py`, `adapters/shacl.py`,
   `rules/measurements.py`, `rules/hierarchy_quality.py`). The same mechanism that made the nine
   pardons necessary applies to them: each is likely to be reported as an error, which counts
   against the score. Only `RunPlan` was observed here. The previous local run (53 errors, 95.1%
   overall) already included such errors and passed, but the count grows with every new frozen
-  value object. Choices, all the maintainer's: pardon them (more rows, the 5% limit has room: 35
-  of about 2 400 is 1.5%), raise `mutant_timeout`, or leave the errors in the score.
+  value object. Choices, all the maintainer's: pardon them (more rows, the 5% limit has room: 42
+  of about 2 400 is 1.8%), raise `mutant_timeout`, or leave the errors in the score.
 - Errors from timeouts depend on the runner; a hosted run is the only evidence for them.
 - The job's 120-minute limit is unproven for the current suite (the TODO notes the staleness
   test that runs every rule).
 
 ## What this audit does not prove
+
+- It does not complete issue #19. The issue's done-when needs a hosted run, the approval and the
+  `MUTATION_GATE_MODE=blocking` variable; none exists. This page is preparation for them.
 
 - It ran only `imports.py`, `context.py` and `cli.py`. It did not run the whole scope, `worker.py`,
   `baseline.py` and `datasets.py` (pardon readings above are by reading the code, not by running
