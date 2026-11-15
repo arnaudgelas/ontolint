@@ -24,6 +24,7 @@ from ontolint.models import RuleBackend, RuleSpec
 
 from . import (
     alignment,
+    annotation_whitespace,
     class_heuristics,
     classes,
     duplicate_ids,
@@ -105,6 +106,7 @@ RULE_MODULES: tuple[ModuleType, ...] = (
     library,
     duplicate_ids,
     import_identity,
+    annotation_whitespace,
 )
 
 # Declared specs with no ``run`` function behind them (adapters, CLI front end).

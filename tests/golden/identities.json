@@ -2620,6 +2620,50 @@
     "26115eb1c04466d808c6aa51e9adec1c448a0a1dde09b32d7803bc75b15fff7b"
    ]
   ],
+  "LEX025:leading tab in a definition": [
+   [
+    "LEX025",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#definition",
+     "\"\tA thing.\""
+    ],
+    "f0438d714fa3fff4fc6d0a6b67a9fd500ac1b0be9df039013b7c54693bb5768d"
+   ]
+  ],
+  "LEX025:padded synonym": [
+   [
+    "LEX025",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2004/02/skos/core#altLabel",
+     "\" other\"@en"
+    ],
+    "2bb7edc3caacacf971644fcb1314a43d1277422c2e10633fb00564269efbf104"
+   ]
+  ],
+  "LEX025:padded value of a declared annotation property": [
+   [
+    "LEX025",
+    "https://example.test/onto#A",
+    [
+     "https://example.test/onto#note",
+     "\"x \""
+    ],
+    "c06fc7e09f406cf8b165db6feee9d55beafda5ce9dc2d9d9f1f6e6343fa77f41"
+   ]
+  ],
+  "LEX025:trailing space in a comment": [
+   [
+    "LEX025",
+    "https://example.test/onto#A",
+    [
+     "http://www.w3.org/2000/01/rdf-schema#comment",
+     "\"A thing. \"@en"
+    ],
+    "4aa86a8f74c1d7528f693c2164774d2ccf48e01959ea347cc63c4036ea92dfa0"
+   ]
+  ],
   "LIB001:an entry of the entry class with no member at all": [
    [
     "LIB001",

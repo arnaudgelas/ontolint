@@ -131,4 +131,22 @@ CASES = {
             ttl("multiple rdfs:comment is fine", 'ex:A a owl:Class ; rdfs:comment "One."@en, "Two."@en .'),
         ],
     ),
+    "LEX025": rule_cases(
+        [
+            ttl("trailing space in a comment", 'ex:A a owl:Class ; rdfs:comment "A thing. "@en .'),
+            ttl("leading tab in a definition", 'ex:A a owl:Class ; skos:definition "\\tA thing." .'),
+            ttl("padded synonym", 'ex:A a owl:Class ; skos:altLabel " other"@en .'),
+            ttl(
+                "padded value of a declared annotation property",
+                'ex:note a owl:AnnotationProperty . ex:A ex:note "x " .',
+            ),
+        ],
+        [
+            ttl("trimmed comment", 'ex:A a owl:Class ; rdfs:comment "A thing."@en .'),
+            ttl("padded label is LEX005", 'ex:A a owl:Class ; rdfs:label "A " .'),
+            ttl("blank definition is LEX019", 'ex:A a owl:Class ; rdfs:label "A" ; rdfs:comment "  " .'),
+            ttl("undeclared property", 'ex:A a owl:Class ; ex:other "x " .'),
+            ttl("non-string datatype", 'ex:A a owl:Class ; rdfs:comment " 1 "^^xsd:token .'),
+        ],
+    ),
 }
