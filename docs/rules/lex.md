@@ -22,6 +22,14 @@ All examples assume these prefixes:
 The docstring of each module that implements a rule of this page: the definitions that its rules'
 specifications share. Each rule's own specification is shown under the rule.
 
+### Module annotation_whitespace
+
+Source: `src/ontolint/rules/annotation_whitespace.py`.
+
+LEX025: whitespace-padded annotation values.
+
+*Specified under each rule: LEX025.*
+
 ### Module iri_lexical_extras
 
 Source: `src/ontolint/rules/iri_lexical_extras.py`.
@@ -1100,4 +1108,76 @@ ex:A a owl:Class ; skos:definition "One."@en, "Un."@fr .
 
 ```turtle
 ex:A a owl:Class ; rdfs:comment "One."@en, "Two."@en .
+```
+
+#### LEX025: Whitespace-padded annotation value
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** heuristic
+- **Module:** [`annotation_whitespace`](#module-annotation_whitespace)
+- **Fix:** Trim the leading and trailing whitespace of the annotation value.
+
+**Specification.** A string literal (plain, language-tagged or ``xsd:string``) whose lexical form starts or ends with whitespace (anything ``str.strip()`` removes, a no-break space included), used as the object of an annotation property on an owned IRI subject.  An annotation property is one declared ``owl:AnnotationProperty`` in the graph, a documentation predicate (``rdfs:comment``, ``skos:definition``, ``dcterms:description``, ``obo:IAO_0000115`` and the other definition predicates, plus any configured extra definition predicate and the predicates below them), a SKOS note or ``skos:altLabel`` / ``skos:hiddenLabel``, ``dcterms:title``, ``dc:title`` or an ``oboInOwl`` synonym.  The label predicates (``rdfs:label``, ``skos:prefLabel``, the configured extra label predicates and everything below them) are left to LEX005, so a label is never reported twice, and a blank value of a definition predicate is left to LEX019.  One finding per property and literal on a subject, so the same padded text under two properties is two findings.
+
+*Flagged:* `trailing space in a comment`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "A thing. "@en .
+```
+
+Reported: `http://www.w3.org/2000/01/rdf-schema#comment value 'A thing. ' has leading or trailing whitespace.`
+
+*Flagged:* `leading tab in a definition`
+
+```turtle
+ex:A a owl:Class ; skos:definition "\tA thing." .
+```
+
+Reported: `http://www.w3.org/2004/02/skos/core#definition value '\tA thing.' has leading or trailing whitespace.`
+
+*Flagged:* `padded synonym`
+
+```turtle
+ex:A a owl:Class ; skos:altLabel " other"@en .
+```
+
+Reported: `http://www.w3.org/2004/02/skos/core#altLabel value ' other' has leading or trailing whitespace.`
+
+*Flagged:* `padded value of a declared annotation property`
+
+```turtle
+ex:note a owl:AnnotationProperty . ex:A ex:note "x " .
+```
+
+Reported: `https://example.test/onto#note value 'x ' has leading or trailing whitespace.`
+
+*Clean:* `trimmed comment`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment "A thing."@en .
+```
+
+*Clean:* `padded label is LEX005`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A " .
+```
+
+*Clean:* `blank definition is LEX019`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "A" ; rdfs:comment "  " .
+```
+
+*Clean:* `undeclared property`
+
+```turtle
+ex:A a owl:Class ; ex:other "x " .
+```
+
+*Clean:* `non-string datatype`
+
+```turtle
+ex:A a owl:Class ; rdfs:comment " 1 "^^xsd:token .
 ```
