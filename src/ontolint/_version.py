@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from importlib import metadata
 
-FALLBACK_VERSION = "0.14.0"
+FALLBACK_VERSION = "0.15.0"
 
 
 def package_version() -> str:
