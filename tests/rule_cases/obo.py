@@ -440,4 +440,32 @@ CASES = {
             _ttl("definition and elucidation", 'ex:A a owl:Class ; obo:IAO_0000115 "One." ; obo:IAO_0000600 "Two." .'),
         ],
     ),
+    "OBO015": rule_cases(
+        [
+            _ttl("not a curie", 'ex:A a owl:Class ; oio:hasDbXref "not a curie" .'),
+            _ttl("no colon", 'ex:A a owl:Class ; oio:hasDbXref "PMID12345" .'),
+            _ttl("empty", 'ex:A a owl:Class ; oio:hasDbXref "" .'),
+            _ttl("empty local part", 'ex:A a owl:Class ; oio:hasDbXref "PMID:" .'),
+            _ttl("leading whitespace", 'ex:A a owl:Class ; oio:hasDbXref " PMID:12345" .'),
+            _ttl("trailing whitespace", 'ex:A a owl:Class ; oio:hasDbXref "PMID:12345 " .'),
+            _ttl("space in local part", 'ex:A a owl:Class ; oio:hasDbXref "PMID:12 345" .'),
+            _ttl("url", 'ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .'),
+            _ttl("prefix starting with a digit", 'ex:A a owl:Class ; oio:hasDbXref "1AB:123" .'),
+            _ttl("typed literal", 'ex:A a owl:Class ; oio:hasDbXref "x y"^^xsd:string .'),
+            _ttl("on a property", 'ex:p a owl:ObjectProperty ; oio:hasDbXref "bad" .'),
+            _ttl(
+                "axiom annotation",
+                "ex:A a owl:Class . " + _axiom('oio:hasDbXref "bad xref"'),
+            ),
+        ],
+        [
+            _ttl("curie", 'ex:A a owl:Class ; oio:hasDbXref "PMID:12345" .'),
+            _ttl("dotted prefix", 'ex:A a owl:Class ; oio:hasDbXref "Wikipedia.en:Cell_(biology)" .'),
+            _ttl("underscore prefix", 'ex:A a owl:Class ; oio:hasDbXref "_x:1" .'),
+            _ttl("colon in local part", 'ex:A a owl:Class ; oio:hasDbXref "DOI:10.1000/a:b" .'),
+            _ttl("iri value is not read", "ex:A a owl:Class ; oio:hasDbXref <http://example.org/x> ."),
+            _ttl("axiom with a curie", "ex:A a owl:Class . " + _axiom('oio:hasDbXref "PMID:1"')),
+            _ttl("imported term", 'obo:XYZ_1 a owl:Class ; oio:hasDbXref "PMID:12345" .'),
+        ],
+    ),
 }
