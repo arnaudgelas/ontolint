@@ -49,6 +49,7 @@ import tempfile
 import urllib.request
 from collections.abc import Mapping
 from dataclasses import dataclass
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -56,7 +57,9 @@ ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "docs" / "validation" / "metric-corpus.json"
 RESULTS = ROOT / "docs" / "validation" / "metric-corpus-results.json"
 PAGE = ROOT / "docs" / "validation" / "metric-calibration.md"
+CALIBRATION = ROOT / "docs" / "metric-calibration.md"
 BEGIN, END = "<!-- metric_corpus.py: begin -->", "<!-- metric_corpus.py: end -->"
+CALIBRATION_MARKERS = ("<!-- metric_corpus.py: distributions begin -->", "<!-- metric_corpus.py: distributions end -->")
 RULES = tuple(f"METRIC{n:03d}" for n in range(1, 14))
 COUNTED = ("fire", "silent")  # labels that make a true or false positive or negative
 EXPECTS = (*COUNTED, "unknown", "unassessed")  # unknown: assessed and left open; unassessed: not looked at
@@ -288,17 +291,43 @@ def _sha256(body: bytes) -> str:
     return hashlib.sha256(body).hexdigest()
 
 
-def _lint(path: Path, config: Path | None) -> dict[str, str]:
-    """Run ontolint on ``path`` with only the METRIC rules; return each finding's message by rule."""
+def _run(path: Path, config: Path | None, *extra: str) -> dict[str, Any]:
+    """Run ontolint on ``path`` with only the METRIC rules; return its checked JSON report."""
     argv = [sys.executable, "-m", "ontolint", str(path), "--format", "json", "--fail-on", "never", "--select", "METRIC"]
     if config is not None:
         argv += ["--config", str(config)]
-    done = subprocess.run(argv, capture_output=True, text=True, check=False)
+    done = subprocess.run([*argv, *extra], capture_output=True, text=True, check=False)
     if done.returncode != 0:
         raise SystemExit(f"{path.name}: ontolint exited {done.returncode}: {done.stderr.strip()}")
     report = json.loads(done.stdout)
     check_report(path, report)
-    return {finding["rule"]: finding["message"] for finding in report["findings"]}
+    return report
+
+
+def _lint(path: Path, config: Path | None) -> dict[str, str]:
+    """Run ontolint on ``path`` with only the METRIC rules; return each finding's message by rule."""
+    return {finding["rule"]: finding["message"] for finding in _run(path, config)["findings"]}
+
+
+def _vector(path: Path) -> dict[str, dict[str, int]]:
+    """Run ontolint on ``path`` with ``--measurements`` and return the figures the METRIC rules read."""
+    return vector_of(path.name, _run(path, None, "--measurements")["files"][0])
+
+
+def vector_of(name: str, file_report: Mapping[str, Any]) -> dict[str, dict[str, int]]:
+    """Return the measurements the rules read, by id; refuse one that is absent, unavailable or of another version."""
+    published = {m["id"]: m for m in file_report.get("measurements", [])}
+    needed = {r.measurement for r in READINGS.values()} | {r.gate for r in READINGS.values() if r.gate}
+    vector: dict[str, dict[str, int]] = {}
+    for measurement_id in sorted(needed):
+        found = published.get(measurement_id)
+        if found is None or found.get("definition_version") != DEFINITION_VERSION:
+            raise SystemExit(f"{name}: {measurement_id} is absent or not of definition version {DEFINITION_VERSION}")
+        keys = ("value",) if found["kind"] == "count" else ("numerator", "denominator")
+        if any(not isinstance(found.get(key), int) for key in keys):
+            raise SystemExit(f"{name}: {measurement_id} has no value ({found.get('reason', 'no reason given')})")
+        vector[measurement_id] = {"definition_version": DEFINITION_VERSION, **{key: found[key] for key in keys}}
+    return vector
 
 
 def check_report(path: Path, report: Mapping[str, Any]) -> None:
@@ -348,9 +377,114 @@ def parse_forced(messages: Mapping[str, str]) -> dict[str, dict[str, Any]]:
     return measured
 
 
+PRINT_TOLERANCE = 0.005  # a forced mean is printed to two decimals
+DEFINITION_VERSION = 1  # the measurement definitions the readings below were written against (measurements.md)
+
+
+@dataclass(frozen=True)
+class Reading:
+    """How a METRIC rule turns a measurement into the value it compares with its limit."""
+
+    measurement: str  # the id read
+    missing: bool  # the rule reads what is absent (denominator - numerator) rather than the numerator
+    gate: str | None  # the measurement whose denominator must reach the sample gate; None: no gate
+    upper: bool  # fires above the limit, else below it
+
+
+READINGS: dict[str, Reading] = {
+    "METRIC001": Reading("class_label_coverage", True, "class_label_coverage", True),
+    "METRIC002": Reading("class_definition_coverage", True, "class_definition_coverage", True),
+    "METRIC003": Reading("property_documentation_coverage", True, "property_documentation_coverage", True),
+    "METRIC004": Reading("class_fanout", False, "orphan_classes", True),  # gated on the owned classes
+    "METRIC005": Reading("orphan_classes", False, "orphan_classes", True),
+    "METRIC006": Reading("relation_properties_per_class", False, "relation_properties_per_class", False),
+    "METRIC007": Reading("relation_properties_per_class", False, "relation_properties_per_class", True),
+    "METRIC008": Reading("unsigned_properties", False, "unsigned_properties", True),
+    "METRIC009": Reading("label_language_coverage", False, "label_language_coverage", False),
+    "METRIC010": Reading("foreign_references", False, "foreign_references", True),
+    "METRIC011": Reading("unresolved_imports", False, None, True),
+    "METRIC012": Reading("definition_length", False, "definition_length", False),
+    "METRIC013": Reading("blank_subjects", False, "blank_subjects", True),
+}
+LIMIT_KEYS: dict[str, str] = {
+    "METRIC001": "metric_max_unlabelled_ratio",
+    "METRIC002": "metric_max_undefined_ratio",
+    "METRIC003": "metric_max_undocumented_property_ratio",
+    "METRIC004": "metric_max_mean_fanout",
+    "METRIC005": "metric_max_orphan_ratio",
+    "METRIC006": "metric_min_property_class_ratio",
+    "METRIC007": "metric_max_property_class_ratio",
+    "METRIC008": "metric_max_unsigned_property_ratio",
+    "METRIC009": "metric_min_language_coverage",
+    "METRIC010": "metric_max_foreign_reference_ratio",
+    "METRIC011": "metric_max_imports",
+    "METRIC012": "metric_min_definition_words",
+    "METRIC013": "metric_max_blank_node_ratio",
+}
+
+
+def default_limits() -> dict[str, Fraction]:
+    """Return the shipped limit of every rule, read from the policy so that it cannot drift from the code."""
+    from ontolint.policy import Policy  # noqa: PLC0415 -- only the calibration needs the package itself
+
+    policy = Policy()
+    return {rule: Fraction(getattr(policy, key)) for rule, key in LIMIT_KEYS.items()}
+
+
+def sample_gate() -> int:
+    from ontolint.policy import Policy  # noqa: PLC0415
+
+    return int(Policy().metric_min_sample)
+
+
+def reading(rule: str, vector: Mapping[str, Mapping[str, int]], gate: int) -> Fraction | None:
+    """Return the value ``rule`` compares with its limit, or ``None`` when it makes no comparison.
+
+    ``None`` is a population below the sample gate (``gate``), an empty population, or METRIC004 with no parent.
+    """
+    read = READINGS[rule]
+    if read.gate is not None and vector[read.gate]["denominator"] < gate:
+        return None
+    figures = vector[read.measurement]
+    if "value" in figures:
+        return Fraction(figures["value"])
+    if figures["denominator"] == 0:
+        return None
+    part = figures["denominator"] - figures["numerator"] if read.missing else figures["numerator"]
+    return Fraction(part, figures["denominator"])
+
+
+def would_fire(rule: str, value: Fraction | None, limit: Fraction) -> bool:
+    """Say whether ``value`` crosses ``limit`` as the rule does: strictly, and never without a value."""
+    if value is None:
+        return False
+    return value > limit if READINGS[rule].upper else value < limit
+
+
+# What a rule's forced run prints when silent and the value could still be a measurement: the boundary.
+BOUNDARY: dict[str, int] = {**{rule: 0 for rule, read in READINGS.items() if read.upper}, "METRIC009": 1}
+
+
+def check_vector(name: str, rule: str, vector: Mapping[str, Mapping[str, int]], forced: Mapping[str, Any]) -> None:
+    """Refuse a measurement vector that disagrees with what the forced run printed for ``rule``.
+
+    The forced run prints the value of every non-empty population; a silent one measured the boundary or an
+    empty population.  Two independent readings of one number must agree before either is recorded.
+    """
+    value = reading(rule, vector, 1)  # the forced policy's sample gate is 1
+    if "value" in forced:
+        agrees = value is not None and abs(float(value) - forced["value"]) <= PRINT_TOLERANCE
+    else:
+        agrees = value is None or (rule in BOUNDARY and value == BOUNDARY[rule])
+    if not agrees:
+        raise SystemExit(f"{name}: {rule} the vector reads {value} and disagrees with the forced run: {dict(forced)}")
+
+
 def measure(directory: Path, entries: list[Entry]) -> dict[str, Any]:
     """Lint every fetched entry with the default and the forced policy; return the results document."""
     results: dict[str, Any] = {}
+    vectors: dict[str, Any] = {}
+    gate, limits = sample_gate(), default_limits()
     with tempfile.TemporaryDirectory() as scratch:
         forced = Path(scratch) / "forced.json"
         forced.write_text(json.dumps(FORCED_POLICY), encoding="utf-8")
@@ -365,11 +499,17 @@ def measure(directory: Path, entries: list[Entry]) -> dict[str, Any]:
             path.write_bytes(body)
             fired = _lint(path, None)
             measured = parse_forced(_lint(path, forced))
+            vector = _vector(path)
             for rule in RULES:
                 measured[rule]["fires"] = rule in fired
+                if rule != "METRIC007":  # METRIC007 reads the figure METRIC006 prints
+                    check_vector(entry.id, rule, vector, measured[rule])
+                if would_fire(rule, reading(rule, vector, gate), limits[rule]) != (rule in fired):
+                    raise SystemExit(f"{entry.id}: {rule} fired={rule in fired}, but its vector says otherwise")
             results[entry.id] = {rule: measured[rule] for rule in RULES}
+            vectors[entry.id] = vector
             print(f"{entry.id}: {sorted(fired)}", flush=True)
-    return {"results": results}
+    return {"results": results, "vectors": vectors}
 
 
 OUTCOMES = ("tp", "fp", "tn_checked", "tn_presumed", "fn", "unknown", "unassessed")
@@ -457,22 +597,159 @@ def render(entries: list[Entry], results: Mapping[str, Any], status: str) -> str
     return "\n".join(lines)
 
 
-def _split(content: str) -> tuple[str, str, str]:
+def _split(content: str, begin: str = BEGIN, end: str = END) -> tuple[str, str, str]:
     """Split the page into the text before the markers, the generated part and the text after them."""
-    if content.count(BEGIN) != 1 or content.count(END) != 1 or content.index(BEGIN) > content.index(END):
-        raise ValueError(f"the page must hold one {BEGIN} line followed by one {END} line")
-    head, _, rest = content.partition(BEGIN)
-    generated, _, tail = rest.partition(END)
+    if content.count(begin) != 1 or content.count(end) != 1 or content.index(begin) > content.index(end):
+        raise ValueError(f"the page must hold one {begin} line followed by one {end} line")
+    head, _, rest = content.partition(begin)
+    generated, _, tail = rest.partition(end)
     return head, generated.strip("\n"), tail
 
 
-def write_page(text: str, page: Path = PAGE) -> None:
-    head, _, tail = _split(page.read_text(encoding="utf-8"))
-    page.write_text(f"{head}{BEGIN}\n{text}\n{END}{tail}", encoding="utf-8")
+def write_page(text: str, page: Path = PAGE, begin: str = BEGIN, end: str = END) -> None:
+    head, _, tail = _split(page.read_text(encoding="utf-8"), begin, end)
+    page.write_text(f"{head}{begin}\n{text}\n{end}{tail}", encoding="utf-8")
 
 
-def generated_part(page: Path = PAGE) -> str:
-    return _split(page.read_text(encoding="utf-8"))[1]
+def generated_part(page: Path = PAGE, begin: str = BEGIN, end: str = END) -> str:
+    return _split(page.read_text(encoding="utf-8"), begin, end)[1]
+
+
+def _quantile(ordered: list[Fraction], numerator: int, denominator: int) -> Fraction:
+    """Return the ``numerator/denominator`` quantile by linear interpolation between order statistics (exact)."""
+    position = Fraction((len(ordered) - 1) * numerator, denominator)
+    low = position.numerator // position.denominator
+    high = min(low + 1, len(ordered) - 1)
+    return ordered[low] + (ordered[high] - ordered[low]) * (position - low)
+
+
+def describe(values: list[Fraction]) -> dict[str, Any]:
+    """Return the size, minimum, quartiles (inclusive method) and maximum of ``values``, all exact."""
+    if not values:
+        return {"n": 0}
+    ordered = sorted(values)
+    return {
+        "n": len(ordered),
+        "min": ordered[0],
+        "q1": _quantile(ordered, 1, 4),
+        "median": _quantile(ordered, 1, 2),
+        "q3": _quantile(ordered, 3, 4),
+        "max": ordered[-1],
+    }
+
+
+def values_of(rule: str, results: Mapping[str, Any]) -> dict[str, Fraction]:
+    """Return, by file, the value ``rule`` compared with its limit; a file that made no comparison is left out."""
+    gate = sample_gate()
+    found = {name: reading(rule, vector, gate) for name, vector in results["vectors"].items()}
+    return {name: value for name, value in found.items() if value is not None}
+
+
+def _num(value: Fraction | float, rule: str) -> str:
+    return str(int(value)) if rule == "METRIC011" else f"{float(value):.3f}"
+
+
+def distribution_rows(entries: list[Entry], results: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return, per rule, the distribution of its values over the corpus and how many files its default flags."""
+    limits = default_limits()
+    rows: dict[str, dict[str, Any]] = {}
+    for rule in RULES:
+        values = values_of(rule, results)
+        row = describe(list(values.values()))
+        row["limit"] = limits[rule]
+        row["flagged"] = sum(results["results"][entry.id][rule]["fires"] for entry in entries)
+        row["excluded"] = len(entries) - row["n"]
+        rows[rule] = row
+    return rows
+
+
+def _bound(value: Fraction | None, infinity: str) -> str:
+    return infinity if value is None else f"{float(value):.4f}"
+
+
+def consistent_limits(entries: list[Entry], rule: str, values: Mapping[str, Fraction], *, checked_only: bool) -> str:
+    """Return the interval of limits under which ``rule`` has no false positive and no false negative.
+
+    Only files labelled ``fire`` or ``silent`` that have a value count (and, with ``checked_only``, only those
+    whose label was checked).  An upper limit fires above it, so it must be at least every silent value and
+    below every fire value; a lower limit fires below it, so it must be above every fire value and at most
+    every silent value.  Bounds are printed to four decimals; the exact values are in the results file.
+    """
+    fire: list[Fraction] = []
+    silent: list[Fraction] = []
+    for entry in entries:
+        label = entry.label(rule)
+        if entry.id not in values or label["expect"] not in COUNTED or (checked_only and label["basis"] != "checked"):
+            continue
+        (fire if label["expect"] == "fire" else silent).append(values[entry.id])
+    if READINGS[rule].upper:
+        low, high = (max(silent) if silent else None), (min(fire) if fire else None)
+        empty = low is not None and high is not None and low >= high
+        text = f"[{_bound(low, '-inf')}, {_bound(high, '+inf')})"
+    else:
+        low, high = (max(fire) if fire else None), (min(silent) if silent else None)
+        empty = low is not None and high is not None and low >= high
+        text = f"({_bound(low, '-inf')}, {_bound(high, '+inf')}{']' if high is not None else ')'}"
+    return "none" if empty else text
+
+
+def render_calibration(entries: list[Entry], results: Mapping[str, Any]) -> str:
+    """Return the generated part of docs/metric-calibration.md: the distributions and the limits the labels allow."""
+    lines = [
+        "### Distributions",
+        "",
+        f"Per rule, over the {len(entries)} corpus files that make a comparison (a population at or above the sample",
+        "gate of the rule, and for METRIC004 a parent class). `n` is that number, `flagged` how many of the",
+        f"{len(entries)} files the default flags, `excluded` the files with no comparison. Quartiles are linear",
+        "interpolations (inclusive method) of exact fractions, printed to three decimals; METRIC001 to METRIC003",
+        "read the share that is *missing*. METRIC006 and METRIC007 read one measurement.",
+        "",
+        "| Rule | n | flagged | excluded | Default | min | Q1 | median | Q3 | max |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for rule, row in distribution_rows(entries, results).items():
+        sign = ">" if READINGS[rule].upper else "<"
+        cells = [_num(row[k], rule) if row["n"] else "-" for k in ("min", "q1", "median", "q3", "max")]
+        limit = _num(row["limit"], rule)
+        lines.append(
+            f"| {rule} | {row['n']} | {row['flagged']} | {row['excluded']} | {sign} {limit} | "
+            + " | ".join(cells)
+            + " |"
+        )
+    lines += [
+        "",
+        "### Limits the labels allow",
+        "",
+        "For each rule, the interval of limits that would give no false positive and no false negative under the",
+        "proposed labels, among the files that make a comparison. `[a, b)` means a limit of at least a and below b",
+        "for a rule that fires above its limit; `(a, b]` means above a and at most b for one that fires below it;",
+        "`none` means a silent and a fire label cross. The first column uses every counted label, including the",
+        "presumed silent ones; the second only labels whose reason was checked in the file. The default is inside",
+        "the interval only when it is marked yes. An interval is only as good as the labels.",
+        "",
+        "| Rule | Default | All counted labels | Default inside | Checked labels only | Default inside |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    limits = default_limits()
+    for rule in RULES:
+        values = values_of(rule, results)
+        cells = []
+        for checked in (False, True):
+            interval = consistent_limits(entries, rule, values, checked_only=checked)
+            cells += [interval, "yes" if _inside(interval, limits[rule], READINGS[rule].upper) else "no"]
+        lines.append(f"| {rule} | {_num(limits[rule], rule)} | " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
+def _inside(interval: str, limit: Fraction, upper: bool) -> bool:
+    """Say whether ``limit`` lies in a printed interval (a four-decimal comparison, as printed)."""
+    if interval == "none":
+        return False
+    low, high = (part.strip() for part in interval[1:-1].split(","))
+    value = float(limit)
+    above_low = low == "-inf" or (value >= float(low) if upper else value > float(low))
+    below_high = high == "+inf" or (value < float(high) if upper else value <= float(high))
+    return above_low and below_high
 
 
 def _dump(document: Mapping[str, Any]) -> str:
@@ -498,7 +775,9 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             return 0
         RESULTS.write_text(_dump(document), encoding="utf-8")
-    write_page(render(entries, json.loads(RESULTS.read_text(encoding="utf-8")), label_status()))
+    document = json.loads(RESULTS.read_text(encoding="utf-8"))
+    write_page(render(entries, document, label_status()))
+    write_page(render_calibration(entries, document), CALIBRATION, *CALIBRATION_MARKERS)
     return 0
 
 
