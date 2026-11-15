@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 
 from ontolint import main
+from ontolint.cli import EXIT_PIPE_CLOSED
 from ontolint.quality import SnapshotError, dumps, loads
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -100,6 +101,7 @@ def test_the_snapshot_follows_the_policy_options(run: Run, tmp_path: Path) -> No
 def test_a_snapshot_that_cannot_be_written_is_a_tool_failure(run: Run, tmp_path: Path) -> None:
     code, _out, err = run(BEFORE, "--write-quality-snapshot", str(tmp_path / "missing" / "s.json"))
     assert code == TOOL_FAILURE and err.startswith("TOOL001: quality snapshot output failed")
+    assert len(err.splitlines()) == 1  # a refusal, not a crash that happens to exit 2 as well
 
 
 # --- --compare-quality ------------------------------------------------------------------------------------------
@@ -205,6 +207,32 @@ def test_the_comparison_goes_to_output_when_asked(run: Run, snapshots: tuple[Pat
     assert json.loads(target.read_text(encoding="utf-8"))["format"] == "ontolint-quality-comparison"
 
 
+def test_a_comparison_that_cannot_be_written_is_a_tool_failure(
+    run: Run, snapshots: tuple[Path, Path], tmp_path: Path
+) -> None:
+    code, out, err = run("--compare-quality", *map(str, snapshots), "--output", str(tmp_path / "missing" / "t.txt"))
+    assert (code, out) == (TOOL_FAILURE, "")
+    assert err.startswith("TOOL001: report output failed") and len(err.splitlines()) == 1
+
+
+class _NoReader:
+    """A stdout whose reader has gone."""
+
+    def write(self, text: str) -> int:
+        raise BrokenPipeError(32, "Broken pipe")
+
+    def flush(self) -> None:
+        raise BrokenPipeError(32, "Broken pipe")
+
+
+def test_a_comparison_whose_reader_has_gone_is_exit_141_and_silent(
+    snapshots: tuple[Path, Path], capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("sys.stdout", _NoReader())
+    code = main(["--compare-quality", *map(str, snapshots)])
+    assert (code, capsys.readouterr().err) == (EXIT_PIPE_CLOSED, "")
+
+
 @pytest.mark.parametrize(
     "argv",
     [
@@ -307,6 +335,7 @@ def test_a_baseline_is_for_one_file(run: Run, snapshots: tuple[Path, Path]) -> N
 def test_an_unusable_quality_baseline_fails_before_the_ontology_is_read(run: Run, tmp_path: Path) -> None:
     code, out, err = run(AFTER, "--format", "json", "--quality-baseline", str(tmp_path / "gone.json"))
     assert code == TOOL_FAILURE and out == "" and "gone.json cannot be used" in err
+    assert len(err.splitlines()) == 1  # a refusal, not a crash that happens to exit 2 as well
 
 
 def test_the_two_flags_work_together(run: Run, snapshots: tuple[Path, Path], tmp_path: Path) -> None:
