@@ -17,6 +17,7 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import OWL, RDF, SH
 
 from ontolint import cli
+from ontolint.adapters import shacl
 from ontolint.cli import main
 from ontolint.loader import load_graph
 from ontolint.paths import resolve_inputs
@@ -320,4 +321,66 @@ def test_a_literal_cause_with_userinfo_is_compared_masked(tmp_path: Path, capsys
     code, findings = _background_run(tmp_path, capsys, data, "ex:bg a ex:T ; ex:knows ex:c .", shapes)
     assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
     assert _nested_foci(findings[0]) == ['"https://****@h.test/x"']
+    assert code == 1
+
+
+# --- a cause nested past the evidence bound still keeps its violation (issue #80) ----------------------------
+
+
+def _chain(length: int) -> tuple[str, str]:
+    """Shapes and background for a violation ``length`` ``sh:node`` levels deep on ``ex:bg``, whose cause is on
+    ``ex:x`` (``ex:bg ex:next ex:x``): ``ex:x`` is the only node the data can mention.  (pySHACL refuses more than
+    about 11 levels: ``Validation path too deep!``.)"""
+    shapes = "sh:node ex:N1 . "
+    shapes += "".join(f"ex:N{i} sh:node ex:N{i + 1} . " for i in range(1, length))
+    shapes += f"ex:N{length} sh:property [ sh:path ex:next ; sh:node ex:N ] . {NAMED}"
+    return shapes, "ex:bg a ex:T ; ex:next ex:x ."
+
+
+def _deepest(evidence: dict[str, Any]) -> dict[str, Any]:
+    while "detail" in evidence:
+        (evidence,) = evidence["detail"][:1]
+    return evidence
+
+
+@pytest.mark.parametrize("budget", [[], ["--max-validation-seconds", "120"]])
+def test_a_linted_cause_below_the_evidence_bound_keeps_the_violation(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], budget: list[str]
+) -> None:
+    """Regression: the only in-file node sat below the 8 levels the evidence keeps, so the finding vanished."""
+    shapes, background = _chain(10)
+    code, findings = _background_run(tmp_path, capsys, "ex:x a ex:Person .", background, shapes, *budget)
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert "https://ex.test/x" not in _nested_foci(findings[0])  # the evidence no longer names the cause ...
+    assert _deepest(findings[0]["evidence"])["detailTruncated"] == "true"  # ... and says so
+    assert code == 1
+
+
+def test_a_deep_chain_none_of_whose_nodes_the_linted_file_mentions_is_still_dropped(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shapes, background = _chain(10)
+    code, findings = _background_run(tmp_path, capsys, "ex:z a ex:Person .", background, shapes)
+    assert (code, findings) == (0, [])
+
+
+def test_a_cause_nested_within_the_evidence_bound_is_as_before(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shapes, background = _chain(2)
+    code, findings = _background_run(tmp_path, capsys, "ex:x a ex:Person .", background, shapes)
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
+    assert _nested_foci(findings[0])[-1] == "https://ex.test/x"
+    assert "detailTruncated" not in str(findings[0]["evidence"])
+    assert code == 1
+
+
+def test_a_walk_that_exhausts_its_budget_keeps_the_finding(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Pathological depth: what cannot be proven to be the background's alone is reported, never hidden."""
+    monkeypatch.setattr(shacl, "MAX_DETAIL_WALK", 3)
+    shapes, background = _chain(10)
+    code, findings = _background_run(tmp_path, capsys, "ex:z a ex:Person .", background, shapes)
+    assert [f["focus"] for f in findings] == ["https://ex.test/bg"]
     assert code == 1
