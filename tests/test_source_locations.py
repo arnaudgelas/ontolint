@@ -244,13 +244,13 @@ ONTOLOGY_TTL = "<https://example.test/o> a <http://www.w3.org/2002/07/owl#Ontolo
 )
 def test_turtle_directives_are_never_a_location(tmp_path: Path, header: str) -> None:
     document = _document(tmp_path, "a.ttl", header + ONTOLOGY_TTL)
-    assert document.source_index.locations[URIRef("https://example.test/o")] == Location(2, 1)
+    assert document.source_index.locations[URIRef("https://example.test/o")] == Location(2, 1, 2, 25)
 
 
 def test_a_prefixed_name_spelled_like_a_directive_keyword_is_still_located(tmp_path: Path) -> None:
     text = "@prefix base: <https://example.test/> .\nbase:A a base:B .\n"
     locations = _document(tmp_path, "a.ttl", text).source_index.locations
-    assert locations[URIRef("https://example.test/A")] == Location(2, 1)
+    assert locations[URIRef("https://example.test/A")] == Location(2, 1, 2, 7)
 
 
 @pytest.mark.parametrize("suffix", ["ttl", "trig"])
@@ -265,7 +265,7 @@ def test_the_scan_is_linear_on_a_long_word_outside_strings(tmp_path: Path, suffi
     locations = document.source_index.locations
     assert time.perf_counter() - started < LINEAR_SCAN_SECONDS
     column = text.split("\n")[1].index("ex:B") + 1
-    assert locations[URIRef("https://example.test/B")] == Location(2, column)
+    assert locations[URIRef("https://example.test/B")] == Location(2, column, 2, column + 4)
 
 
 def test_a_jsonld_context_term_definition_is_never_a_location(tmp_path: Path) -> None:
@@ -274,7 +274,7 @@ def test_a_jsonld_context_term_definition_is_never_a_location(tmp_path: Path) ->
         ' "@id": "https://example.test/o", "@type": "http://www.w3.org/2002/07/owl#Ontology"}'
     )
     location = _document(tmp_path, "a.jsonld", text).source_index.locations[URIRef("https://example.test/o")]
-    assert location == Location(2, 9)
+    assert location == Location(2, 9, 2, 33)
 
 
 def test_rdfxml_empty_about_locates_the_ontology_at_its_base(tmp_path: Path) -> None:
@@ -291,9 +291,11 @@ def test_rdfxml_empty_about_locates_the_ontology_at_its_base(tmp_path: Path) -> 
 def test_line_numbers_are_exact_across_many_lines(tmp_path: Path) -> None:
     body = "".join(f"<https://example.test/c{i}> a <https://example.test/K> .\n" for i in range(500))
     locations = _document(tmp_path, "a.ttl", body).source_index.locations
-    assert locations[URIRef("https://example.test/c0")] == Location(1, 1)
-    assert locations[URIRef("https://example.test/c499")] == Location(500, 1)
-    assert locations[URIRef("https://example.test/K")] == Location(1, len("<https://example.test/c0> a ") + 1)
+    assert locations[URIRef("https://example.test/c0")] == Location(1, 1, 1, 26)
+    assert locations[URIRef("https://example.test/c499")] == Location(500, 1, 500, 28)
+    assert locations[URIRef("https://example.test/K")] == Location(
+        1, len("<https://example.test/c0> a ") + 1, 1, len("<https://example.test/c0> a ") + 25
+    )
 
 
 def test_the_index_is_computed_only_when_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -354,27 +356,33 @@ def test_a_node_named_in_a_comment_or_literal_is_located_at_its_statement(tmp_pa
         "ex:A a ex:K .\n"
     )
     locations = _document(tmp_path, "a.ttl", text).source_index.locations
-    assert locations[URIRef("https://example.test/A")] == Location(4, 1)
+    assert locations[URIRef("https://example.test/A")] == Location(4, 1, 4, 5)
 
 
 def test_the_last_characters_of_a_comment_are_not_a_term(tmp_path: Path) -> None:
     text = "@prefix : <https://example.test/> .\n# see :A\n<https://example.test/x> :p :A .\n"
     locations = _document(tmp_path, "a.ttl", text).source_index.locations
-    assert locations[URIRef("https://example.test/A")] == Location(3, len("<https://example.test/x> :p ") + 1)
+    assert locations[URIRef("https://example.test/A")] == Location(
+        3, len("<https://example.test/x> :p ") + 1, 3, len("<https://example.test/x> :p ") + 3
+    )
 
 
 def test_a_comment_at_the_very_end_of_the_file_ends_the_scan(tmp_path: Path) -> None:
     locations = _document(
         tmp_path, "a.ttl", "<https://example.test/A> a <https://example.test/K> . # end"
     ).source_index.locations
-    assert locations[URIRef("https://example.test/K")] == Location(1, len("<https://example.test/A> a ") + 1)
+    assert locations[URIRef("https://example.test/K")] == Location(
+        1, len("<https://example.test/A> a ") + 1, 1, len("<https://example.test/A> a ") + 25
+    )
 
 
 def test_an_iri_ending_in_a_hash_does_not_start_a_comment(tmp_path: Path) -> None:
     locations = _document(
         tmp_path, "a.ttl", "<https://example.test/o#> a <https://example.test/K> .\n"
     ).source_index.locations
-    assert locations[URIRef("https://example.test/K")] == Location(1, len("<https://example.test/o#> a ") + 1)
+    assert locations[URIRef("https://example.test/K")] == Location(
+        1, len("<https://example.test/o#> a ") + 1, 1, len("<https://example.test/o#> a ") + 25
+    )
 
 
 def test_rdfxml_keeps_the_first_reference_to_a_resource(tmp_path: Path) -> None:
@@ -394,7 +402,7 @@ def test_a_jsonld_term_without_an_iri_does_not_cost_the_regions(tmp_path: Path) 
         ' "@id": "https://example.test/a", "@type": "' + OWL_CLASS + '"}'
     )
     index = _document(tmp_path, "a.jsonld", text).source_index
-    assert index.locations[URIRef("https://example.test/a")] == Location(2, 9)
+    assert index.locations[URIRef("https://example.test/a")] == Location(2, 9, 2, 33)
     assert index.problem is None
 
 
@@ -428,7 +436,7 @@ def test_input_the_locator_cannot_read_gives_an_empty_index(data: bytes, fmt: st
 def test_a_jsonld_context_given_as_a_list_still_expands_compact_iris(tmp_path: Path) -> None:
     text = '{"@context": [{"ex": "https://example.test/"}],\n "@id": "ex:a", "@type": "' + OWL_CLASS + '"}'
     assert _document(tmp_path, "a.jsonld", text).source_index.locations[URIRef("https://example.test/a")] == Location(
-        2, 9
+        2, 9, 2, 15
     )
 
 
@@ -483,12 +491,12 @@ def test_trig_terms_are_located_inside_named_and_default_graph_blocks(tmp_path: 
     assert index.problem is None
     # The graph labels ex:g1 and <g2> name no node of the merged graph; ``a`` is a keyword, not a term.
     assert dict(index.locations) == {
-        URIRef(f"{EX}A"): Location(5, 5),  # the first of its two graphs
-        URIRef(f"{EX}k#Class"): Location(5, 12),
-        URIRef(f"{EX}note"): Location(5, 22),
-        URIRef(f"{EX}p"): Location(8, 10),
-        URIRef(f"{EX}B"): Location(8, 15),
-        URIRef(f"{EX}C"): Location(10, 13),  # in the default-graph block
+        URIRef(f"{EX}A"): Location(5, 5, 5, 9),  # the first of its two graphs
+        URIRef(f"{EX}k#Class"): Location(5, 12, 5, 19),
+        URIRef(f"{EX}note"): Location(5, 22, 5, 29),
+        URIRef(f"{EX}p"): Location(8, 10, 8, 14),
+        URIRef(f"{EX}B"): Location(8, 15, 8, 19),
+        URIRef(f"{EX}C"): Location(10, 13, 10, 17),  # in the default-graph block
     }
 
 
@@ -506,7 +514,7 @@ def test_a_described_graph_name_is_located_at_its_first_occurrence_in_every_data
 ) -> None:
     """A graph name that is also a node keeps its first lexical occurrence, its graph label, in each syntax."""
     index = _document(tmp_path, name, text).source_index
-    assert index.locations[URIRef(f"{EX}g")] == Location(1, column)
+    assert index.locations[URIRef(f"{EX}g")] == Location(1, column, 1, column + len(f"<{EX}g>"))
 
 
 def _turtle_twin(trig: str) -> str:
@@ -546,9 +554,14 @@ GLUE_HEADER = "@prefix ex: <https://example.test/> .\n"
 B_IRI = f"{EX}B"
 
 
-def _offset_location(text: str, offset: int) -> Location:
+def _offset_location(text: str, offset: int, token: str) -> Location:
+    """The region of ``token`` spelled at ``offset``: its start, and the end one past its last character."""
     line_start = text.rfind("\n", 0, offset) + 1
-    return Location(text.count("\n", 0, offset) + 1, offset - line_start + 1)
+    end = offset + len(token)
+    end_start = text.rfind("\n", 0, end) + 1
+    return Location(
+        text.count("\n", 0, offset) + 1, offset - line_start + 1, text.count("\n", 0, end) + 1, end - end_start + 1
+    )
 
 
 def _glue_text(suffix: str, statements: str, header: str = GLUE_HEADER) -> str:
@@ -575,7 +588,7 @@ def test_a_punctuation_glued_to_a_name_does_not_cost_its_region(
     text = _glue_text(suffix, GLUED_STATEMENTS[punctuation].format(b=spelling))
     index = _document(tmp_path, f"a.{suffix}", text).source_index
     assert index.problem is None
-    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index(spelling))
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index(spelling), spelling)
 
 
 @pytest.mark.parametrize("suffix", ["ttl", "trig"])
@@ -594,7 +607,7 @@ def test_glued_punctuation_is_no_part_of_a_name_whatever_follows_it(
 ) -> None:
     text = _glue_text(suffix, statements)
     index = _document(tmp_path, f"a.{suffix}", text).source_index
-    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"))
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"), "ex:B")
 
 
 @pytest.mark.parametrize(
@@ -603,7 +616,7 @@ def test_glued_punctuation_is_no_part_of_a_name_whatever_follows_it(
 def test_a_trig_block_closed_straight_after_a_name_keeps_the_region(tmp_path: Path, tail: str) -> None:
     text = GLUE_HEADER + "ex:g {\n    ex:A ex:p ex:B" + tail
     index = _document(tmp_path, "a.trig", text).source_index
-    assert index.locations[URIRef(B_IRI)] == Location(3, 15)
+    assert index.locations[URIRef(B_IRI)] == Location(3, 15, 3, 19)
 
 
 @pytest.mark.parametrize(
@@ -615,7 +628,7 @@ def test_a_closing_bracket_or_comment_glued_to_a_name_is_no_part_of_it(tmp_path:
     # PN_LOCAL has none of ``)``, ``]`` and ``#`` unescaped either; the old pattern swallowed them all.
     text = GLUE_HEADER + statement
     index = _document(tmp_path, "a.ttl", text).source_index
-    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"))
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"), "ex:B")
 
 
 @pytest.mark.parametrize(
@@ -640,7 +653,7 @@ def test_a_local_name_keeps_its_inner_dots_and_escapes_before_glued_punctuation(
 ) -> None:
     text = _glue_text(suffix, GLUED_STATEMENTS[punctuation].format(b=name))
     index = _document(tmp_path, f"a.{suffix}", text).source_index
-    assert index.locations[URIRef(EX + local)] == _offset_location(text, text.index(name))
+    assert index.locations[URIRef(EX + local)] == _offset_location(text, text.index(name), name)
 
 
 @pytest.mark.parametrize("punctuation", [".", ";", ","])
@@ -649,34 +662,36 @@ def test_an_empty_local_name_ends_before_the_punctuation_glued_to_it(tmp_path: P
     statements = {".": "ex:A ex:p ex:.\n", ";": "ex:A ex:p ex:;\n    ex:q ex:C.\n", ",": "ex:A ex:p ex:,\n    ex:C.\n"}
     text = GLUE_HEADER + statements[punctuation]
     index = _document(tmp_path, "a.ttl", text).source_index
-    assert index.locations[URIRef(EX)] == _offset_location(text, text.index("ex:" + punctuation))
+    assert index.locations[URIRef(EX)] == _offset_location(text, text.index("ex:" + punctuation), "ex:")
 
 
 @pytest.mark.parametrize("header", ["PREFIX ex: <https://example.test/>\n", "prefix ex: <https://example.test/>\n"])
 def test_a_sparql_style_prefix_declaration_is_no_obstacle_to_a_glued_name(tmp_path: Path, header: str) -> None:
     text = header + "GRAPH ex:g { ex:A ex:p ex:B. }\n"
     index = _document(tmp_path, "a.trig", text).source_index
-    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"))
+    assert index.locations[URIRef(B_IRI)] == _offset_location(text, text.index("ex:B"), "ex:B")
 
 
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("ex:a\\. .", {"a.": 1}),  # an escaped trailing dot belongs to the name; the next one ends it
-        ("ex:a\\.. .", {"a.": 1}),
-        ("ex:a..b .", {"a..b": 1}),  # a run of dots inside a name
-        ("ex:a. ex:b.", {"a": 1, "b": 7}),
-        ("ex:a.ex:b.", {"a.ex:b": 1}),  # a dot between two words is inner, whatever the words hold
-        ("ex:a...", {"a": 1}),  # a run of dots after a name is no part of it
-        ("ex:.a", {"": 1}),  # a local name cannot start with a dot
+        ("ex:a\\. .", {"a.": (1, 6)}),  # an escaped trailing dot belongs to the name; the next one ends it
+        ("ex:a\\.. .", {"a.": (1, 6)}),
+        ("ex:a..b .", {"a..b": (1, 7)}),  # a run of dots inside a name
+        ("ex:a. ex:b.", {"a": (1, 4), "b": (7, 4)}),
+        ("ex:a.ex:b.", {"a.ex:b": (1, 9)}),  # a dot between two words is inner, whatever the words hold
+        ("ex:a...", {"a": (1, 4)}),  # a run of dots after a name is no part of it
+        ("ex:.a", {"": (1, 3)}),  # a local name cannot start with a dot
     ],
 )
 def test_the_local_name_follows_the_turtle_grammar_even_where_rdflib_is_lenient(
-    text: str, expected: dict[str, int]
+    text: str, expected: dict[str, tuple[int, int]]
 ) -> None:
     nodes: set[Node] = {URIRef(EX + local) for local in [*expected, "other"]}
     found = source_locations._scan(text, "turtle", "", nodes, {"ex": EX})  # noqa: SLF001 -- no parse: some inputs are invalid
-    assert found == {URIRef(EX + local): Location(1, column) for local, column in expected.items()}
+    assert found == {
+        URIRef(EX + local): Location(1, column, 1, column + length) for local, (column, length) in expected.items()
+    }
 
 
 def test_the_reproduction_of_issue_61_is_located_in_the_sarif_report(
@@ -694,7 +709,7 @@ def test_the_reproduction_of_issue_61_is_located_in_the_sarif_report(
     main([str(path), "--select", "OWL001", "--format", "sarif", "--fail-on", "never"])
     results = json.loads(capsys.readouterr().out)["runs"][0]["results"]
     regions = [r["locations"][0]["physicalLocation"].get("region") for r in results if "onto#B" in r["message"]["text"]]
-    assert regions == [{"startLine": 5, "startColumn": 21}]
+    assert regions == [{"startLine": 5, "startColumn": 21, "endLine": 5, "endColumn": 25}]
 
 
 @pytest.mark.parametrize(
@@ -811,15 +826,18 @@ def test_a_java_jsonld_finding_has_a_region_at_its_focus(
         assert isinstance(region, dict), message
         focus = _FOCUS.search(message)
         assert focus is not None, message
-        spelled, _end = json.JSONDecoder().raw_decode(lines[region["startLine"] - 1], region["startColumn"] - 1)
+        spelled, end = json.JSONDecoder().raw_decode(lines[region["startLine"] - 1], region["startColumn"] - 1)
         assert spelled == focus[1], (message, region)
-    # A region is a start position only (no SARIF output has an end); it must sit in the file that was linted.
+        # The region spans the string it starts at (issue #68): one line, the end one past the closing quote.
+        assert region["endLine"] == region["startLine"], (message, region)
+        assert region["endColumn"] == end + 1, (message, region)
+    # A region has an end since issue #68; it must sit in the file that was linted.
     main([str(path), "--format", "sarif", "--fail-on", "never"])
     results = json.loads(capsys.readouterr().out)["runs"][0]["results"]
     uris = {r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] for r in results}
     assert not any(Path(uri).is_absolute() for uri in uris), uris  # relative to the working directory...
     assert {(Path.cwd() / uri).resolve() for uri in uris} == {path.resolve()}  # ...and naming the linted file
-    assert not any({"endLine", "endColumn"} & set(r["locations"][0]["physicalLocation"]["region"]) for r in results)
+    assert all({"endLine", "endColumn"} <= set(r["locations"][0]["physicalLocation"]["region"]) for r in results)
 
 
 def _graph_nodes_by_id(text: str) -> dict[str, object]:

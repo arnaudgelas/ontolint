@@ -55,7 +55,12 @@ def test_sarif_uses_the_module_artifact_and_region(umbrella: Path, capsys: pytes
     (result,) = [r for r in sarif["runs"][0]["results"] if r["ruleId"] == "LEX002"]
     physical = result["locations"][0]["physicalLocation"]
     assert physical["artifactLocation"]["uri"].endswith("modular/core.ttl")
-    assert physical["region"] == {"startLine": UNDEFINED_LINE, "startColumn": 1}
+    assert physical["region"] == {
+        "startLine": UNDEFINED_LINE,
+        "startColumn": 1,
+        "endLine": UNDEFINED_LINE,
+        "endColumn": 1 + len("ex:UndefinedThing"),
+    }
     notes = sarif["runs"][0]["invocations"][0]["toolExecutionNotifications"]
     assert not [n for n in notes if n["message"]["text"].startswith("Source regions are unavailable")]
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
