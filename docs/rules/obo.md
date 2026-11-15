@@ -26,11 +26,15 @@ specifications share. Each rule's own specification is shown under the rule.
 
 Source: `src/ontolint/rules/obo.py`.
 
-OBO Foundry convention rules: OBO001-OBO012.
+OBO Foundry convention rules: OBO001-OBO013.
 
 These rules encode conventions of the OBO Foundry (identifiers, textual definitions, obsolescence, scoped synonyms, PURLs, naming).  They only make sense for ontologies that follow those conventions, so the ``OBO`` family is *opt-in*: see `ontolint.profiles.OPT_IN_FAMILIES`.  It runs with ``--select OBO`` / ``--select OBO0xx`` or ``--profile obo`` and never as part of the default selection.
 
 Every rule is an asserted-graph check: nothing is entailed, no import is followed and no network is used.  Rules that would need outside data (a registry lookup, the full RO term list, a reasoner) are not implemented; ``OBO005`` is deliberately narrowed to a small embedded table of well-known RO and BFO relations.  Annotation properties are the IAO and oboInOwl ones used by OBO ontologies.
+
+Specifications:
+
+*Specified under each rule: OBO013.*
 
 ## Rules
 
@@ -1596,4 +1600,154 @@ ex:A a owl:Class ; rdfs:label " " .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:a a owl:AnnotationProperty ; rdfs:label "A_b" .
+```
+
+#### OBO013: Definition starts with a lowercase letter
+
+- **Severity:** info
+- **Scope:** term
+- **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
+- **Fix:** Start the obo:IAO_0000115 definition with a capital letter, or with the digit or symbol the term needs.
+
+**Specification.** A non-obsolete term with an ``obo:IAO_0000115`` literal whose first character after leading whitespace is a lowercase letter (a character Unicode says is lowercase, ``str.islower``).  A digit, a quote, a symbol, an uncased letter (CJK, Arabic, Hebrew) or a titlecase letter does not count, so such a definition is not reported, and neither is one that is blank.  ``obo:IAO_0000600`` is not judged.  One finding per offending literal; its subject is the literal in N-Triples with its language. *Info:* ROBOT's ``lowercase_definition`` is INFO; the capitalisation convention is a style norm, and a definition may legitimately open with a symbol or a gene name such as ``p53``.
+
+*Flagged:* `lowercase definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "a thing." .
+```
+
+Reported: `Definition 'a thing.' starts with a lowercase letter.`
+
+*Flagged:* `leading whitespace`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "  a thing." .
+```
+
+Reported: `Definition 'a thing.' starts with a lowercase letter.`
+
+*Flagged:* `tagged lowercase`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "une chose."@fr .
+```
+
+Reported: `Definition 'une chose.' starts with a lowercase letter.`
+
+*Flagged:* `non-ASCII lowercase`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "élément." .
+```
+
+Reported: `Definition 'élément.' starts with a lowercase letter.`
+
+*Flagged:* `one of two definitions`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing.", "a thing." .
+```
+
+Reported: `Definition 'a thing.' starts with a lowercase letter.`
+
+*Flagged:* `property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; obo:IAO_0000115 "relates things." .
+```
+
+Reported: `Definition 'relates things.' starts with a lowercase letter.`
+
+*Clean:* `capital`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
+```
+
+*Clean:* `digit`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "3-methyl thing." .
+```
+
+*Clean:* `quote`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 '"a" thing.' .
+```
+
+*Clean:* `symbol`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "(a) thing." .
+```
+
+*Clean:* `CJK is uncased`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "一个东西" .
+```
+
+*Clean:* `Arabic is uncased`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "شيء" .
+```
+
+*Clean:* `non-ASCII capital`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "Élément." .
+```
+
+*Clean:* `blank definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "  " .
+```
+
+*Clean:* `obsolete term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "a thing." .
+```
+
+*Clean:* `elucidation is not judged`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000600 "a thing." .
 ```

@@ -36,7 +36,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [LEX](#lex) | 25 | 0 |
 | [LIB](#lib) | 3 | 0 |
 | [METRIC](#metric) | 13 | 0 |
-| [OBO](#obo) | 12 | 0 |
+| [OBO](#obo) | 13 | 0 |
 | [ONT](#ont) | 9 | 0 |
 | [OWL](#owl) | 45 | 0 |
 | [SEC](#sec) | 16 | 0 |
@@ -315,6 +315,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [OBO010](rules/obo.md) | Whole OBO ontology imported instead of a module | info |
 | [OBO011](rules/obo.md) | Ontology or version IRI that does not follow the OBO PURL pattern | warning |
 | [OBO012](rules/obo.md) | Label that breaks OBO naming conventions | info |
+| [OBO013](rules/obo.md) | Definition starts with a lowercase letter | info |
 
 ## ONT
 
