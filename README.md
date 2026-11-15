@@ -338,6 +338,19 @@ case a `Rule execution:` block is appended.
   first spelled, whichever graph that is in. JSON-LD findings include a region for an
   explicit `@id`, including compact IRIs defined by a local context; generated JSON-LD nodes retain
   their artifact URI but omit a region rather than reporting an unreliable location.
+* A SARIF region spans the token its start points at, not the statement: `startLine`/`startColumn`
+  are the first character of the focus's first spelling and `endLine`/`endColumn` the position one
+  past its last (the end is exclusive, SARIF 2.1.0 section 3.30.9). The token is an IRI reference
+  (`<...>` with its brackets), a prefixed name (without a `.`, `;` or `,` written straight after
+  it), a blank-node label, a JSON-LD `@id` string (with its quotes), or the whole start tag of the
+  RDF/XML element that names the term (`<` to `>`, over as many lines as it takes). Columns count
+  Unicode code points, as `columnKind` says (a tab is one, a character outside the Basic
+  Multilingual Plane is one, and a line ends at `\n` in text syntaxes and at `\n`, `\r\n` or a
+  lone `\r` in RDF/XML). A region has an end only when it can be told as surely as its start; if
+  not, the result keeps `startLine`/`startColumn` and has no `endLine`/`endColumn`. That is the
+  case for a blank-node label that may run on past what the scan reads (an inner dot, a non-ASCII
+  letter) and for an RDF/XML file in an encoding other than UTF-8 or ASCII. Findings, fingerprints
+  and baselines are unaffected: only the `region` of a located result gained two keys.
 
 ### Measurements
 
