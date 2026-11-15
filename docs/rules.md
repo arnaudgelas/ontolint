@@ -20,7 +20,7 @@ Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 and `--list-rules --format json` reports them with `"selectable": false`.
 
 
-**251 of 306 catalogue rules are implemented; 55 are TODO.**
+**252 of 307 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [GOV](#gov) | 14 | 1 |
 | [INPUT](#input) | 1 | 0 |
 | [IRI](#iri) | 18 | 1 |
-| [LEX](#lex) | 24 | 0 |
+| [LEX](#lex) | 25 | 0 |
 | [LIB](#lib) | 3 | 0 |
 | [METRIC](#metric) | 13 | 0 |
 | [OBO](#obo) | 12 | 0 |
@@ -265,6 +265,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [LEX022](rules/lex.md) | Label in a language outside the configured languages | info |
 | [LEX023](rules/lex.md) | Missing definition in a required language | info |
 | [LEX024](rules/lex.md) | Several skos:definition values in one language | warning |
+| [LEX025](rules/lex.md) | Whitespace-padded annotation value | warning |
 
 ## LIB
 

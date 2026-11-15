@@ -94,6 +94,7 @@
 "LEX022","LEX","Label in a language outside the configured languages","implemented","heuristic","RDFLib graph","annotation fixture and language-policy cases"
 "LEX023","LEX","Missing definition in a required language","implemented","heuristic","RDFLib graph","annotation fixture and language-policy cases"
 "LEX024","LEX","Several skos:definition values in one language","implemented","heuristic","RDFLib graph","annotation fixture and language-policy cases"
+"LEX025","LEX","Whitespace-padded annotation value","implemented","heuristic","RDFLib graph","annotation fixtures: padded rdfs:comment, skos:definition, skos:altLabel, an oboInOwl synonym and a declared annotation property; labels (LEX005), a blank definition (LEX019), a trimmed value and a non-string datatype clean"
 "CLS010","CLS","Sibling classes with identical labels","implemented","heuristic","RDFLib graph algorithms","taxonomy fixture and false-positive case"
 "CLS011","CLS","Excessive direct subclasses","implemented","heuristic","RDFLib graph algorithms","taxonomy fixture and false-positive case"
 "CLS012","CLS","Instantiated class with only unused leaf subclasses","implemented","heuristic","RDFLib graph algorithms","taxonomy fixture and false-positive case"
