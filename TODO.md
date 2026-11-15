@@ -1069,7 +1069,7 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   incompatible pair is refused measurement by measurement, and the Markdown summary shows the
   split for that pair.
 
-- [ ] **DQV-REPORT: the measurements as W3C DQV.** One `dqv:QualityMeasurement` per value, with
+- [x] **DQV-REPORT: the measurements as W3C DQV.** Done (issue #22): `--write-dqv`, `docs/dqv.md`. One `dqv:QualityMeasurement` per value, with
   `dqv:isMeasurementOf` a `dqv:Metric`, `dqv:computedOn` the ontology (its version IRI when it has
   one), a typed `dqv:value`, and `prov:wasGeneratedBy` the run (tool and catalogue versions).
   Decide first:
