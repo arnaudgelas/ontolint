@@ -5,6 +5,12 @@ scoped synonyms, PURLs, naming).  They only make sense for ontologies that follo
 so the ``OBO`` family is *opt-in*: see :data:`ontolint.profiles.OPT_IN_FAMILIES`.  It runs with
 ``--select OBO`` / ``--select OBO0xx`` or ``--profile obo`` and never as part of the default selection.
 
+* **OBO015.** An ``oboInOwl:hasDbXref`` literal on a local term, or on an ``owl:Axiom`` that annotates a local
+  term, must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar
+  ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\\S+``.  A value whose local part starts with ``//`` (``http://...``)
+  is reported too, because a URL is not a CURIE.  The lexical form is checked whatever the datatype or language;
+  an IRI or blank-node value is not read.
+
 Every rule is an asserted-graph check: nothing is entailed, no import is followed and no network is
 used.  Rules that would need outside data (a registry lookup, the full RO term list, a reasoner) are
 not implemented; ``OBO005`` is deliberately narrowed to a small embedded table of well-known RO and
@@ -73,6 +79,7 @@ OBSOLESCENCE_REMEDIES = (IAO_OBSOLESCENCE_REASON, IAO_TERM_TRACKER, IAO_REPLACED
 UNSCOPED_SYNONYMS = (OIO_SYNONYM, SKOS.altLabel)
 MAX_QUOTE = 60  # Characters of a label or synonym quoted in a message.
 
+XREF_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:[^\s]+")  # ROBOT's invalid_xref.rq.
 ID_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z][A-Za-z0-9]*)*_[A-Za-z]*[0-9]+")
 ONTOLOGY_PATTERN = re.compile(re.escape(OBO_NS) + r"([a-z][a-z0-9_]*)(?:\.owl|/\S+\.owl)")
 VERSION_PATTERN = re.compile(
@@ -208,6 +215,13 @@ SPECS: tuple[RuleSpec, ...] = (
         "More than one textual definition in the same language",
         Severity.WARNING,
         "Keep one obo:IAO_0000115 per term and language; merge the texts or move the extra one to a comment.",
+        RuleScope.TERM,
+    ),
+    _spec(
+        "OBO015",
+        "Malformed database cross-reference",
+        Severity.WARNING,
+        "Write oboInOwl:hasDbXref values as PREFIX:local CURIEs without whitespace (for example PMID:12345), not URLs.",
         RuleScope.TERM,
     ),
 )
@@ -498,8 +512,34 @@ def _multiple_definitions(ctx: RuleContext, terms: list[URIRef]) -> None:
                 )
 
 
+def _xref_focus(ctx: RuleContext, holder: Node) -> URIRef | None:
+    """The local term a ``hasDbXref`` on ``holder`` is about: the holder, or the source of an axiom annotation."""
+    if isinstance(holder, URIRef):
+        return holder if ctx.local(holder) else None
+    sources = [o for o in ctx.g.objects(holder, OWL.annotatedSource) if isinstance(o, URIRef) and ctx.local(o)]
+    return min(sources, key=str) if sources else None
+
+
+def _xref_syntax(ctx: RuleContext) -> None:
+    for holder, value in sorted(ctx.g.subject_objects(OIO_DB_XREF), key=lambda pair: (str(pair[0]), str(pair[1]))):
+        text = str(value)
+        if not isinstance(value, Literal) or (
+            XREF_PATTERN.fullmatch(text) and not text.partition(":")[2].startswith("//")
+        ):
+            continue
+        focus = _xref_focus(ctx, holder)
+        if focus is not None:
+            ctx.add(
+                "OBO015",
+                focus,
+                f"Database cross-reference {_quote(text)} (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.",
+                confidence="certain",
+                subject=(OIO_DB_XREF, value),
+            )
+
+
 def run(ctx: RuleContext) -> None:
-    """Emit OBO001-OBO014."""
+    """Emit OBO001-OBO015."""
     terms = _terms(ctx)
     deprecated = _deprecated(ctx)
     _identifier_pattern(ctx, terms, deprecated)
@@ -516,3 +556,4 @@ def run(ctx: RuleContext) -> None:
     _label_conventions(ctx, terms, deprecated)
     _definition_case(ctx, terms, deprecated)
     _multiple_definitions(ctx, terms)
+    _xref_syntax(ctx)
