@@ -106,11 +106,12 @@ def test_iris_differing_only_in_their_secrets_give_the_same_findings(scheme: str
     assert [identity(f) for f in first] == [identity(f) for f in second]
 
 
-# A scheme no URL parser reads: its run starts with a digit or a sign, or holds a character a scheme may not.  RDF/XML
-# resolves a reference with one as a relative path, which turns its "//" into "/" (#104).
+# A scheme no URL parser reads: its run starts with a digit or a sign, or holds a "_", a "%" or a non-ASCII letter.
+# RDF/XML resolves a reference with one as a relative path, which turns its "//" into "/" (#104).  It holds a letter:
+# a run without one is no scheme and no mask reads it (``123://u:p@h``).
 generic_schemes = st.builds(
-    lambda lead, tail: lead + tail,
-    st.sampled_from(["1", "9", "-", ".", "+", "_", "%20", "x@", "0."]),
+    lambda lead, tail: f"{lead}a{tail}",
+    st.sampled_from(["1", "9", "-", ".", "+", "_", "%20", "\u00e9", "0."]),
     st.text("abcdefghijklmnopqrstuvwxyz0123456789+.-", max_size=8),
 )
 RDF_NAMESPACES = (

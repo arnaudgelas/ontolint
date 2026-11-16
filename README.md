@@ -1300,12 +1300,15 @@ Ontologies are untrusted input, so the loader is deliberately strict:
   that free prose mixes with an IRI may be over-masked (`https://h has 'a'@en`
   becomes `https://****@en`), and so may a scheme after a digit or a sign,
   which a reader takes for an IRI though no URL parser does (`1http:a@b`
-  becomes `1http:****@b`). RDF/XML resolves an IRI that does not start with a
-  scheme (`1git+https://u:p@h`, `_x://u:p@h`) as a relative path, which turns
-  its `//` into `/`: there the userinfo of a scheme other than `http`, `https`,
-  `ws`, `wss` and `ftp` is not masked, and `SEC014` and `SEC016` do not report
-  a userinfo resolved against the file. Not
-  masked: writes straight to the stderr file descriptor (a crash of the
+  becomes `1http:****@b`). RDF/XML and the JSON-LD `@base` resolve an IRI that
+  does not start with a scheme (`1git+https://u:p@h`, `_x://u:p@h`) as a relative
+  path, which turns its `//` into `/`: the mask hides the userinfo in the
+  resolved text (`file:///d/1git+https:/****@h`), but `SEC014` and `SEC016` do
+  not report it, because that text has no authority for them to read, and the
+  mask cannot tell it from a relative path such as `a_b:/c@d` (which it masks
+  too). A "scheme" with a character other than letters, digits, `_`, `+`, `.`,
+  `-` and `%` (`x@y://u:p@h`), or with no letter (`1://u:p@h`), is not read.
+  Not masked: writes straight to the stderr file descriptor (a crash of the
   interpreter itself), and a library caller's own logging handlers.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
