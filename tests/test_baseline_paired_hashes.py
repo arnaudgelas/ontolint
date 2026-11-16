@@ -255,13 +255,74 @@ def _roamer(subject: str) -> Finding:
     return _f(subject, rule="ONT007", focus="https://example.test/o")
 
 
-def test_a_displaced_roaming_finding_is_accepted_and_its_old_entry_is_stale_as_before() -> None:
-    """``f`` moved from ``q.ttl`` to ``p.ttl``, where ``g`` has its message: accepted by roaming.  Its old entry stays
-    stale, as before this rule (its hash is found on ``p.ttl`` only), a known false stale left to a later decision."""
+def test_a_displaced_roaming_finding_accepted_through_another_entry_consumes_its_old_entry() -> None:
+    """``f`` moved from ``q.ttl`` to ``p.ttl``, where ``g`` has its message (issue #106): ``f`` is accepted by roaming,
+    through its old entry, which it consumes although its hash on ``p.ttl`` is ``g``'s.  Nothing is new, nothing stale."""
     g, f = _roamer("g"), _roamer("f")
     accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
+    assert fingerprint(f, "p.ttl") == fingerprint(g, "p.ttl")  # the collision the scenario needs
     applied = _apply(accepted, _report("p.ttl", g, f), _report("q.ttl"), roaming=ROAMING)
     assert _kept(applied) == [[], []]
+    assert [_ids(r) for r in applied.baselined] == [_ids([g, f]), []]
+    assert applied.stale == ()
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_the_roaming_entry_is_consumed_whatever_the_report_order(reverse: bool) -> None:
+    """The same run with the reports (and ``p.ttl``'s findings) in the other order: still nothing stale."""
+    g, f = _roamer("g"), _roamer("f")
+    accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
+    reports = [_report("p.ttl", f, g), _report("q.ttl")]
+    applied = _apply(accepted, *(reversed(reports) if reverse else reports), roaming=ROAMING)
+    assert _kept(applied) == [[], []]
+    assert applied.stale == ()
+
+
+def test_a_roaming_finding_that_is_fixed_leaves_its_entry_stale() -> None:
+    """Counterexample to consuming too much: ``f`` is gone (only ``g`` is left), so ``f``'s entry is stale."""
+    g, f = _roamer("g"), _roamer("f")
+    accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
+    applied = _apply(accepted, _report("p.ttl", g), _report("q.ttl"), roaming=ROAMING)
+    assert applied.stale == (fingerprint(f, "q.ttl"),)
+
+
+def test_a_roaming_finding_new_next_to_an_accepted_one_is_reported_and_the_old_entry_stays_stale() -> None:
+    """Counterexample to hiding a new finding: ``f`` is fixed and a new ``h`` with ``g``'s message appears on
+    ``p.ttl``: ``h`` is reported (``g`` holds the one entry of its hash) and ``f``'s entry is stale."""
+    g, f, h = _roamer("g"), _roamer("f"), _roamer("h")
+    accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
+    applied = _apply(accepted, _report("p.ttl", g, h), _report("q.ttl"), roaming=ROAMING)
+    assert _kept(applied) == [_ids([h]), []]
+    assert applied.stale == (fingerprint(f, "q.ttl"),)
+
+
+def test_an_identity_recorded_under_two_paths_is_not_consumed_by_roaming() -> None:
+    """``f`` is recorded on ``q.ttl`` and ``r.ttl``: no entry is the one it moved from, so roaming does not apply, ``f``
+    on ``p.ttl`` is new and both entries stay stale."""
+    g, f = _roamer("g"), _roamer("f")
+    accepted = _written(_report("p.ttl", g), _report("q.ttl", f), _report("r.ttl", f))
+    applied = _apply(accepted, _report("p.ttl", g, f), _report("q.ttl"), _report("r.ttl"), roaming=ROAMING)
+    assert _kept(applied) == [_ids([f]), [], []]
+    assert applied.stale == tuple(sorted({fingerprint(f, "q.ttl"), fingerprint(f, "r.ttl")}))
+
+
+def test_two_displaced_roaming_findings_of_one_identity_consume_no_entry() -> None:
+    """One entry accepts one finding: ``f`` is reported on ``p.ttl`` and ``r.ttl`` (two roamers of one identity), so
+    neither takes ``q.ttl``'s entry by roaming; the entry is stale, as before."""
+    g, f = _roamer("g"), _roamer("f")
+    accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
+    applied = _apply(accepted, _report("p.ttl", g, f), _report("q.ttl"), _report("r.ttl", f), roaming=ROAMING)
+    assert _kept(applied) == [_ids([f]), [], _ids([f])]
+    assert applied.stale == (fingerprint(f, "q.ttl"),)
+
+
+def test_a_non_roaming_finding_does_not_consume_the_entry_of_another_path() -> None:
+    """Only the roaming rules may be accepted under another path: ``f`` of ``SEC014`` on ``p.ttl`` is new and its entry
+    on ``q.ttl`` stays stale."""
+    g, f = _f("g", rule="SEC014"), _f("f", rule="SEC014")
+    accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
+    applied = _apply(accepted, _report("p.ttl", g, f), _report("q.ttl"), roaming=ROAMING)
+    assert _kept(applied) == [_ids([f]), []]
     assert applied.stale == (fingerprint(f, "q.ttl"),)
 
 
@@ -278,6 +339,29 @@ def test_the_entry_a_roaming_finding_takes_cannot_accept_another(reverse: bool) 
 
 
 # --- the command line ------------------------------------------------------------------------------------
+
+def test_a_displaced_roaming_finding_does_not_fail_a_strict_baseline_run(tmp_path: Path, monkeypatch: Any) -> None:
+    """Issue #106 through the command line: ``b.ttl`` and ``c.ttl`` declare one ontology IRI (ONT008, reported on
+    ``b.ttl``); ``a.ttl`` is added and the finding moves to it.  The baseline also holds an entry, of another
+    identity (a release that worded the subject differently), for the finding's message on ``a.ttl``, so the moved
+    finding's hash is another entry's.  The finding is accepted by roaming and consumes its old entry: exit 0."""
+    monkeypatch.chdir(tmp_path)
+    for name in ("a.ttl", "b.ttl", "c.ttl"):
+        Path(name).write_text("<https://example.test/o> a <http://www.w3.org/2002/07/owl#Ontology> .\n", encoding="utf-8")
+    base = ["--select", "ONT008", "--format", "json"]
+    assert main(["b.ttl", "c.ttl", *base, "--fail-on", "never", "--write-baseline", "old.json"]) == 0
+    assert main(["a.ttl", "b.ttl", "c.ttl", *base, "--fail-on", "never", "--write-baseline", "new.json"]) == 0
+    old, new = (json.loads(Path(name).read_text(encoding="utf-8")) for name in ("old.json", "new.json"))
+    (moved,) = new["fingerprints"]  # the moved finding's hash on a.ttl
+    old["files"] = ["a.ttl", "b.ttl", "c.ttl"]
+    old["fingerprints"] = sorted([*old["fingerprints"], moved])
+    old["identities"]["a.ttl"] = {"0" * 64: moved}
+    Path("b.json").write_text(json.dumps(old), encoding="utf-8")
+    strict = ["--baseline", "b.json", "--fail-on", "info", "--fail-on-stale-baseline", "--output", "o.json"]
+    code = main(["a.ttl", "b.ttl", "c.ttl", *base, *strict])
+    document = json.loads(Path("o.json").read_text(encoding="utf-8"))
+    assert (code, document["findings"], document["baseline"]) == (0, [], {"stale_fingerprints": []})
+
 
 COLOUR = PREFIXES + "ex:ColourShape a sh:NodeShape ; sh:targetClass ex:T ; sh:property ex:Colour .\n"
 COLOUR += 'ex:Colour sh:path ex:colour ; sh:in ( "red" "green" ) ; sh:message "Unknown colour" .'
@@ -479,14 +563,23 @@ def test_the_order_of_reports_and_findings_changes_neither_counts_nor_stale_entr
 @pytest.mark.slow
 @budget(2.0)
 @given(histories())
-def test_never_more_lenient_than_0_13_and_stale_entries_unchanged(
+def test_never_more_lenient_than_0_13_and_only_roaming_entries_leave_the_stale_ones(
     history: tuple[list[FileReport], list[FileReport]],
 ) -> None:
-    """P5: every finding 0.13.1 reported is still reported, and the stale entries are exactly 0.13.1's."""
+    """P5: every finding 0.13.1 reported is still reported, and the stale entries are 0.13.1's less the entries a
+    roaming finding of the run took (issue #106): each of those is an entry whose identity a kept-out roamer carries."""
     old, new = history
     accepted = _written(*old)
     applied = _apply(accepted, *new, roaming=ROAMING)
     before = _lenient_apply(accepted, new, ROAMING)
     for now, then in zip(_kept(applied), _kept(before), strict=True):
         assert not Counter(then) - Counter(now)
-    assert applied.stale == before.stale
+    assert set(applied.stale) <= set(before.stale)
+    consumed = set(before.stale) - set(applied.stale)
+    held_back = {identity(f) for r in applied.baselined for f in r if f.rule in ROAMING}
+    roamers = Counter(identity(f) for r in new for f in r.findings if f.rule in ROAMING)
+    for path, pairs in accepted.identities.items():
+        for ident, v1 in pairs.items():
+            if v1 in consumed:
+                assert ident in held_back and roamers[ident] == 1
+                assert [p for p, other in accepted.identities.items() if ident in other] == [path]
