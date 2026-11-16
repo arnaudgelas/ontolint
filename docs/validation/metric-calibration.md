@@ -23,10 +23,10 @@ them stale. Running the corpus at every release belongs to issue #31.
 **Observed under the proposed labels:**
 - **METRIC001, METRIC002 and METRIC003:** no false positive, and no false negative among the
   labelled cases, which are few: 1 to 2 true positives each.
-- **The other rules:** each of the 12 false positives comes from a modelling choice the rule does
-  not see, not from where its limit sits. For five of the six rules concerned, only a limit that
-  switches the rule off would remove them. METRIC005's one false positive would go with a limit
-  above 0.45, but its cause is that CLS001 does not read `dcam:rangeIncludes`.
+- **The other rules:** each of the 11 false positives comes from a modelling choice the rule does
+  not see, not from where its limit sits. For each of the five rules concerned, only a limit that
+  switches the rule off would remove them. METRIC005 had a twelfth, DCMI Terms, caused by CLS001 not
+  reading `dcam:rangeIncludes`; it went with the fix for issue #66 and METRIC005 now fires on no file.
 
 No default is changed here, and **this snapshot must not, on its own, justify changing any METRIC
 threshold, severity or confidence.** That needs two things it lacks: labels approved or redone
@@ -133,7 +133,7 @@ label is marked FP or FN.
 | `tractusx-ontology.ttl` | 0 [Sp] | 0 [Sp] | 2 / 156 [Sp] | 2.60 over 10 [Sp] | 0 [Sp] | 139 / 32 [Sp] | 139 / 32 [Sp] | 0 [Sp] | 183 / 186 [Sp] | 6 / 236 [Sp] | 0 [Sp] | 15.72 over 32 [Sp] | 0 [Sp] |
 | `tractusx-taxonomy.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | no class [Sp] | no class [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | no definition [Sp] | 0 [Sp] |
 | `food-traceability.ttl` | **43 / 43** [F] | **43 / 43** [F] | **31 / 31** [F] | 6.00 over 3 [-] | 0 [-] | 31 / 43 [-] | 31 / 43 [-] | **31 / 31** [S FP] | none untagged [-] | 0 [-] | 0 [-] | no definition [-] | 58 / 137 [-] |
-| `dcterms.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 4 [Sp] | **10 / 22** [S FP] | 55 / 22 [Sp] | 55 / 22 [Sp] | 0 [Sp] | none untagged [Sp] | 3 / 11 [Sp] | 0 [Sp] | 10.91 over 22 [Sp] | 0 [Sp] |
+| `dcterms.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 4 [Sp] | 1 / 22 [S] | 55 / 22 [Sp] | 55 / 22 [Sp] | 0 [Sp] | none untagged [Sp] | 3 / 11 [Sp] | 0 [Sp] | 10.91 over 22 [Sp] | 0 [Sp] |
 
 ### Outcomes under the proposed labels
 
@@ -146,7 +146,7 @@ the file, *presumed* when it rests on the file's standing alone.
 | METRIC002 | 2 | 2 | 0 | 2 | 17 | 0 | 0 | 0 |
 | METRIC003 | 2 | 2 | 0 | 0 | 17 | 0 | 0 | 2 |
 | METRIC004 | 1 | 0 | 0 | 0 | 17 | 0 | 1 | 3 |
-| METRIC005 | 1 | 0 | 1 | 0 | 16 | 0 | 0 | 4 |
+| METRIC005 | 0 | 0 | 0 | 1 | 16 | 0 | 0 | 4 |
 | METRIC006 | 3 | 0 | 2 | 0 | 15 | 0 | 1 | 3 |
 | METRIC007 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
 | METRIC008 | 4 | 0 | 3 | 0 | 15 | 0 | 1 | 2 |
@@ -205,14 +205,13 @@ the file, *presumed* when it rests on the file's standing alone.
 | `food-traceability.ttl` | METRIC003 | fire | checked | No property is documented. |
 | `food-traceability.ttl` | METRIC008 | silent | checked | MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design. |
 | `dcterms.ttl` | every other rule | silent | presumed | A DCMI Recommendation. Curated and widely reused; no aggregate quality problem is known for it. |
-| `dcterms.ttl` | METRIC005 | silent | checked | 9 of the 10 classes CLS001 calls orphans are targets of dcam:rangeIncludes, which CLS001 does not read: connected, not orphans. |
+| `dcterms.ttl` | METRIC005 | silent | checked | The classes that are targets of dcam:rangeIncludes are connected, not orphans, and CLS001 reads that predicate since #66: 1 of 22 (BibliographicResource) is an orphan, 0.045. |
 <!-- metric_corpus.py: end -->
 
 ## Reading the false positives
 
 | Rule | Files | Why the rule fires | Would another default help? |
 | --- | --- | --- | --- |
-| METRIC005 | DCMI Terms (10 of 22, 0.45) | 9 of the 10 classes CLS001 calls orphans are targets of `dcam:rangeIncludes`, which CLS001 does not read (OWL005 and OWL006 do). | Only a limit above 0.45; the gap is in CLS001, see "For the maintainer". |
 | METRIC006 | PATO base (0 / 2931), AutomaTCE base (11 / 309) | Both own no or few relations because they reuse RO and PMD core: the rule counts owned properties only. | No: 0 fires at any limit above 0, and CCO (0.106), IAO (0.110) and MFTO (0.111) sit just above 0.1. |
 | METRIC008 | SSN (15 / 15), SKOS (12 / 18), MOMo food traceability (31 / 31) | SSN and MOMo state signatures as class restrictions (73 and 109); SKOS gives them to `skos:semanticRelation`, which its sub-properties inherit. The rule reads neither. | No: two of the three are at 1.0, which only the limit 1.0 (the rule off) leaves silent. |
 | METRIC009 | PATO base (0.00), schema.org (0.003), PROV-O (0.013) | English-only vocabularies with untagged labels, the OBO and W3C convention. | No: every tagged file is above 0.95 and every untagged one below 0.02. The rule separates the two conventions perfectly; the question is whether untagged is a defect. |
@@ -234,7 +233,7 @@ A value below the sample gate (`metric_min_sample`, 10 terms) is left out.
 | METRIC002 | > 0.5 | 0.33, PATO base | 1.0, MFTO and food traceability |
 | METRIC003 | > 0.5 | 0.18, IAO | 1.0, PAO and food traceability |
 | METRIC004 | > 8.0 | 6.0, food traceability | 13.57, PAO |
-| METRIC005 | > 0.3 | 0.22, MFTO | 0.45, DCMI Terms |
+| METRIC005 | > 0.3 | 0.22, MFTO | none |
 | METRIC006 | < 0.1 | 0.106, CCO | 0.036, AutomaTCE base |
 | METRIC007 | > 5.0 | 4.53, MOD | none |
 | METRIC008 | > 0.5 | 0.42, RO core | 0.67, SKOS |

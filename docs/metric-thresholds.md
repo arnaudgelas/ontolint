@@ -38,7 +38,7 @@ too ([measurements.md](measurements.md)).
 | `metric_max_undefined_ratio` | METRIC002 | 0.5 | share of classes without a definition above it | classes | The same reasoning for definitions. | 2 fire: 2 TP, 0 FP, 0 FN |
 | `metric_max_undocumented_property_ratio` | METRIC003 | 0.5 | share of properties without documentation above it | properties | The same reasoning for properties. | 2 fire: 2 TP, 0 FP, 0 FN |
 | `metric_max_mean_fanout` | METRIC004 | 8.0 | mean direct subclasses per parent above it | classes | A flat list of more than about 7 plus or minus 2 siblings is hard to browse; CLS011 judges a single class at 50. | 1 fires (PAO, left open), 0 FP |
-| `metric_max_orphan_ratio` | METRIC005 | 0.3 | share of classes CLS001 reports above it | classes | Curated ontologies are mostly connected; the highest value measured offline after the fix is 0.45 (dcterms, whose `dcam:domainIncludes` CLS001 does not read). | 1 fires: 1 FP (DCMI Terms) |
+| `metric_max_orphan_ratio` | METRIC005 | 0.3 | share of classes CLS001 reports above it | classes | Curated ontologies are mostly connected; the highest value measured offline is 0.22 (MFTO); DCMI Terms is 0.045 now that CLS001 reads `dcam:domainIncludes` and `dcam:rangeIncludes`. | 0 fire |
 | `metric_min_property_class_ratio` | METRIC006 | 0.1 | relation properties per class below it | classes | Below one relation per ten classes the ontology is a taxonomy, which may be intended. | 3 fire: 2 FP (PATO base, AutomaTCE), 1 left open |
 | `metric_max_property_class_ratio` | METRIC007 | 5.0 | relation properties per class above it | classes | Offline values on 19 files ran up to 4.9; far above that, properties are probably proliferating. | 0 fire; highest 4.53 (MOD) |
 | `metric_max_unsigned_property_ratio` | METRIC008 | 0.5 | share of object and datatype properties OWL005 and OWL006 both report above it | properties | A signature is optional in RDFS; the rule speaks only when open signatures are the norm. | 4 fire: 3 FP (SSN, SKOS, MOMo), 1 left open |
@@ -85,18 +85,16 @@ Tractus-X was 34 of 236 references before and 6 after.
   from a file's standing rather than checked in it. Its counts are preliminary observations under
   those labels, not a measurement of precision. Under them, METRIC001, METRIC002 and METRIC003 have
   no false positive, and no false negative among their few labelled cases (1 or 2 true positives
-  each). Every false positive of the other rules (12 in all) rests on a checked label and comes from
+  each). Every false positive of the other rules (11 in all) rests on a checked label and comes from
   a modelling choice the rule does not see. For five of those rules only a limit that switches the
-  rule off would remove them; for METRIC005 a limit above 0.45 would, but its cause is the CLS001 gap
-  below. No default has changed, and none should change on this corpus alone: that needs approved
+  rule off would remove them. METRIC005's twelfth, DCMI Terms, was the CLS001 gap and went with the fix
+  for issue #66. No default has changed, and none should change on this corpus alone: that needs approved
   or independently redone labels (issue #8) and measurements rerun at release (issue #31).
 - The corpus has no known-poor file for METRIC004 to METRIC013, so their recall is not measured.
 - The corpus is a snapshot of 0.13.1: nothing reruns `scripts/metric_corpus.py check`, so a later
   change can leave it stale (a release-time run belongs to issue #31).
 - `METRIC010` does not count reuse of another OBO ontology as foreign, because all OBO terms share
   one namespace. Counting it is a product question.
-- CLS001 ignores `dcam:domainIncludes` and `dcam:rangeIncludes`, so `METRIC005` inherits that gap
-  (dcterms keeps 10 of 22 orphans).
 - `METRIC001` and `METRIC002` are warnings, so they fail the `ci`, `obo` and `fair` profiles. On the
   corpus they fire only on the files labelled poor, never on a curated one, which is consistent
   with their limits but too little evidence to confirm them.
