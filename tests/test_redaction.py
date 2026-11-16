@@ -223,7 +223,8 @@ def test_a_scheme_after_a_digit_or_a_sign_is_read(text: str, masked: str) -> Non
         ("file:///d/_x:/bob:pw@h/x", f"file:///d/_x:/{REDACTED_USERINFO}@h/x"),
         ("file:///d/-x:/bob:pw@h/x", f"file:///d/-x:/{REDACTED_USERINFO}@h/x"),
         ("file:///d/%20x:/bob:pw@h/x", f"file:///d/%20x:/{REDACTED_USERINFO}@h/x"),
-        ("file:///d/x@y:/bob:pw@h/x", f"file:///d/x@y:/{REDACTED_USERINFO}@h/x"),
+        ("file:///d/\u00e9:/bob:pw@h/x", f"file:///d/\u00e9:/{REDACTED_USERINFO}@h/x"),  # a letter, though no ASCII one
+        ("file:///d/x_y:/bob:pw@h/x", f"file:///d/x_y:/{REDACTED_USERINFO}@h/x"),
         ("file:///d/1git+https:/bob@h/x", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x"),  # a token as the user
         ("file:///d/1git+https:/u:p@ss@h/x", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x"),  # up to the last "@"
         ("file:///d/1git+https:/bob:pw@h/x#f", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x#f"),
@@ -263,6 +264,10 @@ def test_a_resolved_relative_path_is_masked_but_no_rule_reads_it() -> None:
         "file:///d/1git+https:/h#a@b",
         "file:///d/1git+https://h/a@b",  # a "//" is read as an authority, which has none
         "file:///d/1git+https:///@h",
+        "file:///d/1:/b@c",  # a run without a letter holds no scheme, as for "123://" above
+        "file:///d/1.2-3:/b@c",
+        "file:///d/=:/b@c",  # a character no scheme-like run holds
+        "file:///d/x@y:/b@c",
         "file:///d/_x:/@h",  # an empty userinfo
         "file:///d/_x:/:@h",
         "file:///d/_x:no-slash@h/x",

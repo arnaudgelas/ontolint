@@ -25,18 +25,25 @@ SEC016 (:func:`userinfo_without_password`) and for what ontolint may write (:fun
   reads ``https://u:p@ss@host`` as the password ``p@ss``.  A percent-encoded ``%40`` or ``%3A`` is data of
   the userinfo.  Not a userinfo: one that is empty or only colons (``https://@host``, ``https://:@host``),
   an ``@`` after the authority (``https://host/a@b``, ``?q=a@b``, ``#a@b``), a scheme without an
-  authority (``mailto:user@host``, ``urn:x:a@b``, ``git+https:/u:p@h``).  So the userinfo of an IRI that
-  RDF/XML resolved as a relative path, which turns its ``//`` into ``/``, is not masked when its scheme is
-  not special (``1git+https://u:p@h`` or ``_x://u:p@h`` as written, which start with no scheme): one ``/``
-  after any scheme would also mask a path such as ``a:/b@c``.  An IRI nested in another
+  authority (``mailto:user@host``, ``urn:x:a@b``, ``git+https:/u:p@h``).  An IRI nested in another
   (``urn:x:https://u:p@h``, ``https://h/?to=https://u:p@g``) has its own authority.
+* *A reference a parser resolved as relative.*  RDF/XML (``rdf:about``, ``rdf:resource``, ``rdf:type``,
+  ``xml:base``, a namespace) and the JSON-LD ``@base`` resolve a string with no scheme (``1git+https://u:p@h/x``
+  or ``_x://u:p@h/x``: its run starts with a digit or a sign, or holds a ``_`` or a ``%``) against the document,
+  which turns its ``//`` into ``/``: ``file:///d/1git+https:/u:p@h/x``.  The *mask* (not SEC014 and SEC016) reads
+  the segment after the ``:/`` of such a run as an authority: the run must hold a letter, only letters, digits,
+  ``_``, ``+``, ``.``, ``-`` and ``%``, and be no scheme (``a:/b@c``, ``file:///C:/me@x/f``, ``1:/b@c`` and
+  ``=:/b@c`` stay as they are).  It cannot tell ``1git+https:/u:p@h`` from a path ``a_b:/c@d``, so the rules do
+  not read it: a path that looks like it would be a credential finding.  Turtle, N-Triples, TriG, N-Quads and
+  JSON-LD ``@id`` keep the ``//`` as written, and the first branch above finds them.
 * *SEC014.*  A text embeds a password when one of its userinfos has a non-empty part after its first
   ``:`` (:func:`userinfo_password`); the mask hides it whatever SEC014 decides.
 * *SEC016.*  A text embeds a user name only when one of its userinfos has no ``:`` or an empty part after its
   first one (:func:`userinfo_without_password`: ``https://alice@h``, ``ssh://git@h``, ``https://alice:@h``).
   Such a userinfo is a token sent as the user name or a plain user name, and the two cannot be told apart, which
   is why the mask hides both.  Every userinfo that holds data is a password (SEC014) or a user name only
-  (SEC016), exactly one of the two, and the mask hides both.
+  (SEC016), exactly one of the two, and the mask hides both; the one exception is the segment of a reference a
+  parser resolved as relative, which only the mask reads.
 * *What is masked.*  The whole userinfo, user name included, is replaced by :data:`REDACTED_USERINFO`
   (``https://****@example.test/x``).  RFC 3986 says not to render what follows the first ``:``; the user
   name is masked too because a token sent as the user name cannot be told from a name, whatever stands
@@ -84,17 +91,33 @@ REDACTED_USERINFO = "****"
 "password", "secret", "token" or "credential" for a secret, does not take the mask for one when it reaches the
 SHA-256 of a fingerprint (py/weak-sensitive-data-hashing)."""
 
-_AUTHORITY = re.compile(
+_SCHEME_START = (
     r"(?<![A-Za-z0-9+.\-])[0-9+.\-]*"
     r"(?:(?i:https?|wss?|ftp):(?P<run>[/\\\t\n\r]*)"
     r"|[A-Za-z][A-Za-z0-9+.\-]*:[\t\n\r]*/[\t\n\r]*/)"
 )
+_AUTHORITY = re.compile(_SCHEME_START)
 """Where an authority starts: after a special scheme's ``:`` and its slashes, or after ``scheme://``.
 
 The look-behind anchors a scheme at the start of its run of scheme characters, so the search never restarts
 inside one: the scan is linear (CodeQL py/polynomial-redos).  The digits and signs that start the run are
 skipped within that one attempt: a scheme starts with a letter, which they are not, so stepping back over
 them fails at once."""
+
+_RELATIVE = r"(?<![\w+.\-%])(?![A-Za-z][A-Za-z0-9+.\-]*:)(?=[\w+.\-%]*[^\W\d_])[\w+.\-%]+:/(?!/)"
+_MASKED_AUTHORITY = re.compile(f"{_SCHEME_START}|{_RELATIVE}")
+"""What the mask reads as the start of an authority: :data:`_AUTHORITY`, or the ``:/`` of an IRI that a parser
+resolved as a relative path.
+
+RDF/XML and the JSON-LD ``@base`` resolve ``1git+https://u:p@h/x`` against the document, as RFC 3986 reads a
+string whose first segment has a colon but no scheme (the string starts with a digit, or holds a character no
+scheme may), and the resolution turns its ``//`` into ``/``: ``file:///d/1git+https:/u:p@h/x``.  Its userinfo is the
+segment after ``:/``.  The segment before it is a whole run of letters, digits, ``_``, ``+``, ``.``, ``-`` and
+``%`` (so the search never restarts inside one), holds a letter, and is not a scheme (a letter, then letters,
+digits, ``+``, ``.`` or ``-``): ``a:/b@c`` and ``file:///C:/me@x/f`` are paths of a valid
+scheme and a drive, ``1:/b@c`` and ``=:/b@c`` hold no scheme (a run without a letter is none, as for ``123://``)
+and ``x@y:/u:p@h`` (``x@y://u:p@h`` resolved) is left alone: its "scheme" ends at the last character a run holds.
+The runs cannot overlap, so the scan stays linear."""
 
 _TO_END = re.compile(r"[^/?#]*")
 """The rest of an authority: up to the first ``/``, ``?`` or ``#``."""
@@ -108,7 +131,9 @@ _ESCAPE = re.compile(r"\\u([0-9A-Fa-f]{4})|\\U([0-9A-Fa-f]{8})|&#[xX]([0-9A-Fa-f
 _LINE = re.compile(r"\bline (\d+)")
 
 
-def _authorities(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[int, int, int, int]]:
+def _authorities(
+    text: str, rest: re.Pattern[str] = _TO_END, starts: re.Pattern[str] = _MASKED_AUTHORITY
+) -> Iterator[tuple[int, int, int, int]]:
     """Each authority of ``text``, in order: where the run of scheme characters that holds its scheme starts,
     where its userinfo would start, where the authority ends and its last ``@`` before that end (``-1`` for
     none).
@@ -118,7 +143,7 @@ def _authorities(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[i
     a delimiter all end where it ends, so its end and last ``@`` are found once and the scan stays linear.
     """
     end = at = -1
-    for start in _AUTHORITY.finditer(text):
+    for start in starts.finditer(text):
         begin = start.end()
         # A rendered report's authority stops at "\\" (an escape there), so it starts after the whole run.
         if start.group("run") is not None and rest is _TO_END:
@@ -129,14 +154,16 @@ def _authorities(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[i
         yield start.start(), begin, end, at
 
 
-def _userinfos(text: str, rest: re.Pattern[str] = _TO_END) -> Iterator[tuple[int, int]]:
+def _userinfos(
+    text: str, rest: re.Pattern[str] = _TO_END, starts: re.Pattern[str] = _MASKED_AUTHORITY
+) -> Iterator[tuple[int, int]]:
     """The ``(start, end)`` of each userinfo of ``text`` that holds data, in order; see the module specification.
 
     An authority that starts inside a userinfo already found ends at the same ``@``: the mask of the outer one
     covers it, so it is not yielded and the spans never overlap.
     """
     done = 0
-    for _, begin, _, at in _authorities(text, rest):
+    for _, begin, _, at in _authorities(text, rest, starts):
         if begin >= done and at > begin and text[begin:at].strip(":"):
             yield begin, at
             done = at
@@ -184,7 +211,7 @@ def userinfo_password(text: str) -> str | None:
 
     This is SEC014's test, on the same userinfos the mask hides.
     """
-    for begin, end in _userinfos(text):
+    for begin, end in _userinfos(text, starts=_AUTHORITY):
         password = text[begin:end].partition(":")[2]
         if password:
             return password
@@ -197,7 +224,7 @@ def userinfo_without_password(text: str) -> bool:
     This is SEC016's test, on the same userinfos the mask hides and the complement of :func:`userinfo_password`
     over each of them: a text with one userinfo of each kind is read by both.
     """
-    return any(not text[begin:end].partition(":")[2] for begin, end in _userinfos(text))
+    return any(not text[begin:end].partition(":")[2] for begin, end in _userinfos(text, starts=_AUTHORITY))
 
 
 def clip(text: str, limit: int, ellipsis: str = "") -> str:

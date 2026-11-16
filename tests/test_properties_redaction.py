@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import io
+import re
 from urllib.parse import urlsplit
 
 import pytest
-from hypothesis import example, given
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget
 from rdflib import Graph, URIRef
@@ -34,7 +35,9 @@ users = st.text(LOWER + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._~-%", max_size=8)
 passwords = st.text("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@:!$&'()*+,;=", min_size=1, max_size=12).filter(
     lambda p: any(c.isalnum() for c in p)
 )
-rests = st.text(LOWER + "./?#=@:", max_size=16).map(lambda r: "/" + r if r else r)
+# No ":/" in it: "/.a:/x@" holds the segment ".a", which no scheme starts, and the mask reads it as the "//" of an IRI
+# that a parser resolved as a relative path (#104).
+rests = st.text(LOWER + "./?#=@:", max_size=16).filter(lambda r: ":/" not in r).map(lambda r: "/" + r if r else r)
 # Digits and signs too: a run of scheme characters may start with them, before its scheme (#55).
 texts = st.text(LOWER + "0123456789+-" + " ./:@#?<>\"'\\\n{}|", max_size=40)
 # Any userinfo an authority can hold: every character but "/ ? #", white space and line breaks included.
@@ -177,6 +180,9 @@ def test_a_credential_after_any_text_is_masked(text: str, separator: str, scheme
 @example(".", "ws:u:p@h")
 def test_digits_and_signs_before_a_text_change_nothing_in_its_mask(lead: str, text: str) -> None:
     # They start the text's first run of scheme characters, or are a run of their own: no part of a scheme.
+    # The exception is a text that starts with a segment and ":/": "1" before "a:/b@c" makes "1a" a segment with
+    # no scheme, the shape of an IRI resolved as a relative path (#104), which the mask reads and a rule does not.
+    assume(re.match(r"[^\s/:?#\"'<>]+:/(?!/)", text) is None)
     assert redact_userinfo(lead + text) == lead + redact_userinfo(text)
     assert redact_rendered(lead + text) == lead + redact_rendered(text)
     assert userinfo_password(lead + text) == userinfo_password(text)
