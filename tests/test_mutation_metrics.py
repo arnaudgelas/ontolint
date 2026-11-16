@@ -131,6 +131,25 @@ def test_metric005_counts_what_cls001_reports_on_the_kitchen_sink() -> None:
     assert metric.message.startswith("6 of 33 classes are orphans")
 
 
+def test_metric005_does_not_count_the_target_of_a_domain_or_range_hint() -> None:
+    # Issue #66: schema.org and dcam hints connect their object, in both vocabularies and both directions.
+    g = Graph()
+    hints = {
+        0: URIRef("https://schema.org/domainIncludes"),
+        1: URIRef("http://schema.org/rangeIncludes"),
+        2: URIRef("http://purl.org/dc/dcam/domainIncludes"),
+        3: URIRef("http://purl.org/dc/dcam/rangeIncludes"),
+    }
+    for i in range(10):
+        c = _cls(g, f"C{i}")
+        if i in hints:
+            g.add((_ex("p"), hints[i], c))
+    g.add((_ex("C4"), hints[2], _ex("X")))  # a subject of the hint is not connected
+    g.add((_ex("p"), hints[3], Literal("C5")))  # a literal is not a class
+    (finding,) = _run(g, "METRIC005", metric_max_orphan_ratio=0.0)
+    assert finding.message.startswith("6 of 10 classes are orphans")
+
+
 def test_metric006_and_007_count_relation_properties_only() -> None:
     g = Graph()
     for i in range(10):
