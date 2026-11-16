@@ -33,7 +33,8 @@ A finding of a rule that compares the files of a run (``roaming``: ONT007, ONT00
 the files it names, which another file of the run can displace (a copy added that sorts first).  Its identity
 is therefore also accepted under another report path, when it is unambiguous: the run reports it once, and the
 baseline records it under one path.  This is decided for every finding before any version 1 hash is spent, so the
-result does not depend on the order of the reports, and the entry it takes is stale or not exactly as before.
+result does not depend on the order of the reports.  The entry it takes is not stale, whether or not the finding's
+version 1 hash on its own path is also another entry's (issue #106).
 
 A recorded entry (a version 1 hash and its identity) is stale when neither matched a finding of the run.
 ``fingerprints`` stays the list of entries: an identity whose version 1 hash is not listed is ignored, so
@@ -184,8 +185,7 @@ class _Matcher:
     entries: dict[str, list[_Entry]] = field(default_factory=dict[str, list[_Entry]])
     """Version 1 hash -> the entries the file pairs it with."""
     seen: set[_Entry] = field(default_factory=set[_Entry])
-    """For staleness only, as before: the (place, identity) of each unique finding, and the entry a roaming finding
-    takes when its version 1 hash is not recorded."""
+    """For staleness only: the (place, identity) of each unique finding, and the entry a roaming finding takes."""
 
     @classmethod
     def of(cls, baseline: Baseline, reports: Sequence[FileReport], roaming: frozenset[str]) -> _Matcher:
@@ -214,8 +214,7 @@ class _Matcher:
         elsewhere = self.recorded.get(ident, [])
         if not self.path_free and self.roamers[ident] == 1 and len(elsewhere) == 1:
             self.held.add((elsewhere[0], ident))
-            if not recorded:
-                self.seen.add((elsewhere[0], ident))
+            self.seen.add((elsewhere[0], ident))  # also when the hash is another entry's (issue #106)
             return True
         return None if recorded else False
 
