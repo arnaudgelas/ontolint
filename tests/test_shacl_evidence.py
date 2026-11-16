@@ -1103,12 +1103,55 @@ def test_only_the_results_a_report_lists_are_findings(monkeypatch: pytest.Monkey
     assert _values(_issues(monkeypatch, report)) == ['"listed"']
 
 
-def test_a_report_node_without_results_falls_back_to_the_typed_results(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_report_with_no_report_node_falls_back_to_the_typed_results(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    _result(report, "x")
+    _result(report, "y")
+    assert _values(_issues(monkeypatch, report)) == ['"x"', '"y"']
+
+
+def _only_the_empty_finding(findings: list[Finding]) -> None:
+    (finding,) = findings
+    assert finding.focus == "(shapes)"
+    assert finding.message == "SHACL returned nonconformant without individual result nodes."
+    assert finding.evidence is None
+
+
+def test_a_report_node_without_results_does_not_fall_back_to_the_typed_results(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A report is there and lists nothing: the typed results are not its results (issue 109)."""
     report = Graph()
     _result(report, "x")
     _result(report, "y")
     _listing(report)
-    assert _values(_issues(monkeypatch, report)) == ['"x"', '"y"']
+    _only_the_empty_finding(_issues(monkeypatch, report))
+
+
+def test_a_report_with_only_a_non_root_report_node_gives_no_finding_from_typed_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The issue's script: a data value shaped like a report and result, and a root that lists nothing."""
+    report = Graph()
+    forged = _result(report, "forged by a data value")
+    report.add((BNode(), URIRef(f"{EX}p"), _listing(report, forged)))  # a report node that is the object of a triple
+    _listing(report)  # the root, listing nothing
+    _only_the_empty_finding(_issues(monkeypatch, report))
+
+
+def test_a_report_with_only_a_non_root_report_node_has_no_root_to_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    forged = _result(report, "forged")
+    report.add((BNode(), URIRef(f"{EX}p"), _listing(report, forged)))
+    _only_the_empty_finding(_issues(monkeypatch, report))
+
+
+def test_a_root_listing_a_result_is_unaffected_by_typed_results_elsewhere(monkeypatch: pytest.MonkeyPatch) -> None:
+    report = Graph()
+    real = _result(report, "real")
+    forged = _result(report, "forged")
+    _result(report, "stray")
+    _listing(report, real)
+    report.add((BNode(), URIRef(f"{EX}p"), _listing(report, forged)))
+    assert _values(_issues(monkeypatch, report)) == ['"real"']
 
 
 def test_a_listed_result_that_is_also_a_detail_is_still_a_finding(monkeypatch: pytest.MonkeyPatch) -> None:
