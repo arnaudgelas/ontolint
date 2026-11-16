@@ -53,6 +53,12 @@ Nothing open: 0.11.0 is released (see "Recently done").
       TOOL001 case) and bidi and zero-width characters show. The finding's header is printed as
       before: a lone surrogate in its focus or message still gives TOOL001, exit 2, as
       `rules/external.py` documents. Rendering is iterative and generic over evidence keys.
+    - *Text header escaped* (#110, `fix:`): the header's focus and message go through `one_line` too, at render
+      time only, so `Finding.message`, JSON, SARIF, the Markdown summary, baselines and fingerprints are as
+      before; the rule-agnostic variant, since GOV002, SEC007 and OWL027 also quote a literal. Still printed
+      as they are: `In:` (named graphs, module names, import paths), `Findings by module:`, the `== <path>`
+      heading of a multi-file report, `Fix:`, the rule-execution lines and `--compare-quality` (a snapshot's
+      ids); a lone surrogate there still gives TOOL001.
     - *SHACL-AF `sh:resultAnnotation`* (documented): pySHACL 0.40.2 does not implement it; three
       canary `DONE_WHEN` cases (node validator, property validator, `sh:sparql`) fail when an
       upgrade writes annotations, as a scratch plugin simulating that showed.

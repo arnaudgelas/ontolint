@@ -7,7 +7,8 @@ finding's focus (:mod:`ontolint.source_locations`); other formats do not use loc
 The Markdown summary (:func:`render_markdown`) is a bounded view of a run for a pull request,
 in which no text of the report can become markup.
 JSON and SARIF carry a finding's ``evidence`` in full; text prints its path, value and nested causes on lines of
-their own after ``Fix:`` (and any ``In:``), each escaped to one visible line (:func:`one_line`).
+their own after ``Fix:`` (and any ``In:``), each escaped to one visible line (:func:`one_line`), as is the focus and
+the message of a finding's header; ``Finding.message``, JSON, SARIF and the fingerprints keep the raw text.
 """
 
 from __future__ import annotations
@@ -503,7 +504,7 @@ def _evidence_lines(evidence: Evidence | None) -> str:
 
 def _finding_lines(file: FileReport) -> list[str]:
     lines = [
-        f"[{f.severity.upper():7}] {f.rule} {f.focus}: {f.message}\n    Fix: {f.suggestion}"
+        f"[{f.severity.upper():7}] {f.rule} {one_line(f.focus)}: {one_line(f.message)}\n    Fix: {f.suggestion}"
         + _where(f, file)
         + _evidence_lines(f.evidence)
         for f in file.findings
