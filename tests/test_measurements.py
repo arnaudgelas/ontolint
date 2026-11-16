@@ -338,6 +338,20 @@ def test_orphan_classes_are_the_owned_classes_cls001_reports() -> None:
     assert len(found.denominator) == 5
 
 
+def test_orphan_classes_read_dcam_includes_like_cls001() -> None:
+    # Issue #66: a class that is only the target of dcam:domainIncludes or dcam:rangeIncludes is connected.
+    dcam = "<http://purl.org/dc/dcam/%s>"
+    ctx = _ctx(
+        "ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:E a owl:Class ."
+        f" ex:p {dcam % 'rangeIncludes'} ex:A . ex:q {dcam % 'domainIncludes'} ex:B ."
+        f" ex:C {dcam % 'rangeIncludes'} ex:X . ex:p {dcam % 'domainIncludes'} 'E' ."
+    )
+    found = measure(ctx, "orphan_classes")
+    assert isinstance(found, TermRatio)
+    assert _names(found.numerator) == ["C", "D", "E"]  # a subject or a literal does not connect
+    assert len(found.denominator) == 5
+
+
 def test_relation_properties_leave_out_annotation_only_properties() -> None:
     ctx = _ctx(
         "ex:A a owl:Class . ex:a a owl:AnnotationProperty . ex:b a owl:AnnotationProperty , owl:ObjectProperty ."

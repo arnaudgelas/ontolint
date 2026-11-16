@@ -39,6 +39,27 @@ def test_cls001_unrelated_reference_still_reported() -> None:
     assert _focus("CLS001", CLS + "ex:p rdfs:domain 'A' .") == ["A"]
 
 
+def test_cls001_dcam_includes_clears_the_class_like_schema_org_does() -> None:
+    # Issue #66: OWL005 and OWL006 read dcam:domainIncludes and dcam:rangeIncludes, so CLS001 must too.
+    dcam = "<http://purl.org/dc/dcam/%s>"
+    for local in ("domainIncludes", "rangeIncludes"):
+        assert _focus("CLS001", CLS + f"ex:p {dcam % local} ex:A .") == []
+        assert _focus("CLS001", CLS + f"[] {dcam % local} ex:A .") == []  # a blank-node subject too
+        assert _focus("CLS001", CLS + f"ex:p {dcam % local} ex:A , ex:B . ex:B a owl:Class .") == []
+
+
+def test_cls001_dcam_includes_only_connects_its_object() -> None:
+    dcam = "<http://purl.org/dc/dcam/%s>"
+    for local in ("domainIncludes", "rangeIncludes"):
+        # Subject of the predicate, a literal, a different namespace and a near-miss name do not connect.
+        assert _focus("CLS001", CLS + f"ex:A {dcam % local} ex:B .") == ["A"]
+        assert _focus("CLS001", CLS + f"ex:p {dcam % local} 'A' .") == ["A"]
+        assert _focus("CLS001", CLS + f"ex:p <http://purl.org/dc/terms/{local}> ex:A .") == ["A"]
+        assert _focus("CLS001", CLS + f"ex:p <http://purl.org/dc/dcam/{local}s> ex:A .") == ["A"]
+    # Another class of the same graph with no link at all is still reported.
+    assert _focus("CLS001", CLS + f"ex:B a owl:Class . ex:p {dcam % 'rangeIncludes'} ex:A .") == ["B"]
+
+
 # --- CLS002 ------------------------------------------------------------------------------------
 
 
