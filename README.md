@@ -793,7 +793,10 @@ which for an `sh:node` violation is the referencing shape's:
 warnings-only data passes the default `--fail-on error`. A custom severity is
 reported as `error` and named in the message. Blank-node shapes and focus nodes
 are named by a content-stable identity, in the focus and in a finding's baseline identity alike,
-so baselines keep matching across runs.
+so baselines keep matching across runs. A report that has a `sh:ValidationReport` node but no
+result listed by one that is the object of no triple (never pySHACL's) gives one `error` on `(shapes)`,
+"SHACL returned nonconformant without individual result nodes", and no finding from the typed
+`sh:ValidationResult` nodes it holds; only a report with no `sh:ValidationReport` node at all falls back to those.
 
 In JSON and SARIF, each `SHACL001` finding also carries every SHACL result property
 listed below as `evidence` (`properties.evidence` in SARIF), so two violations of one shape on one node, which
