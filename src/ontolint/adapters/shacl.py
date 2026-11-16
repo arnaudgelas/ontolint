@@ -357,15 +357,13 @@ def _results(report: Graph) -> set[Node]:
     although pySHACL types it ``sh:ValidationResult`` too.  Only a report node that is the object of no triple is
     read: pySHACL copies into the report every triple reachable from a blank ``sh:value`` or ``sh:focusNode``,
     so a data value shaped like a report (always the object of the triple that holds it) must not add findings.
-    A report that links no result (never pySHACL's) falls back to every node typed ``sh:ValidationResult``.
+    Only a report with no ``sh:ValidationReport`` node at all (never pySHACL's) falls back to every node typed
+    ``sh:ValidationResult``: one that has a report node and no root listing a result has no result to read.
     """
-    listed = {
-        r
-        for node in report.subjects(RDF.type, SH.ValidationReport)
-        if (None, None, node) not in report
-        for r in report.objects(node, SH.result)
-    }
-    return listed or set(report.subjects(RDF.type, SH.ValidationResult))
+    reports = set(report.subjects(RDF.type, SH.ValidationReport))
+    if not reports:
+        return set(report.subjects(RDF.type, SH.ValidationResult))
+    return {r for node in reports if (None, None, node) not in report for r in report.objects(node, SH.result)}
 
 
 def _short(iri: str) -> str:
