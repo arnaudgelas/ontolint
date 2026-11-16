@@ -3441,7 +3441,7 @@ ex:p a owl:ObjectProperty . ex:DP a owl:DatatypeProperty . ex:A a owl:Class . ex
 - **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Break the odd-length owl:complementOf cycle; a class cannot be the complement of itself.
 
-**Specification.** Treat each ``owl:complementOf`` triple with a non-literal object as an undirected edge (``A = not B`` iff ``B = not A``) and two-colour every connected component iteratively (no depth bound); one finding per component that contains an odd cycle, a self-loop included, focused on the first node, in a depth-first walk over sorted nodes, with an edge to a node of its own colour. Even cycles (``A = not B``, ``B = not A``) are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error: an odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is inconsistent under the Direct Semantics.
+**Specification.** Treat each ``owl:complementOf`` triple with a non-literal object as an undirected edge (``A = not B`` iff ``B = not A``) and two-colour every connected component iteratively (no depth bound); one finding per component that contains an odd cycle, a self-loop included, focused on the first node, in a depth-first walk over sorted nodes (a blank node sorts by its stable identity, never its label), with an edge to a node of its own colour.  Even cycles (``A = not B``, ``B = not A``) are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error: an odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is inconsistent under the Direct Semantics.
 
 *Flagged:* `self complement`
 

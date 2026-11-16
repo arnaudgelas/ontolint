@@ -9,10 +9,10 @@ label left in a message, or a label ``2`` rewriting a count).
 
 The renaming keeps the order of the labels among themselves and against every IRI of the strategies (all the new
 labels sort after ``""`` and before ``h``, as the generators' ``QBNA<n>`` do).  A relabelling that changes that order
-may still change a finding: OWL029 focuses the smaller of two nodes asserted in both directions, OWL041 the first
-node of an odd cycle in a walk over sorted nodes and OWL043 orders its two operands, each by the text of the
-nodes, a defect older than #54 and not fixed with it.  The last test pins OWL029's case, as a strict expected
-failure, so that a fix of that order makes it pass and fail the run until the mark goes.
+may still change a finding: OWL029 focuses the smaller of two nodes asserted in both directions and OWL043 orders
+its two operands, each by the text of the nodes, a defect older than #54 and not fixed with it (OWL041's walk over
+sorted nodes orders a blank node by its stable identity since #108).  The last test pins OWL029's case, as a strict
+expected failure, so that a fix of that order makes it pass and fail the run until the mark goes.
 """
 
 from __future__ import annotations

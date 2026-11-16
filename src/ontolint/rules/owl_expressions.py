@@ -99,8 +99,8 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
 * **OWL041.** Treat each ``owl:complementOf`` triple with a non-literal object as an undirected edge
   (``A = not B`` iff ``B = not A``) and two-colour every connected component iteratively (no depth
   bound); one finding per component that contains an odd cycle, a self-loop included, focused on the
-  first node, in a depth-first walk over sorted nodes, with an edge to a node of its own colour.
-  Even cycles (``A = not B``, ``B = not A``)
+  first node, in a depth-first walk over sorted nodes (a blank node sorts by its stable identity, never its
+  label), with an edge to a node of its own colour.  Even cycles (``A = not B``, ``B = not A``)
   are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error: an
   odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is
   inconsistent under the Direct Semantics.
@@ -147,7 +147,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import is_datatype_iri, list_items, owning_term, term_text, value_text
+from .support import is_datatype_iri, list_items, owning_term, stable_blank_id, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -712,15 +712,20 @@ def _complements(ctx: RuleContext) -> None:
 
 
 def _odd_cycles(ctx: RuleContext, adjacent: dict[Node, set[Node]]) -> None:
+    def order(node: Node) -> tuple[str, str]:
+        # A blank node sorts by its stable identity, not its label, which each syntax chooses: the walk, and so
+        # the culprit it names, is then the same in every serialisation of the graph.
+        return (stable_blank_id(ctx.g, node) if isinstance(node, BNode) else str(node), str(node))
+
     color: dict[Node, int] = {}
-    for start in sorted(adjacent, key=str):
+    for start in sorted(adjacent, key=order):
         if start in color:
             continue
         color[start] = 0
         stack, culprit = [start], None
         while stack:
             node = stack.pop()
-            for neighbour in sorted(adjacent[node], key=str):
+            for neighbour in sorted(adjacent[node], key=order):
                 if neighbour not in color:
                     color[neighbour] = 1 - color[node]
                     stack.append(neighbour)
