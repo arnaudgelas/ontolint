@@ -12,6 +12,7 @@ from rdflib.namespace import OWL, RDFS
 from ontolint.graph import hierarchy_depths, strongly_connected_components, transitively_redundant_edges
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .owl import DOMAIN_SUBSTITUTES, RANGE_SUBSTITUTES
 from .support import MINIMUM_SINGLE_CHILD_CHAIN_LENGTH, directed_edges
 
 if TYPE_CHECKING:
@@ -161,17 +162,15 @@ def run(ctx: RuleContext) -> None:
 POPULATED_CLASS_SHARE_DENOMINATOR = 4
 
 # Predicates whose object is a class *used* by the ontology (domain, range, restriction filler,
-# schema.org style domain/range hints).  Used by CLS001.
+# schema.org and dcam style domain/range hints, the same ones OWL005 and OWL006 read).  Used by CLS001.
 USAGE_PREDICATES = (
     RDFS.domain,
     RDFS.range,
     OWL.someValuesFrom,
     OWL.allValuesFrom,
     OWL.onClass,
-    URIRef("https://schema.org/domainIncludes"),
-    URIRef("https://schema.org/rangeIncludes"),
-    URIRef("http://schema.org/domainIncludes"),
-    URIRef("http://schema.org/rangeIncludes"),
+    *DOMAIN_SUBSTITUTES,
+    *RANGE_SUBSTITUTES,
 )
 
 

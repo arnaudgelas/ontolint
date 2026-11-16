@@ -55,9 +55,11 @@ specifications:
   legitimately flat.
 * **METRIC005.** (``metric_max_orphan_ratio``, 0.3.)  Owned classes; the numerator is the classes
   CLS001 reports: no asserted local super- or subclass, no typed instance, not used as a domain,
-  range or restriction filler, no ``owl:equivalentClass`` link, not ``rdfs:subClassOf owl:Thing``
+  range (``domainIncludes`` and ``rangeIncludes`` of schema.org and dcam included) or restriction
+  filler, no ``owl:equivalentClass`` link, not ``rdfs:subClassOf owl:Thing``
   and not deprecated.  A restriction or external superclass connects.  Exclusions: disjointness,
-  membership of a union or intersection list and ``dcam:domainIncludes`` do not connect.  Reads
+  membership of a union or intersection list do not connect, nor does being the subject of a
+  ``domainIncludes`` or ``rangeIncludes`` triple.  Reads
   ``orphan_classes``.
   *Info:* a class connected to nothing is usually unfinished, but vocabularies list isolated terms.
 * **METRIC006.** (``metric_min_property_class_ratio``, 0.1.)  Gated on the owned-class count.  Owned
