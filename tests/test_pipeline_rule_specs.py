@@ -261,12 +261,15 @@ def test_an_unwritable_baseline_is_a_lint_execution_failure(tmp_path: Path, run:
 
 
 OUTPUT_FAILED = "TOOL001: report output failed: "
-# A lone surrogate is a valid Turtle escape that no UTF-8 report can hold (JSON escapes it; text cannot).
+# A lone surrogate is a valid Turtle escape that no UTF-8 report can hold (JSON escapes it; text cannot).  The
+# finding header escapes it, so it comes in as a module name (a literal), which the text report still prints as it is.
 SURROGATE_TTL = (
     "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+    "@prefix m: <https://example.test/m#> .\n"
     "<https://example.test/onto> a owl:Ontology .\n"
-    "<https://example.test/onto#\\uD800x> a owl:Class .\n"
+    '<https://example.test/onto#A> a owl:Class ; m:in "\\uD800" .\n'
 )
+MODULES = ("--module-annotation", "https://example.test/m#in")
 
 
 def test_an_output_in_a_missing_directory_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
@@ -309,7 +312,7 @@ def test_an_unencodable_report_keeps_the_previous_output_file(tmp_path: Path, ru
     (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
     previous = tmp_path / "out.txt"
     previous.write_bytes(b"last good report\n")
-    code, out, err = run("a.ttl", "--output", "out.txt")
+    code, out, err = run("a.ttl", *MODULES, "--output", "out.txt")
     assert (code, out) == (TOOL_FAILURE, "")
     assert err.startswith(OUTPUT_FAILED + "UnicodeEncodeError: ")
     assert previous.read_bytes() == b"last good report\n"
@@ -317,10 +320,10 @@ def test_an_unencodable_report_keeps_the_previous_output_file(tmp_path: Path, ru
 
 def test_an_unencodable_report_on_stdout_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
     (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
-    code, out, err = run("a.ttl")
+    code, out, err = run("a.ttl", *MODULES)
     assert (code, out) == (TOOL_FAILURE, "")
     assert err.startswith(OUTPUT_FAILED + "UnicodeEncodeError: ")
-    code, out, _err = run("a.ttl", "--format", "json")  # JSON escapes the surrogate: written as before
+    code, out, _err = run("a.ttl", *MODULES, "--format", "json")  # JSON escapes the surrogate: written as before
     assert code != TOOL_FAILURE and "\\ud800" in out
 
 
