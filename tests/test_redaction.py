@@ -90,7 +90,6 @@ def test_the_lenient_forms_of_an_authority_are_masked(text: str, masked: str) ->
         "1urn:x:a:b@c",
         "-https://h/a@b",
         "1https://@h/x",
-        "1git+https:/bob:pw@h/x",
     ],
 )
 def test_text_without_a_userinfo_is_unchanged(text: str) -> None:
@@ -215,6 +214,72 @@ def test_a_scheme_after_a_digit_or_a_sign_is_read(text: str, masked: str) -> Non
     assert userinfo_password(text) == "pw"
 
 
+@pytest.mark.parametrize(
+    ("text", "masked"),
+    [
+        # RDF/XML and JSON-LD's @base resolve "1git+https://u:p@h/x" as a relative path: no letter-led scheme, so the
+        # "//" becomes "/" and the userinfo is the first segment after it (#104).  The mask reads that segment.
+        ("file:///d/1git+https:/bob:pw@h/x", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x"),
+        ("file:///d/_x:/bob:pw@h/x", f"file:///d/_x:/{REDACTED_USERINFO}@h/x"),
+        ("file:///d/-x:/bob:pw@h/x", f"file:///d/-x:/{REDACTED_USERINFO}@h/x"),
+        ("file:///d/%20x:/bob:pw@h/x", f"file:///d/%20x:/{REDACTED_USERINFO}@h/x"),
+        ("file:///d/x@y:/bob:pw@h/x", f"file:///d/x@y:/{REDACTED_USERINFO}@h/x"),
+        ("file:///d/1git+https:/bob@h/x", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x"),  # a token as the user
+        ("file:///d/1git+https:/u:p@ss@h/x", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x"),  # up to the last "@"
+        ("file:///d/1git+https:/bob:pw@h/x#f", f"file:///d/1git+https:/{REDACTED_USERINFO}@h/x#f"),
+        # The base itself is the start of the text, and a nested one follows a "/" (JSON-LD's @base).
+        ("1git+https:/bob:pw@h/", f"1git+https:/{REDACTED_USERINFO}@h/"),
+        (
+            "1git+https:/bob:pw@h/1git+https:/bob:pw@h/y",
+            f"1git+https:/{REDACTED_USERINFO}@h/1git+https:/{REDACTED_USERINFO}@h/y",
+        ),
+        ('"focus": "1git+https:/bob:pw@h/x",', f'"focus": "1git+https:/{REDACTED_USERINFO}@h/x",'),
+        ("Term <file:///d/_x:/bob:pw@h/x> has no label", f"Term <file:///d/_x:/{REDACTED_USERINFO}@h/x> has no label"),
+    ],
+)
+def test_an_iri_resolved_as_a_relative_path_with_its_userinfo_is_masked(text: str, masked: str) -> None:
+    assert redact_userinfo(text) == masked
+    assert redact_rendered(text) == masked
+    assert has_userinfo(text)
+    assert redact_userinfo(masked) == masked
+
+
+def test_a_resolved_relative_path_is_masked_but_no_rule_reads_it() -> None:
+    # The mask reads a resolved relative path more broadly than the rules do: it cannot tell "1git+https:/u:p@h"
+    # from "a_b:/c@d", and a rule must not report a path as a credential.  SEC014 and SEC016 read the structure.
+    text = "file:///d/1git+https:/bob:pw@h/x"
+    assert userinfo_password(text) is None
+    assert not userinfo_without_password(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "file:///d/a:/b@c",  # a valid scheme "a": a path, which the mask has no reason to read as an authority
+        "file:///C:/Users/me@x/f.ttl",  # a Windows drive and a folder named like an address
+        "file:///d/git+https:/bob:pw@h/x",
+        "file:///d/1git+https:/h/a@b",  # the authority ends at its "/" before the "@"
+        "file:///d/1git+https:/h?q=a@b",
+        "file:///d/1git+https:/h#a@b",
+        "file:///d/1git+https://h/a@b",  # a "//" is read as an authority, which has none
+        "file:///d/1git+https:///@h",
+        "file:///d/_x:/@h",  # an empty userinfo
+        "file:///d/_x:/:@h",
+        "file:///d/_x:no-slash@h/x",
+        "file:///d/a@b.example/x",  # an address in a path
+        "file:///d/a_b/c@d",
+        "mailto:bob@example.test",
+        "urn:x:_a:/b",
+        "ratio 1:2 (a@b)",
+        "12:30 mail bob@example.test",  # no "/" after the colon
+        "see foo_bar: /x@y",  # a space after the colon
+    ],
+)
+def test_text_that_is_not_a_resolved_userinfo_is_unchanged(text: str) -> None:
+    assert redact_userinfo(text) == text
+    assert redact_rendered(text) == text
+
+
 def test_a_scheme_is_read_from_the_first_letter_of_its_run() -> None:
     # The digits and signs that start a run are no part of its scheme; those after its first letter are.
     assert redact_userinfo("x1https://bob:pw@h/x") == f"x1https://{REDACTED_USERINFO}@h/x"
@@ -264,6 +329,9 @@ def test_clip_masks_before_it_cuts() -> None:
         "1a://" * 100_000 + " @",
         "1a:" + "\n" * 400_000 + "@",
         "https://h " + "1http:a " * 50_000 + "@",
+        "_a:/" * 100_000 + "@",
+        "/".join(["1a:/b"] * 100_000) + "@",
+        "_" * 400_000 + ":/@",
     ],
     ids=[
         "scheme-then-authority",
@@ -280,6 +348,9 @@ def test_clip_masks_before_it_cuts() -> None:
         "prefixed-starts",
         "prefixed-line-breaks",
         "nested-prefixed",
+        "relative-starts",
+        "relative-segments",
+        "relative-run",
     ],
 )
 def test_the_scan_is_linear(text: str) -> None:

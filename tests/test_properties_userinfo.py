@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import fields
+from xml.sax.saxutils import escape
 
 import pytest
 from hypothesis import given
@@ -103,3 +104,46 @@ def test_iris_differing_only_in_their_secrets_give_the_same_findings(scheme: str
     assert [(f.rule, f.focus, f.message) for f in first] == [(f.rule, f.focus, f.message) for f in second]
     assert [fingerprint(f) for f in first] == [fingerprint(f) for f in second]
     assert [identity(f) for f in first] == [identity(f) for f in second]
+
+
+# A scheme no URL parser reads: its run starts with a digit or a sign, or holds a character a scheme may not.  RDF/XML
+# resolves a reference with one as a relative path, which turns its "//" into "/" (#104).
+generic_schemes = st.builds(
+    lambda lead, tail: lead + tail,
+    st.sampled_from(["1", "9", "-", ".", "+", "_", "%20", "x@", "0."]),
+    st.text("abcdefghijklmnopqrstuvwxyz0123456789+.-", max_size=8),
+)
+RDF_NAMESPACES = (
+    'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:owl="http://www.w3.org/2002/07/owl#" '
+    'xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"'
+)
+XML_ESCAPES = {'"': "&quot;", "\n": "&#10;", "\r": "&#13;", "\t": "&#9;"}
+
+
+def _rdfxml(where: str, iri: str) -> str:
+    value = escape(iri, XML_ESCAPES)
+    extra = ""
+    if where == "about":
+        body = f'<owl:Class rdf:about="{value}"/>'
+    elif where == "resource":
+        body = f'<owl:Class rdf:about="https://example.test/a"><rdfs:seeAlso rdf:resource="{value}"/></owl:Class>'
+    else:
+        body = '<owl:Class rdf:about="a"/>'
+        extra = f' xml:base="{value}/"'
+    return f'<?xml version="1.0"?>\n<rdf:RDF {RDF_NAMESPACES}{extra}>{body}</rdf:RDF>\n'
+
+
+@budget(0.1)
+@given(generic_schemes, userinfos, st.sampled_from(["about", "resource", "base"]))
+def test_no_finding_holds_the_userinfo_of_a_reference_rdfxml_resolved_as_a_relative_path(
+    scheme: str, userinfo: str, where: str
+) -> None:
+    data = _rdfxml(where, f"{scheme}://{userinfo}@example.test/y")
+    graph = Graph()
+    graph.parse(data=data, format="xml", publicID="file:///d/doc.rdf")
+    findings = Linter(graph).execute().findings
+    assert findings
+    for finding in findings:
+        for text in _texts(finding):
+            for secret in _secret_parts(userinfo):
+                assert secret not in text, (finding.rule, text)

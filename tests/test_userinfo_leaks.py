@@ -354,12 +354,8 @@ def test_a_digit_led_iri_resolved_as_relative_repeats_no_userinfo(run: Any, tmp_
         assert _leaks(out) == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="known limit: RDF/XML resolves a scheme-less '1git+https://u:p@h' to '.../1git+https:/u:p@h', "
-    "which no generic-scheme branch masks (documented in README Security; tracked outside #55)",
-)
 def test_a_digit_led_generic_scheme_resolved_as_relative_repeats_no_userinfo(run: Any, tmp_path: Path) -> None:
+    # The same, for a scheme that is no special one: "1git+https:/u:p@h" has no "//" left for a mask to find (#104).
     (tmp_path / "generic.rdf").write_text(
         '<?xml version="1.0"?>\n'
         '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:owl="http://www.w3.org/2002/07/owl#">\n'
@@ -370,7 +366,81 @@ def test_a_digit_led_generic_scheme_resolved_as_relative_repeats_no_userinfo(run
     )
     for output_format in FORMATS:
         _code, out = run("generic.rdf", "--format", output_format, "--profile", "strict")
+        assert "example.test/y" in out, out
         assert _leaks(out) == []
+
+
+# Every way RDF/XML or JSON-LD resolves a reference whose scheme is no letter-led run: the parser keeps the text
+# after the document's directory, with its "//" collapsed to "/" (#104).  Turtle, N-Triples, TriG and N-Quads keep
+# the IRI as written, and a Turtle IRI with such a scheme is masked as it always was.
+GENERIC = f"{{scheme}}://alice:{PASSWORD}@example.test/y"
+RDFXML_HEAD = (
+    '<?xml version="1.0"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" '
+    'xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"{extra}>\n'
+)
+RESOLVED_INPUTS = {
+    "about": (
+        "rdf",
+        RDFXML_HEAD.format(extra="") + '  <owl:Class rdf:about="{iri}"/>\n</rdf:RDF>\n',
+    ),
+    "resource": (
+        "rdf",
+        RDFXML_HEAD.format(extra="")
+        + '  <owl:Class rdf:about="https://example.test/onto#A"><rdfs:seeAlso rdf:resource="{iri}"/></owl:Class>\n'
+        "</rdf:RDF>\n",
+    ),
+    "typed-attribute": (
+        "rdf",
+        RDFXML_HEAD.format(extra="") + '  <owl:Class rdf:about="https://example.test/onto#A" rdf:type="{iri}"/>\n'
+        "</rdf:RDF>\n",
+    ),
+    "xml-base": (
+        "rdf",
+        RDFXML_HEAD.format(extra=' xml:base="{iri}/"') + '  <owl:Class rdf:about="a"/>\n</rdf:RDF>\n',
+    ),
+    "jsonld-base": (
+        "jsonld",
+        '{{"@context": {{"@base": "{iri}/"}}, "@id": "a", "@type": "http://www.w3.org/2002/07/owl#Class"}}\n',
+    ),
+}
+
+
+@pytest.mark.parametrize("output_format", FORMATS)
+@pytest.mark.parametrize("scheme", ["1git+https", "_x", "-y", "%20z", "9.a-b+c"])
+@pytest.mark.parametrize("kind", sorted(RESOLVED_INPUTS))
+def test_a_reference_resolved_as_a_relative_path_repeats_no_userinfo_in_any_format(
+    run: Any, tmp_path: Path, kind: str, scheme: str, output_format: str
+) -> None:
+    extension, template = RESOLVED_INPUTS[kind]
+    name = f"resolved.{extension}"
+    (tmp_path / name).write_text(template.format(iri=GENERIC.format(scheme=scheme)), encoding="utf-8")
+    code, out = run(name, "--format", output_format, "--profile", "strict")
+    assert code == 1, out
+    assert _leaks(out) == []
+    assert "example.test/y" in out, out  # the term is reported, with its host and path kept
+
+
+def test_a_reference_resolved_as_a_relative_path_repeats_no_userinfo_in_a_baseline_or_stderr(
+    run: Any, tmp_path: Path
+) -> None:
+    _, template = RESOLVED_INPUTS["about"]
+    (tmp_path / "resolved.rdf").write_text(template.format(iri=GENERIC.format(scheme="1git+https")), encoding="utf-8")
+    code, out = run("resolved.rdf", "--write-baseline", "base.json", "--format", "sarif", "--output", "out.sarif")
+    assert code == 1, out
+    _code, again = run("resolved.rdf", "--baseline", "base.json", "--format", "json")
+    files = [(tmp_path / name).read_text(encoding="utf-8") for name in ("base.json", "out.sarif")]
+    for text in (out, again, *files):
+        assert _leaks(text) == []
+    assert json.loads(again)["findings"] == []
+
+
+def test_a_resolved_reference_is_not_a_finding_of_sec014(run: Any, tmp_path: Path) -> None:
+    # Mask-only (#104): SEC014 reads the structure of an IRI as the parser delivers it, which has no authority here.
+    _, template = RESOLVED_INPUTS["about"]
+    (tmp_path / "resolved.rdf").write_text(template.format(iri=GENERIC.format(scheme="1git+https")), encoding="utf-8")
+    _code, out = run("resolved.rdf", "--select", "SEC014", "--fail-on", "never")
+    assert "SEC014" not in out
+    assert _leaks(out) == []
 
 
 def test_a_catalog_entry_for_a_credentialed_url_repeats_no_userinfo(run: Any, tmp_path: Path) -> None:
