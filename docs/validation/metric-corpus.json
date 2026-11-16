@@ -522,7 +522,7 @@
         "METRIC005": {
           "expect": "silent",
           "basis": "checked",
-          "why": "9 of the 10 classes CLS001 calls orphans are targets of dcam:rangeIncludes, which CLS001 does not read: connected, not orphans."
+          "why": "The classes that are targets of dcam:rangeIncludes are connected, not orphans, and CLS001 reads that predicate since #66: 1 of 22 (BibliographicResource) is an orphan, 0.045."
         }
       }
     }

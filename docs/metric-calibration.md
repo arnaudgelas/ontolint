@@ -60,7 +60,7 @@ read the share that is *missing*. METRIC006 and METRIC007 read one measurement.
 | METRIC002 | 16 | 2 | 5 | > 0.500 | 0.000 | 0.000 | 0.000 | 0.071 | 1.000 |
 | METRIC003 | 16 | 2 | 5 | > 0.500 | 0.000 | 0.000 | 0.000 | 0.098 | 1.000 |
 | METRIC004 | 14 | 1 | 7 | > 8.000 | 1.625 | 2.047 | 2.856 | 4.290 | 13.571 |
-| METRIC005 | 16 | 1 | 5 | > 0.300 | 0.000 | 0.000 | 0.000 | 0.000 | 0.455 |
+| METRIC005 | 16 | 0 | 5 | > 0.300 | 0.000 | 0.000 | 0.000 | 0.000 | 0.222 |
 | METRIC006 | 16 | 3 | 5 | < 0.100 | 0.000 | 0.109 | 0.916 | 1.952 | 4.533 |
 | METRIC007 | 16 | 0 | 5 | > 5.000 | 0.000 | 0.109 | 0.916 | 1.952 | 4.533 |
 | METRIC008 | 14 | 4 | 7 | > 0.500 | 0.000 | 0.002 | 0.076 | 0.604 | 1.000 |
@@ -86,7 +86,7 @@ here. An interval is only as good as the labels.
 | METRIC002 | 0.500 | [0.3272, 1.0000) | yes | [0.0971, 1.0000) | yes |
 | METRIC003 | 0.500 | [0.1754, 1.0000) | yes | [-inf, 1.0000) | yes |
 | METRIC004 | 8.000 | [5.3661, +inf) | yes | [-inf, +inf) | yes |
-| METRIC005 | 0.300 | [0.4545, +inf) | no | [0.4545, +inf) | no |
+| METRIC005 | 0.300 | [0.0455, +inf) | yes | [0.0455, +inf) | yes |
 | METRIC006 | 0.100 | (-inf, 0.0000] | no | (-inf, 0.0000] | no |
 | METRIC007 | 5.000 | [4.5333, +inf) | yes | [-inf, +inf) | yes |
 | METRIC008 | 0.500 | [1.0000, +inf) | no | [1.0000, +inf) | no |
@@ -104,8 +104,8 @@ here. An interval is only as good as the labels.
   definition for 0.33 of its classes: a mature OBO ontology 0.17 below the METRIC002 limit.
 - **METRIC004, METRIC007, METRIC012, METRIC013.** The default is inside the allowed interval with a margin;
   only METRIC004 flags a file (PAO, 13.6, left unlabelled).
-- **METRIC005.** The only flagged file is DCMI Terms, whose orphans are mostly `dcam:rangeIncludes` targets
-  (see "CLS001" below). The label-consistent limit is 0.4545 or more only because of that gap.
+- **METRIC005.** No file is flagged. DCMI Terms was (10 of 22, 0.4545) because its orphans were mostly
+  `dcam:rangeIncludes` targets; with CLS001 reading them (issue #66) it is 1 of 22, 0.045 (see "CLS001" below).
 - **METRIC006, METRIC008, METRIC009, METRIC010.** The labelled-silent files include some at the extreme
   (0 relations, 1.0 unsigned, 0 tagged, 1.0 foreign), so the only limit with no false positive switches the
   rule off. The cause is a modelling choice the rule does not see (reuse of imported relations, signatures as
@@ -153,20 +153,21 @@ it would alter JSON and SARIF output for every METRIC011 finding.
 
 ### CLS001 and `dcam:domainIncludes` (also issue #66)
 
-CLS001 reads `schema:domainIncludes` and `schema:rangeIncludes` but not the `dcam:` pair, which OWL005 and
-OWL006 read. On DCMI Terms CLS001 reports 10 of 22 orphans and METRIC005 fires at 0.4545. Only that file in the
-corpus uses `dcam:domainIncludes` or `dcam:rangeIncludes` (24 occurrences). Simulated in a scratch copy with the
-`dcam` namespace rewritten to schema.org's: CLS001 reports one class (`BibliographicResource`), METRIC005 is
-0.045 and silent. This is a simulation, not the change. *Recommendation:* yes, read both `dcam:` predicates
-(#66 holds the change and its fixture), and update the METRIC005 exclusion in the specification.
-*Alternative:* leave it, and METRIC005 stays a known false positive on DCMI vocabularies.
+CLS001 read `schema:domainIncludes` and `schema:rangeIncludes` but not the `dcam:` pair, which OWL005 and
+OWL006 read. On DCMI Terms it reported 10 of 22 orphans and METRIC005 fired at 0.4545. Only that file in the
+corpus uses `dcam:domainIncludes` or `dcam:rangeIncludes` (24 occurrences). A scratch copy with the `dcam`
+namespace rewritten to schema.org's predicted one orphan (`BibliographicResource`), 0.045. *Recommendation:* yes,
+read both `dcam:` predicates. Issue #66 implements it on that recommendation, pending the maintainer's decision:
+CLS001 now reads both, METRIC005 reports 1 of 22 (0.0455) and is silent on DCMI Terms, as predicted, and the
+METRIC005 specification is corrected. *Alternative:* revert the change, and METRIC005 stays a known false
+positive on DCMI vocabularies.
 
 ### Approval of the METRIC specifications
 
 The specification in the `rules/metrics.py` docstring needs approval. Points to settle first: the METRIC005
-exclusion of `dcam:domainIncludes` (depends on the decision above); METRIC008 already reading `dcam:` while
-CLS001 does not; METRIC004 and METRIC005 being gated on the owned classes while the text says "population";
-METRIC011's `certain`. *Recommendation:* approve after #66 is decided. The corpus does not confirm or refute
+reading of `dcam:domainIncludes` and `dcam:rangeIncludes` (issue #66, decided as recommended above, to be
+confirmed); METRIC004 and METRIC005 being gated on the owned classes while the text says "population";
+METRIC011's `certain`. *Recommendation:* approve once #66 is confirmed. The corpus does not confirm or refute
 the other specifications.
 
 ## What the maintainer has to decide

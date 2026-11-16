@@ -198,9 +198,9 @@
         "value": 2.0
       },
       "METRIC005": {
-        "fires": true,
-        "measured": "10 / 22",
-        "value": 0.4545
+        "fires": false,
+        "measured": "1 / 22",
+        "value": 0.0455
       },
       "METRIC006": {
         "fires": false,
@@ -1480,7 +1480,7 @@
       "orphan_classes": {
         "definition_version": 1,
         "denominator": 22,
-        "numerator": 10
+        "numerator": 1
       },
       "property_documentation_coverage": {
         "definition_version": 1,
