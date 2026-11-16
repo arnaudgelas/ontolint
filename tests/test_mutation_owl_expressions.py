@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from rdflib import Graph, URIRef
+from itertools import permutations
+
+from rdflib import BNode, Graph, URIRef
 from rdflib.namespace import OWL
 from rule_harness import BASE, graph
 
@@ -57,3 +59,30 @@ def test_owl041_detects_odd_cycles_of_various_shapes() -> None:
         names = [f"c{i}" for i in range(n)]
         g = _cycle(*((names[i], names[(i + 1) % n]) for i in range(n)))
         assert len(_run("OWL041", g)) == 1, n
+
+
+def _blank_cycle(labels: tuple[str, ...], named: int) -> Graph:
+    """An odd ``owl:complementOf`` cycle through ``named`` IRIs and the blank nodes ``labels``, in a fixed shape."""
+    nodes = [URIRef(BASE + f"c{i}") for i in range(named)] + [BNode(label) for label in labels]
+    g = Graph()
+    for i, node in enumerate(nodes):
+        g.add((node, OWL.complementOf, nodes[(i + 1) % len(nodes)]))
+    return g
+
+
+def test_owl041_names_the_same_node_whatever_labels_the_blank_nodes_have() -> None:
+    """Issue 108: the culprit is chosen by a walk over the nodes, which must not depend on parser-chosen labels."""
+    for named, blanks in ((1, 2), (2, 1), (0, 3), (1, 4), (0, 5)):
+        # Label pairs from the three schemes of the metamorphic test, in every assignment to the nodes.
+        pool = ("b1", "b2", "b3", "b4", "b5", "zz", "yy", "N0", "N1", "x")
+        results = set()
+        for labels in permutations(pool, blanks):
+            (finding,) = _run("OWL041", _blank_cycle(labels, named))
+            results.add((finding.focus, finding.message))
+        assert len(results) == 1, (named, blanks, results)
+
+
+def test_owl041_keeps_its_focus_on_a_triangle_of_iris() -> None:
+    """Only blank nodes change their place in the walk: a triangle of IRIs is focused as it always was."""
+    g = _cycle(("c1", "c2"), ("c2", "c0"), ("c0", "c1"))
+    assert [f.focus for f in _run("OWL041", g)] == [BASE + "c2"]

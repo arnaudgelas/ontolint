@@ -6,12 +6,12 @@ import warnings
 from pathlib import Path
 
 import pytest
-from hypothesis import assume, given
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget, roundtrip_triple_lists
 from hypothesis_strategies import build_graph as build
 from metamorphic_support import cli_json, document_keys, keys, lint_all, serialisable, workdir
-from rdflib import Dataset, Graph
+from rdflib import OWL, BNode, Dataset, Graph, URIRef
 from rdflib.compare import isomorphic
 
 from ontolint.loader import load_graph
@@ -47,8 +47,20 @@ def load(path: Path, root: Path) -> Graph:
     return load_graph(resolve_inputs([path.name], root)[0], Policy(), root)
 
 
+# Issue 108: a complementOf triangle through one named class and two blank nodes.  OWL041 focused the first
+# node of a walk over the labels, and each syntax labels the blank nodes differently, so the focus was an
+# IRI in one syntax and ``_:B`` in another.
+_TRIANGLE = URIRef("https://example.test/onto#A")
+_COMPLEMENT_TRIANGLE = [
+    (_TRIANGLE, OWL.complementOf, BNode("b1")),
+    (BNode("b1"), OWL.complementOf, BNode("b2")),
+    (BNode("b2"), OWL.complementOf, _TRIANGLE),
+]
+
+
 @budget(1)
 @given(roundtrip_triple_lists())
+@example(_COMPLEMENT_TRIANGLE)
 def test_findings_are_the_same_for_every_serialisation_through_the_loader(triples: list) -> None:
     """RELATION (serialisation invariance): the graph read back from Turtle, N-Triples, RDF/XML, JSON-LD, TriG
     and N-Quads yields the findings of the original graph: same rule, severity, focus and message."""
