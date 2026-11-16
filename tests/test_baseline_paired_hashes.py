@@ -257,7 +257,7 @@ def _roamer(subject: str) -> Finding:
 
 def test_a_displaced_roaming_finding_accepted_through_another_entry_consumes_its_old_entry() -> None:
     """``f`` moved from ``q.ttl`` to ``p.ttl``, where ``g`` has its message (issue #106): ``f`` is accepted by roaming,
-    through its old entry, which it consumes although its hash on ``p.ttl`` is ``g``'s.  Nothing is new, nothing stale."""
+    through its old entry, which it consumes although its hash on ``p.ttl`` is ``g``'s.  Nothing new, nothing stale."""
     g, f = _roamer("g"), _roamer("f")
     accepted = _written(_report("p.ttl", g), _report("q.ttl", f))
     assert fingerprint(f, "p.ttl") == fingerprint(g, "p.ttl")  # the collision the scenario needs
@@ -340,6 +340,7 @@ def test_the_entry_a_roaming_finding_takes_cannot_accept_another(reverse: bool) 
 
 # --- the command line ------------------------------------------------------------------------------------
 
+
 def test_a_displaced_roaming_finding_does_not_fail_a_strict_baseline_run(tmp_path: Path, monkeypatch: Any) -> None:
     """Issue #106 through the command line: ``b.ttl`` and ``c.ttl`` declare one ontology IRI (ONT008, reported on
     ``b.ttl``); ``a.ttl`` is added and the finding moves to it.  The baseline also holds an entry, of another
@@ -347,7 +348,9 @@ def test_a_displaced_roaming_finding_does_not_fail_a_strict_baseline_run(tmp_pat
     finding's hash is another entry's.  The finding is accepted by roaming and consumes its old entry: exit 0."""
     monkeypatch.chdir(tmp_path)
     for name in ("a.ttl", "b.ttl", "c.ttl"):
-        Path(name).write_text("<https://example.test/o> a <http://www.w3.org/2002/07/owl#Ontology> .\n", encoding="utf-8")
+        Path(name).write_text(
+            "<https://example.test/o> a <http://www.w3.org/2002/07/owl#Ontology> .\n", encoding="utf-8"
+        )
     base = ["--select", "ONT008", "--format", "json"]
     assert main(["b.ttl", "c.ttl", *base, "--fail-on", "never", "--write-baseline", "old.json"]) == 0
     assert main(["a.ttl", "b.ttl", "c.ttl", *base, "--fail-on", "never", "--write-baseline", "new.json"]) == 0

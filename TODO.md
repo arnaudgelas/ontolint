@@ -113,14 +113,14 @@ Nothing open: 0.11.0 is released (see "Recently done").
       no other rule; a possible follow-up); allowing roaming only for unrecorded hashes (falsely
       reopens a displaced finding whose hash is paired on its new path); a lazy roaming claim
       (order-dependent); adding every roaming claim to `seen` (moves stale output in 171 of 40,000
-      random runs).
+      random runs; adopted in 0.16.0, see below).
     - *SARIF `partialFingerprints`*: none in 0.14.0; the design (`ontolintIdentity/v2`, a
       conditional `ontolintFingerprint/v1`, the versioning rule, its disclosed cost and open
       questions) and its tests are under GITHUB-ACTION (#24).
-    - Follow-up, for a separate decision: a displaced ONT007/ONT008 finding whose hash is also
-      paired on its new path leaves its old entry stale (as on `main`; pinned by
-      `test_a_displaced_roaming_finding_is_accepted_and_its_old_entry_is_stale_as_before`).
-      Adding that claim to `seen` fixes it, but moves stale output in about 0.4% of random runs.
+    - Resolved in 0.16.0 (issue #106): a displaced ONT007/ONT008 finding whose hash is also
+      paired on its new path used to leave its old entry stale. The roaming claim now always goes to
+      `seen` (it only feeds staleness, so no finding's verdict moves; stale output changes exactly for
+      the entries such a finding took, `test_a_displaced_roaming_finding_accepted_through_another_entry_consumes_its_old_entry`).
   - **METRICS-ENGINE** (P1; issue #20): METRIC001-METRIC013 are thresholds over named
     measurements. `rules/measurements.py` holds the catalogue (`SPECS`): sixteen measurements, each
     with an ID, a definition version (1), a kind (ratio, count or histogram) and a population,
