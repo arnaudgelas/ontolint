@@ -853,11 +853,18 @@ result whose evidence is `detailTruncated`:
       Path: https://example.test/name
 ```
 
-Each of these lines is one line of visible characters: control, format (bidi, zero-width),
-surrogate, private-use and separator characters other than a space are written as N-Triples
-escapes, `\uXXXX` or `\UXXXXXXXX`, so a lone surrogate in a value does not make the text report
-unwritable (one in a finding's focus or message, which the header prints as is, still gives
-`TOOL001`, exit 2). A literal value is then still an N-Triples term that reads back as itself,
+Each of these lines, and the focus and the message of every finding's header, is one line of
+visible characters: control (a line break, the escape of a terminal sequence), format (bidi,
+zero-width), surrogate, private-use and separator characters other than a space are written as
+N-Triples escapes, `\uXXXX` or `\UXXXXXXXX`, so a lone surrogate in a value, a focus or a message
+does not make the text report unwritable, and a message that quotes input (a `sh:message`, a
+literal an `owl:imports` points to) cannot add a line that reads like a finding or reorder the
+line. Ordinary text, accents, CJK and single emoji included, is printed as it is (a joiner
+between the emoji of a sequence is a format character, so it is written as an escape). The escape is made when
+the text is rendered: a finding's `message`, JSON, SARIF, the Markdown summary (which escapes on
+its own), baselines and fingerprints keep the raw string. The other lines that quote input, the
+`In:` line, the module names and a file's heading in a multi-file report, are printed as they
+are. A literal value of an evidence line is still an N-Triples term that reads back as itself,
 except a lone surrogate: it is not a valid RDF string, it is shown as its code unit, and an
 escaped high and low surrogate side by side read back as one character. IRIs and messages are
 printed bare, so a backslash in one (`\u001B` written literally in a JSON-LD IRI) reads like an

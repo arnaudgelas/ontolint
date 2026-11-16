@@ -48,6 +48,7 @@ CHARS = [
     ("\u2029", "\\u2029"),
     ("\u061c", "\\u061C"),
     ("\u200b", "\\u200B"),
+    ("\u200d", "\\u200D"),  # a joiner: a format character, as in the evidence lines
     ("\u200e", "\\u200E"),
     ("\u200f", "\\u200F"),
     ("\u202a", "\\u202A"),
