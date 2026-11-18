@@ -14,7 +14,7 @@ did. The exit code is unchanged too, unless a measurement could not be computed:
 ([measurements](measurements.md), "Failure").
 
 > **This is not a quality gate.** `--quality-baseline` and `--compare-quality` report; they exit `0`
-> whatever they find, so committing a quality baseline does not protect a branch: a run that loses
+> whatever they find (a measurement that could not be computed exits `2`, see below), so committing a quality baseline does not protect a branch: a run that loses
 > definition coverage still passes CI. The only quality gate today is the
 > findings of the METRIC rules (their absolute thresholds, [metric-thresholds.md](metric-thresholds.md),
 > and `--fail-on`): they judge one run, not a change from the baseline. A gate on the
@@ -113,7 +113,9 @@ a code span, at most 20 measurements. `--quality-baseline` takes `--format json`
 
 Exit codes: a comparison exits `0` whatever it finds, by design: it is not a gate (see the top of this page;
 a threshold is QUALITY-BUDGET's job, issue #26). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
-(`TOOL001: quality snapshot FILE cannot be used: ...`).
+(`TOOL001: quality snapshot FILE cannot be used: ...`), and so does a run in which a measurement could not be
+computed (`TOOL001: measurement <id> failed for <file>: ...`; the snapshot is still written, with that
+measurement absent, and must not be committed as the accepted values).
 
 ## The snapshot file (version 1)
 

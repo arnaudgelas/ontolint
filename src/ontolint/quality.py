@@ -170,7 +170,7 @@ def _masked(iris: frozenset[Any]) -> tuple[str, ...]:
     return tuple(sorted(redact_userinfo(str(i)) for i in iris))
 
 
-def build(ctx: RuleContext) -> Snapshot:
+def build(ctx: RuleContext, vector: engine.Vector | None = None) -> Snapshot:
     """The snapshot of ``ctx``: every measurement of the catalogue, in its order, as it stood after the rules ran.
 
     A coverage measure (one with ``better``) keeps the sorted IRIs of its numerator and denominator, each masked
@@ -187,7 +187,7 @@ def build(ctx: RuleContext) -> Snapshot:
         tuple(sorted(map(redact_userinfo, policy.resolved_imports))),
     )
     entries: list[Entry] = []
-    for spec, value in engine.taken(ctx):
+    for spec, value in engine.taken(ctx) if vector is None else vector:
         record = engine.record(spec, value)
         if spec.better is None or isinstance(value, Absent):
             entries.append(Entry(record))

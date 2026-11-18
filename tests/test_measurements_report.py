@@ -140,7 +140,7 @@ def test_each_file_has_its_own_vector_and_a_baseline_keeps_it(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     clean = str(FIXTURES / "clean.ttl")
-    _code, out, _err = _run([KITCHEN, clean, "--format", "json", "--ignore", "METRIC", "--measurements"], capsys)
+    _code, out, _err = _run([KITCHEN, clean, "--format", "json", "--measurements"], capsys)
     files = {Path(entry["path"]).name: entry["measurements"] for entry in json.loads(out)["files"]}
     assert files["kitchen_sink.ttl"] == KITCHEN_VECTOR
     assert files["clean.ttl"] != KITCHEN_VECTOR
@@ -275,6 +275,38 @@ def test_a_failing_computation_is_published_absent_and_fails_the_run(
     }
     assert vector[1:] == KITCHEN_VECTOR[1:]
     assert _without_measurements(document) == json.loads(plain[1])  # findings and everything else are unchanged
+
+
+def test_a_computation_that_fails_once_is_one_failure_in_the_report_and_the_exit_status(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """The vector is taken once: a failure that does not repeat cannot be in the report and not in the exit status."""
+    calls: list[object] = []
+    real = measurements.is_unlabelled
+
+    def once(ctx: RuleContext, term: object) -> bool:
+        calls.append(term)
+        if len(calls) == 1:
+            raise MemoryError("transient")
+        return real(ctx, term)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(measurements, "is_unlabelled", once)
+    snapshot = tmp_path / "snapshot.json"
+    argv = [
+        QUALITY,
+        "--format",
+        "json",
+        "--ignore",
+        "METRIC",
+        "--measurements",
+        "--write-quality-snapshot",
+        str(snapshot),
+    ]
+    code, out, err = _run(argv, capsys)
+    assert code == USAGE_ERROR
+    assert "failed: MemoryError: transient" in out
+    assert err.count("TOOL001: measurement class_label_coverage failed for ") == 1
+    assert "failed: MemoryError: transient" in snapshot.read_text()  # the report and the snapshot agree
 
 
 def test_a_failing_computation_fails_the_run_whatever_fail_on_says(
