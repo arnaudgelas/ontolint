@@ -1729,15 +1729,15 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:class ex:A .
 ```
 
-#### SHQ014: sh:severity outside the SHACL severity vocabulary
+#### SHQ014: sh:severity outside the SHACL severity vocabulary or with several values
 
 - **Severity:** warning
 - **Scope:** shapes
 - **Category:** heuristic
 - **Module:** [`shacl_quality`](#module-shacl_quality)
-- **Fix:** Use sh:Info, sh:Warning or sh:Violation, or a custom severity IRI outside the sh: namespace.
+- **Fix:** Give a shape one sh:severity: sh:Info, sh:Warning or sh:Violation, or a custom IRI outside sh:.
 
-**Specification.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and ``sh:Violation``.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); several values, which 2.1.4 allows only one of, are each judged alone and not reported as several on purpose (SHACL-SHACL rejects them: SHACL001 fails).  Warning: a literal makes the shape ill-formed; an unknown ``sh:`` IRI is most likely a typo, but processors accept it.
+**Specification.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and ``sh:Violation``; and every shape with more than one distinct value (2.1.4: "a shape has at most one value for sh:severity"), reported once as "several" whatever the values are (as SHQ023 does for ``sh:path``), on top of the finding of each value that is not a severity.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); one value named twice, which is one RDF triple.  A node with ``sh:severity`` and no other triple counts as a shape here, though SHACL-SHACL does not check it.  Warning: a literal or several values make the shape ill-formed (SHACL-SHACL rejects the shapes graph: SHACL001 fails); an unknown ``sh:`` IRI is most likely a typo, but processors accept it.
 
 *Flagged:* `typo severity`
 
@@ -1769,6 +1769,50 @@ ex:P sh:path ex:p ; sh:severity 'warning' .
 
 Reported: `sh:severity value warning is not sh:Info, sh:Warning or sh:Violation.`
 
+*Flagged:* `two standard severities on a node shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:severity sh:Info, sh:Warning .
+```
+
+Reported: `Shape has 2 sh:severity values; SHACL 2.1.4 allows one.`
+
+*Flagged:* `two standard severities on a property shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:severity sh:Info, sh:Warning .
+```
+
+Reported: `Shape has 2 sh:severity values; SHACL 2.1.4 allows one.`
+
+*Flagged:* `two custom severity IRIs`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:severity ex:Minor, ex:Major .
+```
+
+Reported: `Shape has 2 sh:severity values; SHACL 2.1.4 allows one.`
+
 *Clean:* `well-formed shapes`
 
 ```turtle
@@ -1793,7 +1837,7 @@ Shapes graph:
 ```turtle
 ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:severity sh:Info .
-ex:Q sh:severity sh:Violation, sh:Warning .
+ex:Q sh:severity sh:Violation .
 ```
 
 *Clean:* `custom severity IRI`
@@ -1807,6 +1851,19 @@ Shapes graph:
 ```turtle
 ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:severity ex:Critical .
+```
+
+*Clean:* `one severity named twice`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
+ex:P sh:path ex:p ; sh:severity sh:Info, sh:Info .
 ```
 
 #### SHQ015: Invalid sh:flags value or sh:flags without sh:pattern
