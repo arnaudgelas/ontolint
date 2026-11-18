@@ -24,7 +24,10 @@ Specifications:
   ``obo:IAO_0000115`` values in the same language, where a value without a language tag is a
   language of its own.  OBO policy is one textual definition per term.  The same text in two
   languages is a translation, not a second definition, so only values sharing a language (or
-  all untagged) count together; language tags compare case-insensitively.  One finding per
+  all untagged) count together; language tags compare case-insensitively, whole (``en`` and
+  ``en-US`` are two languages).  Values are compared by lexical form with whitespace runs
+  collapsed and the ends trimmed, so a datatype does not make a value distinct and a text that
+  differs only in spacing is one definition.  One finding per
   term and language, identified by the language tag (empty for untagged).  Obsolete terms are
   checked too, as ``robot report`` does for ``multiple_definitions``.  ``obo:IAO_0000600``
   (elucidation) is not a definition for this rule.  The severity is a warning, not ROBOT's error.
@@ -482,7 +485,7 @@ def _multiple_definitions(ctx: RuleContext, terms: list[URIRef]) -> None:
     for term in terms:
         by_language: dict[str, set[str]] = defaultdict(set)
         for definition in _texts(ctx.g, term, IAO_DEFINITION):
-            by_language[(definition.language or "").lower()].add(str(definition))
+            by_language[(definition.language or "").lower()].add(" ".join(str(definition).split()))
         for language, texts in sorted(by_language.items()):
             if len(texts) > 1:
                 where = f"language {language!r}" if language else "no language tag"

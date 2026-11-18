@@ -26,7 +26,7 @@ specifications share. Each rule's own specification is shown under the rule.
 
 Source: `src/ontolint/rules/obo.py`.
 
-OBO Foundry convention rules: OBO001-OBO013.
+OBO Foundry convention rules: OBO001-OBO014.
 
 These rules encode conventions of the OBO Foundry (identifiers, textual definitions, obsolescence, scoped synonyms, PURLs, naming).  They only make sense for ontologies that follow those conventions, so the ``OBO`` family is *opt-in*: see `ontolint.profiles.OPT_IN_FAMILIES`.  It runs with ``--select OBO`` / ``--select OBO0xx`` or ``--profile obo`` and never as part of the default selection.
 
@@ -34,7 +34,7 @@ Every rule is an asserted-graph check: nothing is entailed, no import is followe
 
 Specifications:
 
-*Specified under each rule: OBO013.*
+*Specified under each rule: OBO013, OBO014.*
 
 ## Rules
 
@@ -1600,6 +1600,130 @@ ex:A a owl:Class ; rdfs:label " " .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:a a owl:AnnotationProperty ; rdfs:label "A_b" .
+```
+
+#### OBO014: More than one textual definition in the same language
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
+- **Fix:** Keep one obo:IAO_0000115 per term and language; merge the texts or move the extra one to a comment.
+
+**Specification.** A class, object property or datatype property has two or more distinct non-blank ``obo:IAO_0000115`` values in the same language, where a value without a language tag is a language of its own.  OBO policy is one textual definition per term.  The same text in two languages is a translation, not a second definition, so only values sharing a language (or all untagged) count together; language tags compare case-insensitively, whole (``en`` and ``en-US`` are two languages).  Values are compared by lexical form with whitespace runs collapsed and the ends trimmed, so a datatype does not make a value distinct and a text that differs only in spacing is one definition.  One finding per term and language, identified by the language tag (empty for untagged).  Obsolete terms are checked too, as ``robot report`` does for ``multiple_definitions``.  ``obo:IAO_0000600`` (elucidation) is not a definition for this rule.  The severity is a warning, not ROBOT's error.
+
+*Flagged:* `two untagged definitions`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One.", "Two." .
+```
+
+Reported: `Term has 2 distinct textual definitions (obo:IAO_0000115) with no language tag.`
+
+*Flagged:* `three definitions in one language`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@en, "Three."@en .
+```
+
+Reported: `Term has 3 distinct textual definitions (obo:IAO_0000115) with language 'en'.`
+
+*Flagged:* `two datatypes, two texts`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One."^^xsd:string, "Two." .
+```
+
+Reported: `Term has 2 distinct textual definitions (obo:IAO_0000115) with no language tag.`
+
+*Flagged:* `two definitions in one language`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@EN .
+```
+
+Reported: `Term has 2 distinct textual definitions (obo:IAO_0000115) with language 'en'.`
+
+*Flagged:* `obsolete term with two definitions`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "One.", "Two." .
+```
+
+Reported: `Term has 2 distinct textual definitions (obo:IAO_0000115) with no language tag.`
+
+*Clean:* `one definition`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "A thing." .
+```
+
+*Clean:* `translation`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Un."@fr .
+```
+
+*Clean:* `tagged and untagged`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "One." .
+```
+
+*Clean:* `spacing only`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One thing.", " One  thing. " .
+```
+
+*Clean:* `plain and xsd:string`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One.", "One."^^xsd:string .
+```
+
+*Clean:* `one definition and a blank one`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One.", "  " .
+```
+
+*Clean:* `language and region are two languages`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@en-US .
+```
+
+*Clean:* `definition and elucidation`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "One." ; obo:IAO_0000600 "Two." .
 ```
 
 #### OBO013: Definition starts with a lowercase letter
