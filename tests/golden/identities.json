@@ -7618,6 +7618,50 @@
     "44abe9706312c73a69a7e2b8e2667e4bdf36e5c979388266feb3039dcaf4049f"
    ]
   ],
+  "SHQ012:unique lang false on a node shape": [
+   [
+    "SHQ012",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#uniqueLang",
+     "node shape"
+    ],
+    "9e915d40fa3ff3bee624f1d79596a7a4aa6bbea918623bc0efb992c0f39e6ba8"
+   ]
+  ],
+  "SHQ012:unique lang on a node shape": [
+   [
+    "SHQ012",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#uniqueLang",
+     "node shape"
+    ],
+    "9e915d40fa3ff3bee624f1d79596a7a4aa6bbea918623bc0efb992c0f39e6ba8"
+   ]
+  ],
+  "SHQ012:unique lang on a shape only referenced by sh:node": [
+   [
+    "SHQ012",
+    "_:c0bce3baa675",
+    [
+     "http://www.w3.org/ns/shacl#uniqueLang",
+     "node shape"
+    ],
+    "dd3decf21fad34496650b81cd58619db104467311962c20ebb9e38b60ca3f0f3"
+   ]
+  ],
+  "SHQ012:unique lang on an untyped shape without path": [
+   [
+    "SHQ012",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#uniqueLang",
+     "node shape"
+    ],
+    "9e915d40fa3ff3bee624f1d79596a7a4aa6bbea918623bc0efb992c0f39e6ba8"
+   ]
+  ],
   "SHQ012:unique lang on string": [
    [
     "SHQ012",

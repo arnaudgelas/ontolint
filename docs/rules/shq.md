@@ -44,7 +44,7 @@ Source: `src/ontolint/rules/shacl_quality.py`.
 
 SHACL shape-authoring quality heuristics over the supplied shapes graph: SHQ009, 010, 012, 014-016, 022, 023.
 
-Implemented: SHQ009 (``sh:in`` list), SHQ010 (``sh:languageIn`` tags), SHQ012 (``sh:uniqueLang`` on a non-language-tagged datatype), SHQ014 (``sh:severity`` outside the SHACL vocabulary), SHQ015 (``sh:flags``: a letter other than ``s``, ``m``, ``i``, ``x`` and ``q``, which SHQ011 drops when it compiles the pattern, or flags without a pattern), SHQ016 (recursive shape references), SHQ022 (non-IRI shape targets) and SHQ023 (property shape without exactly one ``sh:path``).
+Implemented: SHQ009 (``sh:in`` list), SHQ010 (``sh:languageIn`` tags), SHQ012 (``sh:uniqueLang`` on a non-language-tagged datatype or outside a property shape), SHQ014 (``sh:severity`` outside the SHACL vocabulary), SHQ015 (``sh:flags``: a letter other than ``s``, ``m``, ``i``, ``x`` and ``q``, which SHQ011 drops when it compiles the pattern, or flags without a pattern), SHQ016 (recursive shape references), SHQ022 (non-IRI shape targets) and SHQ023 (property shape without exactly one ``sh:path``).
 
 Every check is a structural lint of the asserted shapes graph (no SHACL engine, no entailment, no network) that complements, and never repeats, the checks of ``shapes`` (SHQ001-006) and ``shacl_authoring`` (SHQ007-027).  The rules are skipped when no shapes graph is supplied; ``run`` is also a no-op then.  The data graph is never read.
 
@@ -1517,7 +1517,7 @@ ex:P sh:path ex:p ; sh:pattern ex:regex .
 - **Module:** [`shacl_quality`](#module-shacl_quality)
 - **Fix:** Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag.
 
-**Specification.** Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang`` ``"true"`` (a string), no ``sh:datatype``, a literal datatype; ``sh:uniqueLang`` on a node shape, which 4.4.5 forbids, is not reported on purpose (SHACL-SHACL rejects it: SHACL001 fails, ``the shapes graph does not conform to SHACL-SHACL``).  Info: the constraint only sees value nodes that already violate ``sh:datatype``, so it is vacuous for conforming data.
+**Specification.** Two defects.  (1) Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang`` ``"true"`` (a string), no ``sh:datatype``, a literal datatype.  Info: the constraint only sees value nodes that already violate ``sh:datatype``, so it is vacuous for conforming data.  (2) Every shape with any ``sh:uniqueLang`` value (``false`` and a string included) that is not a property shape (the set of SHQ023: no ``sh:path``, not typed ``sh:PropertyShape``, not a value of ``sh:property``), whatever its type, because 4.4.5 allows the parameter in property shapes only and SHACL-SHACL (``shsh:NodeShapeShape``, ``uniqueLang-scope``) rejects it on any other shape, so SHACL001 fails with ``the shapes graph does not conform to SHACL-SHACL`` and no engine run accepts the shapes graph; one finding per shape, and the MetaSHACL result line carries ``(SHQ012)``.  Excluded: a shape with a path, which is a property shape (a typed node shape with a path is a gap SHQ023 keeps), and a property shape without a path, which SHQ023 reports.  The decision is to report it here, not in a rule of its own (the defect is the same parameter in the wrong place), and not to leave the gap (a lint run that said nothing about a shapes graph no engine accepts).
 
 *Flagged:* `unique lang on string`
 
@@ -1533,6 +1533,62 @@ ex:P sh:path ex:p ; sh:datatype xsd:string ; sh:uniqueLang true .
 ```
 
 Reported: `sh:uniqueLang is vacuous with sh:datatype http://www.w3.org/2001/XMLSchema#string; only rdf:langString values have a language.`
+
+*Flagged:* `unique lang on a node shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:uniqueLang true .
+```
+
+Reported: `sh:uniqueLang is used on a shape with no sh:path; SHACL 4.4.5 allows it only in a property shape.`
+
+*Flagged:* `unique lang false on a node shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:uniqueLang false .
+```
+
+Reported: `sh:uniqueLang is used on a shape with no sh:path; SHACL 4.4.5 allows it only in a property shape.`
+
+*Flagged:* `unique lang on an untyped shape without path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S sh:uniqueLang true .
+```
+
+Reported: `sh:uniqueLang is used on a shape with no sh:path; SHACL 4.4.5 allows it only in a property shape.`
+
+*Flagged:* `unique lang on a shape only referenced by sh:node`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:node [ sh:uniqueLang true ] .
+```
+
+Reported: `sh:uniqueLang is used on a shape with no sh:path; SHACL 4.4.5 allows it only in a property shape.`
 
 *Clean:* `well-formed shapes`
 
@@ -1584,6 +1640,42 @@ Shapes graph:
 ```turtle
 ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:uniqueLang true .
+```
+
+*Clean:* `unique lang on a shape with a path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S sh:path ex:p ; sh:uniqueLang true .
+```
+
+*Clean:* `unique lang on a typed property shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:P a sh:PropertyShape ; sh:path ex:p ; sh:uniqueLang true .
+```
+
+*Clean:* `node shape without unique lang`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:closed true .
 ```
 
 #### SHQ013: Shape combining sh:datatype and sh:class

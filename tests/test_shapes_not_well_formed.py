@@ -286,6 +286,17 @@ POINTED = {
     "a literal targetClass": (':S a sh:NodeShape ; sh:targetClass "lit" .', "SHQ022"),
     "a blank targetSubjectsOf": (":S a sh:NodeShape ; sh:targetSubjectsOf [ ] .", "SHQ022"),
     "a literal severity": (':S a sh:NodeShape ; sh:severity "high" .', "SHQ014"),
+    "uniqueLang on a node shape": (":S a sh:NodeShape ; sh:targetClass :Person ; sh:uniqueLang true .", "SHQ012"),
+    "uniqueLang false on a node shape": (":S a sh:NodeShape ; sh:uniqueLang false .", "SHQ012"),
+    "uniqueLang on an untyped shape": (":S sh:uniqueLang true .", "SHQ012"),
+    "uniqueLang on a node shape with a datatype": (
+        ":S a sh:NodeShape ; sh:datatype xsd:string ; sh:uniqueLang true .",
+        "SHQ012",
+    ),
+    "uniqueLang on a shape that sh:node refers to": (
+        ":S a sh:NodeShape ; sh:node :T .\n:T sh:uniqueLang true .",
+        "SHQ012",
+    ),
 }
 
 
@@ -310,7 +321,6 @@ def _foci(failure: ShapesNotWellFormed, rule: str) -> list[str]:
 # says what is wrong without pointing at a rule that would not find it.  (A typed sh:NodeShape with sh:path is not one
 # of them: SHACL-SHACL accepts it, and pySHACL then refuses it with a ShapeLoadError, which stays a tool failure.)
 UNPOINTED = {
-    "uniqueLang on a node shape": ":S a sh:NodeShape ; sh:uniqueLang true .",
     "two severities": ":S a sh:NodeShape ; sh:severity sh:Info, sh:Warning .",
 }
 
@@ -323,6 +333,55 @@ def test_a_known_gap_is_reported_without_a_pointer(name: str) -> None:
     assert not any(re.search(r"\(SHQ\d+\)$", line) for line in failure.results), failure.results
     shq = Linter(_graph(DATA), _graph(PREFIXES + UNPOINTED[name] + "\n")).execute(["SHQ023", "SHQ012", "SHQ014"])
     assert shq.findings == ()  # the gap is real: nothing but SHACL001 can say it
+
+
+# sh:uniqueLang is allowed in a property shape only (SHACL 4.4.5): SHQ012 reports it where SHACL-SHACL rejects it.  Each
+# graph is run through pySHACL's real MetaSHACL, and the rule must fire exactly when that rejects the graph.
+UNIQUE_LANG_SCOPE = {
+    ":S a sh:NodeShape ; sh:uniqueLang true .": True,
+    ":S a sh:NodeShape ; sh:uniqueLang false .": True,
+    ":S a sh:NodeShape ; sh:uniqueLang 'true' .": True,
+    ":S a sh:NodeShape ; sh:uniqueLang true ; sh:deactivated true .": True,
+    ":S sh:uniqueLang true .": True,
+    ":x a owl:Class ; sh:uniqueLang true .": True,
+    ":S a sh:NodeShape ; sh:node [ sh:uniqueLang true ] .": True,
+    ":S a sh:NodeShape ; sh:and ( [ sh:uniqueLang true ] ) .": True,
+    ":S a sh:NodeShape ; sh:property [ sh:path :p ; sh:uniqueLang true ] .": False,
+    ":S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath :p ] ; sh:uniqueLang true ] .": False,
+    ":S sh:path :p ; sh:uniqueLang true .": False,
+    ":S a sh:PropertyShape ; sh:path :p ; sh:uniqueLang true .": False,
+    ":S a sh:NodeShape ; sh:closed true .": False,
+}
+
+
+@pytest.mark.parametrize("shapes", sorted(UNIQUE_LANG_SCOPE))
+def test_shq012_fires_on_a_shape_exactly_when_metashacl_rejects_its_unique_lang(shapes: str) -> None:
+    text = PREFIXES + shapes + "\n"
+    rejected = False
+    try:
+        shacl_issues(_graph(DATA), _graph(text))
+    except ShapesNotWellFormed:
+        rejected = True
+    fired = bool(Linter(_graph(DATA), _graph(text)).execute(["SHQ012"]).findings)
+
+    assert fired is UNIQUE_LANG_SCOPE[shapes]
+    assert fired is rejected
+
+
+def test_the_xone_of_a_node_shape_with_unique_lang_is_pointed_and_one_without_it_is_not() -> None:
+    pointed = _raised(PREFIXES + ":S a sh:NodeShape ; sh:uniqueLang true .\n")
+    assert [line for line in pointed.results if "exactly one shape" in line] == [
+        "https://example.test/onto#S: Node :S must conform to exactly one shape in shsh:NodeShapeShape , "
+        "shsh:PropertyShapeShape (SHQ012)"
+    ]
+    # The same result of a shape whose defect is another (a minCount with no path): no rule names it.
+    other = _raised(PREFIXES + ":S a sh:NodeShape ; sh:minCount 1 .\n")
+    assert other.results
+    assert not any(re.search(r"\(SHQ\d+\)$", line) for line in other.results), other.results
+    # A property shape without a path that carries sh:uniqueLang is SHQ023's, not SHQ012's.
+    shapes = PREFIXES + ":S a sh:NodeShape ; sh:property :P .\n:P sh:uniqueLang true .\n"
+    assert all("(SHQ012)" not in line for line in _raised(shapes).results)
+    assert any(line.endswith("(SHQ023)") for line in _raised(shapes).results)
 
 
 # --- masking, one line, a cap ---------------------------------------------------------------------------------------

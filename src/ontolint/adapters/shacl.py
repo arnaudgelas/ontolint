@@ -25,7 +25,12 @@ from rdflib.term import Node
 from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
 from ontolint.redaction import clip, redact_userinfo
-from ontolint.rules.shacl_quality import has_path_defect, is_node_shape_with_path, property_shape_nodes
+from ontolint.rules.shacl_quality import (
+    has_path_defect,
+    has_unique_lang_scope_defect,
+    is_node_shape_with_path,
+    property_shape_nodes,
+)
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import ntriples_literal, stable_blank_id
 from ontolint.worker import WorkerFailed, WorkerGone, WorkerTimeout, decode_graph, encode_graph, run_bounded
@@ -385,6 +390,8 @@ def _pointer(
     follow from a shape's paths do not name one pair: a node shape with a path (``sh:maxCount 0`` of SHACL 2.2) has
     the same result as a property shape with two.  They are the ``sh:path`` cardinality results and the ``sh:xone``
     of a shape that is neither a node nor a property shape, which has no path.
+    That ``sh:xone`` is also SHQ012's when the shape has ``sh:uniqueLang`` and is no property shape (SHACL 4.4.5), a
+    defect no other rule reports, whatever else the shape lacks.
     """
     if focus is None:
         return None
@@ -394,6 +401,12 @@ def _pointer(
         follows = path == SH.path and component in ("MinCountConstraintComponent", "MaxCountConstraintComponent")
     if follows and has_path_defect(sg, focus, property_shapes):
         return "SHQ023"
+    if (
+        path is None
+        and component == "XoneConstraintComponent"
+        and has_unique_lang_scope_defect(sg, focus, property_shapes)
+    ):
+        return "SHQ012"
     return _SHQ_COMPONENT_PATHS.get((component, path)) if isinstance(path, URIRef) else None
 
 
