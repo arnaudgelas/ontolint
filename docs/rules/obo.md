@@ -30,6 +30,8 @@ OBO Foundry convention rules: OBO001-OBO014.
 
 These rules encode conventions of the OBO Foundry (identifiers, textual definitions, obsolescence, scoped synonyms, PURLs, naming).  They only make sense for ontologies that follow those conventions, so the ``OBO`` family is *opt-in*: see `ontolint.profiles.OPT_IN_FAMILIES`.  It runs with ``--select OBO`` / ``--select OBO0xx`` or ``--profile obo`` and never as part of the default selection.
 
+*Specified under each rule: OBO015.*
+
 Every rule is an asserted-graph check: nothing is entailed, no import is followed and no network is used.  Rules that would need outside data (a registry lookup, the full RO term list, a reasoner) are not implemented; ``OBO005`` is deliberately narrowed to a small embedded table of well-known RO and BFO relations.  Annotation properties are the IAO and oboInOwl ones used by OBO ontologies.
 
 Specifications:
@@ -1600,6 +1602,252 @@ ex:A a owl:Class ; rdfs:label " " .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:a a owl:AnnotationProperty ; rdfs:label "A_b" .
+```
+
+#### OBO015: Malformed database cross-reference
+
+- **Severity:** warning
+- **Scope:** term
+- **Category:** context-dependent
+- **Module:** [`obo`](#module-obo)
+- **Fix:** Write oboInOwl:hasDbXref values as PREFIX:local CURIEs without whitespace (for example PMID:12345), not URLs.
+
+**Specification.** An ``oboInOwl:hasDbXref`` literal on a term (a local class, object property or datatype property; an ontology header, an annotation property, an individual or an untyped resource is not one), or on an ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\S+``.  A value whose local part starts with ``//`` (``http://...``) is reported too, because a URL is not a CURIE.  The lexical form is checked whatever the datatype or language; an IRI or blank-node value is not read.
+
+*Flagged:* `not a curie`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "not a curie" .
+```
+
+Reported: `Database cross-reference 'not a curie' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `no colon`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID12345" .
+```
+
+Reported: `Database cross-reference 'PMID12345' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `empty`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "" .
+```
+
+Reported: `Database cross-reference '' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `empty local part`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:" .
+```
+
+Reported: `Database cross-reference 'PMID:' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `leading whitespace`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref " PMID:12345" .
+```
+
+Reported: `Database cross-reference ' PMID:12345' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `trailing whitespace`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:12345 " .
+```
+
+Reported: `Database cross-reference 'PMID:12345 ' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `space in local part`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:12 345" .
+```
+
+Reported: `Database cross-reference 'PMID:12 345' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `url`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .
+```
+
+Reported: `Database cross-reference 'http://example.org/x' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `prefix starting with a digit`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "1AB:123" .
+```
+
+Reported: `Database cross-reference '1AB:123' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `axiom with several sources`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class . ex:B a owl:Class . [] a owl:Axiom ; owl:annotatedSource ex:A, ex:B ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; oio:hasDbXref "bad xref" .
+```
+
+Reported: `Database cross-reference 'bad xref' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `typed literal`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "x y"^^xsd:string .
+```
+
+Reported: `Database cross-reference 'x y' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `on a property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:ObjectProperty ; oio:hasDbXref "bad" .
+```
+
+Reported: `Database cross-reference 'bad' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `on a datatype property`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:p a owl:DatatypeProperty ; oio:hasDbXref "bad" .
+```
+
+Reported: `Database cross-reference 'bad' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `axiom annotation`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; oio:hasDbXref "bad xref" .
+```
+
+Reported: `Database cross-reference 'bad xref' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Clean:* `curie`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:12345" .
+```
+
+*Clean:* `dotted prefix`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "Wikipedia.en:Cell_(biology)" .
+```
+
+*Clean:* `underscore prefix`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "_x:1" .
+```
+
+*Clean:* `colon in local part`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "DOI:10.1000/a:b" .
+```
+
+*Clean:* `iri value is not read`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref <http://example.org/x> .
+```
+
+*Clean:* `axiom with a curie`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class . [] a owl:Axiom ; owl:annotatedSource ex:A ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; oio:hasDbXref "PMID:1" .
+```
+
+*Clean:* `imported term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+obo:XYZ_1 a owl:Class ; oio:hasDbXref "PMID:12345" .
+```
+
+*Clean:* `ontology header is not a term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:onto a owl:Ontology ; oio:hasDbXref "not a curie" .
+```
+
+*Clean:* `untyped resource is not a term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:x oio:hasDbXref "not a curie" .
+```
+
+*Clean:* `annotation property is not a term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:a a owl:AnnotationProperty ; oio:hasDbXref "not a curie" .
+```
+
+*Clean:* `individual is not a term`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:i a owl:NamedIndividual ; oio:hasDbXref "not a curie" .
+```
+
+*Clean:* `axiom on an ontology header`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:onto a owl:Ontology . [] a owl:Axiom ; owl:annotatedSource ex:onto ; owl:annotatedProperty obo:IAO_0000115 ; owl:annotatedTarget "A thing." ; oio:hasDbXref "bad xref" .
 ```
 
 #### OBO014: More than one textual definition in the same language

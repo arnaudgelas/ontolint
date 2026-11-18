@@ -3656,6 +3656,169 @@
     "41c78a210d7014c8b5961b168cf9d4e5ee7379b01948a5ea14337b57d4113fa4"
    ]
   ],
+  "OBO015:axiom annotation": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad xref\""
+    ],
+    "199122441d231209df8c7c709c8028adcb9529f1c54033288cdf7f68ca5aa59c"
+   ]
+  ],
+  "OBO015:axiom with several sources": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad xref\""
+    ],
+    "199122441d231209df8c7c709c8028adcb9529f1c54033288cdf7f68ca5aa59c"
+   ],
+   [
+    "OBO015",
+    "https://example.test/onto#B",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad xref\""
+    ],
+    "dc052fe8bd4f640cb21f10123509f12390aa919ca6c37c8a9d84a9ae9a62b742"
+   ]
+  ],
+  "OBO015:empty": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"\""
+    ],
+    "1bb0fb1b0368fdc8b9125471197cc01a002c4a3f7527add3a8f66c66175c9ee7"
+   ]
+  ],
+  "OBO015:empty local part": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"PMID:\""
+    ],
+    "d8b406535f3cb09599b5ee4d72cbd039b802135ecaba677fb28d8465088b1f9b"
+   ]
+  ],
+  "OBO015:leading whitespace": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\" PMID:12345\""
+    ],
+    "821325aba5abb321b37287aef1b8a79bc3175948ed8a043e24fdfbdaba6260cb"
+   ]
+  ],
+  "OBO015:no colon": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"PMID12345\""
+    ],
+    "e6cabbb6eeefc673bcbfb6c22b9d64ec59a608467e8e1d3b6d7800b8240f321c"
+   ]
+  ],
+  "OBO015:not a curie": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"not a curie\""
+    ],
+    "b40108794012b4b9abc0fc24bbbaad7ddddaacaea9510d42b52d73e47ea68f38"
+   ]
+  ],
+  "OBO015:on a datatype property": [
+   [
+    "OBO015",
+    "https://example.test/onto#p",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad\""
+    ],
+    "5723af6230c2472dcc228a69e4bba6bda2f24df47a6a1f2110d5630e0b8b3ccc"
+   ]
+  ],
+  "OBO015:on a property": [
+   [
+    "OBO015",
+    "https://example.test/onto#p",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad\""
+    ],
+    "5723af6230c2472dcc228a69e4bba6bda2f24df47a6a1f2110d5630e0b8b3ccc"
+   ]
+  ],
+  "OBO015:prefix starting with a digit": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"1AB:123\""
+    ],
+    "1890ab4e3afddeb988e69f09d8f0a4742fb3e04621d61110fadaff7ed11e1293"
+   ]
+  ],
+  "OBO015:space in local part": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"PMID:12 345\""
+    ],
+    "571740c2be3066435f8ac76abc00baff91f1dc5ee3733796148a6a5bb84cfbca"
+   ]
+  ],
+  "OBO015:trailing whitespace": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"PMID:12345 \""
+    ],
+    "5af2b26390a6aa01dae8e5c2e448d4f6e0ac41876bec32a6ba69ea41c595d63c"
+   ]
+  ],
+  "OBO015:typed literal": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"x y\"^^<http://www.w3.org/2001/XMLSchema#string>"
+    ],
+    "a0636f4c6863b862cf297421ce11e52a96d36277515ab461a1f1d403d5530884"
+   ]
+  ],
+  "OBO015:url": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"http://example.org/x\""
+    ],
+    "ad855c7d61fa3adfd61950d1bd84a4344912648e3cfd311e414edbd710fee1de"
+   ]
+  ],
   "ONT001:no owl:Ontology": [
    [
     "ONT001",

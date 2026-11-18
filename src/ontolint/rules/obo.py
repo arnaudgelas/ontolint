@@ -7,7 +7,8 @@ so the ``OBO`` family is *opt-in*: see :data:`ontolint.profiles.OPT_IN_FAMILIES`
 
 * **OBO015.** An ``oboInOwl:hasDbXref`` literal on a term (a local class, object property or datatype property;
   an ontology header, an annotation property, an individual or an untyped resource is not one), or on an
-  ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar
+  ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local``
+  cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar
   ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\\S+``.  A value whose local part starts with ``//`` (``http://...``)
   is reported too, because a URL is not a CURIE.  The lexical form is checked whatever the datatype or language;
   an IRI or blank-node value is not read.
