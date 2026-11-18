@@ -142,9 +142,10 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
     _spec(
         "SHQ012",
-        "sh:uniqueLang on a shape with a non-language-tagged datatype",
+        "sh:uniqueLang on a shape with a non-language-tagged datatype or outside a property shape",
         Severity.INFO,
-        "Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag.",
+        "Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag. "
+        "Put sh:uniqueLang in a property shape (one with sh:path).",
     ),
     _spec(
         "SHQ014",

@@ -450,7 +450,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [SHQ009](rules/shq.md) | sh:in list that is empty or repeats members | warning |
 | [SHQ010](rules/shq.md) | sh:languageIn with a malformed language tag | warning |
 | [SHQ011](rules/shq.md) | Invalid sh:pattern regular expression | error |
-| [SHQ012](rules/shq.md) | sh:uniqueLang on a shape with a non-language-tagged datatype | info |
+| [SHQ012](rules/shq.md) | sh:uniqueLang on a shape with a non-language-tagged datatype or outside a property shape | info |
 | [SHQ013](rules/shq.md) | Shape combining sh:datatype and sh:class | warning |
 | [SHQ014](rules/shq.md) | sh:severity outside the SHACL severity vocabulary | warning |
 | [SHQ015](rules/shq.md) | Invalid sh:flags value or sh:flags without sh:pattern | warning |
