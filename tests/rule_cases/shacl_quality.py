@@ -42,12 +42,23 @@ CASES = {
         ],
     ),
     "SHQ012": rule_cases(
-        [_c("unique lang on string", _prop("sh:datatype xsd:string ; sh:uniqueLang true"))],
+        [
+            _c("unique lang on string", _prop("sh:datatype xsd:string ; sh:uniqueLang true")),
+            _c("unique lang on a node shape", NODE + "sh:uniqueLang true ."),
+            _c("unique lang false on a node shape", NODE + "sh:uniqueLang false ."),
+            _c("unique lang on an untyped shape without path", "ex:S sh:uniqueLang true ."),
+            _c("unique lang on a shape only referenced by sh:node", NODE + "sh:node [ sh:uniqueLang true ] ."),
+        ],
         [
             GOOD,
             _c("unique lang on langString", _prop("sh:datatype rdf:langString ; sh:uniqueLang true")),
             _c("unique lang false", _prop("sh:datatype xsd:string ; sh:uniqueLang false")),
             _c("unique lang without datatype", _prop("sh:uniqueLang true")),
+            _c("unique lang on a shape with a path", "ex:S sh:path ex:p ; sh:uniqueLang true ."),
+            _c(
+                "unique lang on a typed property shape", "ex:P a sh:PropertyShape ; sh:path ex:p ; sh:uniqueLang true ."
+            ),
+            _c("node shape without unique lang", NODE + "sh:closed true ."),
         ],
     ),
     "SHQ014": rule_cases(

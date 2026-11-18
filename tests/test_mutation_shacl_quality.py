@@ -106,14 +106,39 @@ def test_shq010_non_literal_members_and_malformed_lists() -> None:
 
 def test_shq012_requires_true_uniquelang_and_a_foreign_datatype() -> None:
     message = f"sh:uniqueLang is vacuous with sh:datatype {XSD_STRING}; only rdf:langString values have a language."
-    assert _messages("SHQ012", "ex:S sh:uniqueLang true ; sh:datatype xsd:string .") == [message]
-    assert _run("SHQ012", "ex:S sh:uniqueLang true ; sh:datatype rdf:langString .") == []
-    assert _run("SHQ012", "ex:S sh:uniqueLang false ; sh:datatype xsd:string .") == []
-    assert _run("SHQ012", "ex:S sh:uniqueLang 'true' ; sh:datatype xsd:string .") == []
-    assert _run("SHQ012", "ex:S sh:uniqueLang true .") == []
-    assert _run("SHQ012", "ex:S sh:datatype xsd:string .") == []
-    assert len(_run("SHQ012", "ex:S sh:uniqueLang true ; sh:datatype xsd:string, xsd:integer .")) == TWO
-    assert _run("SHQ012", "ex:S sh:uniqueLang true ; sh:datatype 'x' .") == []
+    assert _messages("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang true ; sh:datatype xsd:string .") == [message]
+    assert _run("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang true ; sh:datatype rdf:langString .") == []
+    assert _run("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang false ; sh:datatype xsd:string .") == []
+    assert _run("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang 'true' ; sh:datatype xsd:string .") == []
+    assert _run("SHQ012", "ex:S sh:path ex:p ; sh:datatype xsd:string .") == []
+    assert len(_run("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang true ; sh:datatype xsd:string, xsd:integer .")) == TWO
+    assert _run("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang true ; sh:datatype 'x' .") == []
+
+
+def test_shq012_reports_unique_lang_on_a_shape_that_is_no_property_shape() -> None:
+    message = "sh:uniqueLang is used on a shape with no sh:path; SHACL 4.4.5 allows it only in a property shape."
+    assert _messages("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang true .") == [message]
+    assert _focus("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang true .") == [NS + "S"]
+    # SHACL-SHACL rejects any value, a repeated one counting once; the shape is not told apart by its type.
+    assert _messages("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang false .") == [message]
+    assert _messages("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang 'true' .") == [message]
+    assert _messages("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang true, false .") == [message]
+    assert _messages("SHQ012", "ex:S sh:uniqueLang true .") == [message]
+    assert _messages("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang true ; sh:deactivated true .") == [message]
+    assert len(_run("SHQ012", "ex:S a sh:NodeShape ; sh:node [ sh:uniqueLang true ] .")) == 1
+    # A node shape with a datatype is also vacuous: both findings, told apart by their message.
+    both = _messages("SHQ012", "ex:S a sh:NodeShape ; sh:uniqueLang true ; sh:datatype xsd:string .")
+    assert len(both) == TWO
+    assert message in both
+    # A shape with a path is a property shape (2.3), whatever its type; one without a path that is referenced
+    # as a property shape is SHQ023's.
+    assert _run("SHQ012", "ex:S sh:path ex:p ; sh:uniqueLang true .") == []
+    assert _run("SHQ012", "ex:S a sh:NodeShape ; sh:path ex:p ; sh:uniqueLang true .") == []
+    assert _run("SHQ012", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:uniqueLang true ] .") == []
+    assert _run("SHQ012", "ex:P a sh:PropertyShape ; sh:uniqueLang true .") == []
+    assert _run("SHQ012", "ex:S sh:property [ sh:uniqueLang true ] .") == []
+    assert len(_run("SHQ023", "ex:S sh:property [ sh:uniqueLang true ] .")) == 1
+    assert _run("SHQ012", "ex:S a sh:NodeShape ; sh:closed true .") == []
 
 
 XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
