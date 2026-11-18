@@ -2662,7 +2662,7 @@ ex:S a sh:NodeShape ; sh:targetNode 'x' ; sh:targetSubjectsOf ex:p .
 - **Module:** [`shacl_quality`](#module-shacl_quality)
 - **Fix:** Give every property shape exactly one sh:path.
 
-**Specification.** Every property shape that has no ``sh:path`` ("none") or more than one distinct value ("several").  A property shape is a node typed ``sh:PropertyShape`` or an IRI or blank node value of ``sh:property``, which must have exactly one path (2.3: "SHACL instances of sh:PropertyShape have one value for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path) or a blank path is one value.  Excluded: a node typed ``sh:NodeShape`` with a path, which 2.2 forbids, is not reported on purpose (pySHACL refuses it with its own load error: SHACL001 fails); the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a processor may reject the shapes graph or validate either path.
+**Specification.** Every property shape that has no ``sh:path`` ("none") or more than one distinct value ("several").  A property shape is a node typed ``sh:PropertyShape`` or an IRI or blank node value of ``sh:property``, which must have exactly one path (2.3: "SHACL instances of sh:PropertyShape have one value for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path) or a blank path is one value.  Also every node typed ``sh:NodeShape`` that has an ``sh:path`` ("node shape"), which 2.2 forbids: SHACL-SHACL accepts it, but pySHACL refuses every such shape with a ``ShapeLoadError`` (deactivated, unreferenced or also typed ``sh:PropertyShape`` included), so SHACL001 fails.  It was a kept gap ("not reported on purpose", left to SHACL-SHACL as for the other gaps of issue #62), but SHACL-SHACL does not see it, so the user got pySHACL's own text and no pointer; issue #96 reports it here, with no new rule. A node shape with several paths gets both findings. Excluded: the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a processor may reject the shapes graph or validate either path.
 
 *Flagged:* `missing path`
 
@@ -2722,6 +2722,34 @@ ex:P sh:path ex:p, ex:q ; sh:minCount 1 .
 
 Reported: `Property shape has 2 sh:path values.`
 
+*Flagged:* `node shape with a path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:path ex:p ; sh:minCount 1 .
+```
+
+Reported: `Node shape has an sh:path.`
+
+*Flagged:* `deactivated node shape with a path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:deactivated true ; sh:path ex:p .
+```
+
+Reported: `Node shape has an sh:path.`
+
 *Clean:* `well-formed shapes`
 
 ```turtle
@@ -2757,6 +2785,18 @@ Shapes graph:
 
 ```turtle
 ex:S a sh:NodeShape ; sh:closed true .
+```
+
+*Clean:* `untyped shape with a target and a path`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S sh:targetClass ex:A ; sh:path ex:p ; sh:minCount 1 .
 ```
 
 #### SHQ024: Closed shape that does not ignore rdf:type

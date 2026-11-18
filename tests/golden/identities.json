@@ -7902,6 +7902,17 @@
     "3c7a6b38c38fe9ca5e49e4b5ea1800db3816d4295c1e44a67b198eefd39b6af2"
    ]
   ],
+  "SHQ023:deactivated node shape with a path": [
+   [
+    "SHQ023",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#path",
+     "node shape"
+    ],
+    "67c024b9c344d3d078c2831390718f490b2c2d0b31faa64730069dab214be3a2"
+   ]
+  ],
   "SHQ023:missing path": [
    [
     "SHQ023",
@@ -7911,6 +7922,17 @@
      "none"
     ],
     "fbd0daa27fb9c0f983cc84c5ff6216f1604ef9436d0f138c43e63c169f6b8762"
+   ]
+  ],
+  "SHQ023:node shape with a path": [
+   [
+    "SHQ023",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#path",
+     "node shape"
+    ],
+    "67c024b9c344d3d078c2831390718f490b2c2d0b31faa64730069dab214be3a2"
    ]
   ],
   "SHQ023:two paths": [

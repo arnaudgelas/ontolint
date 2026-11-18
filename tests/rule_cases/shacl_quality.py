@@ -112,7 +112,14 @@ CASES = {
             _c("two paths", NODE + "sh:property ex:P .\nex:P sh:path ex:p, ex:q ."),
             _c("typed property shape without path", "ex:P a sh:PropertyShape ; sh:minCount 1 ."),
             _c("untyped, unreferenced shape with two paths", "ex:P sh:path ex:p, ex:q ; sh:minCount 1 ."),
+            _c("node shape with a path", NODE + "sh:path ex:p ; sh:minCount 1 ."),
+            _c("deactivated node shape with a path", NODE + "sh:deactivated true ; sh:path ex:p ."),
         ],
-        [GOOD, EMPTY, _c("node shape needs no path", "ex:S a sh:NodeShape ; sh:closed true .")],
+        [
+            GOOD,
+            EMPTY,
+            _c("node shape needs no path", "ex:S a sh:NodeShape ; sh:closed true ."),
+            _c("untyped shape with a target and a path", "ex:S sh:targetClass ex:A ; sh:path ex:p ; sh:minCount 1 ."),
+        ],
     ),
 }
