@@ -10,8 +10,8 @@ ontolint onto.ttl --format json --measurements
 ```
 
 Each entry of the report's `files` then carries a `measurements` list. Nothing else in the report
-changes: findings, fingerprints, baselines and the exit code are the same with and without the flag,
-and the text and SARIF formats never show measurements (`--measurements` with another format is a
+changes: findings, fingerprints and baselines are the same with and without the flag, and so is the
+exit code, unless a measurement could not be computed (see "Failure"). The text and SARIF formats never show measurements (`--measurements` with another format is a
 usage error, exit 2). Measurements are a vector on purpose; ontolint does not compute a single
 health score.
 
@@ -185,9 +185,24 @@ concepts and individuals are in no population.
   even when empty. A count has `value`. A histogram has `buckets`, possibly empty.
 - A measurement that could not be taken keeps `id`, `definition_version`, `kind` and `population`
   and has a `reason` instead of a value. A computation that failed is published as absent with the
-  reason `failed: <ExceptionType>: <message>`; a METRIC rule that read it has failed too.
+  reason `failed: <ExceptionType>: <message>` and fails the run (see "Failure"); a METRIC rule that read
+  it has failed too. A measurement that does not apply to the input, such as the SHACL coverage without
+  `--shapes`, is absent too but is not a failure.
 - The report's `schema_version` stays `1`: the key is additive.
 - No IRI userinfo is ever printed: reasons and namespaces are masked.
+
+## Failure
+
+A run that was asked for the measurements (`--measurements`, `--write-quality-snapshot`,
+`--quality-baseline` or `--write-dqv`) and in which a computation raised exits 2, with the other tool
+failures: it prints `TOOL001: measurement <id> failed for <file>: failed: <ExceptionType>: <message>` on
+stderr, once per measurement and file, whatever `--fail-on` says. The report is still written, with the
+absent record of that measurement (`reason` starting `failed:`) and every other measurement, so the
+cause can be read; a consumer that reads the report without the exit status can tell a failure (a
+`failed:` reason) from a measurement that does not apply to the input (any other reason). A snapshot or
+DQV file written by that run holds the same absent entry and must not be committed as an accepted value.
+A run that does not ask for the measurements is unchanged, as a measurement that fails there is not
+computed for a report; a selected METRIC rule that reads it fails the run itself.
 
 ## Partitions
 

@@ -9,8 +9,9 @@ behind the coverage measures. It has two uses, and one comparison serves both:
   keeps the snapshots as artifacts, and a trend is two of them.
 
 This is not `--baseline`, which suppresses findings by fingerprint (README "Policy and baselines").
-Nothing here changes a finding, a fingerprint or an exit code, and a run without these options reports
-exactly what it did.
+Nothing here changes a finding or a fingerprint, and a run without these options reports exactly what it
+did. The exit code is unchanged too, unless a measurement could not be computed: the run then exits 2
+([measurements](measurements.md), "Failure").
 
 > **This is not a quality gate.** `--quality-baseline` and `--compare-quality` report; they exit `0`
 > whatever they find, so committing a quality baseline does not protect a branch: a run that loses
