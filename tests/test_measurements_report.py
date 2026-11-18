@@ -28,6 +28,7 @@ from ontolint.rules.runtime import RuleContext
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
 KITCHEN = str(FIXTURES / "kitchen_sink.ttl")
+QUALITY = str(FIXTURES / "quality" / "before.ttl")  # one owl:Ontology, which --write-dqv needs
 KEYS = ("measurements", "measurement_partitions")
 USAGE_ERROR = 2
 
@@ -139,7 +140,7 @@ def test_each_file_has_its_own_vector_and_a_baseline_keeps_it(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     clean = str(FIXTURES / "clean.ttl")
-    _code, out, _err = _run([KITCHEN, clean, "--format", "json", "--measurements"], capsys)
+    _code, out, _err = _run([KITCHEN, clean, "--format", "json", "--ignore", "METRIC", "--measurements"], capsys)
     files = {Path(entry["path"]).name: entry["measurements"] for entry in json.loads(out)["files"]}
     assert files["kitchen_sink.ttl"] == KITCHEN_VECTOR
     assert files["clean.ttl"] != KITCHEN_VECTOR
@@ -243,18 +244,28 @@ def test_the_info_commands_answer_before_the_usage_check(info: list[str], capsys
     assert _run([*info, "--measurements"], capsys) == expected
 
 
-def test_a_failing_computation_is_published_absent_and_changes_nothing_else(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
+def _boom(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(_ctx: RuleContext, _term: object) -> bool:
         raise ValueError("boom https://u:secret@example.test/x")
 
-    argv = [KITCHEN, "--format", "json", "--ignore", "METRIC"]
     monkeypatch.setattr(measurements, "is_unlabelled", boom)
+
+
+def test_a_failing_computation_is_published_absent_and_fails_the_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    argv = [KITCHEN, "--format", "json", "--ignore", "METRIC"]
+    _boom(monkeypatch)
     plain = _run(argv, capsys)
+    assert plain[0] in {0, 1}
     code, out, err = _run([*argv, "--measurements"], capsys)
-    assert (code, err) == (plain[0], plain[2])
-    vector = json.loads(out)["files"][0]["measurements"]
+    assert code == USAGE_ERROR  # TOOL001: a pipeline that asked for the vector must not read it as complete
+    document = json.loads(out)  # the report is still written, with the record that says what failed
+    assert err == (
+        f"TOOL001: measurement class_label_coverage failed for {document['files'][0]['path']}: "
+        "failed: ValueError: boom https://****@example.test/x\n"
+    )
+    vector = document["files"][0]["measurements"]
     assert vector[0] == {
         "id": "class_label_coverage",
         "definition_version": 1,
@@ -263,6 +274,79 @@ def test_a_failing_computation_is_published_absent_and_changes_nothing_else(
         "reason": "failed: ValueError: boom https://****@example.test/x",
     }
     assert vector[1:] == KITCHEN_VECTOR[1:]
+    assert _without_measurements(document) == json.loads(plain[1])  # findings and everything else are unchanged
+
+
+def test_a_failing_computation_fails_the_run_whatever_fail_on_says(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _boom(monkeypatch)
+    assert (
+        _run([KITCHEN, "--format", "json", "--ignore", "METRIC", "--measurements", "--fail-on", "never"], capsys)[0]
+        == USAGE_ERROR
+    )
+
+
+def test_a_failing_computation_is_not_a_failure_unless_the_measurements_were_requested(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _boom(monkeypatch)
+    code, out, err = _run([KITCHEN, "--format", "json", "--ignore", "METRIC"], capsys)
+    assert code in {0, 1}
+    assert err == ""
+    assert "measurements" not in json.loads(out)["files"][0]
+
+
+@pytest.mark.parametrize("flag", ["--write-quality-snapshot", "--write-dqv"])
+def test_a_failing_computation_fails_a_run_that_writes_the_vector_elsewhere(
+    flag: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    _boom(monkeypatch)
+    target = tmp_path / "out"
+    code, _out, err = _run([QUALITY, "--ignore", "METRIC", flag, str(target)], capsys)
+    assert code == USAGE_ERROR
+    assert "TOOL001: measurement class_label_coverage failed for " in err
+
+
+def test_a_failing_computation_fails_a_run_compared_with_a_quality_baseline(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    baseline = tmp_path / "baseline.json"
+    assert _run([QUALITY, "--write-quality-snapshot", str(baseline)], capsys)[0] in {0, 1}
+    _boom(monkeypatch)
+    argv = [QUALITY, "--ignore", "METRIC", "--format", "json", "--quality-baseline", str(baseline)]
+    code, _out, err = _run(argv, capsys)
+    assert code == USAGE_ERROR
+    assert "TOOL001: measurement class_label_coverage failed for " in err
+
+
+def test_a_measurement_that_does_not_apply_is_not_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    code, out, err = _run([KITCHEN, "--format", "json", "--measurements"], capsys)  # no shapes graph supplied
+    assert code in {0, 1}
+    assert err == ""
+    assert NO_SHAPES in json.loads(out)["files"][0]["measurements"]
+
+
+def test_every_file_with_a_failed_measurement_is_named(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _boom(monkeypatch)
+    clean = str(FIXTURES / "clean.ttl")
+    code, out, err = _run([KITCHEN, clean, "--format", "json", "--ignore", "METRIC", "--measurements"], capsys)
+    assert code == USAGE_ERROR
+    paths = [entry["path"] for entry in json.loads(out)["files"]]
+    lines = [line for line in err.splitlines() if line.startswith("TOOL001: measurement ")]
+    assert [line.split(" failed for ")[1].split(": ")[0] for line in lines] == paths
+    assert len(paths) == 2  # noqa: PLR2004 -- one line per file
+
+
+def test_failures_name_only_computations_that_raised(monkeypatch: pytest.MonkeyPatch) -> None:
+    ctx = build_context(graph(""), None, Policy())
+    assert measurements.failures(ctx) == ()
+    _boom(monkeypatch)
+    ctx = build_context(graph("<https://e/C> a <http://www.w3.org/2002/07/owl#Class> ."), None, Policy())
+    assert [i for i, _why in measurements.failures(ctx)] == ["class_label_coverage"]
+    assert measurements.failures(ctx)[0][1] == "failed: ValueError: boom https://****@example.test/x"
 
 
 def test_a_value_that_does_not_fit_its_kind_is_published_absent() -> None:

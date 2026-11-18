@@ -116,6 +116,9 @@ class FileReport:
     quality: Snapshot | None = None
     # With --write-dqv: what the file's DQV measurements are computed on (:mod:`ontolint.dqv`); else ``None``.
     dqv: Subject | None = None
+    # With --measurements, --write-quality-snapshot, --quality-baseline or --write-dqv: ``(id, reason)`` of each
+    # measurement whose computation raised.  The report still carries it as an absent record; the run exits 2.
+    failed_measurements: tuple[tuple[str, str], ...] = ()
 
     def path_of(self, finding: Finding) -> str:
         """The report path of the file ``finding`` belongs to: its module's, or this file's."""
@@ -153,6 +156,11 @@ class RunReport:
     def broken(self) -> tuple[tuple[str, RuleExecution], ...]:
         """``(path, execution)`` for every failed or unsupported rule."""
         return tuple((r.path, x) for r in self.files for x in r.executions if x.status in BROKEN)
+
+    @property
+    def failed_measurements(self) -> tuple[tuple[str, str, str], ...]:
+        """``(path, id, reason)`` for every requested measurement whose computation raised."""
+        return tuple((r.path, i, why) for r in self.files for i, why in r.failed_measurements)
 
 
 def fingerprint(f: Finding, path: str | None = None) -> str:
@@ -639,8 +647,10 @@ def _markdown_verdict(report: RunReport, exit_status: int) -> str:
         stale = ", or the baseline has stale entries (`--fail-on-stale-baseline`)" if report.stale_baseline else ""
         return f"**Failed** (exit 1): a finding reached the `--fail-on` threshold{stale}."
     if exit_status == TOOL_FAILURE_EXIT:
-        broken = f": {len(report.broken)} rule run(s) did not deliver a verdict" if report.broken else ""
-        return f"**Failed** (exit 2){broken}."
+        why = [f"{len(report.broken)} rule run(s) did not deliver a verdict"] if report.broken else []
+        if report.failed_measurements:
+            why.append(f"{len(report.failed_measurements)} measurement(s) could not be computed")
+        return f"**Failed** (exit 2){': ' + ', '.join(why) if why else ''}."
     return f"Exit status {exit_status}."
 
 
@@ -807,5 +817,5 @@ def exit_code(findings: Sequence[Finding], fail_on: str) -> int:
 
 
 def run_exit_code(report: RunReport, fail_on: str) -> int:
-    """Exit status: 2 when a requested rule failed or is unsupported, else ``exit_code`` over all findings."""
-    return TOOL_FAILURE_EXIT if report.broken else exit_code(report.findings, fail_on)
+    """Exit status: 2 when a requested rule or measurement failed, or a rule is unsupported, else ``exit_code``."""
+    return TOOL_FAILURE_EXIT if report.broken or report.failed_measurements else exit_code(report.findings, fail_on)

@@ -95,9 +95,14 @@ class Count:
 
 @dataclass(frozen=True)
 class Absent:
-    """A measurement that could not be taken, and why: never published, nor read, as 0."""
+    """A measurement that could not be taken, and why: never published, nor read, as 0.
+
+    ``failed`` tells a computation that raised (a defect of the run, which a request for the measurement turns into
+    exit 2) from a measurement that does not apply to the input, such as the SHACL coverage without a shapes graph.
+    """
 
     reason: str
+    failed: bool = False
 
 
 type Value = TermRatio | TermValues | CountRatio | Count
@@ -190,8 +195,10 @@ def _count(measurement_id: str, value: Value) -> int:
 def taken(ctx: RuleContext) -> tuple[tuple[MeasurementSpec, Value | Absent], ...]:
     """Every measurement of :data:`SPECS` on ``ctx``, in order; one whose computation raises is absent.
 
-    The reason of such a failure is ``failed: <ExceptionType>: <message>``: publishing never fails a run, and a
-    METRIC rule that read the measurement has already failed with the exception itself.
+    The reason of such a failure is ``failed: <ExceptionType>: <message>`` and the value is marked ``failed``.  This
+    function never raises, so a published record cannot carry the failure out of the report: a run that was asked for
+    the measurements takes it from :func:`failures` and exits 2 (a METRIC rule that read the measurement has already
+    failed with the exception itself).
     """
     return tuple((spec, _safely(ctx, spec)) for spec in SPECS)
 
@@ -200,7 +207,19 @@ def _safely(ctx: RuleContext, spec: MeasurementSpec) -> Value | Absent:
     try:
         return measure(ctx, spec.id)
     except Exception as exc:  # noqa: BLE001 -- the published reason says what failed.
-        return Absent(_failure(exc))
+        return Absent(_failure(exc), failed=True)
+
+
+def failures(ctx: RuleContext) -> tuple[tuple[str, str], ...]:
+    """``(id, reason)`` of every measurement of :data:`SPECS` whose computation raised, in catalogue order.
+
+    A measurement that does not apply (:data:`NO_SHAPES`) is not a failure.  The reason is masked like a published one.
+    """
+    return tuple(
+        (spec.id, redact_userinfo(value.reason))
+        for spec, value in taken(ctx)
+        if isinstance(value, Absent) and value.failed
+    )
 
 
 def _failure(exc: Exception) -> str:
