@@ -451,8 +451,16 @@ CASES = {
             _ttl("space in local part", 'ex:A a owl:Class ; oio:hasDbXref "PMID:12 345" .'),
             _ttl("url", 'ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .'),
             _ttl("prefix starting with a digit", 'ex:A a owl:Class ; oio:hasDbXref "1AB:123" .'),
+            _ttl(
+                "axiom with several sources",
+                "ex:A a owl:Class . ex:B a owl:Class . "
+                + _axiom('oio:hasDbXref "bad xref"').replace(
+                    "owl:annotatedSource ex:A", "owl:annotatedSource ex:A, ex:B"
+                ),
+            ),
             _ttl("typed literal", 'ex:A a owl:Class ; oio:hasDbXref "x y"^^xsd:string .'),
             _ttl("on a property", 'ex:p a owl:ObjectProperty ; oio:hasDbXref "bad" .'),
+            _ttl("on a datatype property", 'ex:p a owl:DatatypeProperty ; oio:hasDbXref "bad" .'),
             _ttl(
                 "axiom annotation",
                 "ex:A a owl:Class . " + _axiom('oio:hasDbXref "bad xref"'),
@@ -466,6 +474,14 @@ CASES = {
             _ttl("iri value is not read", "ex:A a owl:Class ; oio:hasDbXref <http://example.org/x> ."),
             _ttl("axiom with a curie", "ex:A a owl:Class . " + _axiom('oio:hasDbXref "PMID:1"')),
             _ttl("imported term", 'obo:XYZ_1 a owl:Class ; oio:hasDbXref "PMID:12345" .'),
+            _ttl("ontology header is not a term", 'ex:onto a owl:Ontology ; oio:hasDbXref "not a curie" .'),
+            _ttl("untyped resource is not a term", 'ex:x oio:hasDbXref "not a curie" .'),
+            _ttl("annotation property is not a term", 'ex:a a owl:AnnotationProperty ; oio:hasDbXref "not a curie" .'),
+            _ttl("individual is not a term", 'ex:i a owl:NamedIndividual ; oio:hasDbXref "not a curie" .'),
+            _ttl(
+                "axiom on an ontology header",
+                "ex:onto a owl:Ontology . " + _axiom('oio:hasDbXref "bad xref"').replace("ex:A", "ex:onto"),
+            ),
         ],
     ),
 }

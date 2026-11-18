@@ -5,8 +5,9 @@ scoped synonyms, PURLs, naming).  They only make sense for ontologies that follo
 so the ``OBO`` family is *opt-in*: see :data:`ontolint.profiles.OPT_IN_FAMILIES`.  It runs with
 ``--select OBO`` / ``--select OBO0xx`` or ``--profile obo`` and never as part of the default selection.
 
-* **OBO015.** An ``oboInOwl:hasDbXref`` literal on a local term, or on an ``owl:Axiom`` that annotates a local
-  term, must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar
+* **OBO015.** An ``oboInOwl:hasDbXref`` literal on a term (a local class, object property or datatype property;
+  an ontology header, an annotation property, an individual or an untyped resource is not one), or on an
+  ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar
   ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\\S+``.  A value whose local part starts with ``//`` (``http://...``)
   is reported too, because a URL is not a CURIE.  The lexical form is checked whatever the datatype or language;
   an IRI or blank-node value is not read.
@@ -512,23 +513,22 @@ def _multiple_definitions(ctx: RuleContext, terms: list[URIRef]) -> None:
                 )
 
 
-def _xref_focus(ctx: RuleContext, holder: Node) -> URIRef | None:
-    """The local term a ``hasDbXref`` on ``holder`` is about: the holder, or the source of an axiom annotation."""
+def _xref_foci(holder: Node, terms: frozenset[URIRef], ctx: RuleContext) -> list[URIRef]:
+    """The in-scope terms a ``hasDbXref`` on ``holder`` is about: the holder, or every source of an axiom annotation."""
     if isinstance(holder, URIRef):
-        return holder if ctx.local(holder) else None
-    sources = [o for o in ctx.g.objects(holder, OWL.annotatedSource) if isinstance(o, URIRef) and ctx.local(o)]
-    return min(sources, key=str) if sources else None
+        return [holder] if holder in terms else []
+    return sorted((o for o in ctx.g.objects(holder, OWL.annotatedSource) if o in terms), key=str)  # type: ignore[misc]
 
 
-def _xref_syntax(ctx: RuleContext) -> None:
+def _xref_syntax(ctx: RuleContext, terms: list[URIRef]) -> None:
+    in_scope = frozenset(terms)
     for holder, value in sorted(ctx.g.subject_objects(OIO_DB_XREF), key=lambda pair: (str(pair[0]), str(pair[1]))):
         text = str(value)
         if not isinstance(value, Literal) or (
             XREF_PATTERN.fullmatch(text) and not text.partition(":")[2].startswith("//")
         ):
             continue
-        focus = _xref_focus(ctx, holder)
-        if focus is not None:
+        for focus in _xref_foci(holder, in_scope, ctx):
             ctx.add(
                 "OBO015",
                 focus,
@@ -556,4 +556,4 @@ def run(ctx: RuleContext) -> None:
     _label_conventions(ctx, terms, deprecated)
     _definition_case(ctx, terms, deprecated)
     _multiple_definitions(ctx, terms)
-    _xref_syntax(ctx)
+    _xref_syntax(ctx, terms)
