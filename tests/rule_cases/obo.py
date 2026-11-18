@@ -449,7 +449,6 @@ CASES = {
             _ttl("leading whitespace", 'ex:A a owl:Class ; oio:hasDbXref " PMID:12345" .'),
             _ttl("trailing whitespace", 'ex:A a owl:Class ; oio:hasDbXref "PMID:12345 " .'),
             _ttl("space in local part", 'ex:A a owl:Class ; oio:hasDbXref "PMID:12 345" .'),
-            _ttl("url", 'ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .'),
             _ttl("prefix starting with a digit", 'ex:A a owl:Class ; oio:hasDbXref "1AB:123" .'),
             _ttl(
                 "axiom with several sources",
@@ -479,6 +478,10 @@ CASES = {
             _ttl("colon in local part", 'ex:A a owl:Class ; oio:hasDbXref "DOI:10.1000/a:b" .'),
             _ttl("language-tagged curie", 'ex:A a owl:Class ; oio:hasDbXref "PMID:1"@en .'),
             _ttl("trailing dot is allowed", 'ex:A a owl:Class ; oio:hasDbXref "PMID:1." .'),
+            _ttl(
+                "url-shaped literal is accepted as in ROBOT",
+                'ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .',
+            ),
             _ttl("iri value is not read", "ex:A a owl:Class ; oio:hasDbXref <http://example.org/x> ."),
             _ttl("axiom with a curie", "ex:A a owl:Class . " + _axiom('oio:hasDbXref "PMID:1"')),
             _ttl("imported term", 'obo:XYZ_1 a owl:Class ; oio:hasDbXref "PMID:12345" .'),

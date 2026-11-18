@@ -3874,17 +3874,6 @@
     "a0636f4c6863b862cf297421ce11e52a96d36277515ab461a1f1d403d5530884"
    ]
   ],
-  "OBO015:url": [
-   [
-    "OBO015",
-    "https://example.test/onto#A",
-    [
-     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
-     "\"http://example.org/x\""
-    ],
-    "ad855c7d61fa3adfd61950d1bd84a4344912648e3cfd311e414edbd710fee1de"
-   ]
-  ],
   "ONT001:no owl:Ontology": [
    [
     "ONT001",

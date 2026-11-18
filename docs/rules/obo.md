@@ -1610,9 +1610,9 @@ ex:a a owl:AnnotationProperty ; rdfs:label "A_b" .
 - **Scope:** term
 - **Category:** context-dependent
 - **Module:** [`obo`](#module-obo)
-- **Fix:** Write oboInOwl:hasDbXref values as PREFIX:local CURIEs without whitespace (for example PMID:12345), not URLs.
+- **Fix:** Write oboInOwl:hasDbXref values as PREFIX:local CURIEs without whitespace (for example PMID:12345).
 
-**Specification.** An ``oboInOwl:hasDbXref`` literal on a term (a local class, object property or datatype property; an ontology header, an annotation property, an individual or an untyped resource is not one), or on an ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\S+``.  A value whose local part starts with ``//`` (``http://...``) is reported too, because a URL is not a CURIE.  The lexical form is checked whatever the datatype or language; an IRI or blank-node value is not read.
+**Specification.** An ``oboInOwl:hasDbXref`` literal on a term (a local class, object property or datatype property; an ontology header, an annotation property, an individual or an untyped resource is not one), or on an ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local`` cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\S+``.  A URL-shaped literal (``http://...``) is accepted, as in ROBOT: its prefix is ``http`` and its reference ``//...`` is a valid CURIE reference (W3C CURIE Syntax 1.0, section 3). The lexical form is checked whatever the datatype or language; an IRI or blank-node value is not read.
 
 *Flagged:* `not a curie`
 
@@ -1683,16 +1683,6 @@ ex:A a owl:Class ; oio:hasDbXref "PMID:12 345" .
 ```
 
 Reported: `Database cross-reference 'PMID:12 345' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
-
-*Flagged:* `url`
-
-```turtle
-@prefix obo: <http://purl.obolibrary.org/obo/> .
-@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
-ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .
-```
-
-Reported: `Database cross-reference 'http://example.org/x' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
 
 *Flagged:* `prefix starting with a digit`
 
@@ -1860,6 +1850,14 @@ ex:A a owl:Class ; oio:hasDbXref "PMID:1"@en .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; oio:hasDbXref "PMID:1." .
+```
+
+*Clean:* `url-shaped literal is accepted as in ROBOT`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "http://example.org/x" .
 ```
 
 *Clean:* `iri value is not read`

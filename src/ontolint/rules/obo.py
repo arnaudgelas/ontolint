@@ -9,9 +9,9 @@ so the ``OBO`` family is *opt-in*: see :data:`ontolint.profiles.OPT_IN_FAMILIES`
   an ontology header, an annotation property, an individual or an untyped resource is not one), or on an
   ``owl:Axiom`` whose ``owl:annotatedSource`` is such a term (one finding per source), must be a ``PREFIX:local``
   cross-reference with no whitespace, using ROBOT's ``invalid_xref`` grammar
-  ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\\S+``.  A value whose local part starts with ``//`` (``http://...``)
-  is reported too, because a URL is not a CURIE.  The lexical form is checked whatever the datatype or language;
-  an IRI or blank-node value is not read.
+  ``[A-Za-z_][A-Za-z0-9_.-]*[A-Za-z0-9_]:\\S+``.  A URL-shaped literal (``http://...``) is accepted, as in ROBOT:
+  its prefix is ``http`` and its reference ``//...`` is a valid CURIE reference (W3C CURIE Syntax 1.0, section 3).
+  The lexical form is checked whatever the datatype or language; an IRI or blank-node value is not read.
 
 Every rule is an asserted-graph check: nothing is entailed, no import is followed and no network is
 used.  Rules that would need outside data (a registry lookup, the full RO term list, a reasoner) are
@@ -223,7 +223,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "OBO015",
         "Malformed database cross-reference",
         Severity.WARNING,
-        "Write oboInOwl:hasDbXref values as PREFIX:local CURIEs without whitespace (for example PMID:12345), not URLs.",
+        "Write oboInOwl:hasDbXref values as PREFIX:local CURIEs without whitespace (for example PMID:12345).",
         RuleScope.TERM,
     ),
 )
@@ -525,9 +525,7 @@ def _xref_syntax(ctx: RuleContext, terms: list[URIRef]) -> None:
     in_scope = frozenset(terms)
     for holder, value in sorted(ctx.g.subject_objects(OIO_DB_XREF), key=lambda pair: (str(pair[0]), str(pair[1]))):
         text = str(value)
-        if not isinstance(value, Literal) or (
-            XREF_PATTERN.fullmatch(text) and not text.partition(":")[2].startswith("//")
-        ):
+        if not isinstance(value, Literal) or XREF_PATTERN.fullmatch(text):
             continue
         for focus in _xref_foci(holder, in_scope, ctx):
             ctx.add(
