@@ -426,16 +426,144 @@ def test_the_execution_dict_has_a_results_key_only_when_there_are_results() -> N
     assert dicts[0]["results"] == ["a", "b"]
 
 
-def test_a_node_shape_with_a_path_is_a_pyshacl_load_error_not_a_metashacl_verdict() -> None:
-    execution = (
-        Linter(_graph(DATA), _graph(PREFIXES + ":S a sh:NodeShape ; sh:targetClass :Person ; sh:path :p .\n"))
-        .execute(["SHACL001"])
-        .executions[0]
-    )
+# --- a node shape with a path: SHACL-SHACL accepts it, pySHACL's loader refuses it (issue #96) -----------------------
+
+NODE_PATH = ":S a sh:NodeShape ; sh:targetClass :Person ; sh:path :p ; sh:minCount 1 ."
+NODE_PATH_SUMMARY = "the shapes graph has a node shape with sh:path, which SHACL forbids"
+SHAPE_S = "https://example.test/onto#S"
+# Every one is a ShapeLoadError in pySHACL, with and without meta_shacl, so each is a user defect SHQ023 reports.
+NODE_PATH_SHAPES = {
+    "the issue's shape": NODE_PATH,
+    "a deactivated shape": ":S a sh:NodeShape ; sh:deactivated true ; sh:path :p .",
+    "a shape typed as a property shape too": ":S a sh:NodeShape, sh:PropertyShape ; sh:path :p .",
+    "a blank shape": "[ a sh:NodeShape ; sh:path :p ] .",
+    "a shape reached through sh:and": (
+        ":T a sh:NodeShape ; sh:targetClass :Person ; sh:and ( :S ) .\n:S a sh:NodeShape ; sh:path :p ."
+    ),
+    "a shape reached through sh:property": ":T a sh:NodeShape ; sh:property :S .\n:S a sh:NodeShape ; sh:path :p .",
+}
+
+
+@pytest.mark.parametrize("name", sorted(NODE_PATH_SHAPES))
+def test_a_node_shape_with_a_path_is_a_summary_that_points_at_shq023(name: str) -> None:
+    """Before issue #96 this was the raw ``ShapeLoadError: ...`` with no ``results`` and no pointer."""
+    text = PREFIXES + NODE_PATH_SHAPES[name] + "\n"
+
+    execution = Linter(_graph(DATA), _graph(text)).execute(["SHACL001"]).executions[0]
 
     assert execution.status is ExecutionStatus.FAILED
-    assert execution.detail.startswith("ShapeLoadError: A shape defined as a NodeShape cannot be the subject")
+    assert execution.detail == NODE_PATH_SUMMARY
+    assert len(execution.results) == 1
+    assert execution.results[0].endswith("(SHQ023)")
+    assert "ShapeLoadError" not in execution.detail + "".join(execution.results)
+    # The pointer names a rule that really fires on that shape.
+    fired = {finding.focus for finding in Linter(_graph(DATA), _graph(text)).execute(["SHQ023"]).findings}
+    assert fired
+    assert execution.results[0].split(": ", 1)[0] in fired
+
+
+def test_the_node_shape_with_a_path_line_names_the_shape_and_the_path() -> None:
+    failure = _raised(PREFIXES + NODE_PATH + "\n")
+
+    assert failure.summary == NODE_PATH_SUMMARY
+    assert str(failure) == "\n".join((NODE_PATH_SUMMARY, *failure.results))
+    assert failure.results == (f"{SHAPE_S}: sh:path: a node shape must not have sh:path (SHQ023)",)
+
+
+def test_every_node_shape_with_a_path_gets_a_line_and_the_lines_are_capped() -> None:
+    count = shacl.MAX_RESULT_LINES + 3
+    shapes = PREFIXES + "".join(f":N{i} a sh:NodeShape ; sh:path :p .\n" for i in range(count))
+
+    lines = _raised(shapes).results
+
+    assert list(lines[:-1]) == sorted(lines[:-1])
+    assert len(lines) == shacl.MAX_RESULT_LINES + 1
+    assert lines[-1] == "... and 3 more result(s) not shown"
+    assert all(line.endswith("(SHQ023)") for line in lines[:-1])
+
+
+def test_a_node_shape_with_a_path_reached_through_sh_node_points_at_shq023_too() -> None:
+    """SHACL-SHACL does see this one (``sh:maxCount 0`` of its node shapes): the result now has the pointer."""
+    shapes = PREFIXES + ":T a sh:NodeShape ; sh:targetClass :Person ; sh:node :S .\n:S a sh:NodeShape ; sh:path :p .\n"
+
+    failure = _raised(shapes)
+
+    assert failure.summary == SUMMARY
+    assert any("sh:path: More than 0 values" in line and line.endswith("(SHQ023)") for line in failure.results)
+
+
+def test_a_load_error_that_is_not_a_node_shape_with_a_path_keeps_its_text() -> None:
+    """Typed as both and with no path: pySHACL's other load error, which SHQ023 reports as a missing path only."""
+    shapes = PREFIXES + ":S a sh:NodeShape, sh:PropertyShape ; sh:targetClass :Person .\n"
+
+    execution = Linter(_graph(DATA), _graph(shapes)).execute(["SHACL001"]).executions[0]
+
+    assert execution.status is ExecutionStatus.FAILED
+    assert execution.detail.startswith("ShapeLoadError: A shape defined as a NodeShape cannot also be defined")
     assert execution.results == ()
+
+
+def test_the_defect_alone_does_not_make_another_failure_a_summary(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The summary needs pySHACL's ``ShapeLoadError`` and the defect in the shapes graph: a crash is still a crash."""
+
+    def crash(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("internal pySHACL error")
+
+    monkeypatch.setattr(pyshacl, "validate", crash)
+
+    execution = Linter(_graph(DATA), _graph(PREFIXES + NODE_PATH + "\n")).execute(["SHACL001"]).executions[0]
+
+    assert execution.detail == "RuntimeError: internal pySHACL error"
+    assert execution.results == ()
+
+
+def test_a_load_error_without_the_defect_in_the_graph_is_not_a_summary(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pyshacl.errors import ShapeLoadError  # noqa: PLC0415
+
+    def refuse(*_args: object, **_kwargs: object) -> None:
+        raise ShapeLoadError("A shape defined as a NodeShape cannot be the subject of a 'sh:path' predicate.", "x")
+
+    monkeypatch.setattr(pyshacl, "validate", refuse)
+    valid = PREFIXES + ":S a sh:NodeShape ; sh:targetClass :Person .\n"
+
+    execution = Linter(_graph(DATA), _graph(valid)).execute(["SHACL001"]).executions[0]
+
+    assert execution.detail.startswith("ShapeLoadError: ")
+    assert execution.results == ()
+
+
+def test_the_cli_exits_2_and_prints_one_line_for_a_node_shape_with_a_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "data.ttl").write_text(DATA, encoding="utf-8")
+    (tmp_path / "shapes.ttl").write_text(PREFIXES + NODE_PATH + "\n", encoding="utf-8")
+    argv = [str(tmp_path / "data.ttl"), "--shapes", str(tmp_path / "shapes.ttl"), "--select", "SHQ023,SHACL001"]
+
+    assert main(argv) == FAILED
+    captured = capsys.readouterr()
+
+    assert f"[FAILED     ] SHACL001: {NODE_PATH_SUMMARY}\n" in captured.out + "\n"
+    assert "SHQ023" in captured.out
+    assert captured.err.count("(SHQ023)") == 1
+    assert "ShapeLoadError" not in captured.out + captured.err
+
+
+def test_a_node_shape_with_a_path_is_a_summary_in_a_budgeted_worker_too(tmp_path: Path) -> None:
+    code, out, _ = _run(
+        tmp_path,
+        PREFIXES + NODE_PATH + "\n",
+        "--select",
+        "SHACL001",
+        "--format",
+        "json",
+        "--max-validation-seconds",
+        "120",
+    )
+
+    assert code == FAILED
+    (execution,) = [e for f in json.loads(out.read_text())["files"] for e in f["executions"] if e["rule"] == "SHACL001"]
+    assert execution["detail"] == NODE_PATH_SUMMARY
+    assert len(execution["results"]) == 1
 
 
 @pytest.mark.parametrize(("extra", "last"), [(0, None), (1, "... and 1 more result(s) not shown")])
