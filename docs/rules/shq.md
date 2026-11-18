@@ -1509,13 +1509,13 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P .
 ex:P sh:path ex:p ; sh:pattern ex:regex .
 ```
 
-#### SHQ012: sh:uniqueLang on a shape with a non-language-tagged datatype
+#### SHQ012: sh:uniqueLang on a shape with a non-language-tagged datatype or outside a property shape
 
 - **Severity:** info
 - **Scope:** shapes
 - **Category:** heuristic
 - **Module:** [`shacl_quality`](#module-shacl_quality)
-- **Fix:** Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag.
+- **Fix:** Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag. Put sh:uniqueLang in a property shape (one with sh:path).
 
 **Specification.** Two defects.  (1) Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value is true) and an IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded: ``sh:uniqueLang`` ``"true"`` (a string), no ``sh:datatype``, a literal datatype.  Info: the constraint only sees value nodes that already violate ``sh:datatype``, so it is vacuous for conforming data.  (2) Every shape with any ``sh:uniqueLang`` value (``false`` and a string included) that is not a property shape (the set of SHQ023: no ``sh:path``, not typed ``sh:PropertyShape``, not a value of ``sh:property``), whatever its type, because 4.4.5 allows the parameter in property shapes only and SHACL-SHACL (``shsh:NodeShapeShape``, ``uniqueLang-scope``) rejects it on any other shape, so SHACL001 fails with ``the shapes graph does not conform to SHACL-SHACL`` and no engine run accepts the shapes graph; one finding per shape, and the MetaSHACL result line carries ``(SHQ012)``.  Excluded: a shape with a path, which is a property shape (a typed node shape with a path is a gap SHQ023 keeps), and a property shape without a path, which SHQ023 reports.  The decision is to report it here, not in a rule of its own (the defect is the same parameter in the wrong place), and not to leave the gap (a lint run that said nothing about a shapes graph no engine accepts).
 
