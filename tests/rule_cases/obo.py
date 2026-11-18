@@ -416,6 +416,11 @@ CASES = {
     "OBO014": rule_cases(
         [
             _ttl("two untagged definitions", 'ex:A a owl:Class ; obo:IAO_0000115 "One.", "Two." .'),
+            _ttl(
+                "three definitions in one language",
+                'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@en, "Three."@en .',
+            ),
+            _ttl("two datatypes, two texts", 'ex:A a owl:Class ; obo:IAO_0000115 "One."^^xsd:string, "Two." .'),
             _ttl("two definitions in one language", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@EN .'),
             _ttl(
                 "obsolete term with two definitions",
@@ -426,6 +431,12 @@ CASES = {
             _ttl("one definition", f"ex:A a owl:Class ; {DEF} ."),
             _ttl("translation", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Un."@fr .'),
             _ttl("tagged and untagged", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "One." .'),
+            _ttl("spacing only", 'ex:A a owl:Class ; obo:IAO_0000115 "One thing.", " One  thing. " .'),
+            _ttl("plain and xsd:string", 'ex:A a owl:Class ; obo:IAO_0000115 "One.", "One."^^xsd:string .'),
+            _ttl("one definition and a blank one", 'ex:A a owl:Class ; obo:IAO_0000115 "One.", "  " .'),
+            _ttl(
+                "language and region are two languages", 'ex:A a owl:Class ; obo:IAO_0000115 "One."@en, "Two."@en-US .'
+            ),
             _ttl("definition and elucidation", 'ex:A a owl:Class ; obo:IAO_0000115 "One." ; obo:IAO_0000600 "Two." .'),
         ],
     ),

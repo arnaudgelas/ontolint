@@ -3606,6 +3606,56 @@
     "3b350229bbfb348e5252f20a797fb2170aa456879b8aa3be4159d578a023ef5c"
    ]
   ],
+  "OBO014:obsolete term with two definitions": [
+   [
+    "OBO014",
+    "https://example.test/onto#A",
+    [
+     ""
+    ],
+    "41c78a210d7014c8b5961b168cf9d4e5ee7379b01948a5ea14337b57d4113fa4"
+   ]
+  ],
+  "OBO014:three definitions in one language": [
+   [
+    "OBO014",
+    "https://example.test/onto#A",
+    [
+     "en"
+    ],
+    "a639f9c4595084dd81a771087c453942660ee1d28602c494d56f4e4532c2e4b8"
+   ]
+  ],
+  "OBO014:two datatypes, two texts": [
+   [
+    "OBO014",
+    "https://example.test/onto#A",
+    [
+     ""
+    ],
+    "41c78a210d7014c8b5961b168cf9d4e5ee7379b01948a5ea14337b57d4113fa4"
+   ]
+  ],
+  "OBO014:two definitions in one language": [
+   [
+    "OBO014",
+    "https://example.test/onto#A",
+    [
+     "en"
+    ],
+    "a639f9c4595084dd81a771087c453942660ee1d28602c494d56f4e4532c2e4b8"
+   ]
+  ],
+  "OBO014:two untagged definitions": [
+   [
+    "OBO014",
+    "https://example.test/onto#A",
+    [
+     ""
+    ],
+    "41c78a210d7014c8b5961b168cf9d4e5ee7379b01948a5ea14337b57d4113fa4"
+   ]
+  ],
   "ONT001:no owl:Ontology": [
    [
     "ONT001",

@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:9c1bbdd769cdab7c73bcbc5d194915e0530f0710059f7538f8b0be996b022a0f (97514 chars)"
+    "stdout": "sha256:a71121b4258195d0f1e1e8e26bc5e62e34f448ea8c7423d7ae874ce4340ff58e (97866 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:9c1bbdd769cdab7c73bcbc5d194915e0530f0710059f7538f8b0be996b022a0f (97514 chars)"
+    "stdout": "sha256:a71121b4258195d0f1e1e8e26bc5e62e34f448ea8c7423d7ae874ce4340ff58e (97866 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:acd6b61406c182141fa7cb356bf7fa17636e54df086d5d6e4af50edfc8f9c3c3 (31667 chars)"
+    "stdout": "sha256:194cf9d241663a6384ebb947ad0cb50182ef4620343fec79a45e70e0ef5f4746 (31778 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:acd6b61406c182141fa7cb356bf7fa17636e54df086d5d6e4af50edfc8f9c3c3 (31667 chars)"
+    "stdout": "sha256:194cf9d241663a6384ebb947ad0cb50182ef4620343fec79a45e70e0ef5f4746 (31778 chars)"
    }
   },
   "missing_config": {
