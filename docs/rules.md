@@ -452,7 +452,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [SHQ011](rules/shq.md) | Invalid sh:pattern regular expression | error |
 | [SHQ012](rules/shq.md) | sh:uniqueLang on a shape with a non-language-tagged datatype or outside a property shape | info |
 | [SHQ013](rules/shq.md) | Shape combining sh:datatype and sh:class | warning |
-| [SHQ014](rules/shq.md) | sh:severity outside the SHACL severity vocabulary | warning |
+| [SHQ014](rules/shq.md) | sh:severity outside the SHACL severity vocabulary or with several values | warning |
 | [SHQ015](rules/shq.md) | Invalid sh:flags value or sh:flags without sh:pattern | warning |
 | [SHQ016](rules/shq.md) | Shape that is part of a recursive reference cycle | info |
 | [SHQ017](rules/shq.md) | Shape with sh:minLength greater than sh:maxLength | error |

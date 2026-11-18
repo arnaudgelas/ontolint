@@ -768,7 +768,7 @@ line per MetaSHACL result (`<shape>: <path>: <message>`, at most 20 then a count
 characters, userinfo masked, control characters escaped), once. A line ends with `(SHQ023)`, `(SHQ008)`,
 `(SHQ014)` or `(SHQ022)` when that rule reports the same defect, so
 `--select SHQ,SHACL` shows the finding that names it; the other defects, which no SHQ rule
-reports (`sh:uniqueLang` on a node shape, several `sh:severity` values), have no pointer, and neither
+reports (`sh:uniqueLang` on a node shape), have no pointer, and neither
 has a typed `sh:NodeShape` with `sh:path`, which SHACL-SHACL accepts and pySHACL then refuses with its
 own load error. JSON and SARIF keep the same lines as `results` of the execution
 (`executions[].results`, `toolExecutionNotifications[].properties.results`), present only when there are

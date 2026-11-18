@@ -7690,6 +7690,39 @@
     "419d90d8a0bb10b54be6db14f33c40927abb2d54026af6c5ca6ea309f99912a7"
    ]
   ],
+  "SHQ014:two custom severity IRIs": [
+   [
+    "SHQ014",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#severity",
+     "several"
+    ],
+    "67e294211af1f8e5732e9aa508a465fcc0f4bf55f65cc62815035c30c7aa7d01"
+   ]
+  ],
+  "SHQ014:two standard severities on a node shape": [
+   [
+    "SHQ014",
+    "https://example.test/onto#S",
+    [
+     "http://www.w3.org/ns/shacl#severity",
+     "several"
+    ],
+    "902c1f4cb5705e55f6d0830091c06e1a83503c43bf281a1b71216f4654a137c5"
+   ]
+  ],
+  "SHQ014:two standard severities on a property shape": [
+   [
+    "SHQ014",
+    "https://example.test/onto#P",
+    [
+     "http://www.w3.org/ns/shacl#severity",
+     "several"
+    ],
+    "67e294211af1f8e5732e9aa508a465fcc0f4bf55f65cc62815035c30c7aa7d01"
+   ]
+  ],
   "SHQ014:typo severity": [
    [
     "SHQ014",
