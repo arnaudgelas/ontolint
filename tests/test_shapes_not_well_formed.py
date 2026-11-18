@@ -297,6 +297,11 @@ POINTED = {
         ":S a sh:NodeShape ; sh:node :T .\n:T sh:uniqueLang true .",
         "SHQ012",
     ),
+    "two severities": (":S a sh:NodeShape ; sh:severity sh:Info, sh:Warning .", "SHQ014"),
+    "two severities on a property shape": (
+        ":S a sh:NodeShape ; sh:property [ sh:path :a ; sh:severity :A, :B ] .",
+        "SHQ014",
+    ),
 }
 
 
@@ -313,15 +318,47 @@ def test_a_pointer_names_a_rule_that_fires_on_the_same_shape(name: str) -> None:
     assert pointed <= fired, (pointed, fired)
 
 
+# SHQ014 reports "several" exactly where SHACL-SHACL rejects the graph for it: the two verdicts agree on each of these.
+SEVERITY_COUNTS = {
+    "one severity": (":S a sh:NodeShape ; sh:severity sh:Info .", False),
+    "one severity named twice": (":S a sh:NodeShape ; sh:severity sh:Info, sh:Info .", False),
+    "two severities": (":S a sh:NodeShape ; sh:severity sh:Info, sh:Warning .", True),
+    "three severities": (":S a sh:NodeShape ; sh:severity sh:Info, sh:Warning, sh:Violation .", True),
+    "two custom severities": (":S a sh:NodeShape ; sh:severity :A, :B .", True),
+    "a deactivated shape": (":S a sh:NodeShape ; sh:deactivated true ; sh:severity sh:Info, sh:Warning .", True),
+    "a blank property shape": (":S a sh:NodeShape ; sh:property [ sh:path :a ; sh:severity :A, :B ] .", True),
+    "a blank shape in sh:not": (":S a sh:NodeShape ; sh:not [ sh:severity sh:Info, sh:Warning ] .", True),
+    "a valid and a literal severity": (':S a sh:NodeShape ; sh:severity sh:Info, "x" .', True),
+    "one literal severity": (':S a sh:NodeShape ; sh:severity "x" .', False),
+}
+
+
+@pytest.mark.parametrize("name", sorted(SEVERITY_COUNTS))
+def test_several_severities_are_reported_where_shacl_shacl_rejects_them(name: str) -> None:
+    shapes, several = SEVERITY_COUNTS[name]
+    text = PREFIXES + shapes + "\n"
+    findings = Linter(_graph(DATA), _graph(text)).execute(["SHQ014"]).findings
+
+    assert any(f.message.startswith("Shape has ") for f in findings) is several
+    try:
+        shacl_issues(_graph(DATA), _graph(text))
+    except ShapesNotWellFormed as failure:
+        assert any("More than 1 values" in line for line in failure.results) is several
+    else:
+        assert not several
+
+
 def _foci(failure: ShapesNotWellFormed, rule: str) -> list[str]:
     return [line.split(": ", 1)[0] for line in failure.results if line.endswith(f"({rule})")]
 
 
 # The gaps PR #46 kept ("Known gaps kept") stay unreported by SHQ: MetaSHACL is then the only signal, and the line
 # says what is wrong without pointing at a rule that would not find it.  (A typed sh:NodeShape with sh:path is not one
-# of them: SHACL-SHACL accepts it, and pySHACL then refuses it with a ShapeLoadError, which stays a tool failure.)
+# of them: SHACL-SHACL accepts it, pySHACL's loader refuses it, and SHQ023 reports it: see the ShapeLoadError tests.)
 UNPOINTED = {
-    "two severities": ":S a sh:NodeShape ; sh:severity sh:Info, sh:Warning .",
+    "a literal sh:property": ':S a sh:NodeShape ; sh:property "x" .',
+    "a uniqueLang that is no boolean": ':S a sh:NodeShape ; sh:property [ sh:path :p ; sh:uniqueLang "maybe" ] .',
+    "two uniqueLang values": ":S a sh:NodeShape ; sh:property [ sh:path :p ; sh:uniqueLang true, false ] .",
 }
 
 

@@ -43,10 +43,13 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   and not to leave the gap (a lint run that said nothing about a shapes graph no engine accepts).
 * **SHQ014.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity
   ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and
-  ``sh:Violation``.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); several values,
-  which 2.1.4 allows only one of, are each judged alone and not reported as several on purpose (SHACL-SHACL
-  rejects them: SHACL001 fails).  Warning: a literal makes the shape ill-formed; an unknown ``sh:`` IRI is most
-  likely a typo, but processors accept it.
+  ``sh:Violation``; and every shape with more than one distinct value (2.1.4: "a shape has at most one value for
+  sh:severity"), reported once as "several" whatever the values are (as SHQ023 does for ``sh:path``), on top of
+  the finding of each value that is not a severity.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as
+  a severity"); one value named twice, which is one RDF triple.  A node with ``sh:severity`` and no other
+  triple counts as a shape here, though SHACL-SHACL does not check it.  Warning: a literal or several values
+  make the shape ill-formed (SHACL-SHACL rejects the shapes graph: SHACL001 fails); an unknown ``sh:`` IRI is
+  most likely a typo, but processors accept it.
 * **SHQ015.** Every value of ``sh:flags`` on a shape that is not a literal made only of ``s``, ``m``, ``i``,
   ``x`` and ``q`` (F&O 3.1 5.6.2; ``q`` is XPath 3.0, ``s``, ``m``, ``i`` and ``x`` XPath 2.0, which SPARQL
   1.1 REGEX cites), and every shape with ``sh:flags`` but no ``sh:pattern`` (4.4.3: an optional parameter of
@@ -149,9 +152,9 @@ SPECS: tuple[RuleSpec, ...] = (
     ),
     _spec(
         "SHQ014",
-        "sh:severity outside the SHACL severity vocabulary",
+        "sh:severity outside the SHACL severity vocabulary or with several values",
         Severity.WARNING,
-        "Use sh:Info, sh:Warning or sh:Violation, or a custom severity IRI outside the sh: namespace.",
+        "Give a shape one sh:severity: sh:Info, sh:Warning or sh:Violation, or a custom IRI outside sh:.",
     ),
     _spec(
         "SHQ015",
@@ -259,6 +262,10 @@ def _unique_lang_scope(ctx: RuleContext, sg: Graph, shape: Node, property_shapes
 
 
 def _severity(ctx: RuleContext, sg: Graph, shape: Node) -> None:
+    count = len(set(sg.objects(shape, SH.severity)))
+    if count > 1:
+        message = f"Shape has {count} sh:severity values; SHACL 2.1.4 allows one."
+        ctx.add("SHQ014", shape, message, subject=(SH.severity, "several"))
     for value in sg.objects(shape, SH.severity):
         if value in SEVERITIES:
             continue
