@@ -370,7 +370,9 @@ apart), the number of disconnected parts of the asserted hierarchy and the SHACL
 coverage. A record has an `id`, a `definition_version`, a `kind` and a `population`; a
 ratio is a `numerator` and a `denominator`, never a float, and a measurement that could not be
 taken (the SHACL coverage without `--shapes`) has a `reason` instead of a value, never 0. Findings,
-fingerprints, baselines and the exit code are the same with and without the flag, and it works with
+fingerprints and baselines are the same with and without the flag, and so is the exit code, except that a
+measurement whose computation raised exits 2 (`TOOL001: measurement <id> failed for <file>`, the report still
+written; also with `--write-quality-snapshot`, `--quality-baseline` and `--write-dqv`). It works with
 `--format json` only (otherwise a usage error, exit 2). There is no single health score. With
 module grouping, named graphs or `--follow-imports`, `measurement_partitions` gives the term
 measurements per module, graph or imported file, each term placed where its findings are.

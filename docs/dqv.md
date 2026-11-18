@@ -2,7 +2,8 @@
 
 `--write-dqv FILE` writes one run's [measurements](measurements.md) as Turtle in the W3C Data Quality
 Vocabulary (DQV), so a tool that reads DQV can consume them. It is opt-in: a run without the flag is
-unchanged, and with it the findings, fingerprints and exit code are the same.
+unchanged, and with it the findings, fingerprints and exit code are the same, unless a measurement could not
+be computed: the run then exits 2 ([measurements](measurements.md), "Failure").
 
 ```bash
 ontolint onto.ttl --write-dqv quality-dqv.ttl
