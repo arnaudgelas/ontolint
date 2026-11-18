@@ -95,7 +95,10 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   is printed.  A selected rule whose module or adapter
   raised (``failed``) or whose backend is missing (``unsupported``) is listed in the report, which is still
   written, and then printed as ``TOOL001: rule <ID> <status> for <file>: <detail>``; the exit code is ``2`` even
-  with ``--fail-on never``.  Policy files with an unknown rule or ``policy_version`` are GOV020, not TOOL001.
+  with ``--fail-on never``.  So is a measurement whose computation raised in a run that asked for the measurements
+  (``--measurements``, ``--write-quality-snapshot``, ``--quality-baseline``, ``--write-dqv``):
+  ``TOOL001: measurement <id> failed for <file>: failed: <ExceptionType>: <message>``, the report written with the
+  absent record.  Policy files with an unknown rule or ``policy_version`` are GOV020, not TOOL001.
   Why error: the run cannot vouch for a result.
 * **SEM001.** Only with ``--owl-profile EL|QL|RL|DL|Full`` and ``docker`` on ``PATH`` (``unsupported``
   otherwise).  For each ontology argument, the original file (not an ``owl:imports`` closure) is run through

@@ -421,7 +421,9 @@ def _lint_file(
     # Taken after the rules ran, so a measurement a METRIC rule read is the value it compared.
     measured, partitions = _measured(item, loaded, ctx, grouping) if args.measurements else (None, ())
     # Likewise taken after the rules ran; only a run that writes or compares a quality snapshot builds one.
-    snapshot = quality.build(ctx) if args.write_quality_snapshot or args.quality_baseline or args.write_dqv else None
+    published = args.write_quality_snapshot or args.quality_baseline or args.write_dqv
+    snapshot = quality.build(ctx) if published else None
+    failed = measurements.failures(ctx) if args.measurements or published else ()
     return FileReport(
         item.display,
         item.uri,
@@ -437,6 +439,7 @@ def _lint_file(
         partitions,
         snapshot,
         dqv.subject(ctx) if args.write_dqv else None,
+        failed,
     )
 
 
@@ -1328,6 +1331,8 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
             print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
             for line in x.results:  # one per result, escaped to one visible line each
                 print(f"  {one_line(line)}", file=sys.stderr)
+        for path, measurement_id, reason in report.failed_measurements:
+            print(f"TOOL001: measurement {measurement_id} failed for {path}: {one_line(reason)}", file=sys.stderr)
     except BrokenPipeError:  # the report is out and the exit status says what these lines would have: keep it
         _release(sys.stderr)
     return EXIT_PIPE_CLOSED if closed and code != TOOL_FAILURE_EXIT else code
