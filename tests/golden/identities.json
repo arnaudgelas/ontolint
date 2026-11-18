@@ -3709,6 +3709,17 @@
     "d8b406535f3cb09599b5ee4d72cbd039b802135ecaba677fb28d8465088b1f9b"
    ]
   ],
+  "OBO015:language-tagged value": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad lang value\"@en"
+    ],
+    "df3bca483bd800acd2c66732be21b98b83fe5903f02d22b366f3e9235484a143"
+   ]
+  ],
   "OBO015:leading whitespace": [
    [
     "OBO015",
@@ -3729,6 +3740,28 @@
      "\"PMID12345\""
     ],
     "e6cabbb6eeefc673bcbfb6c22b9d64ec59a608467e8e1d3b6d7800b8240f321c"
+   ]
+  ],
+  "OBO015:no-break space": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"PMID:1 \""
+    ],
+    "68f9796554fd53a60dae40e2973177681c84e5394c3faafd10e22247bb63ccb8"
+   ]
+  ],
+  "OBO015:non-ASCII prefix": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"ét:1\""
+    ],
+    "d6bc12c426a2e34b16e2569d141390f6ba72bf3c88c4c14035462ad9c25ec636"
    ]
   ],
   "OBO015:not a curie": [
@@ -3764,6 +3797,28 @@
     "5723af6230c2472dcc228a69e4bba6bda2f24df47a6a1f2110d5630e0b8b3ccc"
    ]
   ],
+  "OBO015:one good and one bad value": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"bad one\""
+    ],
+    "687ea52ceb5a61783d77b52be919d058dd4e04c6c2e7175ad4be6cf80e68e09a"
+   ]
+  ],
+  "OBO015:one-letter prefix": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"X:1\""
+    ],
+    "38aec996ae4677861b6c6a8ebd0ee126bc6acffaba80e14fc7fb5eb2c8b36951"
+   ]
+  ],
   "OBO015:prefix starting with a digit": [
    [
     "OBO015",
@@ -3784,6 +3839,17 @@
      "\"PMID:12 345\""
     ],
     "571740c2be3066435f8ac76abc00baff91f1dc5ee3733796148a6a5bb84cfbca"
+   ]
+  ],
+  "OBO015:trailing newline is not a CURIE": [
+   [
+    "OBO015",
+    "https://example.test/onto#A",
+    [
+     "http://www.geneontology.org/formats/oboInOwl#hasDbXref",
+     "\"\"\"PMID:1\n\"\"\""
+    ],
+    "254e6f5db7074bb94da4cdc77190f20179dc4b6143969942651b41f536f2480f"
    ]
   ],
   "OBO015:trailing whitespace": [
