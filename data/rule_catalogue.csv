@@ -300,6 +300,7 @@
 "OBO010","OBO","Whole OBO ontology imported instead of a module","implemented","context-dependent","RDFLib graph","OBO fixture"
 "OBO011","OBO","Ontology or version IRI that does not follow the OBO PURL pattern","implemented","context-dependent","RDFLib graph","OBO fixture"
 "OBO012","OBO","Label that breaks OBO naming conventions","implemented","context-dependent","RDFLib graph","OBO fixture"
+"OBO015","OBO","Malformed database cross-reference","implemented","context-dependent","RDFLib graph","OBO fixture"
 "LIB001","LIB","Pattern library index entry names no member ontology","implemented","heuristic","RDFLib graph","pattern library fixture: an entry linked by IRI or rdfs:isDefinedBy (negative), one sharing only a name with a member (positive, message names the member), an individual of a non-entry class (negative)"
 "OBO014","OBO","More than one textual definition in the same language","implemented","context-dependent","RDFLib graph","OBO fixture"
 "LIB002","LIB","Pattern library member missing from the index","implemented","heuristic","RDFLib graph","pattern library fixture: a member no entry links or names (positive), a member matched by name (negative)"

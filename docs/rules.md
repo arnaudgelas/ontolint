@@ -20,7 +20,7 @@ Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 and `--list-rules --format json` reports them with `"selectable": false`.
 
 
-**254 of 309 catalogue rules are implemented; 55 are TODO.**
+**255 of 310 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [LEX](#lex) | 25 | 0 |
 | [LIB](#lib) | 3 | 0 |
 | [METRIC](#metric) | 13 | 0 |
-| [OBO](#obo) | 14 | 0 |
+| [OBO](#obo) | 15 | 0 |
 | [ONT](#ont) | 9 | 0 |
 | [OWL](#owl) | 45 | 0 |
 | [SEC](#sec) | 16 | 0 |
@@ -315,6 +315,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [OBO010](rules/obo.md) | Whole OBO ontology imported instead of a module | info |
 | [OBO011](rules/obo.md) | Ontology or version IRI that does not follow the OBO PURL pattern | warning |
 | [OBO012](rules/obo.md) | Label that breaks OBO naming conventions | info |
+| [OBO015](rules/obo.md) | Malformed database cross-reference | warning |
 | [OBO014](rules/obo.md) | More than one textual definition in the same language | warning |
 | [OBO013](rules/obo.md) | Definition starts with a lowercase letter | info |
 
