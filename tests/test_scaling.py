@@ -184,10 +184,10 @@ def _measurement_partitions(count: int) -> Step:
     (item,) = resolve_inputs(["d.trig"], Path.cwd())
     loaded = LoadedGraph(graph, build_source_index(b"", "nt", "file:///w/d.trig", Graph()), graphs=index)
     ctx = build_context(graph, None, Policy())
-    measurements.taken(ctx)  # the rules take the vector; only its partitions are timed
+    taken = measurements.taken(ctx)  # the run takes the vector once; only its partitions are timed
 
     def step() -> None:
-        _vector, partitions = cli._measured(item, loaded, ctx, cli._ModuleGrouping(None))
+        _vector, partitions = cli._measured(item, loaded, ctx, cli._ModuleGrouping(None), taken)
         assert len(partitions) == 2 * (count // 10)  # each graph, then each module
 
     return step

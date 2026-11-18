@@ -192,7 +192,7 @@ def _count(measurement_id: str, value: Value) -> int:
 # --- publication ---------------------------------------------------------------------------------------------
 
 
-def taken(ctx: RuleContext) -> tuple[tuple[MeasurementSpec, Value | Absent], ...]:
+def taken(ctx: RuleContext) -> Vector:
     """Every measurement of :data:`SPECS` on ``ctx``, in order; one whose computation raises is absent.
 
     The reason of such a failure is ``failed: <ExceptionType>: <message>`` and the value is marked ``failed``.  This
@@ -210,14 +210,14 @@ def _safely(ctx: RuleContext, spec: MeasurementSpec) -> Value | Absent:
         return Absent(_failure(exc), failed=True)
 
 
-def failures(ctx: RuleContext) -> tuple[tuple[str, str], ...]:
-    """``(id, reason)`` of every measurement of :data:`SPECS` whose computation raised, in catalogue order.
+def failures(ctx: RuleContext, vector: Vector | None = None) -> tuple[tuple[str, str], ...]:
+    """``(id, reason)`` of every measurement of ``vector`` (:func:`taken` on ``ctx``) whose computation raised.
 
     A measurement that does not apply (:data:`NO_SHAPES`) is not a failure.  The reason is masked like a published one.
     """
     return tuple(
         (spec.id, redact_userinfo(value.reason))
-        for spec, value in taken(ctx)
+        for spec, value in (taken(ctx) if vector is None else vector)
         if isinstance(value, Absent) and value.failed
     )
 
@@ -226,9 +226,13 @@ def _failure(exc: Exception) -> str:
     return f"failed: {type(exc).__name__}: {exc}"
 
 
-def publish(ctx: RuleContext) -> tuple[Measurement, ...]:
-    """The published record of every measurement on ``ctx``, in catalogue order; never raises."""
-    return tuple(record(spec, value) for spec, value in taken(ctx))
+type Vector = tuple[tuple[MeasurementSpec, Value | Absent], ...]
+"""What :func:`taken` returns.  A run takes it once, so the report, the snapshot and the exit status agree."""
+
+
+def publish(ctx: RuleContext, vector: Vector | None = None) -> tuple[Measurement, ...]:
+    """The published record of every measurement of ``vector`` (:func:`taken` on ``ctx``), in order; never raises."""
+    return tuple(record(spec, value) for spec, value in (taken(ctx) if vector is None else vector))
 
 
 def record(spec: MeasurementSpec, value: Value | Absent, terms: Set[Node] | None = None) -> Measurement:

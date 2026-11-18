@@ -419,11 +419,13 @@ def _lint_file(
         graphs = {f: names for f, names in graphs.items() if f not in members}
     others = _shared_places((item, loaded), findings, shared, sarif, (origins, locations, graphs)) if shared else {}
     # Taken after the rules ran, so a measurement a METRIC rule read is the value it compared.
-    measured, partitions = _measured(item, loaded, ctx, grouping) if args.measurements else (None, ())
-    # Likewise taken after the rules ran; only a run that writes or compares a quality snapshot builds one.
     published = args.write_quality_snapshot or args.quality_baseline or args.write_dqv
-    snapshot = quality.build(ctx) if published else None
-    failed = measurements.failures(ctx) if args.measurements or published else ()
+    # The vector is taken once, so the report, the snapshot and the exit status cannot disagree about a failure.
+    vector = measurements.taken(ctx) if args.measurements or published else ()
+    measured, partitions = _measured(item, loaded, ctx, grouping, vector) if args.measurements else (None, ())
+    # Likewise taken after the rules ran; only a run that writes or compares a quality snapshot builds one.
+    snapshot = quality.build(ctx, vector) if published else None
+    failed = measurements.failures(ctx, vector) if vector else ()
     return FileReport(
         item.display,
         item.uri,
@@ -448,7 +450,11 @@ type _Place = tuple[str, str | None, str | None]
 
 
 def _measured(
-    item: InputFile, loaded: LoadedGraph, ctx: RuleContext, grouping: _ModuleGrouping | None
+    item: InputFile,
+    loaded: LoadedGraph,
+    ctx: RuleContext,
+    grouping: _ModuleGrouping | None,
+    taken: measurements.Vector,
 ) -> tuple[tuple[Measurement, ...], tuple[MeasurementPartition, ...]]:
     """The file's measurement vector, and its term measurements per closure file, named graph and module.
 
@@ -456,12 +462,11 @@ def _measured(
     and never recomputes it.  The vector is taken after the rules ran, so a value a METRIC rule compared is the
     value published.
     """
-    vector = measurements.publish(ctx)
+    vector = measurements.publish(ctx, taken)
     terms = measurements.partition_terms(ctx)
     places = _term_places(item, loaded, terms, grouping)
     if not places:
         return vector, ()
-    taken = measurements.taken(ctx)
     return vector, tuple(
         MeasurementPartition(by, path, name, measurements.partition(taken, {t for text in held for t in terms[text]}))
         for (by, path, name), held in places.items()
@@ -685,7 +690,7 @@ def _quality(
     """Write the run's quality snapshot and compare it with the quality baseline, as asked (one file, by usage).
 
     Returns the comparison (``None`` without ``--quality-baseline``), or the exit code when the snapshot could
-    not be written.  Neither changes the findings or the exit status of the run.
+    not be written.  Neither changes the findings; a measurement that could not be computed makes the run exit 2.
     """
     snapshot = files[0].quality
     if snapshot is None:
