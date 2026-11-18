@@ -1734,6 +1734,66 @@ ex:p a owl:ObjectProperty ; oio:hasDbXref "bad" .
 
 Reported: `Database cross-reference 'bad' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
 
+*Flagged:* `trailing newline is not a CURIE`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:1\n" .
+```
+
+Reported: `Database cross-reference 'PMID:1\n' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `no-break space`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:1\u00a0" .
+```
+
+Reported: `Database cross-reference 'PMID:1\xa0' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `one-letter prefix`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "X:1" .
+```
+
+Reported: `Database cross-reference 'X:1' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `non-ASCII prefix`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "\u00e9t:1" .
+```
+
+Reported: `Database cross-reference 'ét:1' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `language-tagged value`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "bad lang value"@en .
+```
+
+Reported: `Database cross-reference 'bad lang value' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
+*Flagged:* `one good and one bad value`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:1", "bad one" .
+```
+
+Reported: `Database cross-reference 'bad one' (oboInOwl:hasDbXref) is not a PREFIX:local CURIE.`
+
 *Flagged:* `on a datatype property`
 
 ```turtle
@@ -1784,6 +1844,22 @@ ex:A a owl:Class ; oio:hasDbXref "_x:1" .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; oio:hasDbXref "DOI:10.1000/a:b" .
+```
+
+*Clean:* `language-tagged curie`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:1"@en .
+```
+
+*Clean:* `trailing dot is allowed`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; oio:hasDbXref "PMID:1." .
 ```
 
 *Clean:* `iri value is not read`
