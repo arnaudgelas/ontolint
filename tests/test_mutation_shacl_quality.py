@@ -13,6 +13,7 @@ from ontolint.rules.specs import FIXES, SEVERITY
 
 NS = "https://example.test/onto#"
 TWO = 2
+THREE = 3
 FOUR = 4
 CHAIN = 3000
 
@@ -158,7 +159,26 @@ def test_shq014_values() -> None:
     assert len(_run("SHQ014", "ex:S sh:severity [] .")) == 1
     for ok in ("sh:Info", "sh:Warning", "sh:Violation", "ex:Fatal", "<urn:x>"):
         assert _run("SHQ014", f"ex:S sh:severity {ok} .") == [], ok
-    assert len(_run("SHQ014", "ex:S sh:severity sh:Info, sh:Bad, sh:Worse .")) == TWO
+    assert len(_run("SHQ014", "ex:S sh:severity sh:Info, sh:Bad, sh:Worse .")) == THREE  # two values, the count
+
+
+def test_shq014_several_values_are_reported_once_as_several_and_each_value_is_still_judged() -> None:
+    sh = "http://www.w3.org/ns/shacl#"
+    several = "Shape has 2 sh:severity values; SHACL 2.1.4 allows one."
+    assert _messages("SHQ014", "ex:S sh:severity sh:Info, sh:Warning .") == [several]
+    assert _messages("SHQ014", "ex:S sh:severity ex:A, ex:B .") == [several]
+    assert _messages("SHQ014", "ex:S sh:severity sh:Info, sh:Warning, sh:Violation .") == [
+        "Shape has 3 sh:severity values; SHACL 2.1.4 allows one."
+    ]
+    assert _messages("SHQ014", "ex:S sh:severity sh:Info, sh:Bad .") == sorted(
+        [several, f"sh:severity value {sh}Bad is not sh:Info, sh:Warning or sh:Violation."]
+    )
+    assert _run("SHQ014", "ex:S sh:severity sh:Info, sh:Info .") == []  # one value in RDF
+    assert _run("SHQ014", "ex:S sh:severity sh:Info . ex:T sh:severity sh:Warning .") == []  # one per shape
+    assert _focus("SHQ014", "ex:S sh:severity sh:Info, sh:Warning . ex:T sh:severity sh:Info .") == [NS + "S"]
+    nested = "ex:S sh:property ex:P . ex:P sh:path ex:p ; sh:severity sh:Info, sh:Warning ."
+    assert _messages("SHQ014", nested) == [several]
+    assert _focus("SHQ014", nested) == [NS + "P"]
 
 
 # --- SHQ015 ----------------------------------------------------------------------------------

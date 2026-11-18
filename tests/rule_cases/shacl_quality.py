@@ -65,11 +65,15 @@ CASES = {
         [
             _c("typo severity", _prop("sh:severity sh:Warn")),
             _c("literal severity", _prop("sh:severity 'warning'")),
+            _c("two standard severities on a node shape", NODE + "sh:severity sh:Info, sh:Warning ."),
+            _c("two standard severities on a property shape", _prop("sh:severity sh:Info, sh:Warning")),
+            _c("two custom severity IRIs", _prop("sh:severity ex:Minor, ex:Major")),
         ],
         [
             GOOD,
-            _c("standard severities", _prop("sh:severity sh:Info") + "\nex:Q sh:severity sh:Violation, sh:Warning ."),
+            _c("standard severities", _prop("sh:severity sh:Info") + "\nex:Q sh:severity sh:Violation ."),
             _c("custom severity IRI", _prop("sh:severity ex:Critical")),
+            _c("one severity named twice", _prop("sh:severity sh:Info, sh:Info")),
         ],
     ),
     "SHQ015": rule_cases(

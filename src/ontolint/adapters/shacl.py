@@ -104,6 +104,7 @@ _SHQ_COMPONENT_PATHS: dict[tuple[str, URIRef], str] = {
     **{("DatatypeConstraintComponent", p): "SHQ008" for p in (SH.minCount, SH.maxCount, SH.minLength, SH.maxLength)},
     **{("NodeKindConstraintComponent", p): "SHQ022" for p in (SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf)},
     ("NodeKindConstraintComponent", SH.severity): "SHQ014",
+    ("MaxCountConstraintComponent", SH.severity): "SHQ014",
 }
 """``(constraint component, result path)`` of a MetaSHACL result and the SHQ rule that reports the same defect on the
 same shape (see :func:`_pointer`); a pair that is not here has no rule, or one that does not always fire."""
