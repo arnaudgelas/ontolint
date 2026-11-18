@@ -246,6 +246,34 @@ def test_shq023_typed_property_shape_and_blank_property_shape() -> None:
     assert _run("SHQ023", "ex:P a sh:PropertyShape ; sh:path ex:a .") == []
 
 
+def test_shq023_reports_a_node_shape_with_a_path_once_per_shape() -> None:
+    """SHACL 2.2 forbids it and pySHACL refuses it with a load error, whatever else the shape says (issue #96)."""
+    node = "ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:path ex:p ."
+    assert _messages("SHQ023", node) == ["Node shape has an sh:path."]
+    assert _focus("SHQ023", node) == [NS + "S"]
+    assert len(_run("SHQ023", "[ a sh:NodeShape ; sh:path ex:p ] .")) == 1  # blank node shape
+    assert len(_run("SHQ023", "ex:S a sh:NodeShape ; sh:deactivated true ; sh:path ex:p .")) == 1
+    assert len(_run("SHQ023", "ex:S a sh:NodeShape ; sh:path [ sh:inversePath ex:a ] .")) == 1
+    assert len(_run("SHQ023", "ex:S a sh:NodeShape ; sh:path ex:p . ex:T sh:node ex:S .")) == 1
+    assert len(_run("SHQ023", "ex:S a sh:NodeShape ; sh:path ex:p . ex:T sh:property ex:S .")) == 1
+    # Typed as both: pySHACL fails on the path first; one finding for the node shape, none more for the one path.
+    assert _messages("SHQ023", "ex:S a sh:NodeShape, sh:PropertyShape ; sh:path ex:p .") == [
+        "Node shape has an sh:path."
+    ]
+    # Several paths on a node shape are two defects, each reported by its own message.
+    assert _messages("SHQ023", "ex:S a sh:NodeShape ; sh:path ex:a, ex:b .") == [
+        "Node shape has an sh:path.",
+        "Property shape has 2 sh:path values.",
+    ]
+    # What pySHACL accepts stays quiet: an untyped shape with a path, a property shape, a node shape without one.
+    assert _run("SHQ023", "ex:S sh:targetClass ex:A ; sh:path ex:p .") == []
+    assert _run("SHQ023", "ex:S a sh:PropertyShape ; sh:targetClass ex:A ; sh:path ex:p .") == []
+    assert _run("SHQ023", "ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property [ sh:path ex:p ] .") == []
+    assert _focus("SHQ023", "ex:S a sh:NodeShape ; sh:path ex:p . ex:T a sh:PropertyShape ; sh:path ex:p .") == [
+        NS + "S"
+    ]
+
+
 def test_shared_property_shape_reports_once() -> None:
     shapes = "ex:S sh:property ex:P . ex:T sh:property ex:P ."
     assert len(_run("SHQ023", shapes)) == 1

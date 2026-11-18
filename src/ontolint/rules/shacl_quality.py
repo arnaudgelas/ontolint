@@ -61,9 +61,13 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   ``sh:property``, which must have exactly one path (2.3: "SHACL instances of sh:PropertyShape have one value
   for the property sh:path"; 4.7.2: the values of ``sh:property`` are property shapes), and any subject of
   ``sh:path``, which has at most one (2.3: "a shape has at most one value for sh:path").  A list (sequence path)
-  or a blank path is one value.  Excluded: a node typed ``sh:NodeShape`` with a path, which 2.2 forbids, is
-  not reported on purpose (pySHACL refuses it with its own load error: SHACL001 fails); the path is not checked
-  for well-formedness.  Warning: the shape is ill-formed, and a
+  or a blank path is one value.  Also every node typed ``sh:NodeShape`` that has an ``sh:path`` ("node shape"),
+  which 2.2 forbids: SHACL-SHACL accepts it, but pySHACL refuses every such shape with a ``ShapeLoadError``
+  (deactivated, unreferenced or also typed ``sh:PropertyShape`` included), so SHACL001 fails.  It was a kept gap
+  ("not reported on purpose", left to SHACL-SHACL as for the other gaps of issue #62), but SHACL-SHACL does not
+  see it, so the user got pySHACL's own text and no pointer; issue #96 reports it here, with no new rule.
+  A node shape with several paths gets both findings.
+  Excluded: the path is not checked for well-formedness.  Warning: the shape is ill-formed, and a
   processor may reject the shapes graph or validate either path.
 
 Fixtures: ``tests/rule_cases/shacl_quality.py``, ``tests/test_mutation_shacl_quality.py`` and
@@ -277,13 +281,23 @@ def property_shape_nodes(sg: Graph) -> set[Node]:
     return shapes | {o for o in sg.objects(None, SH.property) if isinstance(o, URIRef | BNode)}
 
 
+def is_node_shape_with_path(sg: Graph, shape: Node) -> bool:
+    """Whether ``shape`` is typed ``sh:NodeShape`` and has an ``sh:path``: SHACL 2.2 forbids it, and pySHACL refuses
+    it as a ``ShapeLoadError`` for every such shape (deactivated, unreferenced or typed ``sh:PropertyShape`` too)."""
+    return (shape, RDF.type, SH.NodeShape) in sg and (shape, SH.path, None) in sg
+
+
 def has_path_defect(sg: Graph, shape: Node, property_shapes: set[Node]) -> bool:
-    """Whether SHQ023 reports ``shape``: a property shape with no ``sh:path`` or with several."""
+    """Whether SHQ023 reports ``shape``: a node shape with a path, or a property shape without exactly one."""
+    if is_node_shape_with_path(sg, shape):
+        return True
     return shape in property_shapes and len(set(sg.objects(shape, SH.path))) != 1
 
 
 def _property_path(ctx: RuleContext, sg: Graph, shape: Node, property_shapes: set[Node]) -> None:
-    if not has_path_defect(sg, shape, property_shapes):
+    if is_node_shape_with_path(sg, shape):
+        ctx.add("SHQ023", shape, "Node shape has an sh:path.", subject=(SH.path, "node shape"))
+    if shape not in property_shapes:
         return
     count = len(set(sg.objects(shape, SH.path)))
     if count == 0:
