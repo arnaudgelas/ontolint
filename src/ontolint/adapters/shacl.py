@@ -25,7 +25,7 @@ from rdflib.term import Node
 from ontolint.loader import network_disabled
 from ontolint.models import Evidence, EvidenceValue, Finding, plain_evidence
 from ontolint.redaction import clip, redact_userinfo
-from ontolint.rules.shacl_quality import has_path_defect, property_shape_nodes
+from ontolint.rules.shacl_quality import has_path_defect, is_node_shape_with_path, property_shape_nodes
 from ontolint.rules.specs import FIXES
 from ontolint.rules.support import ntriples_literal, stable_blank_id
 from ontolint.worker import WorkerFailed, WorkerGone, WorkerTimeout, decode_graph, encode_graph, run_bounded
@@ -112,11 +112,15 @@ class ShapesNotWellFormed(RuntimeError):
     report prints each result once instead of pySHACL's whole validation report.  A line is ``<focus>: <path>:
     <message>`` (no path for a node-level result), masked, cut at :data:`MAX_RESULT_LINE` characters and ended by
     ``(SHQnnn)`` when that rule reports the same defect.
+
+    A shapes graph that pySHACL's loader refuses for a node shape with ``sh:path`` (``ShapeLoadError``: SHACL-SHACL
+    accepts it) is the same kind of user defect and is raised the same way, with its own :attr:`summary`.
     """
 
     summary = "the shapes graph does not conform to SHACL-SHACL"
 
-    def __init__(self, results: tuple[str, ...]) -> None:
+    def __init__(self, results: tuple[str, ...], summary: str | None = None) -> None:
+        self.summary = summary or self.summary
         super().__init__("\n".join((self.summary, *results)))
         self.results = results
 
@@ -378,9 +382,9 @@ def _pointer(
 
     A shapes graph that breaks SHACL-SHACL through a pair of :data:`_SHQ_COMPONENT_PATHS` breaks the condition of
     exactly that rule.  SHQ023 is told by its own condition (:func:`has_path_defect`), because the results that
-    follow from a property shape's paths also arise where SHQ023 keeps a gap: a node shape with a path
-    (``sh:maxCount 0`` of SHACL 2.2) has the same result as a property shape with two.  They are the ``sh:path``
-    cardinality results and the ``sh:xone`` of a shape that is neither a node nor a property shape, which has no path.
+    follow from a shape's paths do not name one pair: a node shape with a path (``sh:maxCount 0`` of SHACL 2.2) has
+    the same result as a property shape with two.  They are the ``sh:path`` cardinality results and the ``sh:xone``
+    of a shape that is neither a node nor a property shape, which has no path.
     """
     if focus is None:
         return None
@@ -413,6 +417,11 @@ def _metashacl_lines(report: Graph, sg: Graph) -> tuple[str, ...]:
         line = clip(": ".join(part for part in parts if part), MAX_RESULT_LINE, ELLIPSIS)
         rule = _pointer(sg, focus_node, component, path_node, property_shapes)
         lines.append(line if rule is None else f"{line} ({rule})")
+    return _capped(lines)
+
+
+def _capped(lines: list[str]) -> tuple[str, ...]:
+    """``lines`` sorted, at most :data:`MAX_RESULT_LINES` and a count of the rest."""
     lines.sort()
     if len(lines) > MAX_RESULT_LINES:
         lines[MAX_RESULT_LINES:] = [f"... and {len(lines) - MAX_RESULT_LINES} more result(s) not shown"]
@@ -446,6 +455,33 @@ def _metashacl_failure(sg: Graph, failure: Exception) -> ShapesNotWellFormed | N
     return ShapesNotWellFormed(_metashacl_lines(report, sg))
 
 
+NODE_SHAPE_PATH_SUMMARY = "the shapes graph has a node shape with sh:path, which SHACL forbids"
+"""The summary of a shapes graph that pySHACL's loader refuses for a node shape with ``sh:path`` (SHACL 2.2)."""
+
+
+def _node_shape_path_failure(sg: Graph, failure: Exception) -> ShapesNotWellFormed | None:
+    """``failure`` as a :class:`ShapesNotWellFormed` when it is pySHACL's ``ShapeLoadError`` and the shapes graph has
+    a node shape with an ``sh:path``; ``None`` otherwise.
+
+    SHACL-SHACL accepts such a shape, so MetaSHACL does not see it, but pySHACL's loader refuses every one before it
+    validates any data.  The shapes graph, not the exception's text, tells that defect from another load error (and
+    from a bug): the loader refuses exactly the shapes :func:`is_node_shape_with_path` selects, and SHQ023 reports
+    them.  Another ``ShapeLoadError`` on a graph without one keeps its own detail.
+    """
+    try:
+        from pyshacl.errors import ShapeLoadError  # noqa: PLC0415 -- the same package as ``validate``.
+    except ImportError:  # a pySHACL without it: no way to tell the load error, the failure keeps its text
+        return None
+    if not isinstance(failure, ShapeLoadError):
+        return None
+    lines = []
+    for shape in set(sg.subjects(RDF.type, SH.NodeShape)):
+        if is_node_shape_with_path(sg, shape):
+            line = clip(f"{_name(sg, shape)}: sh:path: a node shape must not have sh:path", MAX_RESULT_LINE, ELLIPSIS)
+            lines.append(f"{line} (SHQ023)")
+    return ShapesNotWellFormed(_capped(lines), NODE_SHAPE_PATH_SUMMARY) if lines else None
+
+
 def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, object]:
     """``(conforms, report)`` from pySHACL, run with the network disabled; a failure is diagnosed, then re-raised.
 
@@ -474,6 +510,8 @@ def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, o
         return bool(conforms), report
     if (not_well_formed := _metashacl_failure(sg, failure)) is not None:
         raise not_well_formed from failure
+    if (not_loadable := _node_shape_path_failure(sg, failure)) is not None:
+        raise not_loadable from failure
     if not isinstance(failure, ShapesRejected):
         # The data graph may hold large enumerations, odd IRIs (IRI001 reports those) or malformed lists, and
         # pySHACL fails on them only when a violation message has to describe such a node: diagnose it then.
