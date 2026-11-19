@@ -12,9 +12,17 @@ All three inspect only the asserted graph and never leave the process.  Their sp
   configured extra label predicate) containing an XML/HTML tag (``<b>``, ``</b>``) or a named, decimal or
   hexadecimal character entity (``&amp;``, ``&#233;``).  A bare ``<``, ``>`` or ``&`` is plain text, and
   a trailing ``<word>`` disambiguator that is not an HTML tag name is allowed.  Comments and definitions
-  are not labels and are not checked.
+  are not labels and are not checked, nor is ``skos:hiddenLabel``.  The tag list is the HTML tags of
+  ``HTML_TAGS``; ``<foo>`` alone is text.  Confidence ``heuristic``.  Warning: RDFS 5.4.1 and SKOS 5.3 give
+  the label a plain literal, where markup shows as characters (an ``rdf:HTML`` literal would be the way to
+  carry it).
 * **LEX021.** A label, on the same predicates as LEX018, that differs from its Unicode NFC normal form
-  (for example a decomposed ``e`` plus combining acute accent).
+  (for example a decomposed ``e`` plus combining acute accent).  Unicode normalisation form C is UAX #15; RDF 1.1
+  Concepts 3.3 says literals "SHOULD be in Normal Form C" and compares lexical forms character by character, so
+  two NFC-different spellings are two literals.  ``skos:hiddenLabel`` is not read.  Info.
+
+Fixtures for LEX018 and LEX021: ``tests/rule_cases/iri_lexical_extras.py``,
+``tests/test_mutation_iri_lexical_extras.py`` and ``tests/test_lex_specification.py``.
 """
 
 from __future__ import annotations

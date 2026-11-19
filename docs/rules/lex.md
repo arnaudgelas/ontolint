@@ -30,6 +30,8 @@ LEX025: whitespace-padded annotation values.
 
 *Specified under each rule: LEX025.*
 
+Fixtures: ``tests/rule_cases/lexical_quality.py`` and ``tests/test_lex_specification.py``.
+
 ### Module iri_lexical_extras
 
 Source: `src/ontolint/rules/iri_lexical_extras.py`.
@@ -40,11 +42,19 @@ All three inspect only the asserted graph and never leave the process.  Their sp
 
 *Specified under each rule: [IRI015](iri.md), LEX018, LEX021.*
 
+Fixtures for LEX018 and LEX021: ``tests/rule_cases/iri_lexical_extras.py``, ``tests/test_mutation_iri_lexical_extras.py`` and ``tests/test_lex_specification.py``.
+
 ### Module lexical
 
 Source: `src/ontolint/rules/lexical.py`.
 
 Label, definition, and naming-style rules: LEX001-LEX009.
+
+Every rule reads the asserted graph only (no reasoner, no network).  A *term* is an owned declared class, property, individual or SKOS concept or scheme (``RuleContext.terms``).  A *label* is a ``Literal`` under ``rdfs:label``, ``skos:prefLabel``, a configured extra label predicate or a predicate below one of them (``rdfs:subPropertyOf`` and ``owl:equivalentProperty``, ``RuleContext.labels``); ``skos:altLabel`` and ``skos:hiddenLabel`` are below ``rdfs:label`` in the SKOS schema (SKOS Reference 5.3, S11) but never name a term, so they are not labels here.  A *main* label is a label under ``rdfs:label``, ``skos:prefLabel`` or an extra, or below ``skos:prefLabel``; a term with none is named by its other labels (``RuleContext.main_label_predicates``). A *language* is the lower-cased tag of a literal, ``und`` when it has none.  A *definition* is a value of ``rdfs:comment``, ``skos:definition``, ``dcterms:description``, ``dc:description``, the OBO and PROV definition predicates, a configured extra and every predicate below one.  Every finding is ``heuristic`` unless said otherwise.  The standards are the SKOS Reference (W3C 2009-08-18), RDF Schema 1.1 (5.4.1 ``rdfs:label``, 5.4.2 ``rdfs:comment``: the range of both is ``rdfs:Literal``), RDF 1.1 Concepts (3.3: literals) and RFC 4647 (3.3.1: basic filtering).  Specifications:
+
+*Specified under each rule: LEX001, LEX002, LEX003, LEX004, LEX005, LEX006, LEX007, LEX008, LEX009.*
+
+Fixtures: ``tests/rule_cases/lexical.py``, ``tests/test_precision_lex_iri.py``, ``tests/test_mutation_rules.py`` and ``tests/test_lex_specification.py``.
 
 ### Module lexical_quality
 
@@ -53,6 +63,12 @@ Source: `src/ontolint/rules/lexical_quality.py`.
 Terminology and documentation quality rules: LEX010-LEX017, LEX019, LEX020, LEX022-LEX024.
 
 LEX018 and LEX021 are implemented in ``iri_lexical_extras`` as markup and NFC checks: polysemy needs NLP and domain judgement, and malformed language tags cannot be observed because RDFLib rejects them at parse time.
+
+Terms, labels, main labels, definitions and languages are those of ``lexical`` (read its docstring first); "normalised" below means whitespace runs collapsed to one space and case-folded.  Every finding is ``heuristic`` unless said otherwise.  Specifications:
+
+*Specified under each rule: LEX010, LEX011, LEX012, LEX013, LEX014, LEX015, LEX016, LEX017, LEX019, LEX020, LEX022, LEX023, LEX024.*
+
+Fixtures: ``tests/rule_cases/lexical_quality.py`` and ``tests/test_lex_specification.py``.
 
 ## Rules
 
@@ -64,7 +80,7 @@ LEX018 and LEX021 are implemented in ``iri_lexical_extras`` as markup and NFC ch
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add rdfs:label or an accepted alternative to the declared local term.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned term with no ``Literal`` value under a label predicate; a blank label counts (LEX005 reports it) and a non-literal label does not (LEX013 reports it).  Excluded: a term with ``owl:deprecated true`` (METRIC001 counts the same terms).  Confidence ``certain``, but ``heuristic`` when the term has a literal under a predicate whose local name contains ``label``, ``name`` or ``title`` that is not a label predicate (``ex:hasName``).  Warning: RDFS 5.4.1 makes a label optional, so this is a documentation convention.
 
 *Flagged:* `no label`
 
@@ -122,7 +138,7 @@ ex:name owl:equivalentProperty rdfs:label . ex:A a owl:Class ; ex:name "A" .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description).
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned term with no triple under a definition predicate or a SKOS documentation note (``skos:note``, ``skos:scopeNote`` and what is below them; the change, editorial and history notes and ``skos:example`` document no term, SKOS Reference 7.3 S17 puts them below ``skos:note``).  Any value counts, a blank one included (LEX019) and a non-literal one (LEX013).  Excluded: nothing, a deprecated term is judged. Confidence ``certain``.  Info: RDFS 5.4.2 makes a comment optional.
 
 *Flagged:* `no definition`
 
@@ -192,7 +208,7 @@ ex:n rdfs:subPropertyOf skos:note . ex:A a owl:Class ; ex:n 'About A.' .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use one language-specific primary label per term and language.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Per owned term, a language with more than one distinct literal in the *preferred family*: ``skos:prefLabel`` and below, or when the term has none, its main labels.  Two literals are one when their text and lower-cased language are equal, so ``"A"`` and ``"A"^^xsd:string`` count once (RDF 1.1 Concepts 3.3). SKOS Reference 5.4 S14: "A resource has no more than one value of skos:prefLabel per language tag".  Excluded: an ``rdfs:label`` beside a ``skos:prefLabel`` (a notation or a specialised label), a sub-property of ``rdfs:label`` beside a main label.  Warning: in SKOS the term is then inconsistent (S14 is an integrity condition); outside SKOS it is a convention.
 
 *Flagged:* `two labels in one language`
 
@@ -228,7 +244,7 @@ ex:short rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; rdfs:label "Aye"@en 
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Differentiate labels or formally document and link genuinely equivalent concepts.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Several owned terms of one kind (class, property, or other) that share a main label with the same language, compared after stripping the ends only (case and inner whitespace count).  One finding per label, focused on the first term.  Excluded: a blank label, a label starting with ``obsolete``, a deprecated term, a SKOS collection or scheme.  Info: a repeated label may be intended (homonyms in separate namespaces).
 
 *Flagged:* `same label on two terms`
 
@@ -294,7 +310,7 @@ ex:A a owl:Class ; rdfs:label "S"@en . ex:B a owl:Class ; rdfs:label "S"@fr .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Trim whitespace or replace empty labels.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A label (labels as above, ``skos:altLabel`` excluded, see LEX025) that is empty, whitespace or differs from its stripped form (any character ``str.strip`` removes).  Confidence ``certain``.  Warning: a padded label breaks matching and rendering.
 
 *Flagged:* `padded label`
 
@@ -326,7 +342,7 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use a consistent label language-tag policy.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned term whose main labels hold untagged and language-tagged literals.  Info: policy.
 
 *Flagged:* `plain and tagged`
 
@@ -356,7 +372,7 @@ ex:A a owl:Class ; rdfs:label "A" .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use one configured naming convention for comparable term identifiers.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Once per vocabulary: the local names of the owned terms, opaque names (IRI015) left out, are sorted into ``underscore`` (contains ``_``), ``hyphen`` (contains ``-``), ``camel`` (a lower-case letter followed by an upper-case one) and ``other``; the rule fires when more than one style besides ``other`` occurs and there are at least ``MINIMUM_STYLE_SAMPLE_SIZE`` names.  There is no configuration, the suggestion's "configured" is a leftover.  Info.
 
 *Flagged:* `four terms, two styles (sample size)`
 
@@ -392,7 +408,7 @@ ex:X_0000001 a owl:Class . ex:X_0000002 a owl:Class . ex:eF a owl:Class . ex:gH 
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add the required preferred language label.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** For each configured language, an owned term with no label (``ctx.labels``) in it.  A tag satisfies a range by RFC 4647 3.3.1 basic filtering: ``en-GB`` satisfies ``en``, ``eng`` and a shorter tag do not.  An untagged label satisfies none.  Silent when no language is configured.  Info.
 
 *Flagged:* `required language missing`
 
@@ -426,7 +442,7 @@ ex:A a owl:Class ; rdfs:label "A"@en .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Review capitalization and wording relative to the namespace policy.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Per kind (classes, properties), the terms whose first ``rdfs:label`` (sorted by language, datatype, text) starts with a letter of the minority case, when at least ``MINIMUM_CAPITALIZATION_SAMPLE`` labels begin with a letter and ``MAJORITY_PERCENT`` percent of them share one case.  Info: a style review of the ontology against its own convention.
 
 *Flagged:* `one upper-case class among ten lower-case`
 
@@ -512,7 +528,7 @@ ex:u5 a owl:Class ; rdfs:label "Up 5" .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Write a human-readable label (words separated by spaces) instead of repeating the identifier.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A label of an owned term that equals the term's local name, has no space, and is camelCase or contains ``_`` (``hasPart``, ``has_part``); one finding per label.  When at least ``MINIMUM_AGGREGATE_LABELLED_TERMS`` terms are labelled and more than ``AGGREGATE_PERCENT`` percent of them have a label equal to their local name (schema.org style), one finding on the ontology instead.  Excluded: a one-word label (``cell``).  Info.
 
 *Flagged:* `camelCase label equals local name`
 
@@ -550,7 +566,7 @@ ex:Person a owl:Class ; rdfs:label "Person" .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use single spaces inside labels.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A label (stripped first, so the ends are LEX005's) containing a line break, a tab or two whitespace characters in a row.  Confidence ``certain``.  Warning: such a label renders differently by tool.
 
 *Flagged:* `newline`
 
@@ -596,7 +612,7 @@ ex:A a owl:Class ; rdfs:label " a " .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Remove trailing punctuation such as '.', ':', ';' or ',' from labels.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A label, stripped, ending with ``.``, ``:``, ``;`` or ``,``.  Excluded: ``!``, ``?``, an ellipsis and any other mark.  Info: an abbreviation (``etc.``) is legitimate.
 
 *Flagged:* `period`
 
@@ -634,7 +650,7 @@ ex:A a owl:Class ; rdfs:label "a.b" .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use a literal value for labels and definitions; link resources with a different property.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A value of a label predicate that is not a literal, or of a definition predicate that is neither a literal nor a node with ``rdf:value`` (the SKOS documentation-note pattern, SKOS Reference 7.1 and 7.3). RDFS 5.4.1 and 5.4.2 give ``rdfs:label`` and ``rdfs:comment`` the range ``rdfs:Literal``, and SKOS 5.3 S12 makes the label properties' range the plain literals.  Confidence ``certain``.  Warning.
 
 *Flagged:* `IRI label`
 
@@ -678,7 +694,7 @@ ex:A a owl:Class ; skos:definition ex:d . ex:d rdf:value "An A." .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use plain or language-tagged string literals for labels.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A label with a datatype other than ``xsd:string``, which includes ``rdf:langString`` written explicitly.  SKOS 5.3 S12: the range of the label properties is the plain literals (RDF 1.0), which RDF 1.1 Concepts 3.3 replaces by ``xsd:string`` and ``rdf:langString``.  Confidence ``certain``.  Warning.
 
 *Flagged:* `integer label`
 
@@ -722,7 +738,7 @@ ex:A a owl:Class ; rdfs:label "A"^^xsd:string .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Remove alternative labels that equal the term's own label in the same language.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An alternative label (``skos:altLabel``, ``skos:hiddenLabel``) whose normalised text and language equal a main label of the same term.  SKOS Reference 5.4 S13: the three label properties are pairwise disjoint; the rule is wider (case and inner whitespace ignored) and does not report an ``skos:altLabel`` that equals a ``skos:hiddenLabel`` (known gap).  Info.
 
 *Flagged:* `altLabel equals prefLabel`
 
@@ -752,7 +768,7 @@ ex:A a owl:Class ; skos:prefLabel "Car"@en ; skos:altLabel "Car"@fr .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Resolve the overlap: relate the terms or remove the conflicting synonym.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An alternative label that is a main label of another owned term, same normalised text and language.  One finding per alternative label, naming the first other term.  Excluded: a blank alternative label.  A deprecated term still owns its labels here (LEX004 skips it): known gap.  Warning: the synonym makes the lookup ambiguous.
 
 *Flagged:* `synonym is another term's label`
 
@@ -788,7 +804,7 @@ ex:A a owl:Class ; rdfs:label "" . ex:B a owl:Class ; skos:altLabel "" .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Write a definition that says more than the label.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A definition whose normalised text equals a label of the same term (any language, any label predicate but ``skos:altLabel``).  Blank definitions are LEX019's.  Info.
 
 *Flagged:* `definition equals label`
 
@@ -812,7 +828,7 @@ ex:A a owl:Class ; rdfs:label "Car" ; rdfs:comment "A wheeled vehicle." .
 - **Module:** [`iri_lexical_extras`](#module-iri_lexical_extras)
 - **Fix:** Store labels as plain text; remove HTML/XML tags and character entities.
 
-**Specification.** A label of an owned term (``rdfs:label``, ``skos:prefLabel``, ``skos:altLabel`` and any configured extra label predicate) containing an XML/HTML tag (``<b>``, ``</b>``) or a named, decimal or hexadecimal character entity (``&amp;``, ``&#233;``).  A bare ``<``, ``>`` or ``&`` is plain text, and a trailing ``<word>`` disambiguator that is not an HTML tag name is allowed.  Comments and definitions are not labels and are not checked.
+**Specification.** A label of an owned term (``rdfs:label``, ``skos:prefLabel``, ``skos:altLabel`` and any configured extra label predicate) containing an XML/HTML tag (``<b>``, ``</b>``) or a named, decimal or hexadecimal character entity (``&amp;``, ``&#233;``).  A bare ``<``, ``>`` or ``&`` is plain text, and a trailing ``<word>`` disambiguator that is not an HTML tag name is allowed.  Comments and definitions are not labels and are not checked, nor is ``skos:hiddenLabel``.  The tag list is the HTML tags of ``HTML_TAGS``; ``<foo>`` alone is text.  Confidence ``heuristic``.  Warning: RDFS 5.4.1 and SKOS 5.3 give the label a plain literal, where markup shows as characters (an ``rdf:HTML`` literal would be the way to carry it).
 
 *Flagged:* `html tag`
 
@@ -884,7 +900,7 @@ ex:A a owl:Class ; rdfs:comment "<b>x</b>" .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Provide definition text or remove the empty annotation.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A definition value that is empty or only whitespace.  Confidence ``certain``.  Warning.  A padded but not blank definition is LEX025's.
 
 *Flagged:* `empty`
 
@@ -922,7 +938,7 @@ ex:A a owl:Class .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Write a distinguishing definition for each term.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Two or more owned terms with the same normalised non-blank definition and language; one finding per text, focused on the first term.  Deprecated terms are not excluded.  Warning.
 
 *Flagged:* `same definition twice`
 
@@ -958,7 +974,7 @@ ex:A a owl:Class ; rdfs:comment "" . ex:B a owl:Class ; rdfs:comment "" .
 - **Module:** [`iri_lexical_extras`](#module-iri_lexical_extras)
 - **Fix:** Normalize labels to Unicode NFC so equal-looking labels compare equal.
 
-**Specification.** A label, on the same predicates as LEX018, that differs from its Unicode NFC normal form (for example a decomposed ``e`` plus combining acute accent).
+**Specification.** A label, on the same predicates as LEX018, that differs from its Unicode NFC normal form (for example a decomposed ``e`` plus combining acute accent).  Unicode normalisation form C is UAX #15; RDF 1.1 Concepts 3.3 says literals "SHOULD be in Normal Form C" and compares lexical forms character by character, so two NFC-different spellings are two literals.  ``skos:hiddenLabel`` is not read.  Info.
 
 *Flagged:* `decomposed e-acute`
 
@@ -996,7 +1012,7 @@ ex:A a owl:Class ; rdfs:label "Cafe" .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use a configured language tag or extend the language policy.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A label whose language is not ``und`` and matches no configured language by RFC 4647 3.3.1 (equal, or the configured range followed by ``-``).  Silent when no language is configured.  Info.
 
 *Flagged:* `German label with en policy`
 
@@ -1046,7 +1062,7 @@ Linter options: `languages=('en',)`.
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Add the definition in every configured language, or none.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** When a term has a non-blank definition, each configured language in which it has none (basic filtering); an untagged definition satisfies none, so a term with only untagged definitions is reported for every configured language.  A term with no definition is LEX002's.  Info.
 
 *Flagged:* `definition only in English`
 
@@ -1088,7 +1104,7 @@ ex:A a owl:Class ; rdfs:comment "An A."@en .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Keep one skos:definition per language and term.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** More than one distinct ``skos:definition`` literal in one language on a term ("x" and "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3).  SKOS Reference 7.3 puts no limit on the number of definitions: this is a convention, unlike LEX003's S14.  Warning.
 
 *Flagged:* `two definitions`
 
@@ -1118,7 +1134,7 @@ ex:A a owl:Class ; rdfs:comment "One."@en, "Two."@en .
 - **Module:** [`annotation_whitespace`](#module-annotation_whitespace)
 - **Fix:** Trim the leading and trailing whitespace of the annotation value.
 
-**Specification.** A string literal (plain, language-tagged or ``xsd:string``) whose lexical form starts or ends with whitespace (anything ``str.strip()`` removes, a no-break space included), used as the object of an annotation property on an owned IRI subject.  An annotation property is one declared ``owl:AnnotationProperty`` in the graph, a documentation predicate (``rdfs:comment``, ``skos:definition``, ``dcterms:description``, ``obo:IAO_0000115`` and the other definition predicates, plus any configured extra definition predicate and the predicates below them), a SKOS note or ``skos:altLabel`` / ``skos:hiddenLabel``, ``dcterms:title``, ``dc:title`` or an ``oboInOwl`` synonym.  The label predicates (``rdfs:label``, ``skos:prefLabel``, the configured extra label predicates and everything below them) are left to LEX005, so a label is never reported twice, and a blank value of a definition predicate is left to LEX019.  One finding per property and literal on a subject, so the same padded text under two properties is two findings.
+**Specification.** A string literal (plain, language-tagged or ``xsd:string``) whose lexical form starts or ends with whitespace (anything ``str.strip()`` removes, a no-break space included), used as the object of an annotation property on an owned IRI subject.  An annotation property is one declared ``owl:AnnotationProperty`` in the graph, a documentation predicate (``rdfs:comment``, ``skos:definition``, ``dcterms:description``, ``obo:IAO_0000115`` and the other definition predicates, plus any configured extra definition predicate and the predicates below them), a SKOS note or ``skos:altLabel`` / ``skos:hiddenLabel``, ``dcterms:title``, ``dc:title`` or an ``oboInOwl`` synonym.  The label predicates (``rdfs:label``, ``skos:prefLabel``, the configured extra label predicates and everything below them) are left to LEX005, so a label is never reported twice, and a blank value of a definition predicate is left to LEX019.  One finding per property and literal on a subject, so the same padded text under two properties is two findings.  Excluded: a subject that is a blank node or not owned, a non-string datatype and an annotation under an undeclared custom predicate (known gap: no declaration, no finding).  ``skos:hiddenLabel`` and ``skos:altLabel`` are judged here, since they are no label of LEX005.  Confidence ``certain``.  Warning: RDF 1.1 Concepts 3.3 compares lexical forms character by character, so a padded value is a different literal from the trimmed one and every consumer that matches on text sees two values.
 
 *Flagged:* `trailing space in a comment`
 

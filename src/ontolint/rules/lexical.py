@@ -1,4 +1,61 @@
-"""Label, definition, and naming-style rules: LEX001-LEX009."""
+"""Label, definition, and naming-style rules: LEX001-LEX009.
+
+Every rule reads the asserted graph only (no reasoner, no network).  A *term* is an owned declared class,
+property, individual or SKOS concept or scheme (``RuleContext.terms``).  A *label* is a ``Literal`` under
+``rdfs:label``, ``skos:prefLabel``, a configured extra label predicate or a predicate below one of them
+(``rdfs:subPropertyOf`` and ``owl:equivalentProperty``, ``RuleContext.labels``); ``skos:altLabel`` and
+``skos:hiddenLabel`` are below ``rdfs:label`` in the SKOS schema (SKOS Reference 5.3, S11) but never name a
+term, so they are not labels here.  A *main* label is a label under ``rdfs:label``, ``skos:prefLabel`` or an
+extra, or below ``skos:prefLabel``; a term with none is named by its other labels (``RuleContext.main_label_predicates``).
+A *language* is the lower-cased tag of a literal, ``und`` when it has none.  A *definition* is a value of
+``rdfs:comment``, ``skos:definition``, ``dcterms:description``, ``dc:description``, the OBO and PROV
+definition predicates, a configured extra and every predicate below one.  Every finding is ``heuristic``
+unless said otherwise.  The standards are the SKOS Reference (W3C 2009-08-18), RDF Schema 1.1 (5.4.1
+``rdfs:label``, 5.4.2 ``rdfs:comment``: the range of both is ``rdfs:Literal``), RDF 1.1 Concepts (3.3:
+literals) and RFC 4647 (3.3.1: basic filtering).  Specifications:
+
+* **LEX001.** An owned term with no ``Literal`` value under a label predicate; a blank label counts (LEX005
+  reports it) and a non-literal label does not (LEX013 reports it).  Excluded: a term with
+  ``owl:deprecated true`` (METRIC001 counts the same terms).  Confidence ``certain``, but ``heuristic`` when
+  the term has a literal under a predicate whose local name contains ``label``, ``name`` or ``title`` that is not
+  a label predicate (``ex:hasName``).  Warning: RDFS 5.4.1 makes a label optional, so this is a documentation
+  convention.
+* **LEX002.** An owned term with no triple under a definition predicate or a SKOS documentation note
+  (``skos:note``, ``skos:scopeNote`` and what is below them; the change, editorial and history notes and
+  ``skos:example`` document no term, SKOS Reference 7.3 S17 puts them below ``skos:note``).  Any value counts,
+  a blank one included (LEX019) and a non-literal one (LEX013).  Excluded: nothing, a deprecated term is judged.
+  Confidence ``certain``.  Info: RDFS 5.4.2 makes a comment optional.
+* **LEX003.** Per owned term, a language with more than one distinct literal in the *preferred family*:
+  ``skos:prefLabel`` and below, or when the term has none, its main labels.  Two literals are one when their
+  text and lower-cased language are equal, so ``"A"`` and ``"A"^^xsd:string`` count once (RDF 1.1 Concepts 3.3).
+  SKOS Reference 5.4 S14: "A resource has no more than one value of skos:prefLabel per language tag".  Excluded:
+  an ``rdfs:label`` beside a ``skos:prefLabel`` (a notation or a specialised label), a sub-property of
+  ``rdfs:label`` beside a main label.  Warning: in SKOS the term is then inconsistent (S14 is an integrity
+  condition); outside SKOS it is a convention.
+* **LEX004.** Several owned terms of one kind (class, property, or other) that share a main label with the
+  same language, compared after stripping the ends only (case and inner whitespace count).  One finding per
+  label, focused on the first term.  Excluded: a blank label, a label starting with ``obsolete``, a deprecated
+  term, a SKOS collection or scheme.  Info: a repeated label may be intended (homonyms in separate namespaces).
+* **LEX005.** A label (labels as above, ``skos:altLabel`` excluded, see LEX025) that is empty, whitespace or
+  differs from its stripped form (any character ``str.strip`` removes).  Confidence ``certain``.  Warning: a
+  padded label breaks matching and rendering.
+* **LEX006.** An owned term whose main labels hold untagged and language-tagged literals.  Info: policy.
+* **LEX007.** Once per vocabulary: the local names of the owned terms, opaque names (IRI015) left out, are sorted
+  into ``underscore`` (contains ``_``), ``hyphen`` (contains ``-``), ``camel`` (a lower-case letter followed by
+  an upper-case one) and ``other``; the rule fires when more than one style besides ``other`` occurs and there
+  are at least ``MINIMUM_STYLE_SAMPLE_SIZE`` names.  There is no configuration, the suggestion's "configured"
+  is a leftover.  Info.
+* **LEX008.** For each configured language, an owned term with no label (``ctx.labels``) in it.  A tag
+  satisfies a range by RFC 4647 3.3.1 basic filtering: ``en-GB`` satisfies ``en``, ``eng`` and a shorter tag do
+  not.  An untagged label satisfies none.  Silent when no language is configured.  Info.
+* **LEX009.** Per kind (classes, properties), the terms whose first ``rdfs:label`` (sorted by language,
+  datatype, text) starts with a letter of the minority case, when at least ``MINIMUM_CAPITALIZATION_SAMPLE``
+  labels begin with a letter and ``MAJORITY_PERCENT`` percent of them share one case.  Info: a style review
+  of the ontology against its own convention.
+
+Fixtures: ``tests/rule_cases/lexical.py``, ``tests/test_precision_lex_iri.py``, ``tests/test_mutation_rules.py``
+and ``tests/test_lex_specification.py``.
+"""
 
 from __future__ import annotations
 
