@@ -67,3 +67,26 @@ def test_ci_and_the_contributor_docs_use_the_gate_script() -> None:
         assert f"uv run {tool}" not in workflow, f"ci.yml runs {tool} outside the gate"
     assert "scripts/gate.py" in (ROOT / "docs" / "adding-rules.md").read_text(encoding="utf-8")
     assert "scripts/gate.py" in (ROOT / "README.md").read_text(encoding="utf-8")
+
+
+def test_smoke_mode_runs_only_the_marked_cross_platform_tests_without_the_suite_wide_coverage_floor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ran: list[str] = []
+    monkeypatch.setattr(gate, "run_step", lambda _title, argv: ran.append(" ".join(argv)) or 0)
+    assert gate.main(["--smoke"]) == 0
+    assert ran == ["pytest -m smoke --no-cov -W error -rs"]
+    with pytest.raises(SystemExit):
+        gate.main(["--smoke", "--fix"])
+
+
+def test_the_smoke_workflow_runs_the_smoke_mode_on_all_three_systems_with_least_privilege() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "smoke.yml").read_text(encoding="utf-8")
+    assert "run: uv run python scripts/gate.py --smoke\n" in workflow
+    for system in ("ubuntu-latest", "windows-latest", "macos-latest"):
+        assert system in workflow
+    assert "permissions:\n  contents: read\n" in workflow
+    assert "timeout-minutes:" in workflow
+    assert "pull_request:" in workflow
+    assert "uv run pytest" not in workflow
+    assert "write" not in workflow.replace("persist-credentials", "")
