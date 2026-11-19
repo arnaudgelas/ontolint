@@ -9,7 +9,14 @@
   ``dc:title`` or an ``oboInOwl`` synonym.  The label predicates (``rdfs:label``, ``skos:prefLabel``, the
   configured extra label predicates and everything below them) are left to LEX005, so a label is never
   reported twice, and a blank value of a definition predicate is left to LEX019.  One finding per property
-  and literal on a subject, so the same padded text under two properties is two findings.
+  and literal on a subject, so the same padded text under two properties is two findings.  Excluded: a
+  subject that is a blank node or not owned, a non-string datatype and an annotation under an undeclared custom
+  predicate (known gap: no declaration, no finding).  ``skos:hiddenLabel`` and ``skos:altLabel`` are judged here,
+  since they are no label of LEX005.  Confidence ``certain``.  Warning: RDF 1.1 Concepts 3.3 compares lexical forms
+  character by character, so a padded value is a different literal from the trimmed one and every consumer that
+  matches on text sees two values.
+
+Fixtures: ``tests/rule_cases/lexical_quality.py`` and ``tests/test_lex_specification.py``.
 """
 
 from __future__ import annotations

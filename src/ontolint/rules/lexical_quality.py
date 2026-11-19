@@ -3,6 +3,51 @@
 LEX018 and LEX021 are implemented in ``iri_lexical_extras`` as markup and NFC checks: polysemy needs
 NLP and domain judgement, and malformed language tags cannot be observed because RDFLib rejects
 them at parse time.
+
+Terms, labels, main labels, definitions and languages are those of ``lexical`` (read its docstring first);
+"normalised" below means whitespace runs collapsed to one space and case-folded.  Every finding is
+``heuristic`` unless said otherwise.  Specifications:
+
+* **LEX010.** A label of an owned term that equals the term's local name, has no space, and is camelCase or
+  contains ``_`` (``hasPart``, ``has_part``); one finding per label.  When at least
+  ``MINIMUM_AGGREGATE_LABELLED_TERMS`` terms are labelled and more than ``AGGREGATE_PERCENT`` percent of them
+  have a label equal to their local name (schema.org style), one finding on the ontology instead.  Excluded:
+  a one-word label (``cell``).  Info.
+* **LEX011.** A label (stripped first, so the ends are LEX005's) containing a line break, a tab or two
+  whitespace characters in a row.  Confidence ``certain``.  Warning: such a label renders differently by tool.
+* **LEX012.** A label, stripped, ending with ``.``, ``:``, ``;`` or ``,``.  Excluded: ``!``, ``?``, an ellipsis
+  and any other mark.  Info: an abbreviation (``etc.``) is legitimate.
+* **LEX013.** A value of a label predicate that is not a literal, or of a definition predicate that is neither a
+  literal nor a node with ``rdf:value`` (the SKOS documentation-note pattern, SKOS Reference 7.1 and 7.3).
+  RDFS 5.4.1 and 5.4.2 give ``rdfs:label`` and ``rdfs:comment`` the range ``rdfs:Literal``, and SKOS 5.3 S12
+  makes the label properties' range the plain literals.  Confidence ``certain``.  Warning.
+* **LEX014.** A label with a datatype other than ``xsd:string``, which includes ``rdf:langString`` written
+  explicitly.  SKOS 5.3 S12: the range of the label properties is the plain literals (RDF 1.0), which RDF 1.1
+  Concepts 3.3 replaces by ``xsd:string`` and ``rdf:langString``.  Confidence ``certain``.  Warning.
+* **LEX015.** An alternative label (``skos:altLabel``, ``skos:hiddenLabel``) whose normalised text and language
+  equal a main label of the same term.  SKOS Reference 5.4 S13: the three label properties are pairwise
+  disjoint; the rule is wider (case and inner whitespace ignored) and does not report an ``skos:altLabel`` that
+  equals a ``skos:hiddenLabel`` (known gap).  Info.
+* **LEX016.** An alternative label that is a main label of another owned term, same normalised text and
+  language.  One finding per alternative label, naming the first other term.  Excluded: a blank alternative
+  label.  A deprecated term still owns its labels here (LEX004 skips it): known gap.  Warning: the synonym
+  makes the lookup ambiguous.
+* **LEX017.** A definition whose normalised text equals a label of the same term (any language, any label
+  predicate but ``skos:altLabel``).  Blank definitions are LEX019's.  Info.
+* **LEX019.** A definition value that is empty or only whitespace.  Confidence ``certain``.  Warning.  A padded
+  but not blank definition is LEX025's.
+* **LEX020.** Two or more owned terms with the same normalised non-blank definition and language; one finding
+  per text, focused on the first term.  Deprecated terms are not excluded.  Warning.
+* **LEX022.** A label whose language is not ``und`` and matches no configured language by RFC 4647 3.3.1
+  (equal, or the configured range followed by ``-``).  Silent when no language is configured.  Info.
+* **LEX023.** When a term has a non-blank definition, each configured language in which it has none (basic
+  filtering); an untagged definition satisfies none, so a term with only untagged definitions is reported for
+  every configured language.  A term with no definition is LEX002's.  Info.
+* **LEX024.** More than one distinct ``skos:definition`` literal in one language on a term ("x" and
+  "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3).  SKOS Reference 7.3 puts no limit on the number of
+  definitions: this is a convention, unlike LEX003's S14.  Warning.
+
+Fixtures: ``tests/rule_cases/lexical_quality.py`` and ``tests/test_lex_specification.py``.
 """
 
 from __future__ import annotations

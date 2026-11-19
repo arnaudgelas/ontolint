@@ -38,6 +38,8 @@ All three inspect only the asserted graph and never leave the process.  Their sp
 
 *Specified under each rule: IRI015, [LEX018](lex.md), [LEX021](lex.md).*
 
+Fixtures for LEX018 and LEX021: ``tests/rule_cases/iri_lexical_extras.py``, ``tests/test_mutation_iri_lexical_extras.py`` and ``tests/test_lex_specification.py``.
+
 ### Module iri_quality
 
 Source: `src/ontolint/rules/iri_quality.py`.
