@@ -128,9 +128,10 @@ coverage_timeout = 900
 [tool.pytest.ini_options]
 # pytest-gremlins is loaded explicitly for mutation runs; auto-loading it delays
 # normal xdist worker teardown even when mutation testing is not enabled.
-addopts = "-p no:pytest_gremlins --cov=ontolint --cov-branch --cov-report=term-missing --cov-fail-under=95"
+addopts = "-p no:pytest_gremlins --cov=ontolint --cov-branch --cov-report=term-missing --cov-fail-under=95 --strict-markers"
 testpaths = ["tests"]
 markers = [
+    "smoke: the small cross-platform suite run on Linux, macOS and Windows (scripts/gate.py --smoke)",
     "benchmark: opt-in large-ontology resource-budget benchmarks (set ONTOLINT_BENCH=1)",
     "slow: property-based and fuzz tests; excluded from mutation runs (pytest -m 'not slow')",
 ]
