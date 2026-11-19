@@ -68,6 +68,9 @@ results after upgrading.
   annotation properties), the gap `robot report` calls `annotation_whitespace`. LEX005 still owns labels.
 - **OBO013 (info):** reports a term whose `obo:IAO_0000115` definition starts with a lowercase letter, as ROBOT's
   `lowercase_definition` does. Opt-in with the rest of the `OBO` family.
+- **scripts:** `scripts/metric_sweep.py` sweeps each METRIC limit over the recorded calibration corpus, prints false
+  positives and negatives per limit under a label sheet, and lists four candidate corpus files. Documentation and
+  tooling only: no default, severity or finding changes (issue #8, which stays open for the maintainer's labels).
 
 ### Added
 
