@@ -55,7 +55,7 @@ from .models import (
 )
 from .modules import MODULE_BY, UnresolvedModulePredicate, finding_modules, resolve_predicate, term_modules
 from .paths import InputFile, resolve_inputs
-from .policy import MAX_PARSE_SECONDS, Policy, PolicyVersionError
+from .policy import MAX_PARSE_SECONDS, Policy, PolicyBudgetError, PolicyVersionError
 from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
 from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
@@ -71,7 +71,7 @@ from .reporting import (
     run_exit_code,
 )
 from .rule_info import UnknownRuleError, explain_rule, render_explanation, render_rule_list, rule_rows
-from .rules import measurements
+from .rules import budgets, measurements
 from .rules.duplicate_ids import SET_RULES, finding_key
 from .rules.registry import RuleRegistry, UnknownSelectorError, default_registry
 from .rules.runtime import RuleContext
@@ -1161,6 +1161,7 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
     _check_policy_rules(config, registry)
+    budgets.validate(config)
     check_selectors(registry, split_selectors(args.select), split_selectors(args.ignore))
     limits = _policy(args, config, config.ignored_rules)
     try:  # read catalogs and import dirs before parsing: a broken one is a configuration error
@@ -1303,7 +1304,7 @@ def _lint_and_finish(args: argparse.Namespace) -> int:
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
         print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)
         return 2
-    except (PolicyVersionError, UnknownPolicyRuleError) as exc:
+    except (PolicyVersionError, PolicyBudgetError, UnknownPolicyRuleError) as exc:
         print(f"GOV020: policy file rejected: {exc}", file=sys.stderr)
         return 2
     except Exception as exc:

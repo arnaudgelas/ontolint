@@ -243,6 +243,8 @@ each in-file module, named graph or closure file.
 
 ## Limitations
 
+- A measurement can be bounded by a policy budget (`quality_budgets`, [quality-budgets.md](quality-budgets.md));
+  only the ones with a single value, not the histogram `class_depth`.
 - Every measurement is asserted-only. Unsatisfiable classes, the competency-question pass rate and
   mapping coverage need a reasoner, a CQ manifest or reviewed mappings, and are not measured.
 - With `--pattern-library`, the measurements are those of the linted index file's graph; they are
