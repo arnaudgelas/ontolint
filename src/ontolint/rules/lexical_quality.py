@@ -259,11 +259,11 @@ def _definitions(ctx: RuleContext, term: URIRef, text: TermText) -> None:
             ctx.add("LEX019", term, "Definition is blank.", confidence="certain")
         elif _norm(definition) in labels:
             ctx.add("LEX017", term, f"Definition {str(definition)!r} repeats the label.", subject=(str(definition),))
-    counts: defaultdict[str, int] = defaultdict(int)
+    values: defaultdict[str, set[str]] = defaultdict(set)
     for definition in text.skos_definitions:
-        counts[_language(definition)] += 1
-    for language, count in sorted(counts.items()):
-        if count > 1:
+        values[_language(definition)].add(str(definition))  # "x" and "x"^^xsd:string are one literal
+    for language, found in sorted(values.items()):
+        if (count := len(found)) > 1:
             ctx.add("LEX024", term, f"{count} skos:definition values for language {language}.", subject=(language,))
 
 
