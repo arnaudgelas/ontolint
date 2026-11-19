@@ -200,7 +200,9 @@ def test_dependencies_come_from_the_hash_locked_files_and_they_match_the_lock(
         text=True,
         check=True,
     ).stdout
-    assert (ROOT / "action" / file).read_text() == exported
+    assert (ROOT / "action" / file).read_text() == exported, (
+        f"action/{file} is out of step with uv.lock: regenerate it with the commands in docs/releasing.md"
+    )
     assert "--hash=sha256:" in exported
     # Every requirement line carries hashes, so --require-hashes accepts the file.
     hashed = r"^[A-Za-z][^\n]*==[^\n]*\\\n(?:    --hash=sha256:[0-9a-f]{64}(?: \\)?\n)+"
