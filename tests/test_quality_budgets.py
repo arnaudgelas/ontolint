@@ -324,6 +324,56 @@ def test_a_budget_on_a_measurement_with_shapes_is_taken(tmp_path: Path, capsys: 
     assert _findings(out) == []
 
 
+def _boom(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(_ctx: object, _term: object) -> bool:
+        raise ValueError("boom")
+
+    monkeypatch.setattr(measurements, "is_unlabelled", boom)
+
+
+def test_a_budget_on_a_measurement_whose_computation_raised_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _boom(monkeypatch)
+    code, _, err = _run(tmp_path, {"class_label_coverage": {"minimum": 0}}, "--format", "json", capsys=capsys)
+    assert code == 2
+    assert "TOOL001: rule METRIC014 failed" in err
+    assert "ValueError: boom" in err
+
+
+def test_a_failed_requested_measurement_and_a_budget_on_it_both_exit_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``--measurements`` the failure is reported as the run's own as well; there is one exit status, 2."""
+    _boom(monkeypatch)
+    code, out, err = _run(
+        tmp_path, {"class_label_coverage": {"minimum": 0}}, "--format", "json", "--measurements", capsys=capsys
+    )
+    assert code == 2
+    assert "TOOL001: rule METRIC014 failed" in err
+    assert "TOOL001: measurement class_label_coverage failed" in err
+    assert json.loads(out)["files"][0]["measurements"]  # the report is written
+
+
+def test_a_budget_on_a_measurement_that_does_not_apply_exits_2_where_the_measurement_alone_does_not(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The SHACL coverage without shapes is published absent without a failure: a request for the vector exits 0 ...
+    code, _, err = _run(tmp_path, {}, "--format", "json", "--measurements", capsys=capsys)
+    assert (code, err) == (0, "")
+    # ... and a budget on it is a request for its value, which there is none of.
+    code, _, err = _run(
+        tmp_path,
+        {"shacl_class_target_coverage": {"minimum": 0}},
+        "--format",
+        "json",
+        "--measurements",
+        capsys=capsys,
+    )
+    assert code == 2
+    assert "no SHACL shapes graph was supplied" in err
+
+
 # --- the built-in budgets -------------------------------------------------------------------------------------------
 
 
