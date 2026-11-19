@@ -202,7 +202,8 @@ cause can be read; a consumer that reads the report without the exit status can 
 `failed:` reason) from a measurement that does not apply to the input (any other reason). A snapshot or
 DQV file written by that run holds the same absent entry and must not be committed as an accepted value.
 A run that does not ask for the measurements is unchanged, as a measurement that fails there is not
-computed for a report; a selected METRIC rule that reads it fails the run itself.
+computed for a report; a selected METRIC rule that reads it, or a quality budget on it
+([quality-budgets.md](quality-budgets.md), `METRIC014`), fails the run itself.
 
 ## Partitions
 
