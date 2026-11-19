@@ -21,6 +21,8 @@ labels and the false-positive counts).
   `METRIC001`-`METRIC003` and none for `METRIC004`-`METRIC013`, recall is not measured for most rules.
 - Numbers are for ontolint 0.14.0. `check` reproduced the 0.13.1 results unchanged on 0.14.0 before this
   page's extra measurements were added.
+- `check` was rerun on ontolint 0.15.1 (2026-11-19) after refetching all 21 files from their pins: every
+  SHA-256 matched and the recorded results are unchanged. The tables below are therefore current for 0.15.1.
 
 ## Method
 
@@ -29,6 +31,15 @@ uv run python scripts/metric_corpus.py fetch DIR     # download by pin, refuse a
 uv run python scripts/metric_corpus.py measure DIR   # lint, cross-check, rewrite the results and both pages
 uv run python scripts/metric_corpus.py check DIR     # fail if the measurements changed
 uv run python scripts/metric_corpus.py render        # rewrite the generated tables from the JSON files
+```
+
+Two more commands read the recorded results and need neither the network nor the corpus files
+([`validation/metric-sweep.md`](validation/metric-sweep.md)):
+
+```sh
+uv run python scripts/metric_sweep.py sweep          # files flagged as each limit moves (no labels needed)
+uv run python scripts/metric_sweep.py labels-sheet   # CSV, one row per (file, rule), maintainer columns blank
+uv run python scripts/metric_sweep.py calibrate      # TP/FP/FN/TN per rule and limit under the labels, and a limit
 ```
 
 Each file is linted alone, three times with `--select METRIC`: at the default policy (does the rule fire),
@@ -162,20 +173,77 @@ CLS001 now reads both, METRIC005 reports 1 of 22 (0.0455) and is silent on DCMI 
 METRIC005 specification is corrected. *Alternative:* revert the change, and METRIC005 stays a known false
 positive on DCMI vocabularies.
 
+**What the DCAM says.** `dcam:domainIncludes` and `dcam:rangeIncludes` are defined by DCMI Terms, "Terms for
+vocabulary description" (section 8 of <https://www.dublincore.org/specifications/dublin-core/dcmi-terms/>, and
+<http://purl.org/dc/dcam/>, issued 2020-01-20): `domainIncludes` is "a suggested class for subjects of this
+property", the same weak, non-entailing hint as `schema:domainIncludes`. It is a usage hint, so a class named
+by it is *used by the ontology* in the sense CLS001 means, which is the argument for reading it. The same
+argument is why OWL005 and OWL006 already treat it as a signature.
+
+**Tests.** The behaviour is already pinned: `tests/test_precision_cls.py`
+(`test_cls001_dcam_includes_clears_the_class_like_schema_org_does` and `..._only_connects_its_object`) and the
+METRIC005 rule case `dcam domain and range includes`. What is missing is the catalogue-level fixtures
+that the rule-case harness reads for CLS001 (`tests/rule_cases/classes.py` has none for `domainIncludes`, schema.org
+or dcam). A sketch, if the maintainer confirms the decision, in the style of that file:
+
+```python
+ttl("dcam:domainIncludes names the class", "ex:A a owl:Class . ex:p a rdf:Property ; <http://purl.org/dc/dcam/domainIncludes> ex:A ."),
+ttl("dcam:rangeIncludes names the class", "ex:A a owl:Class . ex:p a rdf:Property ; <http://purl.org/dc/dcam/rangeIncludes> ex:A ."),
+```
+
+in the clean list, and `ex:A a owl:Class ; <http://purl.org/dc/dcam/domainIncludes> ex:B .` (a class that is only the
+subject of a hint) in the firing list. This PR does not add them: the decision is the maintainer's, and the behaviour
+is already tested.
+
 ### Approval of the METRIC specifications
 
-The specification in the `rules/metrics.py` docstring needs approval. Points to settle first: the METRIC005
-reading of `dcam:domainIncludes` and `dcam:rangeIncludes` (issue #66, decided as recommended above, to be
-confirmed); METRIC004 and METRIC005 being gated on the owned classes while the text says "population";
-METRIC011's `certain`. *Recommendation:* approve once #66 is confirmed. The corpus does not confirm or refute
-the other specifications.
+Each statement of the `rules/metrics.py` docstring was read against the code and the measurement it names
+(`rules/measurements.py`) on 2026-11-19, ontolint 0.15.1. The rows are a checklist for approval; "matches" means
+the statement is what the code does, not that the choice is right. No docstring line was changed: nothing found
+is a clear typo.
+
+| Item | Docstring says | Code does | Verdict |
+| --- | --- | --- | --- |
+| Severities | 001 and 002 warning, 003 to 013 info | `SPECS` agrees | matches; the 001/002 choice is decision 1 above |
+| Confidence | "Findings are `heuristic` ... except METRIC011's" | every `SPECS` entry has category `heuristic` (the shared `_spec` helper), METRIC011 passes confidence `certain` | **wording conflates category and confidence**; reword once METRIC011 is decided |
+| Strict comparison, focus, identity | as stated | `_focus`, strict `>` and `<` | matches |
+| Message digits | "value and limit with 2 decimals, or more (up to 6)" | true of `_vs`; METRIC004 and METRIC012 print `(threshold X)`, METRIC011 an integer | **true only of the comparison messages**; say so |
+| Sample gate | "a population of at least `metric_min_sample` terms" | the gated quantity differs: owned classes (004 to 007), object and datatype properties (008), labelled terms (009), defined classes (012), structural references (010), subjects (013); METRIC001 to METRIC003 gate on their own population | **"terms" is imprecise** for 010 and 013; per-rule lines name it only for 004, 006, 007 |
+| METRIC004 and METRIC005 | "population" gate on owned classes | `_hierarchy_rules` returns early below the gate for both | matches; METRIC005's line does not state the gate |
+| METRIC005 | CLS001's set, `dcam` included | `USAGE_PREDICATES` has `DOMAIN_SUBSTITUTES` and `RANGE_SUBSTITUTES` (schema.org http and https, dcam) | matches since #66 |
+| METRIC005 message | (not stated) | prints "no asserted sub/superclass, instance, domain or range", shorter than the specification | message is a summary; no change needed |
+| METRIC006, METRIC007 | owned non-annotation-only properties per owned class | `annotation_only`, `owned_properties` | matches |
+| METRIC008 | what OWL005 and OWL006 both report | `unsigned_properties` | matches |
+| METRIC009 | labelled terms, tagged share | `label_language_coverage` | matches |
+| METRIC010 | exclusions "`owl:equivalentClass`, restriction fillers" | only `subClassOf`, `domain` and `range` are read, so `equivalentClass` and fillers are never looked at | **wording**: not exclusions; the W3C list is OWL, RDF, RDFS, XSD only, so SHACL and `skos:` targets count as foreign |
+| METRIC011 | distinct IRI `owl:imports` minus resolved ones; no gate | `_unresolved_imports` | matches |
+| METRIC012 | mean of the longest description's `\w+` tokens | `_definition_length` | matches |
+| METRIC013 | structural blank types and predicates | `_STRUCTURAL_TYPES`, `_STRUCTURAL_PREDICATES`, any `sh:` predicate | matches; `owl:AllDifferent` is among the `owl:All*` nodes |
+
+*Recommendation:* approve the specification once #66 is confirmed and the three wording rows (confidence, message
+digits, sample gate) and the METRIC010 exclusions line are reworded; they change no behaviour. The corpus neither
+confirms nor refutes any of the other specifications.
 
 ## What the maintainer has to decide
 
-1. Approve or correct the proposed labels in `metric-corpus.json`, replacing presumed ones with checked ones.
-2. Decide the three open labels (METRIC004 and METRIC008 on PAO, METRIC006 on the Rights Ontology).
-3. Add a known-poor example for each of METRIC004-METRIC013, or accept that their recall is unmeasured.
-4. The four decisions above: severity, METRIC011 confidence, CLS001 and `dcam:`, approval of the specifications.
-5. Whether `check` runs at every release (issue #31).
+Making the labelling mechanical (no step below changes a default):
 
-Until 1 and 3, no threshold should change on this corpus.
+1. `uv run python scripts/metric_sweep.py labels-sheet > sheet.csv`. Each row is a (file, rule) with its measured
+   value and whether the default fires; fill `maintainer_expect` (`fire`, `silent`, `unknown`), `maintainer_basis`
+   (`checked` or `presumed`) and `maintainer_reason` on the rows you decide; blank rows keep today's label.
+2. `uv run python scripts/metric_sweep.py calibrate --labels sheet.csv` (add `--checked-only` to ignore presumed
+   labels) prints, per rule and limit, flagged files, TP, FP, FN, TN and the recommended limit. A rule with no
+   `fire` label prints no recommendation: its recall is unmeasured, and the limit that switches it off would
+   otherwise win. Copy the decisions into `validation/metric-corpus.json`, set `label_status` to `approved`, and
+   `scripts/metric_corpus.py render`.
+3. Decide the open labels: METRIC004 and METRIC008 on PAO, METRIC006 on the Rights Ontology.
+4. Add known-poor files for METRIC004-METRIC013, or accept their recall as unmeasured. The four candidates in
+   [`validation/metric-candidates.md`](validation/metric-candidates.md) are all suggested "silent"; none is poor.
+5. The decisions above: severity (METRIC001, METRIC002), METRIC011 confidence, CLS001 and `dcam:`, approval of the
+   specifications.
+6. Whether `check` runs at every release (issue #31).
+
+Until 2 and 4, no threshold should change on this corpus. The issue's "done when" (every threshold records its
+rationale, corpus results and override behaviour, and any changed default has regression fixtures) is not met by this
+page: the rationale and override behaviour are recorded, the corpus results are conditioned on labels nobody has
+approved, and no default has changed.
