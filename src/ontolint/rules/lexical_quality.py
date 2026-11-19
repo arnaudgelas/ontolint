@@ -44,7 +44,8 @@ Terms, labels, main labels, definitions and languages are those of ``lexical`` (
   filtering); an untagged definition satisfies none, so a term with only untagged definitions is reported for
   every configured language.  A term with no definition is LEX002's.  Info.
 * **LEX024.** More than one distinct ``skos:definition`` literal in one language on a term ("x" and
-  "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3).  SKOS Reference 7.3 puts no limit on the number of
+  "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3;
+  "1"^^xsd:integer is another).  SKOS Reference 7.3 puts no limit on the number of
   definitions: this is a convention, unlike LEX003's S14.  Warning.
 
 Fixtures: ``tests/rule_cases/lexical_quality.py`` and ``tests/test_lex_specification.py``.
@@ -63,7 +64,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import local_name
+from .support import literal_identity, local_name
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -304,9 +305,9 @@ def _definitions(ctx: RuleContext, term: URIRef, text: TermText) -> None:
             ctx.add("LEX019", term, "Definition is blank.", confidence="certain")
         elif _norm(definition) in labels:
             ctx.add("LEX017", term, f"Definition {str(definition)!r} repeats the label.", subject=(str(definition),))
-    values: defaultdict[str, set[str]] = defaultdict(set)
+    values: defaultdict[str, set[tuple[str, str | None]]] = defaultdict(set)
     for definition in text.skos_definitions:
-        values[_language(definition)].add(str(definition))  # "x" and "x"^^xsd:string are one literal
+        values[_language(definition)].add(literal_identity(definition))  # "x" and "x"^^xsd:string are one literal
     for language, found in sorted(values.items()):
         if (count := len(found)) > 1:
             ctx.add("LEX024", term, f"{count} skos:definition values for language {language}.", subject=(language,))
