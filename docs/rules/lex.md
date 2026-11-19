@@ -208,7 +208,7 @@ ex:n rdfs:subPropertyOf skos:note . ex:A a owl:Class ; ex:n 'About A.' .
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Use one language-specific primary label per term and language.
 
-**Specification.** Per owned term, a language with more than one distinct literal in the *preferred family*: ``skos:prefLabel`` and below, or when the term has none, its main labels.  Two literals are one when their text and lower-cased language are equal, so ``"A"`` and ``"A"^^xsd:string`` count once (RDF 1.1 Concepts 3.3). SKOS Reference 5.4 S14: "A resource has no more than one value of skos:prefLabel per language tag".  Excluded: an ``rdfs:label`` beside a ``skos:prefLabel`` (a notation or a specialised label), a sub-property of ``rdfs:label`` beside a main label.  Warning: in SKOS the term is then inconsistent (S14 is an integrity condition); outside SKOS it is a convention.
+**Specification.** Per owned term, a language with more than one distinct literal in the *preferred family*: ``skos:prefLabel`` and below, or when the term has none, its main labels.  Two literals are one when their text, datatype and lower-cased language are equal, so ``"A"`` and ``"A"^^xsd:string`` count once (RDF 1.1 Concepts 3.3). SKOS Reference 5.4 S14: "A resource has no more than one value of skos:prefLabel per language tag".  Excluded: an ``rdfs:label`` beside a ``skos:prefLabel`` (a notation or a specialised label), a sub-property of ``rdfs:label`` beside a main label.  Warning: in SKOS the term is then inconsistent (S14 is an integrity condition); outside SKOS it is a convention.
 
 *Flagged:* `two labels in one language`
 
@@ -1104,7 +1104,7 @@ ex:A a owl:Class ; rdfs:comment "An A."@en .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Keep one skos:definition per language and term.
 
-**Specification.** More than one distinct ``skos:definition`` literal in one language on a term ("x" and "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3).  SKOS Reference 7.3 puts no limit on the number of definitions: this is a convention, unlike LEX003's S14.  Warning.
+**Specification.** More than one distinct ``skos:definition`` literal in one language on a term ("x" and "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3; "1"^^xsd:integer is another).  SKOS Reference 7.3 puts no limit on the number of definitions: this is a convention, unlike LEX003's S14.  Warning.
 
 *Flagged:* `two definitions`
 

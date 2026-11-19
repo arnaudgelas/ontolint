@@ -52,6 +52,12 @@ def test_lex024_counts_one_rdf_literal_once() -> None:
     assert _foci("LEX024", 'ex:A a owl:Class ; skos:definition "x", "y"^^xsd:string .') == ["A"]
 
 
+def test_lex003_and_lex024_keep_literals_of_another_datatype_apart() -> None:
+    # Only xsd:string and rdf:langString are implied by the plain form; "1" and "1"^^xsd:integer are two terms.
+    assert _foci("LEX003", 'ex:A a owl:Class ; rdfs:label "1", "1"^^xsd:integer .') == ["A"]
+    assert _foci("LEX024", 'ex:A a owl:Class ; skos:definition "1", "1"^^xsd:integer .') == ["A"]
+
+
 # --- LEX001, LEX002: a term without label or definition (RDFS 5.4.1 and 5.4.2 make both optional) --------
 
 

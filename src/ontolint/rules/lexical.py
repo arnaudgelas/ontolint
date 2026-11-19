@@ -28,7 +28,8 @@ literals) and RFC 4647 (3.3.1: basic filtering).  Specifications:
   Confidence ``certain``.  Info: RDFS 5.4.2 makes a comment optional.
 * **LEX003.** Per owned term, a language with more than one distinct literal in the *preferred family*:
   ``skos:prefLabel`` and below, or when the term has none, its main labels.  Two literals are one when their
-  text and lower-cased language are equal, so ``"A"`` and ``"A"^^xsd:string`` count once (RDF 1.1 Concepts 3.3).
+  text, datatype and lower-cased language are equal, so ``"A"`` and
+  ``"A"^^xsd:string`` count once (RDF 1.1 Concepts 3.3).
   SKOS Reference 5.4 S14: "A resource has no more than one value of skos:prefLabel per language tag".  Excluded:
   an ``rdfs:label`` beside a ``skos:prefLabel`` (a notation or a specialised label), a sub-property of
   ``rdfs:label`` beside a main label.  Warning: in SKOS the term is then inconsistent (S14 is an integrity
@@ -70,7 +71,7 @@ from rdflib.namespace import OWL, RDFS, SKOS
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
 from .iri_lexical_extras import OPAQUE_NAME
-from .support import MINIMUM_STYLE_SAMPLE_SIZE, local_name
+from .support import MINIMUM_STYLE_SAMPLE_SIZE, literal_identity, local_name
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -276,10 +277,10 @@ def _multiple_labels(ctx: RuleContext, term: URIRef, labels: set[Literal]) -> No
     predicates below it (``ctx.preferred_labels``).
     """
     preferred = {o for p in ctx.preferred_labels for o in ctx.g.objects(term, p) if isinstance(o, Literal)}
-    family: defaultdict[str, set[str]] = defaultdict(set)
+    family: defaultdict[str, set[tuple[str, str | None]]] = defaultdict(set)
     for o in preferred or labels:
         # RDF 1.1 Concepts 3.3: "A" and "A"^^xsd:string are one literal, counted once.
-        family[(o.language or "und").lower()].add(str(o))
+        family[(o.language or "und").lower()].add(literal_identity(o))
     for lang, values in family.items():
         if (count := len(values)) > 1:
             ctx.add("LEX003", term, f"{count} labels for language {lang}.", subject=(lang,))

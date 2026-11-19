@@ -62,6 +62,16 @@ def is_local(base: str | None, node: object) -> bool:
     return base_matches(base, node)
 
 
+def literal_identity(literal: Literal) -> tuple[str, str | None]:
+    """The RDF 1.1 Concepts 3.3 identity of a literal besides its language: text and datatype.
+
+    ``"A"`` and ``"A"^^xsd:string`` are one literal (a language-tagged one carries ``rdf:langString``, implied by
+    its tag), so those datatypes are dropped; ``"1"`` and ``"1"^^xsd:integer`` are two.
+    """
+    datatype = literal.datatype
+    return (str(literal), None if datatype in (None, XSD.string, RDF.langString) else str(datatype))
+
+
 def local_name(iri: URIRef) -> str:
     """Return the fragment or last path segment of an IRI."""
     return re.split(r"[/#]", str(iri))[-1]
