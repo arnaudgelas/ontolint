@@ -15,7 +15,7 @@ is refused before a byte is read (``O_NOFOLLOW`` where it exists, and on every p
 opened file with the checked one).  ``fetch`` writes by renaming a new file into place, which replaces a link
 instead of following it, and ``measure`` lints a private copy of the bytes it verified.
 
-Each file is linted twice with ``--select METRIC``:
+Each file is linted twice with ``--select`` of METRIC001-METRIC013 (METRIC014, a policy budget, is not one of them):
 
 * *default*: the default policy, which says whether each rule fires as shipped;
 * *forced*: every limit at the end of its range and ``metric_min_sample`` 1, so every rule with a non-empty
@@ -293,7 +293,18 @@ def _sha256(body: bytes) -> str:
 
 def _run(path: Path, config: Path | None, *extra: str) -> dict[str, Any]:
     """Run ontolint on ``path`` with only the METRIC rules; return its checked JSON report."""
-    argv = [sys.executable, "-m", "ontolint", str(path), "--format", "json", "--fail-on", "never", "--select", "METRIC"]
+    argv = [
+        sys.executable,
+        "-m",
+        "ontolint",
+        str(path),
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--select",
+        ",".join(RULES),
+    ]
     if config is not None:
         argv += ["--config", str(config)]
     done = subprocess.run([*argv, *extra], capture_output=True, text=True, check=False)

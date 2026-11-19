@@ -549,6 +549,28 @@ _QUANTITIES = st.sampled_from((0.0, 0.5, 2.0, 8.0, 100.0))
 _PREDICATE_IRIS = st.sampled_from((FOREIGN + "label", FOREIGN + "def", "urn:x:p", OBO + "IAO_0000118"))
 
 
+def _bounds(values: tuple[int | float, ...]) -> st.SearchStrategy[dict[str, int | float]]:
+    """One bound, or both with the minimum not above the maximum, from ``values``."""
+    return st.one_of(
+        st.sampled_from(values).map(lambda n: {"minimum": n}),
+        st.sampled_from(values).map(lambda n: {"maximum": n}),
+        st.tuples(st.sampled_from(values), st.sampled_from(values)).map(
+            lambda p: {"minimum": min(p), "maximum": max(p)}
+        ),
+    )
+
+
+_BUDGETS: st.SearchStrategy[dict[str, dict[str, int | float]]] = st.fixed_dictionaries(
+    {},
+    optional={
+        "unresolved_imports": _bounds((0, 1, 2, 10)),  # a count: integer bounds
+        "class_label_coverage": _bounds((0, 0.25, 0.5, 1)),  # a coverage: bounds at most 1
+        "orphan_classes": _bounds((0, 0.5, 1)),
+    },
+)
+"""``quality_budgets`` a policy accepts and the rule can read: names of the catalogue, bounds it can hold."""
+
+
 @st.composite
 def valid_policy_mappings(draw: st.DrawFn) -> dict[str, Any]:
     """JSON-like mappings that :meth:`Policy.from_mapping` must accept (every key optional)."""
@@ -586,6 +608,7 @@ def valid_policy_mappings(draw: st.DrawFn) -> dict[str, Any]:
         ),
         "alignment_namespaces": st.lists(_PREDICATE_IRIS, max_size=3),
         "alignment_min_coverage": st.one_of(st.none(), _RATIOS),
+        "quality_budgets": _BUDGETS,
         "policy_version": st.just(1),
         "severity_overrides": st.dictionaries(
             st.sampled_from(RULE_IDS), st.sampled_from(("error", "warning", "info")), max_size=4

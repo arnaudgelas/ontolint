@@ -63,6 +63,10 @@ def to_mapping(policy: Policy) -> dict[str, Any]:
     data["extra_label_predicates"] = list(policy.extra_label_predicates)
     data["required_annotations"] = {kind: list(predicates) for kind, predicates in policy.required_annotations}
     data["alignment_namespaces"] = list(policy.alignment_namespaces)
+    data["quality_budgets"] = {
+        b.measurement: {side: v for side, v in (("minimum", b.minimum), ("maximum", b.maximum)) if v is not None}
+        for b in policy.quality_budgets
+    }
     for runtime in _RUNTIME_FIELDS:
         data.pop(runtime)  # bookkeeping of from_mapping and of the loader, not configuration keys
     return data

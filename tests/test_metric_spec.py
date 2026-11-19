@@ -6,7 +6,7 @@ import re
 
 from ontolint.catalogue import load_catalogue
 from ontolint.policy import METRIC_FIELDS
-from ontolint.rules import metrics
+from ontolint.rules import budgets, metrics
 
 BULLET = re.compile(r"^\* \*\*(METRIC\d{3})\.\*\* \((``\w+``)", re.MULTILINE)
 
@@ -28,5 +28,5 @@ def test_every_bullet_states_its_severity_and_confidence() -> None:
 
 def test_catalogue_rows_name_their_fixtures_not_the_placeholder() -> None:
     rows = [row for row in load_catalogue() if row.rule_id.startswith("METRIC")]
-    assert len(rows) == len(metrics.SPECS)
+    assert len(rows) == len(metrics.SPECS) + len(budgets.SPECS)
     assert all("fixture" in row.test_requirement and "metric threshold" not in row.test_requirement for row in rows)
