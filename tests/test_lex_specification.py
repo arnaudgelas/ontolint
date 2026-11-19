@@ -76,7 +76,9 @@ def test_lex002_any_value_counts_even_blank_or_not_a_literal() -> None:
 
 
 def test_lex002_a_change_note_is_no_documentation() -> None:
-    assert _foci("LEX002", 'ex:A a owl:Class ; skos:changeNote "c" ; skos:historyNote "h" ; skos:example "e" .') == ["A"]
+    assert _foci("LEX002", 'ex:A a owl:Class ; skos:changeNote "c" ; skos:historyNote "h" ; skos:example "e" .') == [
+        "A"
+    ]
 
 
 # --- LEX003 (SKOS 5.4 S14) ------------------------------------------------------------------------------

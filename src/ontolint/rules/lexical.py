@@ -6,7 +6,8 @@ property, individual or SKOS concept or scheme (``RuleContext.terms``).  A *labe
 (``rdfs:subPropertyOf`` and ``owl:equivalentProperty``, ``RuleContext.labels``); ``skos:altLabel`` and
 ``skos:hiddenLabel`` are below ``rdfs:label`` in the SKOS schema (SKOS Reference 5.3, S11) but never name a
 term, so they are not labels here.  A *main* label is a label under ``rdfs:label``, ``skos:prefLabel`` or an
-extra, or below ``skos:prefLabel``; a term with none is named by its other labels (``RuleContext.main_label_predicates``).
+extra, or below ``skos:prefLabel``; a term with none is named by its other labels
+(``RuleContext.main_label_predicates``).
 A *language* is the lower-cased tag of a literal, ``und`` when it has none.  A *definition* is a value of
 ``rdfs:comment``, ``skos:definition``, ``dcterms:description``, ``dc:description``, the OBO and PROV
 definition predicates, a configured extra and every predicate below one.  Every finding is ``heuristic``
