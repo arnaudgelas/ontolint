@@ -501,7 +501,10 @@ file is consulted before the root catalog, as Protégé does, and an import nami
 the closure by its ontology or version IRI needs no entry. A catalog entry whose file declares neither
 the imported IRI nor a version IRI of it (a stale or mistyped entry, a file with no ontology header) is
 still loaded as the import, so no other finding moves, but `ONT009` (warning) reports it once, naming the
-imported IRI, the file and the ontology IRIs the file does declare; `file:` IRIs, which name a document, and
+imported IRI, the file and the ontology IRIs the file does declare. It detects without enforcing: a warning leaves
+the default `--fail-on error` run at exit `0` while it lints another ontology than the one imported, so CI that relies
+on catalog integrity needs `--fail-on warning` (as the `ci`, `obo`, `fair` and `strict` profiles have) or
+`severity_overrides` raising `ONT009` to `error`. `file:` IRIs, which name a document, and
 `--import-dir` files, matched by what they declare, are not checked. A catalog entry whose file does not exist
 leaves the import unresolved, with a `TOOL004` note, rather than failing the run. Every resolved
 file must lie inside the import root after symlinks are followed (`SEC009`): by default the

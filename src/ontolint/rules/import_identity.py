@@ -22,7 +22,10 @@ the IRIs they declare.
   imported IRI, never the file or what it declares: repointing the entry at another wrong file is the same
   problem.  Why warning: the closure
   lints a different ontology than the one imported, which changes what every other rule sees; it is not an
-  error because the file is still read and the result is deterministic.  A file with no ontology header is
+  error because the file is still read and the result is deterministic.  So it detects without enforcing:
+  under the default ``--fail-on error`` such a run exits 0, and CI that relies on catalog integrity needs
+  ``--fail-on warning``, a profile that fails on warnings (``ci``, ``obo``, ``fair``, ``strict``), or a
+  ``severity_overrides`` entry raising ONT009 to ``error``.  A file with no ontology header is
   reported the same way, since nothing says which ontology it is.  Confidence ``certain``.
 """
 
