@@ -5,6 +5,8 @@
     uv run python scripts/metric_sweep.py calibrate        # FP/FN per rule and limit, and the recommended limit
     uv run python scripts/metric_sweep.py labels-sheet > sheet.csv    # a row per (file, rule) to fill in
     uv run python scripts/metric_sweep.py calibrate --labels sheet.csv    # the same, under the filled sheet
+    uv run python scripts/metric_sweep.py fetch-candidates DIR     # download the candidate files by pin (network)
+    uv run python scripts/metric_sweep.py measure-candidates DIR   # lint them, rewrite the candidate results and page
 
 Nothing here fetches or lints: it reads ``docs/validation/metric-corpus-results.json`` (written by
 ``scripts/metric_corpus.py measure``) and the labels of ``docs/validation/metric-corpus.json``, so it is
@@ -44,6 +46,10 @@ _spec.loader.exec_module(corpus)
 ROOT: Path = corpus.ROOT
 SWEEP_PAGE = ROOT / "docs" / "validation" / "metric-sweep.md"
 SWEEP_MARKERS = ("<!-- metric_sweep.py: begin -->", "<!-- metric_sweep.py: end -->")
+CANDIDATES = ROOT / "docs" / "validation" / "metric-candidates.json"
+CANDIDATE_RESULTS = ROOT / "docs" / "validation" / "metric-candidates-results.json"
+CANDIDATE_PAGE = ROOT / "docs" / "validation" / "metric-candidates.md"
+CANDIDATE_MARKERS = ("<!-- metric_sweep.py: candidates begin -->", "<!-- metric_sweep.py: candidates end -->")
 SHEET_COLUMNS = (
     "file",
     "rule",
@@ -247,12 +253,50 @@ def write_page(text: str, page: Path = SWEEP_PAGE) -> None:
     corpus.write_page(text, page, *SWEEP_MARKERS)
 
 
+def render_candidates(entries: list[Any], results: Mapping[str, Any]) -> str:
+    """Return, per candidate and rule, the measured value (a star: the default flags it), or a dash if none."""
+    limits = corpus.default_limits()
+    values = {rule: corpus.values_of(rule, results) for rule in corpus.RULES}
+    lines = [
+        "| Candidate | " + " | ".join(r.removeprefix("METRIC") for r in corpus.RULES) + " |",
+        "| --- " * (len(corpus.RULES) + 1) + "|",
+    ]
+    for entry in entries:
+        cells = []
+        for rule in corpus.RULES:
+            value = values[rule].get(entry.id)
+            flag = "*" if value is not None and fires(rule, value, limits[rule]) else ""
+            cells.append("-" if value is None else format(float(value), ".4g") + flag)
+        lines.append(f"| {entry.id} | " + " | ".join(cells) + " |")
+    return _block("\n".join(lines))
+
+
+def candidates(command: str, directory: Path | None) -> None:
+    """Fetch the candidate files (network), or lint them and rewrite their results and page."""
+    entries = corpus.load_manifest(CANDIDATES)
+    if directory is None:
+        raise SystemExit(f"{command} needs a directory")
+    if command == "fetch-candidates":
+        corpus.fetch(directory, entries)
+        return
+    document = corpus.measure(directory, entries)
+    CANDIDATE_RESULTS.write_text(corpus._dump(document), encoding="utf-8")
+    corpus.write_page(render_candidates(entries, document), CANDIDATE_PAGE, *CANDIDATE_MARKERS)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Sweep METRIC limits over the recorded corpus measurements.")
-    parser.add_argument("command", choices=("render", "sweep", "calibrate", "labels-sheet"))
+    parser.add_argument(
+        "command",
+        choices=("render", "sweep", "calibrate", "labels-sheet", "fetch-candidates", "measure-candidates"),
+    )
+    parser.add_argument("directory", nargs="?", type=Path, help="where the candidate files are kept (not committed)")
     parser.add_argument("--labels", type=Path, help="a filled sheet from labels-sheet (calibrate only)")
     parser.add_argument("--checked-only", action="store_true", help="count only labels checked in the file")
     args = parser.parse_args(argv)
+    if args.command.endswith("-candidates"):
+        candidates(args.command, args.directory)
+        return 0
     entries = corpus.load_manifest()
     results = json.loads(corpus.RESULTS.read_text(encoding="utf-8"))
     if args.command == "labels-sheet":

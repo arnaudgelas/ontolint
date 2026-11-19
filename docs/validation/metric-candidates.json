@@ -1,0 +1,114 @@
+{
+  "description": "Candidate additions to the METRIC calibration corpus (issue #8). Same schema as metric-corpus.json, so scripts/metric_corpus.py load_manifest reads it. Every label is BLANK ('unassessed') for the maintainer to fill; 'suggested' is a suggestion with its source, never a label and never counted. Nothing is committed but the pins: fetch checks each SHA-256. A namespace document (commit null) is mutable and is pinned by checksum only; fetch fails when it changes.",
+  "label_status": "proposed",
+  "entries": [
+    {
+      "id": "dcat3.ttl",
+      "title": "W3C DCAT version 3 (namespace document)",
+      "source": "https://www.w3.org/TR/vocab-dcat-3/",
+      "release": "W3C Recommendation 22 August 2024; namespace document, Last-Modified Wed, 03 Sep 2025",
+      "commit": null,
+      "path": null,
+      "url": "https://www.w3.org/ns/dcat3.ttl",
+      "licence": "CC-BY-4.0",
+      "licence_source": "dcterms:license <https://creativecommons.org/licenses/by/4.0/> in the file itself",
+      "sha256": "d1624d3bbf364f6fc1d43b9a188bbb9e67639b1a7d46a5cb7ea3f5d47d02b62f",
+      "bytes": 200345,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "silent",
+          "why": "A W3C Recommendation (22 August 2024), reviewed by a working group and widely reused; no aggregate quality problem is known. Not checked in the file.",
+          "source": "https://www.w3.org/TR/vocab-dcat-3/"
+        }
+      }
+    },
+    {
+      "id": "org.ttl",
+      "title": "W3C Organization Ontology (namespace document)",
+      "source": "https://www.w3.org/TR/vocab-org/",
+      "release": "W3C Recommendation 16 January 2014; namespace document, Last-Modified Fri, 05 Sep 2025",
+      "commit": null,
+      "path": null,
+      "url": "https://www.w3.org/ns/org.ttl",
+      "licence": "PDDL-1.0",
+      "licence_source": "dct:license <http://www.opendatacommons.org/licenses/pddl/1.0/> in the file itself",
+      "sha256": "3e01f89a17475a88f8b1606ca0fae04800d34dbbf93adc6db12dc30929848729",
+      "bytes": 84162,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "silent",
+          "why": "A W3C Recommendation (16 January 2014) and a widely reused vocabulary; no aggregate quality problem is known. Not checked in the file.",
+          "source": "https://www.w3.org/TR/vocab-org/"
+        }
+      }
+    },
+    {
+      "id": "foaf.rdf",
+      "title": "FOAF vocabulary, 0.99 (xmlns.com namespace document)",
+      "source": "http://xmlns.com/foaf/spec/",
+      "release": "namespace document, Last-Modified Fri, 23 Jan 2026",
+      "commit": null,
+      "path": null,
+      "url": "https://xmlns.com/foaf/spec/index.rdf",
+      "licence": "CC-BY-1.0",
+      "licence_source": "'This work is licensed under a Creative Commons Attribution License' (creativecommons.org/licenses/by/1.0/) on http://xmlns.com/foaf/spec/; the RDF file states none",
+      "sha256": "3d859b5d92a2c3d041545d014fa826f682ca06d056af8c7b31e32d930abf2bc5",
+      "bytes": 44209,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "silent",
+          "why": "One of the most reused vocabularies on the web, though not a standard and not under active editing. Not checked in the file. The HTTPS URL serves the same bytes as HTTP (same SHA-256).",
+          "source": "http://xmlns.com/foaf/spec/"
+        }
+      }
+    },
+    {
+      "id": "uo-base.owl",
+      "title": "Units of measurement ontology (UO), base release",
+      "source": "https://github.com/bio-ontology-research-group/unit-ontology",
+      "release": "master, 2026-11-05",
+      "commit": "5da8f423c8817986201f27bc26f7f66b2623de40",
+      "path": "uo-base.owl",
+      "url": "https://raw.githubusercontent.com/bio-ontology-research-group/unit-ontology/5da8f423c8817986201f27bc26f7f66b2623de40/uo-base.owl",
+      "licence": "CC-BY-4.0",
+      "licence_source": "LICENSE.md of the repository at that commit (Attribution 4.0 International) and dcterms:license in the file",
+      "sha256": "eabe138c8228962e2160f7c1735cb9a3fc21e0bf257f378c4709d1d6864d107b",
+      "bytes": 647751,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "silent",
+          "why": "Registered in the OBO Foundry, so reviewed against its principles; no aggregate quality problem is known. Not checked in the file.",
+          "source": "https://obofoundry.org/ontology/uo.html"
+        }
+      }
+    }
+  ]
+}
