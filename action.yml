@@ -38,6 +38,12 @@ inputs:
     description: Append the Markdown summary to the job summary (`true` or `false`).
     required: false
     default: "true"
+  sarif-fingerprints:
+    description: >-
+      Add `partialFingerprints` to the SARIF report (`true` or `false`), so code scanning keeps results of one rule
+      on one line apart. Switching it on re-opens the alerts of earlier uploads once.
+    required: false
+    default: "false"
 
 outputs:
   sarif-file:
@@ -88,6 +94,7 @@ runs:
         INPUT_FAIL_ON: ${{ inputs.fail-on }}
         INPUT_SARIF_FILE: ${{ inputs.sarif-file }}
         INPUT_SUMMARY: ${{ inputs.summary }}
+        INPUT_SARIF_FINGERPRINTS: ${{ inputs.sarif-fingerprints }}
       run: |
         set -euo pipefail
         "$RUNNER_TEMP/ontolint-venv/bin/python" "$ACTION_PATH/action/entrypoint.py" run
