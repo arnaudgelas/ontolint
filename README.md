@@ -1022,6 +1022,12 @@ are managed with [uv](https://docs.astral.sh/uv/).
 # The full validation gate, exactly as CI runs it (add --fix to apply Ruff fixes first)
 uv run python scripts/gate.py
 
+# The small cross-platform suite (tests marked `smoke`: parsing, the spawn worker, the command line, the built
+# wheel); pull requests run it on Linux, macOS and Windows (.github/workflows/smoke.yml). A test that only means
+# something on one system carries a `skipif` marker with a reason, and tests/test_platform_skips.py refuses a
+# platform skip without one
+uv run python scripts/gate.py --smoke
+
 # Unit and property-based tests (coverage must stay at or above 95%)
 uv run pytest -q
 
