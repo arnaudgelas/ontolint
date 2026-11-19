@@ -46,7 +46,16 @@ RELEASE = re.compile(r"\d+\.\d+\.\d+")
 FAIL_ON = ("error", "warning", "info", "never")
 # Options that would change what the Action writes or stop ontolint from writing a report.  argparse accepts any
 # unambiguous prefix of a long option, so a token is refused when it is a prefix of one of these.
-OWNED_OPTIONS = ("--format", "--output", "--measurements", "--list-rules", "--explain", "--version", "--help")
+OWNED_OPTIONS = (
+    "--format",
+    "--output",
+    "--measurements",
+    "--sarif-fingerprints",
+    "--list-rules",
+    "--explain",
+    "--version",
+    "--help",
+)
 CHILD_ENVIRONMENT = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT")
 
 
@@ -65,6 +74,7 @@ class Settings:
     step_summary: Path | None
     github_output: Path | None
     runner_temp: Path | None
+    sarif_fingerprints: bool = False  # the SARIF report only: the Markdown run would refuse the option
 
 
 def _escape_data(text: str) -> str:
@@ -193,6 +203,9 @@ def read_settings(env: Mapping[str, str]) -> Settings:
     summary = env.get("INPUT_SUMMARY", "true").strip()
     if summary not in ("true", "false"):
         raise InputError(f"summary: {summary!r} is not 'true' or 'false'")
+    fingerprints = env.get("INPUT_SARIF_FINGERPRINTS", "false").strip()
+    if fingerprints not in ("true", "false"):
+        raise InputError(f"sarif-fingerprints: {fingerprints!r} is not 'true' or 'false'")
     step_summary, github_output = env.get("GITHUB_STEP_SUMMARY"), env.get("GITHUB_OUTPUT")
     return Settings(
         workspace=workspace,
@@ -204,13 +217,15 @@ def read_settings(env: Mapping[str, str]) -> Settings:
         step_summary=Path(step_summary) if step_summary else None,
         github_output=Path(github_output) if github_output else None,
         runner_temp=Path(env["RUNNER_TEMP"]) if env.get("RUNNER_TEMP") else None,
+        sarif_fingerprints=fingerprints == "true",
     )
 
 
 def report_command(command: Sequence[str], settings: Settings, fmt: str, output: Path) -> list[str]:
     """The ontolint invocation that writes one report; the order is the inputs, then what the Action decides."""
     fail_on = ["--fail-on", settings.fail_on] if settings.fail_on else []
-    return [*command, *settings.files, *settings.extra, *fail_on, "--format", fmt, "--output", str(output)]
+    partial = ["--sarif-fingerprints"] if settings.sarif_fingerprints and fmt == "sarif" else []
+    return [*command, *settings.files, *settings.extra, *partial, *fail_on, "--format", fmt, "--output", str(output)]
 
 
 def child_environment(env: Mapping[str, str]) -> dict[str, str]:

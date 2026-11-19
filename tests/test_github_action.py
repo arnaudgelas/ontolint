@@ -253,6 +253,8 @@ def test_fail_on_is_passed_only_when_set(tmp_path: Path) -> None:
         ("files", "a\x1b[31m.ttl", "control character"),
         ("fail_on", "sometimes", "fail-on"),
         ("summary", "yes", "summary"),
+        ("sarif_fingerprints", "yes", "sarif-fingerprints"),
+        ("args", "--sarif-fingerprints", "--sarif-fingerprints"),
         ("sarif_file", "", "sarif-file"),
         ("sarif_file", "../escape.sarif", "outside the workspace"),
         ("sarif_file", "/etc/cron.d/x", "outside the workspace"),
@@ -489,7 +491,7 @@ def test_fetch_refuses_a_url_that_is_not_https() -> None:
 
 def test_action_yml_is_a_composite_action_with_documented_inputs_and_outputs() -> None:
     assert re.search(r"^runs:\n  using: composite$", ACTION, re.MULTILINE)
-    for name in ("files", "args", "fail-on", "sarif-file", "summary"):
+    for name in ("files", "args", "fail-on", "sarif-file", "summary", "sarif-fingerprints"):
         assert re.search(rf"^  {name}:\n    description: .+", ACTION, re.MULTILINE), name
     for name in ("sarif-file", "summary-file", "exit-code"):
         assert re.search(rf"^  {name}:\n    description: .+\n    value: .+", ACTION, re.MULTILINE), name
@@ -542,6 +544,7 @@ def test_inputs_reach_the_entry_point_only_through_the_environment() -> None:
         "inputs.fail-on",
         "inputs.files",
         "inputs.sarif-file",
+        "inputs.sarif-fingerprints",
         "inputs.summary",
     ]
     for name in re.findall(r"^ +(\w+): \$\{\{ inputs\.", ACTION, re.MULTILINE):
@@ -602,3 +605,18 @@ def test_the_shell_in_the_action_passes_shellcheck(tmp_path: Path) -> None:
         path.write_text("#!/usr/bin/env bash\n" + "\n".join(line[8:] for line in script.splitlines()) + "\n")
         result = subprocess.run(["shellcheck", str(path)], capture_output=True, text=True, check=False)  # noqa: S603, S607
         assert result.returncode == 0, result.stdout
+
+
+def test_sarif_fingerprints_reach_the_sarif_run_only(tmp_path: Path) -> None:
+    on = entrypoint.read_settings(_env(tmp_path, sarif_fingerprints="true"))
+    off = entrypoint.read_settings(_env(tmp_path))
+    assert "--sarif-fingerprints" in entrypoint.report_command(["x"], on, "sarif", Path("o"))
+    assert "--sarif-fingerprints" not in entrypoint.report_command(["x"], on, "markdown", Path("o"))
+    assert "--sarif-fingerprints" not in entrypoint.report_command(["x"], off, "sarif", Path("o"))
+
+
+def test_a_run_with_sarif_fingerprints_writes_them(tmp_path: Path) -> None:
+    entrypoint.run(entrypoint.read_settings(_env(tmp_path, files=KITCHEN_NAME, sarif_fingerprints="true")))
+    results = json.loads((tmp_path / "ontolint.sarif").read_text())["runs"][0]["results"]
+    assert results
+    assert all("ontolintIdentity/v2" in r["partialFingerprints"] for r in results)
