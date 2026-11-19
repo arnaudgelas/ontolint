@@ -245,6 +245,7 @@ def test_a_failing_computation_fails_the_metric_rules_with_its_own_exception(
     assert code == 2
     statuses = _statuses(report)
     assert statuses.pop("LEX001") == ("executed", "")
+    assert statuses.pop("METRIC014") == ("executed", "")  # no budget asks for the measurement
     assert set(statuses.values()) == {("failed", "ValueError: boom")}
     assert {f["rule"] for f in report["findings"]} == {"LEX001"}
 

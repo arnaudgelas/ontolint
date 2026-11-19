@@ -157,7 +157,7 @@ SAVED_CLI_ARGV = {
         "--shapes", "WORK/input.ttl", "WORK/input.ttl",
     ],
     7: [
-        "--select", "CLS014,DATA002,NOPE001", "--ignore", "CLS019,GOV,METRIC004", "--profile", "obo",
+        "--select", "CLS014,DATA002,TOOL", "--ignore", "CLS019,FAIR,METRIC004", "--profile", "obo",
         "--format", "text",
         "--fail-on", "never", "--base", "http://example.org/", "--inheritance-limit",
         "1000000000000000000000000000000", "--max-triples", "5", "--shapes", "WORK/input.ttl",
