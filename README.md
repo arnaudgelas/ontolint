@@ -1075,8 +1075,8 @@ To add rules, see [docs/adding-rules.md](https://github.com/arnaudgelas/ontolint
 `.github/workflows/ci.yml` runs `scripts/gate.py`: Ruff, Pyright, mypy (host and
 Win32), tests with coverage and warnings as errors, `pip-audit` and the package build. All actions are pinned to
 commit SHAs and the uv version is pinned; Renovate keeps both current (its one configuration is
-`renovate.json`, which automerges only non-major updates of the dev tools and the pinned actions,
-and the monthly lock file refresh, once CI passes).
+`renovate.json`, which automerges only non-major updates of the dev tools and the pinned actions once CI passes; the monthly lock file refresh
+is reviewed by hand, because the Action's two exported requirements files must be regenerated with it).
 
 `.github/workflows/fuzz.yml` runs the mutation fuzzer weekly with a longer
 budget per target and uploads any crashing input.

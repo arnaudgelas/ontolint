@@ -66,7 +66,11 @@ PyPI refuses to overwrite a version, so a failed publish needs a new version. A 
 
 `action/requirements.txt` and `action/verify-requirements.txt` are the Action's hash-locked dependency lists
 (what ontolint needs, and what checks the PyPI attestation of the ontolint wheel). Regenerate them whenever
-`uv.lock` moves (a test compares each with the lock):
+`uv.lock` moves (a test compares each with the lock). Renovate's monthly lock file refresh changes `uv.lock`
+only, and the hosted Renovate app cannot run these commands for it (`postUpgradeTasks` needs a self-hosted
+Renovate with `allowedCommands`), so that pull request does not automerge: check out its branch, run the two
+commands, commit the files and push (`git commit -am 'build(deps): regenerate the Action requirements'`), and
+merge once CI passes. A runtime-dependency bump is reviewed by hand already and needs the same step:
 
 ```bash
 uv export --frozen --no-dev --no-emit-project --format requirements-txt --no-header > action/requirements.txt
