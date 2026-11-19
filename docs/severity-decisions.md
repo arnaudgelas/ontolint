@@ -5,7 +5,7 @@ no severity, confidence, category, rule behaviour, golden or catalogue row. Each
 recommendation, how sure it is, and the exact change that would ship it if accepted. A row is decided when the
 "Decision" cell is filled in by the maintainer; the audit item in `TODO.md` can drop the row then.
 
-Everything here was measured on 2026-11-19 with the tree at `4845fec` (the `main` of 0.16.0 development), Python 3.13.7,
+Everything here was measured on 2026-11-19 with the tree at `4845fec` (the `main` of 0.16.0 development; later commits on `main` touch SHQ012, SHQ014 and SHQ023 and no row below, but no count was re-run on them), Python 3.13.7,
 pySHACL 0.40.2 and, for the engine checks, Apache Jena 4.10.0 on Temurin 11. ROBOT, the OWL API and HermiT were not
 installed, so no claim here rests on how they behave.
 
@@ -270,7 +270,7 @@ SHQ003 1,244 / 412.
 
 ## Scope questions
 
-### 1. SHQ003 widened condition (+46% on the audit corpus)
+### 1. SHQ003 widened condition (+42% on corpus B, +46% on the PR's own corpus)
 
 * On corpus B (930 readable files): the widened condition reports **1,244** findings in 412 files; the 0.12.0 condition (nine parameters, no
   deactivated exclusion; restored in a scratch run by patching the predicate) reports **878** in 290: +366 (+42%) and +122 files. The PR's +1,072
