@@ -184,3 +184,24 @@ def test_a_report_with_a_shared_identity_validates(validate: Callable[[dict[str,
     document = to_sarif_report(RunReport(report.files, sarif_fingerprints=True))
     validate(document)
     assert FINGERPRINT_KEY in document["runs"][0]["results"][0]["partialFingerprints"]
+
+
+def test_the_same_finding_in_two_files_is_told_apart_by_the_artifact_location_only() -> None:
+    f = _finding()
+    report = RunReport(
+        (FileReport("a.ttl", "file:///a.ttl", (f,)), FileReport("b.ttl", "file:///b.ttl", (f,))),
+        sarif_fingerprints=True,
+    )
+    first, second = to_sarif_report(report)["runs"][0]["results"]
+    assert first["partialFingerprints"] == second["partialFingerprints"] == {IDENTITY_KEY: identity(f)}
+    uris = [r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] for r in (first, second)]
+    assert uris[0] != uris[1]
+
+
+def test_a_sibling_coming_or_going_keeps_the_identity_key_and_only_moves_the_version_1_one() -> None:
+    one, two = _finding("First."), _finding("Second.")
+    alone = _constructed(one)[0]["partialFingerprints"]
+    crowded = _constructed(one, two)[0]["partialFingerprints"]
+    assert alone == {IDENTITY_KEY: identity(one)}
+    assert crowded[IDENTITY_KEY] == alone[IDENTITY_KEY]
+    assert set(crowded) - set(alone) == {FINGERPRINT_KEY}
