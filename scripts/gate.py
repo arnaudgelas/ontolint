@@ -2,6 +2,7 @@
 
     uv run python scripts/gate.py          # check only, as CI runs it
     uv run python scripts/gate.py --fix    # first apply ruff formatting and autofixes
+    uv run python scripts/gate.py --smoke  # only the small cross-platform suite (Linux, macOS, Windows)
 
 CI (``.github/workflows/ci.yml``) calls this script and nothing else, so "green locally" and
 "green in CI" mean the same thing.  The steps run in order and the gate stops at the first
@@ -35,6 +36,13 @@ STEPS: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 
+SMOKE_STEPS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    # The smoke suite is a selection of the tests, so the coverage floor of the whole suite does not apply (--no-cov);
+    # -rs lists every skip with its reason in the log.
+    ("Run the cross-platform smoke tests", ("pytest", "-m", "smoke", "--no-cov", "-W", "error", "-rs")),
+)
+
+
 def _command(argv: tuple[str, ...]) -> list[str]:
     """Run project tools through ``uv run`` so they use the locked environment; ``uv`` runs as is."""
     return list(argv) if argv[0] == "uv" else ["uv", "run", *argv]
@@ -56,12 +64,18 @@ def run_step(title: str, argv: tuple[str, ...]) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the ontolint validation gate.")
     parser.add_argument("--fix", action="store_true", help="apply ruff formatting and autofixes first")
+    parser.add_argument(
+        "--smoke", action="store_true", help="run only the cross-platform smoke tests (what the smoke workflow runs)"
+    )
     args = parser.parse_args(argv)
-    for title, step in (*FIXES, *STEPS) if args.fix else STEPS:
+    if args.smoke and args.fix:
+        parser.error("--smoke runs no fixes")
+    steps = SMOKE_STEPS if args.smoke else (*FIXES, *STEPS) if args.fix else STEPS
+    for title, step in steps:
         status = run_step(title, step)
         if status != 0:
             return status
-    print("Gate passed.", flush=True)
+    print("Smoke tests passed." if args.smoke else "Gate passed.", flush=True)
     return 0
 
 
