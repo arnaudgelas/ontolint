@@ -9,6 +9,9 @@ every test module:
 * a ``pytest.skip(...)`` call inside an ``if`` that looks at the platform: the skip is then decided while the test
   runs, out of reach of ``-rs`` and of the marker, so it must be a ``skipif`` marker instead.
 
+This is a source-level lint, not proof that coverage ran: a skip hidden behind a helper, an alias or an environment
+probe is not seen.  The ``-rs`` listing in the smoke job log is the evidence of what was skipped.
+
 Tools that may be missing (``actionlint``, ``uv``) are not platforms; their ``skipif`` markers are not constrained.
 """
 
