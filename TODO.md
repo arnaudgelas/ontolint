@@ -887,8 +887,10 @@ Validation corpus (public; licences per repository):
   user documentation, and fixtures state the same contract.
   The specifications of every error-severity rule, the whole OWL family, the METRIC family
   (0.11.0, see "Recently done", METRIC-SPEC) and the SHQ family (v0.13.0, issue #11, see "Recently
-  done", SHQ-SPEC) await the maintainer's approval. Next: the SKOS, CLS, LEX and IRI families. Left
-  open by those reviews:
+  done", SHQ-SPEC) await the maintainer's approval. Next: the SKOS, CLS, LEX and IRI families. The
+  severity and confidence proposals below, the three scope questions and the approval checklist are
+  prepared row by row, with measurements and recommendations, in `docs/severity-decisions.md` (issue
+  #63; nothing applied). Left open by those reviews:
   - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
     `--fail-on` results): OWL009 warning → error, and OWL010 info → warning or error (both
     describe graphs outside OWL 2 DL); OWL013/OWL014 → error; OWL032 info → warning; OWL045's
