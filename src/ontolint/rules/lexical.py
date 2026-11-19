@@ -205,7 +205,8 @@ def _language_checks(
         ctx.add("LEX006", term, "Mixed plain and language-tagged preferred labels.")
     present = {(o.language or "und").lower() for o in labels}
     for lang in ctx.policy.languages:
-        if lang not in present:
+        # RFC 4647 3.3.1 basic filtering: the range ``en`` matches ``en-GB`` (LEX022 and LEX023 agree).
+        if not any(tag == lang or tag.startswith(lang + "-") for tag in present):
             ctx.add("LEX008", term, f"Missing preferred label in language {lang}.", subject=(lang,))
 
 
@@ -217,11 +218,12 @@ def _multiple_labels(ctx: RuleContext, term: URIRef, labels: set[Literal]) -> No
     predicates below it (``ctx.preferred_labels``).
     """
     preferred = {o for p in ctx.preferred_labels for o in ctx.g.objects(term, p) if isinstance(o, Literal)}
-    family: defaultdict[str, int] = defaultdict(int)
+    family: defaultdict[str, set[str]] = defaultdict(set)
     for o in preferred or labels:
-        family[(o.language or "und").lower()] += 1
-    for lang, count in family.items():
-        if count > 1:
+        # RDF 1.1 Concepts 3.3: "A" and "A"^^xsd:string are one literal, counted once.
+        family[(o.language or "und").lower()].add(str(o))
+    for lang, values in family.items():
+        if (count := len(values)) > 1:
             ctx.add("LEX003", term, f"{count} labels for language {lang}.", subject=(lang,))
 
 
