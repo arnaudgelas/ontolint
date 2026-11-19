@@ -256,6 +256,7 @@
 "METRIC011","METRIC","Excessive number of imports","implemented","heuristic","RDFLib graph algorithms","import fixtures: 11 imports and 12 over two headers fire; 10 imports and none are clean"
 "METRIC012","METRIC","Terse class definitions","implemented","heuristic","RDFLib graph algorithms","definition-length fixtures: one-word definitions fire; full, below-sample, undefined classes and a long comment beside a short definition are clean"
 "METRIC013","METRIC","High blank node ratio","implemented","heuristic","RDFLib graph algorithms","blank-node fixtures: free blank subjects fire; named subjects, below-sample, restrictions, reified statements and member shapes are clean"
+"METRIC014","METRIC","Quality budget breached","implemented","deterministic","RDFLib graph","budget fixtures: a maximum and a minimum breached by one finding each, at-limit values and an empty population clean, both bounds of one measurement and a count; an untaken measurement fails the rule; a malformed budget or an unknown measurement is a GOV020 policy error"
 "COMP001","COMP","Version compatibility candidate COMP001","proposed","context-dependent","ontology diff and reasoner","before/after ontology fixture"
 "COMP002","COMP","Version compatibility candidate COMP002","proposed","context-dependent","ontology diff and reasoner","before/after ontology fixture"
 "COMP004","COMP","Version compatibility candidate COMP004","proposed","context-dependent","ontology diff and reasoner","before/after ontology fixture"

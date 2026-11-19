@@ -22,6 +22,22 @@ All examples assume these prefixes:
 The docstring of each module that implements a rule of this page: the definitions that its rules'
 specifications share. Each rule's own specification is shown under the rule.
 
+### Module budgets
+
+Source: `src/ontolint/rules/budgets.py`.
+
+Quality budgets, the explicit thresholds a policy puts over measurements: METRIC014.
+
+A budget is a ``minimum``, a ``maximum`` or both on the value of one measurement of the catalogue (`ontolint.rules.measurements`, ``docs/measurements.md``), written in the policy file as ``quality_budgets: {"unresolved_imports": {"maximum": 0}, "class_definition_coverage": {"minimum": 0.95}}`` (``docs/quality-budgets.md``).  There is no default budget: a policy without ``quality_budgets`` runs none.  Common to the rule:
+
+* The value of a ratio is its numerator over its denominator (a mean is the sum over the count), the value of a count is the count; a histogram has no value and cannot be budgeted.  A ratio over an empty population has no value, so it breaches nothing.  Unlike a METRIC rule, a budget has no ``metric_min_sample`` gate: the limit is the policy's own.
+* Bounds are inclusive (`ontolint.rules.bounds.breached`): a value equal to its limit is within the budget.
+* A measurement that was not taken (no shapes graph for the SHACL coverage, or a computation that raised) has no value to bound: the rule fails, which is exit ``2`` whatever ``--fail-on`` says, never a pass.  Every budget is read before any is compared, so the rule reports no partial verdict.
+* A name that is not a measurement, a histogram, a bound a measurement cannot hold (a fraction of a count, above 1 for a coverage) or a malformed budget is a policy error, ``GOV020`` and exit ``2``, before any input is read.
+* The focus is the lexically first ontology IRI of the graph (``ctx.ontologies``), else ``urn:ontolint:graph``, and the subject is the measurement and the side, so the identity of a finding is its rule, focus, measurement and side: the value and the limit never change a baseline entry.
+
+*Specified under each rule: METRIC014.*
+
 ### Module metrics
 
 Source: `src/ontolint/rules/metrics.py`.
@@ -32,7 +48,7 @@ Each rule compares one aggregate of the *asserted* graph (a ratio, a mean or a c
 
 * The population is the terms owned by the linted ontology (see `ontolint.ownership`), except METRIC011 and METRIC013, which count the whole graph.
 * A rule needs a population of at least ``metric_min_sample`` (default 10) terms, so tiny ontologies never fire; METRIC011 has no such gate.  A ratio over an empty population is 0, never a division. The measurement is read before the gate: one that could not be taken fails the rule (exit 2), on a tiny ontology too, and never passes.
-* Comparisons are strict: a value equal to its limit never fires.  The message prints the value and the limit with 2 decimals, or as many more (up to 6) as it takes to tell them apart.
+* Comparisons are strict: a value equal to its limit never fires (`ontolint.rules.bounds.breached`, the one comparison of a METRIC limit and of a budget, METRIC014).  The message prints the value and the limit with 2 decimals, or as many more (up to 6) as it takes to tell them apart.
 * The focus is the lexically first ontology IRI of the graph (``ctx.ontologies``: the root headers of a closure, SHACL prefix declarations dropped), else ``urn:ontolint:graph``.  The finding's identity is its rule and focus, so counts and thresholds never change a baseline entry.
 * Findings are ``heuristic`` (the limits are conventions, not facts) except METRIC011's.
 * A numerator that a per-term rule also reports is *exactly* that rule's set, by a shared helper, so "METRIC005 says 10 orphans while CLS001 lists 6" cannot happen.
@@ -1693,3 +1709,141 @@ ex:S7 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
 ex:S8 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
 ex:S9 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
 ```
+
+#### METRIC014: Quality budget breached
+
+- **Severity:** error
+- **Scope:** ontology
+- **Category:** deterministic
+- **Module:** [`budgets`](#module-budgets)
+- **Fix:** Bring the measurement within its quality_budgets bound, or change the budget in the policy file.
+
+**Specification.** (``quality_budgets``.)  One finding for each bound a value breaches: ``<measurement> is <value> (<numerator> of <denominator>), below the minimum <limit>.`` (``above the maximum`` for a maximum; a count prints its value).  The value and the limit print with 2 decimals, or as many more (up to 6) as it takes to tell them apart.  Budgets on the measurements of the SEM, CQ and ALIGN gates (``new_unsatisfiable_classes``, ``competency_question_pass_rate``, ``unreviewed_equivalence_mappings``) wait for those gates; bounds over the classified change against a quality baseline are not read yet (a ``delta`` key is refused). *Error, certain, deterministic:* the limit is the policy's own and the value is exact, so a breach is a fact the policy declared a failure; ``severity_overrides`` lowers it.
+
+*Flagged:* `2 imports over a maximum of 1`
+
+```turtle
+ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/> .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='unresolved_imports', maximum=1),))`.
+
+Reported: `unresolved_imports is 2, above the maximum 1.`
+
+*Flagged:* `1 import under a minimum of 2`
+
+```turtle
+ex:o a owl:Ontology ; owl:imports <https://o0.test/> .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='unresolved_imports', minimum=2),))`.
+
+Reported: `unresolved_imports is 1, below the minimum 2.`
+
+*Flagged:* `4 of 10 classes labelled under a minimum of 0.5`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='class_label_coverage', minimum=0.5),))`.
+
+Reported: `class_label_coverage is 0.40 (4 of 10), below the minimum 0.50.`
+
+*Flagged:* `10 of 10 classes orphans over a maximum of 0.5`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class  .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='orphan_classes', maximum=0.5),))`.
+
+Reported: `orphan_classes is 1.00 (10 of 10), above the maximum 0.50.`
+
+*Flagged:* `one class below the sample size of the METRIC rules`
+
+```turtle
+ex:C0 a owl:Class  .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='class_label_coverage', minimum=1),))`.
+
+Reported: `class_label_coverage is 0.00 (0 of 1), below the minimum 1.00.`
+
+*Clean:* `no budget`
+
+```turtle
+ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/> .
+```
+
+*Clean:* `2 imports at a maximum of 2`
+
+```turtle
+ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/> .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='unresolved_imports', maximum=2),))`.
+
+*Clean:* `2 imports at a minimum of 2`
+
+```turtle
+ex:o a owl:Ontology ; owl:imports <https://o0.test/>, <https://o1.test/> .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='unresolved_imports', minimum=2),))`.
+
+*Clean:* `5 of 10 classes labelled at a minimum of 0.5`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class ; rdfs:label "c"@en .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='class_label_coverage', minimum=0.5),))`.
+
+*Clean:* `within both bounds`
+
+```turtle
+ex:C0 a owl:Class ; rdfs:label "c"@en .
+ex:C1 a owl:Class ; rdfs:label "c"@en .
+ex:C2 a owl:Class ; rdfs:label "c"@en .
+ex:C3 a owl:Class ; rdfs:label "c"@en .
+ex:C4 a owl:Class ; rdfs:label "c"@en .
+ex:C5 a owl:Class  .
+ex:C6 a owl:Class  .
+ex:C7 a owl:Class  .
+ex:C8 a owl:Class  .
+ex:C9 a owl:Class  .
+```
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='class_label_coverage', minimum=0.1, maximum=0.9),))`.
+
+*Clean:* `no class: a ratio over nothing` (the empty data graph)
+
+Linter options: `policy=Policy(quality_budgets=(Budget(measurement='class_label_coverage', minimum=1),))`.

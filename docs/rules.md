@@ -20,7 +20,7 @@ Rules marked **Selectable: no** are pipeline rules, of backend `cli`
 and `--list-rules --format json` reports them with `"selectable": false`.
 
 
-**255 of 310 catalogue rules are implemented; 55 are TODO.**
+**256 of 311 catalogue rules are implemented; 55 are TODO.**
 
 | Family | Implemented | TODO |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [IRI](#iri) | 18 | 1 |
 | [LEX](#lex) | 25 | 0 |
 | [LIB](#lib) | 3 | 0 |
-| [METRIC](#metric) | 13 | 0 |
+| [METRIC](#metric) | 14 | 0 |
 | [OBO](#obo) | 15 | 0 |
 | [ONT](#ont) | 9 | 0 |
 | [OWL](#owl) | 45 | 0 |
@@ -296,6 +296,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [METRIC011](rules/metric.md) | Excessive number of imports | info |
 | [METRIC012](rules/metric.md) | Terse class definitions | info |
 | [METRIC013](rules/metric.md) | High blank node ratio | info |
+| [METRIC014](rules/metric.md) | Quality budget breached | error |
 
 ## OBO
 
