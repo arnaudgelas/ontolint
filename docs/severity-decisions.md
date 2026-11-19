@@ -5,7 +5,7 @@ no severity, confidence, category, rule behaviour, golden or catalogue row. Each
 recommendation, how sure it is, and the exact change that would ship it if accepted. A row is decided when the
 "Decision" cell is filled in by the maintainer; the audit item in `TODO.md` can drop the row then.
 
-Everything here was measured on 2026-11-19 with the tree at `4845fec` (the `main` of 0.16.0 development; later commits on `main` touch SHQ012, SHQ014 and SHQ023 and no row below, but no count was re-run on them), Python 3.13.7,
+Everything here was measured on 2026-11-19 with the tree at `4845fec` (the `main` of 0.16.0 development; later commits on `main` touch SHQ012, SHQ014, SHQ023 and the LEX family (LEX003, LEX008 and LEX024 among them) but none of the rows below; the LEX020 warning counted below is not among them; no count was re-run on those commits), Python 3.13.7,
 pySHACL 0.40.2 and, for the engine checks, Apache Jena 4.10.0 on Temurin 11. ROBOT, the OWL API and HermiT were not
 installed, so no claim here rests on how they behave.
 
