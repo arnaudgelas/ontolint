@@ -146,6 +146,8 @@ class RunReport:
     baselined: tuple[tuple[Finding, ...], ...] | None = None
     # With --quality-baseline: the run's measurements compared with the committed quality snapshot; else ``None``.
     quality: Comparison | None = None
+    # With --sarif-fingerprints: SARIF results carry ``partialFingerprints`` (see :func:`sarif_fingerprints`).
+    sarif_fingerprints: bool = False
 
     @property
     def findings(self) -> tuple[Finding, ...]:
@@ -185,6 +187,35 @@ def identity(f: Finding) -> str:
     """
     payload = json.dumps([IDENTITY_TAG, f.rule, f.focus, list(f.subject)], ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8", errors="surrogatepass")).hexdigest()
+
+
+IDENTITY_KEY = f"ontolintIdentity/v{IDENTITY_TAG.rsplit('-', 1)[-1]}"
+"""The SARIF ``partialFingerprints`` key of :func:`identity`; its suffix moves with :data:`IDENTITY_TAG`."""
+FINGERPRINT_KEY = "ontolintFingerprint/v1"
+"""The key of the path-free version 1 :func:`fingerprint`, written only for a result whose identity is shared."""
+
+
+def unique_identities(report: FileReport) -> list[tuple[Finding, str, bool]]:
+    """Each finding of ``report`` with its identity, and whether no other finding of the report shares it."""
+    ids = [identity(f) for f in report.findings]
+    counts = Counter(ids)
+    # gremlin: pardon[equivalent] ids is built from report.findings, so the lengths always match
+    pairs = zip(report.findings, ids, strict=True)
+    return [(f, i, counts[i] == 1) for f, i in pairs]
+
+
+def sarif_fingerprints(report: FileReport) -> dict[Finding, dict[str, str]]:
+    """The SARIF ``partialFingerprints`` of each finding of ``report`` (SARIF 2.1.0, section 3.27.17).
+
+    Every result gets its :func:`identity` under :data:`IDENTITY_KEY`: it holds no message, so a reworded message,
+    a moved line or a re-serialized file keeps it.  A result whose identity another result of the report shares
+    (a rule's subject is incomplete, as in :mod:`ontolint.baseline`) also gets the path-free version 1
+    :func:`fingerprint` under :data:`FINGERPRINT_KEY`, so such results stay apart.
+    """
+    return {
+        f: {IDENTITY_KEY: ident} if unique else {IDENTITY_KEY: ident, FINGERPRINT_KEY: fingerprint(f)}
+        for f, ident, unique in unique_identities(report)
+    }
 
 
 def effective_severity(spec: RuleSpec, overrides: Mapping[str, str]) -> str:
@@ -321,7 +352,9 @@ def _sarif_location(uri: str, location: Location | None) -> dict[str, Any]:
     return {"physicalLocation": physical}
 
 
-def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -> dict[str, Any]:
+def _sarif_result(
+    f: Finding, file: FileReport, rule_index: Mapping[str, int], partial: Mapping[str, str] | None = None
+) -> dict[str, Any]:
     result: dict[str, Any] = {
         "ruleId": f.rule,
         "level": SARIF_LEVELS[f.severity],
@@ -338,6 +371,8 @@ def _sarif_result(f: Finding, file: FileReport, rule_index: Mapping[str, int]) -
         result["relatedLocations"] = related
     if f.rule in rule_index:
         result["ruleIndex"] = rule_index[f.rule]
+    if partial:
+        result["partialFingerprints"] = dict(partial)
     properties: dict[str, Any] = {}
     if f.details is not None:
         properties["details"] = f.details
@@ -407,7 +442,11 @@ def to_sarif_report(report: RunReport, exit_status: int | None = None) -> dict[s
             }
         },
         "invocations": [_sarif_invocation(report, exit_status)],
-        "results": [_sarif_result(f, r, rule_index) for r in report.files for f in r.findings],
+        "results": [
+            _sarif_result(f, r, rule_index, partials.get(f))
+            for r, partials in ((r, sarif_fingerprints(r) if report.sarif_fingerprints else {}) for r in report.files)
+            for f in r.findings
+        ],
     }
     if report.findings:
         # SARIF requires the column unit when a run processes text artifacts and has results.

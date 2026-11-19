@@ -706,6 +706,7 @@ jobs:
 | `fail-on` | `error`, `warning`, `info` or `never`; empty keeps ontolint's default. |
 | `sarif-file` | Where to write the SARIF report (default `ontolint.sarif`); it must resolve inside the workspace. |
 | `summary` | `true` (default) appends the [Markdown summary](#pull-request-summary-markdown) to the job summary. |
+| `sarif-fingerprints` | `false` (default). `true` passes `--sarif-fingerprints` to the SARIF run only, see [SARIF `partialFingerprints`](#sarif-partialfingerprints). `--sarif-fingerprints` in `args` is refused. |
 
 Outputs are `sarif-file`, `summary-file` (the Markdown summary, kept until the job ends) and
 `exit-code` (`0`, `1` on findings at or above `fail-on`, `2` on a tool failure). The Action runs
@@ -748,6 +749,23 @@ What the Action does and does not do:
 There is no `--format github`: workflow commands cap the annotations per step and job, so findings reach
 GitHub as SARIF and as the summary. The one workflow-command helper, `ontolint.github.escape_data`, escapes the
 Action's own error annotations.
+
+### SARIF `partialFingerprints`
+
+Without them, GitHub code scanning computes its own fingerprint from the rule and about 100 characters of source
+from the result's start line, so results of one rule that start on one line can be shown as one alert, and
+re-serializing an ontology moves its lines and re-opens its alerts. `--sarif-fingerprints` (with `--format sarif`;
+the Action's `sarif-fingerprints: true`) writes `partialFingerprints` on every result:
+
+* `ontolintIdentity/v2`: the [baseline](#policy-and-baselines) version 2 identity of the finding (rule, focus and
+  subject, never the message), the same value in a one-file and a multi-file run;
+* `ontolintFingerprint/v1`: the version 1 baseline hash, without the path, only on a result whose identity another
+  result of the same file shares, so those results stay apart.
+
+It is off by default because adopting it changes the fingerprints of every alert that already exists: GitHub
+matches alerts by fingerprint, so the next upload closes the old alerts and opens new ones once. Whether code
+scanning uses these keys (its documentation names `primaryLocationLineHash` as the one it uses) has to be observed
+on an upload; see `TODO.md` (GITHUB-ACTION) for what is and is not verified.
 
 ### Optional SHACL validation
 
