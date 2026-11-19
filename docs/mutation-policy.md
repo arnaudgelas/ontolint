@@ -38,6 +38,12 @@ chiefly for survivors. If the scheduled job nears its timeout, check its share
 with `--durations` before marking it `slow`, since that would give up the
 messages it pins.
 
+A class decorator runs at import, before any test, so coverage ties it to no test and gremlins
+runs the whole suite for its mutant, in collection order, stopping at the first failure.
+`tests/conftest.py` therefore collects `test_value_objects_are_frozen` first, which kills the
+`@dataclass(frozen=True)` mutants within the mutant timeout (issue #71). Keep that name for the
+test that lists the frozen classes.
+
 Do not run any other pytest session in the same checkout while a mutation run is in
 progress. The run pre-scans coverage into the repository-root `.coverage` (statement
 data), and a concurrent `pytest -n auto` writes branch-coverage worker files that
@@ -94,16 +100,8 @@ within the next two scheduled runs by one of:
 3. Pardon it with a gremlins pragma carrying a reason and justification,
    on a line that holds only that mutant, with a row in `docs/mutation-pardons.md`
    (`tests/test_mutation_pardons.py` enforces both). A reviewer other than
-   the author must approve the pragma in the PR. Two reasons are allowed:
+   the author must approve the pragma in the PR. One reason is allowed:
    - `equivalent`: an equivalent mutant, or an unobservable side effect;
-   - `untestable`: an observable mutant that the run cannot execute in time. This
-     is a tool limitation, not an equivalence, so it is allowed only for a
-     `@dataclass(frozen=True)` decorator (it runs at import, so every test covers
-     it and the selected suite exceeds the mutant timeout), only when a test of
-     the normal suite kills the mutant (`test_value_objects_are_frozen`), and only
-     until the expiry and remediation plan of issue #71 (the next quarterly audit,
-     2027-02-13). By then the mutant runs in a mutation run, or a reviewed PR
-     renews the pardon with what was tried.
 4. Waive a threshold temporarily: open an issue naming the operator, current
    score, owner and expiry date (at most 30 days) and link it in the PR that
    lowers the constant in `mutation_gate.py`.

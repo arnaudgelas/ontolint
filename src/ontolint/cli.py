@@ -744,7 +744,6 @@ def _compare_quality(args: argparse.Namespace) -> int:
 _LOADER_POLICY: ContextVar[Policy | None] = ContextVar("loader_policy", default=None)
 
 
-# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class ImportOptions:
     """How to follow ``owl:imports``: with one explicit catalog, or with the one found next to each input."""
