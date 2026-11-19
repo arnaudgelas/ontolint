@@ -176,3 +176,41 @@ def test_the_sweep_flags_at_the_default_what_the_recorded_run_flagged() -> None:
         cells = metric_sweep.sweep(entries, rule, values, limits[rule], checked_only=False)
         flagged = next(c.flagged for c in cells if c.limit == limits[rule])
         assert flagged == sum(results["results"][e.id][rule]["fires"] for e in entries)
+
+
+def _candidates() -> dict[str, Any]:
+    return json.loads(metric_sweep.CANDIDATES.read_text(encoding="utf-8"))
+
+
+def test_every_candidate_is_pinned_licensed_and_unlabelled() -> None:
+    entries = corpus.load_manifest(metric_sweep.CANDIDATES)  # refuses an unpinned or unlicensed entry
+    assert {e.id for e in entries} == {item["id"] for item in _candidates()["entries"]}
+    for entry in entries:
+        assert all(entry.label(rule)["expect"] == "unassessed" for rule in corpus.RULES)  # the label column is blank
+    for item in _candidates()["entries"]:
+        assert item["licence_source"].strip()
+        assert set(item["suggested"]) == {"*"}  # a suggestion, kept apart from the labels
+        assert item["suggested"]["*"]["source"].startswith("http")
+
+
+def test_the_candidate_results_and_page_match_the_manifest() -> None:
+    entries = corpus.load_manifest(metric_sweep.CANDIDATES)
+    results = json.loads(metric_sweep.CANDIDATE_RESULTS.read_text(encoding="utf-8"))
+    assert set(results["results"]) == {e.id for e in entries} == set(results["vectors"])
+    shown = corpus.generated_part(metric_sweep.CANDIDATE_PAGE, *metric_sweep.CANDIDATE_MARKERS)
+    assert shown == metric_sweep.render_candidates(entries, results).strip("\n")
+
+
+def test_a_candidate_table_marks_the_flagged_and_the_empty() -> None:
+    entries = _entries({"a": ("unassessed", "none")})
+    vector = {
+        name: {"definition_version": 1, "numerator": 0, "denominator": 20}
+        for name in {r.measurement for r in corpus.READINGS.values()}
+        | {r.gate for r in corpus.READINGS.values() if r.gate}
+    }
+    vector["unresolved_imports"] = {"definition_version": 1, "value": 12}
+    vector["class_label_coverage"] = {"definition_version": 1, "numerator": 0, "denominator": 5}  # below the gate
+    row = metric_sweep.render_candidates(entries, {"vectors": {"a": vector}}).splitlines()[-1].split("|")
+    cells = [c.strip() for c in row[2:-1]]
+    assert cells[0] == "-"  # METRIC001: under the sample gate
+    assert cells[10] == "12*"  # METRIC011: above 10
