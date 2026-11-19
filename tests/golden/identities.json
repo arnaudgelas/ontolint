@@ -2899,6 +2899,61 @@
     "3749aca3c99a5980db2d46831208e1f3b84ba53489e389b28fb8a1ae493ec31b"
    ]
   ],
+  "METRIC014:1 import under a minimum of 2": [
+   [
+    "METRIC014",
+    "https://example.test/onto#o",
+    [
+     "unresolved_imports",
+     "minimum"
+    ],
+    "cef232ee0fbf4c42af9ee4f6bb63355915ef28ce1a6ad7fb7ccba8bb8860999f"
+   ]
+  ],
+  "METRIC014:10 of 10 classes orphans over a maximum of 0.5": [
+   [
+    "METRIC014",
+    "urn:ontolint:graph",
+    [
+     "orphan_classes",
+     "maximum"
+    ],
+    "e63f960dbe2575aef4cc5793a5f979e1f51cb4701bdd0621eee09b396799bebc"
+   ]
+  ],
+  "METRIC014:2 imports over a maximum of 1": [
+   [
+    "METRIC014",
+    "https://example.test/onto#o",
+    [
+     "unresolved_imports",
+     "maximum"
+    ],
+    "35ad64ae4dfec9bd6f02b1ad8d70feb91ff028a6a42015c78583ef9b7d6985a1"
+   ]
+  ],
+  "METRIC014:4 of 10 classes labelled under a minimum of 0.5": [
+   [
+    "METRIC014",
+    "urn:ontolint:graph",
+    [
+     "class_label_coverage",
+     "minimum"
+    ],
+    "8b1b35e8a0e098bd717b69cfddb5b30aed03777730993250af9ecfe4782edce5"
+   ]
+  ],
+  "METRIC014:one class below the sample size of the METRIC rules": [
+   [
+    "METRIC014",
+    "urn:ontolint:graph",
+    [
+     "class_label_coverage",
+     "minimum"
+    ],
+    "8b1b35e8a0e098bd717b69cfddb5b30aed03777730993250af9ecfe4782edce5"
+   ]
+  ],
   "OBO001:hash class": [
    [
     "OBO001",

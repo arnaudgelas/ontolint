@@ -115,6 +115,13 @@ outputs (each as file and stdout) and the six SARIF entries of ``single_graph_re
 before and after on every fixture file, the SARIF documents are equal once the two end keys are left out, and no
 finding, message, fingerprint, text or JSON report, exit code, ``identities.json`` or ``legacy_rules.json`` entry
 moved.
+
+Deliberate golden update (issue #26, METRIC014): the rule is new, so every pinned output that lists the rules or
+counts the executed ones changed (the rule metadata of each JSON and SARIF report, ``--list-rules``, and the
+"Rule execution: N executed" line of two text reports, 191 to 192).  Nothing else did: with no ``quality_budgets``
+METRIC014 emits nothing, so no METRIC001-013 finding, message, fingerprint, severity, text report or exit code moved
+(every changed line of the diff is a ``sha256`` or that count), ``legacy_rules.json`` is untouched, and
+``identities.json`` only gained the five METRIC014 cases.
 """
 
 from __future__ import annotations
