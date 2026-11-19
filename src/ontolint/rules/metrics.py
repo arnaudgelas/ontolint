@@ -13,7 +13,8 @@ closure.  Common to every rule:
   never fire; METRIC011 has no such gate.  A ratio over an empty population is 0, never a division.
   The measurement is read before the gate: one that could not be taken fails the rule (exit 2), on a
   tiny ontology too, and never passes.
-* Comparisons are strict: a value equal to its limit never fires.  The message prints the value and
+* Comparisons are strict: a value equal to its limit never fires (:func:`~ontolint.rules.bounds.breached`, the one
+  comparison of a METRIC limit and of a budget, METRIC014).  The message prints the value and
   the limit with 2 decimals, or as many more (up to 6) as it takes to tell them apart.
 * The focus is the lexically first ontology IRI of the graph (``ctx.ontologies``: the root headers
   of a closure, SHACL prefix declarations dropped), else ``urn:ontolint:graph``.  The finding's
@@ -120,6 +121,7 @@ from typing import TYPE_CHECKING
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
+from .bounds import MAXIMUM, MINIMUM, breached
 from .measurements import count, owned_classes, ratio
 
 if TYPE_CHECKING:
@@ -268,7 +270,7 @@ def _coverage_rule(ctx: RuleContext, code: str, measurement_id: str) -> None:
         return
     missing = total - covered
     value = _ratio(missing, total)
-    if value > limit:
+    if breached(value, MAXIMUM, limit):
         ctx.add(
             code,
             _focus(ctx),
@@ -286,7 +288,7 @@ def _shape_rules(ctx: RuleContext) -> None:
     relations, classes = ratio(ctx, "relation_properties_per_class")
     if classes >= policy.metric_min_sample:
         value = relations / classes
-        if value < policy.metric_min_property_class_ratio:
+        if breached(value, MINIMUM, policy.metric_min_property_class_ratio):
             ctx.add(
                 "METRIC006",
                 _focus(ctx),
@@ -294,7 +296,7 @@ def _shape_rules(ctx: RuleContext) -> None:
                 f"({_cmp(value, '<', policy.metric_min_property_class_ratio)}).",
                 subject=(),
             )
-        if value > policy.metric_max_property_class_ratio:
+        if breached(value, MAXIMUM, policy.metric_max_property_class_ratio):
             ctx.add(
                 "METRIC007",
                 _focus(ctx),
@@ -312,7 +314,7 @@ def _hierarchy_rules(ctx: RuleContext) -> None:
         return
     if parents:
         mean = edges / parents
-        if mean > policy.metric_max_mean_fanout:
+        if breached(mean, MAXIMUM, policy.metric_max_mean_fanout):
             shown, limit = _vs(mean, policy.metric_max_mean_fanout)
             ctx.add(
                 "METRIC004",
@@ -321,7 +323,7 @@ def _hierarchy_rules(ctx: RuleContext) -> None:
                 subject=(),
             )
     value = _ratio(orphans, classes)
-    if value > policy.metric_max_orphan_ratio:
+    if breached(value, MAXIMUM, policy.metric_max_orphan_ratio):
         ctx.add(
             "METRIC005",
             _focus(ctx),
@@ -337,7 +339,7 @@ def _signature_rule(ctx: RuleContext) -> None:
     if props < ctx.policy.metric_min_sample:
         return
     value = _ratio(unsigned, props)
-    if value > ctx.policy.metric_max_unsigned_property_ratio:
+    if breached(value, MAXIMUM, ctx.policy.metric_max_unsigned_property_ratio):
         limit = ctx.policy.metric_max_unsigned_property_ratio
         ctx.add(
             "METRIC008",
@@ -353,7 +355,7 @@ def _language_rule(ctx: RuleContext) -> None:
     tagged, labelled = ratio(ctx, "label_language_coverage")
     if labelled >= policy.metric_min_sample:
         coverage = tagged / labelled
-        if coverage < policy.metric_min_language_coverage:
+        if breached(coverage, MINIMUM, policy.metric_min_language_coverage):
             ctx.add(
                 "METRIC009",
                 _focus(ctx),
@@ -368,7 +370,7 @@ def _definition_rule(ctx: RuleContext) -> None:
     words, defined = ratio(ctx, "definition_length")
     if defined >= policy.metric_min_sample:
         mean = words / defined
-        if mean < policy.metric_min_definition_words:
+        if breached(mean, MINIMUM, policy.metric_min_definition_words):
             shown, limit = _vs(mean, policy.metric_min_definition_words)
             ctx.add(
                 "METRIC012",
@@ -383,7 +385,7 @@ def _reference_rule(ctx: RuleContext) -> None:
     foreign, total = ratio(ctx, "foreign_references")
     limit = ctx.policy.metric_max_foreign_reference_ratio
     value = _ratio(foreign, total)
-    if total >= ctx.policy.metric_min_sample and value > limit:
+    if total >= ctx.policy.metric_min_sample and breached(value, MAXIMUM, limit):
         ctx.add(
             "METRIC010",
             _focus(ctx),
@@ -395,7 +397,7 @@ def _reference_rule(ctx: RuleContext) -> None:
 def _graph_rules(ctx: RuleContext) -> None:
     imports = count(ctx, "unresolved_imports")
     blanks, subjects = ratio(ctx, "blank_subjects")
-    if imports > ctx.policy.metric_max_imports:
+    if breached(imports, MAXIMUM, ctx.policy.metric_max_imports):
         ctx.add(
             "METRIC011",
             _focus(ctx),
@@ -405,7 +407,7 @@ def _graph_rules(ctx: RuleContext) -> None:
         )
     if subjects >= ctx.policy.metric_min_sample:
         value = _ratio(blanks, subjects)
-        if value > ctx.policy.metric_max_blank_node_ratio:
+        if breached(value, MAXIMUM, ctx.policy.metric_max_blank_node_ratio):
             ctx.add(
                 "METRIC013",
                 _focus(ctx),
