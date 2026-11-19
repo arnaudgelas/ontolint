@@ -55,6 +55,22 @@ METRIC_QUANTITY_DEFAULTS: dict[str, float] = {
 }
 
 
+class PolicyBudgetError(ValueError):
+    """``quality_budgets`` is malformed, or names a budget no measurement can carry (reported as GOV020)."""
+
+
+@dataclass(frozen=True)
+class Budget:
+    """The bounds of one measurement (``docs/quality-budgets.md``): a value within them is within the budget.
+
+    Both are inclusive, so a value equal to its ``minimum`` or its ``maximum`` is not a breach.  At least one is set.
+    """
+
+    measurement: str
+    minimum: int | float | None = None
+    maximum: int | float | None = None
+
+
 OwlConverter = Callable[[Path, bytes, str], bytes]
 """Turns a file in a non-RDF OWL syntax (its path, bytes and sniffed syntax) into Turtle bytes."""
 
@@ -94,6 +110,8 @@ class Policy:
     required_annotations: tuple[tuple[str, tuple[str, ...]], ...] = ()
     alignment_namespaces: tuple[str, ...] = ()
     alignment_min_coverage: float | None = None
+    # Explicit bounds on named measurements (METRIC014); empty means no budget, which is the default.
+    quality_budgets: tuple[Budget, ...] = ()
     # Modules inside one file (ontolint.modules): an annotation predicate, or "namespace"; at most one is set.
     module_annotation: str | None = None
     module_by: str | None = None
@@ -186,6 +204,7 @@ class Policy:
             required_annotations=_required_annotations(data),
             alignment_namespaces=_iri_list(data, "alignment_namespaces"),
             alignment_min_coverage=_optional_ratio(data, "alignment_min_coverage"),
+            quality_budgets=_quality_budgets(data),
             max_parse_seconds=_seconds(data, "max_parse_seconds"),
             max_validation_seconds=_seconds(data, "max_validation_seconds"),
             module_annotation=grouping[0],
@@ -268,6 +287,46 @@ def _required_annotations(data: Mapping[str, Any]) -> tuple[tuple[str, tuple[str
         if predicates:
             result.append((kind, predicates))
     return tuple(result)
+
+
+BUDGET_BOUNDS = ("minimum", "maximum")
+
+
+def _bound(name: str, side: str, value: Any) -> int | float:
+    """A bound: a finite number of at least 0, kept as the integer or the float it was written."""
+    where = f"quality_budgets.{name}.{side}"
+    try:
+        number = _real(where, value)
+    except ValueError:
+        raise PolicyBudgetError(f"{where} must be a finite number") from None
+    if number < 0:
+        raise PolicyBudgetError(f"{where} must be at least 0")
+    return value if isinstance(value, int) else number
+
+
+def _quality_budgets(data: Mapping[str, Any]) -> tuple[Budget, ...]:
+    """Validate ``quality_budgets``: measurement name -> ``{"minimum": n, "maximum": n}``; sorted by name.
+
+    What the name and its bounds mean for that measurement (it exists, is a scalar, a count's bounds are integers)
+    is checked against the catalogue by :func:`ontolint.rules.budgets.validate`: a policy is below the rules.
+    """
+    value = data.get("quality_budgets", {})
+    if not isinstance(value, dict):
+        raise PolicyBudgetError("quality_budgets must map measurement names to bounds")
+    budgets: list[Budget] = []
+    for name in sorted(value, key=str):
+        bounds = value[name]
+        if not isinstance(bounds, dict):
+            raise PolicyBudgetError(f"quality_budgets.{name} must be an object with a minimum or a maximum")
+        if extra := sorted(set(bounds) - set(BUDGET_BOUNDS), key=str):
+            raise PolicyBudgetError(f"quality_budgets.{name} has no key {extra[0]!r}; its keys are minimum and maximum")
+        if not bounds:
+            raise PolicyBudgetError(f"quality_budgets.{name} needs a minimum or a maximum")
+        low, high = (_bound(name, side, bounds[side]) if side in bounds else None for side in BUDGET_BOUNDS)
+        if low is not None and high is not None and low > high:
+            raise PolicyBudgetError(f"quality_budgets.{name}: minimum {low} exceeds maximum {high}")
+        budgets.append(Budget(str(name), low, high))
+    return tuple(budgets)
 
 
 def _iri_list(data: Mapping[str, Any], name: str) -> tuple[str, ...]:

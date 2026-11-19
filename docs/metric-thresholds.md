@@ -26,6 +26,9 @@ too ([measurements.md](measurements.md)).
   so `METRIC001` and `METRIC002` (warnings) can fail them; `strict` gates on every finding.
 - Comparisons are strict, so a value equal to its limit never fires, and a rule needs a
   population of at least `metric_min_sample` terms (`METRIC011` has no such gate).
+- Each key is one bound on one measurement from one side, a *built-in budget*; `quality_budgets` puts
+  further, explicit bounds on any measurement and reports a breach as `METRIC014`
+  ([quality-budgets.md](quality-budgets.md), which tabulates the keys as budgets). The keys are unchanged.
 - The Python API does not validate a `Policy` built directly; only `Policy.from_mapping` (used
   for `--config`) does.
 

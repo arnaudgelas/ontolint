@@ -15,12 +15,13 @@ did. The exit code is unchanged too, unless a measurement could not be computed:
 
 > **This is not a quality gate.** `--quality-baseline` and `--compare-quality` report; they exit `0`
 > whatever they find (a measurement that could not be computed exits `2`, see below), so committing a quality baseline does not protect a branch: a run that loses
-> definition coverage still passes CI. The only quality gate today is the
-> findings of the METRIC rules (their absolute thresholds, [metric-thresholds.md](metric-thresholds.md),
-> and `--fail-on`): they judge one run, not a change from the baseline. A gate on the
-> comparison itself (a budget on regressions, dilution or removals) is QUALITY-BUDGET (issue #26); it needs
-> decisions this format does not take (removed terms, dilution, measurements that are not comparable,
-> definition-version changes), so it is not part of this feature.
+> definition coverage still passes CI. The only quality gates today are the findings of the METRIC rules
+> (their absolute thresholds, [metric-thresholds.md](metric-thresholds.md)) and of `quality_budgets`
+> ([quality-budgets.md](quality-budgets.md), `METRIC014`), with `--fail-on`: they judge one run, not a change
+> from the baseline. A gate on the comparison itself (a bound on regressions, dilution or removals) is the
+> rest of QUALITY-BUDGET (issue #26, "Not read yet" in quality-budgets.md); it needs decisions this format
+> does not take (removed terms, dilution, measurements that are not comparable, definition-version
+> changes), so it is not part of this feature.
 
 ```bash
 ontolint onto.ttl --write-quality-snapshot quality.json          # take a snapshot (commit it, or keep it in CI)

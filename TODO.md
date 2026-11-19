@@ -1244,6 +1244,12 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   `unreviewed_equivalence_mappings` wait for the SEM, CQ and ALIGN gates. *Done when:* the absolute
   and delta bounds each have a passing and a failing fixture, the METRIC aliases leave
   `differential.json` unchanged, and an untaken measurement exits 2.
+  - *Partly done (branch `feat/26-quality-budgets`, issue #26 stays open):* the `quality_budgets` key with
+    absolute bounds, METRIC014 and the table of METRIC keys as built-in budgets
+    (`docs/quality-budgets.md`); an untaken measurement fails the rule (exit 2) and an unknown name is GOV020.
+    Left: bounds over the classified change against a quality baseline (`regressed`, `diluted`, `removed`,
+    the coverage among `added_good`), which need a place in the report after the comparison; the syntax
+    is still the maintainer's to confirm.
 
 - [ ] **CTRF-REPORT: a CI test-result format.** This is OPS012 with a consumer: choose CTRF or
   JUnit, not both. The mapping is the design: one test per (file, rule), `passed`, `failed` when it
