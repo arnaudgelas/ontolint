@@ -38,7 +38,7 @@ by the line it decorates) and the mutant with the source.
 | `src/ontolint/loader.py` | `@dataclass(frozen=True) class ImportShadow:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/loader.py` | `@dataclass(frozen=True) class _ParseJob:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/reporting.py` | `@dataclass(frozen=True) class Origin:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/baseline.py` | `pairs = zip(report.findings, ids, strict=True)` | boolean: True to False | `ids` is built from `report.findings` on the line above, so both have the same length and `strict` never fires. |
+| `src/ontolint/reporting.py` | `pairs = zip(report.findings, ids, strict=True)` | boolean: True to False | `ids` is built from `report.findings` on the line above, so both have the same length and `strict` never fires. |
 | `src/ontolint/datasets.py` | `for triple, positions in zip(triples, cast(list[object], of), strict=True):` | boolean: True to False | The function raises `ValueError` above when `of` and `triples` differ in length, so `strict` never fires. |
 | `src/ontolint/worker.py` | `receiver, sender = context.Pipe(duplex=False)` | boolean: False to True | The parent only reads `receiver` and the worker only writes `sender`; a duplex pipe offers a direction nothing uses. |
 | `src/ontolint/worker.py` | `process = context.Process(target=_worker_main, args=(sender, task, rdflib_level), daemon=True)` | boolean: True to False | `run_bounded` stops and reaps the worker in `finally`, so `daemon` only matters when the parent dies, which a test of the parent cannot observe. |
