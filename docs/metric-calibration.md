@@ -187,8 +187,16 @@ that the rule-case harness reads for CLS001 (`tests/rule_cases/classes.py` has n
 or dcam). A sketch, if the maintainer confirms the decision, in the style of that file:
 
 ```python
-ttl("dcam:domainIncludes names the class", "ex:A a owl:Class . ex:p a rdf:Property ; <http://purl.org/dc/dcam/domainIncludes> ex:A ."),
-ttl("dcam:rangeIncludes names the class", "ex:A a owl:Class . ex:p a rdf:Property ; <http://purl.org/dc/dcam/rangeIncludes> ex:A ."),
+clean = [
+    ttl(
+        "dcam:domainIncludes names the class",
+        "ex:A a owl:Class . ex:p a rdf:Property ; <http://purl.org/dc/dcam/domainIncludes> ex:A .",
+    ),
+    ttl(
+        "dcam:rangeIncludes names the class",
+        "ex:A a owl:Class . ex:p a rdf:Property ; <http://purl.org/dc/dcam/rangeIncludes> ex:A .",
+    ),
+]
 ```
 
 in the clean list, and `ex:A a owl:Class ; <http://purl.org/dc/dcam/domainIncludes> ex:B .` (a class that is only the
