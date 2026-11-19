@@ -77,7 +77,9 @@ One finding of `METRIC014` for each bound breached:
   rules whose limits are conventions stay `heuristic`.)
 - It is a rule of the `METRIC` family, in the module `budgets`, so `--select METRIC014`, `--ignore`
   and `ignored_rules` act on it, and `--profile minimal`, which runs no METRIC rule, does not run it.
-  A run that selects it away does not evaluate the budgets.
+  A run that selects it away does not evaluate the budgets, and says so with `TOOL002: warning: the policy
+  sets quality_budgets, but METRIC014 is not selected for this run` on standard error (the exit status
+  is not changed).
 
 ## A measurement that was not taken
 

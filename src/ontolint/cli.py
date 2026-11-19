@@ -1061,10 +1061,27 @@ def _profile(args: argparse.Namespace) -> Profile | None:
     return PROFILES[args.profile] if args.profile else None
 
 
+def _warn_unenforced_budgets(config: Policy, selection: Selection) -> None:
+    """Say so when ``quality_budgets`` is set but the run does not evaluate ``METRIC014``.
+
+    A budget is a gate: a profile, ``--select``, ``--ignore`` or ``ignored_rules`` that drops the rule
+    would otherwise let the run pass without ever comparing a bound.
+    """
+    if config.quality_budgets and (
+        "METRIC014" in config.ignored_rules or all(s.rule_id != "METRIC014" for s in selection.run)
+    ):
+        print(
+            "TOOL002: warning: the policy sets quality_budgets, but METRIC014 is not selected for this run "
+            "(--profile, --select, --ignore or ignored_rules); no budget is checked.",
+            file=sys.stderr,
+        )
+
+
 def _plan(args: argparse.Namespace, config: Policy, shapes: Graph | None, registry: RuleRegistry) -> RunPlan:
     profile = _profile(args)
     selection = resolve_selection(registry, profile, split_selectors(args.select), split_selectors(args.ignore))
     overrides = {**dict(profile.severity_overrides if profile else ()), **config.severity_mapping}
+    _warn_unenforced_budgets(config, selection)
     return RunPlan(_policy(args, config, config.ignored_rules), selection, overrides, shapes, registry)
 
 

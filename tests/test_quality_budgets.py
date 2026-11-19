@@ -177,6 +177,32 @@ def test_a_value_at_its_minimum_passes(tmp_path: Path, capsys: pytest.CaptureFix
         assert bool(_findings(out)) is breaches
 
 
+@pytest.mark.parametrize(
+    "argv", [("--profile", "minimal"), ("--ignore", "METRIC014"), ("--select", "LEX")], ids=" ".join
+)
+def test_a_run_that_drops_metric014_says_no_budget_is_checked(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], argv: tuple[str, ...]
+) -> None:
+    config = tmp_path / "policy.json"
+    config.write_text(json.dumps({"quality_budgets": {"unresolved_imports": {"maximum": 0}}}), encoding="utf-8")
+    capsys.readouterr()
+    main(["--config", str(config), *argv, KITCHEN])
+    err = capsys.readouterr().err
+    assert "TOOL002: warning: the policy sets quality_budgets, but METRIC014 is not selected" in err
+
+
+def test_ignored_rules_dropping_metric014_warns_too(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    _, _, err = _run(
+        tmp_path, {"unresolved_imports": {"maximum": 0}}, policy={"ignored_rules": ["METRIC014"]}, capsys=capsys
+    )
+    assert "METRIC014 is not selected" in err
+
+
+def test_a_run_that_evaluates_the_budgets_does_not_warn(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    _, _, err = _run(tmp_path, {"unresolved_imports": {"maximum": 0}}, capsys=capsys)
+    assert "METRIC014 is not selected" not in err
+
+
 def test_only_the_bound_a_value_breaches_is_reported(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     budgets = {"class_label_coverage": {"minimum": 0.1, "maximum": 0.5}}
     _, out, _ = _run(tmp_path, budgets, "--format", "json", capsys=capsys)
