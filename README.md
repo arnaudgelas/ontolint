@@ -15,7 +15,7 @@ file, reports what looks wrong, and exits non-zero when a finding is serious eno
   <a href="https://github.com/arnaudgelas/ontolint/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
 </p>
 <p align="center">
-  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 255 of 310" src="https://img.shields.io/badge/rules-255%2F310_implemented-brightgreen"></a>
+  <a href="https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md"><img alt="Rules implemented: 256 of 311" src="https://img.shields.io/badge/rules-256%2F311_implemented-brightgreen"></a>
   <img alt="Offline first" src="https://img.shields.io/badge/mode-offline--first-informational">
   <img alt="Formats: RDF, OWL, SKOS, SHACL" src="https://img.shields.io/badge/formats-RDF%20%C2%B7%20OWL%20%C2%B7%20SKOS%20%C2%B7%20SHACL-6f42c1">
 </p>
@@ -105,7 +105,7 @@ agents is [`llms.txt`](https://github.com/arnaudgelas/ontolint/blob/main/llms.tx
 
 ## What it checks
 
-255 of the 310 catalogue rules are implemented; the rest are planned. The
+256 of the 311 catalogue rules are implemented; the rest are planned. The
 [rule reference](https://github.com/arnaudgelas/ontolint/blob/main/docs/rules.md) documents each one, with its specification and test cases, on one page per family.
 
 - 236 Python graph checks for metadata, identifiers, IRIs, labels and lexical
@@ -399,8 +399,9 @@ term. A measurement whose definition version, kind, population or policy differs
 not take, is reported as not comparable, measurement by measurement, never diffed. **This reports; it does
 not gate.** Neither option changes a finding or the exit code (a comparison exits `0` whatever it finds;
 `2` for an unusable snapshot), so a committed quality baseline does not stop a regression from passing CI;
-failing a build on the comparison is QUALITY-BUDGET (issue #26); the METRIC rules' findings and
-`--fail-on` judge one run against absolute thresholds, not a change from the baseline. A run without these options is unchanged. [docs/quality.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md)
+failing a build on the comparison is the part of QUALITY-BUDGET (issue #26) not yet built; the METRIC rules'
+findings, `quality_budgets` and `--fail-on` judge one run against absolute thresholds, not a change from the
+baseline. A run without these options is unchanged. [docs/quality.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md)
 documents the versioned snapshot format and the comparison.
 
 ### Measurements as DQV
@@ -951,6 +952,15 @@ value is `TOOL001`, exit `2`) and has no flag or profile value;
 [docs/metric-thresholds.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/metric-thresholds.md)
 lists every key with its default, the rationale and the offline measurements.
 
+`quality_budgets` puts an explicit bound on a named measurement, for example
+`{"unresolved_imports": {"maximum": 0}, "class_definition_coverage": {"minimum": 0.95}}`. There is no
+default budget. A value strictly outside a bound (bounds are inclusive) is one `METRIC014` finding, an
+error that `--baseline` accepts like any other; a budget on a measurement that could not be taken makes
+the run exit `2`; an unknown name or a malformed bound is `GOV020`, exit `2`. Only absolute bounds are
+read; bounds on the change against a quality baseline are not yet.
+[docs/quality-budgets.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality-budgets.md)
+specifies it.
+
 ```bash
 # Emit SARIF using a policy
 ontolint ontology.ttl \
@@ -1330,7 +1340,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 [`data/rule_catalogue.csv`](https://github.com/arnaudgelas/ontolint/blob/main/data/rule_catalogue.csv) is the machine-readable
-catalogue. It records 310 entries: 255 executable diagnostics and 55 proposed
+catalogue. It records 311 entries: 256 executable diagnostics and 55 proposed
 candidates. The additional entry beyond the original roadmap is `TOOL001`, an
 operational diagnostic for the linter itself. The 18 `OPS` entries of the
 original roadmap describe command-line and report features, not checks on an
