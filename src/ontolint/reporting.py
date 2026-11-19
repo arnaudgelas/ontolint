@@ -79,7 +79,6 @@ class Location:
                 raise ValueError("a region's end must be after its start")
 
 
-# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class Origin:
     """The file a finding belongs to when it is not the linted file itself (an imported module)."""

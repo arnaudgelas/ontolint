@@ -21,6 +21,9 @@ starting the hosted run and setting `MUTATION_GATE_MODE=blocking` remain the mai
 mutant is observable and a test could pin it, or the reason leaves a gap. `testable`: a survivor
 that deserves a test. A `sound` verdict on an `untestable` pardon is conditional on its expiry
 (issue #71, 2027-02-13) and on the test that kills the mutant outside the run.
+Since 2026-11-19 these pardons are gone: `tests/conftest.py` collects `test_value_objects_are_frozen`
+first and the mutants are killed in a run (`docs/mutation-pardons.md`, Audits). The section below is
+the state at the audit.
 
 ### `untestable`: `@dataclass(frozen=True)`, mutant `True` to `False` (9)
 

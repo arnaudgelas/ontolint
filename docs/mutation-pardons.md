@@ -28,30 +28,20 @@ by the line it decorates) and the mutant with the source.
 
 | Module | Pardoned line | Mutant | Why it cannot be killed in a run |
 | --- | --- | --- | --- |
-| `src/ontolint/adapters/shacl.py` | `@dataclass(frozen=True) class _ValidationJob:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/context.py` | `@dataclass(frozen=True) class GraphContext:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/cli.py` | `rows = zip(inputs, graphs, shared, strict=True)` | boolean: True to False | `graphs` has one graph per input (any input that fails to parse ends the run with exit 2 before this line), and `shared` is either `shared_identities(inputs, ...)`, one tuple per input, or `[()] * len(inputs)`, so `strict` never fires. |
-| `src/ontolint/cli.py` | `@dataclass(frozen=True) class ImportOptions:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/imports.py` | `@dataclass(frozen=True) class Catalog:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/imports.py` | `@dataclass(frozen=True) class Closure:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/loader.py` | `@dataclass(frozen=True) class ImportChoice:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/loader.py` | `@dataclass(frozen=True) class ImportShadow:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/loader.py` | `@dataclass(frozen=True) class _ParseJob:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
-| `src/ontolint/reporting.py` | `@dataclass(frozen=True) class Origin:` | boolean: True to False | Untestable in a run, killed outside it (see below). |
 | `src/ontolint/reporting.py` | `pairs = zip(report.findings, ids, strict=True)` | boolean: True to False | `ids` is built from `report.findings` on the line above, so both have the same length and `strict` never fires. |
 | `src/ontolint/datasets.py` | `for triple, positions in zip(triples, cast(list[object], of), strict=True):` | boolean: True to False | The function raises `ValueError` above when `of` and `triples` differ in length, so `strict` never fires. |
 | `src/ontolint/worker.py` | `receiver, sender = context.Pipe(duplex=False)` | boolean: False to True | The parent only reads `receiver` and the worker only writes `sender`; a duplex pipe offers a direction nothing uses. |
 | `src/ontolint/worker.py` | `process = context.Process(target=_worker_main, args=(sender, task, rdflib_level), daemon=True)` | boolean: True to False | `run_bounded` stops and reaps the worker in `finally`, so `daemon` only matters when the parent dies, which a test of the parent cannot observe. |
 
-These are the `untestable` pardons of `docs/mutation-policy.md`: observable mutants, pardoned
-because of a tool limitation and until issue #71's expiry (2027-02-13), not because they are
-equivalent. A class decorator runs when its module is imported, so every test covers its mutant.
-pytest-gremlins then selects the whole suite, whose unmutated run exceeds the 30 s mutant timeout,
-and reports the mutant as an error that counts against the score, however fast a test would kill it.
-`test_value_objects_are_frozen` in `tests/test_mutation_pardon_audit.py` kills each of these in
-the normal suite (`frozen` is a contract of these values: they are handed between stages, cached
-or sent to a worker). A frozen decorator without a pardon shows up as such an error; pardon it the
-same way only together with a row here and that test.
+The `untestable` reason no longer exists. Its nine pardons were the `@dataclass(frozen=True)`
+decorators, whose mutant (`True` to `False`) is observable: `test_value_objects_are_frozen` kills it.
+A class decorator runs when its module is imported, so coverage ties it to no test and
+pytest-gremlins runs the whole suite for its mutant, in collection order, stopping at the first
+failure. That test used to come after most of the suite, so the run reached the 30 s mutant timeout
+first and reported an error. `tests/conftest.py` now collects it first, and the mutants are killed
+in about 12 s (issue #71). A frozen decorator needs neither a pardon nor a longer timeout; it needs
+a test of that name that lists its class.
 
 ## Audits
 
@@ -67,3 +57,9 @@ same way only together with a row here and that test.
   (Claude), not by a human reviewer other than the author; the approval the policy requires is
   the maintainer's review of that pull request. The same change added two: the `frozen=True` of
   `GraphContext`, when `context.py` entered the scope, and the run-level `zip` of `cli.py`.
+- 2026-11-19 (issue #71): the nine `untestable` pardons were removed. In a run restricted to
+  `reporting.py` and the `boolean` operator, `Origin` and three more frozen decorators of that module
+  (lines 57, 90 and 130, none pardoned) were errors (30 s timeout, whole suite selected, 3 of 24
+  mutants). With `tests/conftest.py` collecting `test_value_objects_are_frozen` first, all four were
+  zapped in about 11.5 s each. The audit was made by an AI agent (Claude); the maintainer's review
+  of the pull request is the approval the policy requires.

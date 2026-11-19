@@ -659,7 +659,6 @@ def _findings_from_json(records: list[dict[str, Any]]) -> list[Finding]:
     return findings
 
 
-# gremlin: pardon[untestable] every test covers a decorator: too slow to time; test_mutation_pardon_audit kills it
 @dataclass(frozen=True)
 class _ValidationJob:
     """A :class:`~ontolint.worker.WorkerTask`: the data and shapes graphs, encoded by the parent."""

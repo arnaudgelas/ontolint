@@ -8,14 +8,14 @@ source the way pytest-gremlins does (its own instrumentation, with the operators
 
 from __future__ import annotations
 
-import importlib
 import re
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
 from pytest_gremlins.instrumentation.gremlin import Gremlin
 from pytest_gremlins.instrumentation.transformer import get_default_registry, transform_source
-from test_mutation_pardon_audit import FROZEN
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "src"
@@ -118,19 +118,29 @@ def _pragmas() -> list[tuple[Path, int, str]]:
 
 def test_every_pragma_has_a_reason_the_policy_allows() -> None:
     # docs/mutation-policy.md, survivor triage item 3.
-    assert sorted({reason for _, _, reason in _pragmas()} - {"equivalent", "untestable"}) == []
+    assert sorted({reason for _, _, reason in _pragmas()} - {"equivalent"}) == []
 
 
-def test_every_untestable_pardon_is_a_frozen_dataclass_the_normal_suite_kills() -> None:
-    """The policy allows `untestable` only on a frozen decorator whose mutant a normal-suite test kills (#71)."""
-    unbacked: list[str] = []
-    for path, number, reason in _pragmas():
-        if reason != "untestable":
-            continue
-        lines = path.read_text().splitlines()
-        decorator, header = lines[number].strip(), lines[number + 1].strip()
-        name = re.fullmatch(r"class (\w+)[(:].*", header)
-        module = importlib.import_module(".".join(path.relative_to(SOURCE).with_suffix("").parts))
-        if decorator != "@dataclass(frozen=True)" or name is None or getattr(module, name[1], None) not in FROZEN:
-            unbacked.append(f"{path.relative_to(ROOT).as_posix()}:{number}")
-    assert unbacked == []
+def test_the_frozen_dataclass_test_is_collected_first() -> None:
+    """A frozen decorator's mutant runs the whole suite in collection order (#71): the test that kills it leads."""
+    # The module is named after the file it sorts behind: without tests/conftest.py it would come second.
+    run = subprocess.run(  # noqa: S603 -- fixed interpreter and module.
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "--collect-only",
+            "-q",
+            "--no-cov",
+            "-p",
+            "no:randomly",
+            "-p",
+            "no:cacheprovider",
+        ]
+        + ["tests/test_worker.py", "tests/test_mutation_pardon_audit.py"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "::test_value_objects_are_frozen[" in run.stdout.splitlines()[0]
