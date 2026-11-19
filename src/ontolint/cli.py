@@ -212,6 +212,13 @@ def build_parser() -> argparse.ArgumentParser:
         "METRIC rules and more, as numerators and denominators); requires --format json",
     )
     ap.add_argument(
+        "--sarif-fingerprints",
+        action="store_true",
+        help="Add partialFingerprints to every SARIF result (ontolintIdentity/v2, the baseline identity, and "
+        "ontolintFingerprint/v1 for a result whose identity another result shares), so code scanning keeps "
+        "results of one rule on one line apart; requires --format sarif. Adopting it re-opens existing alerts once",
+    )
+    ap.add_argument(
         "--write-quality-snapshot",
         metavar="FILE",
         help="Write the run's quality snapshot (its measurement vector, the term sets behind each coverage "
@@ -1221,7 +1228,15 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     if isinstance(trend, int):
         return trend
     rules = plan.selection.run + plan.selection.ignored
-    return RunReport(tuple(files), rules, plan.overrides, stale, baselined=baselined, quality=trend)
+    return RunReport(
+        tuple(files),
+        rules,
+        plan.overrides,
+        stale,
+        baselined=baselined,
+        quality=trend,
+        sarif_fingerprints=args.sarif_fingerprints,
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1268,8 +1283,15 @@ def _usage_problem(args: argparse.Namespace) -> str | None:
         return "--fail-on-stale-baseline requires --baseline"
     if (problem := _alternatives_problem(args)) is not None:
         return problem
+    return _format_problem(args)
+
+
+def _format_problem(args: argparse.Namespace) -> str | None:
+    """The first report option given with a format that cannot carry it, if any."""
     if args.measurements and args.format != "json":
         return "--measurements requires --format json"
+    if args.sarif_fingerprints and args.format != "sarif":
+        return "--sarif-fingerprints requires --format sarif"
     return None
 
 

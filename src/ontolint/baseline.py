@@ -52,7 +52,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, NamedTuple
 
 from .models import Finding
-from .reporting import FileReport, fingerprint, identity
+from .reporting import FileReport, fingerprint, identity, unique_identities
 
 BASELINE_VERSION = 2
 _HASH = re.compile(r"[0-9a-f]{64}")
@@ -90,22 +90,13 @@ def _v1(finding: Finding, report: FileReport, multi: bool) -> str:
     return fingerprint(finding, report.path if multi else None)
 
 
-def _unique(report: FileReport) -> list[tuple[Finding, str, bool]]:
-    """Each finding of ``report`` with its identity, and whether no other finding of the report shares it."""
-    ids = [identity(f) for f in report.findings]
-    counts = Counter(ids)
-    # gremlin: pardon[equivalent] ids is built from report.findings, so the lengths always match
-    pairs = zip(report.findings, ids, strict=True)
-    return [(f, i, counts[i] == 1) for f, i in pairs]
-
-
 def build(reports: Sequence[FileReport]) -> Baseline:
     """The baseline that accepts every finding of ``reports`` (the reports of one run)."""
     multi = len(reports) > 1
     fingerprints: set[str] = set()
     identities: dict[str, dict[str, str]] = {}
     for report in reports:
-        for finding, ident, unique in _unique(report):
+        for finding, ident, unique in unique_identities(report):
             fingerprints.add(_v1(finding, report, multi))
             if unique:
                 identities.setdefault(report.path, {})[ident] = _v1(finding, report, multi)
@@ -236,7 +227,7 @@ def apply(baseline: Baseline, reports: Sequence[FileReport], roaming: frozenset[
     pending: list[tuple[list[bool | None], int, str]] = []  # (verdicts of a report, index, version 1 hash)
     for report in reports:
         row: list[bool | None] = []
-        for finding, ident, unique in _unique(report):
+        for finding, ident, unique in unique_identities(report):
             v1 = _v1(finding, report, multi)
             current.add(v1)
             if unique:
