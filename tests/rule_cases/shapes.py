@@ -18,14 +18,60 @@ def _shapes(*, name: bool = True, description: bool = True, message: bool = True
     return node + "\n" + prop + " ."
 
 
+_TARGETED = "ex:T sh:path ex:p ; sh:targetClass ex:A"  # an untyped property shape of its own, no sh:property parent
+
 GOOD = with_shapes("fully documented shapes", DATA, _shapes())
 
 CASES = {
     "SHQ001": rule_cases(
-        [with_shapes("no sh:name", DATA, _shapes(name=False))],
-        [GOOD, with_shapes("a literal sh:property value is not a shape", DATA, _shapes() + ' ex:S sh:property "x" .')],
+        [
+            with_shapes("no sh:name", DATA, _shapes(name=False)),
+            with_shapes(
+                "a directly targeted property shape without sh:name", DATA, _TARGETED + ' ; sh:description "d" .'
+            ),
+            with_shapes(
+                "a property shape with sh:targetNode",
+                DATA,
+                "ex:T sh:path ex:p ; sh:targetNode ex:i ; sh:description 'd' .",
+            ),
+        ],
+        [
+            GOOD,
+            with_shapes("a literal sh:property value is not a shape", DATA, _shapes() + ' ex:S sh:property "x" .'),
+            with_shapes(
+                "a path shape reached only through sh:or has no target of its own",
+                DATA,
+                'ex:S a sh:NodeShape ; sh:targetClass ex:A ; rdfs:label "S" ; rdfs:comment "c" ; sh:or ( ex:T ) .\n'
+                'ex:T sh:path ex:p ; sh:description "d" .',
+            ),
+            with_shapes(
+                "a node shape with a path and a target is not a property shape",
+                DATA,
+                'ex:T a sh:NodeShape ; sh:path ex:p ; sh:targetClass ex:A ; rdfs:label "T" ; rdfs:comment "c" .',
+            ),
+            with_shapes(
+                "a directly targeted property shape, documented",
+                DATA,
+                _TARGETED + ' ; sh:name "n" ; sh:description "d" .',
+            ),
+        ],
     ),
-    "SHQ002": rule_cases([with_shapes("no sh:description", DATA, _shapes(description=False))], [GOOD]),
+    "SHQ002": rule_cases(
+        [
+            with_shapes("no sh:description", DATA, _shapes(description=False)),
+            with_shapes(
+                "a directly targeted property shape without sh:description", DATA, _TARGETED + ' ; sh:name "n" .'
+            ),
+        ],
+        [
+            GOOD,
+            with_shapes(
+                "a directly targeted property shape, documented",
+                DATA,
+                _TARGETED + ' ; sh:name "n" ; sh:description "d" .',
+            ),
+        ],
+    ),
     "SHQ003": rule_cases(
         [
             with_shapes("constraint without sh:message", DATA, _shapes(message=False)),
@@ -33,6 +79,11 @@ CASES = {
                 "sh:maxLength is a constraint", DATA, "ex:P a sh:PropertyShape ; sh:path ex:p ; sh:maxLength 9 ."
             ),
             with_shapes("sh:closed is a constraint", DATA, "ex:S a sh:NodeShape ; sh:closed true ."),
+            with_shapes(
+                "sh:nodeKind is a constraint (the widened condition)",
+                DATA,
+                "ex:S a sh:NodeShape ; sh:nodeKind sh:IRI .",
+            ),
         ],
         [
             GOOD,

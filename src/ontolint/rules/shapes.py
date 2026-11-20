@@ -8,13 +8,17 @@ skipped when no shapes graph is supplied.  References are to the SHACL Recommend
 In this module a *node shape* is a node typed ``sh:NodeShape``; a *property shape* is a node typed
 ``sh:PropertyShape`` or an IRI or blank node that is a value of ``sh:property``.  That is narrower than
 SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the property shapes a form
-shows, not a property shape used as a condition inside ``sh:or``.  Every finding is ``heuristic``: the
+shows, not a property shape used as a condition inside ``sh:or``.  They also judge a *directly targeted* property
+shape: a subject of ``sh:path``, not typed ``sh:NodeShape``, with a target of its own (``sh:targetClass``,
+``sh:targetNode``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), which is a stand-alone form field.  SHQ003 and
+SHQ005 keep the narrower set.  Every finding is ``heuristic``: the
 documentation rules are conventions, and SHQ005 and SHQ006 read "should" statements.  Specifications:
 
 * **SHQ001.** Every property shape without an ``sh:name`` triple (any object: an IRI or an untagged
   literal counts).  Excluded: a literal value of ``sh:property`` (SHACL 2.1: a shape is an IRI or a
-  blank node), and a property shape reached only through ``sh:or``, ``sh:and``, ``sh:xone``,
-  ``sh:not``, ``sh:node`` or ``sh:qualifiedValueShape`` or only targeted directly.  Info: ``sh:name``
+  blank node), and a subject of ``sh:path`` that is neither typed ``sh:PropertyShape`` nor a value of
+  ``sh:property`` nor targeted (one reached only through ``sh:or``, ``sh:and``, ``sh:xone``, ``sh:not``,
+  ``sh:node`` or ``sh:qualifiedValueShape`` has no target of its own).  Info: ``sh:name``
   is non-validating (2.3.2.1) and only helps forms and documentation.
 * **SHQ002.** The same for ``sh:description``.  Info, for the same reason.
 * **SHQ003.** Every node or property shape that declares a constraint able to produce a validation
@@ -40,7 +44,11 @@ documentation rules are conventions, and SHQ005 and SHQ006 read "should" stateme
   and ``sh:uniqueLang false``; targets, ``sh:severity`` and the non-validating properties; a message
   on another shape.  Known gap: other values that make a constraint vacuous (``sh:minCount 0``, an
   empty ``sh:and`` list) still count, as the values are not evaluated.  Info: without ``sh:message`` a
-  processor still reports the violation with its own text (2.1.5).
+  processor still reports the violation with its own text (2.1.5).  The condition is deliberately the wide one:
+  against the nine parameters 0.12.0 listed (and without the ``sh:deactivated`` exclusion) it reports more shapes,
+  +42% (878 to 1,244 findings, +122 files) on the 930 readable shapes files of ``docs/severity-decisions.md``
+  (W3C ``data-shapes`` and DCAT-AP 3.0.1) and +46% (+1,072) on the corpus of PR #46; the narrow subset has no
+  principled boundary, the cost is info noise, and no exit code changes under any profile (issue #63).
 * **SHQ004.** Every node shape without an ``rdfs:label`` triple or without an ``rdfs:comment`` triple
   (both are needed).  Excluded: untyped node shapes; ``skos:prefLabel``, ``sh:name`` and
   ``dcterms:description`` do not count, as a shape is not an ontology term.  Info: documentation only.
@@ -115,6 +123,8 @@ CONSTRAINT_PREDICATES = frozenset(
 )
 # Parameters whose constraint produces no validation result when the value is false (4.4.5, 4.8.1).
 SWITCH_PREDICATES = (SH.uniqueLang, SH.closed)
+# The explicit targets of SHACL 2.1.3: a property shape that has one is a stand-alone form field (SHQ001, SHQ002).
+DIRECT_TARGETS = (SH.targetClass, SH.targetNode, SH.targetSubjectsOf, SH.targetObjectsOf)
 # 4.7.3: sh:qualifiedValueShape and a qualified count are the mandatory parameters of a qualified constraint.
 QUALIFIED_COUNTS = (SH.qualifiedMinCount, SH.qualifiedMaxCount)
 
@@ -203,9 +213,19 @@ def run(ctx: RuleContext) -> None:
     node_shapes = set(sg.subjects(RDF.type, SH.NodeShape))
     property_shapes = set(sg.subjects(RDF.type, SH.PropertyShape))
     property_shapes |= {o for o in sg.objects(None, SH.property) if isinstance(o, URIRef | BNode)}  # SHACL 2.1
-    _documentation(ctx, sg, node_shapes, property_shapes)
+    _documentation(ctx, sg, node_shapes, property_shapes | _targeted_property_shapes(sg, node_shapes))
     _messages_and_languages(ctx, sg, node_shapes | property_shapes)
     _class_targets(ctx, sg)
+
+
+def _targeted_property_shapes(sg: Graph, node_shapes: set[Node]) -> set[Node]:
+    """The subjects of ``sh:path`` with a target of their own that are not node shapes (SHQ001, SHQ002)."""
+    targeted = {s for target in DIRECT_TARGETS for s in sg.subjects(target, None)}
+    return {
+        s
+        for s in sg.subjects(SH.path, None)
+        if s in targeted and s not in node_shapes and isinstance(s, URIRef | BNode)
+    }
 
 
 def _documentation(ctx: RuleContext, sg: Graph, node_shapes: set[Node], property_shapes: set[Node]) -> None:
