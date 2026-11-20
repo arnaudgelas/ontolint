@@ -33,7 +33,9 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   ``sh:qualifiedMaxCount`` (4.7.3), and the range parameters.  Error: SHACL (sections 4.2.1, 4.2.2,
   4.4.1 and 4.4.2, and the syntax rules of Appendix B) requires each to be a literal with datatype
   ``xsd:integer``, so any other value makes the shape ill-formed (3.4.2: the result of validation is
-  undefined; a processor may reject the shapes graph or ignore the constraint).  A negative
+  undefined; a processor may reject the shapes graph or ignore the constraint: pySHACL 0.40.2 rejects a
+  ``"1"^^xsd:nonNegativeInteger`` count, so SHACL001 fails and the run exits 2, while Apache Jena 4.10.0
+  reads ``"1"^^xsd:int`` as 1).  A negative
   ``xsd:integer`` is well formed (SHACL sets no lower bound) but meaningless: a negative minimum is
   vacuous and a negative maximum fails every focus node (``sh:maxCount``) or value node
   (``sh:maxLength``), so it is an authoring error all the same.  The check is deterministic, though its
@@ -75,8 +77,9 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   which Python reads as an octal escape; and an unknown flag letter, which is dropped when compiling and
   is SHQ015's.  It can also flag a valid pattern Python rejects (a repetition count above 4294967295,
   subtractions nested more than 64 deep).  Error, heuristic: an invalid pattern makes the shape ill-formed
-  (3.4.2), but a SHACL engine built on Python's or Java's regex may accept it (``\\/`` in particular,
-  which JavaScript habit writes, and ``[[a]``, a Java union).
+  (3.4.2), but an engine built on a host regex accepts some of these: pySHACL 0.40.2 and Apache Jena 4.10.0
+  both accept ``\\/`` (which JavaScript habit writes) and ``[]a]``; pySHACL also accepts ``[[a]`` (Python warns
+  of a possible nested set) while Jena rejects it (``Unclosed character class``).
 * **SHQ013.** Every shape with both an ``sh:datatype`` and an ``sh:class`` triple (any values).
   Excluded: the two on different shapes of one path; ``sh:or`` alternatives.  Warning, deterministic:
   ``sh:datatype`` needs a literal value node and ``sh:class`` an IRI or blank instance (4.1.1, 4.1.2),

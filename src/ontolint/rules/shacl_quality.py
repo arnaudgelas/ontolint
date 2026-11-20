@@ -55,7 +55,8 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   1.1 REGEX cites), and every shape with ``sh:flags`` but no ``sh:pattern`` (4.4.3: an optional parameter of
   ``sh:PatternConstraintComponent``).  The empty string and repeated letters are valid.  Excluded: the
   datatype of the flags literal.  Warning: an unknown letter is an error in XPath (FORX0001), but SHQ011
-  compiles the pattern without it and Python- or Java-based engines may accept it; flags without a pattern
+  compiles the pattern without it, and engines differ: pySHACL 0.40.2 ignores the letter (the shapes graph
+  conforms) while Apache Jena 4.10.0 stops with an unsupported-flag error (exit 2); flags without a pattern
   are ignored.
 * **SHQ016.** Every shape on a cycle of the "refers to" relation of 3.4.3: ``sh:node``, ``sh:property``,
   ``sh:not`` and ``sh:qualifiedValueShape`` values and ``sh:and``, ``sh:or`` and ``sh:xone`` list members that
