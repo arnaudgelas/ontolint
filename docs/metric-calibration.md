@@ -144,6 +144,10 @@ Each is a recommendation, with its evidence and the alternative. None is applied
 
 ### METRIC001 and METRIC002: warning severity and the `ci`, `obo`, `fair` profiles
 
+**Decided (issue #63): keep both at warning.** The two flagged files below are the evidence the corpus has; the sweep of
+issue #163 may reopen it, and `severity_overrides` lowers either rule in a policy file for a mature ontology that sits
+under the limit (PATO base is at 0.33 for METRIC002).
+
 They are warnings, and those three profiles gate on warnings, so a low coverage fails the build. Observed with
 `--profile ci`, `obo` and `fair` (identical) on the corpus: exactly two files fail, MOMo food traceability
 (`METRIC001`, `METRIC002`, `METRIC003`) and MFTO (`METRIC002`), both labelled poor. No curated file fails.
@@ -154,6 +158,12 @@ protects the failing case. *Alternatives:* demote to info (no profile ever fails
 severity but state in the `obo` profile that METRIC002 can be overridden. Two flagged files cannot settle it.
 
 ### METRIC011: `certain` or `heuristic`
+
+**Decided (issue #63): `heuristic`.** The count is exact, but the limit of ten is a convention, as it is for every
+other METRIC rule, whose category is `heuristic`, and the only corpus flag is a false positive; a finding that reports
+`certain` under a `heuristic` category tells a consumer two things. `tests/test_metric_confidence.py` pins that
+a METRIC finding is `certain` exactly when its rule's category is `deterministic` (METRIC014). The recommendation
+below was the other reading.
 
 The finding reports confidence `certain` and category `heuristic`. The count of distinct imports is exact; the
 limit of 10 is a convention. The only corpus flag (IDS, 80) is labelled a false positive, because the imports
@@ -213,7 +223,7 @@ is a clear typo.
 | Item | Docstring says | Code does | Verdict |
 | --- | --- | --- | --- |
 | Severities | 001 and 002 warning, 003 to 013 info | `SPECS` agrees | matches; the 001/002 choice is decision 1 above |
-| Confidence | "Findings are `heuristic` ... except METRIC011's" | every `SPECS` entry has category `heuristic` (the shared `_spec` helper), METRIC011 passes confidence `certain` | **wording conflates category and confidence**; reword once METRIC011 is decided |
+| Confidence | "Findings are `heuristic` ... METRIC011's included" | every `SPECS` entry has category `heuristic` (the shared `_spec` helper), and since issue #63 no METRIC finding reports `certain` | **matches** (reworded when METRIC011 was decided) |
 | Strict comparison, focus, identity | as stated | `_focus`, strict `>` and `<` | matches |
 | Message digits | "value and limit with 2 decimals, or more (up to 6)" | true of `_vs`; METRIC004 and METRIC012 print `(threshold X)`, METRIC011 an integer | **true only of the comparison messages**; say so |
 | Sample gate | "a population of at least `metric_min_sample` terms" | the gated quantity differs: owned classes (004 to 007), object and datatype properties (008), labelled terms (009), defined classes (012), structural references (010), subjects (013); METRIC001 to METRIC003 gate on their own population | **"terms" is imprecise** for 010 and 013; per-rule lines name it only for 004, 006, 007 |
