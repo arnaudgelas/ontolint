@@ -466,6 +466,7 @@ def test_fail_on_error_now_fails_on_the_closed_gaps(tmp_path: Path, capsys: pyte
     argv = [str(ontology), "--shapes", str(shapes), "--select", rules, "--fail-on", "error", "--format", "json"]
     assert main(argv) == 1
     findings = json.loads(capsys.readouterr().out)["findings"]
+    # SHQ011's `\/` is a warning since issue #63: pySHACL and Jena accept it; the gate is the other five errors.
     assert sorted((f["rule"], f["severity"]) for f in findings) == [
-        (rule, "error") for rule in sorted(rules.split(","))
+        (rule, "warning" if rule == "SHQ011" else "error") for rule in sorted(rules.split(","))
     ]

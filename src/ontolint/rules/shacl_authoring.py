@@ -38,8 +38,7 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   reads ``"1"^^xsd:int`` as 1).  A negative
   ``xsd:integer`` is well formed (SHACL sets no lower bound) but meaningless: a negative minimum is
   vacuous and a negative maximum fails every focus node (``sh:maxCount``) or value node
-  (``sh:maxLength``), so it is an authoring error all the same.  The check is deterministic, though its
-  findings are recorded with the default confidence ``heuristic``.
+  (``sh:maxLength``), so it is an authoring error all the same.  Certain: the check is exact.
 * **SHQ011.** A literal value of ``sh:pattern`` that is not an XPath regular expression under the
   shape's ``sh:flags`` (all values concatenated).  SHACL 4.4.3 requires "valid pattern arguments for
   the SPARQL REGEX function", which are XPath regexes (F&O 1.0 7.6.1, F&O 3.1 5.6.1, over XSD Part 2
@@ -76,15 +75,17 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   XPath 2.0); an empty group before a subtraction (``[-[a]]``); a back-reference to group 100 or above,
   which Python reads as an octal escape; and an unknown flag letter, which is dropped when compiling and
   is SHQ015's.  It can also flag a valid pattern Python rejects (a repetition count above 4294967295,
-  subtractions nested more than 64 deep).  Error, heuristic: an invalid pattern makes the shape ill-formed
-  (3.4.2), but an engine built on a host regex accepts some of these: pySHACL 0.40.2 and Apache Jena 4.10.0
-  both accept ``\\/`` (which JavaScript habit writes) and ``[]a]``; pySHACL also accepts ``[[a]`` (Python warns
-  of a possible nested set) while Jena rejects it (``Unclosed character class``).
+  subtractions nested more than 64 deep).  Error, heuristic, except a warning for a pattern all of whose
+  problems are ``\\/`` (an escape outside XPath's) or a ``]`` first in a class without ``^``: an invalid pattern
+  makes the shape ill-formed (3.4.2), but an engine built on a host regex accepts some of these: pySHACL 0.40.2
+  and Apache Jena 4.10.0 both accept ``\\/`` (which JavaScript habit writes) and ``[]a]``, so those two are
+  warnings; pySHACL also accepts ``[[a]`` (Python warns of a possible nested set) while Jena rejects it
+  (``Unclosed character class``), so it stays an error, as does ``[^]a]``, which no engine was run on.
 * **SHQ013.** Every shape with both an ``sh:datatype`` and an ``sh:class`` triple (any values).
   Excluded: the two on different shapes of one path; ``sh:or`` alternatives.  Warning, deterministic:
   ``sh:datatype`` needs a literal value node and ``sh:class`` an IRI or blank instance (4.1.1, 4.1.2),
-  so every value node violates one of them; the shape still holds when there is no value node.
-  Findings are recorded with the default confidence ``heuristic``.
+  so every value node violates one of them; the shape still holds when there is no value node, which is why it
+  is a warning where SHQ007 is an error.  Certain: the condition is exact.
 * **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``, derived integer types included.
   Excluded as for SHQ007; a length that is not a natural is SHQ008's.  Error, certain: no value node has a
   string length in the range, so every value node (and every blank node) violates the shape.
@@ -98,8 +99,7 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   number beyond a type's range becomes ``INF`` or ``-INF``, which compare as infinities.  Excluded: NaN,
   ill-typed literals, booleans, and non-numeric bounds such as dates or strings; an interval empty
   only over the integers (``sh:minExclusive 1 ; sh:maxExclusive 2``), as the value nodes' datatype is
-  not considered.  Error: no value node can satisfy both bounds; deterministic, though the findings
-  are recorded with the default confidence ``heuristic``.
+  not considered.  Error, certain: no value node can satisfy both bounds.
 * **SHQ019.** Every IRI value of ``sh:node`` or ``sh:property`` on a shape that is the subject of no
   triple of the shapes graph; one finding per predicate and value.  Excluded: blank values; references
   through ``sh:not``, ``sh:qualifiedValueShape`` and the ``sh:and``, ``sh:or`` and ``sh:xone`` lists (a
@@ -426,14 +426,15 @@ def _integer_values(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                     "SHQ008",
                     shape,
                     f"{predicate.n3(sg.namespace_manager)} value {value_text(value)} is not a non-negative integer.",
+                    confidence="certain",
                     subject=(predicate, shape_term(value)),
                 )
             elif _natural(value) is None:
                 message = f"{name} value {term_text(value)} is not a non-negative integer."
-                ctx.add("SHQ008", shape, message, subject=(predicate, shape_term(value)))
+                ctx.add("SHQ008", shape, message, confidence="certain", subject=(predicate, shape_term(value)))
             elif isinstance(value, Literal) and value.datatype != XSD.integer:
                 message = f"{name} value {term_text(value)} is not of datatype xsd:integer."
-                ctx.add("SHQ008", shape, message, subject=(predicate, value))
+                ctx.add("SHQ008", shape, message, confidence="certain", subject=(predicate, value))
 
 
 def _strip_whitespace(text: str) -> str:
@@ -453,6 +454,27 @@ def _strip_whitespace(text: str) -> str:
             continue
         out.append(ch)
     return "".join(out)
+
+
+# Escapes outside XPath's SingleCharEsc that pySHACL 0.40.2 and Apache Jena 4.10.0 both read as the character itself
+# (JavaScript habit writes ``\\/``): SHQ011 reports them, at warning, because the engines still run the shape.
+ENGINE_ACCEPTED_ESCAPES = frozenset("/")
+LEADING_BRACKET = "an unescaped ] at the start of a character class"
+
+
+def _tolerated_escape(text: str, i: int) -> bool:
+    """Whether the escape at ``text[i]`` (a backslash) is one the engines accept in spite of XPath."""
+    return text[i + 1 : i + 2] in ENGINE_ACCEPTED_ESCAPES and i + 1 < len(text)
+
+
+def _judged_escape(text: str, i: int, seen: list[str] | None, *, in_class: bool) -> tuple[str | None, int]:
+    """:func:`_escape_end`, except that an engine-accepted escape is appended to ``seen`` (when given), not returned."""
+    tolerated = seen is not None and _tolerated_escape(text, i)
+    problem, end = _escape_end(text, i, in_class=in_class)
+    if problem is not None and tolerated and seen is not None:
+        seen.append(problem)
+        return None, end
+    return problem, end
 
 
 def _escape_end(text: str, i: int, *, in_class: bool) -> tuple[str | None, int]:
@@ -482,8 +504,23 @@ def _is_block_name(name: str) -> bool:
     return name.startswith("Is") and len(name) > len("Is") and set(name[2:]) <= BLOCK_NAME_CHARACTERS
 
 
-def _class_end(text: str, i: int) -> tuple[str | None, int]:
+def _class_start(text: str, i: int, seen: list[str] | None) -> tuple[int, str | None]:
+    """Where the members of the class opening at ``text[i]`` start, and the problem of a ``]`` that comes first."""
+    end = i + 1 + (text[i + 1 : i + 2] == "^")
+    if text[end : end + 1] != "]":
+        return end, None
+    if seen is None or end != i + 1:
+        return end + 1, LEADING_BRACKET
+    seen.append(LEADING_BRACKET)
+    return end + 1, None  # pySHACL and Jena read ``[]a]`` as the class of ``]`` and ``a``
+
+
+def _class_end(text: str, i: int, seen: list[str] | None = None) -> tuple[str | None, int]:
     """The problem with the character class opening at ``text[i]``, and where it ends.
+
+    With ``seen``, the two forms the engines accept (a ``]`` first in the class without a ``^``, and an escape of
+    :data:`ENGINE_ACCEPTED_ESCAPES`) are appended to it and the scan goes on; without it they stop the scan like
+    any other problem.
 
     Judged inside a class: its escapes, an unescaped ``[`` that does not follow ``-`` (``-[`` opens a
     subtracted class) and an unescaped ``]`` first in the class (after its ``^``).  XSD 1.0 ("The [, ], -
@@ -494,14 +531,14 @@ def _class_end(text: str, i: int) -> tuple[str | None, int]:
     class and accepts it.  A class left open without one is Python's to report.
     The placement of ``-`` is left to Python, as XSD 1.0 and 1.1 disagree on it.
     """
-    end = i + 1 + (text[i + 1 : i + 2] == "^")
-    if text[end : end + 1] == "]":
-        return "an unescaped ] at the start of a character class", end + 1
+    end, stop = _class_start(text, i, seen)
+    if stop is not None:
+        return stop, end
     depth, dash, subtracted = 1, False, False
     while end < len(text):
         char = text[end]
         if char == "\\":
-            problem, end = _escape_end(text, end, in_class=True)
+            problem, end = _judged_escape(text, end, seen, in_class=True)
             if problem is not None:
                 return problem, end
             dash = False
@@ -552,15 +589,28 @@ def xpath_regex_problem(text: str) -> str | None:
     other than one reluctant ``?``, or with nothing to repeat; an unescaped ``{`` that starts no ``{n}``,
     ``{n,}`` or ``{n,m}``; and an unescaped ``}`` or ``]`` outside a class.
     """
+    return xpath_regex_scan(text)[0]
+
+
+def xpath_regex_scan(text: str) -> tuple[str | None, bool]:
+    """The first problem of :func:`xpath_regex_problem`, and whether every problem is one the engines accept.
+
+    The second value is ``True`` when each construct the scan finds is in :data:`ENGINE_ACCEPTED_ESCAPES` or is a
+    ``]`` first in a class without ``^`` (the forms SHQ011 grades as a warning), and also when there is no
+    problem; it is ``False`` as soon as one construct is not.  The problem is then the first construct that is not
+    accepted, so that an error never names a tolerated construct met earlier; when every problem is accepted it is
+    the first of them.
+    """
+    seen: list[str] = []
     i, last, quantifier = 0, _START, 0
     while i < len(text):
         char = text[i]
         problem: str | None = None
         if char == "\\":
-            problem, i = _escape_end(text, i, in_class=False)
+            problem, i = _judged_escape(text, i, seen, in_class=False)
             last = _ATOM
         elif char == "[":
-            problem, i = _class_end(text, i)
+            problem, i = _class_end(text, i, seen)
             last = _ATOM
         elif char == "?" and last == _QUANTIFIED:
             i, last = i + 1, _RELUCTANT
@@ -577,8 +627,8 @@ def xpath_regex_problem(text: str) -> str | None:
             i, last = i + 1, _START if char in "(|" else _ATOM
             continue
         if problem is not None:
-            return problem
-    return None
+            return problem, False
+    return (seen[0] if seen else None), True
 
 
 def _python_escape(text: str, i: int, last_close: int) -> tuple[str, int]:
@@ -686,8 +736,18 @@ def pattern_problem(pattern: str, letters: str) -> str | None:
     Python's error first, when ``python_form`` of the pattern does not compile (its position is dropped when
     the text was rewritten); then the first construct ``xpath_regex_problem`` finds.
     """
+    return pattern_check(pattern, letters)[0]
+
+
+def pattern_check(pattern: str, letters: str) -> tuple[str | None, bool]:
+    """:func:`pattern_problem`, and whether the engines accept the pattern in spite of the message.
+
+    ``True`` only when the message comes from the XPath scan and every construct it found is one pySHACL and Apache
+    Jena accept (:func:`xpath_regex_scan`): then SHQ011 reports a warning, otherwise an error.  A pattern that
+    does not compile is never accepted.
+    """
     if "q" in letters:
-        return None  # XPath 3 ``q``: the pattern is a plain string, so any pattern is valid
+        return None, True  # XPath 3 ``q``: the pattern is a plain string, so any pattern is valid
     flags = sum(REGEX_FLAGS[ch] for ch in set(letters) if ch in REGEX_FLAGS)
     text = _strip_whitespace(pattern) if "x" in letters else pattern
     python = python_form(text)
@@ -697,13 +757,13 @@ def pattern_problem(pattern: str, letters: str) -> str | None:
             re.compile(python, flags)
     except (re.error, RecursionError, OverflowError) as exc:
         if not isinstance(exc, re.error) or python == text:
-            return f"sh:pattern does not compile: {exc}"
+            return f"sh:pattern does not compile: {exc}", False
         detail = exc.msg  # its position would be in the rewritten text
         if "\\w" in detail and any(text[k + 1 : k + 2] in XPATH_ONLY_ESCAPES for k in _escapes(text)):
             detail += " (reading \\p{..}, \\i and \\c as \\w)"
-        return f"sh:pattern does not compile: {detail}"
-    problem = xpath_regex_problem(text)
-    return None if problem is None else f"sh:pattern is not an XPath regular expression: {problem}."
+        return f"sh:pattern does not compile: {detail}", False
+    problem, accepted = xpath_regex_scan(text)
+    return (None if problem is None else f"sh:pattern is not an XPath regular expression: {problem}."), accepted
 
 
 def _escapes(text: str) -> list[int]:
@@ -719,8 +779,18 @@ def _escapes(text: str) -> list[int]:
 def _regex(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     letters = "".join(str(flag) for flag in sg.objects(shape, SH.flags))
     for pattern in sg.objects(shape, SH.pattern):
-        if isinstance(pattern, Literal) and (message := pattern_problem(str(pattern), letters)) is not None:
-            ctx.add("SHQ011", shape, message, confidence="heuristic", subject=(pattern,))
+        if not isinstance(pattern, Literal):
+            continue
+        message, accepted = pattern_check(str(pattern), letters)
+        if message is not None:
+            ctx.add(
+                "SHQ011",
+                shape,
+                message,
+                confidence="heuristic",
+                subject=(pattern,),
+                severity="warning" if accepted else None,
+            )
 
 
 def _logical_members(ctx: RuleContext, sg: Graph, shape: Node) -> None:
@@ -738,7 +808,12 @@ def _logical_members(ctx: RuleContext, sg: Graph, shape: Node) -> None:
 
 def _datatype_and_class(ctx: RuleContext, sg: Graph, shape: Node) -> None:
     if (shape, SH.datatype, None) in sg and (shape, SH["class"], None) in sg:
-        ctx.add("SHQ013", shape, "Shape has both sh:datatype and sh:class; no value can satisfy both.")
+        ctx.add(
+            "SHQ013",
+            shape,
+            "Shape has both sh:datatype and sh:class; no value can satisfy both.",
+            confidence="certain",
+        )
 
 
 type Bound = tuple[Decimal | float | int, int, bool]  # value, XPath promotion rank, exclusive
@@ -782,7 +857,11 @@ def _numeric_range(ctx: RuleContext, sg: Graph, shape: Node) -> None:
             hi = _promote(_promote(high, high_rank), rank)
             if lo > hi or (lo == hi and (low_strict or high_strict)):
                 ctx.add(
-                    "SHQ018", shape, f"Numeric bounds {low} and {high} admit no value.", subject=(str(low), str(high))
+                    "SHQ018",
+                    shape,
+                    f"Numeric bounds {low} and {high} admit no value.",
+                    confidence="certain",
+                    subject=(str(low), str(high)),
                 )
 
 
