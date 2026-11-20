@@ -60,7 +60,7 @@ Source: `src/ontolint/rules/shapes.py`.
 
 Quality rules for a user-supplied SHACL shapes graph: SHQ001-SHQ006.
 
-The rules read the asserted shapes graph (``--shapes``) and, for SHQ006 only, the data graph (the linted ontology, the whole closure under ``--follow-imports``).  No SHACL engine runs, nothing is entailed, ``rdfs:subClassOf`` in the shapes graph is not followed (so a shape typed by a subclass of ``sh:NodeShape`` is not one) and ``owl:imports`` of the shapes graph are not loaded.  The rules are skipped when no shapes graph is supplied.  References are to the SHACL Recommendation (2017-07-20). In this module a *node shape* is a node typed ``sh:NodeShape``; a *property shape* is a node typed ``sh:PropertyShape`` or an IRI or blank node that is a value of ``sh:property``.  That is narrower than SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the property shapes a form shows, not a property shape used as a condition inside ``sh:or``.  Every finding is ``heuristic``: the documentation rules are conventions, and SHQ005 and SHQ006 read "should" statements.  Specifications:
+The rules read the asserted shapes graph (``--shapes``) and, for SHQ006 only, the data graph (the linted ontology, the whole closure under ``--follow-imports``).  No SHACL engine runs, nothing is entailed, ``rdfs:subClassOf`` in the shapes graph is not followed (so a shape typed by a subclass of ``sh:NodeShape`` is not one) and ``owl:imports`` of the shapes graph are not loaded.  The rules are skipped when no shapes graph is supplied.  References are to the SHACL Recommendation (2017-07-20). In this module a *node shape* is a node typed ``sh:NodeShape``; a *property shape* is a node typed ``sh:PropertyShape`` or an IRI or blank node that is a value of ``sh:property``.  That is narrower than SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the property shapes a form shows, not a property shape used as a condition inside ``sh:or``.  They also judge a *directly targeted* property shape: a subject of ``sh:path``, not typed ``sh:NodeShape``, with a target of its own (``sh:targetClass``, ``sh:targetNode``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), which is a stand-alone form field.  SHQ003 and SHQ005 keep the narrower set.  Every finding is ``heuristic``: the documentation rules are conventions, and SHQ005 and SHQ006 read "should" statements.  Specifications:
 
 *Specified under each rule: SHQ001, SHQ002, SHQ003, SHQ004, SHQ005, SHQ006.*
 
@@ -76,7 +76,7 @@ Fixtures: ``tests/rule_cases/shapes.py`` and ``tests/test_shq_specification.py``
 - **Module:** [`shapes`](#module-shapes)
 - **Fix:** Add sh:name to property shapes to support generated forms and documentation.
 
-**Specification.** Every property shape without an ``sh:name`` triple (any object: an IRI or an untagged literal counts).  Excluded: a literal value of ``sh:property`` (SHACL 2.1: a shape is an IRI or a blank node), and a property shape reached only through ``sh:or``, ``sh:and``, ``sh:xone``, ``sh:not``, ``sh:node`` or ``sh:qualifiedValueShape`` or only targeted directly.  Info: ``sh:name`` is non-validating (2.3.2.1) and only helps forms and documentation.
+**Specification.** Every property shape without an ``sh:name`` triple (any object: an IRI or an untagged literal counts).  Excluded: a literal value of ``sh:property`` (SHACL 2.1: a shape is an IRI or a blank node), and a subject of ``sh:path`` that is neither typed ``sh:PropertyShape`` nor a value of ``sh:property`` nor targeted (one reached only through ``sh:or``, ``sh:and``, ``sh:xone``, ``sh:not``, ``sh:node`` or ``sh:qualifiedValueShape`` has no target of its own).  Info: ``sh:name`` is non-validating (2.3.2.1) and only helps forms and documentation.
 
 *Flagged:* `no sh:name`
 
@@ -89,6 +89,34 @@ Shapes graph:
 ```turtle
 ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; rdfs:comment "c" .
 ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:description "d" ; sh:message "m" .
+```
+
+Reported: `Property shape lacks sh:name.`
+
+*Flagged:* `a directly targeted property shape without sh:name`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:T sh:path ex:p ; sh:targetClass ex:A ; sh:description "d" .
+```
+
+Reported: `Property shape lacks sh:name.`
+
+*Flagged:* `a property shape with sh:targetNode`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:T sh:path ex:p ; sh:targetNode ex:i ; sh:description 'd' .
 ```
 
 Reported: `Property shape lacks sh:name.`
@@ -119,6 +147,43 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; 
 ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" . ex:S sh:property "x" .
 ```
 
+*Clean:* `a path shape reached only through sh:or has no target of its own`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; rdfs:label "S" ; rdfs:comment "c" ; sh:or ( ex:T ) .
+ex:T sh:path ex:p ; sh:description "d" .
+```
+
+*Clean:* `a node shape with a path and a target is not a property shape`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:T a sh:NodeShape ; sh:path ex:p ; sh:targetClass ex:A ; rdfs:label "T" ; rdfs:comment "c" .
+```
+
+*Clean:* `a directly targeted property shape, documented`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:T sh:path ex:p ; sh:targetClass ex:A ; sh:name "n" ; sh:description "d" .
+```
+
 #### SHQ002: Property shape without sh:description
 
 - **Severity:** info
@@ -144,6 +209,20 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:messag
 
 Reported: `Property shape lacks sh:description.`
 
+*Flagged:* `a directly targeted property shape without sh:description`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:T sh:path ex:p ; sh:targetClass ex:A ; sh:name "n" .
+```
+
+Reported: `Property shape lacks sh:description.`
+
 *Clean:* `fully documented shapes`
 
 ```turtle
@@ -157,6 +236,18 @@ ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property ex:P ; rdfs:label "S" ; 
 ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:description "d" ; sh:message "m" .
 ```
 
+*Clean:* `a directly targeted property shape, documented`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:T sh:path ex:p ; sh:targetClass ex:A ; sh:name "n" ; sh:description "d" .
+```
+
 #### SHQ003: Constraint-bearing shape without sh:message
 
 - **Severity:** info
@@ -165,7 +256,7 @@ ex:P a sh:PropertyShape ; sh:path ex:p ; sh:minCount 1 ; sh:name "p" ; sh:descri
 - **Module:** [`shapes`](#module-shapes)
 - **Fix:** Add sh:message to constraint-bearing shapes for better diagnostics.
 
-**Specification.** Every node or property shape that declares a constraint able to produce a validation result and has no ``sh:message`` triple: 2.1.5 copies a shape's messages into its validation results and has no other use for them.  A shape declares a constraint when it has values for all mandatory parameters of a constraint component (2.1.1).  The components are those of SHACL Core section 4 whose validation results name the shape itself as ``sh:sourceShape``, and SHACL-SPARQL's (section 5).  Each of these parameters counts with any value: ``sh:class``, ``sh:datatype``, ``sh:nodeKind``, ``sh:minCount``, ``sh:maxCount``, ``sh:minExclusive``, ``sh:minInclusive``, ``sh:maxExclusive``, ``sh:maxInclusive``, ``sh:minLength``, ``sh:maxLength``, ``sh:pattern``, ``sh:languageIn``, ``sh:equals``, ``sh:disjoint``, ``sh:lessThan``, ``sh:lessThanOrEquals``, ``sh:not``, ``sh:and``, ``sh:or``, ``sh:xone``, ``sh:node``, ``sh:hasValue``, ``sh:in`` and ``sh:sparql``. ``sh:qualifiedValueShape`` counts only with an ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` (4.7.3 makes both of a pair mandatory).  ``sh:closed`` and ``sh:uniqueLang`` count unless they are false (an ``xsd:boolean`` literal: ``false`` or ``"0"^^xsd:boolean``), as 4.8.1 and 4.4.5 produce a validation result only "if $closed is true" and "if $uniqueLang is true"; any other value is true, the ``sh:ByTypes`` of the SHACL 1.2 draft, or ill-formed (3.4.2: the results are undefined). Excluded: a shape with ``sh:deactivated`` true (``true`` or ``"1"^^xsd:boolean``; 2.1.6: all RDF terms conform to it, and 3.4: its validation results are empty); ``sh:property`` (its results are the property shape's, 4.7.2); a parameter without its mandatory partner (``sh:qualifiedValueShape`` alone, ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` alone); the optional parameters alone (``sh:flags``, ``sh:ignoredProperties``, ``sh:qualifiedValueShapesDisjoint``); ``sh:closed false`` and ``sh:uniqueLang false``; targets, ``sh:severity`` and the non-validating properties; a message on another shape.  Known gap: other values that make a constraint vacuous (``sh:minCount 0``, an empty ``sh:and`` list) still count, as the values are not evaluated.  Info: without ``sh:message`` a processor still reports the violation with its own text (2.1.5).
+**Specification.** Every node or property shape that declares a constraint able to produce a validation result and has no ``sh:message`` triple: 2.1.5 copies a shape's messages into its validation results and has no other use for them.  A shape declares a constraint when it has values for all mandatory parameters of a constraint component (2.1.1).  The components are those of SHACL Core section 4 whose validation results name the shape itself as ``sh:sourceShape``, and SHACL-SPARQL's (section 5).  Each of these parameters counts with any value: ``sh:class``, ``sh:datatype``, ``sh:nodeKind``, ``sh:minCount``, ``sh:maxCount``, ``sh:minExclusive``, ``sh:minInclusive``, ``sh:maxExclusive``, ``sh:maxInclusive``, ``sh:minLength``, ``sh:maxLength``, ``sh:pattern``, ``sh:languageIn``, ``sh:equals``, ``sh:disjoint``, ``sh:lessThan``, ``sh:lessThanOrEquals``, ``sh:not``, ``sh:and``, ``sh:or``, ``sh:xone``, ``sh:node``, ``sh:hasValue``, ``sh:in`` and ``sh:sparql``. ``sh:qualifiedValueShape`` counts only with an ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` (4.7.3 makes both of a pair mandatory).  ``sh:closed`` and ``sh:uniqueLang`` count unless they are false (an ``xsd:boolean`` literal: ``false`` or ``"0"^^xsd:boolean``), as 4.8.1 and 4.4.5 produce a validation result only "if $closed is true" and "if $uniqueLang is true"; any other value is true, the ``sh:ByTypes`` of the SHACL 1.2 draft, or ill-formed (3.4.2: the results are undefined). Excluded: a shape with ``sh:deactivated`` true (``true`` or ``"1"^^xsd:boolean``; 2.1.6: all RDF terms conform to it, and 3.4: its validation results are empty); ``sh:property`` (its results are the property shape's, 4.7.2); a parameter without its mandatory partner (``sh:qualifiedValueShape`` alone, ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` alone); the optional parameters alone (``sh:flags``, ``sh:ignoredProperties``, ``sh:qualifiedValueShapesDisjoint``); ``sh:closed false`` and ``sh:uniqueLang false``; targets, ``sh:severity`` and the non-validating properties; a message on another shape.  Known gap: other values that make a constraint vacuous (``sh:minCount 0``, an empty ``sh:and`` list) still count, as the values are not evaluated.  Info: without ``sh:message`` a processor still reports the violation with its own text (2.1.5).  The condition is deliberately the wide one: against the nine parameters 0.12.0 listed (and without the ``sh:deactivated`` exclusion) it reports more shapes, +42% (878 to 1,244 findings, +122 files) on the 930 readable shapes files of ``docs/severity-decisions.md`` (W3C ``data-shapes`` and DCAT-AP 3.0.1) and +46% (+1,072) on the corpus of PR #46; the narrow subset has no principled boundary, the cost is info noise, and no exit code changes under any profile (issue #63).
 
 *Flagged:* `constraint without sh:message`
 
@@ -206,6 +297,20 @@ Shapes graph:
 
 ```turtle
 ex:S a sh:NodeShape ; sh:closed true .
+```
+
+Reported: `Constraint-bearing shape lacks sh:message.`
+
+*Flagged:* `sh:nodeKind is a constraint (the widened condition)`
+
+```turtle
+ex:A a owl:Class .
+```
+
+Shapes graph:
+
+```turtle
+ex:S a sh:NodeShape ; sh:nodeKind sh:IRI .
 ```
 
 Reported: `Constraint-bearing shape lacks sh:message.`

@@ -7167,12 +7167,36 @@
     "ccd0b2dcfd5e7bf4157b64295298e389063a38fb4c5e17adaf9008084230c66a"
    ]
   ],
+  "SHQ001:a directly targeted property shape without sh:name": [
+   [
+    "SHQ001",
+    "https://example.test/onto#T",
+    [],
+    "387457f6c086ab02cf0310074467a45925cc495a8def00ac18be6a39380d4632"
+   ]
+  ],
+  "SHQ001:a property shape with sh:targetNode": [
+   [
+    "SHQ001",
+    "https://example.test/onto#T",
+    [],
+    "387457f6c086ab02cf0310074467a45925cc495a8def00ac18be6a39380d4632"
+   ]
+  ],
   "SHQ001:no sh:name": [
    [
     "SHQ001",
     "https://example.test/onto#P",
     [],
     "2d6e03a950fedd8ab0540e40aa3093b76b38885d8b8bf9b84ad2ff5b2d0f0d16"
+   ]
+  ],
+  "SHQ002:a directly targeted property shape without sh:description": [
+   [
+    "SHQ002",
+    "https://example.test/onto#T",
+    [],
+    "21ff2ceddb3546bcd49a88a8652e61163440bf907dd4d17afc8e17fe8183bee5"
    ]
   ],
   "SHQ002:no sh:description": [
@@ -7205,6 +7229,14 @@
     "https://example.test/onto#P",
     [],
     "4aa1940c77cffc9abf5ece5f19be3eef24eff40b5fd903e4b35be327a676f5ff"
+   ]
+  ],
+  "SHQ003:sh:nodeKind is a constraint (the widened condition)": [
+   [
+    "SHQ003",
+    "https://example.test/onto#S",
+    [],
+    "46f31b48a846e609c46c9393e0b204c77d67a849c73d817608422feb19e642f5"
    ]
   ],
   "SHQ004:node shape without label/comment": [
