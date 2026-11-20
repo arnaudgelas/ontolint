@@ -54,10 +54,11 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   ``x`` and ``q`` (F&O 3.1 5.6.2; ``q`` is XPath 3.0, ``s``, ``m``, ``i`` and ``x`` XPath 2.0, which SPARQL
   1.1 REGEX cites), and every shape with ``sh:flags`` but no ``sh:pattern`` (4.4.3: an optional parameter of
   ``sh:PatternConstraintComponent``).  The empty string and repeated letters are valid.  Excluded: the
-  datatype of the flags literal.  Warning: an unknown letter is an error in XPath (FORX0001), but SHQ011
-  compiles the pattern without it, and engines differ: pySHACL 0.40.2 ignores the letter (the shapes graph
-  conforms) while Apache Jena 4.10.0 stops with an unsupported-flag error (exit 2); flags without a pattern
-  are ignored.
+  datatype of the flags literal.  Error for an unknown letter: it is an error in XPath (FORX0001) and engines
+  differ, pySHACL 0.40.2 ignoring the letter (the shapes graph conforms) while Apache Jena 4.10.0 stops with an
+  unsupported-flag error (exit 2); SHQ011 compiles the pattern without it.  Warning for flags without a
+  pattern, which engines ignore.  The rule is registered at error and the second condition reports its own
+  severity.
 * **SHQ016.** Every shape on a cycle of the "refers to" relation of 3.4.3: ``sh:node``, ``sh:property``,
   ``sh:not`` and ``sh:qualifiedValueShape`` values and ``sh:and``, ``sh:or`` and ``sh:xone`` list members that
   are IRIs or blank nodes; a self-reference counts.  One finding per shape, naming the size of its strongly
@@ -160,7 +161,7 @@ SPECS: tuple[RuleSpec, ...] = (
     _spec(
         "SHQ015",
         "Invalid sh:flags value or sh:flags without sh:pattern",
-        Severity.WARNING,
+        Severity.ERROR,
         "Use only the flags s, m, i, x and q, and put sh:flags next to the sh:pattern it modifies.",
     ),
     _spec(
@@ -290,7 +291,7 @@ def _flags(ctx: RuleContext, sg: Graph, shape: Node) -> None:
                 subject=(shape_term(flag),),
             )
     if values and (shape, SH.pattern, None) not in sg:
-        ctx.add("SHQ015", shape, "sh:flags is used without an sh:pattern.", subject=(SH.pattern,))
+        ctx.add("SHQ015", shape, "sh:flags is used without an sh:pattern.", subject=(SH.pattern,), severity="warning")
 
 
 def _targets(ctx: RuleContext, sg: Graph, shape: Node) -> None:

@@ -132,6 +132,13 @@ severity-first sort, so it changed with them), every ``cli`` exit code is unchan
 because a view contains one of the four.  ``differential.json`` and ``single_graph_reports.json`` were regenerated;
 no finding, message, focus, fingerprint or ``identities.json`` entry moved.  ``tests/test_severity_decisions.py``
 pins each decided row on its own fixture.
+
+Deliberate golden update (issue #63, SHQ family): SHQ015 is registered at error (its unknown-flag condition; the
+flags-without-a-pattern condition reports its own warning), and SHQ008, SHQ013 and SHQ018 report confidence
+``certain``; SHQ011 reports ``\\/`` and ``[]a]`` at warning.  The only pinned output that lists SHQ015 is the rule
+metadata of the JSON and SARIF reports and ``--list-rules``, so 38 values changed, every one a ``sha256``; no SHQ
+rule has a finding in a golden, so no finding, message, focus, fingerprint, text report or exit code moved, and
+``legacy_rules.json`` (which holds no SHQ rule) did not.
 """
 
 from __future__ import annotations

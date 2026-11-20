@@ -46,7 +46,7 @@ def test_specs_are_well_formed() -> None:
     assert {s.family for s in shacl_quality.SPECS} == {"SHQ"}
     assert {s.rule_id: s.severity.value for s in shacl_quality.SPECS} == {
         "SHQ009": "warning", "SHQ010": "warning", "SHQ012": "info", "SHQ014": "warning",
-        "SHQ015": "warning", "SHQ016": "info", "SHQ022": "warning", "SHQ023": "warning",
+        "SHQ015": "error", "SHQ016": "info", "SHQ022": "warning", "SHQ023": "warning",
     }  # fmt: skip
 
 
