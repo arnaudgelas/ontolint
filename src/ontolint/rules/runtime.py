@@ -13,7 +13,7 @@ from rdflib.namespace import OWL, RDFS, SKOS
 from rdflib.term import Node
 
 from ontolint.context import GraphContext
-from ontolint.models import CONFIDENCES, Finding
+from ontolint.models import CONFIDENCES, Finding, Severity
 from ontolint.policy import Policy
 from ontolint.redaction import redact_userinfo
 
@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from .measurements import Absent, Value
 
 EMPTY_FOCUS = "<>"
+
+_SEVERITIES: frozenset[str] = frozenset(severity.value for severity in Severity)
 
 
 def _with_extras(defaults: tuple[URIRef, ...], extras: tuple[str, ...]) -> tuple[URIRef, ...]:
@@ -234,6 +236,7 @@ class RuleContext:
         confidence: str = "heuristic",
         related: Iterable[object] = (),
         subject: Iterable[object] = (),
+        severity: str | None = None,
     ) -> None:
         """Record a finding once per ``(rule, focus, message)``; severity and fix come from the specs.
 
@@ -243,6 +246,13 @@ class RuleContext:
         A blank node in ``message`` is written ``_:label`` (:func:`~ontolint.rules.support.value_text`), which is
         replaced by the node's stable identity when the node is a subject or an object of the graph the running
         rules report on; a bare label is left as text (see ``_BlankNames.rewrite``).
+
+        ``severity`` is for a rule whose conditions differ in gravity (one defect an error, another a warning): the
+        finding reports it instead of the rule's registered severity.  The registered severity stays the rule's
+        default, the one ``--list-rules``, the SARIF ``defaultConfiguration`` and ``severity_overrides`` act on (an
+        override replaces every finding of the rule, whatever severity it asked for).  It is not part of the
+        identity, so a baseline never tells two severities apart; two calls with one focus and message are one
+        finding, the first call's.  Leave it out unless a rule has two gravities: the spec says which.
 
         ``related`` names the other terms a finding is about (the rest of a collision); they place the
         finding in every module involved (``--module-by``) and never change its identity or text.
@@ -259,6 +269,8 @@ class RuleContext:
         """
         if confidence not in CONFIDENCES:
             raise ValueError(f"{code}: confidence must be one of {sorted(CONFIDENCES)}, not {confidence!r}")
+        if severity is not None and severity not in _SEVERITIES:
+            raise ValueError(f"{code}: severity must be one of {sorted(_SEVERITIES)}, not {severity!r}")
         text = self._focus_text(focus)
         message = self._message_text(message)
         key = (code, text, message)
@@ -273,7 +285,9 @@ class RuleContext:
         self._emitted[key] = len(self.findings)
         others = tuple(dict.fromkeys(t for t in map(self._focus_text, related) if t != text))
         self.findings.append(
-            Finding(code, SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about)
+            Finding(
+                code, severity or SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about
+            )
         )
 
     @contextmanager
