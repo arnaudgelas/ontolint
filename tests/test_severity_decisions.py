@@ -21,7 +21,10 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
+from rule_harness import PREFIXES as RULE_PREFIXES
+from rule_harness import graph
 
+from ontolint import Linter
 from ontolint.cli import main
 from ontolint.rules.specs import RULE_SPECS
 
@@ -150,3 +153,40 @@ def test_a_baseline_written_with_the_old_severity_still_matches(
     code, report = _run(capsys, source, decision.rule, "--baseline", str(baseline), fail_on="info")
     assert code == 0
     assert _findings(report, decision.rule) == []
+
+
+# Category decisions (issue #63): the rule's category as `--list-rules`, `--explain`, SARIF and the catalogue report it.
+CATEGORIES = {"SKOS001": "deterministic", "SKOS002": "deterministic"}
+
+
+@pytest.mark.parametrize("rule", sorted(CATEGORIES))
+def test_decided_category(rule: str, capsys: pytest.CaptureFixture[str]) -> None:
+    spec = next(s for s in RULE_SPECS if s.rule_id == rule)
+    assert spec.category == CATEGORIES[rule]
+    assert main(["--list-rules", "--format", "json"]) == 0
+    listed = {r["id"]: r for r in json.loads(capsys.readouterr().out)["rules"]}
+    assert listed[rule]["category"] == CATEGORIES[rule]
+
+
+@pytest.mark.parametrize("rule", sorted(CATEGORIES))
+def test_decided_category_in_explain_and_sarif(rule: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["--explain", rule]) == 0
+    assert f"Category         {CATEGORIES[rule]}" in capsys.readouterr().out
+    source = tmp_path / "labels.ttl"
+    source.write_text(RULE_PREFIXES + "ex:c a skos:Concept ; skos:prefLabel 'a'@en .\n", encoding="utf-8")
+    assert main([str(source), "--select", rule, "--format", "sarif", "--fail-on", "never"]) == 0
+    rules = json.loads(capsys.readouterr().out)["runs"][0]["tool"]["driver"]["rules"]
+    assert {r["id"]: r["properties"]["category"] for r in rules}[rule] == CATEGORIES[rule]
+
+
+@pytest.mark.parametrize("rule", sorted(CATEGORIES))
+def test_a_deterministic_rule_reports_certain_findings(rule: str) -> None:
+    """The category records how the rule decides; every SKOS001 and SKOS002 finding is exact, so `certain`."""
+    body = (
+        'ex:c a skos:Concept ; skos:prefLabel "a"@en, "b"@en ; skos:altLabel "a"@en .'
+        if rule == "SKOS001"
+        else 'ex:c a skos:Concept ; skos:prefLabel "x"@en ; skos:altLabel "x"@en .'
+    )
+    findings = [f for f in Linter(graph(RULE_PREFIXES + body)).run() if f.rule == rule]
+    assert findings
+    assert {f.confidence for f in findings} == {"certain"}

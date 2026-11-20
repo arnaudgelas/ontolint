@@ -50,11 +50,11 @@ Every rule reads asserted triples only (no entailment).  The conditions come fro
 
 - **Severity:** error
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`skos`](#module-skos)
 - **Fix:** Keep only one skos:prefLabel per language tag for a given resource.
 
-**Specification.** Scope: the owned resources explicitly typed ``skos:Concept`` (``ctx.concepts``; no subclass typing).  Condition: two or more distinct literal values of ``skos:prefLabel`` share a language tag.  Tags compare case-insensitively (``@en`` and ``@EN`` are one tag, as in RDF 1.1), and untagged labels (plain or ``xsd:string``) form one group reported as ``und``; an explicit ``@und`` tag joins that group.  Literals are compared as RDF 1.1 terms: ``"a"`` equals ``"a"^^xsd:string``, and ``"a"@en`` equals ``"a"@EN``, so a repeated label is not counted twice.  Other datatypes count as untagged labels (SKOS013 reports them).  Exclusions: non-literal values; resources that are not owned concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked).  One finding per concept and language.  Severity error, confidence certain: the triples violate integrity condition S14.
+**Specification.** Scope: the owned resources explicitly typed ``skos:Concept`` (``ctx.concepts``; no subclass typing).  Condition: two or more distinct literal values of ``skos:prefLabel`` share a language tag.  Tags compare case-insensitively (``@en`` and ``@EN`` are one tag, as in RDF 1.1), and untagged labels (plain or ``xsd:string``) form one group reported as ``und``; an explicit ``@und`` tag joins that group.  Literals are compared as RDF 1.1 terms: ``"a"`` equals ``"a"^^xsd:string``, and ``"a"@en`` equals ``"a"@EN``, so a repeated label is not counted twice.  Other datatypes count as untagged labels (SKOS013 reports them).  Exclusions: non-literal values; resources that are not owned concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked).  One finding per concept and language.  Severity error, confidence certain, category deterministic: the triples violate integrity condition S14.
 
 *Flagged:* `two prefLabels in a language`
 
@@ -129,11 +129,11 @@ Linter options: `base='https://example.test/onto#'`.
 
 - **Severity:** error
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`skos`](#module-skos)
 - **Fix:** Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource.
 
-**Specification.** Scope: the owned concepts plus every resource that is the subject of ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` and is either an owned IRI or a blank node.  Condition: the same literal is a value of two or three of those properties of one resource. Literals compare as RDF 1.1 terms: lexical form and language tag (case-insensitively) must both match, ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Exclusions: same text with a different language tag; non-owned IRIs; sub-properties of the label properties (not entailed).  One finding per resource and literal.  Severity error, confidence certain: the triples violate integrity condition S13 (the three label properties are pairwise disjoint).
+**Specification.** Scope: the owned concepts plus every resource that is the subject of ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` and is either an owned IRI or a blank node.  Condition: the same literal is a value of two or three of those properties of one resource. Literals compare as RDF 1.1 terms: lexical form and language tag (case-insensitively) must both match, ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Exclusions: same text with a different language tag; non-owned IRIs; sub-properties of the label properties (not entailed).  One finding per resource and literal.  Severity error, confidence certain, category deterministic: the triples violate integrity condition S13 (the three label properties are pairwise disjoint).
 
 *Flagged:* `same literal as pref and alt label`
 

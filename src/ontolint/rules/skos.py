@@ -11,15 +11,16 @@ Recommendation, 18 August 2009).  Specifications of the error rules:
   ``"a"@en`` equals ``"a"@EN``, so a repeated label is not counted twice.  Other datatypes count as
   untagged labels (SKOS013 reports them).  Exclusions: non-literal values; resources that are not owned
   concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked).  One finding per concept
-  and language.  Severity error, confidence certain: the triples violate integrity condition S14.
+  and language.  Severity error, confidence certain, category deterministic: the triples violate integrity
+  condition S14.
 * **SKOS002.** Scope: the owned concepts plus every resource that is the subject of
   ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` and is either an owned IRI or a blank
   node.  Condition: the same literal is a value of two or three of those properties of one resource.
   Literals compare as RDF 1.1 terms: lexical form and language tag (case-insensitively) must both match,
   ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Exclusions: same text with a
   different language tag; non-owned IRIs; sub-properties of the label properties (not entailed).  One
-  finding per resource and literal.  Severity error, confidence certain: the triples violate integrity
-  condition S13 (the three label properties are pairwise disjoint).
+  finding per resource and literal.  Severity error, confidence certain, category deterministic: the triples violate
+  integrity condition S13 (the three label properties are pairwise disjoint).
 """
 
 from __future__ import annotations
@@ -47,7 +48,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "Multiple preferred labels in one language",
         Severity.ERROR,
         "Keep only one skos:prefLabel per language tag for a given resource.",
-        "heuristic",
+        "deterministic",
         RuleBackend.RDFLIB,
         RuleScope.TERM,
         "skos",
@@ -58,7 +59,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "Same literal in disjoint SKOS label properties",
         Severity.ERROR,
         "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource.",
-        "heuristic",
+        "deterministic",
         RuleBackend.RDFLIB,
         RuleScope.TERM,
         "skos",
