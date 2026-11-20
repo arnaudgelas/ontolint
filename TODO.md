@@ -896,8 +896,10 @@ Validation corpus (public; licences per repository):
     describe graphs outside OWL 2 DL); OWL013/OWL014 → error; OWL032 info → warning; OWL045's
     missing or malformed list → error like OWL031; OWL038 error or warning; confidence `certain`
     for OWL023, OWL041, SHQ008 and SHQ018 (exact checks still on the default `heuristic`, which
-    changes `differential.json`); OWL004/OWL007 `heuristic`; category `deterministic` for SKOS001
+    changes `differential.json`); category `deterministic` for SKOS001
     and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
+    (OWL004 and OWL007 already report `certain` in the code, the docstring and every observed finding, so the
+    earlier proposal to make them `heuristic` is dropped.)
     Added by the coverage gaps (each new finding ships at its rule's current severity): SHQ011
     for a `\/` escape (an error by XPath, but pySHACL and Jena accept it, so a warning would match
     its practical effect); SHQ008 for a derived integer type such as `xsd:nonNegativeInteger`
