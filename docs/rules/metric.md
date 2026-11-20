@@ -50,7 +50,7 @@ Each rule compares one aggregate of the *asserted* graph (a ratio, a mean or a c
 * A rule needs a population of at least ``metric_min_sample`` (default 10) terms, so tiny ontologies never fire; METRIC011 has no such gate.  A ratio over an empty population is 0, never a division. The measurement is read before the gate: one that could not be taken fails the rule (exit 2), on a tiny ontology too, and never passes.
 * Comparisons are strict: a value equal to its limit never fires (`ontolint.rules.bounds.breached`, the one comparison of a METRIC limit and of a budget, METRIC014).  The message prints the value and the limit with 2 decimals, or as many more (up to 6) as it takes to tell them apart.
 * The focus is the lexically first ontology IRI of the graph (``ctx.ontologies``: the root headers of a closure, SHACL prefix declarations dropped), else ``urn:ontolint:graph``.  The finding's identity is its rule and focus, so counts and thresholds never change a baseline entry.
-* Findings are ``heuristic`` (the limits are conventions, not facts) except METRIC011's.
+* Findings are ``heuristic``: every limit is a convention, not a fact, METRIC011's included (its count of imports is exact, the limit of ten is not).  The category of every METRIC rule is ``heuristic`` too, and ``tests/test_metric_confidence.py`` fails for a METRIC finding that reports ``certain``.
 * A numerator that a per-term rule also reports is *exactly* that rule's set, by a shared helper, so "METRIC005 says 10 orphans while CLS001 lists 6" cannot happen.
 
 Thresholds, their rationale and how to override them are in ``docs/metric-thresholds.md``.  The specifications:
@@ -1496,7 +1496,7 @@ Linter options: `base='http://purl.obolibrary.org/obo/XAO_'`.
 - **Module:** [`metrics`](#module-metrics)
 - **Fix:** Reduce owl:imports to the ontologies actually needed, or use import modules.
 
-**Specification.** (``metric_max_imports``, 10.)  The distinct IRI objects of ``owl:imports`` in the graph, of every header, minus ``policy.resolved_imports``.  Fires above the limit; no sample gate. Reads ``unresolved_imports``. *Info, certain:* the count is exact; only the limit is a convention.
+**Specification.** (``metric_max_imports``, 10.)  The distinct IRI objects of ``owl:imports`` in the graph, of every header, minus ``policy.resolved_imports``.  Fires above the limit; no sample gate. Reads ``unresolved_imports``. *Info, heuristic:* the count is exact; the limit is a convention, and the one flag on the calibration corpus (an IDS header whose 80 imports are its own modules) is a false positive.
 
 *Flagged:* `11 imports`
 

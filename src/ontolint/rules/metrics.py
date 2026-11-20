@@ -19,7 +19,9 @@ closure.  Common to every rule:
 * The focus is the lexically first ontology IRI of the graph (``ctx.ontologies``: the root headers
   of a closure, SHACL prefix declarations dropped), else ``urn:ontolint:graph``.  The finding's
   identity is its rule and focus, so counts and thresholds never change a baseline entry.
-* Findings are ``heuristic`` (the limits are conventions, not facts) except METRIC011's.
+* Findings are ``heuristic``: every limit is a convention, not a fact, METRIC011's included (its count of imports
+  is exact, the limit of ten is not).  The category of every METRIC rule is ``heuristic`` too, and
+  ``tests/test_metric_confidence.py`` fails for a METRIC finding that reports ``certain``.
 * A numerator that a per-term rule also reports is *exactly* that rule's set, by a shared helper, so
   "METRIC005 says 10 orphans while CLS001 lists 6" cannot happen.
 
@@ -97,7 +99,8 @@ specifications:
 * **METRIC011.** (``metric_max_imports``, 10.)  The distinct IRI objects of ``owl:imports`` in the
   graph, of every header, minus ``policy.resolved_imports``.  Fires above the limit; no sample gate.
   Reads ``unresolved_imports``.
-  *Info, certain:* the count is exact; only the limit is a convention.
+  *Info, heuristic:* the count is exact; the limit is a convention, and the one flag on the calibration corpus
+  (an IDS header whose 80 imports are its own modules) is a false positive.
 * **METRIC012.** (``metric_min_definition_words``, 4.0.)  Owned classes with a ``Literal``
   description (``ctx.descriptions``, as METRIC002); each scores the ``\\w+`` token count of its
   longest description and the value is their mean.  Fires below the limit.  Exclusions: IRI
@@ -402,7 +405,6 @@ def _graph_rules(ctx: RuleContext) -> None:
             "METRIC011",
             _focus(ctx),
             f"{imports} distinct owl:imports (threshold {ctx.policy.metric_max_imports}).",
-            confidence="certain",
             subject=(),
         )
     if subjects >= ctx.policy.metric_min_sample:
