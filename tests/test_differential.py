@@ -139,6 +139,12 @@ flags-without-a-pattern condition reports its own warning), and SHQ008, SHQ013 a
 metadata of the JSON and SARIF reports and ``--list-rules``, so 38 values changed, every one a ``sha256``; no SHQ
 rule has a finding in a golden, so no finding, message, focus, fingerprint, text report or exit code moved, and
 ``legacy_rules.json`` (which holds no SHQ rule) did not.
+
+Deliberate golden update (issue #63, SKOS category): SKOS001 and SKOS002 are catalogued and registered as
+``deterministic`` (were ``heuristic``).  The category appears in the rule metadata of the JSON and SARIF reports and in
+``--list-rules``, so 40 pinned values changed, every one a ``sha256``; no linter snapshot, finding, message, focus,
+fingerprint, severity, confidence, text report, exit code or ``legacy_rules.json`` entry moved (the legacy view holds
+no rule metadata).
 """
 
 from __future__ import annotations
