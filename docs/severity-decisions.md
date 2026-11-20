@@ -1,9 +1,76 @@
 # Severity and confidence decisions (issue #63): decision record
 
-**Status: nothing decided, nothing applied.** This page prepares the maintainer's answers to issue #63. It changes
-no severity, confidence, category, rule behaviour, golden or catalogue row. Each row below ends with a
-recommendation, how sure it is, and the exact change that would ship it if accepted. A row is decided when the
-"Decision" cell is filled in by the maintainer; the audit item in `TODO.md` can drop the row then.
+**Status: proposed, not yet decided.** The decisions below were prepared by Claude from this record's recommendations. They
+become the maintainer's decisions only when the maintainer merges pull request #198, which carries them, and each one is applied
+only when its pull request of "Where each decision ships" merges (#199 to #204); until then nothing here is in force, and
+`TODO.md` keeps listing the rows as pending. "Decisions taken" records what is proposed, including the three places where it
+departs from a recommendation. A row marked "maintainer" is not decided here. The maintainer's approval, the date and the
+merge commit of each pull request are the evidence of a decision; the audit item in `TODO.md` drops a row when the pull request
+that ships it merges.
+
+## Decisions taken
+
+### The three cross-cutting questions
+
+* **D1, what `certain` means.** A finding is `certain` when its condition is exact: the same graph always yields it, and the
+  cited specification gives the matched pattern a fixed meaning or forbids it. It is `heuristic` when the condition rests on a
+  convention (a threshold, a naming or locality judgement) or when the specification leaves the outcome to the engine. Whether
+  the author may have meant the pattern is the business of the severity, not of the confidence. This keeps OWL004 and OWL007
+  (`certain` today, with the same "may be intended" caveat as OWL023 and SHQ016) consistent with the rest.
+  *Departures from the recommendations below:* **OWL023 becomes `certain`** (the record recommended keeping `heuristic`: the
+  condition is exact and its category is already `deterministic`); **SHQ016 stays `heuristic`**, for a different reason than the
+  record's (SHACL leaves validation with recursive shapes undefined, 3.4.3, so the result depends on the engine); **METRIC011
+  becomes `heuristic`** (the calibration page recommended keeping `certain`; its limit of 10 is a convention, as for every other
+  METRIC rule, and its category is `heuristic`).
+* **D2, one rule with two severities: option A.** `RuleContext.add` gains an optional `severity=`; the rule's registered
+  severity stays the default shown by `--list-rules` and SARIF `defaultConfiguration` and replaced by `severity_overrides`. Two
+  rows need it (SHQ011 and SHQ015); OWL010 and OWL045 are decided for the whole rule, so they do not. Option B would re-identify
+  SHQ011's findings for one rule; option C would give up the warning that matches the engines.
+* **D3, `tests/golden/legacy_rules.json`.** It stays the pre-0.9 proof, and is re-pinned only for the entries a decision moves
+  (OWL009, OWL010, OWL013, OWL014), in the same commit and listed in its message. A new test lists the changed entries and compares
+  them with the decision, so an unrelated change cannot hide in the re-pin.
+
+### The rows
+
+All rows are the recommendations of this record, except the departures above and row 18.
+
+| Row | Decision | Ships in |
+| --- | --- | --- |
+| OWL009, OWL013, OWL014 | error | OWL pull request #199 (closes #178) |
+| OWL010, OWL032 | warning (the whole rule) | OWL pull request #199 (closes #178) |
+| OWL045 | error (the whole rule; a repeated member is inconsistent or empties a class, see the OWL specification) | OWL pull request #199 (closes #178) |
+| OWL038 | keep error | none |
+| OWL035 | keep error; the count is the issue "Count OWL035 ... on OWL 1 era ontologies" (v0.18.0) | none |
+| OWL041, OWL023 | `certain` | OWL pull request #199 (#180, confidence) |
+| OWL004, OWL007 | no change (the TODO proposal is dropped) | none |
+| SHQ011 | `\/` and `[]a]` warning, `[[a]` and every other malformed pattern error | SHQ pull request #201 (closes #179) |
+| SHQ015 | an unknown letter error, flags without a pattern warning | SHQ pull request #201 (closes #179) |
+| SHQ013 | `certain`, keep warning | SHQ pull request #201 (closes #179) |
+| SHQ008, SHQ018 | `certain`; SHQ008 derived integer types keep the error | SHQ pull request #201 (closes #179) |
+| SHQ016 | keep `heuristic` | none |
+| SKOS001, SKOS002 | category `deterministic` | SKOS pull request #202 (#180, category) |
+| SHQ003 | keep the widened condition; the docstring states both figures | scope pull request #203 (closes #181) |
+| SHQ001, SHQ002 | include directly targeted property shapes | scope pull request #203 (closes #181) |
+| SKOS001 scope (S14) | deferred: needs a count ("Count the widened SKOS001 scope", v0.18.0) | none |
+| METRIC001, METRIC002 | keep warning (no curated file fails; revisit with the calibration sweep of #163) | none |
+| METRIC011 | `heuristic`; a catalogue invariant for the METRIC family | METRIC pull request #204 (closes #183) |
+| Approval of the specifications | **maintainer**: not decided here | none |
+
+### What the decisions leave open
+
+* The approval of the OWL, METRIC and SHQ specifications (issue #182) is a human review; the pull requests only correct the
+  specifications and pin their severity and confidence in tests.
+* `category` still disagrees with the finding confidence for OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 (category
+  `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63.
+* Counts that need corpora this record does not have: OWL035, SKOS001's widening, SHQ001 and SHQ002 on production shapes.
+* METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 may reopen them.
+
+### Where each decision ships
+
+One pull request per rule family, because every accepted row moves the same goldens (`differential.json`,
+`single_graph_reports.json`, `docs/rules*`) and parallel pull requests would conflict: OWL (#178, with OWL041 and OWL023
+confidence), the per-finding severity mechanism, SHQ (#179, with SHQ008, SHQ013 and SHQ018 confidence), SKOS (#180's category),
+scope (#181) and METRIC (#183).
 
 Everything here was measured on 2026-11-19 with the tree at `4845fec` (the `main` of 0.16.0 development; later commits on `main` touch SHQ012, SHQ014, SHQ023 and the LEX family (LEX003, LEX008 and LEX024 among them) but none of the rows below; the LEX020 warning counted below is not among them; no count was re-run on those commits), Python 3.13.7,
 pySHACL 0.40.2 and, for the engine checks, Apache Jena 4.10.0 on Temurin 11. ROBOT, the OWL API and HermiT were not
@@ -304,7 +371,7 @@ SHQ003 1,244 / 412.
 
 ## Approval checklist for the specifications
 
-Each box is the maintainer's. "Found" lists what contradicted spec and behaviour while preparing this page; none is fixed here.
+Each box is the maintainer's. "Found" lists what contradicted spec and behaviour while preparing this page. The SHQ008, SHQ011 and SHQ015 statements and the OWL004/OWL007 TODO proposal named below have since been corrected (commit `docs(rules): correct the SHQ008, SHQ011 and SHQ015 specifications ...`); the severity and confidence rows are fixed by the pull requests of "Where each decision ships".
 
 - [ ] **OWL001-OWL011, OWL013-OWL015, DATA001, DATA002**: `src/ontolint/rules/owl.py`, module docstring, 91 lines.
       Found: OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 say "certain" while their catalogue category is `heuristic`
@@ -332,24 +399,26 @@ Each box is the maintainer's. "Found" lists what contradicted spec and behaviour
 
 | # | Row | Recommendation | Decision |
 | --- | --- | --- | --- |
-| 1 | OWL009 to error | yes (high) | |
-| 2 | OWL010 | warning (medium-low) | |
-| 3 | OWL013, OWL014 to error | yes (medium-high) | |
-| 4 | OWL032 to warning | yes (medium-low) | |
-| 5 | OWL045 to error | whole rule (medium) | |
-| 6 | OWL038 | keep error (medium) | |
-| 7 | OWL035 | keep, count first (low) | |
-| 8 | SHQ015 | error for unknown letter (medium) | |
-| 9 | SHQ013 | `certain`, keep warning (high / medium) | |
-| 10 | SHQ011 | warning for `\/`, `[]a]`; mechanism A (medium) | |
-| 11 | SHQ008 derived types | keep error (high) | |
-| 12 | OWL023, OWL041, SHQ008, SHQ018, SHQ016 confidence | `certain` for OWL041, SHQ008, SHQ018 only | |
-| 13 | OWL004, OWL007 confidence | no change (medium) | |
-| 14 | SKOS001, SKOS002 category | deterministic (high) | |
-| 15 | SHQ003 | keep widened (medium-high) | |
-| 16 | SHQ001, SHQ002 direct targets | include (low-medium) | |
-| 17 | SKOS001 scope | widen after a count (low) | |
-| 18 | Approve the OWL, METRIC, SHQ specifications | after the inconsistencies above are corrected | |
+| 1 | OWL009 to error | yes (high) | error |
+| 2 | OWL010 | warning (medium-low) | warning, whole rule |
+| 3 | OWL013, OWL014 to error | yes (medium-high) | error |
+| 4 | OWL032 to warning | yes (medium-low) | warning |
+| 5 | OWL045 to error | whole rule (medium) | error, whole rule |
+| 6 | OWL038 | keep error (medium) | keep error |
+| 7 | OWL035 | keep, count first (low) | keep error; count in v0.18.0 |
+| 8 | SHQ015 | error for unknown letter (medium) | as recommended, option A |
+| 9 | SHQ013 | `certain`, keep warning (high / medium) | as recommended |
+| 10 | SHQ011 | warning for `\/`, `[]a]`; mechanism A (medium) | as recommended |
+| 11 | SHQ008 derived types | keep error (high) | keep error |
+| 12 | OWL023, OWL041, SHQ008, SHQ018, SHQ016 confidence | `certain` for OWL041, SHQ008, SHQ018 only | `certain` for OWL023 too (D1); SHQ016 stays `heuristic` |
+| 13 | OWL004, OWL007 confidence | no change (medium) | no change |
+| 14 | SKOS001, SKOS002 category | deterministic (high) | deterministic |
+| 15 | SHQ003 | keep widened (medium-high) | keep |
+| 16 | SHQ001, SHQ002 direct targets | include (low-medium) | include |
+| 17 | SKOS001 scope | widen after a count (low) | deferred until the count |
+| 18 | Approve the OWL, METRIC, SHQ specifications | after the inconsistencies above are corrected | maintainer; the corrections are in the pull request that precedes this one |
+| 19 | METRIC001, METRIC002 severity | keep warning | keep warning |
+| 20 | METRIC011 confidence | keep `certain` (calibration page) | `heuristic` (D1) |
 
 ## Reproduce
 
@@ -373,5 +442,6 @@ the repository, edit the spec's severity (or confidence, or category) in the rul
 ## Limits of this record
 
 * No count exists for real OWL 1 era ontologies (OWL035) or for production shapes graphs outside the W3C test suites and DCAT-AP (IDS, GeoSPARQL, SHQ001, SHQ002); those rows say so.
+* The Jena measurements follow from the command above, but no fixture or scheduled job commits them: only pySHACL's behaviour is a test. Reproducing them in CI is a separate issue (with the weekly Jena round-trip check of #165).
 * One version of each engine (pySHACL 0.40.2, Jena 4.10.0 on Java 11). Jena 5 needs Java 17 and was not run; TopBraid and the OWL API were not run.
 * The per-row file list of an accepted change is the union measured in fact 5, not a per-row split.
