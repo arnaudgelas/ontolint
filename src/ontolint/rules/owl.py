@@ -47,14 +47,15 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   ``owl:SymmetricProperty``, ``owl:TransitiveProperty``, ``owl:AsymmetricProperty`` or
   ``owl:InverseFunctionalProperty``.  ``owl:FunctionalProperty`` is allowed on data properties;
   ``owl:ReflexiveProperty`` and ``owl:IrreflexiveProperty`` are OWL016's.  Ownership is not checked.
-  Warning, certain: these axioms take object property expressions only (SS 9.2, DS Table 6), so the
-  graph is not OWL 2 DL.
+  Error, certain: these axioms take object property expressions only (SS 9.2, DS Table 6), so the
+  graph is not OWL 2 DL, as for OWL003 and OWL016.
 * **OWL010.** Every subject of an ``owl:propertyChainAxiom`` whose object is not a list of two or more
   members, one finding per kind of defect: a well-formed RDF list of exactly one member; the empty list
   (``rdf:nil``); or no well-formed RDF list at all (a literal, an IRI or blank node without exactly one
   ``rdf:first`` and one ``rdf:rest``, a cyclic list), as :func:`~.support.list_items` reads it.
-  Ownership is not checked.  Info, certain: SS 9.2.1 and MAP Table 16 require at least two chain
-  members, so the axiom is not OWL 2.
+  Ownership is not checked.  Warning, certain: SS 9.2.1 and MAP Table 16 require at least two chain
+  members, so the axiom is not OWL 2; one severity covers the three kinds (a one-member chain is only
+  redundant, an empty or malformed one is dropped by a parser).
 * **OWL011.** Every node with an ``owl:allValuesFrom`` value that does not also carry
   ``owl:someValuesFrom``, unless: the filler is a datatype (an IRI in the XSD namespace or one of the
   other datatype IRIs OWL022 and OWL040 know, :data:`~.support.LITERAL_RANGES`: ``rdfs:Literal``,
@@ -79,11 +80,11 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   the object of one ``owl:equivalentClass`` triple.  Info, heuristic: a tautology, harmless but noise.
 * **OWL013.** Every subject of a triple whose predicate is typed ``owl:ObjectProperty`` (owned or not)
   and whose object is a literal; one finding per subject, property and literal, which the message prints
-  in one-line N-Triples (a line break escaped).  Warning, certain: an
+  in one-line N-Triples (a line break escaped).  Error, certain: an
   object property assertion needs an individual (DS 2.2: literals are not in the object domain), so the
   graph is not OWL 2 DL.
 * **OWL014.** Every subject of a triple whose predicate is typed ``owl:DatatypeProperty`` (owned or
-  not) and whose object is an IRI or a blank node.  Warning, certain: the converse of OWL013 (MAP 3.2.5
+  not) and whose object is an IRI or a blank node.  Error, certain: the converse of OWL013 (MAP 3.2.5
   maps such a triple to no axiom).
 * **OWL015.** Only when an explicit ``base`` is configured: every owned predicate of the graph not in
   ``ctx.properties`` (built-in and foreign predicates are not owned).  Warning, heuristic: SS 5.8.1
@@ -274,7 +275,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "OWL009",
         "OWL",
         "Datatype property with object-property characteristic",
-        Severity.WARNING,
+        Severity.ERROR,
         "Use object properties for owl:inverseOf and symmetric/transitive property semantics.",
         "heuristic",
         RuleBackend.RDFLIB,
@@ -285,7 +286,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "OWL010",
         "OWL",
         "Property chain with fewer than two operands",
-        Severity.INFO,
+        Severity.WARNING,
         "Review an owl:propertyChainAxiom whose RDF list has only one element.",
         "heuristic",
         RuleBackend.RDFLIB,
@@ -307,7 +308,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "OWL013",
         "OWL",
         "Object property asserted with a literal value",
-        Severity.WARNING,
+        Severity.ERROR,
         "An object-property assertion should point to a resource, not a literal.",
         "heuristic",
         RuleBackend.RDFLIB,
@@ -318,7 +319,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "OWL014",
         "OWL",
         "Datatype property asserted with a resource value",
-        Severity.WARNING,
+        Severity.ERROR,
         "A datatype-property assertion should point to a literal.",
         "heuristic",
         RuleBackend.RDFLIB,

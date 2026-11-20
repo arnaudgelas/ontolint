@@ -6,7 +6,7 @@ walks the property hierarchy that the OWL 2 definition of a simple property is s
 is read from its explicit ``rdf:type owl:ObjectProperty`` / ``owl:DatatypeProperty`` only (a
 characteristic such as ``owl:TransitiveProperty`` does not make it an object property).  No rule is
 restricted to owned terms: every subject of the graph is checked, imported or not.  Every finding is
-``certain`` except OWL023's.  Their specifications:
+``certain``.  Their specifications:
 
 * **OWL016.** A node typed ``owl:DatatypeProperty`` and ``owl:ReflexiveProperty`` or
   ``owl:IrreflexiveProperty``; one finding per characteristic.  The other object-only characteristics
@@ -64,7 +64,8 @@ restricted to owned terms: every subject of the graph is checked, imported or no
   not OWL 2 DL.
 * **OWL023.** An IRI related by ``owl:inverseOf``, in either direction, to two or more other IRIs; one
   finding per such property.  Self-inverse and blank-node inverses are ignored (OWL007 has the former).
-  *Warning, heuristic:* valid OWL; the inverses are entailed equivalent, which may be intended.
+  *Warning, certain:* valid OWL; the inverses are entailed equivalent (DS), which may be intended, so the finding
+  asks for review; the count is exact.
 * **OWL024.** Two properties declared disjoint, by ``owl:propertyDisjointWith`` or as members of one
   ``owl:AllDisjointProperties`` list, that are also related by an asserted ``rdfs:subPropertyOf`` or
   ``owl:equivalentProperty`` in either direction, or a property declared disjoint with itself
@@ -646,7 +647,7 @@ def _multiple_inverses(ctx: RuleContext) -> None:
     for p in _ordered(set(inverses)):
         if len(inverses[p]) > 1:
             names = ", ".join(str(n) for n in _ordered(inverses[p]))
-            ctx.add("OWL023", p, f"Property has several distinct inverses: {names}.", subject=())
+            ctx.add("OWL023", p, f"Property has several distinct inverses: {names}.", confidence="certain", subject=())
 
 
 def _disjoint_conflicts(ctx: RuleContext, code: str, pair_predicate: Node, group_type: Node, kind: str) -> None:

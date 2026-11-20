@@ -9,7 +9,7 @@ present in the graph are checked too.  "Restriction" below means a subject with 
 are read with :func:`~.support.list_items`: a list is *malformed* when its head is neither
 ``rdf:nil`` nor a node with exactly one ``rdf:first`` and one ``rdf:rest`` (this includes literal and
 plain-IRI heads), when it is cyclic, or when it exceeds a million cells; list cells may be IRIs.
-Every finding is certain except OWL041's, which is emitted with the default (heuristic) confidence.
+Every finding is certain.
 A blank-node focus is printed as its stable content-based identity.  Terms in messages print as IRIs, ``_:``
 stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/XMLSchema#integer>``,
 ``"x"@en``; a line break is escaped), never as Python reprs.  The specifications:
@@ -22,9 +22,10 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   an OWL 2 DL expression or axiom.  A one-member list is OWL032's.
 * **OWL032.** An ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:disjointUnionOf`` whose well-formed
   list has exactly one member, focused on the subject; the message names the operand.  ``owl:oneOf``
-  with one member is a valid enumeration and is not reported.  Info: the expression means its operand
+  with one member is a valid enumeration and is not reported.  Warning: the expression means its operand
   (a one-member disjoint union only makes the class equivalent to it), so it is redundant rather than
-  wrong (it is, however, outside the OWL 2 DL grammar, which requires two operands, SS 8.1 and 9.1.4).
+  wrong, but it is outside the OWL 2 DL grammar, which requires two operands (SS 8.1 and 9.1.4); OWL033's
+  repeated operand, harmless too, is a warning.
 * **OWL033.** An ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` whose
   well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and
   ``"1"^^xsd:integer`` differ; structurally equal blank-node expressions are not compared), one
@@ -101,7 +102,7 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   bound); one finding per component that contains an odd cycle, a self-loop included, focused on the
   first node, in a depth-first walk over sorted nodes (a blank node sorts by its stable identity, never its
   label), with an edge to a node of its own colour.  Even cycles (``A = not B``, ``B = not A``)
-  are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error: an
+  are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error, certain: an
   odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is
   inconsistent under the Direct Semantics.
 * **OWL042.** For each ``E owl:complementOf C`` with a non-literal ``C``: ``C rdfs:subClassOf E``
@@ -129,9 +130,11 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
 * **OWL045.** For each node typed ``owl:AllDifferent`` (member lists on ``owl:members`` or
   ``owl:distinctMembers``) or ``owl:AllDisjointClasses`` (``owl:members`` only), focused on the
   axiom: no member list; more than one; and per list, malformed, fewer than two members, or a
-  repeated member.  ``owl:AllDisjointProperties`` and untyped nodes are not judged.  Warning: an
+  repeated member.  ``owl:AllDisjointProperties`` and untyped nodes are not judged.  Error, as OWL031: an
   OWL 2 parser cannot map the axiom (RDF mapping section 3.2) and drops it, so the intended
-  distinctness or disjointness silently disappears.
+  distinctness or disjointness silently disappears.  One severity covers the five kinds: the first four
+  make a parser drop the axiom; a repeated member does not, but ``AllDifferent(a a)`` asserts ``a`` different
+  from itself (an inconsistent ontology) and ``AllDisjointClasses(C C)`` makes ``C`` empty, so it is graded with them.
 """
 
 from __future__ import annotations
@@ -177,7 +180,7 @@ SPECS: tuple[RuleSpec, ...] = (
     _spec(
         "OWL032",
         "Single-operand union, intersection or disjoint union",
-        Severity.INFO,
+        Severity.WARNING,
         "Replace an owl:unionOf or owl:intersectionOf with one operand by that operand.",
     ),
     _spec(
@@ -255,7 +258,7 @@ SPECS: tuple[RuleSpec, ...] = (
     _spec(
         "OWL045",
         "Malformed owl:AllDifferent or owl:AllDisjointClasses",
-        Severity.WARNING,
+        Severity.ERROR,
         "Give the axiom one well-formed member list with at least two distinct members.",
     ),
 )
@@ -732,7 +735,12 @@ def _odd_cycles(ctx: RuleContext, adjacent: dict[Node, set[Node]]) -> None:
                 elif color[neighbour] == color[node] and culprit is None:
                     culprit = node
         if culprit is not None:
-            ctx.add("OWL041", culprit, "owl:complementOf assertions form an odd cycle (a class equals its complement).")
+            ctx.add(
+                "OWL041",
+                culprit,
+                "owl:complementOf assertions form an odd cycle (a class equals its complement).",
+                confidence="certain",
+            )
 
 
 # --- individuals (OWL044, OWL045) ------------------------------------------------------------

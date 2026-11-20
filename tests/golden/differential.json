@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:f2384908ee75803de952d9bf6d99573b3252d66237fffb31a3677ba599e28cb1 (27000 chars)",
+    "file": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:f2384908ee75803de952d9bf6d99573b3252d66237fffb31a3677ba599e28cb1 (27000 chars)"
+    "stdout": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,62 +118,62 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:6e9e6003ea4f4d3f5e6562a6f4542bd754f661f474e65b0425d3e5d25b6e602f (44596 chars)",
+   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:b9d05c6cb27a1c42377c2074c7406aef01a1e93ab9e12ae2dda6ccfe236ae57f (163453 chars)",
+    "file": "sha256:0b8688816ea94a04a65e9482ea14159748c4db68b403b61a131f91a2e1ada9c0 (163442 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:b9d05c6cb27a1c42377c2074c7406aef01a1e93ab9e12ae2dda6ccfe236ae57f (163453 chars)"
+    "stdout": "sha256:0b8688816ea94a04a65e9482ea14159748c4db68b403b61a131f91a2e1ada9c0 (163442 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:23dd09d633d66c2aec4dec44449b5ceabc856e9e3ea0739212e6a0c5a7264a65 (40708 chars)",
+   "legacy_json_view": "sha256:6fdf5cf69a0507f276d1ff5b81595ee12afc79de65e27edc84a582bbff6a6dcf (40701 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:ab67d1f51881ae6f4fe354b38e9945d06c52812ea40b3a6a78cda8a47c3d7192 (159481 chars)",
+    "file": "sha256:27c8cb3e4da5549747941b7a64f839bf2b7a92568214a87045449dda96d29944 (159470 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ab67d1f51881ae6f4fe354b38e9945d06c52812ea40b3a6a78cda8a47c3d7192 (159481 chars)"
+    "stdout": "sha256:27c8cb3e4da5549747941b7a64f839bf2b7a92568214a87045449dda96d29944 (159470 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:29e35690312337f52577904861ded77aaf66988bb6da36883000e0b9b2d52334 (28622 chars)",
+    "file": "sha256:62e7afad8ce81332a6f4a88618dbc7d647205fc0212997aba09d4ecbd3c17556 (28622 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:29e35690312337f52577904861ded77aaf66988bb6da36883000e0b9b2d52334 (28622 chars)"
+    "stdout": "sha256:62e7afad8ce81332a6f4a88618dbc7d647205fc0212997aba09d4ecbd3c17556 (28622 chars)"
    }
   },
   "json_clean": {
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:54b0236953e96827e0c0293fde1e0a0e932883f0a3a33ca280326387212ee7e8 (114195 chars)",
+    "file": "sha256:16c8a63229dfcdc861587f9eb4861455b9d9116a6b5a62508dc3c295a067b720 (114191 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:54b0236953e96827e0c0293fde1e0a0e932883f0a3a33ca280326387212ee7e8 (114195 chars)"
+    "stdout": "sha256:16c8a63229dfcdc861587f9eb4861455b9d9116a6b5a62508dc3c295a067b720 (114191 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:a5ffb4f68f7d0dc21c3197b3b67fcd0da030f11ef17d3e3ba6c87b511385ebd0 (228440 chars)"
+    "stdout": "sha256:ad6c0630bdfc619051c3d9cac6b061b58b4ba24faed6f0a1bb97b0e8f5c36b79 (228432 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,32 +184,32 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:893548b353c0cfc7ec02314f9a4a624a324b082224a144181a24bbb76fd3efce (115448 chars)",
+    "file": "sha256:e6fbebd52f52bba3fe60ec747180a1576b8edfbfbab7a9765ed964e43a3f273a (115444 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:893548b353c0cfc7ec02314f9a4a624a324b082224a144181a24bbb76fd3efce (115448 chars)"
+    "stdout": "sha256:e6fbebd52f52bba3fe60ec747180a1576b8edfbfbab7a9765ed964e43a3f273a (115444 chars)"
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:d1959c03170925021c6a3d2c7ed8b719e3ae074e8e2c4a94492ba8e4132f80a4 (61957 chars)",
+   "legacy_json_view": "sha256:69c421ca05d516265934432c6149a91e36bec6340a2a3590c0e5b15ef35da005 (61950 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:850accac845d26b1af529abf4cdc058b5534325ed306597ced70d4676d73eb36 (183232 chars)",
+    "file": "sha256:c66ccb20553bb9ee66a200e8addb7e702bc763150d5a4e3cc30b98112dd4f62b (183221 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:850accac845d26b1af529abf4cdc058b5534325ed306597ced70d4676d73eb36 (183232 chars)"
+    "stdout": "sha256:c66ccb20553bb9ee66a200e8addb7e702bc763150d5a4e3cc30b98112dd4f62b (183221 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:cfcc665e5df3431ee4d1c0f98a024ad0b3b784d74acd1ebde91589b06d6b3b11 (297520 chars)"
+    "stdout": "sha256:2f7f2f0bb694ac08426c164464ed4afe56c984382f0c32a9260504d5ccfd9222 (297505 chars)"
    },
    "write_baseline": {
     "count": 206,
@@ -217,21 +217,21 @@
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:6e9e6003ea4f4d3f5e6562a6f4542bd754f661f474e65b0425d3e5d25b6e602f (44596 chars)",
+   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:b9d05c6cb27a1c42377c2074c7406aef01a1e93ab9e12ae2dda6ccfe236ae57f (163453 chars)",
+    "file": "sha256:0b8688816ea94a04a65e9482ea14159748c4db68b403b61a131f91a2e1ada9c0 (163442 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:b9d05c6cb27a1c42377c2074c7406aef01a1e93ab9e12ae2dda6ccfe236ae57f (163453 chars)"
+    "stdout": "sha256:0b8688816ea94a04a65e9482ea14159748c4db68b403b61a131f91a2e1ada9c0 (163442 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:96d6825df9750f676e3ed0645198c2e5f348188500a5675ef4e7e501cb252ad0 (277705 chars)"
+    "stdout": "sha256:d76d84c75feefc122b0778c4f73431cb4a7470c81794c67bb4fa27e5c6dece62 (277690 chars)"
    },
    "write_baseline": {
     "count": 136,
@@ -239,63 +239,63 @@
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:8150ed8c4a03b1fd864c9f7a0b1e0bbed6fe9322837aa064df153b806ba70bd3 (45144 chars)",
+   "legacy_json_view": "sha256:513472fa4a94bd0d9b137d4754f52f198b2758fac1820b769dbad7a975a87229 (45137 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:ecd977d0da751feaa5af1b64dedf41cb10392cd13bda939e226af6bb6e0d04e9 (163996 chars)",
+    "file": "sha256:b1301e3711bb4ef6b3c3f34943d665d1797627f2223546f43b22c4aec535fa90 (163985 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:ecd977d0da751feaa5af1b64dedf41cb10392cd13bda939e226af6bb6e0d04e9 (163996 chars)"
+    "stdout": "sha256:b1301e3711bb4ef6b3c3f34943d665d1797627f2223546f43b22c4aec535fa90 (163985 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:6e9e6003ea4f4d3f5e6562a6f4542bd754f661f474e65b0425d3e5d25b6e602f (44596 chars)",
+   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:cbb0e7e090d29a1b5e3be918666c6eb20f072da4e961d2092d11e4320dea423f (163414 chars)",
+    "file": "sha256:df6bdf448ee5fa10fed1d824793810630b7125dc009dde6f83759cfa7f77974b (163403 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:cbb0e7e090d29a1b5e3be918666c6eb20f072da4e961d2092d11e4320dea423f (163414 chars)"
+    "stdout": "sha256:df6bdf448ee5fa10fed1d824793810630b7125dc009dde6f83759cfa7f77974b (163403 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:6e9e6003ea4f4d3f5e6562a6f4542bd754f661f474e65b0425d3e5d25b6e602f (44596 chars)",
+   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:7edcfc53871b84170d1c04515e8bb27c41c5b7c5f66889dc2cb9149ab865e7dc (163460 chars)",
+    "file": "sha256:7caf318f1e9e51a356265c61d934a97d0b81fbb8ccf1c6b9284f9725315d1b6d (163449 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:7edcfc53871b84170d1c04515e8bb27c41c5b7c5f66889dc2cb9149ab865e7dc (163460 chars)"
+    "stdout": "sha256:7caf318f1e9e51a356265c61d934a97d0b81fbb8ccf1c6b9284f9725315d1b6d (163449 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:bba53187bce71b59fd3a26e83a3c9a3d4186b57350cbb7be4373209d4e4709e9 (47707 chars)",
+   "legacy_json_view": "sha256:87348000b16170158b05f9ad4559701e66ca79f2beaffd504697404da689e84e (47700 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:dc2129d0449874461a44b65a618fad8afd47f191614f3c1883585b869babb3da (165979 chars)",
+    "file": "sha256:2a401b5bef1e8c73805a677793b8a2a7c21dd5b1d914fc06acff3548aced31a6 (165968 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:dc2129d0449874461a44b65a618fad8afd47f191614f3c1883585b869babb3da (165979 chars)"
+    "stdout": "sha256:2a401b5bef1e8c73805a677793b8a2a7c21dd5b1d914fc06acff3548aced31a6 (165968 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:79ba799fceeebcf251e5fc64b81424860dab4a35abcfb0f4f6995f5eabbe3bfd (279305 chars)"
+    "stdout": "sha256:4d72ea537b26c637dc0dcfd49ef733aadb095e4c5bef8ba439b299c5d6549c0d (279290 chars)"
    },
    "write_baseline": {
     "count": 146,
@@ -303,17 +303,17 @@
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:6c2c18a98caa22602fe37955559d057c1d2f872b823c5fb1a258e953b419ab8b (51042 chars)",
+   "legacy_json_view": "sha256:a65b338d90afc6cd846a284707632ac3fc94ff30a02eebdf297cc26bb14fa3de (51035 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:89ee6e4efd938f9ca809f57f53360a8588d0a07c0f83bb8408fd3816ce7d07a4 (170648 chars)",
+    "file": "sha256:db1c42a78843754dc641aff0f498e41f7b6e5456d48a69548a2996afcb65a566 (170637 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:89ee6e4efd938f9ca809f57f53360a8588d0a07c0f83bb8408fd3816ce7d07a4 (170648 chars)"
+    "stdout": "sha256:db1c42a78843754dc641aff0f498e41f7b6e5456d48a69548a2996afcb65a566 (170637 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:f889b3bcc811b7cdceabd3e9a5b44de86fb3410296156da99177d954a5cc6d6f (98554 chars)"
+    "stdout": "sha256:84e005c708ab3e9cf2ade4eb92358b647502633042ce97eb5009a2b0a61d0d83 (98552 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:f889b3bcc811b7cdceabd3e9a5b44de86fb3410296156da99177d954a5cc6d6f (98554 chars)"
+    "stdout": "sha256:84e005c708ab3e9cf2ade4eb92358b647502633042ce97eb5009a2b0a61d0d83 (98552 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:c4d7398fcf2604ec13087a5425e47fc471a03b906e2a65438b393e753c75b737 (31991 chars)"
+    "stdout": "sha256:87e60315722d0eef52f3361deb7cfef8203a4806189556b829038cf903470238 (31991 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:c4d7398fcf2604ec13087a5425e47fc471a03b906e2a65438b393e753c75b737 (31991 chars)"
+    "stdout": "sha256:87e60315722d0eef52f3361deb7cfef8203a4806189556b829038cf903470238 (31991 chars)"
    }
   },
   "missing_config": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:6e9e6003ea4f4d3f5e6562a6f4542bd754f661f474e65b0425d3e5d25b6e602f (44596 chars)",
+   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:03e92f2d50526c636c32f949444dc0530dcad110d57536d872139507baa212b7 (188279 chars)",
+    "file": "sha256:c9511e5b065f7ad55453e7c144aea4a8b383b581a7974787c28ad3625737ec52 (188268 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:03e92f2d50526c636c32f949444dc0530dcad110d57536d872139507baa212b7 (188279 chars)"
+    "stdout": "sha256:c9511e5b065f7ad55453e7c144aea4a8b383b581a7974787c28ad3625737ec52 (188268 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,40 +411,40 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:f77d2463602a634c4d4c6540367510ae914a9ae774ed03ffefd2194bd90533dd (325054 chars)",
+    "file": "sha256:a41e2916d699b9113a61177c296a9e8d5b42a434cad91d0d07a554d0f04e5179 (325047 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f77d2463602a634c4d4c6540367510ae914a9ae774ed03ffefd2194bd90533dd (325054 chars)"
+    "stdout": "sha256:a41e2916d699b9113a61177c296a9e8d5b42a434cad91d0d07a554d0f04e5179 (325047 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:e4968e3b90cbad8b184011a9d5947a1be22dcf8e15a2019565277b3b3e7ec6b6 (27076 chars)",
+    "file": "sha256:a3359910f767b14fd34840dc5521beb552ed3417d62a2de8ea441db88ca85d6b (27076 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e4968e3b90cbad8b184011a9d5947a1be22dcf8e15a2019565277b3b3e7ec6b6 (27076 chars)"
+    "stdout": "sha256:a3359910f767b14fd34840dc5521beb552ed3417d62a2de8ea441db88ca85d6b (27076 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:f2384908ee75803de952d9bf6d99573b3252d66237fffb31a3677ba599e28cb1 (27000 chars)",
+    "file": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:f2384908ee75803de952d9bf6d99573b3252d66237fffb31a3677ba599e28cb1 (27000 chars)"
+    "stdout": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)"
    }
   },
   "profile_minimal_json": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:8d562b845db536fedf2a50de38c8c51ce13f525fc5cfe6ac2678b544c9fe38a7 (305889 chars)",
+    "file": "sha256:5e379135aa88e10602df1f5741075d33baa972e416e0817004e708fdd3bb13f3 (305882 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:8d562b845db536fedf2a50de38c8c51ce13f525fc5cfe6ac2678b544c9fe38a7 (305889 chars)"
+    "stdout": "sha256:5e379135aa88e10602df1f5741075d33baa972e416e0817004e708fdd3bb13f3 (305882 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:a739ddac97386d69fe6a70a055dfc6b752aaab47e0e67383e27b4e04f395613f (294716 chars)",
+    "file": "sha256:d930a781c432ff5c755c86bfc33949b6e2c9d418fa02a6d702b32ad0ae9e73e2 (294709 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a739ddac97386d69fe6a70a055dfc6b752aaab47e0e67383e27b4e04f395613f (294716 chars)"
+    "stdout": "sha256:d930a781c432ff5c755c86bfc33949b6e2c9d418fa02a6d702b32ad0ae9e73e2 (294709 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:4f001e8f5f2bb8f1c5309d8c9c964e49e49df03f1cdfdc4e188e7472f1efb082 (43400 chars)",
+    "file": "sha256:79364b00f3e757e964f19beb0ecf3fd59c363b2f8ac035f30e2f5c51eadc9037 (43400 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:4f001e8f5f2bb8f1c5309d8c9c964e49e49df03f1cdfdc4e188e7472f1efb082 (43400 chars)"
+    "stdout": "sha256:79364b00f3e757e964f19beb0ecf3fd59c363b2f8ac035f30e2f5c51eadc9037 (43400 chars)"
    }
   },
   "text_clean": {
@@ -596,14 +596,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:f2384908ee75803de952d9bf6d99573b3252d66237fffb31a3677ba599e28cb1 (27000 chars)",
+    "file": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f2384908ee75803de952d9bf6d99573b3252d66237fffb31a3677ba599e28cb1 (27000 chars)"
+    "stdout": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)"
    }
   },
   "text_node_shacl_violation": {
@@ -683,6 +683,42 @@
    },
    {
     "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "certain",
     "fingerprint": "0f3649a897b35a0a3b19b49fec92da49f8dec962191e61b511d9934332e60f31",
     "focus": "https://example.test/onto#c1",
     "message": "2 prefLabels in language en.",
@@ -989,39 +1025,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -1033,7 +1042,7 @@
     "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
    },
    {
-    "confidence": "heuristic",
+    "confidence": "certain",
     "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
     "focus": "https://example.test/onto#otherProp",
     "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
@@ -1841,15 +1850,6 @@
     "rule": "OWL006",
     "severity": "info",
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -1918,6 +1918,42 @@
    },
    {
     "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "certain",
     "fingerprint": "0f3649a897b35a0a3b19b49fec92da49f8dec962191e61b511d9934332e60f31",
     "focus": "https://example.test/onto#c1",
     "message": "2 prefLabels in language en.",
@@ -2224,39 +2260,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -2268,7 +2277,7 @@
     "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
    },
    {
-    "confidence": "heuristic",
+    "confidence": "certain",
     "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
     "focus": "https://example.test/onto#otherProp",
     "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
@@ -3076,15 +3085,6 @@
     "rule": "OWL006",
     "severity": "info",
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -3153,6 +3153,42 @@
    },
    {
     "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "certain",
     "fingerprint": "0f3649a897b35a0a3b19b49fec92da49f8dec962191e61b511d9934332e60f31",
     "focus": "https://example.test/onto#c1",
     "message": "2 prefLabels in language en.",
@@ -3459,42 +3495,15 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
     "focus": "https://example.test/onto#otherProp",
     "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
@@ -4304,15 +4313,6 @@
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
    },
    {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
-   },
-   {
     "confidence": "heuristic",
     "fingerprint": "be4ad084eb959d6766f4040f3fd1e97d4c2cdaa0c85cb2f8a412ad847847f8ad",
     "focus": "https://example.test/onto#Restr",
@@ -4376,6 +4376,42 @@
     "rule": "OWL003",
     "severity": "error",
     "suggestion": "Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
    },
    {
     "confidence": "certain",
@@ -4685,39 +4721,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -4729,7 +4738,7 @@
     "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
    },
    {
-    "confidence": "heuristic",
+    "confidence": "certain",
     "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
     "focus": "https://example.test/onto#otherProp",
     "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
@@ -5575,15 +5584,6 @@
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
    },
    {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
-   },
-   {
     "confidence": "heuristic",
     "fingerprint": "be4ad084eb959d6766f4040f3fd1e97d4c2cdaa0c85cb2f8a412ad847847f8ad",
     "focus": "https://example.test/onto#Restr",
@@ -5701,6 +5701,42 @@
     "rule": "OWL003",
     "severity": "error",
     "suggestion": "Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
    },
    {
     "confidence": "certain",
@@ -6010,42 +6046,15 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
-   },
-   {
-    "confidence": "heuristic",
     "fingerprint": "c6f8df43274c08378e17766790cdf869e8fb415de85f31f6af74a41a09a0afb7",
     "focus": "https://example.test/onto#otherProp",
     "message": "Property has several distinct inverses: https://example.test/onto#dataSym, https://example.test/onto#symProp.",
@@ -7906,15 +7915,6 @@
     "rule": "OWL006",
     "severity": "info",
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",

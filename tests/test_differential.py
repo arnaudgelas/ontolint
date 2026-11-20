@@ -122,6 +122,16 @@ counts the executed ones changed (the rule metadata of each JSON and SARIF repor
 METRIC014 emits nothing, so no METRIC001-013 finding, message, fingerprint, severity, text report or exit code moved
 (every changed line of the diff is a ``sha256`` or that count), ``legacy_rules.json`` is untouched, and
 ``identities.json`` only gained the five METRIC014 cases.
+
+Deliberate golden update and legacy re-pin (issue #63, OWL family): OWL009, OWL013 and OWL014 became errors, OWL010 and
+OWL032 warnings and OWL045 an error, and OWL023 and OWL041 findings report confidence ``certain``
+(``docs/severity-decisions.md``).  OWL009, OWL010, OWL013 and OWL014 are legacy rules, so ``legacy_rules.json`` moved,
+the first time since 0.10.2, for those four rules only: in each of its eight ``linter`` entries with findings the
+findings equal the previous ones as a set once those four severities are substituted (the order follows the engine's
+severity-first sort, so it changed with them), every ``cli`` exit code is unchanged, and each ``cli`` hash changed
+because a view contains one of the four.  ``differential.json`` and ``single_graph_reports.json`` were regenerated;
+no finding, message, focus, fingerprint or ``identities.json`` entry moved.  ``tests/test_severity_decisions.py``
+pins each decided row on its own fixture.
 """
 
 from __future__ import annotations

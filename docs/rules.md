@@ -350,12 +350,12 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [OWL006](rules/owl.md) | Property without range | info |
 | [OWL007](rules/owl.md) | Property declared inverse of itself | warning |
 | [OWL008](rules/owl.md) | Symmetric property also declared with an inverse | warning |
-| [OWL009](rules/owl.md) | Datatype property with object-property characteristic | warning |
-| [OWL010](rules/owl.md) | Property chain with fewer than two operands | info |
+| [OWL009](rules/owl.md) | Datatype property with object-property characteristic | error |
+| [OWL010](rules/owl.md) | Property chain with fewer than two operands | warning |
 | [OWL011](rules/owl.md) | Universal restriction without existence | info |
 | [OWL012](rules/owl.md) | Class equivalent to itself | info |
-| [OWL013](rules/owl.md) | Object property asserted with a literal value | warning |
-| [OWL014](rules/owl.md) | Datatype property asserted with a resource value | warning |
+| [OWL013](rules/owl.md) | Object property asserted with a literal value | error |
+| [OWL014](rules/owl.md) | Datatype property asserted with a resource value | error |
 | [OWL015](rules/owl.md) | Undeclared local predicate | warning |
 | [OWL016](rules/owl.md) | Reflexivity characteristic on datatype property | error |
 | [OWL017](rules/owl.md) | Property both symmetric and asymmetric | error |
@@ -373,7 +373,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [OWL029](rules/owl.md) | Asymmetric property asserted in both directions | error |
 | [OWL030](rules/owl.md) | Illegal punning of declaration kinds | error |
 | [OWL031](rules/owl.md) | Malformed or empty class-expression list | error |
-| [OWL032](rules/owl.md) | Single-operand union, intersection or disjoint union | info |
+| [OWL032](rules/owl.md) | Single-operand union, intersection or disjoint union | warning |
 | [OWL033](rules/owl.md) | Duplicate operand in class-expression list | warning |
 | [OWL034](rules/owl.md) | Restriction with missing or invalid owl:onProperty | error |
 | [OWL035](rules/owl.md) | Restriction without exactly one valid constraint | error |
@@ -386,7 +386,7 @@ and `--list-rules --format json` reports them with `"selectable": false`.
 | [OWL042](rules/owl.md) | Class subclass of or equivalent to its own complement | error |
 | [OWL043](rules/owl.md) | Contradictory or tautological operands in union or intersection | warning |
 | [OWL044](rules/owl.md) | Individuals identical through owl:sameAs chains but asserted different | error |
-| [OWL045](rules/owl.md) | Malformed owl:AllDifferent or owl:AllDisjointClasses | warning |
+| [OWL045](rules/owl.md) | Malformed owl:AllDifferent or owl:AllDisjointClasses | error |
 
 ## SEC
 
