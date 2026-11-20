@@ -30,6 +30,12 @@ guarantees that proposed rules are never reported as executed.
      `tests/test_subject_contract.py` fails for an add site with a computed message, or of a rule
      with several add sites, that does not pass `subject=`.
      `subject=()` says that the rule reports at most one finding per focus.
+     `severity=` is for a rule whose conditions differ in gravity (one defect an error, another a
+     warning): the finding reports it instead of the registered severity, which stays the rule's default
+     (`--list-rules`, the SARIF `defaultConfiguration`, and what `severity_overrides` replaces: an override
+     flattens every finding of the rule). Say in the specification which condition has which severity, and
+     use it for no other reason. Severity is not part of the identity, so a baseline does not tell two
+     severities of one finding apart. Pin each severity in the rule's cases.
      In `message`, write a term that may be a blank node with `term_text` (an RDF term),
      `value_text` (as `str()` would, but a blank node `_:label`) or `quoted_text` (a quoted value),
      never with `{node}` or `str(node)`: `RuleContext` rewrites only `_:label` to the node's stable
