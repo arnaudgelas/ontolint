@@ -2,11 +2,11 @@
  "cli": {
   "fail_on_warning_kitchen": {
    "exit": 1,
-   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
+   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
   },
   "ignore_family_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:f03f9b4996f28d975fd78bc647805d8212fcd1b457d4f4200c99def8d19a2a55 (33218 chars)"
+   "legacy_json_view": "sha256:de643efc957f27b170f7da236cae6074afc55b48746838d3099ba9f1588e1232 (33213 chars)"
   },
   "json_clean": {
    "exit": 0,
@@ -18,35 +18,35 @@
   },
   "json_config": {
    "exit": 1,
-   "legacy_json_view": "sha256:b3665dbbbc4b79a1c4874add1c0040b45593b9922aeadad277408098587c3b76 (50479 chars)"
+   "legacy_json_view": "sha256:3e46f5204a5eb5fd828f09a11d45ac3125876138a539a4342016ee763ce23c8e (50474 chars)"
   },
   "json_default": {
    "exit": 1,
-   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
+   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
   },
   "json_robot_fail": {
    "exit": 1,
-   "legacy_json_view": "sha256:5f1d1ff4b3ac18d46af544b4f2d1686131c7afc284038448c826aac05b72366b (37654 chars)"
+   "legacy_json_view": "sha256:73a26d18cb5c9e13a2c26f077503a9749bb1f4d6860319657cf9117e344fcec6 (37649 chars)"
   },
   "json_robot_ok": {
    "exit": 1,
-   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
+   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
   },
   "json_robot_unsupported": {
    "exit": 2,
-   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
+   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
   },
   "json_shapes": {
    "exit": 1,
-   "legacy_json_view": "sha256:7ba08ecc1d45fb9caa0d9dc1e98edfc38f590d9b9c9caf22e087efa022e87641 (40216 chars)"
+   "legacy_json_view": "sha256:d1628e92c9ca0765bd70009891776c193d14f178ae165048a668b6959725d4a9 (40211 chars)"
   },
   "json_thresholds": {
    "exit": 1,
-   "legacy_json_view": "sha256:f625395561a9b4be4613fd2b25688e4c9636e83abbc0e18aefffdae6ef948eba (43552 chars)"
+   "legacy_json_view": "sha256:5df4e4f7b0e8ef1745688e62125552dd2180c4eb5f09c3f5bda7b330e699d07e (43546 chars)"
   },
   "multi_file_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:a8ac25b57ef7b11c895385b52c11b5298aef2b5f3a814602cac4513cc9f7f700 (37106 chars)"
+   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
   },
   "profile_minimal_json": {
    "exit": 1,
@@ -189,6 +189,42 @@
    },
    {
     "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "certain",
     "fingerprint": "0f3649a897b35a0a3b19b49fec92da49f8dec962191e61b511d9934332e60f31",
     "focus": "https://example.test/onto#c1",
     "message": "2 prefLabels in language en.",
@@ -459,39 +495,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -1158,15 +1167,6 @@
     "rule": "OWL006",
     "severity": "info",
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -1226,6 +1226,42 @@
    },
    {
     "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
+   },
+   {
+    "confidence": "certain",
     "fingerprint": "0f3649a897b35a0a3b19b49fec92da49f8dec962191e61b511d9934332e60f31",
     "focus": "https://example.test/onto#c1",
     "message": "2 prefLabels in language en.",
@@ -1496,39 +1532,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -2197,15 +2206,6 @@
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
    },
    {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
-   },
-   {
     "confidence": "heuristic",
     "fingerprint": "be4ad084eb959d6766f4040f3fd1e97d4c2cdaa0c85cb2f8a412ad847847f8ad",
     "focus": "https://example.test/onto#Restr",
@@ -2260,6 +2260,42 @@
     "rule": "OWL003",
     "severity": "error",
     "suggestion": "Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
    },
    {
     "confidence": "certain",
@@ -2533,39 +2569,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -3225,15 +3234,6 @@
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
    },
    {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
-   },
-   {
     "confidence": "heuristic",
     "fingerprint": "be4ad084eb959d6766f4040f3fd1e97d4c2cdaa0c85cb2f8a412ad847847f8ad",
     "focus": "https://example.test/onto#Restr",
@@ -3288,6 +3288,42 @@
     "rule": "OWL003",
     "severity": "error",
     "suggestion": "Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
    },
    {
     "confidence": "certain",
@@ -3561,39 +3597,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -4298,15 +4307,6 @@
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
    },
    {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
-   },
-   {
     "confidence": "heuristic",
     "fingerprint": "be4ad084eb959d6766f4040f3fd1e97d4c2cdaa0c85cb2f8a412ad847847f8ad",
     "focus": "https://example.test/onto#Restr",
@@ -4415,6 +4415,42 @@
     "rule": "OWL003",
     "severity": "error",
     "suggestion": "Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
+    "focus": "https://example.test/onto#dataSym",
+    "message": "owl:inverseOf involves a datatype property.",
+    "rule": "OWL009",
+    "severity": "error",
+    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
+    "rule": "OWL013",
+    "severity": "error",
+    "suggestion": "An object-property assertion should point to a resource, not a literal."
+   },
+   {
+    "confidence": "certain",
+    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
+    "focus": "https://example.test/onto#inst1",
+    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
+    "rule": "OWL014",
+    "severity": "error",
+    "suggestion": "A datatype-property assertion should point to a literal."
    },
    {
     "confidence": "certain",
@@ -4688,39 +4724,12 @@
    },
    {
     "confidence": "certain",
-    "fingerprint": "b598422a06f3919337368781be7577322e8ac6b7336c06fdda45656131967277",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "Datatype property declared http://www.w3.org/2002/07/owl#SymmetricProperty.",
-    "rule": "OWL009",
+    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
+    "focus": "https://example.test/onto#chained",
+    "message": "Property-chain axiom has one operand.",
+    "rule": "OWL010",
     "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "aa5665b33b5a2243db68f6e5d1d4aab5e667385c7d56f1143b90f23500f7bbea",
-    "focus": "https://example.test/onto#dataSym",
-    "message": "owl:inverseOf involves a datatype property.",
-    "rule": "OWL009",
-    "severity": "warning",
-    "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "bcfcc7624e0a24914fa2b314db0bd44b6b188d3316247b7d3b115cd5b1cdae67",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Object property https://example.test/onto#objLit points to literal \"lit\".",
-    "rule": "OWL013",
-    "severity": "warning",
-    "suggestion": "An object-property assertion should point to a resource, not a literal."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "93d6575aecb4e8508fc4a70d4b49f88c90790ec66f28b80e700a3a5c63d427d8",
-    "focus": "https://example.test/onto#inst1",
-    "message": "Datatype property https://example.test/onto#dataRes points to resource https://example.test/onto#Root.",
-    "rule": "OWL014",
-    "severity": "warning",
-    "suggestion": "A datatype-property assertion should point to a literal."
+    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
@@ -6305,15 +6314,6 @@
     "rule": "OWL006",
     "severity": "info",
     "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
-   },
-   {
-    "confidence": "certain",
-    "fingerprint": "54f8a755d0648a06fdb6358813557e3c07f8fa2ff7467ab38a2e54c6c546eba6",
-    "focus": "https://example.test/onto#chained",
-    "message": "Property-chain axiom has one operand.",
-    "rule": "OWL010",
-    "severity": "info",
-    "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
    },
    {
     "confidence": "heuristic",
