@@ -889,24 +889,18 @@ Validation corpus (public; licences per repository):
   (0.11.0, see "Recently done", METRIC-SPEC) and the SHQ family (v0.13.0, issue #11, see "Recently
   done", SHQ-SPEC) await the maintainer's approval. Next: the SKOS, CLS, LEX and IRI families. The
   severity and confidence proposals below, the three scope questions and the approval checklist are
-  prepared row by row, with measurements and recommendations, in `docs/severity-decisions.md` (issue
-  #63; nothing applied). Left open by those reviews:
-  - *Severity and confidence, the maintainer's decision* (changing either moves baselines and
-    `--fail-on` results): OWL009 warning → error, and OWL010 info → warning or error (both
-    describe graphs outside OWL 2 DL); OWL013/OWL014 → error; OWL032 info → warning; OWL045's
-    missing or malformed list → error like OWL031; OWL038 error or warning; confidence `certain`
-    for OWL023, OWL041, SHQ008 and SHQ018 (exact checks still on the default `heuristic`, which
-    changes `differential.json`); category `deterministic` for SKOS001
-    and SKOS002; SKOS001 on any owned resource with a `skos:prefLabel`, not only concepts (S14).
-    (OWL004 and OWL007 already report `certain` in the code, the docstring and every observed finding, so the
-    earlier proposal to make them `heuristic` is dropped.)
-    Added by the coverage gaps (each new finding ships at its rule's current severity): SHQ011
-    for a `\/` escape (an error by XPath, but pySHACL and Jena accept it, so a warning would match
-    its practical effect); SHQ008 for a derived integer type such as `xsd:nonNegativeInteger`
-    (common in generated shapes); SHQ015 warning → error (XPath raises FORX0001 for a bad flag
-    letter); OWL035 "several constraints" (a restriction with both `minCardinality` and `maxCardinality`, a
-    common OWL 1 / Protégé idiom) ships at error and needs counting on the real-world corpus;
-    OWL010 and OWL032 stay info although their new conditions are outside OWL 2 DL too.
+  proposed in `docs/severity-decisions.md` (issue #63; pull requests #197 to #205). Left open by those reviews:
+  - *Severity and confidence (issue #63): proposed, applied by open pull requests #199 to #204 and pending until they merge and the maintainer decides.* OWL009, OWL013, OWL014 and OWL045 are errors,
+    OWL010 and OWL032 warnings, OWL023 and OWL041 findings `certain`; SHQ011 reports `\/` and `[]a]` as warnings
+    (per-finding severity, `RuleContext.add(severity=...)`), SHQ015 an unknown flag letter as an error, SHQ008,
+    SHQ013 and SHQ018 findings `certain`; SKOS001 and SKOS002 are `deterministic`; METRIC011 findings are
+    `heuristic`; SHQ001 and SHQ002 judge directly targeted property shapes; SHQ003 keeps its widened condition.
+    OWL004, OWL007 (already `certain`), OWL038 (error), SHQ008's derived integer types (error) and METRIC001 and
+    METRIC002 (warnings) stay as they were. Each decision and its evidence is in `docs/severity-decisions.md`.
+    Left open: the OWL035 count on OWL 1 era ontologies; SKOS001 on any owned resource with a `skos:prefLabel`
+    (S14), which needs a count first; the catalogue categories of OWL004, OWL007, OWL009, OWL010, OWL013 and OWL014
+    (`heuristic`, with `certain` findings), after which `tests/test_metric_confidence.py` widens to every family;
+    the maintainer's approval of the OWL, METRIC and SHQ specifications (issue #182).
   - *Defects that change an exit code, a focus or a message:* all fixed in 0.11.0 (see
     "Recently done", AUDIT-DEFECTS): an unwritable or unencodable report is TOOL001 and exit 2
     (`db56b3f`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`77b8f84`), and so does
