@@ -130,8 +130,8 @@ Tractus-X was 34 of 236 references before and 6 after.
   for issue #66. No default has changed, and none should change on this corpus alone: that needs approved
   or independently redone labels (issue #8) and measurements rerun at release (issue #31).
 - The corpus has no known-poor file for METRIC004 to METRIC013, so their recall is not measured.
-- How the files flagged move as each limit moves is in [`validation/metric-sweep.md`](validation/metric-sweep.md); four
-  further candidate files, with blank labels, are in [`validation/metric-candidates.md`](validation/metric-candidates.md).
+- How the files flagged move as each limit moves is in [`validation/metric-sweep.md`](validation/metric-sweep.md); ten
+  candidate files (six of them firing nominees), with blank labels, are in [`validation/metric-candidates.md`](validation/metric-candidates.md).
   The procedure that turns the maintainer's labels into false-positive and false-negative counts per limit is in
   [`metric-calibration.md`](metric-calibration.md), "What the maintainer has to decide".
 - The corpus is a snapshot of 0.13.1: nothing reruns `scripts/metric_corpus.py check`, so a later

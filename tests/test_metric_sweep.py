@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from fractions import Fraction
 from pathlib import Path
@@ -191,6 +192,14 @@ def test_every_candidate_is_pinned_licensed_and_unlabelled() -> None:
         assert item["licence_source"].strip()
         assert set(item["suggested"]) == {"*"}  # a suggestion, kept apart from the labels
         assert item["suggested"]["*"]["source"].startswith("http")
+
+
+def test_no_candidate_is_pinned_by_a_document_that_can_change() -> None:
+    """Issue #152: a candidate comes from a commit of its repository or an Internet Archive snapshot, never live."""
+    archive = re.compile(r"https://web\.archive\.org/web/\d{14}id_/https?://\S+")
+    for item in _candidates()["entries"]:
+        by_commit = item["commit"] is not None and f"/{item['commit']}/" in item["url"]
+        assert by_commit or archive.fullmatch(item["url"]), item["id"]
 
 
 def test_the_candidate_results_and_page_match_the_manifest() -> None:

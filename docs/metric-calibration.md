@@ -257,8 +257,10 @@ Making the labelling mechanical (no step below changes a default):
    otherwise win. Copy the decisions into `validation/metric-corpus.json`, set `label_status` to `approved`, and
    `scripts/metric_corpus.py render`.
 3. Decide the open labels: METRIC004 and METRIC008 on PAO, METRIC006 on the Rights Ontology.
-4. Add known-poor files for METRIC004-METRIC013, or accept their recall as unmeasured. The four candidates in
-   [`validation/metric-candidates.md`](validation/metric-candidates.md) are all suggested "silent"; none is poor.
+4. Judge the known-poor nominees for METRIC004-METRIC013, or accept their recall as unmeasured. Ten candidates in
+   [`validation/metric-candidates.md`](validation/metric-candidates.md) are measured and pinned immutably: four suggested "silent"
+   and six that fire METRIC004 to METRIC008, METRIC010 or METRIC013, which a firing alone does not make poor. Only the maintainer
+   can label one `fire`. METRIC012 has no nominee.
 5. The decisions above: severity (METRIC001, METRIC002), METRIC011 confidence, CLS001 and `dcam:`, approval of the
    specifications.
 6. Whether `check` runs at every release (issue #31).

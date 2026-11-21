@@ -6,10 +6,10 @@
       "id": "dcat3.ttl",
       "title": "W3C DCAT version 3 (namespace document)",
       "source": "https://www.w3.org/TR/vocab-dcat-3/",
-      "release": "W3C Recommendation 22 August 2024; namespace document, Last-Modified Wed, 03 Sep 2025",
+      "release": "W3C Recommendation 22 August 2024; namespace document, Last-Modified Wed, 03 Sep 2025; pinned to the Internet Archive snapshot of 2024-11-07, whose bytes have the SHA-256 below (the live document may change, the snapshot cannot)",
       "commit": null,
       "path": null,
-      "url": "https://www.w3.org/ns/dcat3.ttl",
+      "url": "https://web.archive.org/web/20241107081704id_/https://www.w3.org/ns/dcat3.ttl",
       "licence": "CC-BY-4.0",
       "licence_source": "dcterms:license <https://creativecommons.org/licenses/by/4.0/> in the file itself",
       "sha256": "d1624d3bbf364f6fc1d43b9a188bbb9e67639b1a7d46a5cb7ea3f5d47d02b62f",
@@ -33,10 +33,10 @@
       "id": "org.ttl",
       "title": "W3C Organization Ontology (namespace document)",
       "source": "https://www.w3.org/TR/vocab-org/",
-      "release": "W3C Recommendation 16 January 2014; namespace document, Last-Modified Fri, 05 Sep 2025",
+      "release": "W3C Recommendation 16 January 2014; namespace document, Last-Modified Fri, 05 Sep 2025; pinned to the Internet Archive snapshot of 2026-07-17, whose bytes have the SHA-256 below (the live document may change, the snapshot cannot)",
       "commit": null,
       "path": null,
-      "url": "https://www.w3.org/ns/org.ttl",
+      "url": "https://web.archive.org/web/20260717212249id_/https://www.w3.org/ns/org.ttl",
       "licence": "PDDL-1.0",
       "licence_source": "dct:license <http://www.opendatacommons.org/licenses/pddl/1.0/> in the file itself",
       "sha256": "3e01f89a17475a88f8b1606ca0fae04800d34dbbf93adc6db12dc30929848729",
@@ -60,10 +60,10 @@
       "id": "foaf.rdf",
       "title": "FOAF vocabulary, 0.99 (xmlns.com namespace document)",
       "source": "http://xmlns.com/foaf/spec/",
-      "release": "namespace document, Last-Modified Fri, 23 Jan 2026",
+      "release": "namespace document, Last-Modified Fri, 23 Jan 2026; pinned to the Internet Archive snapshot of 2014-01-15, whose bytes have the SHA-256 below (the live document may change, the snapshot cannot)",
       "commit": null,
       "path": null,
-      "url": "https://xmlns.com/foaf/spec/index.rdf",
+      "url": "https://web.archive.org/web/20140115170152id_/https://xmlns.com/foaf/spec/index.rdf",
       "licence": "CC-BY-1.0",
       "licence_source": "'This work is licensed under a Creative Commons Attribution License' (creativecommons.org/licenses/by/1.0/) on http://xmlns.com/foaf/spec/; the RDF file states none",
       "sha256": "3d859b5d92a2c3d041545d014fa826f682ca06d056af8c7b31e32d930abf2bc5",
@@ -107,6 +107,168 @@
           "expect": "silent",
           "why": "Registered in the OBO Foundry, so reviewed against its principles; no aggregate quality problem is known. Not checked in the file.",
           "source": "https://obofoundry.org/ontology/uo.html"
+        }
+      }
+    },
+    {
+      "id": "ids-vcard-20140522.ttl",
+      "title": "vCard ontology (copy in the IDS Information Model)",
+      "source": "https://github.com/International-Data-Spaces-Association/InformationModel/blob/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/participant/references/vcard-20140522.ttl",
+      "release": "commit a9b79eab4f",
+      "commit": "a9b79eab4fe148dd6237fa456253070f0e6cb686",
+      "path": "model/participant/references/vcard-20140522.ttl",
+      "url": "https://raw.githubusercontent.com/International-Data-Spaces-Association/InformationModel/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/participant/references/vcard-20140522.ttl",
+      "licence": "W3C-20150513",
+      "licence_source": "a copy of the W3C vCard ontology of 2014-05-22 inside the Apache-2.0 IDS repository; the licence is the original's, check before approving",
+      "sha256": "0802aca2eaf7f8b66225044439d83d6e7438789e7d8cb8cea0b4bb5afe612a5b",
+      "bytes": 37034,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "unknown",
+          "why": "Candidate for METRIC004 (fanout 10.40 above 8.0) and METRIC008 (0.57 above 0.5). It is a firing, not a judgement: the maintainer decides whether a flat vCard class list is poor.",
+          "source": "https://github.com/International-Data-Spaces-Association/InformationModel/blob/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/participant/references/vcard-20140522.ttl"
+        }
+      }
+    },
+    {
+      "id": "ids-dctype-20120614.ttl",
+      "title": "DCMI Type vocabulary (copy in the IDS Information Model)",
+      "source": "https://github.com/International-Data-Spaces-Association/InformationModel/blob/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/content/references/dctype-20120614.ttl",
+      "release": "commit a9b79eab4f",
+      "commit": "a9b79eab4fe148dd6237fa456253070f0e6cb686",
+      "path": "model/content/references/dctype-20120614.ttl",
+      "url": "https://raw.githubusercontent.com/International-Data-Spaces-Association/InformationModel/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/content/references/dctype-20120614.ttl",
+      "licence": "CC-BY-4.0",
+      "licence_source": "a copy of the DCMI Type vocabulary of 2012-06-14 inside the Apache-2.0 IDS repository; the licence is the original's (DCMI Terms, CC-BY), check before approving",
+      "sha256": "0b3b444baffd2933345384a30eafd12ab6495ca7b79008420b2ffb83150c2785",
+      "bytes": 8887,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "unknown",
+          "why": "Candidate for METRIC005 (9 of 12 classes are orphans) and METRIC006. A vocabulary of twelve unrelated types, so its orphans may be intended.",
+          "source": "https://github.com/International-Data-Spaces-Association/InformationModel/blob/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/content/references/dctype-20120614.ttl"
+        }
+      }
+    },
+    {
+      "id": "ids-ma-ont-20120209.ttl",
+      "title": "Ontology for Media Resources (copy in the IDS Information Model)",
+      "source": "https://github.com/International-Data-Spaces-Association/InformationModel/blob/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/content/references/ma-ont-20120209.ttl",
+      "release": "commit a9b79eab4f",
+      "commit": "a9b79eab4fe148dd6237fa456253070f0e6cb686",
+      "path": "model/content/references/ma-ont-20120209.ttl",
+      "url": "https://raw.githubusercontent.com/International-Data-Spaces-Association/InformationModel/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/content/references/ma-ont-20120209.ttl",
+      "licence": "W3C-20150513",
+      "licence_source": "a copy of the W3C Ontology for Media Resources of 2012-02-09 inside the Apache-2.0 IDS repository; the licence is the original's, check before approving",
+      "sha256": "9b46f3bcc6cf9e11f43a90f8b766336ee74b2c1fad4ae40b9db4e1b13acf531a",
+      "bytes": 19604,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "unknown",
+          "why": "Candidate for METRIC007 (85 properties for 14 classes, 6.07 above 5.0). A property-rich vocabulary by design.",
+          "source": "https://github.com/International-Data-Spaces-Association/InformationModel/blob/a9b79eab4fe148dd6237fa456253070f0e6cb686/model/content/references/ma-ont-20120209.ttl"
+        }
+      }
+    },
+    {
+      "id": "brick-ref-schema.ttl",
+      "title": "Brick reference schema",
+      "source": "https://github.com/BrickSchema/Brick/blob/3fdb57060a520d333910eb3902eb02ac25c5cf86/support/ref-schema.ttl",
+      "release": "commit 3fdb57060a",
+      "commit": "3fdb57060a520d333910eb3902eb02ac25c5cf86",
+      "path": "support/ref-schema.ttl",
+      "url": "https://raw.githubusercontent.com/BrickSchema/Brick/3fdb57060a520d333910eb3902eb02ac25c5cf86/support/ref-schema.ttl",
+      "licence": "BSD-3-Clause",
+      "licence_source": "the repository's LICENSE (BSD-3-Clause); the file states none",
+      "sha256": "490c0904532c02be0d28fc0eef56e124bba1b593598b88145fb0964114575ae0",
+      "bytes": 10463,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "unknown",
+          "why": "Candidate for METRIC008 (9 of 12 properties have neither domain nor range). Signatures may be stated as restrictions elsewhere.",
+          "source": "https://github.com/BrickSchema/Brick/blob/3fdb57060a520d333910eb3902eb02ac25c5cf86/support/ref-schema.ttl"
+        }
+      }
+    },
+    {
+      "id": "gaia-x-openlabel.owl.ttl",
+      "title": "ASAM OpenLABEL ontology (Gaia-X 4 PLC-AAD ontology management base)",
+      "source": "https://github.com/GAIA-X4PLC-AAD/ontology-management-base/blob/f35d7c37d18f3de52245a0b1c0bacb9519594cf9/artifacts/openlabel/openlabel.owl.ttl",
+      "release": "commit f35d7c37d1",
+      "commit": "f35d7c37d18f3de52245a0b1c0bacb9519594cf9",
+      "path": "artifacts/openlabel/openlabel.owl.ttl",
+      "url": "https://raw.githubusercontent.com/GAIA-X4PLC-AAD/ontology-management-base/f35d7c37d18f3de52245a0b1c0bacb9519594cf9/artifacts/openlabel/openlabel.owl.ttl",
+      "licence": "EPL-2.0",
+      "licence_source": "the repository's LICENSE (EPL-2.0); the file states none and derives from a third-party standard, check before approving",
+      "sha256": "05e7cc2c99998272b979837696eda768e6e39a726cbee622d758112d10f084ce",
+      "bytes": 65112,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "unknown",
+          "why": "Candidate for METRIC006 (0 properties for 243 classes). A taxonomy of scenario tags, which may be intended.",
+          "source": "https://github.com/GAIA-X4PLC-AAD/ontology-management-base/blob/f35d7c37d18f3de52245a0b1c0bacb9519594cf9/artifacts/openlabel/openlabel.owl.ttl"
+        }
+      }
+    },
+    {
+      "id": "geodcat-ap-930.ttl",
+      "title": "GeoDCAT-AP 3.0.0 vocabulary 930",
+      "source": "https://github.com/SEMICeu/GeoDCAT-AP/blob/7e7d6a82f4bd4491c68f774f185193439881ab42/930/releases/3.0.0/voc/930.ttl",
+      "release": "commit 7e7d6a82f4",
+      "commit": "7e7d6a82f4bd4491c68f774f185193439881ab42",
+      "path": "930/releases/3.0.0/voc/930.ttl",
+      "url": "https://raw.githubusercontent.com/SEMICeu/GeoDCAT-AP/7e7d6a82f4bd4491c68f774f185193439881ab42/930/releases/3.0.0/voc/930.ttl",
+      "licence": "CC-BY-4.0",
+      "licence_source": "dc:license <https://creativecommons.org/licenses/by/4.0/> in the file itself",
+      "sha256": "0670873bd5a73902aab196994b88ac3b3cd3feb917ba296fa731ccea57c7c031",
+      "bytes": 11142,
+      "labels": {
+        "*": {
+          "expect": "unassessed",
+          "basis": "none",
+          "why": "Blank: for the maintainer to fill."
+        }
+      },
+      "suggested": {
+        "*": {
+          "expect": "unknown",
+          "why": "Candidate for METRIC010 (18 of 18 structural references point to another namespace). A code list over foreign concepts, which may be intended.",
+          "source": "https://github.com/SEMICeu/GeoDCAT-AP/blob/7e7d6a82f4bd4491c68f774f185193439881ab42/930/releases/3.0.0/voc/930.ttl"
         }
       }
     }

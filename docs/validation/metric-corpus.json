@@ -178,7 +178,7 @@
       "id": "skos-core.rdf",
       "title": "W3C SKOS Core",
       "source": "https://www.w3.org/2004/02/skos/core",
-      "release": null,
+      "release": "namespace document; mutable: no Internet Archive snapshot has these bytes (checked 2026-11-21 against 6 snapshots of the .rdf URL and 12 of the namespace URL), so it is pinned by checksum only and `fetch` fails if the W3C changes it",
       "commit": null,
       "path": null,
       "url": "https://www.w3.org/2004/02/skos/core.rdf",
