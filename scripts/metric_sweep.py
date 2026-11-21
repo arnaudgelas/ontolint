@@ -1,6 +1,7 @@
 """Sweep the METRIC limits over the recorded corpus measurements, and count false positives and negatives (issue #8).
 
-    uv run python scripts/metric_sweep.py render           # rewrite the generated part of the sweep page
+    uv run python scripts/metric_sweep.py render           # rewrite the generated parts of the sweep page and of
+                                                           # the evidence table of docs/metric-thresholds.md
     uv run python scripts/metric_sweep.py sweep            # print the sweep tables (no labels needed)
     uv run python scripts/metric_sweep.py calibrate        # FP/FN per rule and limit, and the recommended limit
     uv run python scripts/metric_sweep.py labels-sheet > sheet.csv    # a row per (file, rule) to fill in
@@ -46,6 +47,8 @@ _spec.loader.exec_module(corpus)
 ROOT: Path = corpus.ROOT
 SWEEP_PAGE = ROOT / "docs" / "validation" / "metric-sweep.md"
 SWEEP_MARKERS = ("<!-- metric_sweep.py: begin -->", "<!-- metric_sweep.py: end -->")
+THRESHOLDS_PAGE = ROOT / "docs" / "metric-thresholds.md"
+EVIDENCE_MARKERS = ("<!-- metric_sweep.py: evidence begin -->", "<!-- metric_sweep.py: evidence end -->")
 CANDIDATES = ROOT / "docs" / "validation" / "metric-candidates.json"
 CANDIDATE_RESULTS = ROOT / "docs" / "validation" / "metric-candidates-results.json"
 CANDIDATE_PAGE = ROOT / "docs" / "validation" / "metric-candidates.md"
@@ -189,6 +192,89 @@ def render_sweep(entries: list[Any], results: Mapping[str, Any], *, labelled: bo
     return "\n".join(out).rstrip() + "\n"
 
 
+@dataclass(frozen=True)
+class Evidence:
+    """What the corpus says about one rule's shipped limit: the counts at the default, and whether they measure it.
+
+    The counts are under the manifest's labels, which are the maintainer's to approve, and cover every counted
+    label, presumed ones included.  A rule is *unmeasured* while no label expects a fire (nothing says what it should
+    catch, so its recall has no value and an absence of false positives proves nothing) or no label expects a silence
+    (nothing says what it should leave alone, so its precision has none).
+    """
+
+    rule: str
+    key: str
+    default: Fraction
+    compared: int
+    flagged: int
+    fire_labels: int
+    silent_labels: int
+    tp: int
+    fp: int
+    fn: int
+    tn: int
+
+    @property
+    def status(self) -> str:
+        if self.fire_labels == 0:
+            return "unmeasured: no label expects a fire, so recall has no value"
+        if self.silent_labels == 0:
+            return "unmeasured: no label expects a silence, so precision has no value"
+        return "measured"
+
+    @property
+    def recall(self) -> str:
+        """``tp/(tp+fn)`` as a fraction of counts, ``unmeasured`` with no fire label; never a rate from nothing."""
+        return "unmeasured" if self.fire_labels == 0 else f"{self.tp}/{self.fire_labels}"
+
+    @property
+    def precision(self) -> str:
+        """``tp/(tp+fp)`` as a fraction of counts, ``n/a`` when no labelled file is flagged."""
+        return "n/a" if self.tp + self.fp == 0 else f"{self.tp}/{self.tp + self.fp}"
+
+
+def evidence(entries: list[Any], results: Mapping[str, Any]) -> list[Evidence]:
+    """Return one :class:`Evidence` per rule, at its shipped limit, in rule order."""
+    limits = corpus.default_limits()
+    found: list[Evidence] = []
+    for rule in corpus.RULES:
+        values = corpus.values_of(rule, results)
+        at = cell(entries, rule, values, limits[rule], checked_only=False)
+        labelled = [e.label(rule)["expect"] for e in entries if e.id in values]
+        found.append(
+            Evidence(
+                rule,
+                corpus.LIMIT_KEYS[rule],
+                limits[rule],
+                len(values),
+                at.flagged,
+                labelled.count("fire"),
+                labelled.count("silent"),
+                at.tp,
+                at.fp,
+                at.fn,
+                at.tn,
+            )
+        )
+    return found
+
+
+def render_evidence(entries: list[Any], results: Mapping[str, Any]) -> str:
+    """Return the evidence table of docs/metric-thresholds.md: per shipped limit, counts, recall and status."""
+    lines = [
+        "| Rule | Key | Default | Compared | Flagged | Fire labels | Silent labels | TP | FP | FN | TN | Recall "
+        "| Status |",
+        "| --- " * 13 + "|",
+    ]
+    for item in evidence(entries, results):
+        lines.append(
+            f"| {item.rule} | `{item.key}` | {_fmt(item.rule, item.default)} | {item.compared} | {item.flagged} | "
+            f"{item.fire_labels} | {item.silent_labels} | {item.tp} | {item.fp} | {item.fn} | {item.tn} | "
+            f"{item.recall} | {item.status} |"
+        )
+    return _block("\n".join(lines))
+
+
 def labels_sheet(entries: list[Any], results: Mapping[str, Any]) -> str:
     """Return a CSV with one row per file and rule, the maintainer's columns blank, in a deterministic order."""
     buffer = io.StringIO()
@@ -253,6 +339,10 @@ def write_page(text: str, page: Path = SWEEP_PAGE) -> None:
     corpus.write_page(text, page, *SWEEP_MARKERS)
 
 
+def write_evidence(text: str, page: Path = THRESHOLDS_PAGE) -> None:
+    corpus.write_page(text, page, *EVIDENCE_MARKERS)
+
+
 def render_candidates(entries: list[Any], results: Mapping[str, Any]) -> str:
     """Return, per candidate and rule, the measured value (a star: the default flags it), or a dash if none."""
     limits = corpus.default_limits()
@@ -303,6 +393,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(labels_sheet(entries, results))
     elif args.command == "render":
         write_page(render_page(entries, results))
+        write_evidence(render_evidence(entries, results))
     elif args.command == "sweep":
         sys.stdout.write(render_sweep(entries, results, labelled=False))
     else:

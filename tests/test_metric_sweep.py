@@ -214,3 +214,82 @@ def test_a_candidate_table_marks_the_flagged_and_the_empty() -> None:
     cells = [c.strip() for c in row[2:-1]]
     assert cells[0] == "-"  # METRIC001: under the sample gate
     assert cells[10] == "12*"  # METRIC011: above 10
+
+
+# --- the evidence per shipped limit (issue #163) --------------------------------------------------------------------
+
+
+def test_a_rule_with_no_fire_label_is_unmeasured_and_never_a_zero_rate() -> None:
+    item = metric_sweep.Evidence("METRIC001", "metric_max_unlabelled_ratio", F(1, 2), 4, 0, 0, 4, 0, 0, 0, 4)
+    assert item.status.startswith("unmeasured: no label expects a fire")
+    assert item.recall == "unmeasured"
+    assert item.precision == "n/a"
+    assert "%" not in f"{item.status}{item.recall}{item.precision}"
+
+
+def test_a_rule_with_no_silent_label_is_unmeasured_for_precision() -> None:
+    item = metric_sweep.Evidence("METRIC001", "metric_max_unlabelled_ratio", F(1, 2), 2, 2, 2, 0, 2, 0, 0, 0)
+    assert item.status.startswith("unmeasured: no label expects a silence")
+    assert (item.recall, item.precision) == ("2/2", "2/2")
+
+
+def test_a_rule_with_both_labels_is_measured_and_its_counts_are_fractions_of_counts() -> None:
+    item = metric_sweep.Evidence("METRIC001", "metric_max_unlabelled_ratio", F(1, 2), 5, 2, 2, 3, 1, 1, 1, 2)
+    assert (item.status, item.recall, item.precision) == ("measured", "1/2", "1/2")
+
+
+def test_the_evidence_follows_the_recorded_labels_and_values() -> None:
+    entries, results = _recorded()
+    limits = corpus.default_limits()
+    for item in metric_sweep.evidence(entries, results):
+        values = corpus.values_of(item.rule, results)
+        assert item.compared == len(values) and item.default == limits[item.rule]
+        assert item.flagged == sum(metric_sweep.fires(item.rule, v, limits[item.rule]) for v in values.values())
+        assert item.tp + item.fn == item.fire_labels and item.fp + item.tn == item.silent_labels
+        assert (
+            (item.fire_labels == 0) == (item.recall == "unmeasured") == item.status.startswith("unmeasured: no label")
+        )
+
+
+def test_every_rule_has_one_row_of_evidence_in_rule_order() -> None:
+    entries, results = _recorded()
+    assert [e.rule for e in metric_sweep.evidence(entries, results)] == list(corpus.RULES)
+
+
+def test_approving_a_fire_label_makes_a_rule_measured() -> None:
+    entries, results = _recorded()
+    sheet = metric_sweep.labels_sheet(entries, results).splitlines()
+    header, *rows = sheet
+    columns = header.split(",")
+    row = next(r for r in rows if r.startswith(f"{entries[0].id},METRIC004,"))
+    fields = row.split(",")
+    fields[columns.index("maintainer_expect")] = "fire"
+    fields[columns.index("maintainer_basis")] = "checked"
+    fields[columns.index("maintainer_reason")] = "flat catalogue"
+    filled = "\n".join([header, ",".join(fields)])
+    approved = metric_sweep.apply_sheet(entries, filled)
+    before = next(e for e in metric_sweep.evidence(entries, results) if e.rule == "METRIC004")
+    after = next(e for e in metric_sweep.evidence(approved, results) if e.rule == "METRIC004")
+    value_known = entries[0].id in corpus.values_of("METRIC004", results)
+    assert before.status.startswith("unmeasured")
+    assert (after.fire_labels - before.fire_labels) == int(value_known)
+
+
+def test_the_sweep_the_calibration_and_the_sheet_are_byte_identical_between_two_runs(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The calibration is deterministic: nothing depends on the clock, a hash seed or an iteration order."""
+    for command in ("sweep", "calibrate", "labels-sheet"):
+        outputs = []
+        for _ in range(2):
+            assert metric_sweep.main([command]) == 0
+            outputs.append(capsys.readouterr().out)
+        assert outputs[0] == outputs[1] and outputs[0], command
+    entries, results = _recorded()
+    assert metric_sweep.render_evidence(entries, results) == metric_sweep.render_evidence(entries, results)
+
+
+def test_the_committed_evidence_table_is_what_the_script_generates() -> None:
+    entries, results = _recorded()
+    generated = corpus.generated_part(metric_sweep.THRESHOLDS_PAGE, *metric_sweep.EVIDENCE_MARKERS)
+    assert generated == metric_sweep.render_evidence(entries, results).strip("\n")

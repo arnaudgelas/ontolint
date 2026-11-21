@@ -52,7 +52,7 @@ All rows are the recommendations of this record, except the departures above and
 | SHQ003 | keep the widened condition; the docstring states both figures | scope pull request #203 (closes #181) |
 | SHQ001, SHQ002 | include directly targeted property shapes | scope pull request #203 (closes #181) |
 | SKOS001 scope (S14) | deferred: needs a count ("Count the widened SKOS001 scope", v0.18.0) | none |
-| METRIC001, METRIC002 | keep warning (no curated file fails; revisit with the calibration sweep of #163) | none |
+| METRIC001, METRIC002 | keep warning (no curated file fails; the calibration sweep of #163 does not reopen it) | none |
 | METRIC011 | `heuristic`; a catalogue invariant for the METRIC family | METRIC pull request #204 (closes #183) |
 | Approval of the specifications | **maintainer**: not decided here | none |
 
@@ -63,7 +63,7 @@ All rows are the recommendations of this record, except the departures above and
 * `category` still disagrees with the finding confidence for OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 (category
   `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63.
 * Counts that need corpora this record does not have: OWL035, SKOS001's widening, SHQ001 and SHQ002 on production shapes.
-* METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 may reopen them.
+* METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 found no further case (3 true positives, no false positive, on proposed labels).
 
 ### Where each decision ships
 
