@@ -21,6 +21,8 @@ from .specs import FIXES, SEVERITY
 from .support import DESCRIPTIONS, LABEL_STOP, LABELS, stable_blank_id
 
 if TYPE_CHECKING:
+    from ontolint.quality import Comparison
+
     from .measurements import Absent, Value
 
 EMPTY_FOCUS = "<>"
@@ -181,6 +183,9 @@ class RuleContext:
         # Each measurement taken on this context, by ID (see :mod:`ontolint.rules.measurements`): the METRIC
         # rules and the published vector read one value.
         self.measured: dict[str, Value | Absent] = {}
+        # The run's measurements compared with its quality baseline (``--quality-baseline``), set by the command line
+        # before the rules run when the policy has a ``delta`` budget; ``None`` otherwise (METRIC014).
+        self.quality_comparison: Comparison | None = None
 
     def main_label_predicates(self, term: Node) -> tuple[URIRef, ...]:
         """The predicates of ``term``'s main labels, which the rules comparing labels read.

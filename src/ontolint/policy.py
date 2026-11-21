@@ -60,15 +60,32 @@ class PolicyBudgetError(ValueError):
 
 
 @dataclass(frozen=True)
+class DeltaBudget:
+    """Bounds over the classified change of a coverage measure against a quality baseline (``docs/quality-budgets.md``).
+
+    ``regressed``, ``diluted`` and ``removed`` are the most terms of that kind a run may show; ``new_terms`` is the
+    least share of the new terms that are fine, ``added_good / (added_good + diluted)``.  Each is inclusive and
+    ``None`` when the budget does not bound it; at least one is set.
+    """
+
+    regressed: int | None = None
+    diluted: int | None = None
+    removed: int | None = None
+    new_terms: int | float | None = None
+
+
+@dataclass(frozen=True)
 class Budget:
     """The bounds of one measurement (``docs/quality-budgets.md``): a value within them is within the budget.
 
-    Both are inclusive, so a value equal to its ``minimum`` or its ``maximum`` is not a breach.  At least one is set.
+    Both are inclusive, so a value equal to its ``minimum`` or its ``maximum`` is not a breach.  At least one of
+    ``minimum``, ``maximum`` and ``delta`` is set.
     """
 
     measurement: str
     minimum: int | float | None = None
     maximum: int | float | None = None
+    delta: DeltaBudget | None = None
 
 
 OwlConverter = Callable[[Path, bytes, str], bytes]
@@ -148,6 +165,11 @@ class Policy:
             _check_limit(name, getattr(self, name))
         _check_seconds("max_parse_seconds", self.max_parse_seconds)
         _check_seconds("max_validation_seconds", self.max_validation_seconds)
+
+    @property
+    def delta_budgets(self) -> tuple[Budget, ...]:
+        """The budgets that bound a change against a quality baseline (``delta``)."""
+        return tuple(budget for budget in self.quality_budgets if budget.delta is not None)
 
     @property
     def severity_mapping(self) -> dict[str, str]:
@@ -290,6 +312,7 @@ def _required_annotations(data: Mapping[str, Any]) -> tuple[tuple[str, tuple[str
 
 
 BUDGET_BOUNDS = ("minimum", "maximum")
+BUDGET_KEYS = (*BUDGET_BOUNDS, "delta")
 
 
 def _bound(name: str, side: str, value: Any) -> int | float:
@@ -304,11 +327,58 @@ def _bound(name: str, side: str, value: Any) -> int | float:
     return value if isinstance(value, int) else number
 
 
-def _quality_budgets(data: Mapping[str, Any]) -> tuple[Budget, ...]:
-    """Validate ``quality_budgets``: measurement name -> ``{"minimum": n, "maximum": n}``; sorted by name.
+DELTA_COUNTS = ("regressed", "diluted", "removed")
+"""The delta keys that bound a count of terms, each ``{"maximum": n}``."""
+DELTA_SHARE = "new_terms"
+"""The delta key that bounds the share of new terms that are fine, ``{"minimum": share}``."""
 
-    What the name and its bounds mean for that measurement (it exists, is a scalar, a count's bounds are integers)
-    is checked against the catalogue by :func:`ontolint.rules.budgets.validate`: a policy is below the rules.
+
+def _only_bound(where: str, bound: str, value: Any) -> Any:
+    """The number under the one key ``bound`` of ``value``, which is an object with that key alone."""
+    if not isinstance(value, dict) or set(value) != {bound}:
+        raise PolicyBudgetError(f"{where} must be an object with a {bound} only")
+    return value[bound]
+
+
+def _delta_count(where: str, value: Any) -> int:
+    """A count bound of a delta key: ``{"maximum": n}`` with n a whole number of at least 0."""
+    number = _only_bound(where, "maximum", value)
+    if isinstance(number, bool) or not isinstance(number, int) or number < 0:
+        raise PolicyBudgetError(f"{where}.maximum must be a whole number of at least 0")
+    return number
+
+
+def _delta_share(where: str, value: Any) -> int | float:
+    """The share bound of ``new_terms``: ``{"minimum": s}`` with s a number in [0, 1]."""
+    number = _only_bound(where, "minimum", value)
+    try:
+        share = _real(f"{where}.minimum", number)
+    except ValueError:
+        raise PolicyBudgetError(f"{where}.minimum must be a finite number") from None
+    if not 0 <= share <= 1:
+        raise PolicyBudgetError(f"{where}.minimum must be a share between 0 and 1")
+    return number  # type: ignore[no-any-return]  # kept as written, an integer 0 or 1 included
+
+
+def _delta(name: str, value: Any) -> DeltaBudget:
+    """Validate the ``delta`` of one budget: ``regressed``, ``diluted``, ``removed`` and ``new_terms``."""
+    where = f"quality_budgets.{name}.delta"
+    keys = (*DELTA_COUNTS, DELTA_SHARE)
+    if not isinstance(value, dict) or not value:
+        raise PolicyBudgetError(f"{where} must be an object with at least one of {', '.join(keys)}")
+    if extra := sorted(set(value) - set(keys), key=str):
+        raise PolicyBudgetError(f"{where} has no key {extra[0]!r}; its keys are {', '.join(keys)}")
+    regressed, diluted, removed = (_delta_count(f"{where}.{k}", value[k]) if k in value else None for k in DELTA_COUNTS)
+    share = _delta_share(f"{where}.{DELTA_SHARE}", value[DELTA_SHARE]) if DELTA_SHARE in value else None
+    return DeltaBudget(regressed, diluted, removed, share)
+
+
+def _quality_budgets(data: Mapping[str, Any]) -> tuple[Budget, ...]:
+    """Validate ``quality_budgets``: measurement name -> ``minimum``, ``maximum`` and ``delta``; sorted by name.
+
+    What the name and its bounds mean for that measurement (it exists, is a scalar, a count's bounds are integers,
+    only a coverage measure has a ``delta``) is checked against the catalogue by
+    :func:`ontolint.rules.budgets.validate`: a policy is below the rules.
     """
     value = data.get("quality_budgets", {})
     if not isinstance(value, dict):
@@ -317,15 +387,18 @@ def _quality_budgets(data: Mapping[str, Any]) -> tuple[Budget, ...]:
     for name in sorted(value, key=str):
         bounds = value[name]
         if not isinstance(bounds, dict):
-            raise PolicyBudgetError(f"quality_budgets.{name} must be an object with a minimum or a maximum")
-        if extra := sorted(set(bounds) - set(BUDGET_BOUNDS), key=str):
-            raise PolicyBudgetError(f"quality_budgets.{name} has no key {extra[0]!r}; its keys are minimum and maximum")
+            raise PolicyBudgetError(f"quality_budgets.{name} must be an object with a minimum, a maximum or a delta")
+        if extra := sorted(set(bounds) - set(BUDGET_KEYS), key=str):
+            raise PolicyBudgetError(
+                f"quality_budgets.{name} has no key {extra[0]!r}; its keys are minimum, maximum and delta"
+            )
         if not bounds:
-            raise PolicyBudgetError(f"quality_budgets.{name} needs a minimum or a maximum")
+            raise PolicyBudgetError(f"quality_budgets.{name} needs a minimum, a maximum or a delta")
         low, high = (_bound(name, side, bounds[side]) if side in bounds else None for side in BUDGET_BOUNDS)
         if low is not None and high is not None and low > high:
             raise PolicyBudgetError(f"quality_budgets.{name}: minimum {low} exceeds maximum {high}")
-        budgets.append(Budget(str(name), low, high))
+        delta = _delta(name, bounds["delta"]) if "delta" in bounds else None
+        budgets.append(Budget(str(name), low, high, delta))
     return tuple(budgets)
 
 

@@ -24,8 +24,16 @@ to the rule:
   (<numerator> of <denominator>), below the minimum <limit>.`` (``above the maximum`` for a maximum; a count
   prints its value).  The value and the limit print with 2 decimals, or as many more (up to 6) as it takes to
   tell them apart.  Budgets on the measurements of the SEM, CQ and ALIGN gates (``new_unsatisfiable_classes``,
-  ``competency_question_pass_rate``, ``unreviewed_equivalence_mappings``) wait for those gates; bounds over the
-  classified change against a quality baseline are not read yet (a ``delta`` key is refused).
+  ``competency_question_pass_rate``, ``unreviewed_equivalence_mappings``) wait for those gates.
+* **A ``delta`` budget** bounds the classified change of a coverage measure against a quality baseline
+  (``--quality-baseline``): the number of ``regressed``, ``diluted`` and ``removed`` terms (``maximum``) and the share
+  of the new terms that are fine (``new_terms``, ``minimum``, ``added_good / (added_good + diluted)``, no value when
+  there are no new terms).  It is one more bound of METRIC014, so a breach is a finding of the same rule at the same
+  severity, baselinable like the others; its identity is the rule, the focus, the measurement and the delta key
+  (``delta:regressed``), never the counts.  The comparison is read before any bound is compared.  A run with no
+  quality baseline, or a measurement that is not comparable with it (another definition version or population, a
+  different policy shaping, not taken in either snapshot), fails the rule: exit ``2``, never a pass.  Only a
+  coverage measure has terms, so a ``delta`` on a count, a histogram or a non-coverage ratio is a policy error.
   *Error, certain, deterministic:* the limit is the policy's own and the value is exact, so a breach is a fact
   the policy declared a failure; ``severity_overrides`` lowers it.
 """
@@ -35,13 +43,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ontolint.models import MeasurementKind, RuleBackend, RuleScope, RuleSpec, Severity
-from ontolint.policy import Budget, Policy, PolicyBudgetError
+from ontolint.policy import DELTA_COUNTS, Budget, DeltaBudget, Policy, PolicyBudgetError
 
 from . import measurements
 from .bounds import MAXIMUM, MINIMUM, breached
 from .metrics import FOCUS_FALLBACK, _vs
 
 if TYPE_CHECKING:
+    from ontolint.quality import Change
+
     from .runtime import RuleContext
 
 SPECS: tuple[RuleSpec, ...] = (
@@ -80,6 +90,8 @@ def validate(policy: Policy) -> None:
             raise PolicyBudgetError(f"{where}: {spec.id} counts: its bounds are integers")
         if spec.better is not None and any(b > 1 for b in bounds):
             raise PolicyBudgetError(f"{where}: {spec.id} is a share: its bounds are at most 1")
+        if budget.delta is not None and spec.better is None:
+            raise PolicyBudgetError(f"{where}.delta: {spec.id} has no terms; a delta bounds a coverage measure")
 
 
 def _value(ctx: RuleContext, measurement_id: str) -> tuple[int | float | None, str]:
@@ -103,13 +115,78 @@ def _breach(budget: Budget, side: str, limit: float, value: float, of: str) -> s
     return f"{where}, {'below the minimum' if side == MINIMUM else 'above the maximum'} {shown_limit}."
 
 
+def _change(ctx: RuleContext, measurement_id: str) -> Change:
+    """The classified change of a coverage measure against the quality baseline of the run.
+
+    Raises :class:`~ontolint.rules.measurements.MeasurementUnavailable` when the run has no quality baseline or the
+    measurement cannot be compared with it, which is exit ``2``: a delta budget never passes on a change it could
+    not read.
+    """
+    comparison = ctx.quality_comparison
+    if comparison is None:
+        raise measurements.MeasurementUnavailable(
+            measurement_id, "a delta budget needs a quality baseline (--quality-baseline FILE)"
+        )
+    result = {r.id: r for r in comparison.results}[measurement_id]  # the comparison has every measurement of either
+    if result.reasons or result.change is None:
+        raise measurements.MeasurementUnavailable(
+            measurement_id,
+            f"cannot be compared with the quality baseline ({'; '.join(result.reasons)}); "
+            "write a new one with --write-quality-snapshot",
+        )
+    return result.change
+
+
+_COUNT_PHRASES = {
+    "regressed": ("term got worse", "terms got worse"),
+    "diluted": ("new term is not fine", "new terms are not fine"),
+    "removed": ("term was removed", "terms were removed"),
+}
+
+
+def _delta_breaches(budget: Budget, delta: DeltaBudget, change: Change) -> list[tuple[str, str]]:
+    """Each bound of ``delta`` that ``change`` breaches, as the delta key and the message."""
+    found: list[tuple[str, str]] = []
+    counts = change.counts()
+    for key in DELTA_COUNTS:
+        limit = getattr(delta, key)
+        if limit is not None and breached(counts[key], MAXIMUM, limit):
+            one, many = _COUNT_PHRASES[key]
+            found.append(
+                (
+                    key,
+                    f"{budget.measurement}: {counts[key]} {one if counts[key] == 1 else many} "
+                    f"since the quality baseline, above the maximum {limit}.",
+                )
+            )
+    fine, new = counts["added_good"], counts["added_good"] + counts["diluted"]
+    if delta.new_terms is not None and new and breached(fine / new, MINIMUM, delta.new_terms):
+        shown, shown_limit = _vs(fine / new, delta.new_terms)
+        found.append(
+            (
+                "new_terms",
+                f"{budget.measurement}: the share of new terms that are fine is {shown} ({fine} of {new}) "
+                f"since the quality baseline, below the minimum {shown_limit}.",
+            )
+        )
+    return found
+
+
 def run(ctx: RuleContext) -> None:
-    """Report every bound of ``quality_budgets`` that its measurement's value breaches."""
+    """Report every bound of ``quality_budgets`` that its measurement's value or change breaches."""
     budgets = ctx.policy.quality_budgets
     if not budgets:
         return
     validate(ctx.policy)
-    values = [(budget, *_value(ctx, budget.measurement)) for budget in budgets]  # all read before any is compared
+    # Everything is read before anything is compared, so a failed run reports no partial verdict.
+    values = [
+        (budget, *_value(ctx, budget.measurement))
+        for budget in budgets
+        if budget.minimum is not None or budget.maximum is not None
+    ]
+    changes = [
+        (budget, delta, _change(ctx, budget.measurement)) for budget in budgets if (delta := budget.delta) is not None
+    ]
     for budget, value, of in values:
         if value is None:
             continue
@@ -122,3 +199,8 @@ def run(ctx: RuleContext) -> None:
                     confidence="certain",
                     subject=(budget.measurement, side),
                 )
+    for budget, delta, change in changes:
+        for key, message in _delta_breaches(budget, delta, change):
+            ctx.add(
+                "METRIC014", _focus(ctx), message, confidence="certain", subject=(budget.measurement, f"delta:{key}")
+            )
