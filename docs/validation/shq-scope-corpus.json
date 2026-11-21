@@ -1,0 +1,40 @@
+{
+  "description": "Production SHACL shapes graphs counted for SHQ001, SHQ002 and SHQ003 (issue #208). Nothing is vendored: each repository is checked out at its commit by `scripts/shq_scope_count.py fetch`, which refuses any other commit. Every .ttl file with a shape in it is counted.",
+  "repositories": [
+    {
+      "id": "brick",
+      "url": "https://github.com/BrickSchema/Brick.git",
+      "commit": "3fdb57060a520d333910eb3902eb02ac25c5cf86",
+      "licence": "BSD-3-Clause",
+      "domain": "building metadata"
+    },
+    {
+      "id": "gaia-x4plc-aad-omb",
+      "url": "https://github.com/GAIA-X4PLC-AAD/ontology-management-base.git",
+      "commit": "f35d7c37d18f3de52245a0b1c0bacb9519594cf9",
+      "licence": "EPL-2.0",
+      "domain": "automotive data spaces"
+    },
+    {
+      "id": "ids-information-model",
+      "url": "https://github.com/International-Data-Spaces-Association/InformationModel.git",
+      "commit": "a9b79eab4fe148dd6237fa456253070f0e6cb686",
+      "licence": "Apache-2.0",
+      "domain": "data spaces"
+    },
+    {
+      "id": "qudt",
+      "url": "https://github.com/qudt/qudt-public-repo.git",
+      "commit": "8de361b5d3b7e1252cf2f19e70952978d8760e28",
+      "licence": "CC-BY-4.0",
+      "domain": "units of measure"
+    },
+    {
+      "id": "geodcat-ap",
+      "url": "https://github.com/SEMICeu/GeoDCAT-AP.git",
+      "commit": "7e7d6a82f4bd4491c68f774f185193439881ab42",
+      "licence": "CC-BY-4.0",
+      "domain": "geospatial metadata"
+    }
+  ]
+}

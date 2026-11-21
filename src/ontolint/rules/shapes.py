@@ -47,8 +47,9 @@ documentation rules are conventions, and SHQ005 and SHQ006 read "should" stateme
   processor still reports the violation with its own text (2.1.5).  The condition is deliberately the wide one:
   against the nine parameters 0.12.0 listed (and without the ``sh:deactivated`` exclusion) it reports more shapes,
   +42% (878 to 1,244 findings, +122 files) on the 930 readable shapes files of ``docs/severity-decisions.md``
-  (W3C ``data-shapes`` and DCAT-AP 3.0.1) and +46% (+1,072) on the corpus of PR #46; the narrow subset has no
-  principled boundary, the cost is info noise, and no exit code changes under any profile (issue #63).
+  (W3C ``data-shapes`` and DCAT-AP 3.0.1), +46% (+1,072) on the corpus of PR #46 and +29% (+902) on 126 files of five
+  production repositories (``docs/validation/shq-scope.md``); the narrow subset has no principled boundary, the cost is
+  info noise, and no exit code changes under any profile (issue #63).
 * **SHQ004.** Every node shape without an ``rdfs:label`` triple or without an ``rdfs:comment`` triple
   (both are needed).  Excluded: untyped node shapes; ``skos:prefLabel``, ``sh:name`` and
   ``dcterms:description`` do not count, as a shape is not an ontology term.  Info: documentation only.
