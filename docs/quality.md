@@ -13,15 +13,12 @@ Nothing here changes a finding or a fingerprint, and a run without these options
 did. The exit code is unchanged too, unless a measurement could not be computed: the run then exits 2
 ([measurements](measurements.md), "Failure").
 
-> **This is not a quality gate.** `--quality-baseline` and `--compare-quality` report; they exit `0`
-> whatever they find (a measurement that could not be computed exits `2`, see below), so committing a quality baseline does not protect a branch: a run that loses
-> definition coverage still passes CI. The only quality gates today are the findings of the METRIC rules
-> (their absolute thresholds, [metric-thresholds.md](metric-thresholds.md)) and of `quality_budgets`
-> ([quality-budgets.md](quality-budgets.md), `METRIC014`), with `--fail-on`: they judge one run, not a change
-> from the baseline. A gate on the comparison itself (a bound on regressions, dilution or removals) is the
-> rest of QUALITY-BUDGET (issue #26, "Not read yet" in quality-budgets.md); it needs decisions this format
-> does not take (removed terms, dilution, measurements that are not comparable, definition-version
-> changes), so it is not part of this feature.
+> **`--quality-baseline` and `--compare-quality` report; a `delta` budget gates.** The two options exit `0`
+> whatever they find (a measurement that could not be computed exits `2`, see below), so committing a quality baseline
+> does not by itself protect a branch. The gate on the comparison is a `delta` bound of `quality_budgets`
+> ([quality-budgets.md](quality-budgets.md), `METRIC014`): the policy says how many terms may regress, dilute or
+> disappear and how many of the new terms must be fine, and `--fail-on` and `--baseline` apply to a breach like to any
+> finding. "Failing a run on a regression" below records the decisions behind it (issue #98).
 
 ```bash
 ontolint onto.ttl --write-quality-snapshot quality.json          # take a snapshot (commit it, or keep it in CI)
@@ -110,13 +107,59 @@ and `changed`. Measurements are listed in the old snapshot's order, then those o
 `--format text` (the default of `--compare-quality`) prints one line per measurement and its split;
 `--format markdown` writes a section of the pull-request summary (README "Run the linter"), whose lines show
 the four counts, `new and fine`, and the delta, or `not comparable` with the reasons, every id and reason in
-a code span, at most 20 measurements. `--quality-baseline` takes `--format json` or `markdown` only.
+a code span, at most 20 measurements. `--quality-baseline` takes `--format json` or `markdown`, and any format when the
+policy has a `delta` budget, which gates on the comparison instead of showing it.
 
-Exit codes: a comparison exits `0` whatever it finds, by design: it is not a gate (see the top of this page;
-a threshold is QUALITY-BUDGET's job, issue #26). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
+Exit codes: a comparison exits `0` whatever it finds, by design: a threshold is a `delta` budget's job (see the top of
+this page). An unreadable or invalid snapshot, or one that cannot be written, exits `2`
 (`TOOL001: quality snapshot FILE cannot be used: ...`), and so does a run in which a measurement could not be
 computed (`TOOL001: measurement <id> failed for <file>: ...`; the snapshot is still written, with that
 measurement absent, and must not be committed as the accepted values).
+
+## Failing a run on a regression
+
+A committed quality baseline protects a branch when the policy sets a `delta` budget (the syntax, the messages and the
+fixtures are in [quality-budgets.md](quality-budgets.md), "Delta budgets"):
+
+```json
+{"quality_budgets": {"class_definition_coverage": {"delta": {"regressed": {"maximum": 0}, "new_terms": {"minimum": 0.8}}}}}
+```
+
+```bash
+ontolint onto.ttl --config policy.json --quality-baseline quality.json    # exit 1 when a term lost its definition
+```
+
+Issue #98 asked for the policy of that gate. Each choice below is the one implemented, with the alternative that was
+not taken.
+
+1. **A budget, not a flag.** There is no `--fail-on-quality-regression`. A second mechanism beside `quality_budgets`
+   would contradict QUALITY-BUDGET's one threshold mechanism, and a flag cannot say how many terms may regress. A breach
+   is a `METRIC014` finding, so `--fail-on`, `--baseline`, `--select`, `severity_overrides` and every report format
+   already apply.
+2. **`regressed`: a maximum count, no default.** `{"regressed": {"maximum": 0}}` fails at any regression; without the
+   key nothing is bounded. A term that was fine and is not is the real loss, but a project may accept a known number.
+3. **`diluted`: a maximum count, or a minimum share of the new terms that are fine (`new_terms`).** Neither is a default,
+   because failing on every defective new term stops an ontology under construction from growing, and ignoring them lets
+   coverage fall unseen. The share is `added_good / (added_good + diluted)`; with no new term it has no value and breaches
+   nothing, like a ratio over an empty population.
+4. **`removed`: a maximum count, no default, never inferred.** Deleting a defective term raises coverage, and a
+   deprecation is a deliberate removal, so a removal is not a failure unless the policy bounds it. A rename is one removal
+   and one new term, so a `removed` bound cannot tell it apart; the absolute bounds still hold the coverage.
+5. **A measurement that cannot be compared is exit `2`, never a pass.** That covers a definition version, kind or
+   population that changed, a policy that differs (`--base`, extra predicates, the import closure) and a measurement
+   not taken in either snapshot. The message names the reasons and says to write a new baseline with
+   `--write-quality-snapshot`. The cost is stated: a new import, or an ontolint release that bumps a definition version,
+   fails every build that has a delta budget on that measurement until the baseline is regenerated and reviewed. That is
+   the same rule as for an untaken absolute budget, and the alternative (a pass) would let a gate go quiet unseen.
+6. **Masked terms: a gate may rely on the counts.** The comparison counts a term's bad IRIs, so a regression is never
+   hidden, and a swap of one bad IRI for another under one masked text is not a regression it can see (see "The snapshot
+   file"); no measure with masked terms can show a gain it did not make.
+7. **Exit code `1`, as a finding.** A breach is an error finding of `METRIC014`, gated by `--fail-on` (default `error`),
+   suppressed by `--baseline`, lowered by `severity_overrides`. `2` is for what could not be judged (5, and a delta budget
+   with no `--quality-baseline`, which is `GOV020` before any input is read).
+8. **Updating the accepted baseline is a reviewed commit.** There is no command beyond `--write-quality-snapshot FILE`:
+   the maintainer who accepts a worse state, or a new definition version, commits the new snapshot in the pull request
+   that changes the bar, so the change is in the diff. A baseline that moves on every run would gate nothing.
 
 ## The snapshot file (version 1)
 
@@ -184,7 +227,7 @@ The snapshot holds the file's whole vector and no partitions (`measurement_parti
 
 - A snapshot compares by IRI; there is no rename detection (COMP). A renamed term is a removal and a new term.
 - The policy comparison is all-or-nothing, and it includes the import closure: a new import refuses every
-  measurement. The ontology header (its IRI, hence ownership when `--base` is absent) is not in the policy;
+  measurement (a `delta` budget then exits 2 until a new baseline is written). The ontology header (its IRI, hence ownership when `--base` is absent) is not in the policy;
   an ownership change shows in the term sets, but not in a measurement that has none.
 - Only coverage measures have term sets. The other ratios are compared by their parts; their `by_namespace`
   split is not compared.

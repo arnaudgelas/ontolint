@@ -396,12 +396,13 @@ The comparison tells a regression from a change of population, which aggregates 
 coverage measure it counts the terms that got worse, the new terms that are worse (dilution), the removed
 terms and the terms that got better, with the exact ratio delta. A renamed term is a removal and a new
 term. A measurement whose definition version, kind, population or policy differs, or that one snapshot could
-not take, is reported as not comparable, measurement by measurement, never diffed. **This reports; it does
-not gate.** Neither option changes a finding or the exit code (a comparison exits `0` whatever it finds;
-`2` for an unusable snapshot), so a committed quality baseline does not stop a regression from passing CI;
-failing a build on the comparison is the part of QUALITY-BUDGET (issue #26) not yet built; the METRIC rules'
-findings, `quality_budgets` and `--fail-on` judge one run against absolute thresholds, not a change from the
-baseline. A run without these options is unchanged. [docs/quality.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md)
+not take, is reported as not comparable, measurement by measurement, never diffed. **The two options report; a `delta` budget
+gates.** Neither changes a finding or the exit code (a comparison exits `0` whatever it finds; `2` for an unusable
+snapshot). To fail a run on a regression, set `quality_budgets.<measurement>.delta` in the policy (for example
+`{"regressed": {"maximum": 0}}`) and pass `--quality-baseline`: a breach is a `METRIC014` finding, so `--fail-on`
+and `--baseline` apply, and a change that cannot be compared with the baseline exits `2`
+([docs/quality-budgets.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality-budgets.md), "Delta budgets").
+A run without these options is unchanged. [docs/quality.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md)
 documents the versioned snapshot format and the comparison.
 
 ### Measurements as DQV
