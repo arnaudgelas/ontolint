@@ -129,6 +129,8 @@ class Policy:
     alignment_min_coverage: float | None = None
     # Explicit bounds on named measurements (METRIC014); empty means no budget, which is the default.
     quality_budgets: tuple[Budget, ...] = ()
+    # True makes the budgets mandatory: a run that drops METRIC014 fails (exit 2) instead of warning (TOOL002).
+    enforce_quality_budgets: bool = False
     # Modules inside one file (ontolint.modules): an annotation predicate, or "namespace"; at most one is set.
     module_annotation: str | None = None
     module_by: str | None = None
@@ -227,6 +229,7 @@ class Policy:
             alignment_namespaces=_iri_list(data, "alignment_namespaces"),
             alignment_min_coverage=_optional_ratio(data, "alignment_min_coverage"),
             quality_budgets=_quality_budgets(data),
+            enforce_quality_budgets=_enforce_budgets(data, ignored_rules),
             max_parse_seconds=_seconds(data, "max_parse_seconds"),
             max_validation_seconds=_seconds(data, "max_validation_seconds"),
             module_annotation=grouping[0],
@@ -400,6 +403,20 @@ def _quality_budgets(data: Mapping[str, Any]) -> tuple[Budget, ...]:
         delta = _delta(name, bounds["delta"]) if "delta" in bounds else None
         budgets.append(Budget(str(name), low, high, delta))
     return tuple(budgets)
+
+
+def _enforce_budgets(data: Mapping[str, Any], ignored_rules: list[str]) -> bool:
+    """Validate ``enforce_quality_budgets``: a boolean that needs budgets and does not ignore METRIC014."""
+    value = data.get("enforce_quality_budgets", False)
+    if not isinstance(value, bool):
+        raise PolicyBudgetError("enforce_quality_budgets must be true or false")
+    if value and not data.get("quality_budgets"):
+        raise PolicyBudgetError("enforce_quality_budgets is true but quality_budgets sets no budget to enforce")
+    if value and "METRIC014" in ignored_rules:
+        raise PolicyBudgetError(
+            "enforce_quality_budgets is true but ignored_rules ignores METRIC014, which evaluates them"
+        )
+    return value
 
 
 def _iri_list(data: Mapping[str, Any], name: str) -> tuple[str, ...]:

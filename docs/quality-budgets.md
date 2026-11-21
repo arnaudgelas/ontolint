@@ -236,4 +236,9 @@ The decisions above leave two ways to bypass a gate, by design, so a job that re
 - **Review a baseline update as a change of the gate.** An accepted `--baseline` entry for `METRIC014` hides a breach whatever the
   limit becomes (decision 3), so a pull request that adds one, or that loosens `quality_budgets`, is the place to ask why.
 
-A selection that cannot drop the rule on its own is a follow-up, not part of these decisions.
+**Or make the gate mandatory.** `"enforce_quality_budgets": true` in the policy turns the notice into a failure: a run whose selection
+drops `METRIC014` (`--profile minimal`, `--select`, `--ignore`, or `ignored_rules`) stops before any input is read with
+`TOOL001: configuration failed: BudgetGateDropped: ...` and exit `2`, so the snippet above is not needed. The key is a boolean, off by
+default (a policy without it behaves as before), and a policy that sets it without any budget, or that also ignores `METRIC014`, is
+`GOV020`. A developer's narrow run against that policy fails too: use a policy file without the key for it, or run the default
+selection. Issue #213 asked for this; decision 2 (warn, not reject) stays the default.

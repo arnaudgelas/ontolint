@@ -418,6 +418,8 @@ STALE = (
     "not yet built",
     "not part of this feature",
     "bounds over the classified change against a quality baseline** (",
+    "against a quality baseline are not yet",
+    "only absolute bounds are read",
 )
 
 
