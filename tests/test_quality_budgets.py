@@ -68,9 +68,8 @@ def test_budgets_are_validated_and_sorted_by_measurement() -> None:
     [
         ([], "quality_budgets must map"),
         ({"x": []}, "quality_budgets.x must be an object"),
-        ({"x": {}}, "quality_budgets.x needs a minimum or a maximum"),
+        ({"x": {}}, "quality_budgets.x needs a minimum, a maximum or a delta"),
         ({"x": {"minimun": 1}}, "quality_budgets.x has no key 'minimun'"),
-        ({"x": {"delta": {"regressed": {"maximum": 0}}}}, "quality_budgets.x has no key 'delta'"),
         ({"x": {"minimum": -0.1}}, "quality_budgets.x.minimum must be at least 0"),
         ({"x": {"maximum": math.inf}}, "quality_budgets.x.maximum must be a finite number"),
         ({"x": {"maximum": math.nan}}, "quality_budgets.x.maximum must be a finite number"),

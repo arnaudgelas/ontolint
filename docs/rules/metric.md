@@ -38,6 +38,8 @@ A budget is a ``minimum``, a ``maximum`` or both on the value of one measurement
 
 *Specified under each rule: METRIC014.*
 
+* **A ``delta`` budget** bounds the classified change of a coverage measure against a quality baseline (``--quality-baseline``): the number of ``regressed``, ``diluted`` and ``removed`` terms (``maximum``) and the share of the new terms that are fine (``new_terms``, ``minimum``, ``added_good / (added_good + diluted)``, no value when there are no new terms).  It is one more bound of METRIC014, so a breach is a finding of the same rule at the same severity, baselinable like the others; its identity is the rule, the focus, the measurement and the delta key (``delta:regressed``), never the counts.  The comparison is read before any bound is compared.  A run with no quality baseline, or a measurement that is not comparable with it (another definition version or population, a different policy shaping, not taken in either snapshot), fails the rule: exit ``2``, never a pass.  Only a coverage measure has terms, so a ``delta`` on a count, a histogram or a non-coverage ratio is a policy error. *Error, certain, deterministic:* the limit is the policy's own and the value is exact, so a breach is a fact the policy declared a failure; ``severity_overrides`` lowers it.
+
 ### Module metrics
 
 Source: `src/ontolint/rules/metrics.py`.
@@ -1718,7 +1720,7 @@ ex:S9 a sh:NodeShape ; sh:or ( [ sh:class ex:A ] [ sh:class ex:B ] ) .
 - **Module:** [`budgets`](#module-budgets)
 - **Fix:** Bring the measurement within its quality_budgets bound, or change the budget in the policy file.
 
-**Specification.** (``quality_budgets``.)  One finding for each bound a value breaches: ``<measurement> is <value> (<numerator> of <denominator>), below the minimum <limit>.`` (``above the maximum`` for a maximum; a count prints its value).  The value and the limit print with 2 decimals, or as many more (up to 6) as it takes to tell them apart.  Budgets on the measurements of the SEM, CQ and ALIGN gates (``new_unsatisfiable_classes``, ``competency_question_pass_rate``, ``unreviewed_equivalence_mappings``) wait for those gates; bounds over the classified change against a quality baseline are not read yet (a ``delta`` key is refused). *Error, certain, deterministic:* the limit is the policy's own and the value is exact, so a breach is a fact the policy declared a failure; ``severity_overrides`` lowers it.
+**Specification.** (``quality_budgets``.)  One finding for each bound a value breaches: ``<measurement> is <value> (<numerator> of <denominator>), below the minimum <limit>.`` (``above the maximum`` for a maximum; a count prints its value).  The value and the limit print with 2 decimals, or as many more (up to 6) as it takes to tell them apart.  Budgets on the measurements of the SEM, CQ and ALIGN gates (``new_unsatisfiable_classes``, ``competency_question_pass_rate``, ``unreviewed_equivalence_mappings``) wait for those gates.
 
 *Flagged:* `2 imports over a maximum of 1`
 

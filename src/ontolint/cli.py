@@ -307,6 +307,7 @@ class RunPlan:
     shapes: Graph | None
     registry: RuleRegistry
     shacl_background: Graph | None = None
+    quality_baseline: quality.Snapshot | None = None  # what a delta budget of METRIC014 is judged against
 
 
 _SHAPE_TYPES = (SH.NodeShape, SH.PropertyShape)
@@ -362,7 +363,11 @@ def _definition_hint(item: InputFile, graph: Graph, ctx: RuleContext, findings: 
 
 
 def _lint_file(
-    item: InputFile, loaded: LoadedGraph, plan: RunPlan, args: argparse.Namespace, shared: Sequence[Shared] = ()
+    item: InputFile,
+    loaded: LoadedGraph,
+    plan: RunPlan,
+    args: argparse.Namespace,
+    shared: Sequence[Shared] = (),
 ) -> FileReport:
     """Lint one parsed file and record an execution outcome for every selected rule.
 
@@ -382,6 +387,8 @@ def _lint_file(
     )
     ctx = engine.build_context(graph, plan.shapes, policy)
     ctx.shacl_background = plan.shacl_background
+    if plan.quality_baseline is not None and policy.delta_budgets:  # METRIC014 reads it, so taken before the rules
+        ctx.quality_comparison = quality.compare(plan.quality_baseline, quality.build(ctx))
     _shapes_hint(item, graph, ctx)
     if ctx.context.ownership.base_selected_nothing:
         print(
@@ -1179,12 +1186,29 @@ def _secondary_input_error(exc: InputRejected | _ShapesParseFailure | ProfileErr
     return f"TOOL001: --shapes-from-profile: {exc}"
 
 
+def _check_quality_baseline_use(args: argparse.Namespace, config: Policy) -> None:
+    """A ``delta`` budget is judged against ``--quality-baseline``; the baseline then needs no format showing it.
+
+    Raises :class:`~ontolint.policy.PolicyBudgetError` (``GOV020``, exit 2) for a delta budget without a baseline: it
+    would never be read, and a gate never passes on a change it did not see.  A baseline given to a run whose report
+    cannot show its comparison is a usage error, unless the policy gates on it.
+    """
+    delta = config.delta_budgets
+    if delta and not args.quality_baseline:
+        raise PolicyBudgetError(f"quality_budgets.{delta[0].measurement}.delta needs --quality-baseline FILE")
+    if args.quality_baseline and not delta and args.format not in ("json", "markdown"):
+        build_parser().error(
+            "--quality-baseline requires --format json or markdown, unless the policy has a delta budget"
+        )
+
+
 def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     """Run the whole lint; ``stage`` tracks progress for error messages. Returns a report or an exit code."""
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
     _check_policy_rules(config, registry)
     budgets.validate(config)
+    _check_quality_baseline_use(args, config)
     check_selectors(registry, split_selectors(args.select), split_selectors(args.ignore))
     limits = _policy(args, config, config.ignored_rules)
     try:  # read catalogs and import dirs before parsing: a broken one is a configuration error
@@ -1211,7 +1235,7 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         print(_secondary_input_error(exc), file=sys.stderr)
         return 2
     stage[0] = "lint execution"
-    plan = replace(_plan(args, config, shapes, registry), shacl_background=background)
+    plan = replace(_plan(args, config, shapes, registry), shacl_background=background, quality_baseline=accepted)
     if library is not None:
         plan = replace(plan, policy=replace(plan.policy, library=library))
     shared = (
@@ -1314,8 +1338,6 @@ def _quality_usage_problem(args: argparse.Namespace) -> str | None:
             "--write-quality-snapshot, --quality-baseline and --write-dqv take exactly one ONTOLOGY: "
             "a snapshot is of one file"
         )
-    if args.quality_baseline and args.format not in ("json", "markdown"):
-        return "--quality-baseline requires --format json or markdown"
     return None
 
 
