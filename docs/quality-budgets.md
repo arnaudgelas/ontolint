@@ -18,8 +18,8 @@ ontolint onto.ttl --config policy.json
 # [ERROR  ] METRIC014 https://example.org/onto: class_definition_coverage is 0.18 (6 of 33), below the minimum 0.95.
 ```
 
-This is **proposed syntax**: the key and its shape are the maintainer's to confirm (issue #26). Only
-absolute bounds are read today; see "Not read yet".
+The syntax and the behaviours below are the decisions of issue #153 ("Decisions", at the end of this page).
+Only absolute bounds are read today; see "Not read yet".
 
 ## The key
 
@@ -68,9 +68,11 @@ One finding of `METRIC014` for each bound breached:
 - **Focus:** the lexically first ontology IRI of the graph, else `urn:ontolint:graph`, as every METRIC
   finding.
 - **Identity (baseline):** the rule, the focus and the pair *(measurement, side)*. The value and the
-  limit are not in it, so a measurement that moves, or a budget that is loosened and still breached,
-  stays accepted by `--baseline`; a new budget, and the other side of the same measurement, are new
-  findings.
+  limit are not in it, so a measurement that moves, a budget that is loosened and still breached, and a
+  budget that is *tightened* and still breached all stay accepted by `--baseline`; a new budget, and the
+  other side of the same measurement, are new findings. A baseline therefore hides a breached budget
+  whatever its limit becomes: fix the value or change the budget instead of baselining a gate you set
+  yourself (see "Decisions", 3).
 - **Severity:** error, so it gates under every profile's `--fail-on`; `severity_overrides` lowers it.
   **Confidence:** certain; **category:** deterministic. The value is exact and the limit is the
   policy's own, so the finding is a fact the policy declared a failure, not a heuristic. (The METRIC
@@ -138,5 +140,34 @@ to add a gate.
 - **Budgets on `new_unsatisfiable_classes`, `competency_question_pass_rate` and
   `unreviewed_equivalence_mappings`:** those measurements do not exist until the SEM, CQ and ALIGN gates
   do, and a name that is not in the catalogue is refused.
-- **`--profile` and `--select`:** a run that does not select `METRIC014` evaluates no budget, without a
-  notice.
+- **A budget that applies to some inputs only:** a budget on a measurement that does not apply (the SHACL
+  coverage without `--shapes`) is exit `2`, so a policy shared by repositories with and without shapes needs one
+  policy file for each. A budget that names the inputs it applies to is not designed; open an issue with a case
+  if one arises.
+
+## Decisions
+
+Issue #153 asked for four choices left open by the first slice. Each is recorded with the alternative that was
+not taken; none changes behaviour, because the first slice already implemented the chosen one, and each is pinned by
+a test (`tests/test_quality_budgets.py`).
+
+1. **Syntax: keep.** `quality_budgets` maps a catalogue measurement `id` to `minimum` and `maximum`, inclusive, with
+   no sample gate. The key is the measurement's own name, which `--measurements`, the quality snapshot and DQV
+   already publish, so a budget, a snapshot and a report name one thing. Renaming a key after a release would be a
+   policy-version change, so the names of the catalogue are the contract (`docs/measurements.md`).
+2. **Selection: warn, do not force and do not reject.** A run that drops `METRIC014` (`--profile minimal`,
+   `--select`, `--ignore`, `ignored_rules`) says `TOOL002` on standard error and checks no budget; the exit status is
+   not changed. *Forcing the rule on* would make `--select LEX` run a METRIC rule, which contradicts what a
+   selection says. *Rejecting with exit 2* would break a developer's `--select OWL001` run against the shared CI
+   policy, for a gate that is not that run's business. The risk is a CI job that drops the rule by accident and
+   reads no stderr: a job that gates on budgets runs the default selection or names `METRIC014`, and the notice is
+   there for the one that does not.
+3. **Baseline identity: keep rule, focus, measurement and side, without the limit.** This is the identity of every
+   METRIC finding and of the baseline contract (issue #7). *Putting the limit in the identity* would turn a
+   tightened budget into a new finding, which is what a reviewer wants, but it changes the contract for one rule
+   and makes a loosened budget a stale entry plus a new one. The cost is stated above: a baseline hides a breached
+   budget whatever its limit. A budget is a limit the project sets for itself, so the remedy for a breach is to fix
+   the value or edit the budget, not to baseline it.
+4. **A measurement that was not taken: exit 2, also when it does not apply.** Skipping with a note would let a gate
+   pass on a value it never read, and a budget the policy declares for an input that cannot carry it is a
+   configuration the run cannot honour. The report is still written, and the other METRIC rules keep their findings.

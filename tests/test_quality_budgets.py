@@ -191,6 +191,21 @@ def test_a_run_that_drops_metric014_says_no_budget_is_checked(
     assert "TOOL002: warning: the policy sets quality_budgets, but METRIC014 is not selected" in err
 
 
+def test_dropping_metric014_warns_and_does_not_change_the_exit_status(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Issue #153: neither forced on nor rejected; a budget that would breach passes when its rule is not selected."""
+    config = tmp_path / "policy.json"
+    config.write_text(
+        json.dumps({"quality_budgets": {"class_definition_coverage": {"minimum": 0.99}}}), encoding="utf-8"
+    )
+    selected = ["--select", "METRIC014", KITCHEN]
+    assert main(["--config", str(config), *selected]) == 1  # the breach, when the rule runs
+    capsys.readouterr()
+    assert main(["--config", str(config), "--select", "METRIC001", KITCHEN]) == 0
+    assert "METRIC014 is not selected" in capsys.readouterr().err
+
+
 def test_ignored_rules_dropping_metric014_warns_too(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _, _, err = _run(
         tmp_path, {"unresolved_imports": {"maximum": 0}}, policy={"ignored_rules": ["METRIC014"]}, capsys=capsys
@@ -284,6 +299,9 @@ def test_a_breach_is_suppressed_by_its_baseline_and_a_new_one_is_not(
     assert main(args) == 0  # accepted
     # The value and the limit are not in the identity: a looser bound that is still breached stays accepted.
     budgets(class_definition_coverage={"minimum": 0.5})
+    assert main(args) == 0
+    # Nor is a tighter bound that is still breached a new finding (issue #153): the baseline hides a breached budget.
+    budgets(class_definition_coverage={"minimum": 0.99})
     assert main(args) == 0
     # Another bound of the same measurement is another finding, and so is another measurement.
     budgets(class_definition_coverage={"maximum": 0.1})
