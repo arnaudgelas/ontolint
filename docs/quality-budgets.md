@@ -18,8 +18,8 @@ ontolint onto.ttl --config policy.json
 # [ERROR  ] METRIC014 https://example.org/onto: class_definition_coverage is 0.18 (6 of 33), below the minimum 0.95.
 ```
 
-The syntax and the behaviours below are the decisions of issue #153 ("Decisions", at the end of this page).
-Only absolute bounds are read today; see "Not read yet".
+The syntax and the behaviours below are the decisions of issue #153 ("Decisions", at the end of this page). A budget
+can also bound a change against a quality baseline: see "Delta budgets".
 
 ## The key
 
@@ -30,7 +30,7 @@ with a `minimum`, a `maximum` or both.
 | --- | --- |
 | each bound is a finite number of at least 0; a boolean, a string and `null` are refused | the policy validates like every METRIC key |
 | `minimum` must not exceed `maximum`; equal bounds pin a value | a contradictory budget is breached by every value |
-| an object with neither bound, or with another key, is refused | a typo (`minimun`) must not become a budget that never fires |
+| an object with neither bound nor `delta`, or with another key, is refused | a typo (`minimun`) must not become a budget that never fires |
 | the name is a measurement of the catalogue that has one value: a ratio or a count, not the histogram `class_depth` | a bound needs a value |
 | a count's bounds are integers | `unresolved_imports` of 0.5 is a typo |
 | a coverage measure's bounds are at most 1 (`class_label_coverage`, `class_definition_coverage`, `property_documentation_coverage`, `orphan_classes`, `unsigned_properties`, `label_language_coverage`, `cyclic_classes`, `shacl_class_target_coverage`) | 95 for 0.95 is a typo, not a budget that never fires |
@@ -67,7 +67,7 @@ One finding of `METRIC014` for each bound breached:
   with 2 decimals, or as many more, up to 6, as it takes to tell them apart.
 - **Focus:** the lexically first ontology IRI of the graph, else `urn:ontolint:graph`, as every METRIC
   finding.
-- **Identity (baseline):** the rule, the focus and the pair *(measurement, side)*. The value and the
+- **Identity (baseline):** the rule, the focus and the pair *(measurement, side)* (for a `delta` bound, *(measurement, delta key)*). The value and the
   limit are not in it, so a measurement that moves, a budget that is loosened and still breached, and a
   budget that is *tightened* and still breached all stay accepted by `--baseline`; a new budget, and the
   other side of the same measurement, are new findings. A baseline therefore hides a breached budget
@@ -128,15 +128,61 @@ the two are not promised to agree to the last digit. A budget on a measurement a
 is another finding, not a replacement of that rule: set the key to change the METRIC limit, and a budget
 to add a gate.
 
+## Delta budgets
+
+A `delta` bounds the *classified change* of a coverage measure against a quality baseline
+([quality.md](quality.md)), never the raw ratio delta, which cannot tell a regression from a change of population:
+
+```json
+{
+  "quality_budgets": {
+    "class_definition_coverage": {
+      "minimum": 0.9,
+      "delta": {"regressed": {"maximum": 0}, "diluted": {"maximum": 5}, "removed": {"maximum": 2}, "new_terms": {"minimum": 0.8}}
+    }
+  }
+}
+```
+
+```bash
+ontolint onto.ttl --config policy.json --quality-baseline quality.json
+# [ERROR  ] METRIC014 https://example.org/onto: class_definition_coverage: 1 term got worse since the quality baseline, above the maximum 0.
+```
+
+| Key | Bound | Counts |
+| --- | --- | --- |
+| `regressed` | `{"maximum": n}`, a whole number of at least 0 | terms fine before and not now |
+| `diluted` | `{"maximum": n}` | new terms that are not fine |
+| `removed` | `{"maximum": n}` | terms in the baseline and not in the run |
+| `new_terms` | `{"minimum": s}`, a number from 0 to 1 | `added_good / (added_good + diluted)`: the share of new terms that are fine; no value, so no breach, when there are no new terms |
+
+- Bounds are inclusive, as for the absolute ones. A `delta` with no key, an unknown key (`lost`), a key that is not
+  `{"maximum": n}` (`{"minimum": n}` for `new_terms`), a negative or fractional count or a share above 1 is `GOV020`.
+- A `delta` is for a *coverage measure*, the eight with `better` in the [catalogue](measurements.md#catalogue): only
+  they have terms. On a count, a histogram or another ratio it is `GOV020`. A budget may have a `delta` alone, or beside
+  `minimum` and `maximum`; each bound is judged on its own.
+- The finding is one of `METRIC014`, at its severity (error, certain, deterministic), so selection, `--ignore`,
+  `severity_overrides`, `--baseline` and `--fail-on` apply and it renders in text, JSON, SARIF and Markdown. The message
+  is `<measurement>: <n> term(s) got worse | <n> new term(s) is/are not fine | <n> term(s) was/were removed since the
+  quality baseline, above the maximum <limit>.` or `<measurement>: the share of new terms that are fine is <s> (<n> of
+  <m>) since the quality baseline, below the minimum <limit>.` Its identity is the rule, the focus, the measurement and
+  the delta key (`delta:regressed`), never the counts.
+- **`--quality-baseline FILE` is required.** A policy with a `delta` budget and no baseline is `GOV020: policy file
+  rejected: quality_budgets.<measurement>.delta needs --quality-baseline FILE`, exit `2` before any input is read.
+  With a delta budget the baseline gates, so it is accepted with every `--format`; without one it still needs `json` or
+  `markdown`, which are the formats that show the comparison. JSON and Markdown keep showing it.
+- **A change that cannot be judged is exit `2`, never a pass** (`TOOL001: rule METRIC014 failed ...: <measurement>:
+  cannot be compared with the quality baseline (<reasons>); write a new one with --write-quality-snapshot`, the report
+  still written): a definition version, kind or population that changed, a policy that differs (`--base`, extra
+  predicates, the import closure), or a measurement not taken in either snapshot. Every budget, absolute and delta, is
+  read before any is compared, so a failed run reports no partial verdict. The rationale and the cost (a new import
+  fails the build until the baseline is regenerated) are in [quality.md](quality.md), "Failing a run on a regression".
+- A rename is a removal and a new term (`RENAME_NOTE`): a delta budget cannot tell it apart.
+- The Python API: `Linter` has no baseline of its own. A caller that sets a `delta` budget must set
+  `linter.rule_context.quality_comparison = ontolint.quality.compare(old, new)`; without it the rule fails as above.
+
 ## Not read yet
 
-- **Bounds over the classified change against a quality baseline** ([quality.md](quality.md)): the
-  counts of `regressed`, `diluted` and `removed` terms, and the coverage among new terms
-  (`added_good` against `diluted`). The comparison is made after the rules ran, in the report, so
-  findings from it need a design of their own (where they join the report, how a measurement that is not
-  comparable behaves, how `--quality-baseline` is required). A `delta` key is refused with the other
-  unknown keys, so no budget is silently not enforced. Never a bound on the raw ratio delta, which
-  cannot tell a regression from a change of population.
 - **Budgets on `new_unsatisfiable_classes`, `competency_question_pass_rate` and
   `unreviewed_equivalence_mappings`:** those measurements do not exist until the SEM, CQ and ALIGN gates
   do, and a name that is not in the catalogue is refused.

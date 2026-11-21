@@ -1250,10 +1250,14 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
   - *Partly done (branch `feat/26-quality-budgets`, issue #26 stays open):* the `quality_budgets` key with
     absolute bounds, METRIC014 and the table of METRIC keys as built-in budgets
     (`docs/quality-budgets.md`); an untaken measurement fails the rule (exit 2) and an unknown name is GOV020.
-    Left: bounds over the classified change against a quality baseline (`regressed`, `diluted`, `removed`,
-    the coverage among `added_good`), which need a place in the report after the comparison. The syntax, the
-    selection behaviour, the baseline identity and the untaken measurement are decided in
+    The syntax, the selection behaviour, the baseline identity and the untaken measurement are decided in
     `docs/quality-budgets.md` ("Decisions", issue #153).
+  - *Done (issues #148 and #98):* `delta` budgets over the classified change against a quality baseline
+    (`regressed`, `diluted`, `removed` maxima and a `new_terms` minimum), judged by METRIC014 from the comparison the
+    command line sets on the rule context; no flag. A change that cannot be compared, or a run with no baseline, exits
+    2. The decisions of #98 are in `docs/quality.md` ("Failing a run on a regression"); the fixtures are
+    `tests/test_quality_budgets_delta.py`. Left: budgets on the SEM, CQ and ALIGN measurements, which wait for those
+    gates.
 
 - [ ] **CTRF-REPORT: a CI test-result format.** This is OPS012 with a consumer: choose CTRF or
   JUnit, not both. The mapping is the design: one test per (file, rule), `passed`, `failed` when it
