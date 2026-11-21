@@ -216,18 +216,24 @@ def test_exit_codes_through_a_real_interpreter(tmp_path: Path) -> None:
     assert b"Traceback" not in missing.stderr
 
 
-def test_a_console_that_is_not_utf8_gets_json_but_a_documented_failure_for_text(tmp_path: Path) -> None:
-    """Python on Windows encodes a pipe with the ANSI code page (cp1252); the two variables ask for it on any system."""
+def test_a_console_that_is_not_utf8_gets_every_format_and_text_degrades_with_a_note(tmp_path: Path) -> None:
+    """Python on Windows encodes a pipe with the ANSI code page (cp1252); the two variables ask for it on any system.
+
+    JSON and SARIF are escaped to ASCII. Text and markdown used to fail with TOOL001 and exit 2 (issue #150): they are
+    now written with what cp1252 cannot hold as ``\\uXXXX`` escapes, TOOL002 says so, and the exit code is the run's.
+    """
     cp1252 = {"PYTHONUTF8": "0", "PYTHONIOENCODING": "cp1252"}
     _write(tmp_path / "u.ttl", NON_ASCII_ONTOLOGY)
-    for kind in ("json", "sarif"):  # escaped to ASCII: nothing to encode
+    for kind in ("json", "sarif"):
         done = _cli("u.ttl", "--format", kind, "--fail-on", "never", cwd=tmp_path, env=cp1252)
         assert done.returncode == 0, done.stderr
         assert "\\u65e5" in done.stdout.decode("ascii")
-    done = _cli("u.ttl", "--fail-on", "never", cwd=tmp_path, env=cp1252)  # text: the report is not encodable
-    assert done.returncode == TOOL_FAILURE
-    assert b"TOOL001: report output failed" in done.stderr
-    assert b"Traceback" not in done.stderr
+    for kind in ("text", "markdown"):
+        done = _cli("u.ttl", "--format", kind, "--fail-on", "never", cwd=tmp_path, env=cp1252)
+        assert done.returncode == 0, done.stderr
+        assert "\\u65e5\\u672c\\u8a9eCaf\u00e9" in done.stdout.decode("cp1252")
+        assert b"TOOL002: warning: the console encoding" in done.stderr
+        assert b"TOOL001" not in done.stderr and b"Traceback" not in done.stderr
     done = _cli("u.ttl", "--fail-on", "never", "--output", "r.txt", cwd=tmp_path, env=cp1252)  # --output is UTF-8
     assert done.returncode == 0, done.stderr
     assert "日本語" in (tmp_path / "r.txt").read_text(encoding="utf-8")
