@@ -145,7 +145,9 @@ Each is a recommendation, with its evidence and the alternative. None is applied
 ### METRIC001 and METRIC002: warning severity and the `ci`, `obo`, `fair` profiles
 
 **Decided (issue #63): keep both at warning.** The two flagged files below are the evidence the corpus has; the sweep of
-issue #163 may reopen it, and `severity_overrides` lowers either rule in a policy file for a mature ontology that sits
+issue #163 ([metric-thresholds.md](metric-thresholds.md), "Evidence per threshold") does not reopen it: METRIC001 and
+METRIC002 flag only files labelled poor (3 true positives, no false positive), on labels that are still proposed. And
+`severity_overrides` lowers either rule in a policy file for a mature ontology that sits
 under the limit (PATO base is at 0.33 for METRIC002).
 
 They are warnings, and those three profiles gate on warnings, so a low coverage fails the build. Observed with
