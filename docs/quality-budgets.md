@@ -171,3 +171,21 @@ a test (`tests/test_quality_budgets.py`).
 4. **A measurement that was not taken: exit 2, also when it does not apply.** Skipping with a note would let a gate
    pass on a value it never read, and a budget the policy declares for an input that cannot carry it is a
    configuration the run cannot honour. The report is still written, and the other METRIC rules keep their findings.
+
+### Using a budget as a CI gate
+
+The decisions above leave two ways to bypass a gate, by design, so a job that relies on budgets has obligations:
+
+- **Run the default selection.** No `--profile minimal`, `--select` or `--ignore` that drops `METRIC014`, and no `ignored_rules`
+  entry for it. Treat the notice as observable: it is the only sign that the gate did not run.
+
+  ```bash
+  ontolint onto.ttl --config policy.json 2> stderr.txt || status=$?
+  ! grep -q "METRIC014 is not selected" stderr.txt || { echo "the budget gate did not run"; exit 1; }
+  exit "${status:-0}"
+  ```
+
+- **Review a baseline update as a change of the gate.** An accepted `--baseline` entry for `METRIC014` hides a breach whatever the
+  limit becomes (decision 3), so a pull request that adds one, or that loosens `quality_budgets`, is the place to ask why.
+
+A selection that cannot drop the rule on its own is a follow-up, not part of these decisions.
