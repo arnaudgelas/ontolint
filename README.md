@@ -975,8 +975,9 @@ lists every key with its default, the rationale and the offline measurements.
 `{"unresolved_imports": {"maximum": 0}, "class_definition_coverage": {"minimum": 0.95}}`. There is no
 default budget. A value strictly outside a bound (bounds are inclusive) is one `METRIC014` finding, an
 error that `--baseline` accepts like any other; a budget on a measurement that could not be taken makes
-the run exit `2`; an unknown name or a malformed bound is `GOV020`, exit `2`. Only absolute bounds are
-read; bounds on the change against a quality baseline are not yet.
+the run exit `2`; an unknown name or a malformed bound is `GOV020`, exit `2`. A `delta` bound limits the change
+against a quality baseline (`--quality-baseline`). A run whose selection drops `METRIC014` checks no budget and says so
+with `TOOL002`; `"enforce_quality_budgets": true` makes that a failure (exit `2`) instead.
 [docs/quality-budgets.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality-budgets.md)
 specifies it.
 

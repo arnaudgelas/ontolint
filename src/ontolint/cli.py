@@ -1074,15 +1074,25 @@ def _profile(args: argparse.Namespace) -> Profile | None:
     return PROFILES[args.profile] if args.profile else None
 
 
-def _warn_unenforced_budgets(config: Policy, selection: Selection) -> None:
+class BudgetGateDropped(ValueError):
+    """The policy enforces its quality budgets (``enforce_quality_budgets``) and the run's selection drops METRIC014."""
+
+
+def _check_budget_gate(config: Policy, selection: Selection) -> None:
     """Say so when ``quality_budgets`` is set but the run does not evaluate ``METRIC014``.
 
-    A budget is a gate: a profile, ``--select``, ``--ignore`` or ``ignored_rules`` that drops the rule
-    would otherwise let the run pass without ever comparing a bound.
+    A budget is a gate: a profile, ``--select``, ``--ignore`` or ``ignored_rules`` that drops the rule would otherwise
+    let the run pass without ever comparing a bound.  By default that is a ``TOOL002`` notice and the exit status is
+    unchanged; with ``enforce_quality_budgets`` the run is a configuration failure, exit 2, whatever the selection.
     """
     if config.quality_budgets and (
         "METRIC014" in config.ignored_rules or all(s.rule_id != "METRIC014" for s in selection.run)
     ):
+        if config.enforce_quality_budgets:
+            raise BudgetGateDropped(
+                "the policy sets enforce_quality_budgets, but METRIC014 is not selected for this run "
+                "(--profile, --select or --ignore); no budget would be checked"
+            )
         print(
             "TOOL002: warning: the policy sets quality_budgets, but METRIC014 is not selected for this run "
             "(--profile, --select, --ignore or ignored_rules); no budget is checked.",
@@ -1094,7 +1104,7 @@ def _plan(args: argparse.Namespace, config: Policy, shapes: Graph | None, regist
     profile = _profile(args)
     selection = resolve_selection(registry, profile, split_selectors(args.select), split_selectors(args.ignore))
     overrides = {**dict(profile.severity_overrides if profile else ()), **config.severity_mapping}
-    _warn_unenforced_budgets(config, selection)
+    _check_budget_gate(config, selection)
     return RunPlan(_policy(args, config, config.ignored_rules), selection, overrides, shapes, registry)
 
 
@@ -1210,6 +1220,11 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
     budgets.validate(config)
     _check_quality_baseline_use(args, config)
     check_selectors(registry, split_selectors(args.select), split_selectors(args.ignore))
+    if config.enforce_quality_budgets:  # before any input is read; _plan makes the same check for the warning
+        _check_budget_gate(
+            config,
+            resolve_selection(registry, _profile(args), split_selectors(args.select), split_selectors(args.ignore)),
+        )
     limits = _policy(args, config, config.ignored_rules)
     try:  # read catalogs and import dirs before parsing: a broken one is a configuration error
         imports = _import_options(args, limits)
@@ -1359,7 +1374,7 @@ def _lint_and_finish(args: argparse.Namespace) -> int:
     stage = ["configuration"]
     try:
         outcome = _lint(args, stage)
-    except (UnknownSelectorError, SelectorSyntaxError, PipelineSelectorError) as exc:
+    except (UnknownSelectorError, SelectorSyntaxError, PipelineSelectorError, BudgetGateDropped) as exc:
         proposed = frozenset(row.rule_id for row in planned_rows())
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
         print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)
