@@ -1,5 +1,71 @@
 {
   "results": {
+    "brick-ref-schema.ttl": {
+      "METRIC001": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC002": {
+        "fires": false,
+        "measured": "1 / 5",
+        "value": 0.2
+      },
+      "METRIC003": {
+        "fires": false,
+        "measured": "1 / 12",
+        "value": 0.0833
+      },
+      "METRIC004": {
+        "fires": false,
+        "measured": "3.00 over 1",
+        "value": 3.0
+      },
+      "METRIC005": {
+        "fires": false,
+        "measured": "1 / 5",
+        "value": 0.2
+      },
+      "METRIC006": {
+        "fires": false,
+        "measured": "12 / 5",
+        "value": 2.4
+      },
+      "METRIC007": {
+        "fires": false,
+        "measured": "12 / 5",
+        "value": 2.4
+      },
+      "METRIC008": {
+        "fires": true,
+        "measured": "9 / 12",
+        "value": 0.75
+      },
+      "METRIC009": {
+        "fires": true,
+        "measured": "0 / 16",
+        "value": 0.0
+      },
+      "METRIC010": {
+        "fires": false,
+        "measured": "2 / 6",
+        "value": 0.3333
+      },
+      "METRIC011": {
+        "fires": false,
+        "measured": "1",
+        "value": 1
+      },
+      "METRIC012": {
+        "fires": false,
+        "measured": "13.00 over 4",
+        "value": 13.0
+      },
+      "METRIC013": {
+        "fires": false,
+        "measured": "1 / 24",
+        "value": 0.0417
+      }
+    },
     "dcat3.ttl": {
       "METRIC001": {
         "fires": false,
@@ -118,6 +184,303 @@
         "fires": false,
         "measured": "4.92 over 13",
         "value": 4.92
+      },
+      "METRIC013": {
+        "fires": false,
+        "measured": "0"
+      }
+    },
+    "gaia-x-openlabel.owl.ttl": {
+      "METRIC001": {
+        "fires": false,
+        "measured": "1 / 243",
+        "value": 0.0041
+      },
+      "METRIC002": {
+        "fires": false,
+        "measured": "1 / 243",
+        "value": 0.0041
+      },
+      "METRIC003": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC004": {
+        "fires": false,
+        "measured": "3.77 over 64",
+        "value": 3.77
+      },
+      "METRIC005": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC006": {
+        "fires": true,
+        "measured": "0 / 243",
+        "value": 0.0
+      },
+      "METRIC007": {
+        "fires": false,
+        "measured": "0 / 243",
+        "value": 0.0
+      },
+      "METRIC008": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC009": {
+        "fires": false,
+        "measured": "none untagged"
+      },
+      "METRIC010": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC011": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC012": {
+        "fires": false,
+        "measured": "11.55 over 242",
+        "value": 11.55
+      },
+      "METRIC013": {
+        "fires": false,
+        "measured": "0"
+      }
+    },
+    "geodcat-ap-930.ttl": {
+      "METRIC001": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC002": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC003": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC004": {
+        "fires": false,
+        "measured": "no parent"
+      },
+      "METRIC005": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC006": {
+        "fires": false,
+        "measured": "no class"
+      },
+      "METRIC007": {
+        "fires": false,
+        "measured": "no class"
+      },
+      "METRIC008": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC009": {
+        "fires": false,
+        "measured": "none untagged"
+      },
+      "METRIC010": {
+        "fires": true,
+        "measured": "18 / 18",
+        "value": 1.0
+      },
+      "METRIC011": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC012": {
+        "fires": false,
+        "measured": "no definition"
+      },
+      "METRIC013": {
+        "fires": true,
+        "measured": "72 / 87",
+        "value": 0.8276
+      }
+    },
+    "ids-dctype-20120614.ttl": {
+      "METRIC001": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC002": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC003": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC004": {
+        "fires": false,
+        "measured": "2.00 over 1",
+        "value": 2.0
+      },
+      "METRIC005": {
+        "fires": true,
+        "measured": "9 / 12",
+        "value": 0.75
+      },
+      "METRIC006": {
+        "fires": true,
+        "measured": "0 / 12",
+        "value": 0.0
+      },
+      "METRIC007": {
+        "fires": false,
+        "measured": "0 / 12",
+        "value": 0.0
+      },
+      "METRIC008": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC009": {
+        "fires": false,
+        "measured": "none untagged"
+      },
+      "METRIC010": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC011": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC012": {
+        "fires": false,
+        "measured": "23.67 over 12",
+        "value": 23.67
+      },
+      "METRIC013": {
+        "fires": false,
+        "measured": "0"
+      }
+    },
+    "ids-ma-ont-20120209.ttl": {
+      "METRIC001": {
+        "fires": true,
+        "measured": "14 / 14",
+        "value": 1.0
+      },
+      "METRIC002": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC003": {
+        "fires": false,
+        "measured": "21 / 85",
+        "value": 0.2471
+      },
+      "METRIC004": {
+        "fires": false,
+        "measured": "2.00 over 4",
+        "value": 2.0
+      },
+      "METRIC005": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC006": {
+        "fires": false,
+        "measured": "85 / 14",
+        "value": 6.0714
+      },
+      "METRIC007": {
+        "fires": true,
+        "measured": "85 / 14",
+        "value": 6.0714
+      },
+      "METRIC008": {
+        "fires": false,
+        "measured": "40 / 85",
+        "value": 0.4706
+      },
+      "METRIC009": {
+        "fires": false,
+        "measured": "none untagged"
+      },
+      "METRIC010": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC011": {
+        "fires": false,
+        "measured": "1",
+        "value": 1
+      },
+      "METRIC012": {
+        "fires": false,
+        "measured": "16.00 over 14",
+        "value": 16.0
+      },
+      "METRIC013": {
+        "fires": false,
+        "measured": "0"
+      }
+    },
+    "ids-vcard-20140522.ttl": {
+      "METRIC001": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC002": {
+        "fires": false,
+        "measured": "30 / 62",
+        "value": 0.4839
+      },
+      "METRIC003": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC004": {
+        "fires": true,
+        "measured": "10.40 over 5",
+        "value": 10.4
+      },
+      "METRIC005": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC006": {
+        "fires": false,
+        "measured": "84 / 62",
+        "value": 1.3548
+      },
+      "METRIC007": {
+        "fires": false,
+        "measured": "84 / 62",
+        "value": 1.3548
+      },
+      "METRIC008": {
+        "fires": true,
+        "measured": "48 / 84",
+        "value": 0.5714
+      },
+      "METRIC009": {
+        "fires": false,
+        "measured": "none untagged"
+      },
+      "METRIC010": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC011": {
+        "fires": false,
+        "measured": "0"
+      },
+      "METRIC012": {
+        "fires": false,
+        "measured": "10.06 over 32",
+        "value": 10.06
       },
       "METRIC013": {
         "fires": false,
@@ -246,6 +609,67 @@
     }
   },
   "vectors": {
+    "brick-ref-schema.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 24,
+        "numerator": 1
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 5,
+        "numerator": 4
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 1,
+        "numerator": 3
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 5,
+        "numerator": 5
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 52
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 6,
+        "numerator": 2
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 16,
+        "numerator": 0
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 5,
+        "numerator": 1
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 11
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 5,
+        "numerator": 12
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 1
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 9
+      }
+    },
     "dcat3.ttl": {
       "blank_subjects": {
         "definition_version": 1,
@@ -366,6 +790,311 @@
         "definition_version": 1,
         "denominator": 60,
         "numerator": 5
+      }
+    },
+    "gaia-x-openlabel.owl.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 277,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 243,
+        "numerator": 242
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 64,
+        "numerator": 241
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 243,
+        "numerator": 242
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 242,
+        "numerator": 2794
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 241,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 242,
+        "numerator": 242
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 243,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 243,
+        "numerator": 0
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "geodcat-ap-930.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 87,
+        "numerator": 72
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 18,
+        "numerator": 18
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 14
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 14
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 14
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 0
+      }
+    },
+    "ids-dctype-20120614.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 13,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 12
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 1,
+        "numerator": 2
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 12
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 284
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 2,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 12
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 9
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 12,
+        "numerator": 0
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      }
+    },
+    "ids-ma-ont-20120209.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 102,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 14
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 4,
+        "numerator": 8
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 0
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 224
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 59,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 0,
+        "numerator": 0
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 85,
+        "numerator": 64
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 14,
+        "numerator": 85
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 1
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 85,
+        "numerator": 40
+      }
+    },
+    "ids-vcard-20140522.ttl": {
+      "blank_subjects": {
+        "definition_version": 1,
+        "denominator": 147,
+        "numerator": 0
+      },
+      "class_definition_coverage": {
+        "definition_version": 1,
+        "denominator": 62,
+        "numerator": 32
+      },
+      "class_fanout": {
+        "definition_version": 1,
+        "denominator": 5,
+        "numerator": 52
+      },
+      "class_label_coverage": {
+        "definition_version": 1,
+        "denominator": 62,
+        "numerator": 62
+      },
+      "definition_length": {
+        "definition_version": 1,
+        "denominator": 32,
+        "numerator": 322
+      },
+      "foreign_references": {
+        "definition_version": 1,
+        "denominator": 57,
+        "numerator": 0
+      },
+      "label_language_coverage": {
+        "definition_version": 1,
+        "denominator": 146,
+        "numerator": 146
+      },
+      "orphan_classes": {
+        "definition_version": 1,
+        "denominator": 62,
+        "numerator": 0
+      },
+      "property_documentation_coverage": {
+        "definition_version": 1,
+        "denominator": 84,
+        "numerator": 84
+      },
+      "relation_properties_per_class": {
+        "definition_version": 1,
+        "denominator": 62,
+        "numerator": 84
+      },
+      "unresolved_imports": {
+        "definition_version": 1,
+        "value": 0
+      },
+      "unsigned_properties": {
+        "definition_version": 1,
+        "denominator": 84,
+        "numerator": 48
       }
     },
     "org.ttl": {
