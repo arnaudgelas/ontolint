@@ -620,3 +620,68 @@ def test_a_run_with_sarif_fingerprints_writes_them(tmp_path: Path) -> None:
     results = json.loads((tmp_path / "ontolint.sarif").read_text())["runs"][0]["results"]
     assert results
     assert all("ontolintIdentity/v2" in r["partialFingerprints"] for r in results)
+
+
+# --- the manual experiment of issue #149 -----------------------------------------------------------------------
+
+OBSERVE = (WORKFLOWS / "observe-sarif-fingerprints.yml").read_text()
+
+
+def test_the_observation_workflow_is_manual_and_can_be_run_only_from_a_dispatch() -> None:
+    triggers = OBSERVE.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
+    assert triggers.strip().splitlines()[0] == "workflow_dispatch:"
+    assert not re.search(r"^  (push|pull_request|schedule|workflow_run|issue_comment)", triggers, re.MULTILINE)
+
+
+def test_the_observation_workflow_asks_for_write_access_to_code_scanning_in_its_one_job_only() -> None:
+    top = OBSERVE.split("\njobs:\n", 1)[0]
+    assert "security-events" not in top and "contents: read" in top
+    assert OBSERVE.count("security-events: write") == 1
+
+
+def test_every_action_the_observation_uses_is_pinned_to_a_commit_or_is_the_checkout() -> None:
+    used = re.findall(r"^\s+uses: (\S+)(?: # (\S+))?$", OBSERVE, re.MULTILINE)
+    assert used
+    for what, comment in used:
+        assert what == "./" or (re.fullmatch(r"[\w./-]+@[0-9a-f]{40}", what) and comment), what
+
+
+def test_the_observation_only_writes_categories_it_owns() -> None:
+    categories = re.findall(r"^\s+category: (\S+)$", OBSERVE, re.MULTILINE)
+    assert len(categories) >= 6
+    assert all(c.startswith("ontolint-observe-") for c in categories)
+    for owned in ("plain", "fp", "pair"):  # each category it opens, it closes
+        assert categories.count(f"ontolint-observe-{owned}") >= 2
+
+
+def test_every_cleanup_step_runs_after_a_failure_but_not_after_a_cancellation() -> None:
+    # `!cancelled()` is a status-check function, so GitHub does not add the implicit `success()`: the step runs after a
+    # failed step and is skipped only when the run is cancelled.  A bare `inputs.cleanup` would add `success()` back.
+    cleanup = OBSERVE.split("# 5. Leave no alert behind.", 1)[1]
+    conditions = re.findall(r"^\s+if: (.+)$", cleanup, re.MULTILINE)
+    assert len(conditions) == 4  # the empty report, then one close per category
+    assert set(conditions) == {"${{ inputs.cleanup && !cancelled() }}"}
+    assert OBSERVE.count("inputs.cleanup") == 4, "nothing before the cleanup is conditional on it"
+
+
+def test_no_expression_is_interpolated_into_a_shell_script_of_the_observation() -> None:
+    blocks = re.findall(r"^ +run: \|\n((?:(?: {10,}).*\n|\n)+)", OBSERVE, re.MULTILINE)
+    assert blocks
+    assert all("${{" not in block for block in blocks)
+    assert len(re.findall(r"^ +run: ", OBSERVE, re.MULTILINE)) == len(blocks), "every run is a block scalar"
+
+
+def test_only_the_runs_that_study_the_flag_pass_it_and_the_plain_run_does_not() -> None:
+    plain = OBSERVE.split("id: plain", 1)[1].split("- name: Upload without fingerprints", 1)[0]
+    assert "sarif-fingerprints" not in plain
+    assert OBSERVE.count('sarif-fingerprints: "true"') == 3
+
+
+def test_the_observation_page_names_the_workflow_and_the_readme_points_to_the_page() -> None:
+    page = (ROOT / "docs" / "sarif-fingerprints-observation.md").read_text()
+    assert "observe-sarif-fingerprints.yml" in page and (WORKFLOWS / "observe-sarif-fingerprints.yml").is_file()
+    assert "opt-in in 0.17.0" in page
+    readme = (ROOT / "README.md").read_text()
+    assert "docs/sarif-fingerprints-observation.md" in readme and "stays opt-in in 0.17.0" in readme
+    for category in re.findall(r"`(ontolint-observe-\w+)`", page):
+        assert f"category: {category}" in OBSERVE

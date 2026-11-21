@@ -1,0 +1,210 @@
+name: Observe SARIF fingerprints
+
+# A manual experiment, never a check (issue #149, docs/sarif-fingerprints-observation.md).  It uploads SARIF reports of
+# tests/fixtures/kitchen_sink.ttl to code scanning and records what GitHub does with `partialFingerprints`, so that the
+# decision of issue #191 (stay opt-in, or default on) rests on an observation and not on the documentation.
+#
+# Run it from a throwaway branch (`gh workflow run observe-sarif-fingerprints.yml --ref <branch>`): the alerts it opens
+# belong to that ref and to categories that start with `ontolint-observe-`, and the last step closes them by uploading
+# empty reports.  The Action under test is the one of the checkout (`uses: ./`), which installs the ontolint release the
+# checkout's pyproject.toml names from PyPI, so that release must carry `--sarif-fingerprints` (0.16.0 does).
+on:
+  workflow_dispatch:
+    inputs:
+      cleanup:
+        description: "Close the alerts the experiment opened by uploading empty reports"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observe-sarif-fingerprints
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    name: Upload and compare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+          version: "0.13.7"
+
+      - name: Prepare the files
+        run: |
+          set -euo pipefail
+          mkdir -p obs/pair
+          cp tests/fixtures/kitchen_sink.ttl obs/kitchen.ttl
+          cp tests/fixtures/kitchen_sink.ttl obs/original.ttl
+          # Two files that report the same rule, focus, subject and message: identical fingerprints, other artifact URIs.
+          printf '%s\n' \
+            '@prefix owl: <http://www.w3.org/2002/07/owl#> .' \
+            '@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .' \
+            '<https://example.test/pair> a owl:Ontology .' \
+            '<https://example.test/pair#A> a owl:Class ; rdfs:label "A"@en .' > obs/pair/one.ttl
+          cp obs/pair/one.ttl obs/pair/two.ttl
+          # The same graph, written in another order: lines move, identities do not.
+          uv run --no-project --with rdflib==7.6.0 python - <<'PY'
+          from rdflib import Graph
+          graph = Graph().parse("obs/original.ttl", format="turtle")
+          graph.serialize("obs/reserialized.ttl", format="turtle")
+          PY
+          cmp -s obs/original.ttl obs/reserialized.ttl && { echo "the re-serialized file is the original"; exit 1; }
+          rm obs/original.ttl
+
+      # 1. Without the flag: GitHub computes its own fingerprints.
+      - name: Lint without fingerprints
+        id: plain
+        uses: ./
+        with:
+          files: obs/kitchen.ttl
+          fail-on: never
+          sarif-file: obs-plain.sarif
+          summary: "false"
+      - name: Upload without fingerprints
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: obs-plain.sarif
+          category: ontolint-observe-plain
+
+      # 2. With the flag.
+      - name: Lint with fingerprints
+        id: fp
+        uses: ./
+        with:
+          files: obs/kitchen.ttl
+          fail-on: never
+          sarif-file: obs-fp.sarif
+          sarif-fingerprints: "true"
+          summary: "false"
+      - name: Upload with fingerprints
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: obs-fp.sarif
+          category: ontolint-observe-fp
+      - name: Record the alerts after the first upload with fingerprints
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=ontolint&ref=$GITHUB_REF&per_page=100&state=open" \
+            | jq -s 'add // []' > alerts-fp-1.json
+          jq 'length' alerts-fp-1.json
+
+      # 3. The same graph re-serialized, same path, same category: the alerts must stay the same alerts.
+      - name: Re-serialize the file
+        run: |
+          cp obs/reserialized.ttl obs/kitchen.ttl
+      - name: Lint the re-serialized file with fingerprints
+        uses: ./
+        with:
+          files: obs/kitchen.ttl
+          fail-on: never
+          sarif-file: obs-fp-reserialized.sarif
+          sarif-fingerprints: "true"
+          summary: "false"
+      - name: Upload the re-serialized file
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: obs-fp-reserialized.sarif
+          category: ontolint-observe-fp
+      - name: Record the alerts after the re-serialized upload
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=ontolint&ref=$GITHUB_REF&per_page=100&state=open" \
+            | jq -s 'add // []' > alerts-fp-2.json
+          gh api --paginate "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=ontolint&ref=$GITHUB_REF&per_page=100&state=fixed" \
+            | jq -s 'add // []' > alerts-fixed-2.json
+
+      # 4. Two files with one identity.
+      - name: Lint the pair with fingerprints
+        uses: ./
+        with:
+          files: |
+            obs/pair/one.ttl
+            obs/pair/two.ttl
+          fail-on: never
+          sarif-file: obs-pair.sarif
+          sarif-fingerprints: "true"
+          summary: "false"
+      - name: Upload the pair
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: obs-pair.sarif
+          category: ontolint-observe-pair
+
+      - name: Summarize what GitHub did
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=ontolint&ref=$GITHUB_REF&per_page=100&state=open" \
+            | jq -s 'add // []' > alerts-all.json
+          count() { jq --arg c "$2" '[.[] | select(.most_recent_instance.category | contains($c))] | length' "$1"; }
+          results() { jq '[.runs[].results[]] | length' "$1"; }
+          no_region() { jq '[.runs[].results[] | select(([.locations[]?.physicalLocation.region] | map(select(. != null)) | length) == 0)] | length' "$1"; }
+          same_numbers() { [ "$(jq -S '[.[] | select(.most_recent_instance.category | contains("ontolint-observe-fp")) | .number] | sort' "$1")" = "$(jq -S '[.[] | select(.most_recent_instance.category | contains("ontolint-observe-fp")) | .number] | sort' "$2")" ] && echo yes || echo no; }
+          {
+            echo "## What code scanning did with the fingerprints"
+            echo
+            echo "| Observation | Value |"
+            echo "| --- | --- |"
+            echo "| Results in the SARIF without the flag | $(results obs-plain.sarif) |"
+            echo "| Results in the SARIF with the flag | $(results obs-fp.sarif) |"
+            echo "| Open alerts, category plain | $(count alerts-all.json ontolint-observe-plain) |"
+            echo "| Open alerts, category fp, after the first upload | $(count alerts-fp-1.json ontolint-observe-fp) |"
+            echo "| Open alerts, category fp, after the re-serialized upload | $(count alerts-fp-2.json ontolint-observe-fp) |"
+            echo "| Same alerts (numbers) before and after the re-serialized upload | $(same_numbers alerts-fp-1.json alerts-fp-2.json) |"
+            echo "| Alerts fixed by the re-serialized upload | $(count alerts-fixed-2.json ontolint-observe-fp) |"
+            echo "| Results in the pair SARIF | $(results obs-pair.sarif) |"
+            echo "| Open alerts, category pair | $(count alerts-all.json ontolint-observe-pair) |"
+            echo "| Results without a region in the SARIF with the flag | $(no_region obs-fp.sarif) |"
+            echo "| Open alerts for rules whose results have no region (ONT002, LEX007, SEC007) | $(jq '[.[] | select(.rule.id | IN("ONT002","LEX007","SEC007"))] | length' alerts-all.json) |"
+            echo
+            echo "How to read it: docs/sarif-fingerprints-observation.md."
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
+          mkdir -p evidence && cp obs-*.sarif alerts-*.json evidence/
+
+      - name: Keep the evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sarif-fingerprints-observation
+          path: evidence/
+          retention-days: 30
+
+      # 5. Leave no alert behind.
+      - name: Write empty reports
+        if: ${{ inputs.cleanup && !cancelled() }}
+        run: |
+          set -euo pipefail
+          jq -n '{version: "2.1.0", "$schema": "https://json.schemastore.org/sarif-2.1.0.json", runs: [{tool: {driver: {name: "ontolint"}}, results: []}]}' > empty.sarif
+      - name: Close the plain alerts
+        if: ${{ inputs.cleanup && !cancelled() }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: empty.sarif
+          category: ontolint-observe-plain
+      - name: Close the fingerprint alerts
+        if: ${{ inputs.cleanup && !cancelled() }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: empty.sarif
+          category: ontolint-observe-fp
+      - name: Close the pair alerts
+        if: ${{ inputs.cleanup && !cancelled() }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: empty.sarif
+          category: ontolint-observe-pair
