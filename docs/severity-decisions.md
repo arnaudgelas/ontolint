@@ -62,7 +62,7 @@ All rows are the recommendations of this record, except the departures above and
   specifications and pin their severity and confidence in tests.
 * `category` still disagrees with the finding confidence for OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 (category
   `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63.
-* Counts that need corpora this record does not have: OWL035, SKOS001's widening, SHQ001 and SHQ002 on production shapes.
+* Counts that need corpora this record does not have: OWL035 and SKOS001's widening. SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
 * METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 found no further case (3 true positives, no false positive, on proposed labels).
 
 ### Where each decision ships
@@ -346,6 +346,9 @@ SHQ003 1,244 / 412.
   `sh:message` would carry.
 * **Recommendation: keep the widened condition. Confidence: medium-high.** Info noise is the only cost, and the narrow subset has no principled
   boundary. Documenting the old set as deliberate would require a reason the specification does not give.
+  **Counted on production shapes (issue #208): +28.8% (+902 findings) on 126 files of five repositories, +85% on GeoDCAT-AP alone, and no file changes
+  its `strict` result because of it; `sh:nodeKind` carries two thirds of the added shapes. Keep, as above.** See
+  [`validation/shq-scope.md`](validation/shq-scope.md).
 
 ### 2. SHQ001 and SHQ002: directly targeted property shapes
 
@@ -357,7 +360,9 @@ SHQ003 1,244 / 412.
   A directly targeted property shape is a stand-alone form field.
 * **Recommendation: include directly targeted property shapes; keep excluding those reached only through `sh:or`, `sh:and`, `sh:xone`, `sh:not`,
   `sh:node`, `sh:qualifiedValueShape`. Confidence: low-medium** (35 shapes is a small sample of contrived test files). Info only; no exit change.
-  Needs a count on real shapes graphs.
+  Needs a count on real shapes graphs. **Counted (issue #208): 0 directly targeted property shapes without `sh:property` in 126 shapes files of five production
+  repositories (4,826 property shapes), so the widening adds no finding there; the 35 are contrived W3C test cases. Keep.** See
+  [`validation/shq-scope.md`](validation/shq-scope.md).
 
 ### 3. SKOS001 on any owned resource with a `skos:prefLabel` (S14)
 
@@ -441,7 +446,7 @@ the repository, edit the spec's severity (or confidence, or category) in the rul
 
 ## Limits of this record
 
-* No count exists for real OWL 1 era ontologies (OWL035) or for production shapes graphs outside the W3C test suites and DCAT-AP (IDS, GeoSPARQL, SHQ001, SHQ002); those rows say so.
+* No count exists for real OWL 1 era ontologies (OWL035). Production shapes graphs are counted in [`validation/shq-scope.md`](validation/shq-scope.md): five repositories, which is a sample, not the population.
 * The Jena measurements follow from the command above, but no fixture or scheduled job commits them: only pySHACL's behaviour is a test. Reproducing them in CI is a separate issue (with the weekly Jena round-trip check of #165).
 * One version of each engine (pySHACL 0.40.2, Jena 4.10.0 on Java 11). Jena 5 needs Java 17 and was not run; TopBraid and the OWL API were not run.
 * The per-row file list of an accepted change is the union measured in fact 5, not a per-row split.
