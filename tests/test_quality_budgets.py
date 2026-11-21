@@ -467,3 +467,10 @@ def test_the_metric_findings_of_the_default_policy_are_those_of_a_policy_with_no
     _, out, _ = _run(tmp_path, {}, "--format", "json", capsys=capsys)
     assert json.loads(out)["findings"] == plain
     assert not any(f["rule"] == "METRIC014" for f in plain)
+
+
+def test_the_ci_snippet_greps_the_notice_the_command_line_prints() -> None:
+    """``docs/quality-budgets.md`` tells a CI job to grep this text of stderr: it must stay what the CLI writes."""
+    notice = "METRIC014 is not selected"
+    assert notice in (ROOT / "docs" / "quality-budgets.md").read_text(encoding="utf-8")
+    assert notice in (ROOT / "src" / "ontolint" / "cli.py").read_text(encoding="utf-8")
