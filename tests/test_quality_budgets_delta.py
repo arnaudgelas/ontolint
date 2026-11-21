@@ -405,3 +405,30 @@ def test_a_run_without_delta_budgets_is_unchanged(
     with_baseline = _run(capsys, policy, baseline, AFTER, "--format", "json")
     plain = _run(capsys, policy, None, AFTER, "--format", "json")
     assert json.loads(with_baseline[1]).pop("quality_comparison") and with_baseline[0] == plain[0]
+
+
+# --- the documentation does not contradict the feature ----------------------------------------------------------
+
+
+STALE = (
+    "not a quality gate",
+    "cannot fail a build",
+    "a `delta` key is refused",
+    "delta` key is refused",
+    "not yet built",
+    "not part of this feature",
+    "bounds over the classified change against a quality baseline** (",
+)
+
+
+def test_no_page_says_that_a_quality_baseline_cannot_gate_or_that_delta_budgets_are_not_read() -> None:
+    """The pages that described the gate as missing are rewritten; a later edit must not bring the claim back."""
+    root = Path(__file__).parent.parent
+    pages = [root / "README.md", *sorted((root / "docs").glob("*.md"))]
+    found = [
+        f"{page.relative_to(root)}: {phrase}"
+        for page in pages
+        for phrase in STALE
+        if phrase in page.read_text(encoding="utf-8").lower()
+    ]
+    assert found == []
