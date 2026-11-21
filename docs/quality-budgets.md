@@ -178,6 +178,8 @@ ontolint onto.ttl --config policy.json --quality-baseline quality.json
   read before any is compared, so a failed run reports no partial verdict. The rationale and the cost (a new import
   fails the build until the baseline is regenerated) are in [quality.md](quality.md), "Failing a run on a regression".
 - A rename is a removal and a new term (`RENAME_NOTE`): a delta budget cannot tell it apart.
+- **It is bypassed like every budget**: a run that does not select `METRIC014` checks no delta budget, and only `TOOL002` says so.
+  A CI job that relies on the gate follows "Using a budget as a CI gate" below.
 - The Python API: `Linter` has no baseline of its own. A caller that sets a `delta` budget must set
   `linter.rule_context.quality_comparison = ontolint.quality.compare(old, new)`; without it the rule fails as above.
 
