@@ -318,13 +318,14 @@ def test_an_unencodable_report_keeps_the_previous_output_file(tmp_path: Path, ru
     assert previous.read_bytes() == b"last good report\n"
 
 
-def test_an_unencodable_report_on_stdout_is_tool001_and_exit_2(tmp_path: Path, run: Any) -> None:
+def test_an_unencodable_report_on_stdout_is_escaped_and_the_exit_code_is_the_findings(tmp_path: Path, run: Any) -> None:
+    """A lone surrogate cannot be encoded by utf-8 either; since issue #150 the report is written with it escaped."""
     (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
     code, out, err = run("a.ttl", *MODULES)
-    assert (code, out) == (TOOL_FAILURE, "")
-    assert err.startswith(OUTPUT_FAILED + "UnicodeEncodeError: ")
-    code, out, _err = run("a.ttl", *MODULES, "--format", "json")  # JSON escapes the surrogate: written as before
     assert code != TOOL_FAILURE and "\\ud800" in out
+    assert "TOOL002: warning: the console encoding" in err and "TOOL001" not in err
+    code, out, err = run("a.ttl", *MODULES, "--format", "json")  # JSON escapes the surrogate: written as before
+    assert code != TOOL_FAILURE and "\\ud800" in out and "TOOL002" not in err
 
 
 def test_an_unwritable_output_outranks_a_passing_run(tmp_path: Path, run: Any) -> None:

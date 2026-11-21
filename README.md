@@ -213,8 +213,15 @@ Supported report formats are `text`, `json`, `sarif` and `markdown`, a summary f
 | --- | --- |
 | `0` | No finding meets the configured `--fail-on` threshold. |
 | `1` | At least one finding meets the threshold. |
-| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, a report that cannot be written to `--output` or encoded (`TOOL001: report output failed: ...`), or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker, or a SHACL validation that exceeds `--max-validation-seconds`). |
+| `2` | Tool failure: unreadable input or configuration, an unknown rule selector, a usage error, a report that cannot be written to `--output` (`TOOL001: report output failed: ...`), or a requested rule that `failed` or is `unsupported` (for example `--owl-profile` without Docker, or a SHACL validation that exceeds `--max-validation-seconds`). |
 | `141` | The reader of stdout or stderr closed the pipe before the output was written, as `head` does when a long report is piped into it. This is 128 plus SIGPIPE, the status a shell reports for `cat`, `grep` or `git` in the same case. Nothing is printed, and the report and the verdict are not delivered. |
+
+**Console encoding.** A `text` or `markdown` report is written to stdout in the encoding of the stream. When that encoding cannot
+hold a character of the report (a Windows pipe under cp1252, `PYTHONIOENCODING=ascii`, a lone surrogate), the character is
+written as a backslash escape such as `\u65e5`, as JSON and SARIF always do, `TOOL002: warning: the console encoding cannot
+represent every character of the report` goes to stderr, and the exit code is the findings': an encoding belongs to the terminal,
+not to the ontology. Use `--output FILE` (always UTF-8, exact, and a failure if UTF-8 cannot hold the text) or `--format json`
+for the exact text. Before 0.17.0 this was `TOOL001` and exit `2` (issue #150).
 
 Exit `141` outranks `0` and `1` but not `2`: a run that had already failed says so, and its `TOOL001`
 lines still go to stderr. It happens only when a write really fails, so a short output that

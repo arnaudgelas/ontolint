@@ -1001,17 +1001,42 @@ def _release(stream: TextIO) -> None:
         os.close(null)
 
 
+ENCODING_NOTE = (
+    "TOOL002: warning: the console encoding cannot represent every character of the report; they are written as "
+    "backslash escapes (use --output FILE, UTF-8, or --format json for the exact text)."
+)
+
+
+def _escaped(text: str, stream: TextIO) -> str:
+    """``text`` with every character the encoding of ``stream`` cannot hold written as a backslash escape (``\\uXXXX``).
+
+    This is what ``errors="backslashreplace"`` does, and what the JSON and SARIF reports already write for any
+    non-ASCII character: the report keeps its structure and every finding, and loses only the exact spelling.
+    """
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    return text.encode(encoding, "backslashreplace").decode(encoding)
+
+
 def _write_stdout(text: str) -> None:
     """Write ``text`` to stdout and flush it; raise ``_StdoutClosed`` when its reader has gone.
 
     The flush is what makes a small output fail here, where it can be handled, not at the interpreter's last flush.
     With no stdout at all (``pythonw``, ``>&-``) there is nothing to write to, as ``print`` has always taken it.
+
+    A character the stream's encoding cannot hold (a Windows pipe under cp1252, ``PYTHONIOENCODING=ascii``, a lone
+    surrogate) does not fail the run, whose exit code belongs to the findings and not to the terminal: the text is
+    written with those characters escaped and :data:`ENCODING_NOTE` is printed on stderr.  A text stream encodes a
+    whole string before it writes any of it, so nothing of the first attempt is left on stdout.
     """
     stream = sys.stdout
     if stream is None:
         return
     try:
-        stream.write(text)
+        try:
+            stream.write(text)
+        except UnicodeEncodeError:
+            stream.write(_escaped(text, stream))
+            print(ENCODING_NOTE, file=sys.stderr)
         flush = getattr(stream, "flush", None)
         if flush is not None:
             flush()
@@ -1172,7 +1197,7 @@ def _emit(output: str, args: argparse.Namespace) -> str | None:
         return _write_text(args.output, text, what="report")
     try:
         _write_stdout(text)
-    except (UnicodeEncodeError, OSError) as exc:  # a closed pipe is ``_StdoutClosed``, raised before this
+    except OSError as exc:  # a closed pipe is ``_StdoutClosed``, raised before this; an encoding is degraded there
         return _output_failure("report", exc)
     return None
 

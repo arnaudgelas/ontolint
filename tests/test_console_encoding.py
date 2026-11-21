@@ -61,7 +61,7 @@ def source(tmp_path: Path) -> Path:
 def test_a_report_the_console_cannot_encode_is_degraded_and_the_exit_code_is_the_findings(
     source: Path, kind: str
 ) -> None:
-    done = _cli("u.ttl", "--format", kind, cwd=source, env=CP1252)
+    done = _cli("u.ttl", "--format", kind, "--fail-on", "info", cwd=source, env=CP1252)
     assert done.returncode == FINDINGS, done.stderr  # not 2: the report was written
     text = done.stdout.decode("cp1252")
     assert "\\u65e5\\u672c\\u8a9e" in text  # what cp1252 cannot hold is escaped ...
