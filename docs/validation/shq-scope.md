@@ -20,7 +20,7 @@ uv run python scripts/shq_scope_count.py check DIR    # fails when the counts di
 
 Each file is a `--shapes` graph against an empty data graph. The script counts the new scope apart from the rule and checks it
 against the rule's findings, so a figure is the rule's. The results are of one ontolint version
-([`shq-scope-results.json`](shq-scope-results.json) records it); nothing runs `check` in CI or at release.
+([`shq-scope-results.json`](shq-scope-results.json) records it); `check` needs the network and the checkouts, so it is not in the mandatory CI: [`../releasing.md`](../releasing.md) runs it at every release and the weekly corpus job between releases ([`../ci-schedule.md`](../ci-schedule.md)).
 
 ## Results
 

@@ -26,7 +26,8 @@ What is counted, per file, answers the question of issue #208, whether the widen
 * ``strict_flip``: 1 when the file has no finding of the SHQ family but the extra SHQ003 ones, so the widening alone
   is what makes ``--profile strict`` (which fails on any info finding) fail it on these rules.
 
-The results are a snapshot of one ontolint version; nothing runs ``check`` in CI or at release.
+The results are a snapshot of one ontolint version: ``docs/releasing.md`` runs ``check`` at every release and
+``.github/workflows/corpus.yml`` weekly between releases (advisory, issue #214).
 """
 
 # ruff: noqa: S603, S607 -- runs git on fixed HTTPS URLs and a commit hash of the manifest.

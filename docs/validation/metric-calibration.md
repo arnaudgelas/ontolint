@@ -16,9 +16,10 @@ say, for each file and rule, whether the rule *should* fire (issue #8).
 - **Recall is not measured for METRIC004 to METRIC013.** Only METRIC001, METRIC002 and METRIC003
   have files labelled `fire`.
 
-The results are a one-time snapshot of ontolint 0.13.1. Nothing reruns them: neither CI nor the
-release runs `check`, so a later change to a rule, to ownership, to rdflib or to a default can leave
-them stale. Running the corpus at every release belongs to issue #31.
+The results are a one-time snapshot of ontolint 0.13.1. Mandatory CI does not rerun them (the corpus needs the
+network), so a later change to a rule, to ownership, to rdflib or to a default can leave them stale until
+`check` runs: [`../releasing.md`](../releasing.md) runs it at every release and a weekly advisory job between
+releases ([`../ci-schedule.md`](../ci-schedule.md), issue #169).
 
 **Observed under the proposed labels:**
 - **METRIC001, METRIC002 and METRIC003:** no false positive, and no false negative among the
@@ -258,5 +259,5 @@ A value below the sample gate (`metric_min_sample`, 10 terms) is left out.
    independently redo the labels (#8), and rerun the corpus at release (#31).
 4. **Known-poor files are missing** for METRIC004 to METRIC013. Recall needs one per rule; a
    synthetic fixture shows a boundary, not a real ontology.
-5. **Rerun or retire the snapshot.** Nothing keeps these results current; issue #31 is where a
-   release-time run would go, and `check` is the command it could call.
+5. **Rerun or retire the snapshot.** `check` runs at every release and weekly (issue #169) and says when the results
+   are stale; a stale snapshot is rerun with `measure` and reviewed, not left.

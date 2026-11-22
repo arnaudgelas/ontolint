@@ -30,7 +30,9 @@ METRIC007 is never forced: it reads the same ratio as METRIC006, whose forced me
 the manifest are proposals until the maintainer approves them (``"label_status": "approved"``).  Every rule of
 every entry must be labelled, by name or through ``"*"``, so an omission cannot pass for a judgement.
 
-The results are a snapshot of one ontolint version: nothing runs ``check`` in CI or at release (issue #31).
+The results are a snapshot of one ontolint version: ``docs/releasing.md`` runs ``check`` at every release and
+``.github/workflows/corpus.yml`` weekly between releases (advisory: a difference is reviewed and blocks nothing,
+issue #169).
 """
 
 # ruff: noqa: S310, S603 -- downloads fixed, checksummed HTTPS URLs; runs this interpreter on ontolint.
