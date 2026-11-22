@@ -1,5 +1,5 @@
 {
-  "description": "The METRIC calibration corpus (issue #8). Files are fetched by URL and checked by SHA-256; none is committed. Every rule of every entry has a label, named or through '*' (the rules the entry does not name). 'expect' is 'fire' or 'silent' (counted), 'unknown' (assessed, left to the maintainer's judgement) or 'unassessed' (not looked at). 'basis' is 'checked' (the reason was verified in the file), 'presumed' (inferred from the file's standing, not checked) or 'none'. See docs/validation/metric-calibration.md.",
+  "description": "The METRIC calibration corpus (issue #8). Files are fetched by URL and checked by SHA-256; none is committed. Every rule of every entry has a label, named or through '*' (the rules the entry does not name). 'expect' is 'fire' or 'silent' (counted), 'unknown' (assessed, left to the maintainer's judgement) or 'unassessed' (not looked at). 'basis' is 'checked' (the reason was verified in the file), 'presumed' (inferred from the file's standing, not checked) or 'none'. See docs/validation/metric-calibration.md. `sources` are repositories pinned by commit with their files, catalogs and runs (scripts/corpus.py, issue #167); metric_corpus.py reads only `entries`.",
   "label_status": "proposed",
   "entries": [
     {
@@ -525,6 +525,71 @@
           "why": "The classes that are targets of dcam:rangeIncludes are connected, not orphans, and CLS001 reads that predicate since #66: 1 of 22 (BibliographicResource) is an orphan, 0.045."
         }
       }
+    }
+  ],
+  "sources": [
+    {
+      "id": "cco-umbrella",
+      "repository": "CommonCoreOntology/CommonCoreOntologies",
+      "commit": "662f3a6fbb4de40804f970863e0ac0dbd2153460",
+      "licence": "BSD-3-Clause",
+      "note": "The Common Core Ontologies as published: eleven modules with their own catalog, an umbrella (AllCoreOntology) with a second catalog that reaches the modules and BFO through '../', so a run needs both an import root and a catalog. Shows ownership in a closure (TODO.md, Real-world ontologies).",
+      "files": {
+        "src/cco-imports/bfo-core.ttl": "128f5fe1dab7ee804a3037a836813e5953c846eeeefee883a47d5db0b37a106b",
+        "src/cco-merged/AllCoreOntology.ttl": "11947e11b89282ca9aba9ae06ae07a563e253af836dbf26d60ecd226906a3ea4",
+        "src/cco-merged/catalog-v001.xml": "d14418336ac72f1203991153614d22ed360004612313e094241edc154b7bb103",
+        "src/cco-modules/AgentOntology.ttl": "0c2c5635c9a385838fdc1d8bd2c4bbaf3b41a64c8eb1cdc2845492befdfb5eda",
+        "src/cco-modules/ArtifactOntology.ttl": "47bad3aae253ec2ea48cd37ff994d0384559d97e87bfc465504802ef5cbbd256",
+        "src/cco-modules/CurrencyUnitOntology.ttl": "ec445b4d058c6fdbb1812928ffc8314cd66c2b743cdc5fe5d6cf4d5fdec6d8b2",
+        "src/cco-modules/EventOntology.ttl": "341282bd97e1c066658fd57415227b9a4e42339deb02e87ab829f556bc1044e4",
+        "src/cco-modules/ExtendedRelationOntology.ttl": "77322012139e42ec69adafd26e63500433942e77486062c781e0e8c7a0fcb5e1",
+        "src/cco-modules/FacilityOntology.ttl": "8d057c1a85f777d7ce1809afc4a24b4f0633f62eff0e993caf6efbff0a40129c",
+        "src/cco-modules/GeospatialOntology.ttl": "d24d1bbd6b23c93a45c0381f5910da50cd8361dbd6c15e6d8fee26e208116a69",
+        "src/cco-modules/InformationEntityOntology.ttl": "42b2979bcce06cb543d24f1fe32337636e8797655264dbad9c901747c1ec3382",
+        "src/cco-modules/QualityOntology.ttl": "b716a4aacfc10d4f816a11932a966bcb406680627cc88a2810617bcda0d3de5e",
+        "src/cco-modules/TimeOntology.ttl": "ce113b87d98281d5fdc8b970e6ae17ef9bd4c35da1eb38dcac71ea88cb54b429",
+        "src/cco-modules/UnitsOfMeasureOntology.ttl": "36492bdcad79cae1f777dc33d3e3806b643afc896e953bf1aefb8d9f32dcfb83",
+        "src/cco-modules/catalog-v001.xml": "010ff624880dce5fa0e73924317e113e30bedef1b915051d5ef9a2f8e28aff9a"
+      },
+      "runs": [
+        {
+          "name": "umbrella",
+          "inputs": [
+            "src/cco-merged/AllCoreOntology.ttl"
+          ],
+          "args": [
+            "--follow-imports",
+            "--import-root",
+            "{root}",
+            "--catalog",
+            "{root}/src/cco-merged/catalog-v001.xml"
+          ],
+          "exit_status": 0
+        },
+        {
+          "name": "modules",
+          "inputs": [
+            "src/cco-modules/AgentOntology.ttl",
+            "src/cco-modules/ArtifactOntology.ttl",
+            "src/cco-modules/CurrencyUnitOntology.ttl",
+            "src/cco-modules/EventOntology.ttl",
+            "src/cco-modules/ExtendedRelationOntology.ttl",
+            "src/cco-modules/FacilityOntology.ttl",
+            "src/cco-modules/GeospatialOntology.ttl",
+            "src/cco-modules/InformationEntityOntology.ttl",
+            "src/cco-modules/QualityOntology.ttl",
+            "src/cco-modules/TimeOntology.ttl",
+            "src/cco-modules/UnitsOfMeasureOntology.ttl"
+          ],
+          "args": [
+            "--import-root",
+            "{root}",
+            "--catalog",
+            "{root}/src/cco-modules/catalog-v001.xml"
+          ],
+          "exit_status": 0
+        }
+      ]
     }
   ]
 }
