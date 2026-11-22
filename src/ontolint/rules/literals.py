@@ -157,7 +157,8 @@ _LEAP_DAYS = (31, 29, *_DAYS[2:])
 def _xsd_accepts(datatype: Node, lexical: str) -> bool:
     """Whether XSD 1.1 accepts ``lexical`` as an ``xsd:date``, ``xsd:dateTime`` or ``xsd:time``."""
     pattern = _XSD_TEMPORAL.get(datatype) if isinstance(datatype, URIRef) else None
-    match = pattern.fullmatch(lexical) if pattern else None
+    # whiteSpace is collapse for these atomic datatypes (Part 2, 4.3.6): XML whitespace around the form is not part of it
+    match = pattern.fullmatch(lexical.strip(" \t\n\r")) if pattern else None
     if not match:
         return False
     if datatype == XSD.time:

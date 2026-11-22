@@ -151,7 +151,8 @@ results after upgrading.
 
 - **DATA003:** a date or time that XSD 1.1 accepts is no longer reported as "not a valid xsd:dateTime" (or `date`,
   `time`): `24:00:00`, the year `0000`, a negative year and a year of five digits or more. RDFLib reads these datatypes
-  into Python `datetime` objects, whose years run from 1 to 9999 and whose hours stop at 23. Forms XSD rejects
+  into Python `datetime` objects, whose years run from 1 to 9999 and whose hours stop at 23. XML whitespace around
+  the form is collapsed first (XSD 1.1 `whiteSpace`), so `" 2020-01-01T24:00:00 "` is accepted too. Forms XSD rejects
   (`2021-02-29`, `25:00:00`, `24:00:01`) are still reported; the rule adds no finding. Fewer findings only; no
   identity changes.
 - **CLS014:** a class below two disjoint classes that lies on a subclass cycle was reported in no member of the
