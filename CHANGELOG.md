@@ -205,6 +205,12 @@ results after upgrading.
   severity and confidence rationale, the RFC 3986 and 3987 sections they rest on, fixtures), with a specification
   test file, `tests/test_iri_specification.py`, that pins every known gap as it is. No finding, severity,
   confidence or identity changes; IRI007 (network) stays proposed. Part of #64 (issue #186).
+- **docs:** the OWL, METRIC and SHQ specifications are corrected where review (#182) found a sentence false, with no
+  change to any finding, severity, confidence or identity: OWL001, OWL005, OWL006, OWL008, OWL010, OWL011, OWL019,
+  OWL022, OWL024, OWL025, OWL031, OWL040, OWL041, OWL043, OWL044 and OWL045; SHQ005, SHQ007, SHQ008, SHQ010,
+  SHQ011, SHQ012, SHQ013, SHQ017, SHQ018, SHQ021, SHQ024 and SHQ025; and the common bullets of METRIC001 to
+  METRIC013 (METRIC004, METRIC005, METRIC006, METRIC007, METRIC010, METRIC011 and METRIC013 in particular).
+  DATA001 and DATA002 gain their rule-level specification.
 
 ## [0.15.1] - 2026-11-15
 
