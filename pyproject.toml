@@ -22,7 +22,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "pyshacl>=0.40.2",
+    "pyshacl>=0.40.2,<0.41",
     "rdflib>=7.6.0",
 ]
 
