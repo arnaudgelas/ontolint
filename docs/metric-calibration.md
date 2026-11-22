@@ -18,7 +18,8 @@ labels and the false-positive counts).
   (`checked` in the file, or `presumed` from the file's standing). Most negatives are presumed.
 - Every false-positive and false-negative count is conditioned on those labels. They are as good as the labels
   and no better. They are not a measurement of precision, and with one or two known-poor files for
-  `METRIC001`-`METRIC003` and none for `METRIC004`-`METRIC013`, recall is not measured for most rules.
+  `METRIC001`-`METRIC003`, one for `METRIC008` (PAO) and none for the other rules of `METRIC004`-`METRIC013`, recall
+  is not measured for most rules.
 - Numbers are for ontolint 0.14.0. `check` reproduced the 0.13.1 results unchanged on 0.14.0 before this
   page's extra measurements were added.
 - `check` was rerun on ontolint 0.15.1 (2026-11-19) after refetching all 21 files from their pins: every
@@ -96,16 +97,16 @@ here. An interval is only as good as the labels.
 | METRIC001 | 0.500 | [0.0000, 1.0000) | yes | [0.0000, 1.0000) | yes |
 | METRIC002 | 0.500 | [0.3272, 1.0000) | yes | [0.0971, 1.0000) | yes |
 | METRIC003 | 0.500 | [0.1754, 1.0000) | yes | [-inf, 1.0000) | yes |
-| METRIC004 | 8.000 | [5.3661, +inf) | yes | [-inf, +inf) | yes |
-| METRIC005 | 0.300 | [0.0455, +inf) | yes | [0.0455, +inf) | yes |
+| METRIC004 | 8.000 | [13.5714, +inf) | no | [13.5714, +inf) | no |
+| METRIC005 | 0.300 | [0.0833, +inf) | yes | [0.0833, +inf) | yes |
 | METRIC006 | 0.100 | (-inf, 0.0000] | no | (-inf, 0.0000] | no |
-| METRIC007 | 5.000 | [4.5333, +inf) | yes | [-inf, +inf) | yes |
-| METRIC008 | 0.500 | [1.0000, +inf) | no | [1.0000, +inf) | no |
+| METRIC007 | 5.000 | [4.5333, +inf) | yes | [0.7209, +inf) | yes |
+| METRIC008 | 0.500 | none | no | none | no |
 | METRIC009 | 0.500 | (-inf, 0.0000] | no | (-inf, 0.0000] | no |
 | METRIC010 | 0.500 | [1.0000, +inf) | no | [1.0000, +inf) | no |
 | METRIC011 | 10 | [80.0000, +inf) | no | [80.0000, +inf) | no |
-| METRIC012 | 4.000 | (-inf, 10.9091] | yes | (-inf, +inf) | yes |
-| METRIC013 | 0.600 | [0.2105, +inf) | yes | [-inf, +inf) | yes |
+| METRIC012 | 4.000 | (-inf, 10.9091] | yes | (-inf, 12.1075] | yes |
+| METRIC013 | 0.600 | [0.4234, +inf) | yes | [0.4234, +inf) | yes |
 <!-- metric_corpus.py: distributions end -->
 
 ## Reading the results
@@ -256,7 +257,7 @@ Making the labelling mechanical (no step below changes a default):
    `fire` label prints no recommendation: its recall is unmeasured, and the limit that switches it off would
    otherwise win. Copy the decisions into `validation/metric-corpus.json`, set `label_status` to `approved`, and
    `scripts/metric_corpus.py render`.
-3. Decide the open labels: METRIC004 and METRIC008 on PAO, METRIC006 on the Rights Ontology.
+3. Review the labels proposed for the four research files (issue #152: all 37 unassessed pairs and the three open ones were assessed against the files). Two decide something: PAO's 50 flat questionnaires are labelled `silent` for METRIC004, so the default (8.0) fires on a file labelled good and no limit below 13.57 is consistent with the labels; PAO is the one `fire` label of METRIC008, and the three other files the default flags (SSN, SKOS Core, MOMo food traceability) are labelled `silent` because they state signatures as restrictions, so the sweep prefers a limit of 1.0, which misses PAO: one true positive against three false positives is evidence about the rule (a property used in a restriction counts as unsigned) more than about the limit. Two pairs stay `unknown` for you: METRIC005 and METRIC006 on MFTO.
 4. Judge the known-poor nominees for METRIC004-METRIC013, or accept their recall as unmeasured. Ten candidates in
    [`validation/metric-candidates.md`](validation/metric-candidates.md) are measured and pinned immutably: four suggested "silent"
    and six that fire METRIC004 to METRIC008, METRIC010 or METRIC013, which a firing alone does not make poor. Only the maintainer

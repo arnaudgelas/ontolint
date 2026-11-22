@@ -13,8 +13,8 @@ say, for each file and rule, whether the rule *should* fire (issue #8).
   because the file is a curated, widely reused ontology with no known aggregate problem. That is an
   assumption, not something checked in the file. Every true positive, false positive and false
   negative rests instead on a label whose reason was verified in the file (a test enforces it).
-- **Recall is not measured for METRIC004 to METRIC013.** Only METRIC001, METRIC002 and METRIC003
-  have files labelled `fire`.
+- **Recall is not measured for METRIC004 to METRIC013, except METRIC008's single case.** Only METRIC001,
+  METRIC002 and METRIC003 have several files labelled `fire`; METRIC008 has one (PAO).
 
 The results are a one-time snapshot of ontolint 0.13.1. Mandatory CI does not rerun them (the corpus needs the
 network), so a later change to a rule, to ownership, to rdflib or to a default can leave them stale until
@@ -72,14 +72,14 @@ The corpus mixes:
   Assessment Ontology (no property documentation); and the Hohfeldian Rights Ontology, labelled
   only where its file is unambiguous.
 
-There is no known-poor example for METRIC004 to METRIC013: no file is labelled `fire` for them, so
-their recall is not measured here, and their false-positive counts rest mostly on presumed labels.
+There is no known-poor example for METRIC004 to METRIC013 but one (PAO, for METRIC008): no other file is
+labelled `fire` for them, so their recall is not measured here, and their false-positive counts rest mostly on presumed labels.
 
 Every rule of every file has a label, named or through `*`, and `load_manifest` refuses an entry that
 leaves one out, so an omission cannot pass for a judgement. A label is `fire` or `silent` (counted),
-`unknown` (assessed, left to the maintainer: 3 pairs) or `unassessed` (not looked at: 37 pairs, the
-rules the four research files were not labelled for). Its `basis` is `checked` (the reason was
-verified in the file: 25 pairs), `presumed` (from the file's standing: 211) or `none`.
+`unknown` (assessed, left to the maintainer: 2 pairs) or `unassessed` (not looked at: 0 pairs, since issue #152 assessed
+the 37 pairs of the four research files against the files and their measurements). Its `basis` is `checked` (the reason was
+verified in the file: 62 pairs), `presumed` (from the file's standing: 211) or `none`.
 
 ## Method
 
@@ -127,13 +127,13 @@ label is marked FP or FN.
 | `sdo-1.9.0.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 1.62 over 8 [Sp] | 0 [Sp] | 103 / 25 [Sp] | 103 / 25 [Sp] | 1 / 103 [Sp] | 125 / 128 [Sp] | 8 / 139 [Sp] | 0 [Sp] | 21.80 over 25 [Sp] | 0 [Sp] |
 | `mod.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 2 [Sp] | 0 [Sp] | 68 / 15 [Sp] | 68 / 15 [Sp] | 9 / 68 [Sp] | none untagged [Sp] | 8 / 104 [Sp] | 0 [Sp] | 14.80 over 15 [Sp] | 0 [Sp] |
 | `automatce-base.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 1.70 over 27 [Sp] | 0 [Sp] | **11 / 309** [S FP] | 11 / 309 [Sp] | 0 [Sp] | none untagged [Sp] | **271 / 331** [S FP] | 0 [Sp] | 16.94 over 309 [Sp] | 0 [Sp] |
-| `mfto.ttl` | 0 [S] | **18 / 18** [F] | 2 / 2 [-] | no parent [-] | 4 / 18 [-] | 2 / 18 [-] | 2 / 18 [-] | 2 / 2 [-] | none untagged [-] | **14 / 14** [S FP] | 2 [-] | no definition [-] | 0 [-] |
-| `rights-ontology.ttl` | 0 [S] | 0 [S] | 0 [-] | 2.50 over 4 [-] | 1 / 12 [-] | **0 / 12** [?] | 0 / 12 [-] | 0 [-] | none untagged [-] | 0 [-] | 0 [-] | 22.67 over 12 [-] | 0 [-] |
-| `pao.owl` | 0 [S] | 10 / 103 [S] | **13 / 13** [F] | **13.57 over 7** [?] | 0 [-] | 13 / 103 [-] | 13 / 103 [-] | **10 / 13** [?] | none untagged [-] | 12 / 107 [-] | 2 [-] | 12.11 over 93 [-] | 0 [-] |
+| `mfto.ttl` | 0 [S] | **18 / 18** [F] | 2 / 2 [S] | no parent [S] | 4 / 18 [?] | 2 / 18 [?] | 2 / 18 [S] | 2 / 2 [S] | none untagged [S] | **14 / 14** [S FP] | 2 [S] | no definition [S] | 0 [S] |
+| `rights-ontology.ttl` | 0 [S] | 0 [S] | 0 [S] | 2.50 over 4 [S] | 1 / 12 [S] | **0 / 12** [S FP] | 0 / 12 [S] | 0 [S] | none untagged [S] | 0 [S] | 0 [S] | 22.67 over 12 [S] | 0 [S] |
+| `pao.owl` | 0 [S] | 10 / 103 [S] | **13 / 13** [F] | **13.57 over 7** [S FP] | 0 [S] | 13 / 103 [S] | 13 / 103 [S] | **10 / 13** [F] | none untagged [S] | 12 / 107 [S] | 2 [S] | 12.11 over 93 [S] | 0 [S] |
 | `ids-ontology.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | no class [Sp] | no class [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | **80** [S FP] | no definition [Sp] | 2 / 16 [Sp] |
 | `tractusx-ontology.ttl` | 0 [Sp] | 0 [Sp] | 2 / 156 [Sp] | 2.60 over 10 [Sp] | 0 [Sp] | 139 / 32 [Sp] | 139 / 32 [Sp] | 0 [Sp] | 183 / 186 [Sp] | 6 / 236 [Sp] | 0 [Sp] | 15.72 over 32 [Sp] | 0 [Sp] |
 | `tractusx-taxonomy.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | no parent [Sp] | 0 [Sp] | no class [Sp] | no class [Sp] | 0 [Sp] | none untagged [Sp] | 0 [Sp] | 0 [Sp] | no definition [Sp] | 0 [Sp] |
-| `food-traceability.ttl` | **43 / 43** [F] | **43 / 43** [F] | **31 / 31** [F] | 6.00 over 3 [-] | 0 [-] | 31 / 43 [-] | 31 / 43 [-] | **31 / 31** [S FP] | none untagged [-] | 0 [-] | 0 [-] | no definition [-] | 58 / 137 [-] |
+| `food-traceability.ttl` | **43 / 43** [F] | **43 / 43** [F] | **31 / 31** [F] | 6.00 over 3 [S] | 0 [S] | 31 / 43 [S] | 31 / 43 [S] | **31 / 31** [S FP] | none untagged [S] | 0 [S] | 0 [S] | no definition [S] | 58 / 137 [S] |
 | `dcterms.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 4 [Sp] | 1 / 22 [S] | 55 / 22 [Sp] | 55 / 22 [Sp] | 0 [Sp] | none untagged [Sp] | 3 / 11 [Sp] | 0 [Sp] | 10.91 over 22 [Sp] | 0 [Sp] |
 
 ### Outcomes under the proposed labels
@@ -145,17 +145,17 @@ the file, *presumed* when it rests on the file's standing alone.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | METRIC001 | 1 | 1 | 0 | 3 | 17 | 0 | 0 | 0 |
 | METRIC002 | 2 | 2 | 0 | 2 | 17 | 0 | 0 | 0 |
-| METRIC003 | 2 | 2 | 0 | 0 | 17 | 0 | 0 | 2 |
-| METRIC004 | 1 | 0 | 0 | 0 | 17 | 0 | 1 | 3 |
-| METRIC005 | 0 | 0 | 0 | 1 | 16 | 0 | 0 | 4 |
-| METRIC006 | 3 | 0 | 2 | 0 | 15 | 0 | 1 | 3 |
-| METRIC007 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
-| METRIC008 | 4 | 0 | 3 | 0 | 15 | 0 | 1 | 2 |
-| METRIC009 | 3 | 0 | 3 | 0 | 14 | 0 | 0 | 4 |
-| METRIC010 | 2 | 0 | 2 | 0 | 16 | 0 | 0 | 3 |
-| METRIC011 | 1 | 0 | 1 | 0 | 16 | 0 | 0 | 4 |
-| METRIC012 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
-| METRIC013 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 4 |
+| METRIC003 | 2 | 2 | 0 | 2 | 17 | 0 | 0 | 0 |
+| METRIC004 | 1 | 0 | 1 | 3 | 17 | 0 | 0 | 0 |
+| METRIC005 | 0 | 0 | 0 | 4 | 16 | 0 | 1 | 0 |
+| METRIC006 | 3 | 0 | 3 | 2 | 15 | 0 | 1 | 0 |
+| METRIC007 | 0 | 0 | 0 | 4 | 17 | 0 | 0 | 0 |
+| METRIC008 | 4 | 1 | 3 | 2 | 15 | 0 | 0 | 0 |
+| METRIC009 | 3 | 0 | 3 | 4 | 14 | 0 | 0 | 0 |
+| METRIC010 | 2 | 0 | 2 | 3 | 16 | 0 | 0 | 0 |
+| METRIC011 | 1 | 0 | 1 | 4 | 16 | 0 | 0 | 0 |
+| METRIC012 | 0 | 0 | 0 | 4 | 17 | 0 | 0 | 0 |
+| METRIC013 | 0 | 0 | 0 | 4 | 17 | 0 | 0 | 0 |
 
 ### The proposed labels
 
@@ -182,29 +182,62 @@ the file, *presumed* when it rests on the file's standing alone.
 | `automatce-base.ttl` | every other rule | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
 | `automatce-base.ttl` | METRIC006 | silent | checked | An ODK base release: its relations are imported from PMD core and RO, not owned. |
 | `automatce-base.ttl` | METRIC010 | silent | checked | An application ontology that extends PMD core and BFO by subclassing: reuse by design. |
-| `mfto.ttl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
 | `mfto.ttl` | METRIC001 | silent | checked | Every class is labelled. |
 | `mfto.ttl` | METRIC002 | fire | checked | No class has a definition (18 of 18). |
+| `mfto.ttl` | METRIC003 | silent | checked | 2 properties, below metric_min_sample (10): the gate silences the rule, and two properties cannot support a conclusion. Both are undocumented. |
+| `mfto.ttl` | METRIC004 | silent | checked | None of its 14 subclass assertions points to an owned class (every parent is a BFO class), so there is no fan-out to measure. |
+| `mfto.ttl` | METRIC005 | unknown | checked | 4 of 18 classes (22%) have no parent or subclass (sex, process of birth, two MFQ variables): unfinished alignment under BFO or deliberate, and the limit 0.3 is the question, so the label is the maintainer's. |
+| `mfto.ttl` | METRIC006 | unknown | checked | 2 relation properties for 18 classes (0.11, limit 0.1) and neither has a domain or a range: a survey-variable model that may need no relations, or an unfinished one. |
+| `mfto.ttl` | METRIC007 | silent | checked | 0.11 relation properties per class, far below the upper limit of 5. |
+| `mfto.ttl` | METRIC008 | silent | checked | 2 properties, below metric_min_sample (10): the gate silences the rule. Both lack a domain and a range. |
+| `mfto.ttl` | METRIC009 | silent | checked | All 18 labels carry the language tag @en. |
 | `mfto.ttl` | METRIC010 | silent | checked | Every class sits under a BFO class: alignment to an upper ontology is the intended reuse. |
-| `rights-ontology.ttl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
+| `mfto.ttl` | METRIC011 | silent | checked | 2 imports (BFO classes-only and RO core). |
+| `mfto.ttl` | METRIC012 | silent | checked | No class has a definition, so there is no length to measure; the defect is METRIC002's, labelled fire. |
+| `mfto.ttl` | METRIC013 | silent | checked | Every blank-node subject (13 of 35 subjects) is structural; the rule counts none of them (measured 0). |
 | `rights-ontology.ttl` | METRIC001 | silent | checked | Every class is labelled. |
 | `rights-ontology.ttl` | METRIC002 | silent | checked | Every class is defined. |
-| `rights-ontology.ttl` | METRIC006 | unknown | checked | Twelve classes and no relation: a taxonomy of Hohfeld's incidents may be intended, or unfinished. |
-| `pao.owl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
+| `rights-ontology.ttl` | METRIC003 | silent | checked | No owned property, so no population. |
+| `rights-ontology.ttl` | METRIC004 | silent | checked | 2.5 subclasses per parent on average over 4 parents, far below 8. |
+| `rights-ontology.ttl` | METRIC005 | silent | checked | 1 of 12 classes is unconnected. |
+| `rights-ontology.ttl` | METRIC006 | silent | checked | No owned relation by design: its 28 restrictions all use one property, BFO has part (BFO_0000051), from the upper ontology it imports. The same reuse as PATO's, checked in the file. |
+| `rights-ontology.ttl` | METRIC007 | silent | checked | No owned relation, ratio 0. |
+| `rights-ontology.ttl` | METRIC008 | silent | checked | No owned object or datatype property, so no population. |
+| `rights-ontology.ttl` | METRIC009 | silent | checked | All 12 labels carry the language tag @en. |
+| `rights-ontology.ttl` | METRIC010 | silent | checked | No subclass, domain or range reference to a foreign namespace. |
+| `rights-ontology.ttl` | METRIC011 | silent | checked | No owl:imports. |
+| `rights-ontology.ttl` | METRIC012 | silent | checked | All 12 classes are defined, 22.7 words on average, far above 4. |
+| `rights-ontology.ttl` | METRIC013 | silent | checked | Every blank-node subject (99 of 112) is structural, restriction and list nodes; the rule counts none of them (measured 0). |
 | `pao.owl` | METRIC001 | silent | checked | Every class is labelled. |
 | `pao.owl` | METRIC002 | silent | checked | Most classes are defined (93 of 103). |
 | `pao.owl` | METRIC003 | fire | checked | None of its 13 owned properties is documented. |
-| `pao.owl` | METRIC004 | unknown | checked | 50 named questionnaires under one parent: a catalogue may be flat on purpose, or want grouping by construct. |
-| `pao.owl` | METRIC008 | unknown | checked | 10 of its 13 owned object and datatype properties have no signature, in a small research ontology: unfinished or deliberately open. |
+| `pao.owl` | METRIC004 | silent | checked | The 50 subclasses of one parent are named questionnaires (Absorption, Achievement via Independence, Adjective, ... Questionnaire) and its next two parents have 9 and 8: a catalogue of instruments is flat by nature, so a default that fires on it (13.57) is a false positive. Verified in the file; a different reading is legitimate. |
+| `pao.owl` | METRIC005 | silent | checked | No orphan class. |
+| `pao.owl` | METRIC006 | silent | checked | 13 owned relation properties for 103 classes (0.126), and 132 restrictions in the file: relations exist, though the limit 0.1 is close. |
+| `pao.owl` | METRIC007 | silent | checked | 0.126 relation properties per class, far below 5. |
+| `pao.owl` | METRIC008 | fire | checked | 15 of the 18 declared properties have neither a domain nor a range, and 9 of those appear in no restriction either, so they carry no signature at all: an unfinished research ontology (the rule counts 10 of 13 owned). Counted in the file. |
+| `pao.owl` | METRIC009 | silent | checked | All labels carry a language tag but one class (112 of 113). |
+| `pao.owl` | METRIC010 | silent | checked | 12 of 107 references are foreign (0.11), against a limit of 0.5. |
+| `pao.owl` | METRIC011 | silent | checked | 2 imports. |
+| `pao.owl` | METRIC012 | silent | checked | The 93 defined classes average 12.1 words, above 4. |
+| `pao.owl` | METRIC013 | silent | checked | Every blank-node subject (138 of 272) is structural, restriction and list nodes; the rule counts none of them (measured 0). |
 | `ids-ontology.ttl` | every other rule | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
 | `ids-ontology.ttl` | METRIC011 | silent | checked | The 80 imports are the model's own modules, by relative IRI: a modular header, not 80 dependencies. |
 | `tractusx-ontology.ttl` | all | silent | presumed | Curated and widely reused; no aggregate quality problem is known for it. |
 | `tractusx-taxonomy.ttl` | all | silent | presumed | A SKOS taxonomy: no class or property, so no METRIC rule has anything to judge. |
-| `food-traceability.ttl` | every other rule | unassessed | none | Not assessed: only the rules whose gap or absence is visible in the file were labelled. |
 | `food-traceability.ttl` | METRIC001 | fire | checked | No class has a label: a diagram export that was never annotated. |
 | `food-traceability.ttl` | METRIC002 | fire | checked | No class has a definition. |
 | `food-traceability.ttl` | METRIC003 | fire | checked | No property is documented. |
+| `food-traceability.ttl` | METRIC004 | silent | checked | 6.0 subclasses per parent on average over 3 parents, below 8. |
+| `food-traceability.ttl` | METRIC005 | silent | checked | No orphan class. |
+| `food-traceability.ttl` | METRIC006 | silent | checked | 31 relation properties for 43 classes (0.72): relations are the content of this model. |
+| `food-traceability.ttl` | METRIC007 | silent | checked | 0.72 relation properties per class, far below 5. |
 | `food-traceability.ttl` | METRIC008 | silent | checked | MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design. |
+| `food-traceability.ttl` | METRIC009 | silent | checked | No class has a label, so there is no labelled population; the defect is METRIC001's, labelled fire. |
+| `food-traceability.ttl` | METRIC010 | silent | checked | No foreign reference. |
+| `food-traceability.ttl` | METRIC011 | silent | checked | No owl:imports. |
+| `food-traceability.ttl` | METRIC012 | silent | checked | No class has a definition, so there is no length to measure; the defect is METRIC002's, labelled fire. |
+| `food-traceability.ttl` | METRIC013 | silent | checked | 58 of 137 subjects (0.42, limit 0.6) are non-structural blank nodes: 42 are CoModIDE diagram-layout annotations (entityPositionX and Y) and 16 are anonymous inverse-property expressions. A tool artefact, not a hidden individual; counted in the file. |
 | `dcterms.ttl` | every other rule | silent | presumed | A DCMI Recommendation. Curated and widely reused; no aggregate quality problem is known for it. |
 | `dcterms.ttl` | METRIC005 | silent | checked | The classes that are targets of dcam:rangeIncludes are connected, not orphans, and CLS001 reads that predicate since #66: 1 of 22 (BibliographicResource) is an orphan, 0.045. |
 <!-- metric_corpus.py: end -->
@@ -257,7 +290,7 @@ A value below the sample gate (`metric_min_sample`, 10 terms) is left out.
    upper-ontology alignment, own-module imports), a product decision for its own issue. No
    threshold, severity or confidence should change on this snapshot alone: first approve or
    independently redo the labels (#8), and rerun the corpus at release (#31).
-4. **Known-poor files are missing** for METRIC004 to METRIC013. Recall needs one per rule; a
+4. **Known-poor files are missing** for METRIC004 to METRIC013 but one (PAO, METRIC008). Recall needs one per rule; a
    synthetic fixture shows a boundary, not a real ontology.
 5. **Rerun or retire the snapshot.** `check` runs at every release and weekly (issue #169) and says when the results
    are stale; a stale snapshot is rerun with `measure` and reviewed, not left.

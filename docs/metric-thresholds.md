@@ -81,16 +81,16 @@ note.
 | METRIC001 | `metric_max_unlabelled_ratio` | 0.5000 | 16 | 1 | 1 | 15 | 1 | 0 | 0 | 15 | 1/1 | measured |
 | METRIC002 | `metric_max_undefined_ratio` | 0.5000 | 16 | 2 | 2 | 14 | 2 | 0 | 0 | 14 | 2/2 | measured |
 | METRIC003 | `metric_max_undocumented_property_ratio` | 0.5000 | 16 | 2 | 2 | 14 | 2 | 0 | 0 | 14 | 2/2 | measured |
-| METRIC004 | `metric_max_mean_fanout` | 8.0000 | 14 | 1 | 0 | 11 | 0 | 0 | 0 | 11 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC005 | `metric_max_orphan_ratio` | 0.3000 | 16 | 0 | 0 | 12 | 0 | 0 | 0 | 12 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC006 | `metric_min_property_class_ratio` | 0.1000 | 16 | 3 | 0 | 12 | 0 | 2 | 0 | 10 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC007 | `metric_max_property_class_ratio` | 5.0000 | 16 | 0 | 0 | 12 | 0 | 0 | 0 | 12 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC008 | `metric_max_unsigned_property_ratio` | 0.5000 | 14 | 4 | 0 | 13 | 0 | 3 | 0 | 10 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC009 | `metric_min_language_coverage` | 0.5000 | 18 | 3 | 0 | 15 | 0 | 3 | 0 | 12 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC010 | `metric_max_foreign_reference_ratio` | 0.5000 | 17 | 2 | 0 | 14 | 0 | 2 | 0 | 12 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC011 | `metric_max_imports` | 10 | 21 | 1 | 0 | 17 | 0 | 1 | 0 | 16 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC012 | `metric_min_definition_words` | 4.0000 | 14 | 0 | 0 | 12 | 0 | 0 | 0 | 12 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
-| METRIC013 | `metric_max_blank_node_ratio` | 0.6000 | 21 | 0 | 0 | 17 | 0 | 0 | 0 | 17 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC004 | `metric_max_mean_fanout` | 8.0000 | 14 | 1 | 0 | 14 | 0 | 1 | 0 | 13 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC005 | `metric_max_orphan_ratio` | 0.3000 | 16 | 0 | 0 | 15 | 0 | 0 | 0 | 15 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC006 | `metric_min_property_class_ratio` | 0.1000 | 16 | 3 | 0 | 15 | 0 | 3 | 0 | 12 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC007 | `metric_max_property_class_ratio` | 5.0000 | 16 | 0 | 0 | 16 | 0 | 0 | 0 | 16 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC008 | `metric_max_unsigned_property_ratio` | 0.5000 | 14 | 4 | 1 | 13 | 1 | 3 | 0 | 10 | 1/1 | measured |
+| METRIC009 | `metric_min_language_coverage` | 0.5000 | 18 | 3 | 0 | 18 | 0 | 3 | 0 | 15 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC010 | `metric_max_foreign_reference_ratio` | 0.5000 | 17 | 2 | 0 | 17 | 0 | 2 | 0 | 15 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC011 | `metric_max_imports` | 10 | 21 | 1 | 0 | 21 | 0 | 1 | 0 | 20 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC012 | `metric_min_definition_words` | 4.0000 | 14 | 0 | 0 | 14 | 0 | 0 | 0 | 14 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
+| METRIC013 | `metric_max_blank_node_ratio` | 0.6000 | 21 | 0 | 0 | 21 | 0 | 0 | 0 | 21 | unmeasured | unmeasured: no label expects a fire, so recall has no value |
 
 <!-- metric_sweep.py: evidence end -->
 
@@ -124,12 +124,14 @@ Tractus-X was 34 of 236 references before and 6 after.
   from a file's standing rather than checked in it. Its counts are preliminary observations under
   those labels, not a measurement of precision. Under them, METRIC001, METRIC002 and METRIC003 have
   no false positive, and no false negative among their few labelled cases (1 or 2 true positives
-  each). Every false positive of the other rules (11 in all) rests on a checked label and comes from
-  a modelling choice the rule does not see. For five of those rules only a limit that switches the
-  rule off would remove them. METRIC005's twelfth, DCMI Terms, was the CLS001 gap and went with the fix
+  each). Every false positive of the other rules (13 in all) rests on a checked label and comes from a
+  modelling choice the rule does not see; they fall on six rules. For these rules only a limit that switches the rule off on
+  this corpus (above every value it holds, or at zero for a minimum) would remove them, and for METRIC008 no
+  limit is consistent with the labels. METRIC005's twelfth, DCMI Terms, was the CLS001 gap and went with the fix
   for issue #66. No default has changed, and none should change on this corpus alone: that needs approved
   or independently redone labels (issue #8) and measurements rerun at release (`check` does, issue #169).
-- The corpus has no known-poor file for METRIC004 to METRIC013, so their recall is not measured.
+- The corpus has no known-poor file for METRIC004 to METRIC013 but one, PAO for METRIC008, so their recall is not
+  measured, and METRIC008's is a single case.
 - How the files flagged move as each limit moves is in [`validation/metric-sweep.md`](validation/metric-sweep.md); ten
   candidate files (six of them firing nominees), with blank labels, are in [`validation/metric-candidates.md`](validation/metric-candidates.md).
   The procedure that turns the maintainer's labels into false-positive and false-negative counts per limit is in
