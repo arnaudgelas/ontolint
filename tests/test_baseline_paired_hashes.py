@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 from hypothesis_strategies import budget
 from test_baseline_identity import _version_1_apply
@@ -563,8 +563,33 @@ def test_the_order_of_reports_and_findings_changes_neither_counts_nor_stale_entr
     assert first.stale == second.stale
 
 
+def _entries_sharing_a_hash() -> tuple[list[FileReport], list[FileReport]]:
+    """Issue #220: ``a.ttl`` records two roaming identities with one version 1 hash (same rule, focus and message, two
+    subjects), and ``i`` is recorded under both paths; the run reports ``i`` reworded on ``a.ttl`` and ``j`` on
+    ``b.ttl``, where ``j`` hashes like ``b.ttl``'s entry of ``i``."""
+    i, j = (_f(s, rule="ONT007", focus="b") for s in ("z", None))
+    old = [_report("a.ttl", i, j), _report("b.ttl", replace(i, message="n"))]
+    return old, [_report("a.ttl", replace(i, message="n")), _report("b.ttl", replace(j, message="n"))]
+
+
+def test_two_entries_of_one_path_with_one_hash_are_told_apart_when_one_is_consumed() -> None:
+    """Issue #220: ``j`` moved from ``a.ttl`` to ``b.ttl``, where its hash is the one ``b.ttl`` records for ``i``, so
+    it takes its own entry on ``a.ttl`` by roaming (the identity is recorded under that path only).  That entry shares
+    its hash with ``i``'s entry on ``a.ttl``, which is not consumed: 0.13.1 leaves the hash stale, this release does
+    not, and the entry of ``i`` is held by ``i`` itself."""
+    old, new = _entries_sharing_a_hash()
+    accepted = _written(*old)
+    i_entry, j_entry = accepted.identities["a.ttl"].values()
+    assert i_entry == j_entry  # the collision the scenario needs
+    applied = _apply(accepted, *new, roaming=ROAMING)
+    assert _kept(applied) == [[], []]
+    assert applied.stale == ()
+    assert _lenient_apply(accepted, new, ROAMING).stale == (i_entry,)
+
+
 @pytest.mark.slow
 @budget(2.0)
+@example(_entries_sharing_a_hash())
 @given(histories())
 def test_never_more_lenient_than_0_13_and_only_roaming_entries_leave_the_stale_ones(
     history: tuple[list[FileReport], list[FileReport]],
