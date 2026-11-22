@@ -28,7 +28,11 @@ Source: `src/ontolint/rules/class_heuristics.py`.
 
 Class-quality heuristics CLS010, CLS015, CLS017, CLS022, CLS023 and CLS024.
 
-Every rule reads the *asserted* graph over declared classes: no entailment, no imports, no network. They complement ``classes`` (CLS001-009) and ``hierarchy_quality`` (CLS011-014, 016, 018-021, 025) and do not repeat their checks.
+Every rule reads the *asserted* graph over declared classes: no entailment, no imports, no network. They complement ``classes`` (CLS001-009) and ``hierarchy_quality`` (CLS011-014, 016, 018-021, 025) and do not repeat their checks.  A *class* is an owned subject typed ``owl:Class`` or ``rdfs:Class``; a *sibling* is a class with a subclass edge (an asserted ``rdfs:subClassOf`` between two classes, self-loops dropped) to the same parent.  A *name* is the local name of the IRI (its last segment after ``/`` or ``#``), split into lower-cased tokens at case changes, digits, ``_`` and ``-``.  A *label key* is the pair of the lower-cased language tag and the case-folded text with its inner whitespace collapsed, of a literal that is not blank.  Every finding is ``heuristic``.  The standards are RDF Schema 1.1 (``rdfs:label`` has the range ``rdfs:Literal``) and OWL 2 punning (an IRI may be a class and an individual); the rules are otherwise conventions.  Specifications:
+
+*Specified under each rule: CLS010, CLS015, CLS017, CLS022, CLS023, CLS024.*
+
+Fixtures: ``tests/rule_cases/class_heuristics.py``, ``tests/test_mutation_class_heuristics.py`` and ``tests/test_cls_specification.py``.
 
 ### Module classes
 
@@ -36,13 +40,23 @@ Source: `src/ontolint/rules/classes.py`.
 
 Class-hierarchy rules (CLS001-CLS009) and class-equivalence checks (OWL012).
 
+Every rule reads the *asserted* graph (no reasoner, no imports, no network).  A *class* is an owned subject typed ``owl:Class`` or ``rdfs:Class`` (``RuleContext.classes``); a *subclass edge* is an asserted ``rdfs:subClassOf`` triple whose subject and object are both such classes, a self-loop included, so a restriction, a foreign or an undeclared parent is no edge.  Every finding is ``heuristic`` unless said otherwise, and the category of every rule in the catalogue is ``heuristic``.  The standards are the OWL 2 Structural Specification (9.1.1 SubClassOf, 9.1.2 EquivalentClasses) and RDF Schema 1.1 with the RDF 1.1 Semantics entailment patterns (rdfs9 and rdfs11, the transitivity of ``rdfs:subClassOf``); thresholds are conventions and sit on ``Policy``.  Specifications:
+
+*Specified under each rule: CLS001, CLS002, CLS003, CLS004, CLS005, CLS006, CLS007, CLS008, CLS009.*
+
+Fixtures: ``tests/rule_cases/classes.py``, ``tests/test_precision_cls.py``, ``tests/test_mutation_hierarchy.py`` and ``tests/test_cls_specification.py``.
+
 ### Module hierarchy_quality
 
 Source: `src/ontolint/rules/hierarchy_quality.py`.
 
 Class-hierarchy quality rules CLS011-CLS014, CLS016, CLS018-CLS021 and CLS025.
 
-Every rule reads the *asserted* ``rdfs:subClassOf`` graph over declared classes: no entailment, no imports, no network.  Graph walks are iterative (hierarchies of 100k classes must not recurse). CLS010, CLS015, CLS017 and CLS022-CLS024 live in ``class_heuristics``.
+Every rule reads the *asserted* ``rdfs:subClassOf`` graph over declared classes: no entailment, no imports, no network.  Graph walks are iterative (hierarchies of 100k classes must not recurse). CLS010, CLS015, CLS017 and CLS022-CLS024 live in ``class_heuristics``.  A *class* is an owned subject typed ``owl:Class`` or ``rdfs:Class``; a *subclass edge* is an asserted ``rdfs:subClassOf`` between two classes, with self-loops dropped; an *ancestor* is a class reached by one or more edges.  A *label key* is the pair of the lower-cased language tag and the case-folded text with its inner whitespace collapsed, of a non-blank literal under ``rdfs:label`` or ``skos:prefLabel`` (only these two, not a configured extra).  Every finding is ``heuristic`` unless said otherwise, and the category of every rule in the catalogue is ``heuristic``.  The standards are the OWL 2 Structural Specification (5.1 ``owl:Thing`` and ``owl:Nothing``, 9.1.2 EquivalentClasses, 9.1.3 DisjointClasses, 9.1.4 DisjointUnion) and RDF Schema 1.1 with the RDF 1.1 Semantics entailment patterns (rdfs9, rdfs11); thresholds are conventions and sit on ``Policy``.  Specifications:
+
+*Specified under each rule: CLS011, CLS012, CLS013, CLS014, CLS016, CLS018, CLS019, CLS020, CLS021, CLS025.*
+
+Fixtures: ``tests/rule_cases/hierarchy_quality.py``, ``tests/test_coverage_hierarchy_quality.py``, ``tests/test_mutation_hierarchy.py`` and ``tests/test_cls_specification.py``.
 
 ## Rules
 
@@ -54,7 +68,7 @@ Every rule reads the *asserted* ``rdfs:subClassOf`` graph over declared classes:
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class that is connected to nothing.  It is connected when it is the subject of an ``rdfs:subClassOf`` or ``owl:equivalentClass`` triple, or an IRI object of one, whatever the other end is (a foreign class, an anonymous restriction and the class itself included); the IRI object of ``rdfs:domain``, ``rdfs:range``, ``owl:someValuesFrom``, ``owl:allValuesFrom``, ``owl:onClass`` or of the ``domainIncludes`` and ``rangeIncludes`` of schema.org (http and https) and DCAM (since 0.16.0); the type of any subject, a class included; ``owl:deprecated true`` (read as the boolean); or ``rdfs:subClassOf owl:Thing``.  METRIC005 counts exactly this set (``orphan_classes``).  Not connections: disjointness, membership of ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:complementOf``, an ``owl:hasValue`` filler, a member of a class expression used as a domain or range, and being the subject of a ``domainIncludes`` or ``rangeIncludes`` triple.  Info: neither OWL 2 nor RDFS asks for a connected class and a vocabulary may list isolated terms; the finding asks whether the class is unfinished.
 
 *Flagged:* `isolated class`
 
@@ -108,7 +122,7 @@ ex:A a owl:Class . ex:i a ex:A .
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Check whether this class is intentionally uninstantiated, abstract, or imported.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Gated: at least one owned class has an individual (a resource that is not an owned class, typed by the class) and these classes are at least ``1 / POPULATED_CLASS_SHARE_DENOMINATOR`` (a quarter) of the owned classes.  Then an owned class that is the type of no subject (a class typed by it counts) and has no subclass edge below it (a self-loop counts).  A deprecated class is judged, and so is an equivalent of a populated class.  Info: a leaf may be abstract or imported; a vocabulary without individuals is never judged.
 
 *Flagged:* `leaf next to a populated class`
 
@@ -144,7 +158,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:i a ex:A .
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Review the asserted subclass cycle; an OWL subclass cycle is not by itself inconsistent.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A strongly connected component of more than one class, or a class with a self-loop, in the subclass edges.  One finding per component, focused on its first member by IRI, naming all members. Excluded: an equivalence (``owl:equivalentClass``) is not a cycle, and a cycle through a class that is not a declared owned class is not seen.  Confidence ``certain``.  Warning: a cycle is legal OWL 2 and means that its members are equivalent (9.1.1), so it is not an error, but it is rarely meant and it hides the hierarchy.
 
 *Flagged:* `two-class cycle`
 
@@ -176,7 +190,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Remove a redundant asserted subclass axiom if it adds no documentation value.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A subclass edge from a class to a parent that is also reachable through the other edges of the class (rdfs11).  Each edge is judged alone, so the two shortcuts of two equivalent classes are both reported.  The focus is the child, the subject is the parent.  Excluded: an edge on a cycle that nothing else implies, a self-loop, and any path through a class that is not a declared owned class or through an ``owl:equivalentClass``.  Confidence ``certain``.  Info: the edge is entailed, so removing it loses nothing, but it may document the intent.
 
 *Flagged:* `shortcut edge`
 
@@ -214,7 +228,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Review unusually deep asserted hierarchy and possible re-modeling.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** The longest descending chain of subclass edges, counted in classes (a leaf is 1), is longer than ``Policy.depth_limit`` (10).  The classes of a cycle count 0 and a self-loop is ignored.  Reported once per branch, at the topmost class that is over the limit and is not itself a child of one.  Info: depth is a convention of readability, not a defect.
 
 *Flagged:* `depth_limit=3 with 4`
 
@@ -252,7 +266,7 @@ Linter options: `depth_limit=3`.
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Review the intended meaning of multiple direct superclasses.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class with more than ``Policy.inheritance_limit`` (5) subclass edges leaving it.  A restriction, a foreign or an undeclared parent is not counted; a self-loop is (gap: CLS011 to CLS013 drop self-loops).  Info: several parents are legal and often meant.
 
 *Flagged:* `inheritance_limit=2 with 3`
 
@@ -280,7 +294,7 @@ Linter options: `inheritance_limit=2`.
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Check long single-child taxonomic chains for needless subdivisions.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** The chain below a class follows the only child while a class has exactly one subclass edge below it; its length is the number of edges followed, and a class is reported when it is at least ``MINIMUM_SINGLE_CHILD_CHAIN_LENGTH`` (3).  Every class above the boundary is reported, not only the top one.  A ring of classes is a chain whose members each see the whole ring (gap: CLS003 reports the ring).  A second child, or a second parent of the leaf, ends the chain.  Info: a convention against needless subdivisions.
 
 *Flagged:* `four-class single-child chain`
 
@@ -314,7 +328,7 @@ ex:n1 rdfs:subClassOf ex:n2 .
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Consider splitting classes or using property groups/shapes where appropriate.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class that is the object of ``rdfs:domain`` of more than ``Policy.soup_limit`` (15) distinct IRI subjects, whatever their type.  The ``domainIncludes`` hints, a class that is a member of a domain expression and the properties inherited from a superclass are not counted (gap: CLS001 and OWL005 read the hints).  Info: a convention against crowded classes.
 
 *Flagged:* `soup_limit=2 with 3`
 
@@ -342,7 +356,7 @@ Linter options: `soup_limit=2`.
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Check whether class equivalence is purposeful and not merely a duplicate name.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** For each ``owl:equivalentClass`` triple between two distinct owned classes, the case-folded text of their ``rdfs:label`` values has a common member; the focus is the subject of the triple, the subject of the finding is the object.  The text is compared as it is: the language, the datatype and the kind of node are ignored, a blank label equals another, and whitespace is not normalised (gaps: CLS010 and CLS020 compare the language).  Only ``rdfs:label`` is read.  A class equivalent to itself is OWL012's.  Info: two names for one class may be on purpose.
 
 *Flagged:* `equivalent with same label`
 
@@ -366,7 +380,7 @@ ex:A a owl:Class ; rdfs:label "One" ; owl:equivalentClass ex:B . ex:B a owl:Clas
 - **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Give each sibling class a distinct label, or merge the classes if they mean the same thing.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Two or more siblings of one parent that share a label key among their main labels (``RuleContext.main_label_predicates``, as LEX004 reads them).  One finding per sibling and parent, subject the parent, the language and the text.  Excluded: labels in different languages, blank labels, two labels of one class, an ``skos:altLabel``, siblings of different parents.  The datatype is ignored and a deprecated sibling is judged (gap: LEX004 exempts it).  A class below two parents is compared under each.  Warning: two sibling classes that cannot be told apart by their label are most probably one class twice.
 
 *Flagged:* `same label, different case`
 
@@ -402,7 +416,7 @@ ex:P a owl:Class . ex:Q a owl:Class . ex:A a owl:Class ; rdfs:subClassOf ex:P ; 
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Introduce intermediate classes to structure a flat fan-out of direct subclasses.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class with more than ``Policy.subclass_limit`` (50) subclass edges below it.  A foreign or an undeclared subclass is not counted.  Info: a flat fan-out is hard to browse but may be legitimate.
 
 *Flagged:* `51 direct subclasses` (built programmatically; see `tests/rule_cases/`)
 
@@ -436,7 +450,7 @@ Linter options: `policy=Policy(subclass_limit=3)`.
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Check whether the unused leaf subclasses are needed or whether instances should use them.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class that is the type of a subject (a class typed by it counts) all of whose subclasses are leaves (no subclass below) that are the type of no subject; at least one subclass.  A deprecated leaf is unused (gap: CLS001 exempts deprecated classes).  Info: the leaves may be there for later use.
 
 *Flagged:* `instantiated parent, unused leaves`
 
@@ -472,7 +486,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Replace the catch-all 'Other' subclass with specific classes or an open-world note on its parent.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class with a declared parent (a subclass edge leaving it) whose names (its local name and every ``rdfs:label`` and ``skos:prefLabel`` literal, in any language) hold a marker token (``other``, ``others``, ``misc``, ``miscellaneous``, ``remainder``, ``unclassified``, ``uncategorized``, ``uncategorised``, ``unspecified``) and, without the markers and the filler tokens (``and``, ``of``, ``the``, ``a``, ``an``, ``or``, ``else``, ``type``, ``types``, ``kind``, ``kinds``), only tokens of a name of the parent; the first parent by IRI that satisfies this is named.  A marker alone (``Other``) qualifies under any parent; a plural or an accent does not match (gap); a class below ``owl:Thing`` only has no declared parent.  Info: a catch-all class is a modelling choice that OWL's open world makes unnecessary.
 
 *Flagged:* `Other under parent`
 
@@ -530,7 +544,7 @@ ex:A a owl:Class . ex:Mother a owl:Class ; rdfs:subClassOf ex:A .
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove one of the superclass assertions or the disjointness; the class cannot have instances.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A class that is at or below two classes declared pairwise disjoint (``owl:disjointWith`` in either direction, or two members of an ``owl:AllDisjointClasses`` list under ``owl:members``, at most ``MAX_DISJOINT_MEMBERS`` of them), through the subclass edges (9.1.3).  Reported at the topmost class only: not when a parent already clashes.  A subclass cycle is judged as one class and reported at its first member unless a parent outside the cycle clashes.  Not read (gaps): ``owl:disjointUnionOf`` (9.1.4), an equivalent class's disjointness (9.1.2), a class disjoint with itself, an undeclared ancestor.  Confidence ``certain``.  Warning: such a class cannot have an instance, which is an unsatisfiable class, not a style point.
 
 *Flagged:* `direct`
 
@@ -606,7 +620,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Add an rdfs:label or skos:prefLabel to the class that heads a subtree.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A parent with at least ``MINIMUM_UNLABELLED_PARENT_SUBCLASSES`` (3) subclasses and no non-blank literal under any label predicate (``RuleContext.labels``, as LEX001 reads them).  An IRI value, a blank label and an alt label are no label; a deprecated parent is judged (gap: LEX001 exempts it).  Info: a label is optional in RDFS but a class that heads a subtree is the one readers meet first.
 
 *Flagged:* `three subclasses, no label`
 
@@ -642,7 +656,7 @@ ex:P a owl:Class ; skos:prefLabel 'P' . ex:C1 a owl:Class ; rdfs:subClassOf ex:P
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Use rdfs:subClassOf or rdf:type, or a semantically specific property, instead of a generic 'is' property.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned property (any kind, an annotation property included) whose name is one of ``is``, ``isa``, ``is a``, ``is an``, ``is kind of``, ``is type of``, ``is a kind of`` as a token sequence, in any case and style (``isA``, ``is_a``).  Only the local name is read.  Info: a generic relation says nothing; use ``rdf:type``, ``rdfs:subClassOf`` or a specific property.
 
 *Flagged:* `isA`
 
@@ -702,7 +716,7 @@ Linter options: `base='https://example.test/onto#'`.
 - **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Check whether the class/individual punning is intended; otherwise model the individual separately.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class typed ``owl:NamedIndividual``, or typed by a declared class that is not a metaclass (a class below ``rdfs:Class``).  This judges the typing only (gap: OWL 2 punning also makes an IRI an individual where it is the subject or the object of a property assertion, which is not read).  A type that is not a declared class, ``owl:Thing`` and the other builtin types are excluded.  Info: punning is legal in OWL 2 DL but often a modelling slip.
 
 *Flagged:* `named individual`
 
@@ -752,7 +766,7 @@ ex:DataType a owl:Class ; rdfs:subClassOf rdfs:Class . ex:Text a owl:Class, ex:D
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Drop the explicit owl:Thing or rdfs:Resource superclass; the class already has another superclass.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class with ``rdfs:subClassOf owl:Thing`` or ``rdfs:Resource`` and at least one other object of ``rdfs:subClassOf`` that is not the class itself (a restriction, a foreign class and ``owl:Nothing`` count; an equivalent class does not).  Every class is below ``owl:Thing`` (5.1).  Info: redundant, not wrong.
 
 *Flagged:* `Thing plus parent`
 
@@ -796,7 +810,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove the owl:Nothing assertion or the class if it is not meant to be unsatisfiable.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class that is the object of ``rdfs:subClassOf owl:Nothing`` or either end of an ``owl:equivalentClass`` triple whose other end is ``owl:Nothing``, the triple having no direction (9.1.2). Not read (gaps): a class below an empty class, disjoint with ``owl:Thing``, or equivalent to its complement. Confidence ``certain``.  Warning: the class is empty by assertion.
 
 *Flagged:* `below Nothing`
 
@@ -834,7 +848,7 @@ ex:A a owl:Class .
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Give the subclass a label that says how it specializes its superclass.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A subclass edge whose two classes share a label key, the subject being the parent.  The datatype is ignored; an ``rdfs:label`` of one matches an ``skos:prefLabel`` of the other; only direct edges, and the members of a cycle are each other's parent.  Info: a subclass should say how it specialises.
 
 *Flagged:* `same label`
 
@@ -884,7 +898,7 @@ ex:A a owl:Class ; rdfs:label " " . ex:B a owl:Class ; rdfs:label " " ; rdfs:sub
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Check whether the subclass chain between equivalent classes is intended; it collapses the chain.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A pair of distinct owned classes asserted ``owl:equivalentClass`` (in either direction) of which one is an ancestor of the other by the subclass edges (9.1.2); the finding is the lower class, the subject the higher.  Two classes that are each other's ancestor are both reported.  An ancestor path through an undeclared class is not seen (gap).  Info: the chain between them collapses, which may be intended.
 
 *Flagged:* `direct parent`
 
@@ -938,7 +952,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:B
 - **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Name classes with nouns; a has/is-style name usually denotes a property.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class whose name starts with ``has``, ``is``, ``was``, ``can`` or ``does`` in lower case, followed by an upper-case letter or a digit, or by ``_`` or ``-`` and a letter or a digit (``hasPart``, ``is_a``).  A bare ``has``, an initial capital and a longer word (``Hashing``, ``Island``) are excluded.  Info: a convention that a class names a thing and a property names a relation.
 
 *Flagged:* `hasPart`
 
@@ -990,7 +1004,7 @@ ex:isolate a owl:Class . ex:hash a owl:Class . ex:has a owl:Class .
 - **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Split the class, or use owl:unionOf / owl:intersectionOf instead of 'And'/'Or' in the name.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** An owned class whose name has ``and`` or ``or`` as a token that is neither the first nor the last (``CatAndDog``, ``cat_and_dog``, ``CAT_AND_DOG``).  Only the local name is read.  A fixed expression (``BedAndBreakfast``) is a finding (gap).  Info: the suggestion is a convention, a union or an intersection.
 
 *Flagged:* `And`
 
@@ -1028,7 +1042,7 @@ ex:AndGate a owl:Class . ex:Rock_And a owl:Class .
 - **Module:** [`class_heuristics`](#module-class_heuristics)
 - **Fix:** Check whether the class belongs under this parent or should follow its siblings' naming pattern.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A parent whose name has at least one token and at least ``MINIMUM_NAMING_SIBLINGS`` (4) subclasses, exactly one of which does not have a name of at least ``MINIMUM_NAME_TOKENS`` (2) tokens ending in the parent's last token.  The outlier is reported, the subject is the parent.  Labels are not read and no plural is stemmed (gap).  Info: a naming convention, a different name may be right.
 
 *Flagged:* `one outlier among four`
 
@@ -1064,7 +1078,7 @@ ex:Vehicle a owl:Class ; rdfs:label 'Vehicle' . ex:RoadVehicle a owl:Class ; rdf
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove the redundant type assertion for the ancestor class.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** A resource that is not a class, typed by two or more owned classes of which one is an ancestor of another (rdfs9); one finding per (class, ancestor) pair, so a chain of three types gives three.  A blank node and a class are excluded; an undeclared ancestor, an equivalent class and ``owl:Thing`` are not followed (gaps).  Info: the ancestor type is entailed.
 
 *Flagged:* `class and parent`
 

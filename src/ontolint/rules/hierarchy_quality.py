@@ -2,7 +2,62 @@
 
 Every rule reads the *asserted* ``rdfs:subClassOf`` graph over declared classes: no entailment,
 no imports, no network.  Graph walks are iterative (hierarchies of 100k classes must not recurse).
-CLS010, CLS015, CLS017 and CLS022-CLS024 live in ``class_heuristics``.
+CLS010, CLS015, CLS017 and CLS022-CLS024 live in ``class_heuristics``.  A *class* is an owned subject typed
+``owl:Class`` or ``rdfs:Class``; a *subclass edge* is an asserted ``rdfs:subClassOf`` between two classes, with
+self-loops dropped; an *ancestor* is a class reached by one or more edges.  A *label key* is the pair of the
+lower-cased language tag and the case-folded text with its inner whitespace collapsed, of a non-blank literal
+under ``rdfs:label`` or ``skos:prefLabel`` (only these two, not a configured extra).  Every finding is
+``heuristic`` unless said otherwise, and the category of every rule in the catalogue is ``heuristic``.  The
+standards are the OWL 2 Structural Specification (5.1 ``owl:Thing`` and ``owl:Nothing``, 9.1.2
+EquivalentClasses, 9.1.3 DisjointClasses, 9.1.4 DisjointUnion) and RDF Schema 1.1 with the RDF 1.1 Semantics
+entailment patterns (rdfs9, rdfs11); thresholds are conventions and sit on ``Policy``.  Specifications:
+
+* **CLS011.** An owned class with more than ``Policy.subclass_limit`` (50) subclass edges below it.  A foreign or
+  an undeclared subclass is not counted.  Info: a flat fan-out is hard to browse but may be legitimate.
+* **CLS012.** An owned class that is the type of a subject (a class typed by it counts) all of whose subclasses
+  are leaves (no subclass below) that are the type of no subject; at least one subclass.  A deprecated leaf is
+  unused (gap: CLS001 exempts deprecated classes).  Info: the leaves may be there for later use.
+* **CLS013.** An owned class with a declared parent (a subclass edge leaving it) whose names (its local name and every ``rdfs:label`` and
+  ``skos:prefLabel`` literal, in any language) hold a marker token (``other``, ``others``, ``misc``,
+  ``miscellaneous``, ``remainder``, ``unclassified``, ``uncategorized``, ``uncategorised``,
+  ``unspecified``) and, without the markers and the filler tokens (``and``, ``of``, ``the``, ``a``, ``an``,
+  ``or``, ``else``, ``type``, ``types``, ``kind``, ``kinds``), only tokens of a name of the parent; the first
+  parent by IRI that satisfies this is named.  A marker alone (``Other``) qualifies under any parent; a plural
+  or an accent does not match (gap); a class below ``owl:Thing`` only has no declared parent.  Info: a catch-all
+  class is a modelling choice that OWL's open world makes unnecessary.
+* **CLS014.** A class that is at or below two classes declared pairwise disjoint (``owl:disjointWith`` in
+  either direction, or two members of an ``owl:AllDisjointClasses`` list under ``owl:members``, at most
+  ``MAX_DISJOINT_MEMBERS`` of them), through the subclass edges (9.1.3).  Reported at the topmost class only: not
+  when a parent already clashes.  A subclass cycle is judged as one class and reported at its first member
+  unless a parent outside the cycle clashes.  Not read (gaps): ``owl:disjointUnionOf`` (9.1.4), an
+  equivalent class's disjointness (9.1.2), a class disjoint with itself, an undeclared ancestor.  Confidence
+  ``certain``.  Warning: such a class cannot have an instance, which is an unsatisfiable class, not a style
+  point.
+* **CLS016.** An owned property (any kind, an annotation property included) whose name is one of ``is``, ``isa``,
+  ``is a``, ``is an``, ``is kind of``, ``is type of``, ``is a kind of`` as a token sequence, in any case and
+  style (``isA``, ``is_a``).  Only the local name is read.  Info: a generic relation says nothing; use
+  ``rdf:type``, ``rdfs:subClassOf`` or a specific property.
+* **CLS018.** An owned class with ``rdfs:subClassOf owl:Thing`` or ``rdfs:Resource`` and at least one other object
+  of ``rdfs:subClassOf`` that is not the class itself (a restriction, a foreign class and ``owl:Nothing``
+  count; an equivalent class does not).  Every class is below ``owl:Thing`` (5.1).  Info: redundant, not wrong.
+* **CLS019.** An owned class that is the object of ``rdfs:subClassOf owl:Nothing`` or either end of an
+  ``owl:equivalentClass`` triple whose other end is ``owl:Nothing``, the triple having no direction (9.1.2).
+  Not read (gaps): a class below an empty class, disjoint with ``owl:Thing``, or equivalent to its complement.
+  Confidence ``certain``.  Warning: the class is empty by assertion.
+* **CLS020.** A subclass edge whose two classes share a label key, the subject being the parent.  The datatype
+  is ignored; an ``rdfs:label`` of one matches an ``skos:prefLabel`` of the other; only direct edges, and the
+  members of a cycle are each other's parent.  Info: a subclass should say how it specialises.
+* **CLS021.** A pair of distinct owned classes asserted ``owl:equivalentClass`` (in either direction) of which
+  one is an ancestor of the other by the subclass edges (9.1.2); the finding is the lower class, the subject the
+  higher.  Two classes that are each other's ancestor are both reported.  An ancestor path through an
+  undeclared class is not seen (gap).  Info: the chain between them collapses, which may be intended.
+* **CLS025.** A resource that is not a class, typed by two or more owned classes of which one is an ancestor of
+  another (rdfs9); one finding per (class, ancestor) pair, so a chain of three types gives three.  A blank node
+  and a class are excluded; an undeclared ancestor, an equivalent class and ``owl:Thing`` are not followed
+  (gaps).  Info: the ancestor type is entailed.
+
+Fixtures: ``tests/rule_cases/hierarchy_quality.py``, ``tests/test_coverage_hierarchy_quality.py``,
+``tests/test_mutation_hierarchy.py`` and ``tests/test_cls_specification.py``.
 """
 
 from __future__ import annotations
