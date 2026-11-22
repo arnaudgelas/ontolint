@@ -1,4 +1,68 @@
-"""Class-hierarchy rules (CLS001-CLS009) and class-equivalence checks (OWL012)."""
+"""Class-hierarchy rules (CLS001-CLS009) and class-equivalence checks (OWL012).
+
+Every rule reads the *asserted* graph (no reasoner, no imports, no network).  A *class* is an owned subject
+typed ``owl:Class`` or ``rdfs:Class`` (``RuleContext.classes``); a *subclass edge* is an asserted
+``rdfs:subClassOf`` triple whose subject and object are both such classes, a self-loop included, so a
+restriction, a foreign or an undeclared parent is no edge.  Every finding is ``heuristic`` unless said
+otherwise, and the category of every rule in the catalogue is ``heuristic``.  The standards are the OWL 2
+Structural Specification (9.1.1 SubClassOf, 9.1.2 EquivalentClasses) and RDF Schema 1.1 with the RDF 1.1
+Semantics entailment patterns (rdfs9 and rdfs11, the transitivity of ``rdfs:subClassOf``); thresholds are
+conventions and sit on ``Policy``.  Specifications:
+
+* **CLS001.** An owned class that is connected to nothing.  It is connected when it is the subject of an
+  ``rdfs:subClassOf`` or ``owl:equivalentClass`` triple, or an IRI object of one, whatever the other end is
+  (a foreign class, an anonymous restriction and the class itself included); the IRI object of
+  ``rdfs:domain``, ``rdfs:range``, ``owl:someValuesFrom``, ``owl:allValuesFrom``, ``owl:onClass`` or of the
+  ``domainIncludes`` and ``rangeIncludes`` of schema.org (http and https) and DCAM (since 0.16.0); the type of
+  any subject, a class included; ``owl:deprecated true`` (read as the boolean); or ``rdfs:subClassOf
+  owl:Thing``.  METRIC005 counts exactly this set (``orphan_classes``).  Not connections: disjointness,
+  membership of ``owl:unionOf``, ``owl:intersectionOf`` or ``owl:complementOf``, an ``owl:hasValue`` filler, a
+  member of a class expression used as a domain or range, and being the subject of a ``domainIncludes`` or
+  ``rangeIncludes`` triple.  Info: neither OWL 2 nor RDFS asks for a connected class and a vocabulary may list
+  isolated terms; the finding asks whether the class is unfinished.
+* **CLS002.** Gated: at least one owned class has an individual (a resource that is not an owned class, typed by
+  the class) and these classes are at least ``1 / POPULATED_CLASS_SHARE_DENOMINATOR`` (a quarter) of the owned
+  classes.  Then an owned class that is the type of no subject (a class typed by it counts) and has no subclass
+  edge below it (a self-loop counts).  A deprecated class is judged, and so is an equivalent of a populated
+  class.  Info: a leaf may be abstract or imported; a vocabulary without individuals is never judged.
+* **CLS003.** A strongly connected component of more than one class, or a class with a self-loop, in the
+  subclass edges.  One finding per component, focused on its first member by IRI, naming all members.
+  Excluded: an equivalence (``owl:equivalentClass``) is not a cycle, and a cycle through a class that is not a
+  declared owned class is not seen.  Confidence ``certain``.  Warning: a cycle is legal OWL 2 and means that its
+  members are equivalent (9.1.1), so it is not an error, but it is rarely meant and it hides the hierarchy.
+* **CLS004.** A subclass edge from a class to a parent that is also reachable through the other edges of the
+  class (rdfs11).  Each edge is judged alone, so the two shortcuts of two equivalent classes are both
+  reported.  The focus is the child, the subject is the parent.  Excluded: an edge on a cycle that nothing
+  else implies, a self-loop, and any path through a class that is not a declared owned class or through an
+  ``owl:equivalentClass``.  Confidence ``certain``.  Info: the edge is entailed, so removing it loses nothing,
+  but it may document the intent.
+* **CLS005.** The longest descending chain of subclass edges, counted in classes (a leaf is 1), is longer than
+  ``Policy.depth_limit`` (10).  The classes of a cycle count 0 and a self-loop is ignored.  Reported once per
+  branch, at the topmost class that is over the limit and is not itself a child of one.  Info: depth is a
+  convention of readability, not a defect.
+* **CLS006.** An owned class with more than ``Policy.inheritance_limit`` (5) subclass edges leaving it.  A
+  restriction, a foreign or an undeclared parent is not counted; a self-loop is (gap: CLS011 to CLS013 drop
+  self-loops).  Info: several parents are legal and often meant.
+* **CLS007.** The chain below a class follows the only child while a class has exactly one subclass edge below
+  it; its length is the number of edges followed, and a class is reported when it is at least
+  ``MINIMUM_SINGLE_CHILD_CHAIN_LENGTH`` (3).  Every class above the boundary is reported, not only the top
+  one.  A ring of classes is a chain whose members each see the whole ring (gap: CLS003 reports the ring).  A
+  second child, or a second parent of the leaf, ends the chain.  Info: a convention against needless
+  subdivisions.
+* **CLS008.** An owned class that is the object of ``rdfs:domain`` of more than ``Policy.soup_limit`` (15)
+  distinct IRI subjects, whatever their type.  The ``domainIncludes`` hints, a class that is a member of a
+  domain expression and the properties inherited from a superclass are not counted (gap: CLS001 and OWL005 read
+  the hints).  Info: a convention against crowded classes.
+* **CLS009.** For each ``owl:equivalentClass`` triple between two distinct owned classes, the case-folded text of
+  their ``rdfs:label`` values has a common member; the focus is the subject of the triple, the subject of the
+  finding is the object.  The text is compared as it is: the language, the datatype and the kind of node are
+  ignored, a blank label equals another, and whitespace is not normalised (gaps: CLS010 and CLS020 compare the
+  language).  Only ``rdfs:label`` is read.  A class equivalent to itself is OWL012's.  Info: two names for one
+  class may be on purpose.
+
+Fixtures: ``tests/rule_cases/classes.py``, ``tests/test_precision_cls.py``, ``tests/test_mutation_hierarchy.py``
+and ``tests/test_cls_specification.py``.
+"""
 
 from __future__ import annotations
 

@@ -147,6 +147,21 @@ results after upgrading.
 
 ## [Unreleased]
 
+### Fixed
+
+- **CLS014:** a class below two disjoint classes that lies on a subclass cycle was reported in no member of the
+  cycle (each member is another's parent, and only the topmost class is reported); the cycle is now judged as
+  one class and reported at its first member, unless a parent outside it clashes.
+- **CLS019:** `owl:Nothing owl:equivalentClass ex:A` now reports `ex:A`, as `ex:A owl:equivalentClass owl:Nothing`
+  does (the triple has no direction, OWL 2 Structural Specification 9.1.2).
+  No finding of either rule changed on the 21-file calibration corpus (0 before and after).
+
+### Changed
+
+- **CLS:** the family is specified in its module docstrings (scope, condition, exclusions, boundary, severity and
+  confidence rationale, fixtures), with a specification test file, `tests/test_cls_specification.py`, that the
+  catalogue rows name. Part of #64; the SKOS and IRI families remain.
+
 ## [0.15.1] - 2026-11-15
 
 The Action gains the icon and colour its GitHub Marketplace listing shows. ontolint itself, its findings and its

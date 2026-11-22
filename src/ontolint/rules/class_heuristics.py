@@ -2,7 +2,45 @@
 
 Every rule reads the *asserted* graph over declared classes: no entailment, no imports, no network.
 They complement ``classes`` (CLS001-009) and ``hierarchy_quality`` (CLS011-014, 016, 018-021, 025)
-and do not repeat their checks.
+and do not repeat their checks.  A *class* is an owned subject typed ``owl:Class`` or ``rdfs:Class``; a
+*sibling* is a class with a subclass edge (an asserted ``rdfs:subClassOf`` between two classes, self-loops
+dropped) to the same parent.  A *name* is the local name of the IRI (its last segment after ``/`` or ``#``),
+split into lower-cased tokens at case changes, digits, ``_`` and ``-``.  A *label key* is the pair of the
+lower-cased language tag and the case-folded text with its inner whitespace collapsed, of a literal that is not
+blank.  Every finding is ``heuristic``.  The standards are RDF Schema 1.1 (``rdfs:label`` has the range
+``rdfs:Literal``) and OWL 2 punning (an IRI may be a class and an individual); the rules are otherwise
+conventions.  Specifications:
+
+* **CLS010.** Two or more siblings of one parent that share a label key among their main labels
+  (``RuleContext.main_label_predicates``, as LEX004 reads them).  One finding per sibling and parent, subject
+  the parent, the language and the text.  Excluded: labels in different languages, blank labels, two labels of
+  one class, an ``skos:altLabel``, siblings of different parents.  The datatype is ignored and a deprecated
+  sibling is judged (gap: LEX004 exempts it).  A class below two parents is compared under each.  Warning: two
+  sibling classes that cannot be told apart by their label are most probably one class twice.
+* **CLS015.** A parent with at least ``MINIMUM_UNLABELLED_PARENT_SUBCLASSES`` (3) subclasses and no
+  non-blank literal under any label predicate (``RuleContext.labels``, as LEX001 reads them).  An IRI value, a
+  blank label and an alt label are no label; a deprecated parent is judged (gap: LEX001 exempts it).  Info: a
+  label is optional in RDFS but a class that heads a subtree is the one readers meet first.
+* **CLS017.** An owned class typed ``owl:NamedIndividual``, or typed by a declared class that is not a metaclass
+  (a class below ``rdfs:Class``).  This judges the typing only (gap: OWL 2 punning also makes an IRI an
+  individual where it is the subject or the object of a property assertion, which is not read).  A type that is
+  not a declared class, ``owl:Thing`` and the other builtin types are excluded.  Info: punning is legal in
+  OWL 2 DL but often a modelling slip.
+* **CLS022.** An owned class whose name starts with ``has``, ``is``, ``was``, ``can`` or ``does`` in lower case,
+  followed by an upper-case letter or a digit, or by ``_`` or ``-`` and a letter or a digit (``hasPart``,
+  ``is_a``).  A bare ``has``, an
+  initial capital and a longer word (``Hashing``, ``Island``) are excluded.  Info: a convention that a class
+  names a thing and a property names a relation.
+* **CLS023.** An owned class whose name has ``and`` or ``or`` as a token that is neither the first nor the last
+  (``CatAndDog``, ``cat_and_dog``, ``CAT_AND_DOG``).  Only the local name is read.  A fixed expression
+  (``BedAndBreakfast``) is a finding (gap).  Info: the suggestion is a convention, a union or an intersection.
+* **CLS024.** A parent whose name has at least one token and at least ``MINIMUM_NAMING_SIBLINGS`` (4) subclasses,
+  exactly one of which does not have a name of at least ``MINIMUM_NAME_TOKENS`` (2) tokens ending in the
+  parent's last token.  The outlier is reported, the subject is the parent.  Labels are not read and no
+  plural is stemmed (gap).  Info: a naming convention, a different name may be right.
+
+Fixtures: ``tests/rule_cases/class_heuristics.py``, ``tests/test_mutation_class_heuristics.py`` and
+``tests/test_cls_specification.py``.
 """
 
 from __future__ import annotations
