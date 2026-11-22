@@ -24,10 +24,10 @@ confidence disagree, an open question.  The pinned cases, including every known 
   an IRI with a ``#`` (hash-style) and one without (slash-style, a URN included).  An IRI that ends in
   a separator is not counted.  The ``#`` terms under ``http://purl.obolibrary.org/obo/`` are exempt in a file whose
   ontology IRI is an OBO one (subset annotations).  Convention: one style per vocabulary.  Info.
-* **IRI006.** Scope: every term.  Fires, with certainty, when ``urlsplit`` finds a query or the IRI holds a ``?``
-  anywhere (so an empty query ``x?`` is reported).  RFC 3986 3.4 starts the query at the first ``?`` and ends it at
-  ``#``.  Gap: a ``?`` inside a fragment (``#a?b``, allowed by 3.5) holds no query and is reported.  Ontology
-  IRIs are IRI016's.  Warning: a query is not a stable identifier.
+* **IRI006.** Scope: every term.  Fires, with certainty, when the IRI holds a ``?`` before its first ``#`` (so an
+  empty query ``x?`` is reported).  RFC 3986 3.4 starts the query at the first ``?`` and ends it at ``#``; a ``?``
+  inside a fragment (``#a?b``, allowed by 3.5) is no query and is not reported.  Ontology IRIs are IRI016's.
+  Warning: a query is not a stable identifier.
 * **IRI008.** Scope: the vocabulary.  Fires once when terms with a local name have both an ``http`` and an
   ``https`` scheme (compared lower-cased; other schemes ignored).  The same name under both schemes is two terms.
   Convention: one scheme per vocabulary.  Info.
@@ -242,7 +242,7 @@ def _term_checks(ctx: RuleContext, term: URIRef, versioned: dict[str, list[str]]
     iri = str(term)
     pieces = safe_urlsplit(iri)
     name = local_name(term)
-    if pieces.query or "?" in iri:
+    if "?" in iri.partition("#")[0]:  # RFC 3986 3.4: the query ends at "#"; a "?" in a fragment is not one
         ctx.add("IRI006", term, "Term IRI contains a query string.", confidence="certain")
     if ILLEGAL_IRI_CHARACTERS & set(iri):
         ctx.add("IRI009", term, "IRI contains characters that are not allowed in IRIs.", confidence="certain")
