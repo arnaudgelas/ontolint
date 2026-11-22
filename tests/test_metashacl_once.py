@@ -67,6 +67,46 @@ class _Calls:
         monkeypatch.setattr(entrypoints, "meta_validate", spy)
 
 
+def _cold_meta_validate(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``meta_validate`` as a fresh process has it: pySHACL fills ``graph_cache`` with the SHACL-SHACL graph on the
+    first call, so a test that copies the attribute before any call copies the sentinel (the first test of a worker
+    did)."""
+    undecorated = entrypoints.meta_validate.__wrapped__  # type: ignore[attr-defined]
+    cold = entrypoints.with_metashacl_shacl_graph_cache(undecorated)
+    monkeypatch.setattr(entrypoints, "meta_validate", cold)
+
+
+def test_the_spies_do_not_depend_on_an_earlier_test_having_warmed_pyshacls_cache(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Three tests of this module failed when they were the first of a process to reach ``meta_validate`` (pytest-xdist
+    decides which test that is), because their wrappers copied the cache's sentinel."""
+    _cold_meta_validate(monkeypatch)
+    calls = _Calls(monkeypatch)
+
+    with pytest.raises(ShapesNotWellFormed):
+        shacl_issues(_graph(DATA), _graph(ILL_FORMED))
+
+    assert len(calls.arguments) == 1
+
+
+def test_the_signature_spy_does_not_depend_on_a_warm_cache_either(monkeypatch: pytest.MonkeyPatch) -> None:
+    _cold_meta_validate(monkeypatch)
+    real = entrypoints.meta_validate
+
+    def renamed(*args: Any, **kwargs: Any) -> Any:
+        return real(*args, **kwargs)
+
+    renamed.graph_cache = real.graph_cache  # type: ignore[attr-defined]
+    renamed.__signature__ = inspect.Signature([inspect.Parameter("graph", inspect.Parameter.POSITIONAL_ONLY)])  # type: ignore[attr-defined]
+    monkeypatch.setattr(entrypoints, "meta_validate", renamed)
+    seen = _meta_shacl_arguments(monkeypatch)
+
+    shacl_issues(_graph(DATA), _graph(WELL_FORMED))
+
+    assert seen == [True]
+
+
 def test_an_ill_formed_shapes_graph_is_meta_validated_once(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = _Calls(monkeypatch)
 
