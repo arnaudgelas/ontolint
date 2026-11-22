@@ -145,6 +145,16 @@ Deliberate golden update (issue #63, SKOS category): SKOS001 and SKOS002 are cat
 ``--list-rules``, so 40 pinned values changed, every one a ``sha256``; no linter snapshot, finding, message, focus,
 fingerprint, severity, confidence, text report, exit code or ``legacy_rules.json`` entry moved (the legacy view holds
 no rule metadata).
+
+Deliberate golden update and legacy re-pin (issue #155, LEX004): LEX004 compares labels as LEX015, LEX016, LEX017
+and LEX020 do (case folded, inner whitespace collapsed), so the two pairs of ``kitchen_sink.ttl`` that differ only
+in case, ``Dup`` and ``dup`` and ``Same Name`` and ``same name``, are now duplicates. LEX004 is a legacy rule, so
+``legacy_rules.json`` moved: in each of its ten ``linter`` entries the findings equal the previous ones plus two
+LEX004 findings (``Duplicate-Two`` and ``Eq1``; the five kitchen entries, none removed, nothing else added), every
+``cli`` exit code is unchanged, and each ``cli`` view that moved holds those two findings and their counts.
+``differential.json`` was regenerated: every changed line is a ``sha256``, a finding count, or one of the two added
+LEX004 findings in the five kitchen linter snapshots. ``identities.json`` only gained the new positive case. LEX016
+(a deprecated term no longer owns a label) moved no finding in any snapshot.
 """
 
 from __future__ import annotations

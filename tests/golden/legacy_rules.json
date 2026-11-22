@@ -2,11 +2,11 @@
  "cli": {
   "fail_on_warning_kitchen": {
    "exit": 1,
-   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
+   "legacy_json_view": "sha256:e91511cb6cb8d821ea3abba2d1518e1b365daeb79ec8dee045e0c775173c3778 (37855 chars)"
   },
   "ignore_family_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:de643efc957f27b170f7da236cae6074afc55b48746838d3099ba9f1588e1232 (33213 chars)"
+   "legacy_json_view": "sha256:48f04b39d40a0d08d8558462904ff879ba695292179dc590b0a360b153d671cb (33967 chars)"
   },
   "json_clean": {
    "exit": 0,
@@ -18,35 +18,35 @@
   },
   "json_config": {
    "exit": 1,
-   "legacy_json_view": "sha256:3e46f5204a5eb5fd828f09a11d45ac3125876138a539a4342016ee763ce23c8e (50474 chars)"
+   "legacy_json_view": "sha256:b95469e93537e6d831456c52d7a77d94c4c4b39a2950cf9114ff9895ae740a74 (51228 chars)"
   },
   "json_default": {
    "exit": 1,
-   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
+   "legacy_json_view": "sha256:e91511cb6cb8d821ea3abba2d1518e1b365daeb79ec8dee045e0c775173c3778 (37855 chars)"
   },
   "json_robot_fail": {
    "exit": 1,
-   "legacy_json_view": "sha256:73a26d18cb5c9e13a2c26f077503a9749bb1f4d6860319657cf9117e344fcec6 (37649 chars)"
+   "legacy_json_view": "sha256:ecbbb8ea8fedbc36ed253380ea46850bd3952844a6c8d21ab5619acd91e8a995 (38403 chars)"
   },
   "json_robot_ok": {
    "exit": 1,
-   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
+   "legacy_json_view": "sha256:e91511cb6cb8d821ea3abba2d1518e1b365daeb79ec8dee045e0c775173c3778 (37855 chars)"
   },
   "json_robot_unsupported": {
    "exit": 2,
-   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
+   "legacy_json_view": "sha256:e91511cb6cb8d821ea3abba2d1518e1b365daeb79ec8dee045e0c775173c3778 (37855 chars)"
   },
   "json_shapes": {
    "exit": 1,
-   "legacy_json_view": "sha256:d1628e92c9ca0765bd70009891776c193d14f178ae165048a668b6959725d4a9 (40211 chars)"
+   "legacy_json_view": "sha256:7582ff45867e87e5d6d7b70db0c37094e723b82cd390e76edbc3d21e05c9bb2f (40965 chars)"
   },
   "json_thresholds": {
    "exit": 1,
-   "legacy_json_view": "sha256:5df4e4f7b0e8ef1745688e62125552dd2180c4eb5f09c3f5bda7b330e699d07e (43546 chars)"
+   "legacy_json_view": "sha256:cdda09bdcdfc8f9911e797859c2ff1b3f71638ba10505c299bcc84ac6b3d64c2 (44301 chars)"
   },
   "multi_file_json": {
    "exit": 1,
-   "legacy_json_view": "sha256:f55218beeb8ec6b53b973ea01b1dfb26973bed1c9ed59af0a65bb6b9236f5d70 (37101 chars)"
+   "legacy_json_view": "sha256:e91511cb6cb8d821ea3abba2d1518e1b365daeb79ec8dee045e0c775173c3778 (37855 chars)"
   },
   "profile_minimal_json": {
    "exit": 1,
@@ -1023,6 +1023,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
@@ -2063,6 +2081,24 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "efe216e862b29e4a1307fb60867ca40e39924df18b1a17e63725184b7b04aae2",
     "focus": "https://example.test/onto#mixedLang",
     "message": "Mixed plain and language-tagged preferred labels.",
@@ -3088,6 +3124,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
@@ -4161,6 +4215,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
@@ -5288,6 +5360,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",

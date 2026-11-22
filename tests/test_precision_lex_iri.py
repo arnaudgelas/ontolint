@@ -44,11 +44,14 @@ def test_lex002_accepts_obo_and_prov_definitions() -> None:
 # --- LEX004 ----------------------------------------------------------------------------------------
 
 
-def test_lex004_message_severity_and_case_sensitivity() -> None:
+def test_lex004_message_severity_and_case_folding() -> None:
     assert [s.severity for s in lexical.SPECS if s.rule_id == "LEX004"] == [Severity.INFO]
     found = run("LEX004", 'ex:B a owl:Class ; rdfs:label " Same " . ex:A a owl:Class ; rdfs:label "Same" .')
     assert found == [(BASE + "A", f"Duplicate label 'Same'@und for {BASE}A, {BASE}B", "heuristic")]
-    assert run("LEX004", 'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .') == []
+    # Decision of #155: case and inner whitespace are folded, and the group shows its least stripped spelling.
+    assert run("LEX004", 'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .') == [
+        (BASE + "A", f"Duplicate label 'Same'@und for {BASE}A, {BASE}B", "heuristic")
+    ]
 
 
 def test_lex004_skips_kind_mixes_deprecated_and_obsolete() -> None:
