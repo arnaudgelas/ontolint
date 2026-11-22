@@ -21,24 +21,25 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
 * **SHQ007.** A shape with exactly one ``sh:minCount`` and exactly one ``sh:maxCount``, both naturals,
   where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``), derived integer
   types included (SHQ008 reports their datatype).  Excluded: equal bounds, a missing bound, several
-  values for either parameter, and a bound that is not a natural (SHQ008 reports it).  Error,
-  certain: no set of value nodes satisfies both, so every focus node violates the shape.
-* **SHQ008.** Every value of ``sh:minCount``, ``sh:maxCount``, ``sh:minLength`` or ``sh:maxLength`` on
-  a shape that is not a natural, each reported on its own: negative, decimal or double, ill-typed,
-  string, boolean or IRI; and every natural whose datatype is not ``xsd:integer`` (a derived type
-  such as ``xsd:int``, ``xsd:nonNegativeInteger`` or ``xsd:unsignedByte``).  A count keeps the
-  message "sh:minCount value 1.0 is not a non-negative integer." (the predicate as the shapes graph's
-  prefixes write it, the value's lexical form); a length, and a derived type, print the value in
-  N-Triples and the predicate as ``sh:``.  Excluded: ``sh:qualifiedMinCount`` and
-  ``sh:qualifiedMaxCount`` (4.7.3), and the range parameters.  Error: SHACL (sections 4.2.1, 4.2.2,
-  4.4.1 and 4.4.2, and the syntax rules of Appendix B) requires each to be a literal with datatype
-  ``xsd:integer``, so any other value makes the shape ill-formed (3.4.2: the result of validation is
-  undefined; a processor may reject the shapes graph or ignore the constraint: pySHACL 0.40.2 rejects a
-  ``"1"^^xsd:nonNegativeInteger`` count, so SHACL001 fails and the run exits 2, while Apache Jena 4.10.0
-  reads ``"1"^^xsd:int`` as 1).  A negative
-  ``xsd:integer`` is well formed (SHACL sets no lower bound) but meaningless: a negative minimum is
-  vacuous and a negative maximum fails every focus node (``sh:maxCount``) or value node
-  (``sh:maxLength``), so it is an authoring error all the same.  Certain: the check is exact.
+  values for either parameter, and a bound that is not a natural (SHQ008 reports it).  A deactivated shape
+  (2.1.6) is still reported.  Error, certain: no set of value nodes satisfies both, so every focus node
+  violates the shape (when the shape is not deactivated).
+* **SHQ008.** Every value of ``sh:minCount``, ``sh:maxCount``, ``sh:minLength`` or ``sh:maxLength`` on a shape that is
+  not a natural, each reported on its own: negative, decimal or double, ill-typed, string, boolean or IRI; and every
+  natural whose datatype is not ``xsd:integer`` (a derived type such as ``xsd:int``, ``xsd:nonNegativeInteger`` or
+  ``xsd:unsignedByte``).  A count keeps the message "sh:minCount value 1.0 is not a non-negative integer." (the
+  predicate as the shapes graph's prefixes write it, the value as RDFLib normalises it: ``1e0`` prints ``1.0``); a
+  length, and a derived type, print the value in N-Triples and the predicate as ``sh:``.  Excluded:
+  ``sh:qualifiedMinCount`` and ``sh:qualifiedMaxCount`` (4.7.3), and the range parameters.  Error: SHACL (sections
+  4.2.1, 4.2.2, 4.4.1 and 4.4.2, and the syntax rules of Appendix B) requires each to be a literal with datatype
+  ``xsd:integer``, so any other value makes the shape ill-formed (3.4.2: the result of validation is undefined; a
+  processor may reject the shapes graph or ignore the constraint: pySHACL 0.40.2 rejects a
+  ``"1"^^xsd:nonNegativeInteger`` count, so SHACL001 fails and the run exits 2, while Apache Jena 4.10.0 reads
+  ``"1"^^xsd:int`` as 1).  A negative ``xsd:integer`` is well formed (SHACL sets no lower bound) but meaningless: a
+  negative minimum is vacuous and a negative maximum fails every focus node (``sh:maxCount``) or value node
+  (``sh:maxLength``), so it is an authoring error all the same.  pySHACL 0.40.2 refuses a negative count or length when
+  it loads the shape (``ConstraintLoadError``), so SHACL001 is ``failed``, with no pointer to this rule; zero is
+  accepted.  Certain: the check is exact.
 * **SHQ011.** A literal value of ``sh:pattern`` that is not an XPath regular expression under the
   shape's ``sh:flags`` (all values concatenated).  SHACL 4.4.3 requires "valid pattern arguments for
   the SPARQL REGEX function", which are XPath regexes (F&O 1.0 7.6.1, F&O 3.1 5.6.1, over XSD Part 2
@@ -80,15 +81,21 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   makes the shape ill-formed (3.4.2), but an engine built on a host regex accepts some of these: pySHACL 0.40.2
   and Apache Jena 4.10.0 both accept ``\\/`` (which JavaScript habit writes) and ``[]a]``, so those two are
   warnings; pySHACL also accepts ``[[a]`` (Python warns of a possible nested set) while Jena rejects it
-  (``Unclosed character class``), so it stays an error, as does ``[^]a]``, which no engine was run on.
+  (``Unclosed character class``), so it stays an error.  ``[^]a]`` is accepted by pySHACL 0.40.2 (it
+  matches ``b`` and not ``]``); Jena was not run on it, so it stays an error.  pySHACL honours only the flags
+  ``i`` and ``m`` and compiles the pattern with Python's ``re``: it ignores ``s``, ``x`` and ``q`` (``a b``
+  with ``x`` does not match ``ab``; ``a.b`` with ``q`` matches ``axb``), so a pattern that only ``q`` makes
+  valid for this rule, such as ``(a``, still stops SHACL001 (``PatternError``, ``failed``) with no pointer
+  to this rule.
 * **SHQ013.** Every shape with both an ``sh:datatype`` and an ``sh:class`` triple (any values).
   Excluded: the two on different shapes of one path; ``sh:or`` alternatives.  Warning, deterministic:
   ``sh:datatype`` needs a literal value node and ``sh:class`` an IRI or blank instance (4.1.1, 4.1.2),
   so every value node violates one of them; the shape still holds when there is no value node, which is why it
-  is a warning where SHQ007 is an error.  Certain: the condition is exact.
+  is a warning where SHQ007 is an error.  A deactivated shape is still reported.  Certain: the condition is exact.
 * **SHQ017.** As SHQ007 for ``sh:minLength`` and ``sh:maxLength``, derived integer types included.
-  Excluded as for SHQ007; a length that is not a natural is SHQ008's.  Error, certain: no value node has a
-  string length in the range, so every value node (and every blank node) violates the shape.
+  Excluded as for SHQ007; a length that is not a natural is SHQ008's.  A deactivated shape is still
+  reported.  Error, certain: no value node has a string length in the range, so every value node (and every
+  blank node) violates the shape (when the shape is not deactivated).
 * **SHQ018.** A shape where some lower bound (``sh:minInclusive`` or ``sh:minExclusive``) and some
   upper bound (``sh:maxInclusive`` or ``sh:maxExclusive``), both numbers, admit no value: the lower
   is greater than the upper, or they are equal and either is exclusive.  A number is a non-NaN literal
@@ -99,7 +106,8 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   number beyond a type's range becomes ``INF`` or ``-INF``, which compare as infinities.  Excluded: NaN,
   ill-typed literals, booleans, and non-numeric bounds such as dates or strings; an interval empty
   only over the integers (``sh:minExclusive 1 ; sh:maxExclusive 2``), as the value nodes' datatype is
-  not considered.  Error, certain: no value node can satisfy both bounds.
+  not considered.  A deactivated shape is still reported.  Error, certain: no value node can satisfy both
+  bounds.
 * **SHQ019.** Every IRI value of ``sh:node`` or ``sh:property`` on a shape that is the subject of no
   triple of the shapes graph; one finding per predicate and value.  Excluded: blank values; references
   through ``sh:not``, ``sh:qualifiedValueShape`` and the ``sh:and``, ``sh:or`` and ``sh:xone`` lists (a
@@ -116,18 +124,23 @@ boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``x
   typed ``rdfs:Class`` or ``owl:Class`` (an implicit class target, 2.1.3.3), not referred to by any
   ``sh:node``, ``sh:not``, ``sh:property`` or ``sh:qualifiedValueShape`` value or ``sh:and``, ``sh:or`` or
   ``sh:xone`` member, and not deactivated (SHQ020's).  Excluded: untyped node shapes; references from
-  other shapes graphs, ``sh:shapesGraph`` users and SHACL-AF rules.  Warning, heuristic: a shape that
+  other shapes graphs, ``sh:shapesGraph`` users and SHACL-AF rules.  A reference counts wherever it comes
+  from: a self-reference, a deactivated shape and a shape that nothing reaches itself all count, so two node
+  shapes that only refer to each other are never reported, though the message says "no other shape refers to
+  it".  Warning, heuristic: a shape that
   nothing targets or reaches never validates anything (3.4), but it may be a library shape used
   elsewhere.
-* **SHQ024.** Every shape with ``sh:closed`` true whose allowed properties lack ``rdf:type``: neither an
-  ``sh:path`` of one of its ``sh:property`` values (4.8.1: "explicitly enumerated as a value of sh:path in
-  any of the property shapes declared via sh:property") nor a member of an ``sh:ignoredProperties``
-  list.  Only an IRI path counts (an inverse path does not allow ``rdf:type``); a malformed ignore list
-  allows nothing.  Info, heuristic: every focus node with an ``rdf:type`` triple, so every focus node of
-  an ``sh:targetClass``, violates the shape, which is rarely intended, but a closed shape over untyped
-  nodes (``sh:targetNode``) is fine.
+* **SHQ024.** Every shape with ``sh:closed`` true whose allowed properties lack ``rdf:type``: neither an ``sh:path`` of
+  one of its ``sh:property`` values (4.8.1: "explicitly enumerated as a value of sh:path in any of the property shapes
+  declared via sh:property") nor a member of an ``sh:ignoredProperties`` list.  Only an IRI path counts (an inverse path
+  does not allow ``rdf:type``); a malformed ignore list allows nothing, and a list of more than 500 members is read as
+  malformed (:func:`~.support.list_items`). A deactivated shape is still reported.  Info, heuristic: every focus node
+  with an ``rdf:type`` triple, so every focus node of an ``sh:targetClass``, violates the shape, which is rarely
+  intended, but a closed shape over untyped nodes (``sh:targetNode``) is fine.
 * **SHQ025.** Every value of ``sh:and``, ``sh:or`` or ``sh:xone`` that is a list of fewer than two
-  members; one finding per predicate.  Excluded: a malformed list or a literal.  Info, heuristic: one
+  members; one finding per list (findings with the same message, that is the same predicate and member
+  count, merge into one).  Excluded: a malformed list or a literal.  A deactivated shape is still
+  reported.  Info, heuristic: one
   member is redundant (the shape itself would do), an empty ``sh:and`` always holds and an empty
   ``sh:or`` or ``sh:xone`` never does (4.6.2-4.6.4); all are valid SHACL.
 * **SHQ026.** For every shape, every IRI path that two or more of its ``sh:property`` values have as their

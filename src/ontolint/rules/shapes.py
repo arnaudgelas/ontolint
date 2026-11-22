@@ -11,7 +11,9 @@ SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the p
 shows, not a property shape used as a condition inside ``sh:or``.  They also judge a *directly targeted* property
 shape: a subject of ``sh:path``, not typed ``sh:NodeShape``, with a target of its own (``sh:targetClass``,
 ``sh:targetNode``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), which is a stand-alone form field.  SHQ003 and
-SHQ005 keep the narrower set.  Every finding is ``heuristic``: the
+SHQ005 keep the narrower set.  The two definitions overlap: a node typed both ``sh:NodeShape`` and
+``sh:PropertyShape``, or typed ``sh:NodeShape`` and a value of ``sh:property``, is a node shape and a property
+shape at once, and SHQ001, SHQ002 and SHQ004 judge it each in turn.  Every finding is ``heuristic``: the
 documentation rules are conventions, and SHQ005 and SHQ006 read "should" statements.  Specifications:
 
 * **SHQ001.** Every property shape without an ``sh:name`` triple (any object: an IRI or an untagged
@@ -53,11 +55,11 @@ documentation rules are conventions, and SHQ005 and SHQ006 read "should" stateme
 * **SHQ004.** Every node shape without an ``rdfs:label`` triple or without an ``rdfs:comment`` triple
   (both are needed).  Excluded: untyped node shapes; ``skos:prefLabel``, ``sh:name`` and
   ``dcterms:description`` do not count, as a shape is not an ontology term.  Info: documentation only.
-* **SHQ005.** For each node or property shape and each of ``sh:name``, ``sh:description`` and
-  ``sh:message``, one finding when two literal values share a language tag, compared case-insensitively
-  (BCP 47); untagged literals share one tag.  IRI values are not counted.  Warning: 2.1.5 says a shape
-  "should not have more than one value for sh:message with the same language tag" and 2.3.2.1 says
-  the same of ``sh:name`` and ``sh:description``; a tool showing one of them picks arbitrarily.
+* **SHQ005.** For each node or property shape and each of ``sh:name``, ``sh:description`` and ``sh:message``, one
+  finding when two literal values share a language tag, compared case-insensitively (BCP 47); untagged literals, and
+  literals tagged ``und``, share one tag.  IRI values are not counted.  Warning: 2.1.5 says a shape "should not
+  have more than one value for sh:message with the same language tag" and 2.3.2.1 says the same of ``sh:name`` and
+  ``sh:description``; a tool showing one of them picks arbitrarily.
 * **SHQ006.** Every class of ``ctx.classes`` (owned, typed ``owl:Class`` or ``rdfs:Class``) with a
   directly typed instance in the data graph that no class target reaches: neither the class nor one of
   its superclasses (``rdfs:subClassOf``, transitively, in the data graph, as SHACL 1.1 defines a SHACL
