@@ -6,12 +6,15 @@ ontology to belong to the lexical space of its datatype, and (Section 5.2) every
 ``rdfs:Literal`` itself has no lexical space, so no literal can be typed with it.
 
 DATA003 asks RDFLib whether a lexical form is valid (``Literal.ill_typed``), and RDFLib's answer differs from XSD 1.1 in
-both directions (it accepts ``"1_0"^^xsd:integer`` and ``"inf"^^xsd:double``, and rejects ``"24:00:00"^^xsd:time``), so
-its findings are ``heuristic`` and its category is too.
+both directions (it accepts ``"1_0"^^xsd:integer`` and ``"inf"^^xsd:double``), so its findings are ``heuristic`` and its
+category is too.  Where it rejects what XSD 1.1 accepts for ``xsd:date``, ``xsd:dateTime`` and ``xsd:time``
+(``24:00:00``, the year ``0000``, a negative or a five-digit year), the rule does not report it; it adds no finding
+RDFLib does not make.
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
@@ -136,6 +139,34 @@ def _sorted[T: Node](triples: Iterable[tuple[Node, Node, T]]) -> list[tuple[Node
     return sorted(triples, key=lambda t: (str(t[0]), str(t[1]), str(t[2])))
 
 
+_YEAR = r"(-?(?:[1-9][0-9]{3,}|0[0-9]{3}))"
+_DATE = _YEAR + r"-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])"
+_TIME = r"(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\.[0-9]+)?|24:00:00(?:\.0+)?)"
+_ZONE = r"(?:Z|[+-](?:0[0-9]|1[0-3]):[0-5][0-9]|[+-]14:00)?"
+_XSD_TEMPORAL = {
+    XSD.date: re.compile(_DATE + _ZONE),
+    XSD.dateTime: re.compile(_DATE + "T" + _TIME + _ZONE),
+    XSD.time: re.compile(_TIME + _ZONE),
+}
+"""The lexical spaces of XSD 1.1 (Part 2, 3.3.7 to 3.3.9) for the three datatypes RDFLib rejects too much of: it reads
+them into Python ``datetime`` objects, whose years run from 1 to 9999 and whose hours stop at 23."""
+_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+_LEAP_DAYS = (31, 29, *_DAYS[2:])
+
+
+def _xsd_accepts(datatype: Node, lexical: str) -> bool:
+    """Whether XSD 1.1 accepts ``lexical`` as an ``xsd:date``, ``xsd:dateTime`` or ``xsd:time``."""
+    pattern = _XSD_TEMPORAL.get(datatype) if isinstance(datatype, URIRef) else None
+    match = pattern.fullmatch(lexical) if pattern else None
+    if not match:
+        return False
+    if datatype == XSD.time:
+        return True
+    year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+    leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)  # year 0000 is a leap year, as in XSD 1.1
+    return day <= (_LEAP_DAYS if leap else _DAYS)[month - 1]
+
+
 def _ill_typed(ctx: RuleContext) -> None:
     g = ctx.g
     typed = (
@@ -149,6 +180,8 @@ def _ill_typed(ctx: RuleContext) -> None:
             problem = "rdfs:Literal has no lexical forms in OWL 2, so no literal can be typed with it"
         else:
             problem = f"it is not a valid {datatype}"
+        if _xsd_accepts(o.datatype or RDFS.Literal, str(o)):
+            continue
         owner = owning_term(g, s)
         if _foreign(ctx, owner):
             continue
