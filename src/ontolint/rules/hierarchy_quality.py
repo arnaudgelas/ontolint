@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict, deque
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping, Set
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -246,9 +246,8 @@ def _disjoint_pairs(ctx: RuleContext) -> set[tuple[URIRef, URIRef]]:
     return pairs
 
 
-def _ancestor_masks(classes: Iterable[URIRef], h: Hierarchy, bits: Mapping[URIRef, int]) -> dict[URIRef, int]:
+def _ancestor_masks(components: Iterable[Set[URIRef]], h: Hierarchy, bits: Mapping[URIRef, int]) -> dict[URIRef, int]:
     """Bit mask of the disjointness-relevant classes at or above each class (parents are visited first)."""
-    components = strongly_connected_components(classes, h.edges())
     masks: dict[URIRef, int] = {}
     for component in components:
         mask = 0
@@ -278,7 +277,8 @@ def _disjoint_conflicts(ctx: RuleContext, h: Hierarchy) -> None:
     for a, b in pairs:
         partners[bits[a]] |= 1 << bits[b]
         partners[bits[b]] |= 1 << bits[a]
-    masks = _ancestor_masks(ctx.classes, h, bits)
+    components = strongly_connected_components(ctx.classes, h.edges())
+    masks = _ancestor_masks(components, h, bits)
 
     def clash(cls: URIRef) -> tuple[int, int] | None:
         mask = masks[cls]
@@ -288,12 +288,15 @@ def _disjoint_conflicts(ctx: RuleContext, h: Hierarchy) -> None:
                 return bit, next(_set_bits(hit))
         return None
 
-    for cls in sorted(ctx.classes, key=str):
-        found = clash(cls)
-        if found and not any(clash(parent) for parent in h.supers.get(cls, ())):
+    # The members of a subclass cycle are equivalent (OWL 2 Structural Specification 9.1.2) and each is the other's
+    # parent: the cycle is judged as one class, reported at its first member, unless a parent outside it clashes.
+    for component in sorted(components, key=lambda members: min(map(str, members))):
+        found = clash(next(iter(component)))
+        outside = {parent for member in component for parent in h.supers.get(member, ()) if parent not in component}
+        if found and not any(clash(parent) for parent in outside):
             ctx.add(
                 "CLS014",
-                cls,
+                min(component, key=str),
                 f"Below disjoint classes {involved[found[0]]} and {involved[found[1]]}.",
                 confidence="certain",
                 subject=(),
@@ -311,7 +314,9 @@ def _top_and_bottom(ctx: RuleContext) -> None:
         parents = set(ctx.g.objects(cls, RDFS.subClassOf))
         if parents & TOP_CLASSES and parents - TOP_CLASSES - {cls}:
             ctx.add("CLS018", cls, "Explicit owl:Thing/rdfs:Resource superclass next to another superclass.")
-        if OWL.Nothing in parents or OWL.Nothing in set(ctx.g.objects(cls, OWL.equivalentClass)):
+        # owl:equivalentClass is symmetric (OWL 2 Structural Specification 9.1.2): either end may be owl:Nothing.
+        equivalents = set(ctx.g.objects(cls, OWL.equivalentClass)) | set(ctx.g.subjects(OWL.equivalentClass, cls))
+        if OWL.Nothing in parents or OWL.Nothing in equivalents:
             ctx.add("CLS019", cls, "Class is asserted below or equivalent to owl:Nothing.", confidence="certain")
 
 
