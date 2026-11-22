@@ -165,7 +165,7 @@ results after upgrading.
   confidence rationale, fixtures), with a specification test file, `tests/test_cls_specification.py`, that the
   catalogue rows name. Part of #64; the SKOS and IRI families remain.
 - **SKOS:** the family (SKOS001 to SKOS021) is specified the same way, with `tests/test_skos_specification.py`. Known
-  gaps are pinned as they are, not changed: SKOS001 reads asserted `skos:Concept` only (#181 is deferred),
+  gaps are pinned as they are, not changed: SKOS001 reads asserted `skos:Concept` only (the wider scope is counted in #195),
   SKOS005 and SKOS006 do not read `skos:topConceptOf` and `skos:hasTopConcept`, SKOS002 and LEX015 leave an
   `altLabel` against a `hiddenLabel` that differ in case unreported (#155). Part of #64; the CLS and IRI families remain.
 - **IRI:** IRI001-IRI006 and IRI008-IRI019 are specified in their module docstrings (scope, condition, exclusions,
