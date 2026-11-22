@@ -584,15 +584,77 @@ def test_a_node_shape_with_a_path_reached_through_sh_node_points_at_shq023_too()
     assert any("sh:path: More than 0 values" in line and line.endswith("(SHQ023)") for line in failure.results)
 
 
-def test_a_load_error_that_is_not_a_node_shape_with_a_path_keeps_its_text() -> None:
-    """Typed as both and with no path: pySHACL's other load error, which SHQ023 reports as a missing path only."""
-    shapes = PREFIXES + ":S a sh:NodeShape, sh:PropertyShape ; sh:targetClass :Person .\n"
+# The other two shapes graphs pySHACL's loader refuses and SHACL-SHACL accepts (issue #137).
+DUAL_SUMMARY = "the shapes graph has a shape typed both sh:NodeShape and sh:PropertyShape, which pySHACL refuses"
+NO_PATH_SUMMARY = "the shapes graph has a property shape with no sh:path, which pySHACL refuses"
+# Each is a ShapeLoadError in pySHACL, with and without meta_shacl, and SHACL-SHACL conforms.
+DUAL_SHAPES = {
+    "the issue's shape": ":S a sh:NodeShape, sh:PropertyShape ; sh:targetClass :Person .",
+    "a bare shape": ":S a sh:NodeShape, sh:PropertyShape .",
+    "a deactivated shape": ":S a sh:NodeShape, sh:PropertyShape ; sh:deactivated true .",
+    "a shape reached through sh:node": (
+        ":T a sh:NodeShape ; sh:targetClass :Person ; sh:node :S .\n:S a sh:NodeShape, sh:PropertyShape ."
+    ),
+}
+NO_PATH_SHAPES = {
+    "a bare property shape": ":S a sh:PropertyShape .",
+    "a targeted property shape": ":S a sh:PropertyShape ; sh:targetClass :Person .",
+    "a deactivated property shape": ":S a sh:PropertyShape ; sh:deactivated true .",
+}
+
+
+@pytest.mark.parametrize("name", sorted(DUAL_SHAPES))
+def test_a_shape_typed_as_node_and_property_shape_is_a_summary_that_names_it(name: str) -> None:
+    """Before issue #137 this was the raw ``ShapeLoadError: ...`` with no shape named and no ``results``.  No pointer:
+    SHQ023 reports the missing path, and adding one gives the other refusal (a node shape with ``sh:path``)."""
+    shapes = PREFIXES + DUAL_SHAPES[name] + "\n"
 
     execution = Linter(_graph(DATA), _graph(shapes)).execute(["SHACL001"]).executions[0]
 
     assert execution.status is ExecutionStatus.FAILED
-    assert execution.detail.startswith("ShapeLoadError: A shape defined as a NodeShape cannot also be defined")
-    assert execution.results == ()
+    assert execution.detail == DUAL_SUMMARY
+    assert execution.results == (f"{SHAPE_S}: a shape must not be typed both sh:NodeShape and sh:PropertyShape",)
+    assert "ShapeLoadError" not in execution.detail + "".join(execution.results)
+
+
+@pytest.mark.parametrize("name", sorted(NO_PATH_SHAPES))
+def test_a_property_shape_with_no_path_that_shacl_shacl_accepts_is_a_summary_that_points_at_shq023(name: str) -> None:
+    shapes = PREFIXES + NO_PATH_SHAPES[name] + "\n"
+    assert _graph(shapes)  # parses; SHACL-SHACL accepts it, so only the loader sees it
+
+    execution = Linter(_graph(DATA), _graph(shapes)).execute(["SHACL001"]).executions[0]
+
+    assert execution.status is ExecutionStatus.FAILED
+    assert execution.detail == NO_PATH_SUMMARY
+    assert execution.results == (f"{SHAPE_S}: sh:path: a property shape must have one sh:path (SHQ023)",)
+    fired = {finding.focus for finding in Linter(_graph(DATA), _graph(shapes)).execute(["SHQ023"]).findings}
+    assert SHAPE_S in fired  # the pointer names a rule that really fires on that shape
+
+
+def test_several_refused_kinds_in_one_shapes_graph_are_one_summary_with_every_line() -> None:
+    shapes = (
+        PREFIXES + ":A a sh:NodeShape ; sh:path :p .\n:B a sh:NodeShape, sh:PropertyShape .\n:C a sh:PropertyShape .\n"
+    )
+
+    execution = Linter(_graph(DATA), _graph(shapes)).execute(["SHACL001"]).executions[0]
+
+    assert execution.detail == "the shapes graph has shapes that pySHACL refuses to load"
+    base = "https://example.test/onto#"
+    assert execution.results == (
+        f"{base}A: sh:path: a node shape must not have sh:path (SHQ023)",
+        f"{base}B: a shape must not be typed both sh:NodeShape and sh:PropertyShape",
+        f"{base}C: sh:path: a property shape must have one sh:path (SHQ023)",
+    )
+
+
+def test_a_shape_typed_as_both_with_a_path_stays_a_node_shape_with_a_path() -> None:
+    """The loader names the path first, and so does the summary: one defect, one line, as before issue #137."""
+    shapes = PREFIXES + ":S a sh:NodeShape, sh:PropertyShape ; sh:path :p .\n"
+
+    execution = Linter(_graph(DATA), _graph(shapes)).execute(["SHACL001"]).executions[0]
+
+    assert execution.detail == NODE_PATH_SUMMARY
+    assert execution.results == (f"{SHAPE_S}: sh:path: a node shape must not have sh:path (SHQ023)",)
 
 
 def test_the_defect_alone_does_not_make_another_failure_a_summary(monkeypatch: pytest.MonkeyPatch) -> None:
