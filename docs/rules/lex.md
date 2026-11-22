@@ -244,7 +244,15 @@ ex:short rdfs:subPropertyOf rdfs:label . ex:A a owl:Class ; rdfs:label "Aye"@en 
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Differentiate labels or formally document and link genuinely equivalent concepts.
 
-**Specification.** Several owned terms of one kind (class, property, or other) that share a main label with the same language, compared after stripping the ends only (case and inner whitespace count).  One finding per label, focused on the first term.  Excluded: a blank label, a label starting with ``obsolete``, a deprecated term, a SKOS collection or scheme.  Info: a repeated label may be intended (homonyms in separate namespaces).
+**Specification.** Several owned terms of one kind (class, property, or other) that share a main label with the same language, compared as LEX015, LEX016, LEX017 and LEX020 compare (case folded, inner whitespace collapsed; decided in issue #155). One finding per label, focused on the first term and naming the least stripped spelling of the group, so identical labels keep the label and the identity they had. Excluded: a blank label, a label starting with ``obsolete``, a deprecated term, a SKOS collection or scheme. Info: a repeated label may be intended (homonyms in separate namespaces).
+
+*Flagged:* `case and whitespace variants`
+
+```turtle
+ex:A a owl:Class ; rdfs:label "Same  Label" . ex:B a owl:Class ; rdfs:label "same label" .
+```
+
+Reported: `Duplicate label 'Same  Label'@und for https://example.test/onto#A, https://example.test/onto#B`
 
 *Flagged:* `same label on two terms`
 
@@ -264,12 +272,6 @@ ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:Collection ; skos:pref
 
 ```turtle
 ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:ConceptScheme ; skos:prefLabel "Same" .
-```
-
-*Clean:* `case-only difference`
-
-```turtle
-ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .
 ```
 
 *Clean:* `class and property share a label`
@@ -408,7 +410,7 @@ ex:X_0000001 a owl:Class . ex:X_0000002 a owl:Class . ex:eF a owl:Class . ex:gH 
 - **Module:** [`lexical`](#module-lexical)
 - **Fix:** Add the required preferred language label.
 
-**Specification.** For each configured language, an owned term with no label (``ctx.labels``) in it.  A tag satisfies a range by RFC 4647 3.3.1 basic filtering: ``en-GB`` satisfies ``en``, ``eng`` and a shorter tag do not.  An untagged label satisfies none.  Silent when no language is configured.  Info.
+**Specification.** For each configured language, an owned term with no label (``ctx.labels``) in it.  A tag satisfies a range by RFC 4647 3.3.1 basic filtering: ``en-GB`` satisfies ``en``, ``eng`` and a shorter tag do not.  An untagged label satisfies none (decided in issue #155: an untagged label is in no language, so a vocabulary of untagged labels is reported term by term once a language is configured).  Silent when no language is configured.  Info.
 
 *Flagged:* `required language missing`
 
@@ -738,7 +740,7 @@ ex:A a owl:Class ; rdfs:label "A"^^xsd:string .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Remove alternative labels that equal the term's own label in the same language.
 
-**Specification.** An alternative label (``skos:altLabel``, ``skos:hiddenLabel``) whose normalised text and language equal a main label of the same term.  SKOS Reference 5.4 S13: the three label properties are pairwise disjoint; the rule is wider (case and inner whitespace ignored) and does not report an ``skos:altLabel`` that equals a ``skos:hiddenLabel`` (known gap).  Info.
+**Specification.** An alternative label (``skos:altLabel``, ``skos:hiddenLabel``) whose normalised text and language equal a main label of the same term.  SKOS Reference 5.4 S13: the three label properties are pairwise disjoint; the rule is wider (case and inner whitespace ignored) and does not report an ``skos:altLabel`` that equals a ``skos:hiddenLabel`` (decided in issue #155: SKOS002 reports the exact overlap, and no rule reports a case or whitespace variant, which the 21-file calibration corpus does not contain).  Info.
 
 *Flagged:* `altLabel equals prefLabel`
 
@@ -768,7 +770,7 @@ ex:A a owl:Class ; skos:prefLabel "Car"@en ; skos:altLabel "Car"@fr .
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Resolve the overlap: relate the terms or remove the conflicting synonym.
 
-**Specification.** An alternative label that is a main label of another owned term, same normalised text and language.  One finding per alternative label, naming the first other term.  Excluded: a blank alternative label.  A deprecated term still owns its labels here (LEX004 skips it): known gap.  Warning: the synonym makes the lookup ambiguous.
+**Specification.** An alternative label that is a main label of another owned term, same normalised text and language.  One finding per alternative label, naming the first other term.  Excluded: a blank alternative label.  A deprecated term owns no label here, as in LEX004 (decided in issue #155); a deprecated term that holds the alternative label is judged.  Warning: the synonym makes the lookup ambiguous.
 
 *Flagged:* `synonym is another term's label`
 
@@ -1062,7 +1064,7 @@ Linter options: `languages=('en',)`.
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Add the definition in every configured language, or none.
 
-**Specification.** When a term has a non-blank definition, each configured language in which it has none (basic filtering); an untagged definition satisfies none, so a term with only untagged definitions is reported for every configured language.  A term with no definition is LEX002's.  Info.
+**Specification.** When a term has a non-blank definition, each configured language in which it has none (basic filtering); an untagged definition satisfies none (decided in issue #155, as for LEX008), so a term with only untagged definitions is reported for every configured language.  A term with no definition is LEX002's.  Info.
 
 *Flagged:* `definition only in English`
 

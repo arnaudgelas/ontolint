@@ -34,10 +34,12 @@ literals) and RFC 4647 (3.3.1: basic filtering).  Specifications:
   an ``rdfs:label`` beside a ``skos:prefLabel`` (a notation or a specialised label), a sub-property of
   ``rdfs:label`` beside a main label.  Warning: in SKOS the term is then inconsistent (S14 is an integrity
   condition); outside SKOS it is a convention.
-* **LEX004.** Several owned terms of one kind (class, property, or other) that share a main label with the
-  same language, compared after stripping the ends only (case and inner whitespace count).  One finding per
-  label, focused on the first term.  Excluded: a blank label, a label starting with ``obsolete``, a deprecated
-  term, a SKOS collection or scheme.  Info: a repeated label may be intended (homonyms in separate namespaces).
+* **LEX004.** Several owned terms of one kind (class, property, or other) that share a main label with the same
+  language, compared as LEX015, LEX016, LEX017 and LEX020 compare (case folded, inner whitespace collapsed;
+  decided in issue #155). One finding per label, focused on the first term and naming the least stripped
+  spelling of the group, so identical labels keep the label and the identity they had. Excluded: a blank label,
+  a label starting with ``obsolete``, a deprecated term, a SKOS collection or scheme. Info: a repeated label may
+  be intended (homonyms in separate namespaces).
 * **LEX005.** A label (labels as above, ``skos:altLabel`` excluded, see LEX025) that is empty, whitespace or
   differs from its stripped form (any character ``str.strip`` removes).  Confidence ``certain``.  Warning: a
   padded label breaks matching and rendering.
@@ -49,7 +51,9 @@ literals) and RFC 4647 (3.3.1: basic filtering).  Specifications:
   is a leftover.  Info.
 * **LEX008.** For each configured language, an owned term with no label (``ctx.labels``) in it.  A tag
   satisfies a range by RFC 4647 3.3.1 basic filtering: ``en-GB`` satisfies ``en``, ``eng`` and a shorter tag do
-  not.  An untagged label satisfies none.  Silent when no language is configured.  Info.
+  not.  An untagged label satisfies none (decided in issue #155: an untagged label is in no language, so a
+  vocabulary of untagged labels is reported term by term once a language is configured).  Silent when no
+  language is configured.  Info.
 * **LEX009.** Per kind (classes, properties), the terms whose first ``rdfs:label`` (sorted by language,
   datatype, text) starts with a letter of the minority case, when at least ``MINIMUM_CAPITALIZATION_SAMPLE``
   labels begin with a letter and ``MAJORITY_PERCENT`` percent of them share one case.  Info: a style review
@@ -302,8 +306,20 @@ def _indexable_label(ctx: RuleContext, term: URIRef, text: str) -> bool:
 
 
 def _duplicate_labels(ctx: RuleContext, label_index: LabelIndex) -> None:
-    for (duplicate_label, lang, kind), terms in sorted(label_index.items()):
+    """One finding per label shared by several terms, compared as LEX015, LEX016, LEX017 and LEX020 do (case
+    folded, inner whitespace collapsed; issue #155).  The label shown, and the subject, is the least stripped
+    spelling in the group, so a group of identical labels keeps the label and the identity it had when only
+    stripped text was compared.
+    """
+    groups: defaultdict[tuple[str, str, str], tuple[set[str], set[URIRef]]] = defaultdict(lambda: (set(), set()))
+    for (label, lang, kind), terms in label_index.items():
+        spellings, owners = groups[(" ".join(label.split()).casefold(), lang, kind)]
+        spellings.add(label)
+        owners.update(terms)
+    for _key, (spellings, terms) in sorted(groups.items(), key=lambda item: (min(item[1][0]), item[0][1], item[0][2])):
         if len(terms) > 1:
+            lang, kind = _key[1], _key[2]
+            duplicate_label = min(spellings)
             ctx.add(
                 "LEX004",
                 sorted(terms, key=str)[0],

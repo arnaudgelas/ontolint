@@ -27,11 +27,12 @@ Terms, labels, main labels, definitions and languages are those of ``lexical`` (
 * **LEX015.** An alternative label (``skos:altLabel``, ``skos:hiddenLabel``) whose normalised text and language
   equal a main label of the same term.  SKOS Reference 5.4 S13: the three label properties are pairwise
   disjoint; the rule is wider (case and inner whitespace ignored) and does not report an ``skos:altLabel`` that
-  equals a ``skos:hiddenLabel`` (known gap).  Info.
+  equals a ``skos:hiddenLabel`` (decided in issue #155: SKOS002 reports the exact overlap, and no rule reports a
+  case or whitespace variant, which the 21-file calibration corpus does not contain).  Info.
 * **LEX016.** An alternative label that is a main label of another owned term, same normalised text and
   language.  One finding per alternative label, naming the first other term.  Excluded: a blank alternative
-  label.  A deprecated term still owns its labels here (LEX004 skips it): known gap.  Warning: the synonym
-  makes the lookup ambiguous.
+  label.  A deprecated term owns no label here, as in LEX004 (decided in issue #155); a deprecated term that
+  holds the alternative label is judged.  Warning: the synonym makes the lookup ambiguous.
 * **LEX017.** A definition whose normalised text equals a label of the same term (any language, any label
   predicate but ``skos:altLabel``).  Blank definitions are LEX019's.  Info.
 * **LEX019.** A definition value that is empty or only whitespace.  Confidence ``certain``.  Warning.  A padded
@@ -41,8 +42,8 @@ Terms, labels, main labels, definitions and languages are those of ``lexical`` (
 * **LEX022.** A label whose language is not ``und`` and matches no configured language by RFC 4647 3.3.1
   (equal, or the configured range followed by ``-``).  Silent when no language is configured.  Info.
 * **LEX023.** When a term has a non-blank definition, each configured language in which it has none (basic
-  filtering); an untagged definition satisfies none, so a term with only untagged definitions is reported for
-  every configured language.  A term with no definition is LEX002's.  Info.
+  filtering); an untagged definition satisfies none (decided in issue #155, as for LEX008), so a term with only
+  untagged definitions is reported for every configured language.  A term with no definition is LEX002's.  Info.
 * **LEX024.** More than one distinct ``skos:definition`` literal in one language on a term ("x" and
   "x"^^xsd:string are one literal, RDF 1.1 Concepts 3.3;
   "1"^^xsd:integer is another).  SKOS Reference 7.3 puts no limit on the number of
@@ -59,7 +60,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from rdflib import Literal, URIRef
-from rdflib.namespace import RDF, SKOS, XSD
+from rdflib.namespace import OWL, RDF, SKOS, XSD
 from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
@@ -332,12 +333,20 @@ def _language_policy(ctx: RuleContext, term: URIRef, text: TermText) -> None:
                 ctx.add("LEX023", term, f"Missing definition in language {lang}.", subject=(lang,))
 
 
-def _cross_term(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
+def _label_owners(ctx: RuleContext, texts: dict[URIRef, TermText]) -> defaultdict[tuple[str, str], set[URIRef]]:
+    """The terms owning each (normalised label, language); a deprecated term owns none (issue #155), as in LEX004."""
     owners: defaultdict[tuple[str, str], set[URIRef]] = defaultdict(set)
+    for term, text in texts.items():
+        if (term, OWL.deprecated, Literal(True)) not in ctx.g:
+            for label in text.primary:
+                owners[(_norm(label), _language(label))].add(term)
+    return owners
+
+
+def _cross_term(ctx: RuleContext, texts: dict[URIRef, TermText]) -> None:
+    owners = _label_owners(ctx, texts)
     definitions: defaultdict[tuple[str, str], set[URIRef]] = defaultdict(set)
     for term, text in texts.items():
-        for label in text.primary:
-            owners[(_norm(label), _language(label))].add(term)
         for definition in text.definitions:
             if str(definition).strip():
                 definitions[(_norm(definition), _language(definition))].add(term)

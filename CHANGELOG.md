@@ -184,6 +184,14 @@ results after upgrading.
 - **METRIC calibration:** the labels of the calibration corpus are approved (`label_status`, issue #152): 62 pairs checked, 211 presumed, two left
   `unknown`. The pages that said 11 false positives on five rules now say 13 on six (the labels of #246 added two). No default, severity or
   confidence changes; recall stays unmeasured for METRIC004-METRIC013 except METRIC008's single case. Documentation only.
+- **LEX004:** two terms whose labels differ only in case or in inner whitespace (`"Heart"` and `"heart"`, `"x  y"` and `"x y"`) are now
+  duplicates, compared as LEX015, LEX016, LEX017 and LEX020 compare (issue #155). New findings can appear; a finding of identical labels
+  keeps its message and identity. No finding changed on the 21-file calibration corpus (8 before and after).
+- **LEX016:** a deprecated term no longer owns a label, as in LEX004: an alternative label equal to a deprecated term's label is not
+  reported. Fewer findings only; none changed on the calibration corpus (24 before and after).
+- **LEX008, LEX023, LEX015:** decided in #155 and documented as such, with no behaviour change: an untagged label or definition
+  satisfies no configured language (with `languages` set, an untagged vocabulary is reported term by term); an `skos:altLabel` equal to an
+  `skos:hiddenLabel` is not reported by LEX015 (SKOS002 reports the exact overlap).
 - **SHQ014:** the specification states the decision of #138: any subject of an `sh:` predicate is judged for its
   `sh:severity` values, a node that is only loosely a shape included (an `owl:Class` carrying a severity), though
   SHACL-SHACL does not check it. Pinned in `tests/test_shq_specification.py`; no behaviour changes.

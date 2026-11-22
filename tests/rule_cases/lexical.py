@@ -90,9 +90,13 @@ CASES = {
     "LEX004": rule_cases(
         [
             ttl(
+                "case and whitespace variants",
+                'ex:A a owl:Class ; rdfs:label "Same  Label" . ex:B a owl:Class ; rdfs:label "same label" .',
+            ),
+            ttl(
                 "same label on two terms",
                 'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "Same" .',
-            )
+            ),
         ],
         [
             ttl(
@@ -102,9 +106,6 @@ CASES = {
             ttl(
                 "scheme and concept share a label",
                 'ex:A a skos:Concept ; skos:prefLabel "Same" . ex:B a skos:ConceptScheme ; skos:prefLabel "Same" .',
-            ),
-            ttl(
-                "case-only difference", 'ex:A a owl:Class ; rdfs:label "Same" . ex:B a owl:Class ; rdfs:label "same" .'
             ),
             ttl(
                 "class and property share a label",
