@@ -1179,6 +1179,16 @@ The pages are generated; regenerate them with
 
 ## Scope and limitations
 
+- A blank node in a finding is named by its content, never by a parser's label: `_:` and 12 hex digits of a
+  digest of the nearest named owner, the predicates that refer to it and what it reaches (to a bounded depth).
+  This is not canonical labelling. Blank nodes with the same identity (a `[ ex:p "x" ]` written twice for one
+  subject and predicate) are interchangeable to ontolint, so a rule that reports them in the same words reports
+  **one** finding, whose message ends `(reported once for N blank nodes with the same content)`; its focus, its
+  subject and so its baseline identity are those of one node, so a baseline written before the count still
+  matches. Fix every occurrence, not only the first. Blank nodes that differ anywhere inside the bound have two
+  identities and two findings. A rule that orders or picks among blank nodes (OWL029's lesser node, OWL041's
+  walk, OWL043's operand pair) orders them by that identity, so a finding is the same in Turtle, RDF/XML,
+  JSON-LD, TriG and N-Quads.
 - Term-level rules only judge terms the file owns.  With `--base` the base decides (a base such as
   `http://purl.obolibrary.org/obo/RO_` is a plain prefix; a warning is printed when it selects no declared
   term).  Without it the owned namespaces are derived from the `owl:Ontology` IRI(s) (the IRI, the IRI

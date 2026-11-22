@@ -161,6 +161,10 @@ class RuleContext:
         self.findings: list[Finding] = []
         self.seen: set[tuple[str, str, str]] = set()
         self._emitted: dict[tuple[str, str, str], int] = {}  # each seen key's position in ``findings``
+        # The first emission of a key that named a blank node, as the rule wrote it (the node's own label), and the
+        # distinct ones since a second node gave the same key: they tell one node reached twice from two nodes.
+        self._written: dict[tuple[str, str, str], tuple[str, str, str]] = {}
+        self._merged: dict[tuple[str, str, str], set[tuple[str, str, str]]] = {}
         # Blank nodes are named by their content in the graph the running rules report on: the data graph,
         # or the shapes graph inside :meth:`naming_shapes`.  Every rule spells a blank node of a message ``_:label``
         # (:func:`~ontolint.rules.support.value_text`), and only that spelling is rewritten, in either graph.
@@ -277,6 +281,7 @@ class RuleContext:
         if severity is not None and severity not in _SEVERITIES:
             raise ValueError(f"{code}: severity must be one of {sorted(_SEVERITIES)}, not {severity!r}")
         text = self._focus_text(focus)
+        written = (code, f"_:{focus}" if isinstance(focus, BNode) else text, redact_userinfo(message))
         message = self._message_text(message)
         key = (code, text, message)
         about = tuple(map(self._subject_text, subject))
@@ -284,16 +289,39 @@ class RuleContext:
             # One finding per message: of the subjects offered for it, keep the least, so the subject does not
             # depend on the order the graph is iterated in (a rule's subject finer than its message).
             index = self._emitted[key]
-            self.findings[index] = replace(self.findings[index], subject=min(about, self.findings[index].subject))
+            current = self.findings[index]
+            self.findings[index] = replace(current, subject=min(about, current.subject))
+            self._count_merged(key, written)
             return
         self.seen.add(key)
         self._emitted[key] = len(self.findings)
+        if written != key:  # a blank node is named: another node of the same content may give the same key
+            self._written[key] = written
         others = tuple(dict.fromkeys(t for t in map(self._focus_text, related) if t != text))
         self.findings.append(
             Finding(
                 code, severity or SEVERITY[code], text, message, FIXES[code], confidence, related=others, subject=about
             )
         )
+
+    def _count_merged(self, key: tuple[str, str, str], written: tuple[str, str, str]) -> None:
+        """Say in the message of the finding of ``key`` that blank nodes of one content were reported as one.
+
+        ``written`` is the emission as the rule wrote it, with its blank nodes' own labels: it differs from the first
+        one of ``key`` only when another node of the same identity gave the same key (the identity is a digest of the
+        content and the place, so two interchangeable nodes share it), whereas one node reached twice writes the same
+        label twice.  The count is the distinct nodes, so it does not depend on the
+        labels or on the order of the graph; the finding's focus and subject, and so its baseline identity, are the
+        ones of a single node.
+        """
+        first = self._written.get(key)
+        if first is None or written == first:
+            return
+        forms = self._merged.setdefault(key, {first})
+        forms.add(written)
+        index = self._emitted[key]
+        note = f" (reported once for {len(forms)} blank nodes with the same content)"
+        self.findings[index] = replace(self.findings[index], message=key[2] + note)
 
     @contextmanager
     def naming_shapes(self) -> Generator[None]:
@@ -311,6 +339,16 @@ class RuleContext:
 
     def _stable_id(self, node: BNode) -> str:
         return self._names.identity(node)
+
+    def order_key(self, node: Node) -> tuple[str, str]:
+        """A sort key for ``node`` that does not depend on the label a parser gave a blank node.
+
+        An IRI (or a literal) sorts by its text, so a result that holds only IRIs is ordered as it always was; a blank
+        node sorts by its stable identity, the label only separating nodes of one identity, which no rule can tell
+        apart.  A rule that orders or picks among nodes that may be blank (the smaller of two, the first of a walk)
+        uses it, so that the finding is the same in every serialisation of the graph (OWL041, OWL043, OWL029).
+        """
+        return (self._stable_id(node) if isinstance(node, BNode) else str(node), str(node))
 
     def _message_text(self, message: str) -> str:
         """Replace parser-assigned blank-node labels inside ``message`` by their stable identity; mask userinfo."""
