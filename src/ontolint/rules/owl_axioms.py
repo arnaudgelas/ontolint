@@ -83,7 +83,8 @@ restricted to owned terms: every subject of the graph is checked, imported or no
 * **OWL027.** An ``owl:NegativePropertyAssertion`` whose ``owl:sourceIndividual``,
   ``owl:assertionProperty`` and ``owl:targetIndividual`` or ``owl:targetValue`` form a triple that is
   asserted; reported on the source.  Literals match as RDF terms after RDFLib's lexical normalisation
-  (``"01"^^xsd:integer`` matches ``"1"^^xsd:integer``; ``"1.0"^^xsd:decimal`` does not), and an
+  (``"01"^^xsd:integer`` matches ``"1"^^xsd:integer``; ``"1.0"^^xsd:decimal`` does not), and ``"x"`` matches
+  ``"x"^^xsd:string`` (RDF 1.1 Concepts 3.3: one literal, which RDFLib keeps apart), and an
   incomplete assertion is skipped.  *Error:* inconsistent.
 * **OWL028.** A triple ``a p a`` where ``p`` is typed ``owl:IrreflexiveProperty``; reported on ``a``.
   *Error:* inconsistent.
@@ -107,7 +108,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import is_datatype_iri, list_items, owning_term, value_text
+from .support import asserted, is_datatype_iri, list_items, owning_term, value_text
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -709,7 +710,7 @@ def _negative_assertions(ctx: RuleContext) -> None:
         for s in g.objects(assertion, OWL.sourceIndividual):
             for p in g.objects(assertion, OWL.assertionProperty):
                 for target in targets:
-                    if (s, p, target) in g:
+                    if asserted(g, s, p, target):
                         ctx.add(
                             "OWL027",
                             s,

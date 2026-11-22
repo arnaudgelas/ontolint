@@ -17,11 +17,11 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
 ``heuristic``, the default confidence, although most conditions are exact.  Specifications:
 
 * **SHQ009.** Every value of ``sh:in`` on a shape that is a list with no member ("empty"), or with a member
-  repeated, compared as RDF terms ("repeats n member(s)": the number of surplus members); one finding of each
-  kind per shape.  ``"4"^^xsd:byte``, ``4`` and ``"4"`` are distinct (4.8.3: "matching of literals needs to be
-  exact"); rdflib's normalisation of lexical forms (``"01"^^xsd:integer`` is read as ``1``) is kept.
-  Excluded: a literal value or a malformed list.  Warning: an empty list fails every value node; a repeated
-  member is harmless but usually a copy error.
+  repeated, compared as RDF terms ("repeats n member(s)": the number of surplus members, ``"a"`` and
+  ``"a"^^xsd:string`` being one term); one finding of each kind per shape. ``"4"^^xsd:byte``, ``4`` and ``"4"`` are
+  distinct (4.8.3: "matching of literals needs to be exact"); rdflib's normalisation of lexical forms
+  (``"01"^^xsd:integer`` is read as ``1``) is kept. Excluded: a literal value or a malformed list. Warning: an empty
+  list fails every value node; a repeated member is harmless but usually a copy error.
 * **SHQ010.** Every member of an ``sh:languageIn`` list on a shape that is not a basic language range (4.4.4,
   RFC 4647 2.1: ``1*8ALPHA *("-" 1*8alphanum)`` or ``*``), or that is a literal with a language tag or a
   datatype other than ``xsd:string`` (4.4.4: "each member ... is a literal with datatype xsd:string"); one
@@ -100,7 +100,7 @@ from rdflib.term import Node
 
 from ontolint.models import Requirement, RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import list_items, shape_term, term_text, value_text
+from .support import list_items, shape_term, term_key, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -212,11 +212,11 @@ def _in_list(ctx: RuleContext, sg: Graph, shape: Node) -> None:
             continue
         if not items:
             ctx.add("SHQ009", shape, "sh:in list is empty; no value can satisfy it.", subject=(SH["in"], "empty"))
-        elif len(set(items)) < len(items):
+        elif (distinct := len({term_key(item) for item in items})) < len(items):
             ctx.add(
                 "SHQ009",
                 shape,
-                f"sh:in list repeats {len(items) - len(set(items))} member(s).",
+                f"sh:in list repeats {len(items) - distinct} member(s).",
                 subject=(SH["in"], "repeated"),
             )
 

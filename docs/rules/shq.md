@@ -1007,7 +1007,7 @@ ex:P sh:path ex:p ; sh:minInclusive -1 ; sh:maxExclusive 1.5 .
 - **Module:** [`shacl_quality`](#module-shacl_quality)
 - **Fix:** Remove duplicate members; an empty sh:in list can never be satisfied.
 
-**Specification.** Every value of ``sh:in`` on a shape that is a list with no member ("empty"), or with a member repeated, compared as RDF terms ("repeats n member(s)": the number of surplus members); one finding of each kind per shape.  ``"4"^^xsd:byte``, ``4`` and ``"4"`` are distinct (4.8.3: "matching of literals needs to be exact"); rdflib's normalisation of lexical forms (``"01"^^xsd:integer`` is read as ``1``) is kept. Excluded: a literal value or a malformed list.  Warning: an empty list fails every value node; a repeated member is harmless but usually a copy error.
+**Specification.** Every value of ``sh:in`` on a shape that is a list with no member ("empty"), or with a member repeated, compared as RDF terms ("repeats n member(s)": the number of surplus members, ``"a"`` and ``"a"^^xsd:string`` being one term); one finding of each kind per shape. ``"4"^^xsd:byte``, ``4`` and ``"4"`` are distinct (4.8.3: "matching of literals needs to be exact"); rdflib's normalisation of lexical forms (``"01"^^xsd:integer`` is read as ``1``) is kept. Excluded: a literal value or a malformed list. Warning: an empty list fails every value node; a repeated member is harmless but usually a copy error.
 
 *Flagged:* `empty list`
 

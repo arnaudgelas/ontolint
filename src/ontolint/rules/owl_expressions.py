@@ -27,12 +27,12 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   wrong, but it is outside the OWL 2 DL grammar, which requires two operands (SS 8.1 and 9.1.4); OWL033's
   repeated operand, harmless too, is a warning.
 * **OWL033.** An ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` whose
-  well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and
-  ``"1"^^xsd:integer`` differ; structurally equal blank-node expressions are not compared), one
-  finding per list, focused on the subject.  Warning: in a union, intersection or enumeration the
-  repeat is semantically harmless but usually a copy-paste slip where another operand was meant; in a
-  disjoint union it is a defect either way, as read as a set it may leave one operand (SS 9.1.4 needs
-  two) and read as a list it makes the repeated class disjoint with itself, so empty.
+  well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and ``"1"^^xsd:integer``
+  differ, ``"x"`` and ``"x"^^xsd:string`` are one; structurally equal blank-node expressions are not compared), one
+  finding per list, focused on the subject. Warning: in a union, intersection or enumeration the repeat is
+  semantically harmless but usually a copy-paste slip where another operand was meant; in a disjoint union it is a
+  defect either way, as read as a set it may leave one operand (SS 9.1.4 needs two) and read as a list it makes the
+  repeated class disjoint with itself, so empty.
 * **OWL034.** A restriction with neither ``owl:onProperty`` nor ``owl:onProperties``; with more than
   one ``owl:onProperty`` value; with both ``owl:onProperty`` and ``owl:onProperties``; with more than
   one ``owl:onProperties`` value; or (one finding per value) whose ``owl:onProperty`` is a literal.
@@ -152,7 +152,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import is_datatype_iri, list_items, owning_term, term_text, value_text
+from .support import is_datatype_iri, list_items, owning_term, term_key, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -334,7 +334,7 @@ def _operator_lists(ctx: RuleContext) -> None:
                     confidence="certain",
                     subject=(predicate, items[0]),
                 )
-            if len(set(items)) != len(items):
+            if len({term_key(item) for item in items}) != len(items):
                 ctx.add(
                     "OWL033", subject, f"{label} list repeats a member.", confidence="certain", subject=(predicate,)
                 )
