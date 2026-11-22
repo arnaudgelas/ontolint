@@ -94,14 +94,14 @@
   "fail_on_never": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)",
+    "file": "sha256:6035ffe2c1a8d9a18fedb3a18de75cec1003d31cf13159828c6ff2bf529bcb13 (27496 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)"
+    "stdout": "sha256:6035ffe2c1a8d9a18fedb3a18de75cec1003d31cf13159828c6ff2bf529bcb13 (27496 chars)"
    }
   },
   "fail_on_warning_clean": {
@@ -118,44 +118,44 @@
    }
   },
   "fail_on_warning_kitchen": {
-   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
+   "legacy_json_view": "sha256:7c2413e8e904a665b27b9fd935db23f70a6cf5a88a43ebf9c8527a50f949b588 (45343 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d33b9e3f977808b4eca33468b96e4f87d335004663794d276b27886eac3593db (163470 chars)",
+    "file": "sha256:5c56758e9b4f7621a75450d5965f76021003ec9327d840f0959397d28f0ae9a1 (164292 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d33b9e3f977808b4eca33468b96e4f87d335004663794d276b27886eac3593db (163470 chars)"
+    "stdout": "sha256:5c56758e9b4f7621a75450d5965f76021003ec9327d840f0959397d28f0ae9a1 (164292 chars)"
    }
   },
   "ignore_family_json": {
-   "legacy_json_view": "sha256:6fdf5cf69a0507f276d1ff5b81595ee12afc79de65e27edc84a582bbff6a6dcf (40701 chars)",
+   "legacy_json_view": "sha256:ef99008c71a460934f178cb7c5751b0ff44ae3318b33c8dc843a605b08bf0dc8 (41455 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d3315cb9cb2105d5cdbb88cc86283f83c13bfc7708659eefdfcf88aae286888d (159498 chars)",
+    "file": "sha256:a9a653b420ad5be22615fb6046609de5fec0a2c9a4b18ae00295701c15b71b12 (160320 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d3315cb9cb2105d5cdbb88cc86283f83c13bfc7708659eefdfcf88aae286888d (159498 chars)"
+    "stdout": "sha256:a9a653b420ad5be22615fb6046609de5fec0a2c9a4b18ae00295701c15b71b12 (160320 chars)"
    }
   },
   "ignore_text_reports_skips": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:62e7afad8ce81332a6f4a88618dbc7d647205fc0212997aba09d4ecbd3c17556 (28622 chars)",
+    "file": "sha256:1679320fad65b8d9fb87b2e2216afb1dc48bc72342abbf47fa755d72b64db3e5 (29118 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:62e7afad8ce81332a6f4a88618dbc7d647205fc0212997aba09d4ecbd3c17556 (28622 chars)"
+    "stdout": "sha256:1679320fad65b8d9fb87b2e2216afb1dc48bc72342abbf47fa755d72b64db3e5 (29118 chars)"
    }
   },
   "json_clean": {
@@ -195,125 +195,125 @@
    }
   },
   "json_config": {
-   "legacy_json_view": "sha256:69c421ca05d516265934432c6149a91e36bec6340a2a3590c0e5b15ef35da005 (61950 chars)",
+   "legacy_json_view": "sha256:f3b7cd408e3c0b979bd59cf4eef169b12490b116d36902f134669dc9e6a934e0 (62704 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:c17446ff3a9811ff2fb103a932b6cb8dca897e87e8f98c6a394452b3ebadadcd (183249 chars)",
+    "file": "sha256:39899bbea37daccb0b1f355eecd1aa68fd357589ba34d75dd6af92a330525f86 (184071 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:c17446ff3a9811ff2fb103a932b6cb8dca897e87e8f98c6a394452b3ebadadcd (183249 chars)"
+    "stdout": "sha256:39899bbea37daccb0b1f355eecd1aa68fd357589ba34d75dd6af92a330525f86 (184071 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:fe4b2181af236e22bed8645f740ba9a1c1b0bf23d73341803633be9615f0a32c (297561 chars)"
+    "stdout": "sha256:d8471335687c967e8a7cff79b60529470a7573da33ebf40cc48861f1c24055f9 (298383 chars)"
    },
    "write_baseline": {
-    "count": 206,
+    "count": 208,
     "exit": 1
    }
   },
   "json_default": {
-   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
+   "legacy_json_view": "sha256:7c2413e8e904a665b27b9fd935db23f70a6cf5a88a43ebf9c8527a50f949b588 (45343 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:d33b9e3f977808b4eca33468b96e4f87d335004663794d276b27886eac3593db (163470 chars)",
+    "file": "sha256:5c56758e9b4f7621a75450d5965f76021003ec9327d840f0959397d28f0ae9a1 (164292 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:d33b9e3f977808b4eca33468b96e4f87d335004663794d276b27886eac3593db (163470 chars)"
+    "stdout": "sha256:5c56758e9b4f7621a75450d5965f76021003ec9327d840f0959397d28f0ae9a1 (164292 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:030d60aa3062272bfdb85ba76472a16f8f63d4b6ef7b1f5d9e424932a3a3647f (277746 chars)"
+    "stdout": "sha256:c0f8cc4f62052da227e0039d8cc085a878612a421df0385e22a12977f3c58398 (278568 chars)"
    },
    "write_baseline": {
-    "count": 136,
+    "count": 138,
     "exit": 1
    }
   },
   "json_robot_fail": {
-   "legacy_json_view": "sha256:513472fa4a94bd0d9b137d4754f52f198b2758fac1820b769dbad7a975a87229 (45137 chars)",
+   "legacy_json_view": "sha256:0c7cc58e62733bb6b0bf1bb35944ecfea72333a600e065e2db5f6d70fc4f0cfc (45891 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:51857a82cd66a4a453e1b5cd7838d7def132956b19af60cf811aaa6c7f86bb5e (164013 chars)",
+    "file": "sha256:7c0736617351584e8ce29f3563e1268d60d8f5f6212bac3ea32532d21265d0a5 (164835 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:51857a82cd66a4a453e1b5cd7838d7def132956b19af60cf811aaa6c7f86bb5e (164013 chars)"
+    "stdout": "sha256:7c0736617351584e8ce29f3563e1268d60d8f5f6212bac3ea32532d21265d0a5 (164835 chars)"
    }
   },
   "json_robot_ok": {
-   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
+   "legacy_json_view": "sha256:7c2413e8e904a665b27b9fd935db23f70a6cf5a88a43ebf9c8527a50f949b588 (45343 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:e9d9978d28655826d8f5b34e8dc4cda124e9ff9b2ea1d92db440ce6432238aee (163431 chars)",
+    "file": "sha256:a1f4b235ec0137ba5bf7472237706416ce017bd09ce83f69291e6ff47a0a35a9 (164253 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e9d9978d28655826d8f5b34e8dc4cda124e9ff9b2ea1d92db440ce6432238aee (163431 chars)"
+    "stdout": "sha256:a1f4b235ec0137ba5bf7472237706416ce017bd09ce83f69291e6ff47a0a35a9 (164253 chars)"
    }
   },
   "json_robot_unsupported": {
-   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
+   "legacy_json_view": "sha256:7c2413e8e904a665b27b9fd935db23f70a6cf5a88a43ebf9c8527a50f949b588 (45343 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:8698fb9e44406cdc5c7701b31bc4df178e617637e6f6e799b7f801790aadca11 (163477 chars)",
+    "file": "sha256:bc5a145d213a93a22ab2f06da94af839cbf3d1cd42063d3e5a56fda53e759f09 (164299 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:8698fb9e44406cdc5c7701b31bc4df178e617637e6f6e799b7f801790aadca11 (163477 chars)"
+    "stdout": "sha256:bc5a145d213a93a22ab2f06da94af839cbf3d1cd42063d3e5a56fda53e759f09 (164299 chars)"
    }
   },
   "json_shapes": {
-   "legacy_json_view": "sha256:87348000b16170158b05f9ad4559701e66ca79f2beaffd504697404da689e84e (47700 chars)",
+   "legacy_json_view": "sha256:8184d5b17fefe01ae2edd280dff052be2e081ca857954797c955e4c4fd3e83fb (48454 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:e1fe8e1df23665c653dfcb4d542ef0f9fad6526c831e0b002a275009cb84f55b (165996 chars)",
+    "file": "sha256:b05493ce3dc79b1982621560687bf2b64480663d90342dcaca49ab92d28d5043 (166818 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:e1fe8e1df23665c653dfcb4d542ef0f9fad6526c831e0b002a275009cb84f55b (165996 chars)"
+    "stdout": "sha256:b05493ce3dc79b1982621560687bf2b64480663d90342dcaca49ab92d28d5043 (166818 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:58800b84d68bcb30835b32abd97a2f48b167d5d536f47240257acd50d74296f3 (279346 chars)"
+    "stdout": "sha256:5ba93fc559b4b57dc863ea674371264ded82d0d081bbaf6ebebdadfadc0203c3 (280168 chars)"
    },
    "write_baseline": {
-    "count": 146,
+    "count": 148,
     "exit": 1
    }
   },
   "json_thresholds": {
-   "legacy_json_view": "sha256:a65b338d90afc6cd846a284707632ac3fc94ff30a02eebdf297cc26bb14fa3de (51035 chars)",
+   "legacy_json_view": "sha256:5f7030a9ede5b49f2fe669ec6cff3c07be628141b5736b46c99869976a925f82 (51789 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:bb30268211a71f09f7113cfeaa32d64439290c783fe57beb16321ba466b5ac2b (170665 chars)",
+    "file": "sha256:3d53629ef344d5a0c82b3f11f3b622c490d7c5f70ea397cde98b11bf7fb34a27 (171487 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:bb30268211a71f09f7113cfeaa32d64439290c783fe57beb16321ba466b5ac2b (170665 chars)"
+    "stdout": "sha256:3d53629ef344d5a0c82b3f11f3b622c490d7c5f70ea397cde98b11bf7fb34a27 (171487 chars)"
    }
   },
   "list_rules_json": {
@@ -382,17 +382,17 @@
    }
   },
   "multi_file_json": {
-   "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
+   "legacy_json_view": "sha256:7c2413e8e904a665b27b9fd935db23f70a6cf5a88a43ebf9c8527a50f949b588 (45343 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:41f5961dc83666cf5be307c368219796dd269593d14f6d9ad69ed2609bac7100 (188296 chars)",
+    "file": "sha256:9593b36cc5cfbbef390fef02d97134cfe60ba969ff8e84f1024764a5ba3eaa2b (189118 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:41f5961dc83666cf5be307c368219796dd269593d14f6d9ad69ed2609bac7100 (188296 chars)"
+    "stdout": "sha256:9593b36cc5cfbbef390fef02d97134cfe60ba969ff8e84f1024764a5ba3eaa2b (189118 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,40 +411,40 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:4404c8f8f909368596cd14113983ce151ea25ea01cefdb07f32036f6b8c1ee0b (325077 chars)",
+    "file": "sha256:43bfa10f8b17580b7fd30e8c914027afe8ec5920a1d5736edd743c62626d49b5 (326688 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:4404c8f8f909368596cd14113983ce151ea25ea01cefdb07f32036f6b8c1ee0b (325077 chars)"
+    "stdout": "sha256:43bfa10f8b17580b7fd30e8c914027afe8ec5920a1d5736edd743c62626d49b5 (326688 chars)"
    }
   },
   "multi_file_text": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:a3359910f767b14fd34840dc5521beb552ed3417d62a2de8ea441db88ca85d6b (27076 chars)",
+    "file": "sha256:ec2f0ef34280759508b16219eb7ed567015c944dddc030d4271be6d13c33791b (27572 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:a3359910f767b14fd34840dc5521beb552ed3417d62a2de8ea441db88ca85d6b (27076 chars)"
+    "stdout": "sha256:ec2f0ef34280759508b16219eb7ed567015c944dddc030d4271be6d13c33791b (27572 chars)"
    }
   },
   "profile_ci_fail_on_override": {
    "to_file": {
     "exit": 0,
-    "file": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)",
+    "file": "sha256:6035ffe2c1a8d9a18fedb3a18de75cec1003d31cf13159828c6ff2bf529bcb13 (27496 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)"
+    "stdout": "sha256:6035ffe2c1a8d9a18fedb3a18de75cec1003d31cf13159828c6ff2bf529bcb13 (27496 chars)"
    }
   },
   "profile_minimal_json": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:876616079621af1ddfbdabf8019806960230f5a1939c2675ef390518234e5fb0 (305912 chars)",
+    "file": "sha256:6b8460cc470df0cf14c3e425c7ab7f6f3dce7b160062ba21e0b0328485e528cd (307523 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:876616079621af1ddfbdabf8019806960230f5a1939c2675ef390518234e5fb0 (305912 chars)"
+    "stdout": "sha256:6b8460cc470df0cf14c3e425c7ab7f6f3dce7b160062ba21e0b0328485e528cd (307523 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:404b05cf5f71b48473f7d010b5348d9d786e9b406c0dde85f243ffb8906bf0cf (294739 chars)",
+    "file": "sha256:bd3100cd5b17c0129141573ac206041db2ded801f050aa851d332ef16f50d996 (296350 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:404b05cf5f71b48473f7d010b5348d9d786e9b406c0dde85f243ffb8906bf0cf (294739 chars)"
+    "stdout": "sha256:bd3100cd5b17c0129141573ac206041db2ded801f050aa851d332ef16f50d996 (296350 chars)"
    }
   },
   "select_and_ignore_json": {
@@ -557,14 +557,14 @@
   "text_base_langs": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:79364b00f3e757e964f19beb0ecf3fd59c363b2f8ac035f30e2f5c51eadc9037 (43400 chars)",
+    "file": "sha256:09a2dbb6f32eb2a6d73a155ebbb19b0383106c961321fb68dfaefc736cd3bfc8 (43896 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:79364b00f3e757e964f19beb0ecf3fd59c363b2f8ac035f30e2f5c51eadc9037 (43400 chars)"
+    "stdout": "sha256:09a2dbb6f32eb2a6d73a155ebbb19b0383106c961321fb68dfaefc736cd3bfc8 (43896 chars)"
    }
   },
   "text_clean": {
@@ -596,14 +596,14 @@
   "text_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)",
+    "file": "sha256:6035ffe2c1a8d9a18fedb3a18de75cec1003d31cf13159828c6ff2bf529bcb13 (27496 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:16e53847af17b9916a294bf6d6d9572491312cd288ddd5c682e90250c834faa0 (27000 chars)"
+    "stdout": "sha256:6035ffe2c1a8d9a18fedb3a18de75cec1003d31cf13159828c6ff2bf529bcb13 (27496 chars)"
    }
   },
   "text_node_shacl_violation": {
@@ -1598,6 +1598,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
@@ -2836,6 +2854,24 @@
    },
    {
     "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
     "fingerprint": "efe216e862b29e4a1307fb60867ca40e39924df18b1a17e63725184b7b04aae2",
     "focus": "https://example.test/onto#mixedLang",
     "message": "Mixed plain and language-tagged preferred labels.",
@@ -4059,6 +4095,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
@@ -5330,6 +5384,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
@@ -6655,6 +6727,24 @@
     "rule": "LEX002",
     "severity": "info",
     "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "8c573a13ae4df8e671e5dc4bc912e97ef896b7d1f9b746989912f0fbc7a2eb6f",
+    "focus": "https://example.test/onto#Duplicate-Two",
+    "message": "Duplicate label 'Dup'@und for https://example.test/onto#Duplicate-Two, https://example.test/onto#Duplicate_One",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+   },
+   {
+    "confidence": "heuristic",
+    "fingerprint": "22ad677ee6acd07d2b28ade041ed312d3237b6170f906713becefaa7ceed2cbe",
+    "focus": "https://example.test/onto#Eq1",
+    "message": "Duplicate label 'Same Name'@und for https://example.test/onto#Eq1, https://example.test/onto#Eq2",
+    "rule": "LEX004",
+    "severity": "info",
+    "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
    },
    {
     "confidence": "heuristic",
