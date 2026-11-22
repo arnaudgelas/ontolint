@@ -170,6 +170,12 @@ results after upgrading.
 
 ### Changed
 
+- **category:** OWL003, OWL004, OWL007, OWL009, OWL010, OWL013, OWL014, CLS003, CLS004, CLS014, CLS019, IRI001, IRI009
+  and LEX014 are `deterministic`, not `heuristic`: their findings already said `certain` (the condition is exact and the
+  cited specification forbids the pattern or gives it a fixed meaning, decision D1 of `docs/severity-decisions.md`).
+  `--list-rules`, `--explain` and the SARIF rule properties show the new category; no finding, severity, confidence,
+  exit code or identity changes. Rules that report `certain` on a convention (IRI006, IRI010, IRI012, IRI016, IRI017,
+  IRI018, LEX001, LEX002, LEX005, LEX011, LEX019, LEX025) are not aligned yet (issue #180).
 - **category:** SKOS011, SKOS015, SKOS017, SKOS019, SKOS020, SKOS021, ALIGN015 and DATA003 are `heuristic`, not
   `deterministic`: their findings already said `heuristic` (the conditions rest on conventions, and DATA003 asks RDFLib,
   whose lexical check differs from XSD 1.1). `--list-rules`, `--explain` and the SARIF rule properties show the new

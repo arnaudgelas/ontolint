@@ -14,8 +14,8 @@ including every known gap, are in ``tests/test_iri_specification.py``.
   absolute IRI begin with a scheme (3.1: a letter first) and RFC 3987 2.2 excludes the space.  Exclusions: any other
   scheme (``urn:``, ``file:///x``).  Gap: an empty host with a port (``http://:80/x``) is not reported because the
   authority is not empty.  Warning, because such an IRI is a different identifier from the one the author meant
-  once a tool resolves or serialises it; certain, because the condition is a syntax test (the catalogue category
-  is heuristic: confidence and category disagree, an open question).  Fixtures: ``tests/rule_cases/identifiers.py``.
+  once a tool resolves or serialises it; certain, because the condition is a syntax test (the category is
+  deterministic).  Fixtures: ``tests/rule_cases/identifiers.py``.
 * **IRI002.** Scope: every ontology IRI except those under ``http://purl.obolibrary.org/obo/``.  Fires when the
   path (not the query or fragment) ends in ``.owl``, ``.ttl``, ``.n3``, ``.rdf`` or ``.rdfxml``, in any case.
   Convention, not a standard: an ontology IRI names the ontology, not a serialisation of it.  Gap: ``.jsonld``,
@@ -57,7 +57,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "Whitespace or non-absolute IRI",
         Severity.WARNING,
         "Use stable absolute IRIs; avoid whitespace in identifiers.",
-        "heuristic",
+        "deterministic",
         RuleBackend.RDFLIB,
         RuleScope.TERM,
         "identifiers",

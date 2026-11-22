@@ -9,10 +9,11 @@ terms ``--base`` or the ontology IRIs select: ``ontolint.ownership``); a *local 
 ``/`` or ``#`` of an IRI; its *namespace* is the rest.  Every rule reads the IRI as the graph holds it: a parser
 has resolved a relative reference (RFC 3986 section 5) and ``--base`` selects terms, it does not resolve.  A focus
 or message that holds an IRI with a userinfo (RFC 3986 3.2.1) prints it masked by ``ontolint.redaction``, so IRIs that
-differ only in their userinfo give one finding.  The catalogue category of every rule here is heuristic; the
-findings of IRI006, IRI009, IRI010, IRI012, IRI016, IRI017 and IRI018 (and IRI001) say certain: category and
-confidence disagree, an open question.  The pinned cases, including every known gap, are in
-``tests/test_iri_specification.py``; the per-rule fixtures in ``tests/rule_cases/iri_quality.py``.
+differ only in their userinfo give one finding.  The catalogue category of IRI009 is deterministic (its condition is an
+RFC 3986 syntax test); that of the others here is heuristic, though the findings of IRI006, IRI010, IRI012, IRI016,
+IRI017 and IRI018 say certain: category and confidence disagree, an open question (decision D1 would make those
+findings heuristic).  The pinned cases, including every known gap, are in ``tests/test_iri_specification.py``; the
+per-rule fixtures in ``tests/rule_cases/iri_quality.py``.
 
 * **IRI004.** Scope: the ontology, when the file has exactly one ``owl:Ontology`` IRI, that is absolute, not under
   ``http://purl.obolibrary.org/obo/``, and at least one term has a local name.  Fires when no term IRI starts with
@@ -99,8 +100,14 @@ PERCENT_ESCAPE = re.compile(r"%[0-9A-Fa-f]{2}")
 REPEATED_SEPARATOR = re.compile(r"(?:_{2,}|-{2,})")
 
 
+_EXACT = frozenset({"IRI009"})
+"""The rules whose condition is exact and forbidden or given a fixed meaning by the cited specification: their findings
+are ``certain``, so their category is ``deterministic`` (decision D1 of ``docs/severity-decisions.md``, issue #180)."""
+
+
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
-    return RuleSpec(rule_id, "IRI", title, severity, suggestion, "heuristic", RuleBackend.RDFLIB, scope, "iri_quality")
+    category = "deterministic" if rule_id in _EXACT else "heuristic"
+    return RuleSpec(rule_id, "IRI", title, severity, suggestion, category, RuleBackend.RDFLIB, scope, "iri_quality")
 
 
 SPECS: tuple[RuleSpec, ...] = (
