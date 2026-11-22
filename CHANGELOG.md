@@ -40,12 +40,19 @@ results after upgrading.
   basic filtering says and LEX022 and LEX023 already did.
 - **LEX003, LEX024:** `"A"` and `"A"^^xsd:string` are one RDF literal (RDF 1.1 Concepts 3.3) and are counted once.
   No finding changed on the 21-file calibration corpus.
+- **SKOS020:** `"1"` and `"1"^^xsd:string` are one RDF literal (RDF 1.1 Concepts 3.3), so two concepts of a scheme holding
+  them share a notation; the finding of a plain notation keeps its identity. No finding changed on the 21-file
+  calibration corpus (no `skos:notation` there is typed `xsd:string`).
 
 #### Changed
 
 - **LEX:** the family is specified in its module docstrings (scope, condition, exclusions, severity and confidence
   rationale, fixtures), with a specification test file, `tests/test_lex_specification.py`, that the catalogue rows
   name. Part of #64; the SKOS, CLS and IRI families remain.
+- **SKOS:** the family (SKOS001 to SKOS021) is specified the same way, with `tests/test_skos_specification.py`. Known
+  gaps are pinned as they are, not changed: SKOS001 reads asserted `skos:Concept` only (#181 is deferred),
+  SKOS005 and SKOS006 do not read `skos:topConceptOf` and `skos:hasTopConcept`, SKOS002 and LEX015 leave an
+  `altLabel` against a `hiddenLabel` that differ in case unreported (#155). Part of #64; the CLS and IRI families remain.
 
 #### Added
 
