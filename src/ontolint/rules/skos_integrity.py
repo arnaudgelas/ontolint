@@ -7,13 +7,16 @@ hierarchy, exactMatch versus broad/relatedMatch) and from common vocabulary-qual
 
 "Integrity condition Sn" refers to the SKOS Reference (W3C Recommendation, 18 August 2009).  Types are
 the asserted ``rdf:type`` values (no subclass entailment), and blank nodes are never reported.
-Specifications of the error rules:
+Findings are certain unless said otherwise, every rule is category deterministic, and a deprecated resource is
+judged like any other.  Specifications:
 
-* **SKOS007.** An owned IRI typed both ``skos:Concept`` and ``skos:ConceptScheme``.  Error, certain:
+* **SKOS007.** An owned IRI typed both ``skos:Concept`` and ``skos:ConceptScheme``.  Exclusions: a blank
+  node, a non-owned IRI, a type that is only a subclass of one of them.  Error, certain:
   integrity condition S9 makes the two classes disjoint.
 * **SKOS008.** An owned IRI typed ``skos:Collection`` or ``skos:OrderedCollection`` (a subclass of
   Collection, S29) and also ``skos:Concept`` or ``skos:ConceptScheme``.  A Collection that merely has
-  concept members is fine.  Error, certain: integrity condition S37.
+  concept members is fine; a blank node and a non-owned IRI are skipped.  Error, certain: integrity
+  condition S37.
 * **SKOS009.** Two distinct IRIs linked by ``skos:related`` or ``skos:relatedMatch`` (in either
   direction, S23) of which one is an ancestor of the other: reachable through one or more asserted
   ``skos:broader``, ``skos:broaderTransitive`` or ``skos:broadMatch`` edges, or inverted
@@ -30,12 +33,36 @@ Specifications of the error rules:
   hierarchical; a concept related to itself (SKOS010).  One finding per pair when either end is
   owned, focused on the lexically smaller IRI.  Error, certain: integrity condition S27 makes
   ``skos:related`` disjoint with ``skos:broaderTransitive``.
+* **SKOS010.** An owned IRI with an asserted ``skos:related`` value equal to itself.  Exclusions: a
+  reflexive ``skos:relatedMatch`` (no rule reports it); a non-owned IRI.  Warning, certain: the Reference
+  states no integrity condition against a reflexive ``skos:related`` (it is symmetric, S23, not
+  irreflexive), so this is a quality convention.
+* **SKOS011.** Two distinct IRIs linked by one of the five mapping properties (either direction) that
+  share an asserted scheme (``skos:inScheme``, ``skos:topConceptOf``, or the inverse
+  ``skos:hasTopConcept``), when either end is owned.  Exclusions: a pair with no scheme known for one end;
+  a pair of different schemes.  One finding per pair, focused on the lexically smaller IRI.  Info,
+  heuristic: the mapping properties are meant for links between schemes (convention; the Reference states no integrity
+  condition).
 * **SKOS012.** Two distinct IRIs linked by ``skos:exactMatch`` (either direction) and by
   ``skos:broadMatch``, ``skos:narrowMatch`` or ``skos:relatedMatch`` (either direction).  narrowMatch
   counts because it is the inverse of broadMatch (S43) and exactMatch is symmetric (S44).  Exclusions:
   ``skos:closeMatch`` and ``skos:mappingRelation`` (compatible with exactMatch); conflicts that need
   the transitivity of exactMatch (ALIGN003).  One finding per pair when either end is owned, focused on
   the lexically smaller IRI.  Error, certain: integrity condition S46.
+* **SKOS013.** A value of ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` of an owned
+  subject that is not a literal, or is a literal of a datatype other than ``xsd:string`` (a language-tagged
+  literal is fine).  Exclusions: a non-owned subject.  One finding per label property and value.  Warning,
+  certain: the three properties have range ``rdfs:Literal`` (S12), and an IRI or a number is never the
+  intended label.
+* **SKOS014.** A string label (the values SKOS013 accepts) of an owned subject under one of the three label
+  properties that is empty or differs from its ``str.strip()`` (any Unicode white space, a line break
+  included).  Exclusions: inner whitespace; a value SKOS013 reports.  One finding per subject and
+  property.  Warning, certain: no integrity condition; a padded label breaks lookups and S13/S14 comparisons
+  by exact text (convention).
+* **SKOS015.** An owned IRI typed ``skos:ConceptScheme`` that has at least one asserted member
+  (``skos:inScheme`` or ``skos:topConceptOf`` on a concept, or ``skos:hasTopConcept`` on a scheme) but no
+  ``skos:hasTopConcept`` and no incoming ``skos:topConceptOf``.  Exclusions: an empty scheme.  One finding
+  per scheme.  Info, heuristic: top concepts are optional in the Reference (convention).
 * **SKOS016.** An owned IRI with a literal value for ``skos:semanticRelation``, ``broader``,
   ``narrower``, ``related``, ``broaderTransitive``, ``narrowerTransitive``, ``mappingRelation``, one
   of the five mapping properties, ``inScheme``, ``hasTopConcept`` or ``topConceptOf``.  Exclusions:
@@ -43,6 +70,29 @@ Specifications of the error rules:
   subject and property.  Error, certain: SKOS declares every one of them an ``owl:ObjectProperty``
   with a class range (S18-S20, S38, and the scheme properties), so a literal value is no valid OWL 2
   DL assertion and never what the author meant, although SKOS states no integrity condition for it.
+* **SKOS017.** For ``skos:broader``, ``narrower``, ``related`` or a mapping property of an owned subject whose
+  value is an owned IRI with no triple at all as subject, and (for a mapping property) in the namespace of
+  the subject.  Exclusions: non-owned targets; blank nodes and literals.  One finding per subject, property
+  and target.  Warning, heuristic: a dangling local link is usually a typo or a missing concept
+  (convention).
+* **SKOS018.** Asserted ``skos:broader`` edges only: a child with two direct parents of which one is
+  asserted broader than the other (a shortcut through one intermediate concept).  Longer paths, narrower
+  and transitive properties are not read; a two-cycle is no shortcut.  Focused on the child, owned only.
+  Info, certain that the shortcut exists: ``skos:broader`` is not transitive (only ``skos:broaderTransitive``
+  is), so the link is redundant for readers of the closure, not wrong (convention).
+* **SKOS019.** A pair linked by asserted ``skos:broader`` or inverse ``skos:narrower`` whose ends both have
+  asserted schemes and share none, when either end is owned.  Exclusions: a missing scheme on one end; a shared
+  scheme.  One finding per pair on the lexically smaller IRI.  Info, heuristic: schemes are meant to be
+  internally hierarchical (convention).
+* **SKOS020.** Live concepts of one scheme, with an asserted scheme as in SKOS011, sharing a
+  ``skos:notation`` literal.  Notations compare as RDF 1.1 terms, ``"1"`` equals ``"1"^^xsd:string``, a
+  language tag is not read (a gap).  Live is typed ``skos:Concept`` (or a subclass) and not
+  ``owl:deprecated true``, so collections and schemes are excluded.  Each owned owner is reported.  Warning,
+  heuristic: the Reference only says a notation identifies a concept within a scheme (convention).
+* **SKOS021.** Live concepts (as SKOS020) of one scheme sharing a ``skos:prefLabel`` after stripping and
+  case-folding, with the same lower-cased language tag (untagged is its own group).  Inner whitespace is not
+  collapsed; the datatype is not read.  Each owned owner is reported.  Warning, heuristic: two labels may
+  mean two senses (convention).
 """
 
 from __future__ import annotations

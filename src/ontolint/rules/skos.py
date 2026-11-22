@@ -1,7 +1,8 @@
 """SKOS concept-scheme rules: SKOS001-SKOS006.
 
 All rules read asserted triples only.  "Integrity condition Sn" refers to the SKOS Reference (W3C
-Recommendation, 18 August 2009).  Specifications of the error rules:
+Recommendation, 18 August 2009).  A concept is an owned resource explicitly typed ``skos:Concept`` (no
+subclass typing, ``RuleContext.concepts``).  Specifications:
 
 * **SKOS001.** Scope: the owned resources explicitly typed ``skos:Concept`` (``ctx.concepts``; no
   subclass typing).  Condition: two or more distinct literal values of ``skos:prefLabel`` share a
@@ -10,17 +11,48 @@ Recommendation, 18 August 2009).  Specifications of the error rules:
   joins that group.  Literals are compared as RDF 1.1 terms: ``"a"`` equals ``"a"^^xsd:string``, and
   ``"a"@en`` equals ``"a"@EN``, so a repeated label is not counted twice.  Other datatypes count as
   untagged labels (SKOS013 reports them).  Exclusions: non-literal values; resources that are not owned
-  concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked).  One finding per concept
-  and language.  Severity error, confidence certain, category deterministic: the triples violate integrity
-  condition S14.
+  concepts (a scheme or an ``owl:Class`` with two prefLabels is not checked, although S14 binds any
+  resource: widening the scope is an open decision, the corpus has no such resource); a sub-property of
+  ``skos:prefLabel`` (not entailed).  A deprecated concept is checked.  One finding per concept
+  and language.  LEX003 reports the same concepts as a warning.  Severity error, confidence certain,
+  category deterministic: the triples violate integrity condition S14 ("A resource has no more than one
+  value of skos:prefLabel per language tag").  Fixtures: tests/test_skos_specification.py and
+  tests/test_spec_skos_errors.py.
 * **SKOS002.** Scope: the owned concepts plus every resource that is the subject of
   ``skos:prefLabel``, ``skos:altLabel`` or ``skos:hiddenLabel`` and is either an owned IRI or a blank
   node.  Condition: the same literal is a value of two or three of those properties of one resource.
   Literals compare as RDF 1.1 terms: lexical form and language tag (case-insensitively) must both match,
-  ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Exclusions: same text with a
-  different language tag; non-owned IRIs; sub-properties of the label properties (not entailed).  One
-  finding per resource and literal.  Severity error, confidence certain, category deterministic: the triples violate
-  integrity condition S13 (the three label properties are pairwise disjoint).
+  ``"a"`` equals ``"a"^^xsd:string``, but ``"a"`` and ``"a"@en`` differ.  Case and whitespace are not
+  folded (LEX015 folds them, and reports only the pairs that involve ``rdfs:label`` or
+  ``skos:prefLabel``, so an ``altLabel`` and a ``hiddenLabel`` that differ only in case are reported by
+  no rule: an open decision).  Exclusions: same text with a different language tag; non-owned IRIs;
+  sub-properties of the label properties (not entailed).  A deprecated resource is checked.  One
+  finding per resource and literal.  Severity error, confidence certain, category deterministic: the
+  triples violate integrity condition S13 (the three label properties are pairwise disjoint).
+  Fixtures: tests/test_skos_specification.py and tests/test_spec_skos_errors.py.
+* **SKOS003.** Scope: the concepts.  Condition: a strongly connected component of the graph of asserted
+  ``skos:broader`` edges between concepts that has two or more members or a member broader than itself.
+  ``skos:narrower``, ``skos:broaderTransitive`` and the mapping properties are not read.  One finding per
+  component, focused on its smallest IRI.  Severity info, confidence heuristic: the SKOS Reference states no
+  integrity condition against a cycle of ``skos:broader`` (it only says ``skos:broaderTransitive`` is
+  transitive), but a cycle makes the concepts equivalent in the closure, which is rarely meant.
+  Fixtures: tests/test_skos_specification.py.
+* **SKOS004.** Scope: the concepts.  Condition: no literal value under any label predicate
+  (``rdfs:label``, ``skos:prefLabel``, a configured extra and what is below them, never ``altLabel`` or
+  ``hiddenLabel``).  Exclusions: a concept with ``owl:deprecated true`` or a ``skos:historyNote``.  Severity
+  info, confidence heuristic: the SKOS Reference makes ``skos:prefLabel`` optional, so this is a
+  documentation convention.  Fixtures: tests/test_skos_specification.py.
+* **SKOS005.** Scope: the concepts.  Condition: no asserted ``skos:inScheme`` triple with the concept as
+  subject.  ``skos:topConceptOf`` and an inverse ``skos:hasTopConcept`` are not read, although the Reference
+  makes them imply membership (SKOS015, SKOS011 and SKOS019 do read them: a known gap, counted in the
+  pull request of this specification).  Severity warning, confidence heuristic: the Reference leaves
+  scheme membership optional (convention).  Fixtures: tests/test_skos_specification.py.
+* **SKOS006.** Scope: any subject of an asserted ``skos:topConceptOf`` (owned or not, a blank node too).
+  Condition: the subject also has an asserted ``skos:broader`` value.  An inverse ``skos:hasTopConcept``
+  on the scheme and an inverse ``skos:narrower`` are not read.  One finding per concept and scheme.
+  Severity info, confidence heuristic: a top concept is by convention one without a broader concept
+  (convention; the Reference states no integrity condition).  Fixtures:
+  tests/test_skos_specification.py.
 """
 
 from __future__ import annotations
