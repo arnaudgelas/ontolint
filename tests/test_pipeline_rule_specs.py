@@ -308,20 +308,37 @@ def test_an_output_in_a_read_only_directory_is_tool001_and_exit_2(tmp_path: Path
     assert err.startswith(OUTPUT_FAILED + "PermissionError: ")
 
 
-def test_an_unencodable_report_keeps_the_previous_output_file(tmp_path: Path, run: Any) -> None:
+def _with_a_lone_surrogate(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make the text report end in a lone surrogate, which no renderer of ontolint writes any more (#125)."""
+    from ontolint import cli  # noqa: PLC0415
+
+    real = cli.render_report
+    monkeypatch.setattr(cli, "render_report", lambda *args, **kwargs: real(*args, **kwargs) + "\ud800\n")
+
+
+def test_an_unencodable_report_keeps_the_previous_output_file(
+    tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
     (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
+    _with_a_lone_surrogate(monkeypatch)
     previous = tmp_path / "out.txt"
     previous.write_bytes(b"last good report\n")
-    code, out, err = run("a.ttl", *MODULES, "--output", "out.txt")
+    code, out, err = run("a.ttl", "--output", "out.txt")
     assert (code, out) == (TOOL_FAILURE, "")
     assert err.startswith(OUTPUT_FAILED + "UnicodeEncodeError: ")
     assert previous.read_bytes() == b"last good report\n"
 
 
-def test_an_unencodable_report_on_stdout_is_escaped_and_the_exit_code_is_the_findings(tmp_path: Path, run: Any) -> None:
+def test_an_unencodable_report_on_stdout_is_escaped_and_the_exit_code_is_the_findings(
+    tmp_path: Path, run: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A lone surrogate cannot be encoded by utf-8 either; since issue #150 the report is written with it escaped."""
     (tmp_path / "a.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
-    code, out, err = run("a.ttl", *MODULES)
+    code, out, err = run("a.ttl", *MODULES)  # a module name is escaped by the report itself (#125)
+    assert code != TOOL_FAILURE and "\\uD800" in out and "TOOL002" not in err
+    with monkeypatch.context() as patched:
+        _with_a_lone_surrogate(patched)
+        code, out, err = run("a.ttl")
     assert code != TOOL_FAILURE and "\\ud800" in out
     assert "TOOL002: warning: the console encoding" in err and "TOOL001" not in err
     code, out, err = run("a.ttl", *MODULES, "--format", "json")  # JSON escapes the surrogate: written as before

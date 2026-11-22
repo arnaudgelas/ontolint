@@ -906,9 +906,13 @@ literal an `owl:imports` points to) cannot add a line that reads like a finding 
 line. Ordinary text, accents, CJK and single emoji included, is printed as it is (a joiner
 between the emoji of a sequence is a format character, so it is written as an escape). The escape is made when
 the text is rendered: a finding's `message`, JSON, SARIF, the Markdown summary (which escapes on
-its own), baselines and fingerprints keep the raw string. The other lines that quote input, the
-`In:` line, the module names and a file's heading in a multi-file report, are printed as they
-are. A literal value of an evidence line is still an N-Triples term that reads back as itself,
+its own), baselines and fingerprints keep the raw string. The other lines that quote input are
+escaped the same way: a file's heading in a multi-file report, the `In:` line (module file, graph and
+module names), the module names of `Findings by module:`, the rule-execution lines (the file name and
+the detail, which can quote an exception) and the `TOOL001` lines on stderr (the file name and the
+detail); JSON and SARIF keep their raw values. `Fix:` is trusted rule metadata and is printed as it is. The
+other stderr diagnostics (`INPUT001` parse errors, configuration and policy errors, `SEC009`, `TOOL004`, `TOOL010`) quote
+their input as it is for now. A literal value of an evidence line is still an N-Triples term that reads back as itself,
 except a lone surrogate: it is not a valid RDF string, it is shown as its code unit, and an
 escaped high and low surrogate side by side read back as one character. IRIs and messages are
 printed bare, so a backslash in one (`\u001B` written literally in a JSON-LD IRI) reads like an

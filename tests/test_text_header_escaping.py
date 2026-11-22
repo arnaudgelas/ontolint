@@ -9,6 +9,7 @@ at render time only: ``Finding.message``, JSON, SARIF, the Markdown summary and 
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from rdflib import Graph
 from ontolint import Linter, main
 from ontolint.models import ExecutionStatus, Finding, RuleExecution
 from ontolint.reporting import (
+    TOOL_FAILURE_EXIT,
     FileReport,
     Origin,
     RunReport,
@@ -339,7 +341,7 @@ def test_the_execution_lines_of_a_multi_file_run_escape_the_file_name_too() -> N
     text = render_report(report, "text")
 
     assert f"{HOSTILE_ESCAPED}: Rule execution:" in text
-    _no_added_line(text, (*OWN_LINES, "b.ttl:"))
+    _no_added_line(text, (*OWN_LINES, "b.ttl:", HOSTILE_ESCAPED))
 
 
 def test_json_and_sarif_keep_the_raw_names_and_details() -> None:
@@ -369,3 +371,20 @@ def test_ordinary_names_print_as_they_did() -> None:
     assert "== dir/Café ünï.ttl: 1 finding(s)" in text
     assert "    In: mod/本体.ttl, module モジュール" in text
     assert "    モジュール: 1 error" in text
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a file name cannot hold a line break on Windows")
+def test_the_tool001_line_on_stderr_escapes_the_file_name_and_the_detail(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    name = "d\nFake: TOOL001 injected \u202e.ttl"
+    (tmp_path / name).write_text("@prefix ex: <https://ex.test/> .\nex:a a ex:T .\n", encoding="utf-8")
+    (tmp_path / "s.ttl").write_text("@prefix sh: <http://www.w3.org/ns/shacl#> .\n[] sh:property [ sh:minCount 1 ] .\n")
+
+    code = main([str(tmp_path / name), "--shapes", str(tmp_path / "s.ttl"), "--select", "SHACL001"])
+
+    err = capsys.readouterr().err
+    assert code == TOOL_FAILURE_EXIT
+    assert "TOOL001: rule SHACL001 failed for " in err
+    assert not any(line.startswith("Fake:") for line in err.splitlines())
+    assert "\u202e" not in err
