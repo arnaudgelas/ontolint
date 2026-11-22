@@ -2289,6 +2289,18 @@
     "113a2c9a60fc238ccf70d828c2445c0c3afd82ec6532594338c5a5132c148e33"
    ]
   ],
+  "LEX004:case and whitespace variants": [
+   [
+    "LEX004",
+    "https://example.test/onto#A",
+    [
+     "Same  Label",
+     "und",
+     "class"
+    ],
+    "a51f5b5272da142993d79cc75bbe164bef14fd1a3fb13ddae7fe4b15dee23963"
+   ]
+  ],
   "LEX004:same label on two terms": [
    [
     "LEX004",
