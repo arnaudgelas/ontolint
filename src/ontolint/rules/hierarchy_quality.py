@@ -17,13 +17,13 @@ entailment patterns (rdfs9, rdfs11); thresholds are conventions and sit on ``Pol
 * **CLS012.** An owned class that is the type of a subject (a class typed by it counts) all of whose subclasses
   are leaves (no subclass below) that are the type of no subject; at least one subclass.  A deprecated leaf is
   unused (gap: CLS001 exempts deprecated classes).  Info: the leaves may be there for later use.
-* **CLS013.** An owned class with a declared parent (a subclass edge leaving it) whose names (its local name and every ``rdfs:label`` and
-  ``skos:prefLabel`` literal, in any language) hold a marker token (``other``, ``others``, ``misc``,
-  ``miscellaneous``, ``remainder``, ``unclassified``, ``uncategorized``, ``uncategorised``,
+* **CLS013.** An owned class with a declared parent (a subclass edge leaving it) whose names (its local name and
+  every ``rdfs:label`` and ``skos:prefLabel`` literal, in any language) hold a marker token (``other``,
+  ``others``, ``misc``, ``miscellaneous``, ``remainder``, ``unclassified``, ``uncategorized``, ``uncategorised``,
   ``unspecified``) and, without the markers and the filler tokens (``and``, ``of``, ``the``, ``a``, ``an``,
   ``or``, ``else``, ``type``, ``types``, ``kind``, ``kinds``), only tokens of a name of the parent; the first
-  parent by IRI that satisfies this is named.  A marker alone (``Other``) qualifies under any parent; a plural
-  or an accent does not match (gap); a class below ``owl:Thing`` only has no declared parent.  Info: a catch-all
+  parent by IRI that satisfies this is named.  A marker alone (``Other``) qualifies under any parent; a plural or
+  an accent does not match (gap); a class below ``owl:Thing`` only has no declared parent.  Info: a catch-all
   class is a modelling choice that OWL's open world makes unnecessary.
 * **CLS014.** A class that is at or below two classes declared pairwise disjoint (``owl:disjointWith`` in
   either direction, or two members of an ``owl:AllDisjointClasses`` list under ``owl:members``, at most
