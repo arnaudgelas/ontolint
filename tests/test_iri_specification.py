@@ -249,9 +249,15 @@ def test_iri006_query_of_a_term_iri() -> None:
     assert _foci("IRI006", ("https://a.test/x?a#b",)) == ["https://a.test/x?a#b"]
 
 
-def test_iri006_gap_a_question_mark_in_a_fragment_is_no_query_but_is_reported() -> None:
-    # RFC 3986 3.5 lets a fragment hold "?": "#a?b" has no query.  The rule tests "?" in the whole IRI.
-    assert _foci("IRI006", ("https://a.test/x#a?b",)) == ["https://a.test/x#a?b"]
+def test_iri006_a_question_mark_in_a_fragment_is_no_query() -> None:
+    # RFC 3986 3.4 ends the query at "#" and 3.5 lets a fragment hold "?": "#a?b" has no query, so the finding
+    # "Term IRI contains a query string" would be false (it was reported, with certainty, until this fix).
+    assert _foci("IRI006", ("https://a.test/x#a?b",)) == []
+    assert _foci("IRI006", ("https://a.test/x#?",)) == []
+    assert _foci("IRI006", ("https://a.test/x#a?b?c",)) == []
+    # A query before the fragment is one, whatever the fragment holds.
+    assert _foci("IRI006", ("https://a.test/x?a#b?c",)) == ["https://a.test/x?a#b?c"]
+    assert _foci("IRI006", ("https://a.test/x?#b",)) == ["https://a.test/x?#b"]
 
 
 def test_iri006_exclusions() -> None:
