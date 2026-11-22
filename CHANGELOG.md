@@ -53,6 +53,10 @@ results after upgrading.
   gaps are pinned as they are, not changed: SKOS001 reads asserted `skos:Concept` only (#181 is deferred),
   SKOS005 and SKOS006 do not read `skos:topConceptOf` and `skos:hasTopConcept`, SKOS002 and LEX015 leave an
   `altLabel` against a `hiddenLabel` that differ in case unreported (#155). Part of #64; the CLS and IRI families remain.
+- **IRI:** IRI001-IRI006 and IRI008-IRI019 are specified in their module docstrings (scope, condition, exclusions,
+  severity and confidence rationale, the RFC 3986 and 3987 sections they rest on, fixtures), with a specification
+  test file, `tests/test_iri_specification.py`, that pins every known gap as it is. No finding, severity,
+  confidence or identity changes; IRI007 (network) stays proposed. Part of #64 (issue #186).
 
 #### Added
 
