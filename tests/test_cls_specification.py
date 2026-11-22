@@ -12,14 +12,33 @@ from __future__ import annotations
 from rule_harness import graph
 
 from ontolint import Linter
-from ontolint.policy import Policy
+from ontolint.policy import (
+    DEFAULT_DEPTH_LIMIT,
+    DEFAULT_INHERITANCE_LIMIT,
+    DEFAULT_SOUP_LIMIT,
+    DEFAULT_SUBCLASS_LIMIT,
+    Policy,
+)
 
 NS = "https://example.test/onto#"
 C = "a owl:Class"
 
 
-def _foci(rule: str, turtle: str, **policy: int) -> list[str]:
-    result = Linter(graph(turtle), policy=Policy(**policy)).execute([rule])
+def _policy(depth: int, inheritance: int, soup: int, subclass: int) -> Policy:
+    return Policy(depth_limit=depth, inheritance_limit=inheritance, soup_limit=soup, subclass_limit=subclass)
+
+
+def _foci(  # noqa: PLR0913 -- the four hierarchy limits of the policy, each overridable alone.
+    rule: str,
+    turtle: str,
+    *,
+    depth_limit: int = DEFAULT_DEPTH_LIMIT,
+    inheritance_limit: int = DEFAULT_INHERITANCE_LIMIT,
+    soup_limit: int = DEFAULT_SOUP_LIMIT,
+    subclass_limit: int = DEFAULT_SUBCLASS_LIMIT,
+) -> list[str]:
+    policy = _policy(depth_limit, inheritance_limit, soup_limit, subclass_limit)
+    result = Linter(graph(turtle), policy=policy).execute([rule])
     return sorted(f.focus.removeprefix(NS) for f in result.findings)
 
 
@@ -45,8 +64,11 @@ def test_cls019_reads_equivalent_class_in_both_directions() -> None:
     assert _foci("CLS019", f"ex:A {C} . owl:Nothing owl:equivalentClass ex:A .") == ["A"]
 
 
-def _messages(rule: str, turtle: str, **policy: int) -> list[str]:
-    result = Linter(graph(turtle), policy=Policy(**policy)).execute([rule])
+def _messages(
+    rule: str, turtle: str, *, soup_limit: int = DEFAULT_SOUP_LIMIT, subclass_limit: int = DEFAULT_SUBCLASS_LIMIT
+) -> list[str]:
+    policy = _policy(DEFAULT_DEPTH_LIMIT, DEFAULT_INHERITANCE_LIMIT, soup_limit, subclass_limit)
+    result = Linter(graph(turtle), policy=policy).execute([rule])
     return sorted(f.message.replace(NS, "ex:") for f in result.findings)
 
 
@@ -410,7 +432,7 @@ def test_cls010_known_gaps_pinned_as_they_are() -> None:
     both = f"ex:Q {C} . " + _labelled(['rdfs:label "x"', 'rdfs:label "x"']).replace(
         "rdfs:subClassOf ex:P", "rdfs:subClassOf ex:P, ex:Q"
     )
-    assert len(_messages("CLS010", both)) == 4
+    assert _foci("CLS010", both) == ["K0", "K0", "K1", "K1"]
 
 
 # --- CLS011: excessive direct subclasses (convention, subclass_limit 50) --------------------------------
@@ -816,7 +838,11 @@ def test_cls025_an_instance_typed_by_a_class_and_its_ancestor_fires() -> None:
     grand = base + f"ex:C {C}; rdfs:subClassOf ex:B . ex:i a ex:A, ex:C ."
     assert _messages("CLS025", grand) == ["Typed ex:C and its ancestor ex:A."]
     chain = base + f"ex:C {C}; rdfs:subClassOf ex:B . ex:i a ex:A, ex:B, ex:C ."
-    assert len(_messages("CLS025", chain)) == 3  # one finding per (class, ancestor) pair
+    assert _messages("CLS025", chain) == [
+        "Typed ex:B and its ancestor ex:A.",
+        "Typed ex:C and its ancestor ex:A.",
+        "Typed ex:C and its ancestor ex:B.",
+    ]  # one finding per (class, ancestor) pair
 
 
 def test_cls025_exclusions() -> None:
@@ -838,4 +864,4 @@ def test_cls025_known_gaps_pinned_as_they_are() -> None:
     assert _foci("CLS025", f"ex:B {C}; rdfs:subClassOf owl:Thing . ex:i a owl:Thing, ex:B .") == []
     # Two classes of a cycle are each other's ancestor: both pairs are reported.
     cycle = f"ex:A {C}; rdfs:subClassOf ex:B . ex:B {C}; rdfs:subClassOf ex:A . ex:i a ex:A, ex:B ."
-    assert len(_messages("CLS025", cycle)) == 2
+    assert _messages("CLS025", cycle) == ["Typed ex:A and its ancestor ex:B.", "Typed ex:B and its ancestor ex:A."]
