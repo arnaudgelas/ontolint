@@ -6,9 +6,10 @@ say, for each file and rule, whether the rule *should* fire (issue #8).
 
 **This is an exploratory snapshot, not a calibration.** Three things limit it:
 
-- **The labels are proposed, not approved.** The author of this page wrote them with the
-  measurements in view. Until the maintainer approves them (`"label_status": "approved"` in the
-  manifest), every count below is a preliminary observation conditioned on those labels.
+- **The labels are approved, and not independent.** The maintainer approved them as the working labels (issue #152,
+  `"label_status": "approved"` in the manifest), two pairs left `unknown` on purpose. The author of this page wrote them with the
+  measurements in view, so every count below is still a preliminary observation conditioned on those labels,
+  not a measurement of precision.
 - **Most negatives are presumed.** Of the 273 (file, rule) pairs, 211 are labelled silent only
   because the file is a curated, widely reused ontology with no known aggregate problem. That is an
   assumption, not something checked in the file. Every true positive, false positive and false
@@ -21,17 +22,17 @@ network), so a later change to a rule, to ownership, to rdflib or to a default c
 `check` runs: [`../releasing.md`](../releasing.md) runs it at every release and a weekly advisory job between
 releases ([`../ci-schedule.md`](../ci-schedule.md), issue #169).
 
-**Observed under the proposed labels:**
+**Observed under the approved labels:**
 - **METRIC001, METRIC002 and METRIC003:** no false positive, and no false negative among the
   labelled cases, which are few: 1 to 2 true positives each.
-- **The other rules:** each of the 11 false positives comes from a modelling choice the rule does
-  not see, not from where its limit sits. For each of the five rules concerned, only a limit that
-  switches the rule off would remove them. METRIC005 had a twelfth, DCMI Terms, caused by CLS001 not
+- **The other rules:** each of the 13 false positives comes from a modelling choice the rule does
+  not see, not from where its limit sits. For each of the six rules concerned, only a limit that
+  switches the rule off on this corpus would remove them, and for METRIC008 no limit is consistent with the labels. METRIC005 had a twelfth, DCMI Terms, caused by CLS001 not
   reading `dcam:rangeIncludes`; it went with the fix for issue #66 and METRIC005 now fires on no file.
 
 No default is changed here, and **this snapshot must not, on its own, justify changing any METRIC
-threshold, severity or confidence.** That needs two things it lacks: labels approved or redone
-independently (issue #8), and measurements that are rerun at release (issue #31). The choices are
+threshold, severity or confidence.** That needs two things it lacks: labels redone
+independently of the measurements (issue #8), and measurements that are rerun at release (issue #31). The choices are
 in "For the maintainer" below.
 
 ## Corpus
@@ -136,7 +137,7 @@ label is marked FP or FN.
 | `food-traceability.ttl` | **43 / 43** [F] | **43 / 43** [F] | **31 / 31** [F] | 6.00 over 3 [S] | 0 [S] | 31 / 43 [S] | 31 / 43 [S] | **31 / 31** [S FP] | none untagged [S] | 0 [S] | 0 [S] | no definition [S] | 58 / 137 [S] |
 | `dcterms.ttl` | 0 [Sp] | 0 [Sp] | 0 [Sp] | 2.00 over 4 [Sp] | 1 / 22 [S] | 55 / 22 [Sp] | 55 / 22 [Sp] | 0 [Sp] | none untagged [Sp] | 3 / 11 [Sp] | 0 [Sp] | 10.91 over 22 [Sp] | 0 [Sp] |
 
-### Outcomes under the proposed labels
+### Outcomes under the approved labels
 
 Counts of (file, rule) pairs. A true negative is *checked* when its label's reason was verified in
 the file, *presumed* when it rests on the file's standing alone.
@@ -157,7 +158,7 @@ the file, *presumed* when it rests on the file's standing alone.
 | METRIC012 | 0 | 0 | 0 | 4 | 17 | 0 | 0 | 0 |
 | METRIC013 | 0 | 0 | 0 | 4 | 17 | 0 | 0 | 0 |
 
-### The proposed labels
+### The approved labels
 
 | File | Rules | Label | Basis | Why |
 | --- | --- | --- | --- | --- |
@@ -277,20 +278,20 @@ A value below the sample gate (`metric_min_sample`, 10 terms) is left out.
 | METRIC012 | < 4.0 | 10.0, SKOS | none |
 | METRIC013 | > 0.6 | 0.42, food traceability | none |
 
-## For the maintainer
+## Decided (issue #152)
 
-1. **Approve or correct the labels** in `metric-corpus.json`, then set `"label_status": "approved"`
-   and run `render`. A changed label changes only the counts, never a measurement. The presumed
-   ones most need a second look, or replacing with checked ones.
-2. **Decide the open labels**: METRIC004 on PAO, METRIC006 on the Rights Ontology, METRIC008 on PAO.
-3. **No default is changed here.** Nothing observed argues for changing METRIC001, METRIC002 or
-   METRIC003, but 1 or 2 true positives each, against mostly presumed negatives, cannot confirm
-   their limits either. For the six rules with false positives, a limit cannot fix the cause; each
-   would need a scope change (reading restrictions, `dcam:` or inherited signatures,
-   upper-ontology alignment, own-module imports), a product decision for its own issue. No
-   threshold, severity or confidence should change on this snapshot alone: first approve or
-   independently redo the labels (#8), and rerun the corpus at release (#31).
-4. **Known-poor files are missing** for METRIC004 to METRIC013 but one (PAO, METRIC008). Recall needs one per rule; a
-   synthetic fixture shows a boundary, not a real ontology.
+1. **The labels are approved** as they stand in `metric-corpus.json` (`label_status` is `approved`): 62 pairs checked in the file, 211
+   presumed from the file's standing, two left `unknown` (METRIC005 and METRIC006 on MFTO), which take no part in any count. A changed
+   label changes only the counts, never a measurement. The presumed ones remain the weakest evidence.
+2. **The open labels are decided**: METRIC004 on PAO `silent` (a flat catalogue of 50 named questionnaires), METRIC006 on the Rights Ontology
+   `silent` (it reuses BFO's has-part and owns no relation), METRIC008 on PAO `fire` (15 of 18 properties carry no signature).
+3. **No default is changed here.** Nothing observed argues for changing METRIC001, METRIC002 or METRIC003, but 1 or 2 true
+   positives each, against mostly presumed negatives, cannot confirm their limits either. METRIC008's sweep prefers a limit of 1.0, which
+   would miss its one `fire` file: one true positive against three false positives is evidence about the rule (a property used in a
+   restriction counts as unsigned), not about the limit, and the same holds for the other five rules with false positives; each would need
+   a scope change (reading restrictions, `dcam:` or inherited signatures, upper-ontology alignment, own-module imports), a product decision
+   for its own issue. No threshold, severity or confidence changes on this snapshot alone.
+4. **Known-poor files stay missing** for METRIC004 to METRIC013 but one (PAO, METRIC008): their recall is accepted as unmeasured. The ten
+   candidates of `metric-candidates.md` stay unlabelled candidates; a synthetic fixture shows a boundary, not a real ontology.
 5. **Rerun or retire the snapshot.** `check` runs at every release and weekly (issue #169) and says when the results
    are stale; a stale snapshot is rerun with `measure` and reviewed, not left.

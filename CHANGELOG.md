@@ -181,6 +181,9 @@ results after upgrading.
 
 - **Specifications:** the independent review and the approval of the OWL, METRIC and SHQ specifications (issue #182) are recorded in
   `docs/severity-decisions.md`, with the follow-ups the review left. Documentation only.
+- **METRIC calibration:** the labels of the calibration corpus are approved (`label_status`, issue #152): 62 pairs checked, 211 presumed, two left
+  `unknown`. The pages that said 11 false positives on five rules now say 13 on six (the labels of #246 added two). No default, severity or
+  confidence changes; recall stays unmeasured for METRIC004-METRIC013 except METRIC008's single case. Documentation only.
 - **SHQ014:** the specification states the decision of #138: any subject of an `sh:` predicate is judged for its
   `sh:severity` values, a node that is only loosely a shape included (an `owl:Class` carrying a severity), though
   SHACL-SHACL does not check it. Pinned in `tests/test_shq_specification.py`; no behaviour changes.

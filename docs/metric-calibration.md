@@ -5,7 +5,7 @@ defaults (issue #8). **It changes no default, severity, confidence or rule behav
 evidence and a harness; every decision below is the maintainer's.
 
 Read it with [`metric-thresholds.md`](metric-thresholds.md) (what each default is and how to override it) and
-[`validation/metric-calibration.md`](validation/metric-calibration.md) (the per-file measurements, the proposed
+[`validation/metric-calibration.md`](validation/metric-calibration.md) (the per-file measurements, the approved
 labels and the false-positive counts).
 
 ## What this is, and is not
@@ -13,8 +13,8 @@ labels and the false-positive counts).
 - The corpus is 21 public ontology files, pinned in
   [`validation/metric-corpus.json`](validation/metric-corpus.json): URL, commit (20 files; SKOS Core is the
   W3C namespace document, pinned by checksum only), licence and SHA-256. Nothing is vendored.
-- The **labels are proposed, not approved** (`"label_status": "proposed"`). Whether an ontology is known-good
-  or known-poor for a rule is the maintainer's judgement; the file records a reason and a basis for each label
+- The **labels are approved** (`"label_status": "approved"`, issue #152), and not independent of the measurements. Whether an ontology
+  is known-good or known-poor for a rule is the maintainer's judgement; the file records a reason and a basis for each label
   (`checked` in the file, or `presumed` from the file's standing). Most negatives are presumed.
 - Every false-positive and false-negative count is conditioned on those labels. They are as good as the labels
   and no better. They are not a measurement of precision, and with one or two known-poor files for
@@ -147,7 +147,7 @@ Each is a recommendation, with its evidence and the alternative. None is applied
 
 **Decided (issue #63): keep both at warning.** The two flagged files below are the evidence the corpus has; the sweep of
 issue #163 ([metric-thresholds.md](metric-thresholds.md), "Evidence per threshold") does not reopen it: METRIC001 and
-METRIC002 flag only files labelled poor (3 true positives, no false positive), on labels that are still proposed. And
+METRIC002 flag only files labelled poor (3 true positives, no false positive), on approved labels, most of them presumed. And
 `severity_overrides` lowers either rule in a policy file for a mature ontology that sits
 under the limit (PATO base is at 0.33 for METRIC002).
 
@@ -245,29 +245,23 @@ is a clear typo.
 digits, sample gate) and the METRIC010 exclusions line are reworded; they change no behaviour. The corpus neither
 confirms nor refutes any of the other specifications.
 
-## What the maintainer has to decide
+## What the maintainer decided (issue #152)
 
-Making the labelling mechanical (no step below changes a default):
-
-1. `uv run python scripts/metric_sweep.py labels-sheet > sheet.csv`. Each row is a (file, rule) with its measured
-   value and whether the default fires; fill `maintainer_expect` (`fire`, `silent`, `unknown`), `maintainer_basis`
-   (`checked` or `presumed`) and `maintainer_reason` on the rows you decide; blank rows keep today's label.
-2. `uv run python scripts/metric_sweep.py calibrate --labels sheet.csv` (add `--checked-only` to ignore presumed
-   labels) prints, per rule and limit, flagged files, TP, FP, FN, TN and the recommended limit. A rule with no
-   `fire` label prints no recommendation: its recall is unmeasured, and the limit that switches it off would
-   otherwise win. Copy the decisions into `validation/metric-corpus.json`, set `label_status` to `approved`, and
-   `scripts/metric_corpus.py render`.
-3. Review the labels proposed for the four research files (issue #152: all 37 unassessed pairs and the three open ones were assessed against the files). Two decide something: PAO's 50 flat questionnaires are labelled `silent` for METRIC004, so the default (8.0) fires on a file labelled good and no limit below 13.57 is consistent with the labels; PAO is the one `fire` label of METRIC008, and the three other files the default flags (SSN, SKOS Core, MOMo food traceability) are labelled `silent` because they state signatures as restrictions, so the sweep prefers a limit of 1.0, which misses PAO: one true positive against three false positives is evidence about the rule (a property used in a restriction counts as unsigned) more than about the limit. Two pairs stay `unknown` for you: METRIC005 and METRIC006 on MFTO.
-4. Judge the known-poor nominees for METRIC004-METRIC013, or accept their recall as unmeasured. Ten candidates in
-   [`validation/metric-candidates.md`](validation/metric-candidates.md) are measured and pinned immutably: four suggested "silent"
-   and six that fire METRIC004 to METRIC008, METRIC010 or METRIC013, which a firing alone does not make poor. Only the maintainer
-   can label one `fire`. METRIC012 has no nominee.
-5. The decisions above: severity (METRIC001, METRIC002), METRIC011 confidence, CLS001 and `dcam:`, approval of the
-   specifications.
-6. Whether a difference in `check` should block a release. It runs at every release and weekly (`docs/releasing.md`,
+1. **Labelling.** Every (file, rule) pair is assessed: 62 checked in the file, 211 presumed from the file's standing, two `unknown`
+   (METRIC005 and METRIC006 on MFTO). The maintainer approved the manifest (`label_status` is `approved`).
+2. **Open labels.** METRIC004 on PAO is `silent` (a flat catalogue: the default firing at 13.57 is a false positive under this label,
+   and no limit below 13.57 is consistent with the labels); PAO is the one `fire` label of METRIC008, and the three other files the
+   default flags (SSN, SKOS Core, MOMo food traceability) are `silent` because they state signatures as restrictions, so the sweep prefers
+   a limit of 1.0, which misses PAO: one true positive against three false positives is evidence about the rule (a property used in a
+   restriction counts as unsigned) more than about the limit. METRIC006 on the Rights Ontology is `silent`.
+3. **Known-poor nominees.** Not labelled: recall is accepted as unmeasured for METRIC004-METRIC013, except METRIC008's single case. The ten
+   candidates in [`validation/metric-candidates.md`](validation/metric-candidates.md) stay candidates.
+4. The other decisions: severity (METRIC001, METRIC002), METRIC011 confidence, CLS001 and `dcam:`, approval of the specifications, were
+   taken in issues #63, #66, #182.
+5. Whether a difference in `check` should block a release. It runs at every release and weekly (`docs/releasing.md`,
    `docs/ci-schedule.md`, issue #169) and is advisory: a difference is reviewed and explained, it blocks nothing.
 
-Until 2 and 4, no threshold should change on this corpus. The issue's "done when" (every threshold records its
-rationale, corpus results and override behaviour, and any changed default has regression fixtures) is not met by this
-page: the rationale and override behaviour are recorded, the corpus results are conditioned on labels nobody has
-approved, and no default has changed.
+No default changes on this corpus: the labels are approved but were written with the measurements in view, so a limit changes only on
+labels redone independently of the measurements, with boundary fixtures and an upgrade note, and on measurements rerun at release.
+The issue's "done when" (every threshold records its rationale, corpus results and override behaviour) is met: the rationale and
+override behaviour are recorded, and the corpus results are conditioned on approved labels, 211 of which are presumed.
