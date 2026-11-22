@@ -373,3 +373,71 @@ def test_a_bad_source_date_epoch_is_a_tool_failure(
 def test_an_unwritable_destination_is_a_tool_failure(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main([BEFORE, "--write-dqv", str(tmp_path / "missing" / "d.ttl")]) == TOOL_FAILURE
     assert "DQV report" in capsys.readouterr().err
+
+
+# --- free text and IRIs are written without a control, format or separator character (#136) -----------------------
+
+HOSTILE_REASON = "boom \x1b[31m\nline two \u202e bidi \u2028 sep \x00 nul \ud800 lone"
+ESCAPED_REASON = "boom \\u001B[31m\\u000Aline two \\u202E bidi \\u2028 sep \\u0000 nul \\uD800 lone"
+
+
+def raw_characters(text: str) -> set[str]:
+    """The characters of ``text`` a line-oriented reader or a terminal acts on, apart from its own line ends."""
+    import unicodedata  # noqa: PLC0415 -- one test helper
+
+    return {c for c in text if c not in "\n " and unicodedata.category(c) in {"Cc", "Cf", "Cs", "Co", "Zl", "Zp", "Zs"}}
+
+
+def test_a_reason_with_control_format_and_separator_characters_is_written_with_none_of_them_raw() -> None:
+    text = dumps(
+        snapshot(Measurement("class_depth", 1, HIST_KIND, "acyclic_owned_classes", reason=HOSTILE_REASON)),
+        ON,
+        tool_version=VERSION,
+    )
+
+    assert raw_characters(text) == set()
+    text.encode("utf-8")  # strict: a lone surrogate would raise
+
+
+def test_the_escaped_reason_is_the_text_the_text_report_shows() -> None:
+    g = Graph().parse(
+        data=dumps(
+            snapshot(Measurement("class_depth", 1, HIST_KIND, "acyclic_owned_classes", reason=HOSTILE_REASON)),
+            ON,
+            tool_version=VERSION,
+        ),
+        format="turtle",
+    )
+
+    comments = [str(o) for o in g.objects(None, RDFS.comment)]
+
+    assert comments == [f"not measured: class_depth: {ESCAPED_REASON}"]
+
+
+def test_a_no_break_space_and_an_astral_character_in_a_reason_are_escaped() -> None:
+    g = graph_of(Measurement("class_depth", 1, HIST_KIND, "acyclic_owned_classes", reason="a\u00a0b\U000e0001c"))
+
+    assert [str(o) for o in g.objects(None, RDFS.comment)] == ["not measured: class_depth: a\\u00A0b\\U000E0001c"]
+
+
+def test_a_reason_in_ordinary_text_is_written_as_it_is() -> None:
+    reason = "no SHACL shapes graph was supplied: café 本体論 [brackets] 'quotes' \"double\" back\\slash"
+    g = graph_of(Measurement("class_depth", 1, HIST_KIND, "acyclic_owned_classes", reason=reason))
+
+    assert [str(o) for o in g.objects(None, RDFS.comment)] == [f"not measured: class_depth: {reason}"]
+
+
+def test_an_ontology_iri_with_control_or_separator_characters_is_written_as_a_valid_turtle_iri() -> None:
+    on = Subject(("https://e.test/a\x1bb\u202ec d\u2028e<f>",), ())
+
+    text = dumps(snapshot(RATIO), on, tool_version=VERSION)
+
+    assert raw_characters(text) == set()
+    assert "https://e.test/a%1Bb%E2%80%AEc%20d%E2%80%A8e%3Cf%3E" in text
+    assert Graph().parse(data=text, format="turtle")  # it parses: the IRI of the file is a Turtle IRIREF
+
+
+def test_an_ordinary_ontology_iri_is_unchanged() -> None:
+    on = Subject(("https://example.test/q/café#本体?x=1&y=%20",), ())
+
+    assert "<https://example.test/q/café#本体?x=1&y=%20>" in dumps(snapshot(RATIO), on, tool_version=VERSION)
