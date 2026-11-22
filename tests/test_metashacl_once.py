@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Callable
 from typing import Any
 
 import pyshacl
@@ -52,19 +53,40 @@ def _graph(text: str) -> Graph:
     return Graph().parse(data=text, format="turtle")
 
 
+class _Forwarding:
+    """A stand-in for ``pyshacl.entrypoints.meta_validate`` that reads ``graph_cache`` from the real function on every
+    access.  pySHACL fills the attribute with the SHACL-SHACL graph on the first call and the real function's body
+    reads it through the module name, which the test has replaced: a copy taken before that call
+    (``spy.graph_cache = real.graph_cache``) is the ``EMPTY`` sentinel when the test is the first of its process to
+    reach ``meta_validate``."""
+
+    def __init__(
+        self,
+        real: Any,
+        record: Callable[[dict[str, Any]], None] | None = None,
+        signature: inspect.Signature | None = None,
+    ) -> None:
+        self._real = real
+        self._record = record
+        if signature is not None:
+            self.__signature__ = signature
+
+    @property
+    def graph_cache(self) -> Any:
+        return self._real.graph_cache
+
+    def __call__(self, shacl_graph: Any, *args: Any, **kwargs: Any) -> Any:
+        if self._record is not None:
+            self._record(kwargs)
+        return self._real(shacl_graph, *args, **kwargs)
+
+
 class _Calls:
     """Counts the calls of ``pyshacl.entrypoints.meta_validate``, whoever makes them (pySHACL's own included)."""
 
     def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self.arguments: list[dict[str, Any]] = []
-        real = entrypoints.meta_validate
-
-        def spy(shacl_graph: Any, *args: Any, **kwargs: Any) -> Any:
-            self.arguments.append(kwargs)
-            return real(shacl_graph, *args, **kwargs)
-
-        spy.graph_cache = real.graph_cache  # type: ignore[attr-defined] -- the wrapper shares the SHACL-SHACL graph
-        monkeypatch.setattr(entrypoints, "meta_validate", spy)
+        monkeypatch.setattr(entrypoints, "meta_validate", _Forwarding(entrypoints.meta_validate, self.arguments.append))
 
 
 def _cold_meta_validate(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -94,11 +116,9 @@ def test_the_signature_spy_does_not_depend_on_a_warm_cache_either(monkeypatch: p
     _cold_meta_validate(monkeypatch)
     real = entrypoints.meta_validate
 
-    def renamed(*args: Any, **kwargs: Any) -> Any:
-        return real(*args, **kwargs)
-
-    renamed.graph_cache = real.graph_cache  # type: ignore[attr-defined]
-    renamed.__signature__ = inspect.Signature([inspect.Parameter("graph", inspect.Parameter.POSITIONAL_ONLY)])  # type: ignore[attr-defined]
+    renamed = _Forwarding(
+        real, signature=inspect.Signature([inspect.Parameter("graph", inspect.Parameter.POSITIONAL_ONLY)])
+    )
     monkeypatch.setattr(entrypoints, "meta_validate", renamed)
     seen = _meta_shacl_arguments(monkeypatch)
 
@@ -257,11 +277,9 @@ def test_a_missing_meta_validate_falls_back_to_pyshacls_own_meta_shacl(monkeypat
 def test_a_meta_validate_whose_signature_changed_falls_back_too(monkeypatch: pytest.MonkeyPatch) -> None:
     real = entrypoints.meta_validate
 
-    def renamed(*args: Any, **kwargs: Any) -> Any:  # pySHACL's own ``validate`` still reaches the real one
-        return real(*args, **kwargs)
-
-    renamed.graph_cache = real.graph_cache  # type: ignore[attr-defined]
-    renamed.__signature__ = inspect.Signature([inspect.Parameter("graph", inspect.Parameter.POSITIONAL_ONLY)])  # type: ignore[attr-defined]
+    renamed = _Forwarding(
+        real, signature=inspect.Signature([inspect.Parameter("graph", inspect.Parameter.POSITIONAL_ONLY)])
+    )
     monkeypatch.setattr(entrypoints, "meta_validate", renamed)
     seen = _meta_shacl_arguments(monkeypatch)
 
