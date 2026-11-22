@@ -55,14 +55,14 @@ All rows are the recommendations of this record, except the departures above and
 | SKOS001 scope (S14) | deferred: needs a count ("Count the widened SKOS001 scope", v0.18.0) | none |
 | METRIC001, METRIC002 | keep warning (no curated file fails; the calibration sweep of #163 does not reopen it) | none |
 | METRIC011 | `heuristic`; a catalogue invariant for the METRIC family | METRIC pull request #204 (closes #183) |
-| Approval of the specifications | **maintainer**: not decided here | none |
+| Approval of the OWL, METRIC and SHQ specifications | approved at `10c33e5` by merging the pull request that records it ("Review and approval record") | docs pull request of #182 |
 
 ### What the decisions leave open
 
-* The approval of the OWL, METRIC and SHQ specifications (issue #182) is a human review; the pull requests only correct the
-  specifications and pin their severity and confidence in tests.
-* `category` still disagrees with the finding confidence for OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 (category
-  `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63. Its first step is done
+* The approval of the OWL, METRIC and SHQ specifications (issue #182) is recorded in "Review and approval record"; its follow-ups (cosmetic
+  messages behind the legacy pin, the 500-member list limit, SHACL001 pointers for pySHACL load errors, citations) are listed there.
+* `category` and the finding confidence disagreed for 52 rules (category `heuristic` with `certain` findings, and the reverse): a
+  catalogue-wide alignment, not part of #63, in steps. Its first step is done
   (issue #180): no `deterministic` rule reports a `heuristic` finding (SKOS011, SKOS015, SKOS017, SKOS019, SKOS020,
   SKOS021, ALIGN015 and DATA003 became `heuristic`; `tests/test_category_confidence.py`). Its second step is done: the 14 rules
   whose `certain` findings rest on a condition the specification forbids or gives a fixed meaning (OWL003, OWL004, OWL007,
@@ -385,29 +385,75 @@ SHQ003 1,244 / 412.
 
 ## Approval checklist for the specifications
 
-Each box is the maintainer's. "Found" lists what contradicted spec and behaviour while preparing this page. The SHQ008, SHQ011 and SHQ015 statements and the OWL004/OWL007 TODO proposal named below have since been corrected (commit `docs(rules): correct the SHQ008, SHQ011 and SHQ015 specifications ...`); the severity and confidence rows are fixed by the pull requests of "Where each decision ships".
+Each box is the maintainer's. "Found" lists what contradicted spec and behaviour when this page was prepared, and what became of it:
+every item below was corrected (see "Review and approval record"). A box is ticked by merging the pull request that records the approval.
 
-- [ ] **OWL001-OWL011, OWL013-OWL015, DATA001, DATA002**: `src/ontolint/rules/owl.py`, module docstring, 91 lines.
-      Found: OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 say "certain" while their catalogue category is `heuristic`
-      (see fact 4); TODO.md proposes `heuristic` for OWL004/OWL007, contradicting the docstring and the code.
-- [ ] **OWL012**: `src/ontolint/rules/classes.py` (the module docstring is one line; the OWL012 specification is in `owl.py`'s list, which names it as emitted in `classes.py`).
-- [ ] **OWL016-OWL030**: `src/ontolint/rules/owl_axioms.py`, module docstring, 96 lines.
-      Found: "Every finding is certain except OWL023's" while the OWL023 category is `deterministic`.
-- [ ] **OWL031-OWL045**: `src/ontolint/rules/owl_expressions.py`, module docstring, 135 lines.
-      Found: "Every finding is certain except OWL041's" with category `deterministic`. OWL032 and OWL010 are described as outside OWL 2 DL yet info, while OWL016
+- [x] **OWL001-OWL011, OWL013-OWL015, DATA001, DATA002**: `src/ontolint/rules/owl.py`, module docstring, 91 lines.
+      Found, resolved: OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 said "certain" while their catalogue category was `heuristic` (category
+      `deterministic` since #180); the TODO.md proposal to make OWL004/OWL007 `heuristic` was dropped.
+- [x] **OWL012**: `src/ontolint/rules/classes.py` (the module docstring is one line; the OWL012 specification is in `owl.py`'s list, which names it as emitted in `classes.py`).
+- [x] **OWL016-OWL030**: `src/ontolint/rules/owl_axioms.py`, module docstring, 96 lines.
+      Found, resolved: "Every finding is certain except OWL023's" while the OWL023 category is `deterministic`: OWL023 is `certain` since #199.
+- [x] **OWL031-OWL045**: `src/ontolint/rules/owl_expressions.py`, module docstring, 135 lines.
+      Found, resolved (#199: OWL041 is `certain`): "Every finding is certain except OWL041's" with category `deterministic`. OWL032 and OWL010 are described as outside OWL 2 DL yet info, while OWL016
       and OWL009's "not OWL 2 DL" grades differ (error versus warning): the family has no stated rule for what "not OWL 2 DL" costs (decided by the rows above).
       OWL045's one condition has five kinds of defect of different gravity under one severity.
-- [ ] **METRIC001-METRIC013**: `src/ontolint/rules/metrics.py`, module docstring, 115 lines (specifications, `docs/measurements.md`,
-      `docs/metric-thresholds.md`). The open points are in `docs/metric-calibration.md`, "Approval of the METRIC specifications": METRIC004 and METRIC005 are gated on owned classes
-      while the text says "population"; METRIC011's `certain`; the `dcam:` reading of METRIC005 (issue #66). Not re-audited here.
-- [ ] **SHQ001-SHQ006**: `src/ontolint/rules/shapes.py`, 66 lines. Found: SHQ001 and SHQ002 exclude directly targeted property shapes (scope question 2).
-- [ ] **SHQ009, 010, 012, 014-016, 022, 023**: `src/ontolint/rules/shacl_quality.py`, 71 lines.
-      Found: SHQ015 mixes two defects of different gravity (an XPath error and a no-op); the text "Python- or Java-based engines may accept it" is
+- [x] **METRIC001-METRIC013**: `src/ontolint/rules/metrics.py`, module docstring, 115 lines (specifications, `docs/measurements.md`,
+      `docs/metric-thresholds.md`). The open points of `docs/metric-calibration.md`, "Approval of the METRIC specifications", are resolved: the gate of METRIC004
+      and METRIC005 is named in the text, METRIC011 is `heuristic` (#204), METRIC005 reads the `dcam:` predicates (#66). The review of #182 re-audited the family.
+- [x] **SHQ001-SHQ006**: `src/ontolint/rules/shapes.py`, 66 lines. Found, resolved: SHQ001 and SHQ002 excluded directly targeted property shapes (decided in #203).
+- [x] **SHQ009, 010, 012, 014-016, 022, 023**: `src/ontolint/rules/shacl_quality.py`, 71 lines.
+      Found, resolved (#201, per-finding severity): SHQ015 mixed two defects of different gravity (an XPath error and a no-op); the text "Python- or Java-based engines may accept it" is
       true of Python (verified) and untrue of Jena, which refuses an unknown flag.
-- [ ] **SHQ007, 008, 011, 013, 017-021, 024-027**: `src/ontolint/rules/shacl_authoring.py`, 145 lines.
-      Found: SHQ011 says a Java engine may accept `[[a]` ("a Java union"): Jena 4.10.0 rejects it (`Unclosed character class`). SHQ008's rationale and PR #46 say
+- [x] **SHQ007, 008, 011, 013, 017-021, 024-027**: `src/ontolint/rules/shacl_authoring.py`, 145 lines.
+      Found, resolved (#201, #193): SHQ011 said a Java engine may accept `[[a]` ("a Java union"): Jena 4.10.0 rejects it (`Unclosed character class`). SHQ008's rationale and PR #46 say
       engines read a derived integer type as its value: pySHACL refuses the shapes graph (SHACL001, exit 2). The module header says "a documented subset of SHQ007-SHQ027".
-- [ ] **SKOS001-SKOS006** (not in the issue's list but touched by two rows): `src/ontolint/rules/skos.py`, 23 lines. Found: "confidence certain" with category `heuristic`.
+- [ ] **SKOS001-SKOS006** (not in the issue's list but touched by two rows): `src/ontolint/rules/skos.py`, 23 lines. Found: "confidence certain" with category `heuristic`. Outside issue #182: the SKOS specification was written in #185 and has had no independent review of its own; its category was decided in #202.
+
+## Review and approval record (issue #182)
+
+**Review.** On 2026-11-22, at commit `3d28d57`, three independent read-only reviewers checked every specification of the OWL (OWL001-OWL045,
+DATA001, DATA002), METRIC (METRIC001-METRIC014) and SHQ (SHQ001-SHQ027) families against the code: about 900 small graphs run through
+`Linter(...).execute([ID])`, pySHACL 0.40.2 run directly, severities, confidences, categories, catalogue rows and generated pages compared.
+They found no behavioural defect in METRIC or in SHQ's numeric rules, about 25 sentences that were false, stale or incomplete, no specification
+at all for DATA001 and DATA002, and one code defect (OWL027, OWL033 and SHQ009 read `"x"` and `"x"^^xsd:string` as two terms).
+
+**What changed.** Pull request #244 corrected the sentences and wrote the DATA bullets (docstrings only: the abstract syntax trees of the
+changed modules are equal before and after, apart from docstrings); #245 fixed the code defect with failing tests first; the tests
+`tests/test_owl_specification.py`, `test_data_specification.py`, `test_shq_amendments_specification.py` and `test_metric_specification.py`
+pin the amended sentences through the public linter path.
+
+**Approval.** The OWL, METRIC and SHQ specifications are approved at `10c33e5`, the head of `main` when this record was written, by the
+maintainer merging the pull request that adds this section. The approval covers the text of the module docstrings, the severities,
+confidences and categories they state, and the generated rule pages; it does not cover the items below.
+
+**Not verified by anyone** (the reviewers were AI agents; a human may still check them): every citation (SS, DS, MAP, XSD, SHACL, F&O and RFC
+section numbers and quoted phrases), the Jena 4.10 statements of SHQ008, SHQ011 and SHQ015, the corpus percentages of SHQ003,
+`--follow-imports` behaviour and performance claims. The highest-risk citations: "SS 5.8.1 requires a class used in an axiom to be declared"
+(OWL001, OWL002), "SS 11.1 makes owl:topObjectProperty and owl:bottomObjectProperty composite" (OWL019), "DS Table 6" (OWL009), "DS Table 4"
+(OWL011), "DS 2.2" (OWL013), "MAP 3.2.5" (OWL014), "MAP Tables 15 and 16" (OWL010, OWL035, OWL036).
+
+**Follow-ups the review left, none blocking** (open an issue for each you want to track):
+
+1. Extend `tests/test_owl_specification.py` from the amended sentences to every OWL bullet (focus, count and message, not only which rule fires).
+2. Legacy rules, three cosmetic defects behind `tests/golden/legacy_rules.json`: the OWL020 suggestion names `owl:subPropertyOf` (it is
+   `rdfs:subPropertyOf`); the OWL032 and OWL033 suggestions omit `owl:disjointUnionOf`; DATA001 prints "value has datatype None" for a plain
+   or language-tagged literal; OWL009, OWL016 and OWL021 print full IRIs for a built-in term. Fixing them is a "deliberate legacy update"
+   and a changed message changes the version 1 fingerprint of its findings.
+3. DATA001 reports `"1.0"^^xsd:decimal` in an `xsd:integer` range though the value is in the integer value space (documented as is).
+4. A list of more than 500 members is read as malformed (`support.list_items`): OWL010 reports a 501-operand chain, OWL019 ignores it, SHQ024
+   reports a valid 501-member `sh:ignoredProperties` (documented as is).
+5. SHQ008 and SHACL001: pySHACL refuses a negative count or length at load (`ConstraintLoadError`), SHACL001 fails with no SHQ pointer (the
+   pattern fixed for two other load errors in #137).
+6. SHQ011 and the flags `q`, `x` and `s`: pySHACL ignores them and compiles with Python's `re`, so `sh:pattern '(a' ; sh:flags 'q'` stops
+   pySHACL while SHQ011 stays silent.
+7. SHQ012 defect (2) is Info although it makes SHACL001 fail, and SHACL-SHACL also forbids `sh:minCount`, `sh:maxCount`,
+   `sh:qualifiedValueShape`, `sh:lessThan` and `sh:lessThanOrEquals` on a non-property shape with no SHQ finding: a severity and pointer decision.
+8. SHQ007, SHQ013, SHQ017, SHQ018, SHQ024 and SHQ025 report a deactivated shape, SHQ003 does not: one policy for the family.
+9. SHQ021's message says "no other shape refers to it" while a self-reference silences the rule; SHQ005 reads `@und` as untagged.
+10. Message grammar: METRIC004, METRIC006 and METRIC011 print "1 parent classes", "0 properties for 1 classes", "1 distinct owl:imports".
+11. OWL024 and OWL025 report on the member written first (and, for a blank node, by the parser's label): use `ctx.order_key` as OWL029 does.
+12. Verify the citations listed above against the specifications.
 
 ## Decisions asked (fill in)
 
@@ -430,7 +476,7 @@ Each box is the maintainer's. "Found" lists what contradicted spec and behaviour
 | 15 | SHQ003 | keep widened (medium-high) | keep |
 | 16 | SHQ001, SHQ002 direct targets | include (low-medium) | include |
 | 17 | SKOS001 scope | widen after a count (low) | deferred until the count |
-| 18 | Approve the OWL, METRIC, SHQ specifications | after the inconsistencies above are corrected | maintainer; the corrections are in the pull request that precedes this one |
+| 18 | Approve the OWL, METRIC, SHQ specifications | after the inconsistencies above are corrected | approved at `10c33e5` by merging the pull request that records it ("Review and approval record") |
 | 19 | METRIC001, METRIC002 severity | keep warning | keep warning |
 | 20 | METRIC011 confidence | keep `certain` (calibration page) | `heuristic` (D1) |
 
