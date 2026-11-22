@@ -76,11 +76,18 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   ``pyshacl>=0.40.2,<0.41``, because ``meta_validate`` is not pySHACL's public API), and then a refusal keeps
   pySHACL's own text as its detail.  A
   failure that is not a verdict on the shapes graph (a crash, pySHACL's own load errors) keeps its
-  ``<ExceptionType>: <message>`` detail.  One load error is a verdict: a shape typed ``sh:NodeShape`` with
-  ``sh:path`` (SHACL 2.2 forbids it, SHACL-SHACL accepts it, pySHACL's loader refuses it).  When pySHACL raises
-  its ``ShapeLoadError`` and the shapes graph has such a shape, the rule is ``failed`` as above with the detail
-  ``the shapes graph has a node shape with sh:path, which SHACL forbids`` and one line per such shape, ``<shape>:
-  sh:path: a node shape must not have sh:path (SHQ023)``, sorted and capped as the others.
+  ``<ExceptionType>: <message>`` detail. Three load errors are a verdict, because SHACL-SHACL accepts the shape and
+  pySHACL's loader refuses it: a shape typed ``sh:NodeShape`` with ``sh:path`` (SHACL 2.2 forbids it), a shape typed
+  both ``sh:NodeShape`` and ``sh:PropertyShape`` with no ``sh:path`` (issue #137), and a shape typed
+  ``sh:PropertyShape`` with no ``sh:path`` (SHACL-SHACL only sees one that carries a constraint). When pySHACL
+  raises its ``ShapeLoadError`` and the shapes graph has such a shape, the rule is ``failed`` as above with one
+  detail per kind, ``the shapes graph has a node shape with sh:path, which SHACL forbids``, ``the shapes graph has a
+  shape typed both sh:NodeShape and sh:PropertyShape, which pySHACL refuses`` or ``the shapes graph has a property
+  shape with no sh:path, which pySHACL refuses`` (``the shapes graph has shapes that pySHACL refuses to load`` when
+  the graph has more than one kind), and one line per such shape, sorted and capped as the others: ``<shape>:
+  sh:path: a node shape must not have sh:path (SHQ023)``, ``<shape>: a shape must not be typed both sh:NodeShape and
+  sh:PropertyShape`` (no pointer: SHQ023 reports the missing path, and a path gives the first refusal) or ``<shape>:
+  sh:path: a property shape must have one sh:path (SHQ023)``.
 * **INPUT001.** An ontology argument or the ``--shapes`` file cannot be read as RDF: the file is missing or
   unreadable, is a directory, is written in a non-RDF OWL syntax (Functional, Manchester, OWL/XML) without
   ``--convert-with-robot`` (``UnsupportedSyntax``; the message names the flag and suggests ``robot convert``) or
