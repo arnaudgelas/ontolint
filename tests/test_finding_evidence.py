@@ -11,12 +11,11 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from rdflib import Graph, Literal
 
+from ontolint.escaping import _ESCAPED_CATEGORIES, _escape
 from ontolint.models import Evidence, Finding, plain_evidence
 from ontolint.reporting import (
-    _ESCAPED_CATEGORIES,
     FileReport,
     RunReport,
-    _escape,
     fingerprint,
     one_line,
     render_report,

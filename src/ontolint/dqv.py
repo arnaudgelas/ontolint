@@ -18,7 +18,9 @@ The IRIs are in the ``urn:ontolint:`` namespace: it hosts nothing and promises n
 definition version is part of every metric IRI, so a changed definition is another metric).  Findings are not
 published (no ``dqv:QualityAnnotation``).  The output is deterministic: a fixed vocabulary, sorted Turtle, no
 blank node, and a timestamp only when ``SOURCE_DATE_EPOCH`` supplies one.  Every IRI and text is masked
-(:func:`ontolint.redaction.redact_userinfo`) before it is written.
+(:func:`ontolint.redaction.redact_userinfo`) before it is written, and holds no control, format, surrogate,
+private-use or separator character: a text writes each as an escape (:func:`ontolint.escaping.one_line`, as the text
+report does) and an IRI as a percent-encoding (:func:`ontolint.escaping.safe_iri`).
 """
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ from typing import TYPE_CHECKING
 from rdflib import OWL, RDF, RDFS, XSD, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DCTERMS, PROV, SKOS
 
+from .escaping import one_line, safe_iri
 from .models import Measurement, MeasurementKind
 from .redaction import redact_userinfo
 
@@ -96,7 +99,7 @@ def generated_at(environ: Mapping[str, str]) -> str | None:
 
 
 def _iri(text: str) -> URIRef:
-    return URIRef(redact_userinfo(text))
+    return URIRef(safe_iri(redact_userinfo(text)))
 
 
 def _metric(m: Measurement, part: str) -> URIRef:
@@ -149,7 +152,7 @@ def build(snapshot: Snapshot, on: Subject, *, tool_version: str, generated: str 
         g.add((run, PROV.endedAtTime, Literal(generated, datatype=XSD.dateTime)))
     for m in entries:
         if m.reason is not None:  # not taken: no measurement, and never a 0
-            g.add((run, RDFS.comment, Literal(f"not measured: {m.id}: {m.reason}")))
+            g.add((run, RDFS.comment, Literal(one_line(f"not measured: {m.id}: {m.reason}"))))
             continue
         for part, label, value in _values(m):
             metric = _metric(m, part)
