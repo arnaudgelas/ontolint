@@ -230,9 +230,9 @@ def test_skos011_mapping_between_concepts_that_share_a_scheme() -> None:
 
 
 def test_skos011_reads_top_concept_of_and_has_top_concept_as_membership() -> None:
-    assert _foci("SKOS011", "ex:a skos:topConceptOf ex:s . ex:s skos:hasTopConcept ex:b . ex:a skos:closeMatch ex:b .") == [
-        "a"
-    ]
+    assert _foci(
+        "SKOS011", "ex:a skos:topConceptOf ex:s . ex:s skos:hasTopConcept ex:b . ex:a skos:closeMatch ex:b ."
+    ) == ["a"]
 
 
 def test_skos019_hierarchy_across_schemes_needs_both_schemes_and_no_shared_one() -> None:
