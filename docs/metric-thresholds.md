@@ -128,14 +128,14 @@ Tractus-X was 34 of 236 references before and 6 after.
   a modelling choice the rule does not see. For five of those rules only a limit that switches the
   rule off would remove them. METRIC005's twelfth, DCMI Terms, was the CLS001 gap and went with the fix
   for issue #66. No default has changed, and none should change on this corpus alone: that needs approved
-  or independently redone labels (issue #8) and measurements rerun at release (issue #31).
+  or independently redone labels (issue #8) and measurements rerun at release (`check` does, issue #169).
 - The corpus has no known-poor file for METRIC004 to METRIC013, so their recall is not measured.
 - How the files flagged move as each limit moves is in [`validation/metric-sweep.md`](validation/metric-sweep.md); ten
   candidate files (six of them firing nominees), with blank labels, are in [`validation/metric-candidates.md`](validation/metric-candidates.md).
   The procedure that turns the maintainer's labels into false-positive and false-negative counts per limit is in
   [`metric-calibration.md`](metric-calibration.md), "What the maintainer has to decide".
-- The corpus is a snapshot of 0.13.1: nothing reruns `scripts/metric_corpus.py check`, so a later
-  change can leave it stale (a release-time run belongs to issue #31).
+- The corpus is a snapshot of 0.13.1: `scripts/metric_corpus.py check` runs at every release and weekly
+  (issue #169), so a later change that leaves it stale is reported, not silent.
 - `METRIC010` does not count reuse of another OBO ontology as foreign, because all OBO terms share
   one namespace. Counting it is a product question.
 - `METRIC001` and `METRIC002` are warnings, so they fail the `ci`, `obo` and `fair` profiles. On the

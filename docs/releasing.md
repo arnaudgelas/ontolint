@@ -30,9 +30,28 @@ section by hand if a subject reads badly; the script will not touch earlier sect
    `git diff vPREV..HEAD -- tests/golden/identities.json` lists the changed identities, SHACL001's
    included; it does not cover the probe cases of SEM001, INPUT001 and TOOL001, so check a change
    to their subject by hand.
-2. `git commit -am 'chore: release X.Y.Z'`
-3. `git tag -a vX.Y.Z -m 'ontolint X.Y.Z'`
-4. `git push && git push origin vX.Y.Z`, with the release commit as the head of `main`: do not push
+2. **Review the corpus diff.** The release owner fetches the pinned corpus and runs the three checks; each needs the
+   network once, for `fetch`, and none is part of the mandatory CI:
+
+   ```bash
+   uv run python scripts/corpus.py fetch DIR                # the 21 calibration files and the CCO umbrella, by commit
+   uv run python scripts/corpus_counts.py check DIR         # findings per rule and file; exit 1 and the diff when they differ
+   uv run python scripts/metric_corpus.py check DIR         # the METRIC measurements; exit 1 when one changed
+   uv run python scripts/shq_scope_count.py fetch DIR_SHQ   # five production shapes graphs, by commit
+   uv run python scripts/shq_scope_count.py check DIR_SHQ   # SHQ001-SHQ003 scope counts; exit 1 when they differ
+   ```
+
+   The release owner reads each diff. A rule that **doubled** is flagged by `corpus_counts.py diff` and needs a cause,
+   a change of status (a file that now exits 2) needs one before anything else. Every change is explained in the
+   changelog under the rule that moved (a commit that changed it, or a defect it now reports), and then recorded
+   with `corpus_counts.py record DIR`, `metric_corpus.py measure DIR` and `shq_scope_count.py count DIR_SHQ`, committed
+   with the release. A difference nobody can explain stops the release; the checks themselves block nothing, the
+   reviewer does. The weekly `corpus.yml` job (`docs/ci-schedule.md`) runs the same checks between releases, so a
+   change shows up in a red weekly run before the release, not for the first time at it (the job compares with the
+   committed counts, so it stays red until the change is recorded).
+3. `git commit -am 'chore: release X.Y.Z'`
+4. `git tag -a vX.Y.Z -m 'ontolint X.Y.Z'`
+5. `git push && git push origin vX.Y.Z`, with the release commit as the head of `main`: do not push
    it together with later commits. CodeQL scans only the head of each push, so a tagged commit
    with commits pushed on top of it is never scanned and its release run fails at **CodeQL**
    (0.9.0 did). To release several versions, push `main` up to each release commit and its tag,
@@ -42,7 +61,7 @@ Pushing the tag starts `.github/workflows/release.yml`:
 
 1. **Test** runs the CI workflow, that is the validation gate (`scripts/gate.py`).
 2. **CodeQL** waits for the CodeQL scans of the tagged commit and fails unless every one succeeded.
-   CodeQL scans the head of each push to `main`, so tag the head and push both together (step 4
+   CodeQL scans the head of each push to `main`, so tag the head and push both together (step 5
    above); a tag on an unscanned commit never releases, and the tag cannot be moved afterwards.
 3. **Build** checks that the tag equals the version in `pyproject.toml` and builds the
    distributions.

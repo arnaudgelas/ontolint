@@ -1,0 +1,98 @@
+name: Corpus
+
+# Weekly, advisory: fetches the pinned validation corpus and checks it against what the repository recorded
+# (docs/validation/corpus.md, docs/releasing.md step 2, docs/ci-schedule.md).  Nothing here blocks a merge or a
+# release: a job that fails says "the counts moved", and the diff is in the job summary and in the artifact.
+# Reproduce locally with
+#   uv run python scripts/corpus.py fetch DIR && uv run python scripts/corpus_counts.py check DIR
+# and, once the change is explained, record it (docs/releasing.md).  The whole run, the diff directory included, is
+# reproduced with the commands of docs/ci-schedule.md ("Reproduce a run"); the upload also runs when the job is
+# cancelled or times out, so a partial diff is not lost.
+on:
+  schedule:
+    - cron: "11 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.13.7"
+
+jobs:
+  corpus:
+    name: Corpus counts and measurements
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Fetch the pinned corpus
+        run: uv run python scripts/corpus.py fetch "$RUNNER_TEMP/corpus"
+
+      - name: Fetch the pinned SHACL production shapes
+        run: uv run python scripts/shq_scope_count.py fetch "$RUNNER_TEMP/shq"
+
+      # Each check runs whatever the one before it did, writes its report where the upload step finds it, and fails
+      # the job when its exit status is not 0, so a difference is red (and its report is in the summary) and an
+      # unchanged corpus is green and silent.
+      - name: Check the findings per rule and file
+        id: counts
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/diff"
+          status=0
+          uv run python scripts/corpus_counts.py check "$RUNNER_TEMP/corpus" > "$RUNNER_TEMP/diff/rule-counts.md" 2>&1 || status=$?
+          if [ "$status" -ne 0 ]; then cat "$RUNNER_TEMP/diff/rule-counts.md" >> "$GITHUB_STEP_SUMMARY"; fi
+          exit "$status"
+
+      - name: Check the METRIC measurements
+        id: metrics
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/diff"
+          status=0
+          uv run python scripts/metric_corpus.py check "$RUNNER_TEMP/corpus" > "$RUNNER_TEMP/diff/metric-corpus.txt" 2>&1 || status=$?
+          if [ "$status" -ne 0 ]; then cat "$RUNNER_TEMP/diff/metric-corpus.txt" >> "$GITHUB_STEP_SUMMARY"; fi
+          exit "$status"
+
+      - name: Check the SHQ scope counts
+        id: shq
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/diff"
+          status=0
+          uv run python scripts/shq_scope_count.py check "$RUNNER_TEMP/shq" > "$RUNNER_TEMP/diff/shq-scope.txt" 2>&1 || status=$?
+          if [ "$status" -ne 0 ]; then cat "$RUNNER_TEMP/diff/shq-scope.txt" >> "$GITHUB_STEP_SUMMARY"; fi
+          exit "$status"
+
+      - name: Upload the diff
+        if: ${{ !success() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: corpus-diff-${{ github.run_number }}
+          path: ${{ runner.temp }}/diff/
+          retention-days: 30
+          if-no-files-found: ignore

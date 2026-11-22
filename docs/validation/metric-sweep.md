@@ -16,7 +16,7 @@ population, makes no comparison and is never flagged.
 unflagged one is not a false negative until the maintainer's labels say so; for those counts, fill the
 label sheet and run the calculator (`scripts/metric_sweep.py labels-sheet`, then `calibrate --labels`;
 [`../metric-calibration.md`](../metric-calibration.md), "Approving the labels"). The measurements are
-those of the version recorded in the results file and go stale when a rule changes (issue #31).
+those of the version recorded in the results file and go stale when a rule changes; `scripts/metric_corpus.py check` says so at every release (issue #169).
 
 <!-- metric_sweep.py: begin -->
 

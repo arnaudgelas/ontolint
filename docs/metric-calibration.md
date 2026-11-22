@@ -263,7 +263,8 @@ Making the labelling mechanical (no step below changes a default):
    can label one `fire`. METRIC012 has no nominee.
 5. The decisions above: severity (METRIC001, METRIC002), METRIC011 confidence, CLS001 and `dcam:`, approval of the
    specifications.
-6. Whether `check` runs at every release (issue #31).
+6. Whether a difference in `check` should block a release. It runs at every release and weekly (`docs/releasing.md`,
+   `docs/ci-schedule.md`, issue #169) and is advisory: a difference is reviewed and explained, it blocks nothing.
 
 Until 2 and 4, no threshold should change on this corpus. The issue's "done when" (every threshold records its
 rationale, corpus results and override behaviour, and any changed default has regression fixtures) is not met by this
