@@ -35,6 +35,13 @@ VALID = [
     ("date", "-0004-02-29"),
     ("date", "2000-02-29"),
     ("date", "2020-12-31+14:00"),
+    # whiteSpace is collapse for these atomic datatypes (XSD 1.1 Part 2, 4.3.6): the lexical form is normalized first
+    ("dateTime", " 2020-01-01T24:00:00 "),
+    ("dateTime", "\t2020-01-01T24:00:00Z\n"),
+    ("dateTime", "\r\n0000-01-01T00:00:00\r\n"),
+    ("time", " 24:00:00 "),
+    ("date", "\t12020-01-01\t"),
+    ("date", " 0000-02-29\n"),
 ]
 INVALID = [
     ("dateTime", "2020-01-01T24:00:01"),
@@ -52,11 +59,15 @@ INVALID = [
     ("date", "2020-00-10"),
     ("date", "2020-1-1"),
     ("date", "01-01-01"),
+    ("dateTime", "2020-01-01T 24:00:00"),  # collapse trims the ends, it does not delete inner whitespace
+    ("date", "2020-01-01\u00a0"),  # only #x20, #x9, #xA and #xD are XML whitespace
+    ("date", " 2021-02-29 "),
 ]
 
 
 def _messages(datatype: str, lexical: str) -> list[str]:
-    data = graph(f'ex:A a owl:Class ; rdfs:label "A" ; ex:p "{lexical}"^^xsd:{datatype} .')
+    turtle = lexical.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+    data = graph(f'ex:A a owl:Class ; rdfs:label "A" ; ex:p "{turtle}"^^xsd:{datatype} .')
     return [f.message for f in Linter(data).execute(["DATA003"]).findings]
 
 
