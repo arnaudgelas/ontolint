@@ -606,8 +606,14 @@ def test_never_more_lenient_than_0_13_and_only_roaming_entries_leave_the_stale_o
     consumed = set(before.stale) - set(applied.stale)
     held_back = {identity(f) for r in applied.baselined for f in r if f.rule in ROAMING}
     roamers = Counter(identity(f) for r in new for f in r.findings if f.rule in ROAMING)
-    for path, pairs in accepted.identities.items():
-        for ident, v1 in pairs.items():
-            if v1 in consumed:
-                assert ident in held_back and roamers[ident] == 1
-                assert [p for p, other in accepted.identities.items() if ident in other] == [path]
+    # ``stale`` lists hashes and two entries of one path can share one (issue #220): a consumed hash needs *an* entry
+    # that a kept-out roamer took, one the baseline records under that path only.
+    for v1 in consumed:
+        assert any(
+            pair == v1
+            and ident in held_back
+            and roamers[ident] == 1
+            and [p for p, other in accepted.identities.items() if ident in other] == [path]
+            for path, pairs in accepted.identities.items()
+            for ident, pair in pairs.items()
+        )
