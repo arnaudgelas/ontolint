@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import contextlib
 import json
-import logging
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
@@ -90,11 +89,6 @@ class ShapesRejected(ValueError):
     """An input graph would make pySHACL crash or run for minutes; it is refused before validation."""
 
 
-META_SHACL_PREFIX = "SHACL File does not validate against the SHACL Shapes SHACL (MetaSHACL) file."
-"""The first line of the error pySHACL raises when ``meta_shacl=True`` finds the shapes graph ill-formed; it then
-appends its whole validation report, and logs the same text at ERROR on :data:`PYSHACL_LOGGER`."""
-PYSHACL_LOGGER = "pyshacl-validate"
-"""The logger ``pyshacl.validate`` writes to stderr with (it replaces the handlers of this name on every call)."""
 MAX_RESULT_LINES = 20
 """Most MetaSHACL results :class:`ShapesNotWellFormed` lists; the rest are counted."""
 MAX_RESULT_LINE = 300
@@ -442,31 +436,26 @@ def _capped(lines: list[str]) -> tuple[str, ...]:
     return tuple(lines)
 
 
-class _WithoutMetaShaclReport(logging.Filter):
-    """Drops the record pySHACL logs with the whole MetaSHACL report: :class:`ShapesNotWellFormed` says it once."""
+def _metashacl_verdict(sg: Graph) -> ShapesNotWellFormed | None:
+    """:class:`ShapesNotWellFormed` when ``sg`` does not conform to SHACL-SHACL, ``None`` when it does.
 
-    def filter(self, record: logging.LogRecord) -> bool:
-        return not record.getMessage().startswith(META_SHACL_PREFIX)
-
-
-def _metashacl_failure(sg: Graph, failure: Exception) -> ShapesNotWellFormed | None:
-    """``failure`` as a :class:`ShapesNotWellFormed` when it is pySHACL's MetaSHACL error and the shapes graph does
-    not conform to SHACL-SHACL; ``None`` otherwise.
-
-    The text only says where to look: the shapes graph is meta-validated again, so a pass leaves the failure what it
-    is.  The second run is the price of a structured report (the exception holds pySHACL's text); it happens only
-    when the first one failed.
+    The one MetaSHACL run of a validation (issue 97).  ``pyshacl.validate(meta_shacl=True)`` runs the same
+    ``meta_validate`` but raises with text only, so the results had to be read by running it a second time: the
+    failure path cost twice a conforming one, and pySHACL's own copy of the report had to be kept off stderr by a
+    process-global logger filter on a prefix match of its message.  Calling ``meta_validate`` here, with the options
+    ``validate`` passes it (``inference="none"``; ``advanced`` and ``abort_on_first`` do not change SHACL-SHACL's
+    verdict), and then ``validate(meta_shacl=False)`` does the same check once.  It also judges the shapes graph,
+    which ``validate``'s ``shacl_graph or data_graph`` does not when that graph is empty.  A report that is no graph
+    still refuses the shapes graph, with the summary only.  The price is an import
+    from ``pyshacl.entrypoints`` (``meta_validate`` is not in ``pyshacl.__all__``); ``tests/test_metashacl_once.py``
+    fails when an upgrade moves it or changes what it judges.  Without it the caller has ``meta_shacl=True``.
     """
-    if not str(failure).startswith(META_SHACL_PREFIX):
-        return None
-    try:
-        from pyshacl.entrypoints import meta_validate  # noqa: PLC0415 -- the same module as ``validate``.
-    except ImportError:  # a pySHACL that does not export it: no result to list, the failure keeps its text
-        return None
+    from pyshacl.entrypoints import meta_validate  # noqa: PLC0415 -- the same module as ``validate``.
+
     conforms, report, _ = meta_validate(sg, inference="none", advanced=True, abort_on_first=False)
-    if conforms or not isinstance(report, Graph):
+    if conforms:
         return None
-    return ShapesNotWellFormed(_metashacl_lines(report, sg))
+    return ShapesNotWellFormed(_metashacl_lines(report, sg) if isinstance(report, Graph) else ())
 
 
 NODE_SHAPE_PATH_SUMMARY = "the shapes graph has a node shape with sh:path, which SHACL forbids"
@@ -500,30 +489,34 @@ def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, o
     """``(conforms, report)`` from pySHACL, run with the network disabled; a failure is diagnosed, then re-raised.
 
     Shapes are input too: a SPARQL constraint or SHACL-AF function must not reach the network, and an attempt
-    fails the rule even when pySHACL swallowed the refusal.  A shapes graph that breaks SHACL-SHACL is raised as
-    :class:`ShapesNotWellFormed`, with pySHACL's own copy of its report kept off stderr.
+    fails the rule even when pySHACL swallowed the refusal.  The shapes graph is meta-validated once, here
+    (:func:`_metashacl_verdict`), and one that breaks SHACL-SHACL is raised as :class:`ShapesNotWellFormed` before any
+    data is validated.  A pySHACL that does not export ``meta_validate`` is asked for ``meta_shacl=True`` instead,
+    which refuses the same graphs with its own text.
     """
     failure: Exception | None = None
-    quiet = _WithoutMetaShaclReport()
-    pyshacl_log = logging.getLogger(PYSHACL_LOGGER)
-    with network_disabled() as attempts:  # serialised: the logger filter below is process-global
-        pyshacl_log.addFilter(quiet)
+    not_well_formed: ShapesNotWellFormed | None = None
+    with network_disabled() as attempts:
         try:
-            conforms, report, _ = validate(
-                g, shacl_graph=sg, inference="none", advanced=True, meta_shacl=True, abort_on_first=False
-            )
+            try:
+                not_well_formed = _metashacl_verdict(sg)
+                meta_shacl = False
+            except ImportError:  # a pySHACL that does not export it: its own check, with its own text
+                meta_shacl = True
+            if not_well_formed is None:
+                conforms, report, _ = validate(
+                    g, shacl_graph=sg, inference="none", advanced=True, meta_shacl=meta_shacl, abort_on_first=False
+                )
         except Exception as exc:  # noqa: BLE001 -- classified below, once the network guard is lifted.
             failure = exc
-        finally:
-            pyshacl_log.removeFilter(quiet)
     if attempts.network:
         raise RuntimeError(
             f"SHACL validation tried to use the network ({attempts.network[0]}); the network is disabled"
         ) from failure
+    if not_well_formed is not None:
+        raise not_well_formed
     if failure is None:
         return bool(conforms), report
-    if (not_well_formed := _metashacl_failure(sg, failure)) is not None:
-        raise not_well_formed from failure
     if (not_loadable := _node_shape_path_failure(sg, failure)) is not None:
         raise not_loadable from failure
     if not isinstance(failure, ShapesRejected):

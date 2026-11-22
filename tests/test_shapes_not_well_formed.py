@@ -44,6 +44,7 @@ NO_PATH = (
     + ":PersonShape a sh:NodeShape ; sh:targetClass :Person ; sh:property :NameShape .\n"
     + ":NameShape a sh:PropertyShape ; sh:minCount 1 .\n"
 )
+WELL_FORMED = PREFIXES + ":S a sh:NodeShape ; sh:targetClass :Person ; sh:property [ sh:path :p ; sh:minCount 1 ] .\n"
 FAILED = 2
 
 
@@ -221,7 +222,7 @@ def test_a_crash_that_is_not_a_metashacl_verdict_is_still_a_tool_failure(monkeyp
 
     monkeypatch.setattr(pyshacl, "validate", crash)
 
-    execution = Linter(_graph(DATA), _graph(NO_PATH)).execute(["SHACL001"]).executions[0]
+    execution = Linter(_graph(DATA), _graph(WELL_FORMED)).execute(["SHACL001"]).executions[0]
 
     assert execution.status is ExecutionStatus.FAILED
     assert execution.detail == "RuntimeError: internal pySHACL error"
@@ -236,38 +237,33 @@ def test_a_reportable_error_that_is_not_the_metashacl_one_keeps_its_text(monkeyp
 
     monkeypatch.setattr(pyshacl, "validate", refuse)
 
-    execution = Linter(_graph(DATA), _graph(NO_PATH)).execute(["SHACL001"]).executions[0]
+    execution = Linter(_graph(DATA), _graph(WELL_FORMED)).execute(["SHACL001"]).executions[0]
 
     assert execution.detail == "ReportableRuntimeError: Cannot use SHACL-JS in SPARQL Remote Graph Mode."
-    assert execution.results == ()
-
-
-def test_a_metashacl_message_for_a_shapes_graph_that_conforms_is_not_believed(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The text alone does not make a verdict: the shapes graph is meta-validated again, and a pass is a crash."""
-    from pyshacl.errors import ReportableRuntimeError  # noqa: PLC0415
-
-    def claim(*_args: object, **_kwargs: object) -> None:
-        raise ReportableRuntimeError(f"{shacl.META_SHACL_PREFIX}.\nsomething else")
-
-    monkeypatch.setattr(pyshacl, "validate", claim)
-    valid = PREFIXES + ":S a sh:NodeShape ; sh:targetClass :Person .\n"
-
-    with pytest.raises(ReportableRuntimeError):
-        shacl_issues(_graph(DATA), _graph(valid))
-    execution = Linter(_graph(DATA), _graph(valid)).execute(["SHACL001"]).executions[0]
-    assert execution.detail.startswith("ReportableRuntimeError: ")
     assert execution.results == ()
 
 
 def test_a_pyshacl_without_meta_validate_keeps_the_failure_it_raised(monkeypatch: pytest.MonkeyPatch) -> None:
     """The entry point is not in pySHACL's ``__all__``: a version that lacks it still fails the rule, as before."""
     monkeypatch.setitem(sys.modules, "pyshacl.entrypoints", types.SimpleNamespace())  # no meta_validate
+    asked: list[object] = []
+    real = pyshacl.validate
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        asked.append(kwargs["meta_shacl"])
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(pyshacl, "validate", spy)
 
     execution = Linter(_graph(DATA), _graph(NO_PATH)).execute(["SHACL001"]).executions[0]
 
+    assert asked == [True]  # the shapes graph is still meta-validated, by pySHACL
     assert execution.status is ExecutionStatus.FAILED
     assert execution.detail.startswith("ReportableRuntimeError: ")
     assert execution.results == ()
+    assert [x.status for x in Linter(_graph(DATA), _graph(WELL_FORMED)).execute(["SHACL001"]).executions] == [
+        ExecutionStatus.EXECUTED  # a well-formed shapes graph validates as before
+    ]
 
 
 # --- the pointer names a rule that really fires --------------------------------------------------------------------
