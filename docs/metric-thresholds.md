@@ -37,17 +37,22 @@ too ([measurements.md](measurements.md)).
 
 ## Thresholds
 
+*Every figure in the "Corpus notes" column and in the evidence table below comes from the 21-file pinned corpus of
+[`validation/metric-corpus.json`](validation/metric-corpus.json), measured with ontolint 0.17.0 and re-checked on 2026-11-22
+(`scripts/metric_corpus.py check` exits 0; `tests/test_metric_corpus.py` compares the notes with the recorded results).
+The six local copies of the last section are unpinned and say so.*
+
 | Key | Rules | Default | Fires when | Population gate | Why this default | Corpus notes (21 files, approved labels) |
 | --- | --- | --- | --- | --- | --- | --- |
 | `metric_min_sample` | all but METRIC011 | 10 | gated quantity below it: silent | the gate itself | Below ten terms one term moves a ratio by more than ten points, and fixtures and stubs should never fire. | keeps METRIC003 and METRIC008 silent on MFTO (2 properties, both at 1.0) |
 | `metric_max_unlabelled_ratio` | METRIC001 | 0.5 | share of classes LEX001 reports above it | classes | LEX001 already reports each missing label; the aggregate speaks only when missing labels are the norm. | 1 fires: 1 TP, 0 FP, 0 FN |
 | `metric_max_undefined_ratio` | METRIC002 | 0.5 | share of classes without a definition above it | classes | The same reasoning as METRIC001 for definitions: a few undefined classes are a per-term matter, and the aggregate speaks only when most classes lack one. | 2 fire: 2 TP, 0 FP, 0 FN |
 | `metric_max_undocumented_property_ratio` | METRIC003 | 0.5 | share of properties without documentation above it | properties | The same reasoning as METRIC001 for properties: a few undocumented properties are a per-term matter, and the aggregate speaks only when most lack documentation. | 2 fire: 2 TP, 0 FP, 0 FN |
-| `metric_max_mean_fanout` | METRIC004 | 8.0 | mean direct subclasses per parent above it | classes | A flat list of more than about 7 plus or minus 2 siblings is hard to browse; CLS011 judges a single class at 50. | 1 fires (PAO, left open), 0 FP |
-| `metric_max_orphan_ratio` | METRIC005 | 0.3 | share of classes CLS001 reports above it | classes | Curated ontologies are mostly connected; the highest value measured offline is 0.22 (MFTO); DCMI Terms is 0.045 now that CLS001 reads `dcam:domainIncludes` and `dcam:rangeIncludes`. | 0 fire |
-| `metric_min_property_class_ratio` | METRIC006 | 0.1 | relation properties per class below it | classes | Below one relation per ten classes the ontology is a taxonomy, which may be intended. | 3 fire: 2 FP (PATO base, AutomaTCE), 1 left open |
-| `metric_max_property_class_ratio` | METRIC007 | 5.0 | relation properties per class above it | classes | Offline values on 19 files ran up to 4.9; far above that, properties are probably proliferating. | 0 fire; highest 4.53 (MOD) |
-| `metric_max_unsigned_property_ratio` | METRIC008 | 0.5 | share of object and datatype properties OWL005 and OWL006 both report above it | properties | A signature is optional in RDFS; the rule speaks only when open signatures are the norm. | 4 fire: 3 FP (SSN, SKOS, MOMo), 1 left open |
+| `metric_max_mean_fanout` | METRIC004 | 8.0 | mean direct subclasses per parent above it | classes | A flat list of more than about 7 plus or minus 2 siblings is hard to browse; CLS011 judges a single class at 50. | 1 fires: 1 FP (PAO: a flat catalogue of 50 questionnaires) |
+| `metric_max_orphan_ratio` | METRIC005 | 0.3 | share of classes CLS001 reports above it | classes | Curated ontologies are mostly connected; the highest value on the pinned corpus is 0.22 (MFTO); DCMI Terms is 0.045 now that CLS001 reads `dcam:domainIncludes` and `dcam:rangeIncludes`. | 0 fire |
+| `metric_min_property_class_ratio` | METRIC006 | 0.1 | relation properties per class below it | classes | Below one relation per ten classes the ontology is a taxonomy, which may be intended. | 3 fire: 3 FP (PATO base, AutomaTCE, Rights Ontology) |
+| `metric_max_property_class_ratio` | METRIC007 | 5.0 | relation properties per class above it | classes | Values on the pinned corpus run up to 4.53 (MOD); far above that, properties are probably proliferating. | 0 fire; highest 4.53 (MOD) |
+| `metric_max_unsigned_property_ratio` | METRIC008 | 0.5 | share of object and datatype properties OWL005 and OWL006 both report above it | properties | A signature is optional in RDFS; the rule speaks only when open signatures are the norm. | 4 fire: 1 TP (PAO), 3 FP (SSN, SKOS, MOMo) |
 | `metric_min_language_coverage` | METRIC009 | 0.5 | share of labelled terms with a language-tagged label below it | labelled terms | An untagged label works but cannot be localised; half is the point where tagging is the exception. | 3 fire: 3 FP (PATO base, schema.org, PROV-O) |
 | `metric_max_foreign_reference_ratio` | METRIC010 | 0.5 | share of structural references to foreign namespaces above it | references | Past half, the ontology is mostly a thin layer over other vocabularies. | 2 fire: 2 FP (AutomaTCE, MFTO) |
 | `metric_max_imports` | METRIC011 | 10 | distinct `owl:imports` above it | none | A convention: more than ten imports make loading and reasoning heavy and the dependencies hard to review. | 1 fires: 1 FP (IDS header, own modules) |
