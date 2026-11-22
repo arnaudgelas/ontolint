@@ -759,7 +759,7 @@ ex:A skos:exactMatch ex:B . ex:B rdfs:subClassOf ex:A .
 
 - **Severity:** info
 - **Scope:** ontology
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`alignment`](#module-alignment)
 - **Fix:** Add a version, a creator and a licence to the sssom:MappingSet.
 

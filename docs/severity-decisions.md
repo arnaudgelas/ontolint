@@ -61,7 +61,11 @@ All rows are the recommendations of this record, except the departures above and
 * The approval of the OWL, METRIC and SHQ specifications (issue #182) is a human review; the pull requests only correct the
   specifications and pin their severity and confidence in tests.
 * `category` still disagrees with the finding confidence for OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 (category
-  `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63.
+  `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63. Its first step is done
+  (issue #180): no `deterministic` rule reports a `heuristic` finding (SKOS011, SKOS015, SKOS017, SKOS019, SKOS020,
+  SKOS021, ALIGN015 and DATA003 became `heuristic`; `tests/test_category_confidence.py`). What remains is the other
+  direction, about 35 rules whose category is `heuristic` and whose findings are `certain`, per family: OWL, CLS, LEX,
+  IRI, ONT. `context-dependent` rules (FAIR, OBO, ALIGN009) are outside the check.
 * Counts that need corpora this record does not have: OWL035 and SKOS001's widening. SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
 * METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 found no further case (3 true positives, no false positive, on proposed labels).
 

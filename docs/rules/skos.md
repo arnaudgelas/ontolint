@@ -623,7 +623,7 @@ ex:a a skos:Concept ; skos:related ex:b .
 
 - **Severity:** info
 - **Scope:** term
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Use skos:broader/narrower/related inside a scheme; reserve mapping properties for cross-scheme links.
 
@@ -806,7 +806,7 @@ ex:c skos:prefLabel "a b"@en .
 
 - **Severity:** info
 - **Scope:** term
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Declare entry points with skos:hasTopConcept or skos:topConceptOf.
 
@@ -931,7 +931,7 @@ Linter options: `base='https://example.test/onto#'`.
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Describe the target concept in the vocabulary or correct the link.
 
@@ -999,7 +999,7 @@ ex:a skos:broader ex:b, ex:c . ex:b skos:broader ex:d . ex:c skos:broader ex:d .
 
 - **Severity:** info
 - **Scope:** term
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Keep broader/narrower inside one scheme and use mapping properties across schemes.
 
@@ -1043,7 +1043,7 @@ ex:a skos:broader ex:b .
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Make notations unique within a concept scheme.
 
@@ -1085,7 +1085,7 @@ ex:a a skos:Concept ; skos:inScheme ex:s ; skos:notation "1" . ex:b a skos:Colle
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`skos_integrity`](#module-skos_integrity)
 - **Fix:** Give concepts of one scheme distinguishable preferred labels per language.
 

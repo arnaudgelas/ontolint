@@ -121,28 +121,28 @@
    "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:3a22e2fc816ccf794e60274394de4b881616a293b6c67b63d5a7cf86c4cab172 (163446 chars)",
+    "file": "sha256:a327ed799f7e774fb301a3f132923f22b51a266629a895c83c1f295c11b5c198 (163414 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:3a22e2fc816ccf794e60274394de4b881616a293b6c67b63d5a7cf86c4cab172 (163446 chars)"
+    "stdout": "sha256:a327ed799f7e774fb301a3f132923f22b51a266629a895c83c1f295c11b5c198 (163414 chars)"
    }
   },
   "ignore_family_json": {
    "legacy_json_view": "sha256:6fdf5cf69a0507f276d1ff5b81595ee12afc79de65e27edc84a582bbff6a6dcf (40701 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:af2ff2bf2cd28e89c898608df141a92394bea4b48d01870f43e47971f966fe06 (159474 chars)",
+    "file": "sha256:7303787d0242ba818ec95d6a766cac8d1f7c4cc3c54b13001af0bca37297e2b9 (159442 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:af2ff2bf2cd28e89c898608df141a92394bea4b48d01870f43e47971f966fe06 (159474 chars)"
+    "stdout": "sha256:7303787d0242ba818ec95d6a766cac8d1f7c4cc3c54b13001af0bca37297e2b9 (159442 chars)"
    }
   },
   "ignore_text_reports_skips": {
@@ -162,18 +162,18 @@
    "legacy_json_view": "{\n  \"summary\": {},\n  \"findings\": []\n}\n",
    "to_file": {
     "exit": 0,
-    "file": "sha256:0c2625d17a4ace7b3c122a1f19b0a51677d02075cc38826d6e7cbf0866df0902 (114195 chars)",
+    "file": "sha256:aa746005207a333872a2439a8de6bc1af078d70f62dd318715ae28589cad3869 (114163 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:0c2625d17a4ace7b3c122a1f19b0a51677d02075cc38826d6e7cbf0866df0902 (114195 chars)"
+    "stdout": "sha256:aa746005207a333872a2439a8de6bc1af078d70f62dd318715ae28589cad3869 (114163 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:4ec5aeca2e73979f379809747f2d324cd37873151788d6aeb62535abaee3ae0a (228440 chars)"
+    "stdout": "sha256:d9ce2bd0f2777f6a6ace69c78049edc1f9b7143d6ffc00f42002464f5dd3a68a (228376 chars)"
    },
    "write_baseline": {
     "count": 0,
@@ -184,32 +184,32 @@
    "legacy_json_view": "{\n  \"summary\": {\n    \"info\": 4,\n    \"error\": 1\n  },\n  \"findings\": [\n    {\n      \"rule\": \"SHQ001\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:name.\",\n      \"suggestion\": \"Add sh:name to property shapes to support generated forms and documentation.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ002\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Property shape lacks sh:description.\",\n      \"suggestion\": \"Add sh:description to non-trivial property shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ003\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#PS\",\n      \"message\": \"Constraint-bearing shape lacks sh:message.\",\n      \"suggestion\": \"Add sh:message to constraint-bearing shapes for better diagnostics.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHQ004\",\n      \"severity\": \"info\",\n      \"focus\": \"https://example.test/clean#S\",\n      \"message\": \"Node shape lacks rdfs:label or rdfs:comment.\",\n      \"suggestion\": \"Add label and comment to published node shapes.\",\n      \"confidence\": \"heuristic\"\n    },\n    {\n      \"rule\": \"SHACL001\",\n      \"severity\": \"error\",\n      \"focus\": \"https://example.test/clean#t\",\n      \"message\": \"Value is not Literal with datatype xsd:integer [shape: https://example.test/clean#PS]\",\n      \"suggestion\": \"Fix the supplied SHACL shapes or data, and inspect the SHACL report.\",\n      \"confidence\": \"certain\"\n    }\n  ]\n}\n",
    "to_file": {
     "exit": 1,
-    "file": "sha256:dab8450306b0802448451be77dec0ef42e4830c4b9da5d44d0a7c3342ea53c17 (115448 chars)",
+    "file": "sha256:83ef1a7c2ccc92e56a8dddf7a83302adc542280d6a6dd2e86ae304934bffb3ff (115416 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:dab8450306b0802448451be77dec0ef42e4830c4b9da5d44d0a7c3342ea53c17 (115448 chars)"
+    "stdout": "sha256:83ef1a7c2ccc92e56a8dddf7a83302adc542280d6a6dd2e86ae304934bffb3ff (115416 chars)"
    }
   },
   "json_config": {
    "legacy_json_view": "sha256:69c421ca05d516265934432c6149a91e36bec6340a2a3590c0e5b15ef35da005 (61950 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:1eed99149b5d68faddbeca342eb7be4b72d1be74824f60c317601e672b3ab864 (183225 chars)",
+    "file": "sha256:ac0cd53a4fedb2ca3f0cae32be0c6944fb1d75b8607d43ad05018122250af362 (183193 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:1eed99149b5d68faddbeca342eb7be4b72d1be74824f60c317601e672b3ab864 (183225 chars)"
+    "stdout": "sha256:ac0cd53a4fedb2ca3f0cae32be0c6944fb1d75b8607d43ad05018122250af362 (183193 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:60c920010fde0b57373fe7015ee6794de05cf8c3fc8e9b2e8c5b3c9a1c21ab46 (297513 chars)"
+    "stdout": "sha256:2db5f815033c473a737867c8a985649b40b2b2a342766e8f79fdc55558144eb8 (297449 chars)"
    },
    "write_baseline": {
     "count": 206,
@@ -220,18 +220,18 @@
    "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:3a22e2fc816ccf794e60274394de4b881616a293b6c67b63d5a7cf86c4cab172 (163446 chars)",
+    "file": "sha256:a327ed799f7e774fb301a3f132923f22b51a266629a895c83c1f295c11b5c198 (163414 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:3a22e2fc816ccf794e60274394de4b881616a293b6c67b63d5a7cf86c4cab172 (163446 chars)"
+    "stdout": "sha256:a327ed799f7e774fb301a3f132923f22b51a266629a895c83c1f295c11b5c198 (163414 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:8fe5d59b52133fd14f9e3e567c631bb5e49a34d33d49d538a44ecf38a0c01ac2 (277698 chars)"
+    "stdout": "sha256:802779f494c63d902cbf0582ba7ad45faef6ad0bef398700b30135585cab28b3 (277634 chars)"
    },
    "write_baseline": {
     "count": 136,
@@ -242,60 +242,60 @@
    "legacy_json_view": "sha256:513472fa4a94bd0d9b137d4754f52f198b2758fac1820b769dbad7a975a87229 (45137 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:bffb34ec2482ad03f4c073f2e07d6c6ea8de3d998930f244b497c355d5bdf6c2 (163989 chars)",
+    "file": "sha256:b8e6dc9fa2ea6a1fa1c3c3ec076b2ad0f86c087805d183a08fdb60f5775d933d (163957 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:bffb34ec2482ad03f4c073f2e07d6c6ea8de3d998930f244b497c355d5bdf6c2 (163989 chars)"
+    "stdout": "sha256:b8e6dc9fa2ea6a1fa1c3c3ec076b2ad0f86c087805d183a08fdb60f5775d933d (163957 chars)"
    }
   },
   "json_robot_ok": {
    "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:c4101b180abc0b5a4a93c28ac98c2d3e308e006efd23d5f1a0b613dbeba30b67 (163407 chars)",
+    "file": "sha256:faf589dbe2408e89dd9e0377ed5049bef406c1f0e74308f9d9b7b54b02056516 (163375 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:c4101b180abc0b5a4a93c28ac98c2d3e308e006efd23d5f1a0b613dbeba30b67 (163407 chars)"
+    "stdout": "sha256:faf589dbe2408e89dd9e0377ed5049bef406c1f0e74308f9d9b7b54b02056516 (163375 chars)"
    }
   },
   "json_robot_unsupported": {
    "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:45576f0686765e6cba1bfa9bb53400bfcc8b95cecf8807ce16a2973e9fed8045 (163453 chars)",
+    "file": "sha256:d35e92c0e1d0cb77ef7ea7f5e8fe17b89b06e8e973e6ce097eb33dee7d890dca (163421 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:45576f0686765e6cba1bfa9bb53400bfcc8b95cecf8807ce16a2973e9fed8045 (163453 chars)"
+    "stdout": "sha256:d35e92c0e1d0cb77ef7ea7f5e8fe17b89b06e8e973e6ce097eb33dee7d890dca (163421 chars)"
    }
   },
   "json_shapes": {
    "legacy_json_view": "sha256:87348000b16170158b05f9ad4559701e66ca79f2beaffd504697404da689e84e (47700 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:f1288abb804614407f7e7add5d148cf2bdbca7b25c98574f6af9a95bb4a49dce (165972 chars)",
+    "file": "sha256:3f1f4e6dd31f9f9d349116e81053dc8b98efdbb061ff0dca41cd3dca2cdc2534 (165940 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f1288abb804614407f7e7add5d148cf2bdbca7b25c98574f6af9a95bb4a49dce (165972 chars)"
+    "stdout": "sha256:3f1f4e6dd31f9f9d349116e81053dc8b98efdbb061ff0dca41cd3dca2cdc2534 (165940 chars)"
    },
    "with_baseline": {
     "exit": 0,
-    "stdout": "sha256:b6b5c1644e89bcf048fa88c061fc285cc4cb42c2d2713fb8c873fa083ddc14d5 (279298 chars)"
+    "stdout": "sha256:0d4c67cc425781f652c5cdcdf09117291f217001d9726e020153ce8fa2fee2f0 (279234 chars)"
    },
    "write_baseline": {
     "count": 146,
@@ -306,14 +306,14 @@
    "legacy_json_view": "sha256:a65b338d90afc6cd846a284707632ac3fc94ff30a02eebdf297cc26bb14fa3de (51035 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:2a4eb1b5c1e068380b636b3c5ba36b8411b22639fc086db41725a046b46816c4 (170641 chars)",
+    "file": "sha256:fcd44f0249fa5c5844866eb0a65da0a4807fcf834abb4eed2c6a3780df3c7de4 (170609 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:2a4eb1b5c1e068380b636b3c5ba36b8411b22639fc086db41725a046b46816c4 (170641 chars)"
+    "stdout": "sha256:fcd44f0249fa5c5844866eb0a65da0a4807fcf834abb4eed2c6a3780df3c7de4 (170609 chars)"
    }
   },
   "list_rules_json": {
@@ -321,12 +321,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:be94785048a2671a8ab7d588e73a7d1dc7cedeb7bb26389abc8834c187c59db5 (98558 chars)"
+    "stdout": "sha256:eef5601f3f685e9464830639a49a9ec092a7c87550492de0a128430d514d5d7d (98526 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:be94785048a2671a8ab7d588e73a7d1dc7cedeb7bb26389abc8834c187c59db5 (98558 chars)"
+    "stdout": "sha256:eef5601f3f685e9464830639a49a9ec092a7c87550492de0a128430d514d5d7d (98526 chars)"
    }
   },
   "list_rules_text": {
@@ -334,12 +334,12 @@
     "exit": 0,
     "file": null,
     "stderr": "",
-    "stdout": "sha256:c92ead14e3b3088af7cc9f47e2a44ffb71be647e0e47eebfbdc70a3804ed0f15 (31991 chars)"
+    "stdout": "sha256:9cf5e20210cef61c9394cb263b635d8c3e97f1d984b32e4ec55421a107a0bfba (31991 chars)"
    },
    "to_stdout": {
     "exit": 0,
     "stderr": "",
-    "stdout": "sha256:c92ead14e3b3088af7cc9f47e2a44ffb71be647e0e47eebfbdc70a3804ed0f15 (31991 chars)"
+    "stdout": "sha256:9cf5e20210cef61c9394cb263b635d8c3e97f1d984b32e4ec55421a107a0bfba (31991 chars)"
    }
   },
   "missing_config": {
@@ -385,14 +385,14 @@
    "legacy_json_view": "sha256:aec85c66c1a4f4e8d3650025dd275930c18d1a68e06c67b53c7b905234640722 (44589 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:f9fa93484901eb5c56834eab7083f955f5ee5c03eb888c508e7773b47e99669a (188272 chars)",
+    "file": "sha256:13a6b7faff8dfc63f69a3cb40e6fec53b79743e5c62e907cad2c64d76e2deaaf (188240 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f9fa93484901eb5c56834eab7083f955f5ee5c03eb888c508e7773b47e99669a (188272 chars)"
+    "stdout": "sha256:13a6b7faff8dfc63f69a3cb40e6fec53b79743e5c62e907cad2c64d76e2deaaf (188240 chars)"
    }
   },
   "multi_file_one_broken": {
@@ -411,14 +411,14 @@
   "multi_file_sarif": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:fe3d66f4b95ffc5ae27fcd609410f869ac8e2d6f6f95e6779bdc0fb6532a393f (325053 chars)",
+    "file": "sha256:8cc500771119c589af74e3613f852b9e86ce28235e462953039fae2ba93dac3d (325021 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:fe3d66f4b95ffc5ae27fcd609410f869ac8e2d6f6f95e6779bdc0fb6532a393f (325053 chars)"
+    "stdout": "sha256:8cc500771119c589af74e3613f852b9e86ce28235e462953039fae2ba93dac3d (325021 chars)"
    }
   },
   "multi_file_text": {
@@ -451,14 +451,14 @@
    "legacy_json_view": "sha256:24372b5492ac5ed4161b68c3cd0183a07791aec328f5b11225553e7571d90f31 (5595 chars)",
    "to_file": {
     "exit": 1,
-    "file": "sha256:f704a04414f4914d58e75845b384010aede0d4bde7e0f49d5e22d099b11de46e (33662 chars)",
+    "file": "sha256:0f58c911bd8feef8b56fc7e877296eb72ed50eb51b94e746c868a2ad07c61dc3 (33634 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:f704a04414f4914d58e75845b384010aede0d4bde7e0f49d5e22d099b11de46e (33662 chars)"
+    "stdout": "sha256:0f58c911bd8feef8b56fc7e877296eb72ed50eb51b94e746c868a2ad07c61dc3 (33634 chars)"
    }
   },
   "profile_strict_text": {
@@ -477,27 +477,27 @@
   "sarif_default": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:cb9ab15094fee1ca4a7a190d27589682ba5f3a460a710a0cb27a73c7d0459872 (305888 chars)",
+    "file": "sha256:dd6da81f7dc9ed2bb6223917e1b704368a6202548f4caa2759850229fe249fbe (305856 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:cb9ab15094fee1ca4a7a190d27589682ba5f3a460a710a0cb27a73c7d0459872 (305888 chars)"
+    "stdout": "sha256:dd6da81f7dc9ed2bb6223917e1b704368a6202548f4caa2759850229fe249fbe (305856 chars)"
    }
   },
   "sarif_shapes": {
    "to_file": {
     "exit": 1,
-    "file": "sha256:eefba527a3017697c32a1375f117ab1f762ea41da7273d6d8849aeb9b56c275b (294715 chars)",
+    "file": "sha256:844664c265da58b05757741862237fcb6143178b8a18d78ed6a622a2cdbe184b (294683 chars)",
     "stderr": "",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 1,
     "stderr": "",
-    "stdout": "sha256:eefba527a3017697c32a1375f117ab1f762ea41da7273d6d8849aeb9b56c275b (294715 chars)"
+    "stdout": "sha256:844664c265da58b05757741862237fcb6143178b8a18d78ed6a622a2cdbe184b (294683 chars)"
    }
   },
   "select_and_ignore_json": {

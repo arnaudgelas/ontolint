@@ -4,6 +4,10 @@ OWL 2 (Structural Specification, Section 5.7) requires the lexical form of every
 ontology to belong to the lexical space of its datatype, and (Section 5.2) every datatype to be
 ``rdfs:Literal``, a member of the OWL 2 datatype map (Section 4), or a datatype the ontology defines.
 ``rdfs:Literal`` itself has no lexical space, so no literal can be typed with it.
+
+DATA003 asks RDFLib whether a lexical form is valid (``Literal.ill_typed``), and RDFLib's answer differs from XSD 1.1 in
+both directions (it accepts ``"1_0"^^xsd:integer`` and ``"inf"^^xsd:double``, and rejects ``"24:00:00"^^xsd:time``), so
+its findings are ``heuristic`` and its category is too.
 """
 
 from __future__ import annotations
@@ -31,7 +35,7 @@ SPECS: tuple[RuleSpec, ...] = (
         "Literal whose lexical form is not valid for its datatype",
         Severity.WARNING,
         "Correct the value or its datatype ('2004'^^xsd:gYear, not xsd:date); type plain text as xsd:string.",
-        "deterministic",
+        "heuristic",
         RuleBackend.RDFLIB,
         RuleScope.AXIOM,
         "literals",

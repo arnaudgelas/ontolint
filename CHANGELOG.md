@@ -169,6 +169,12 @@ results after upgrading.
 
 ### Changed
 
+- **category:** SKOS011, SKOS015, SKOS017, SKOS019, SKOS020, SKOS021, ALIGN015 and DATA003 are `heuristic`, not
+  `deterministic`: their findings already said `heuristic` (the conditions rest on conventions, and DATA003 asks RDFLib,
+  whose lexical check differs from XSD 1.1). `--list-rules`, `--explain` and the SARIF rule properties show the new
+  category. No finding, severity, confidence, exit code or identity changes. A test now holds every `deterministic`
+  rule to certain findings (`tests/test_category_confidence.py`); the other direction is aligned family by family
+  (issue #180).
 - **CLS:** the family is specified in its module docstrings (scope, condition, exclusions, boundary, severity and
   confidence rationale, fixtures), with a specification test file, `tests/test_cls_specification.py`, that the
   catalogue rows name. Part of #64; the SKOS and IRI families remain.

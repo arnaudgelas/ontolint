@@ -1,11 +1,11 @@
 {
  "single_graph.jsonld json": {
   "exit": 0,
-  "stdout": "sha256:823a1a05f5d3bcd8465e1bbbbf84f8348d9478daa62455677918ee60d0645160 (118012 chars)"
+  "stdout": "sha256:64356f911315ec01e9e3e7bb5737872066d0b0d1f6930c44f552c7efaa0e481c (117980 chars)"
  },
  "single_graph.jsonld sarif": {
   "exit": 0,
-  "stdout": "sha256:e79bbe56214a226e6339f42a2f47922ffc7f1fadc091b9da3afb2558adc34a36 (211624 chars)"
+  "stdout": "sha256:b7e587a745816eb5eb4761645ce0d83fc5197f472fdb2676643f731654f2949f (211592 chars)"
  },
  "single_graph.jsonld text": {
   "exit": 0,
@@ -13,11 +13,11 @@
  },
  "single_graph.nq json": {
   "exit": 0,
-  "stdout": "sha256:b51e6189faf1d18ac9073ad8c436a30af8d6cbbcc59bd34c4eb5cd893aa86e04 (117964 chars)"
+  "stdout": "sha256:83dbcf0db752f541efa1d1392d2952541f14e90396a1bca115fd549e5eeb2ce5 (117932 chars)"
  },
  "single_graph.nq sarif": {
   "exit": 0,
-  "stdout": "sha256:0d04a06618b46a47d9cb443d17f462088b08314ea5422944af62c3232162a3b0 (211421 chars)"
+  "stdout": "sha256:3d8238726ccd0743cb7d7db9666009071ca76778fcda99872968cb593d47bd60 (211389 chars)"
  },
  "single_graph.nq text": {
   "exit": 0,
@@ -25,11 +25,11 @@
  },
  "single_graph.nt json": {
   "exit": 0,
-  "stdout": "sha256:f75517cbbb3674d786df2439c8039769b4eca6379993a3e6e864ea1b646433cb (117964 chars)"
+  "stdout": "sha256:e1c0d13b3012382e2fbb44685c701f37df30db977922feba83b06f61efc5a5c5 (117932 chars)"
  },
  "single_graph.nt sarif": {
   "exit": 0,
-  "stdout": "sha256:ba77ee6a3b43d0ba5a8d83e1667f9984cecab9d0ba43fc08c25bd6ed5877f0d6 (211421 chars)"
+  "stdout": "sha256:52b31d33b55da818dd575f61408803ff5e02cd8c28d6bc9dfd3b51e1b502e45c (211389 chars)"
  },
  "single_graph.nt text": {
   "exit": 0,
@@ -37,11 +37,11 @@
  },
  "single_graph.rdf json": {
   "exit": 0,
-  "stdout": "sha256:a0eb2c54b01c5597a14b6ed0508f0a14f5956205dd6a22f1178cb1b53ee0e889 (117976 chars)"
+  "stdout": "sha256:bcddf1dd20067ddc87ade3cb8b9a0a1f977301cedea74f7f551923144697f6d9 (117944 chars)"
  },
  "single_graph.rdf sarif": {
   "exit": 0,
-  "stdout": "sha256:f885632770076324223e2f65856d8ab6ae4815110ff1998fba005bf99f568e0c (211478 chars)"
+  "stdout": "sha256:3c95b07ae3dad151859a4aefa64eabd4d15f1d195106176cdc29ea99bc836442 (211446 chars)"
  },
  "single_graph.rdf text": {
   "exit": 0,
@@ -49,11 +49,11 @@
  },
  "single_graph.trig json": {
   "exit": 0,
-  "stdout": "sha256:125e601a97ff428f871041ea69de9bdcbd07470858066456305613e8ae38a579 (117988 chars)"
+  "stdout": "sha256:8510e3decf3405bdb3840acf80e61e0dbf715fc9b55a61a776ae9ccb8997467f (117956 chars)"
  },
  "single_graph.trig sarif": {
   "exit": 0,
-  "stdout": "sha256:57480261043b6051246b27a8e9b6f62f7a65ca4cb16a9f3c6100ef3f89cc5965 (211518 chars)"
+  "stdout": "sha256:428a38e9abc0c4c356fe43af65492bfab857741eb9d69058047162cc609967c0 (211486 chars)"
  },
  "single_graph.trig text": {
   "exit": 0,
@@ -61,11 +61,11 @@
  },
  "single_graph.ttl json": {
   "exit": 0,
-  "stdout": "sha256:0571d6a86ae74b66b1d9cf9e26da94eee1e21fd38c855deb5aeeda7aa6776c70 (117976 chars)"
+  "stdout": "sha256:1d4b3d43f876f17618919fddfc90b17c14df533aeb43e31692a4350eb8f013fa (117944 chars)"
  },
  "single_graph.ttl sarif": {
   "exit": 0,
-  "stdout": "sha256:6b7b4b5983627da872957b001f38b147bcd0087a3097ac1b334de276da73f8c0 (211472 chars)"
+  "stdout": "sha256:21b856ca6e03a782b96bb392721300d051bdfb740e149913942973c23c97151c (211440 chars)"
  },
  "single_graph.ttl text": {
   "exit": 0,
