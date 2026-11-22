@@ -61,12 +61,14 @@ runs:
   steps:
     # Linux and macOS only: the install step builds POSIX venv paths (`bin/python`), a Windows venv has
     # `Scripts\python.exe`. This step comes first, so that a Windows job fails here, with one annotation, not
-    # in a later step with a path error. tests/test_github_action.py runs this step's script.
+    # in a later step with a path error. It uses `powershell` (Windows PowerShell 5.1), the one shell every
+    # Windows runner has, hosted or self-hosted, with or without Git Bash; the `if` keeps Linux and macOS from
+    # ever needing it. tests/test_github_action.py checks this step's script.
     - name: Refuse Windows runners
       if: runner.os == 'Windows'
-      shell: bash
+      shell: powershell
       run: |
-        echo "::error title=ontolint Action::This Action runs on Linux and macOS runners only, and this runner is Windows. Install ontolint from PyPI and run the ontolint command in your own step instead."
+        Write-Output "::error title=ontolint Action::This Action runs on Linux and macOS runners only, and this runner is Windows. Install ontolint from PyPI and run the ontolint command in your own step instead."
         exit 1
 
     - name: Set up uv

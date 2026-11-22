@@ -725,8 +725,8 @@ no SARIF file, hence the `hashFiles` guard above.
 What the Action does and does not do:
 
 - It runs on Linux and macOS runners only: its steps are bash and its virtual environment has the POSIX layout
-  (`bin/python`). On a Windows runner its first step fails the job with one error annotation, before anything is
-  installed; install ontolint from PyPI and run `ontolint` in your own step there (the CLI itself is tested on
+  (`bin/python`). On a Windows runner, hosted or self-hosted, its first step (which uses Windows PowerShell, so it
+  needs no Git Bash) fails the job with one error annotation, before anything is installed; install ontolint from PyPI and run `ontolint` in your own step there (the CLI itself is tested on
   Windows, `.github/workflows/smoke.yml`). Nothing in CI runs the Action on Windows, and no user has asked for it.
 - It asks for no token and needs no permission. It does **not** upload the SARIF report: uploading needs
   `security-events: write`, which a caller grants to the one job that needs it, and a caller can also keep the

@@ -707,20 +707,42 @@ def test_no_other_step_is_conditioned_on_the_operating_system() -> None:
     assert [s for s in _steps()[1:] if "runner.os" in s] == []
 
 
-@pytest.mark.skipif(shutil.which("bash") is None, reason="the step's script is bash")
-def test_the_refusal_prints_one_error_annotation_and_fails() -> None:
+def _refusal_script() -> str:
     script = _steps()[0].split("      run: |\n", 1)[1]
-    script = "\n".join(line[8:] for line in script.splitlines())  # the block's indentation
-    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)  # noqa: S603, S607
-    lines = result.stdout.splitlines()
+    return "\n".join(line[8:] for line in script.splitlines())  # the block's indentation
+
+
+def test_the_refusal_needs_no_bash_only_powershell() -> None:
+    step = _steps()[0]
+    assert "shell: powershell" in step  # on every Windows runner, Git Bash or not
+    assert "bash" not in step.split("      run: |\n", 1)[0]
+
+
+def test_the_refusal_script_is_one_error_annotation_then_exit_1() -> None:
+    lines = _refusal_script().splitlines()
+    assert len(lines) == 2
+    assert lines[0].startswith('Write-Output "::error title=ontolint Action::')
+    assert lines[0].endswith('"')
+    assert "Linux and macOS" in lines[0] and "Windows" in lines[0]
+    assert lines[1] == "exit 1"
+    assert "`" not in lines[0] and "$" not in lines[0]  # no PowerShell escape or expansion in the message
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="PowerShell is not installed here")
+def test_the_refusal_runs_under_powershell() -> None:
+    result = subprocess.run(  # noqa: S603
+        [str(shutil.which("pwsh")), "-NoProfile", "-Command", _refusal_script()],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     assert result.returncode == 1
-    assert len(lines) == 1
-    assert lines[0].startswith("::error title=ontolint Action::")
-    assert "Linux and macOS" in lines[0]
-    assert "Windows" in lines[0]
+    assert len(result.stdout.splitlines()) == 1
+    assert result.stdout.startswith("::error title=ontolint Action::")
 
 
 def test_the_readme_says_what_the_action_refuses() -> None:
     readme = (ROOT / "README.md").read_text()
     assert "It runs on Linux and macOS runners only" in readme
     assert "on a Windows runner the Action stops with one error" in readme
+    assert "PowerShell" in readme  # the refusal's shell, so the promise holds without Git Bash
