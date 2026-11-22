@@ -3,8 +3,10 @@
 ``pyshacl.validate(meta_shacl=True)`` meta-validates the shapes graph and raises with text only, so reading the results
 used to take a second run: the failure path cost twice a conforming one.  SHACL001 now calls ``meta_validate``
 itself, once, before ``validate(meta_shacl=False)``.  These tests pin that the call happens once, that it judges the
-same graphs as ``meta_shacl=True`` does (a differential test against pySHACL itself, so a pySHACL upgrade that changes
-either side fails here), and that the private entry point it relies on is still there.
+same graphs as ``meta_shacl=True`` does (a differential test over a small corpus, evidence for the pySHACL series
+pyproject allows and not a proof for SHACL-AF, imports or later releases), that the private entry point it relies on
+is still there, and the support policy: pySHACL is bounded to the verified series, and only a missing or re-signed
+``meta_validate`` falls back to ``meta_shacl=True``.
 """
 
 # ruff: noqa: SLF001
@@ -170,3 +172,72 @@ def test_canary_validate_with_meta_shacl_true_still_refuses_with_the_text_the_fa
     with pytest.raises(ReportableRuntimeError) as caught:
         pyshacl.validate(_graph(DATA), shacl_graph=_graph(ILL_FORMED), inference="none", meta_shacl=True)
     assert str(caught.value).startswith(METASHACL_TEXT)
+
+
+# -- the support policy: a bounded dependency, and a narrow fallback ----------------------------------------------
+
+
+def test_pyshacl_is_bounded_to_the_series_the_private_entry_point_was_verified_on() -> None:
+    """``meta_validate`` is private: an open-ended ``pyshacl>=`` would promise support nobody tests."""
+    import tomllib  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    root = Path(__file__).resolve().parent.parent
+    dependencies = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
+    (requirement,) = (d for d in dependencies if d.startswith("pyshacl"))
+    assert "<0.41" in requirement.replace(" ", "")
+
+
+def _meta_shacl_arguments(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
+    seen: list[Any] = []
+    real = pyshacl.validate
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        seen.append(kwargs["meta_shacl"])
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(pyshacl, "validate", spy)
+    return seen
+
+
+def test_a_missing_meta_validate_falls_back_to_pyshacls_own_meta_shacl(monkeypatch: pytest.MonkeyPatch) -> None:
+    def missing(sg: Graph) -> None:
+        raise ImportError("cannot import name 'meta_validate' from 'pyshacl.entrypoints'")
+
+    monkeypatch.setattr(shacl, "_metashacl_verdict", missing)
+    seen = _meta_shacl_arguments(monkeypatch)
+
+    shacl_issues(_graph(DATA), _graph(WELL_FORMED))
+    with pytest.raises(ReportableRuntimeError, match="MetaSHACL"):  # pySHACL's own refusal, with its own text
+        shacl_issues(_graph(DATA), _graph(ILL_FORMED))
+
+    assert seen == [True, True]
+
+
+def test_a_meta_validate_whose_signature_changed_falls_back_too(monkeypatch: pytest.MonkeyPatch) -> None:
+    real = entrypoints.meta_validate
+
+    def renamed(*args: Any, **kwargs: Any) -> Any:  # pySHACL's own ``validate`` still reaches the real one
+        return real(*args, **kwargs)
+
+    renamed.graph_cache = real.graph_cache  # type: ignore[attr-defined]
+    renamed.__signature__ = inspect.Signature([inspect.Parameter("graph", inspect.Parameter.POSITIONAL_ONLY)])  # type: ignore[attr-defined]
+    monkeypatch.setattr(entrypoints, "meta_validate", renamed)
+    seen = _meta_shacl_arguments(monkeypatch)
+
+    shacl_issues(_graph(DATA), _graph(WELL_FORMED))
+
+    assert seen == [True]
+
+
+def test_any_other_fault_of_meta_validate_is_not_swallowed_by_the_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(*args: Any, **kwargs: Any) -> Any:
+        raise TypeError("a fault inside pySHACL, not a signature mismatch")
+
+    monkeypatch.setattr(entrypoints, "meta_validate", broken)
+    seen = _meta_shacl_arguments(monkeypatch)
+
+    with pytest.raises(TypeError, match="a fault inside pySHACL"):
+        shacl_issues(_graph(DATA), _graph(WELL_FORMED))
+
+    assert seen == []
