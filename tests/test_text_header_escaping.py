@@ -15,8 +15,17 @@ import pytest
 from rdflib import Graph
 
 from ontolint import Linter, main
-from ontolint.models import Finding
-from ontolint.reporting import FileReport, RunReport, fingerprint, one_line, render_report, render_text
+from ontolint.models import ExecutionStatus, Finding, RuleExecution
+from ontolint.reporting import (
+    FileReport,
+    Origin,
+    RunReport,
+    fingerprint,
+    one_line,
+    render_executions,
+    render_report,
+    render_text,
+)
 
 PAYLOAD = "line one\nFake: [ERROR  ] SHACL001 https://evil: injected \u202ebidi \x1b[31mred"
 ESCAPED_PAYLOAD = "line one\\u000AFake: [ERROR  ] SHACL001 https://evil: injected \\u202Ebidi \\u001B[31mred"
@@ -255,3 +264,108 @@ def test_a_baseline_written_from_a_hostile_run_holds_the_raw_message_fingerprint
     # the same baseline suppresses the finding on a second run (so the text report is not part of the identity)
     assert main([str(source), "--select", "GOV002", "--baseline", str(baseline)]) == 0
     assert capsys.readouterr().out == "Ontology linter: 0 finding(s)\n"
+
+
+# --- the rest of the text report: file headings, locations, module names and execution details (#125, #133) ---------
+
+HOSTILE = "a\nFake: [ERROR  ] ONT001 https://evil: injected \u202e\x1b[31m.ttl"
+HOSTILE_ESCAPED = "a\\u000AFake: [ERROR  ] ONT001 https://evil: injected \\u202E\\u001B[31m.ttl"
+OWN_LINES = ("Ontology linter:", "== ", "[ERROR", "[FAILED", "    Fix:", "    In:", "Findings by module:", "    ")
+
+
+def _no_added_line(text: str, allowed: tuple[str, ...]) -> None:
+    """Every physical line of ``text`` starts as the report's own lines do: nothing a name wrote starts one."""
+    for line in text.splitlines():
+        assert line.startswith(allowed), line
+    assert "\x1b" not in text
+    assert "\u202e" not in text
+
+
+def test_a_file_name_is_escaped_in_the_heading_of_a_multi_file_run() -> None:
+    finding = Finding("ONT001", "error", "https://e.test/a", "m", "fix")
+    report = RunReport((FileReport(HOSTILE, HOSTILE, (finding,)), FileReport("b.ttl", "b.ttl", (finding,))))
+
+    text = render_text(report)
+
+    assert f"== {HOSTILE_ESCAPED}: 1 finding(s)" in text.splitlines()
+    _no_added_line(text, OWN_LINES)
+
+
+def test_a_module_name_is_escaped_in_the_findings_by_module_summary() -> None:
+    finding = Finding("ONT001", "error", "https://e.test/a", "m", "fix")
+    report = RunReport((FileReport("a.ttl", "a.ttl", (finding,), modules={finding: (HOSTILE,)}),))
+
+    text = render_text(report)
+
+    assert f"    {HOSTILE_ESCAPED}: 1 error" in text.splitlines()
+    _no_added_line(text, OWN_LINES)
+
+
+def test_the_in_line_escapes_the_module_file_the_graph_and_the_module_names() -> None:
+    finding = Finding("ONT001", "error", "https://e.test/a", "m", "fix")
+    file = FileReport(
+        "a.ttl",
+        "a.ttl",
+        (finding,),
+        origins={finding: Origin(HOSTILE, HOSTILE)},
+        graphs={finding: (HOSTILE, "https://e.test/g")},
+        modules={finding: (HOSTILE,)},
+    )
+
+    text = render_text(RunReport((file,)))
+
+    assert f"    In: {HOSTILE_ESCAPED}, graphs {HOSTILE_ESCAPED}, https://e.test/g, module {HOSTILE_ESCAPED}" in text
+    _no_added_line(text, OWN_LINES)
+
+
+def test_a_rule_execution_detail_is_escaped() -> None:
+    execution = RuleExecution("SHACL001", ExecutionStatus.FAILED, f"ValueError: {HOSTILE}")
+
+    text = render_executions([execution])
+
+    assert text.splitlines()[1] == f"[FAILED     ] SHACL001: ValueError: {HOSTILE_ESCAPED}"
+    _no_added_line(text, ("Rule execution:", "[FAILED"))
+
+
+def test_the_execution_lines_of_a_multi_file_run_escape_the_file_name_too() -> None:
+    execution = RuleExecution("SHACL001", ExecutionStatus.FAILED, f"boom {HOSTILE}")
+    report = RunReport(
+        (
+            FileReport(HOSTILE, HOSTILE, (), (execution,)),
+            FileReport("b.ttl", "b.ttl", (), (RuleExecution("SHACL001", ExecutionStatus.EXECUTED),)),
+        )
+    )
+
+    text = render_report(report, "text")
+
+    assert f"{HOSTILE_ESCAPED}: Rule execution:" in text
+    _no_added_line(text, (*OWN_LINES, "b.ttl:"))
+
+
+def test_json_and_sarif_keep_the_raw_names_and_details() -> None:
+    finding = Finding("ONT001", "error", "https://e.test/a", "m", "fix")
+    execution = RuleExecution("SHACL001", ExecutionStatus.FAILED, HOSTILE)
+    report = RunReport((FileReport(HOSTILE, HOSTILE, (finding,), (execution,), modules={finding: (HOSTILE,)}),))
+
+    document = json.loads(render_report(report, "json"))
+
+    assert document["files"][0]["path"] == HOSTILE
+    assert document["files"][0]["executions"][0]["detail"] == HOSTILE
+    assert json.dumps(HOSTILE)[1:-1] in render_report(report, "sarif")  # the raw text, as JSON writes it
+
+
+def test_ordinary_names_print_as_they_did() -> None:
+    finding = Finding("ONT001", "error", "https://e.test/a", "m", "fix")
+    file = FileReport(
+        "dir/Café ünï.ttl",
+        "x",
+        (finding,),
+        origins={finding: Origin("mod/本体.ttl", "x")},
+        modules={finding: ("モジュール",)},
+    )
+
+    text = render_text(RunReport((file, FileReport("b.ttl", "b.ttl", ()))))
+
+    assert "== dir/Café ünï.ttl: 1 finding(s)" in text
+    assert "    In: mod/本体.ttl, module モジュール" in text
+    assert "    モジュール: 1 error" in text
