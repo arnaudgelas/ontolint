@@ -149,6 +149,10 @@ results after upgrading.
 
 ### Fixed
 
+- **OWL027, OWL033, SHQ009:** `"x"` and `"x"^^xsd:string` are one RDF literal (RDF 1.1 Concepts 3.3), as in LEX003, LEX024
+  and SKOS020: a negative property assertion against `"x"^^xsd:string` of an asserted `"x"` is reported, and a repeated
+  `owl:oneOf` or `sh:in` member written in both forms is a repeat. Other datatypes and language tags stay apart. A new
+  finding can appear; no existing finding changes identity. Found by the review of #182.
 - **SHACL001:** a shapes graph with a shape typed both `sh:NodeShape` and `sh:PropertyShape`, or with a shape typed
   `sh:PropertyShape` and no `sh:path`, that SHACL-SHACL accepts and pySHACL's loader refuses, is no longer reported as
   pySHACL's raw `ShapeLoadError: ...` with no shape named: the rule-execution line says what is wrong and the `TOOL001`

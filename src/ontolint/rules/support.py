@@ -72,6 +72,24 @@ def literal_identity(literal: Literal) -> tuple[str, str | None]:
     return (str(literal), None if datatype in (None, XSD.string, RDF.langString) else str(datatype))
 
 
+def term_key(term: Node) -> Node | tuple[str, str | None, str | None]:
+    """A key under which RDF 1.1 equal terms collide: a literal by text, language and datatype, with ``xsd:string`` and
+    ``rdf:langString`` dropped (``"A"`` and ``"A"^^xsd:string`` are one literal, RDF 1.1 Concepts 3.3); any other term
+    is its own key."""
+    if isinstance(term, Literal):
+        datatype = term.datatype
+        language = term.language.lower() if term.language else None  # a language tag is case-insensitive (BCP 47)
+        return (str(term), language, None if datatype in (None, XSD.string, RDF.langString) else str(datatype))
+    return term
+
+
+def asserted(g: Graph, subject: Node, predicate: Node, value: Node) -> bool:
+    """Whether the graph holds ``subject predicate value``, a plain and an ``xsd:string`` literal being one value."""
+    if isinstance(value, Literal) and value.language is None and value.datatype in (None, XSD.string):
+        return any((subject, predicate, Literal(str(value), datatype=form)) in g for form in (None, XSD.string))
+    return (subject, predicate, value) in g
+
+
 def local_name(iri: URIRef) -> str:
     """Return the fragment or last path segment of an IRI."""
     return re.split(r"[/#]", str(iri))[-1]

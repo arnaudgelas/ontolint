@@ -2028,7 +2028,7 @@ ex:a owl:sameAs ex:b . [] a owl:AllDifferent ; owl:distinctMembers ( ex:a ex:b )
 - **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove the NegativePropertyAssertion or the contradicting positive triple.
 
-**Specification.** An ``owl:NegativePropertyAssertion`` whose ``owl:sourceIndividual``, ``owl:assertionProperty`` and ``owl:targetIndividual`` or ``owl:targetValue`` form a triple that is asserted; reported on the source.  Literals match as RDF terms after RDFLib's lexical normalisation (``"01"^^xsd:integer`` matches ``"1"^^xsd:integer``; ``"1.0"^^xsd:decimal`` does not), and an incomplete assertion is skipped.  *Error:* inconsistent.
+**Specification.** An ``owl:NegativePropertyAssertion`` whose ``owl:sourceIndividual``, ``owl:assertionProperty`` and ``owl:targetIndividual`` or ``owl:targetValue`` form a triple that is asserted; reported on the source.  Literals match as RDF terms after RDFLib's lexical normalisation (``"01"^^xsd:integer`` matches ``"1"^^xsd:integer``; ``"1.0"^^xsd:decimal`` does not), and ``"x"`` matches ``"x"^^xsd:string`` (RDF 1.1 Concepts 3.3: one literal, which RDFLib keeps apart), and an incomplete assertion is skipped.  *Error:* inconsistent.
 
 *Flagged:* `negated individual assertion that is asserted`
 
@@ -2450,7 +2450,7 @@ ex:C owl:intersectionOf () .
 - **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Remove the repeated member from the owl:unionOf, owl:intersectionOf or owl:oneOf list.
 
-**Specification.** An ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` whose well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and ``"1"^^xsd:integer`` differ; structurally equal blank-node expressions are not compared), one finding per list, focused on the subject.  Warning: in a union, intersection or enumeration the repeat is semantically harmless but usually a copy-paste slip where another operand was meant; in a disjoint union it is a defect either way, as read as a set it may leave one operand (SS 9.1.4 needs two) and read as a list it makes the repeated class disjoint with itself, so empty.
+**Specification.** An ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or ``owl:disjointUnionOf`` whose well-formed, non-empty list holds the same RDF term twice (RDF term equality: ``"1"`` and ``"1"^^xsd:integer`` differ, ``"x"`` and ``"x"^^xsd:string`` are one; structurally equal blank-node expressions are not compared), one finding per list, focused on the subject. Warning: in a union, intersection or enumeration the repeat is semantically harmless but usually a copy-paste slip where another operand was meant; in a disjoint union it is a defect either way, as read as a set it may leave one operand (SS 9.1.4 needs two) and read as a list it makes the repeated class disjoint with itself, so empty.
 
 *Flagged:* `duplicate union member`
 
