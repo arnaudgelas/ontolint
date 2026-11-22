@@ -103,10 +103,20 @@ def test_lex003_an_alt_label_is_not_a_second_preferred_label() -> None:
 # --- LEX004 -----------------------------------------------------------------------------------------------
 
 
-def test_lex004_compares_stripped_text_not_inner_whitespace() -> None:
+def test_lex004_compares_case_and_inner_whitespace_as_lex015_lex016_lex017_and_lex020_do() -> None:
+    # Decision of #155 (item 1): LEX004 folds case and collapses inner whitespace, as the other label comparisons do.
     both = 'ex:A a owl:Class ; rdfs:label "x y" . ex:B a owl:Class ; rdfs:label "x  y" .'
-    assert _foci("LEX004", both) == []  # known gap: LEX015 and LEX016 collapse inner whitespace, LEX004 does not
+    assert _foci("LEX004", both) == ["A"]
     assert _foci("LEX004", both.replace("x  y", "x y")) == ["A"]
+    assert _foci("LEX004", 'ex:A a owl:Class ; rdfs:label "Heart" . ex:B a owl:Class ; rdfs:label "heart" .') == ["A"]
+    assert _foci("LEX004", 'ex:A a owl:Class ; rdfs:label "Heart" . ex:B a owl:Class ; rdfs:label "hearts" .') == []
+
+
+def test_lex004_a_group_of_variants_names_the_least_spelling_and_exact_duplicates_keep_their_label() -> None:
+    variants = 'ex:A a owl:Class ; rdfs:label "heart" . ex:B a owl:Class ; rdfs:label "Heart" .'
+    assert [m.split(" for ")[0] for m in _messages("LEX004", variants)] == ["Duplicate label 'Heart'@und"]
+    exact = 'ex:A a owl:Class ; rdfs:label "Heart" . ex:B a owl:Class ; rdfs:label "Heart" .'
+    assert [m.split(" for ")[0] for m in _messages("LEX004", exact)] == ["Duplicate label 'Heart'@und"]
 
 
 def test_lex004_languages_and_collections_are_apart() -> None:
@@ -245,9 +255,15 @@ def test_lex016_an_alt_label_that_names_another_term() -> None:
     assert _foci("LEX016", 'ex:A a owl:Class ; rdfs:label "b" ; skos:altLabel "b" .') == []
 
 
-def test_lex016_a_deprecated_owner_still_counts() -> None:
-    turtle = 'ex:A a owl:Class ; skos:altLabel "b" . ex:B a owl:Class ; owl:deprecated true ; rdfs:label "b" .'
-    assert _foci("LEX016", turtle) == ["A"]  # known gap, LEX004 skips deprecated terms
+def test_lex016_a_deprecated_owner_does_not_count_but_a_deprecated_holder_is_judged() -> None:
+    # Decision of #155 (item 3): a deprecated term owns no label here, as in LEX004; the term holding the alternative
+    # is judged whether or not it is deprecated.
+    owner = 'ex:A a owl:Class ; skos:altLabel "b" . ex:B a owl:Class ; owl:deprecated true ; rdfs:label "b" .'
+    assert _foci("LEX016", owner) == []
+    holder = 'ex:A a owl:Class ; owl:deprecated true ; skos:altLabel "b" . ex:B a owl:Class ; rdfs:label "b" .'
+    assert _foci("LEX016", holder) == ["A"]
+    both = owner + ' ex:C a owl:Class ; rdfs:label "b" .'
+    assert _foci("LEX016", both) == ["A"]
 
 
 # --- LEX017, LEX019, LEX020 -------------------------------------------------------------------------------
