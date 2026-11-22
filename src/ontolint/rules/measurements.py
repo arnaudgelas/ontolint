@@ -442,7 +442,7 @@ def _foreign_references(ctx: RuleContext) -> CountRatio:
 
 
 def _unresolved_imports(ctx: RuleContext) -> Count:
-    """Distinct IRI objects of ``owl:imports`` in the graph, of every header, minus the imports the closure loaded."""
+    """Distinct IRI objects of ``owl:imports`` in the graph, of any subject, minus the imports the closure loaded."""
     imports = {o for o in ctx.g.objects(None, OWL.imports) if isinstance(o, URIRef)}
     # Imports resolved to local modules (--follow-imports) are parts of the same artefact, not dependencies.
     return Count(len({o for o in imports if str(o) not in ctx.policy.resolved_imports}))

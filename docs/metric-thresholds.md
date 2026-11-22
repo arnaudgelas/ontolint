@@ -24,8 +24,11 @@ too ([measurements.md](measurements.md)).
   its severity.
 - `--profile minimal` runs no METRIC rule. The `ci`, `obo` and `fair` profiles gate on warnings,
   so `METRIC001` and `METRIC002` (warnings) can fail them; `strict` gates on every finding.
-- Comparisons are strict, so a value equal to its limit never fires, and a rule needs a
-  population of at least `metric_min_sample` terms (`METRIC011` has no such gate).
+- Comparisons are strict, so a value equal to its limit never fires, and a rule needs at least
+  `metric_min_sample` items of the quantity in the "Population gate" column below (classes, properties,
+  references, labelled terms, subjects: not always terms; `METRIC011` has no such gate). The gate counts
+  that quantity, which can differ from the one the value is taken over: `METRIC004` gates on owned classes
+  and averages over parents, so at the default limits its gate never decides.
 - Each key is one bound on one measurement from one side, a *built-in budget*; `quality_budgets` puts
   further, explicit bounds on any measurement and reports a breach as `METRIC014`
   ([quality-budgets.md](quality-budgets.md), which tabulates the keys as budgets). The keys are unchanged.
@@ -36,7 +39,7 @@ too ([measurements.md](measurements.md)).
 
 | Key | Rules | Default | Fires when | Population gate | Why this default | Corpus notes (21 files, proposed labels) |
 | --- | --- | --- | --- | --- | --- | --- |
-| `metric_min_sample` | all but METRIC011 | 10 | population below it: silent | the gate itself | Below ten terms one term moves a ratio by more than ten points, and fixtures and stubs should never fire. | keeps METRIC003 and METRIC008 silent on MFTO (2 properties, both at 1.0) |
+| `metric_min_sample` | all but METRIC011 | 10 | gated quantity below it: silent | the gate itself | Below ten terms one term moves a ratio by more than ten points, and fixtures and stubs should never fire. | keeps METRIC003 and METRIC008 silent on MFTO (2 properties, both at 1.0) |
 | `metric_max_unlabelled_ratio` | METRIC001 | 0.5 | share of classes LEX001 reports above it | classes | LEX001 already reports each missing label; the aggregate speaks only when missing labels are the norm. | 1 fires: 1 TP, 0 FP, 0 FN |
 | `metric_max_undefined_ratio` | METRIC002 | 0.5 | share of classes without a definition above it | classes | The same reasoning as METRIC001 for definitions: a few undefined classes are a per-term matter, and the aggregate speaks only when most classes lack one. | 2 fire: 2 TP, 0 FP, 0 FN |
 | `metric_max_undocumented_property_ratio` | METRIC003 | 0.5 | share of properties without documentation above it | properties | The same reasoning as METRIC001 for properties: a few undocumented properties are a per-term matter, and the aggregate speaks only when most lack documentation. | 2 fire: 2 TP, 0 FP, 0 FN |
