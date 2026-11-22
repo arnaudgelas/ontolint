@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -230,6 +231,42 @@ def test_the_thresholds_page_counts_agree_with_the_corpus() -> None:
     page = (ROOT / "docs" / "metric-thresholds.md").read_text(encoding="utf-8")
     assert f"({sum(c['fp'] for c in counts.values())} in all)" in page
     assert all(counts[rule]["fp"] == 0 and counts[rule]["fn"] == 0 for rule in ("METRIC001", "METRIC002", "METRIC003"))
+
+
+THRESHOLD_COLUMNS = 7  # key, rules, default, fires when, population gate, why this default, corpus notes
+
+
+def _threshold_notes() -> dict[str, str]:
+    """The "Corpus notes" cell of each single-rule row of the thresholds table of docs/metric-thresholds.md."""
+    notes: dict[str, str] = {}
+    for line in (ROOT / "docs" / "metric-thresholds.md").read_text(encoding="utf-8").splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) == THRESHOLD_COLUMNS and cells[1] in metric_corpus.RULES and cells[0].startswith("`metric_"):
+            notes[cells[1]] = cells[6]
+    return notes
+
+
+def test_the_thresholds_table_notes_agree_with_the_corpus() -> None:
+    """The hand-written notes of each threshold (how many files fire, how many true and false positives and false
+    negatives, the highest or lowest value) are quoted from the corpus: they went stale once, when labels changed."""
+    entries = metric_corpus.load_manifest()
+    results = _results()
+    counts = metric_corpus.confusion(entries, results)
+    notes = _threshold_notes()
+    assert sorted(notes) == sorted(metric_corpus.RULES), "one note per rule"
+    for rule, note in notes.items():
+        flagged = re.match(r"(\d+) fires?\b", note)
+        assert flagged, f"{rule}: the note starts with how many files fire"
+        assert int(flagged.group(1)) == counts[rule]["tp"] + counts[rule]["fp"], f"{rule}: files that fire"
+        for outcome in ("TP", "FP", "FN"):
+            quoted = re.search(rf"(\d+) {outcome}\b", note)
+            if quoted:
+                assert int(quoted.group(1)) == counts[rule][outcome.lower()], f"{rule}: {outcome}"
+        values = [v[rule]["value"] for v in results["results"].values() if v[rule].get("value") is not None]
+        for word, pick in (("highest", max), ("lowest", min)):
+            stated = re.search(rf"{word} (\d+(?:\.\d+)?)", note)
+            if stated:
+                assert float(stated.group(1)) == pytest.approx(pick(values), abs=0.005), f"{rule}: {word}"
 
 
 def test_the_pages_quote_the_label_counts_of_the_manifest() -> None:
