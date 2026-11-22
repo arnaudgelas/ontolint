@@ -149,6 +149,9 @@ results after upgrading.
 
 ### Fixed
 
+- **IRI006:** a `?` inside the fragment of a term IRI (`https://a.test/x#a?b`) is no longer reported as "contains a
+  query string": RFC 3986 3.4 ends the query at `#` and 3.5 lets a fragment hold `?`. A query before the fragment, and an
+  empty query (`x?`), are still reported. Fewer findings only; no identity changes, and none on the pinned corpora.
 - **DATA003:** a date or time that XSD 1.1 accepts is no longer reported as "not a valid xsd:dateTime" (or `date`,
   `time`): `24:00:00`, the year `0000`, a negative year and a year of five digits or more. RDFLib reads these datatypes
   into Python `datetime` objects, whose years run from 1 to 9999 and whose hours stop at 23. XML whitespace around
