@@ -170,6 +170,9 @@ results after upgrading.
 
 ### Changed
 
+- **SHQ014:** the specification states the decision of #138: any subject of an `sh:` predicate is judged for its
+  `sh:severity` values, a node that is only loosely a shape included (an `owl:Class` carrying a severity), though
+  SHACL-SHACL does not check it. Pinned in `tests/test_shq_specification.py`; no behaviour changes.
 - **category:** OWL003, OWL004, OWL007, OWL009, OWL010, OWL013, OWL014, CLS003, CLS004, CLS014, CLS019, IRI001, IRI009
   and LEX014 are `deterministic`, not `heuristic`: their findings already said `certain` (the condition is exact and the
   cited specification forbids the pattern or gives it a fixed meaning, decision D1 of `docs/severity-decisions.md`).

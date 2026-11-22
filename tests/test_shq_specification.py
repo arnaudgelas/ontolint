@@ -526,3 +526,17 @@ def test_shq027_any_owned_term_counts_as_declared() -> None:
     data = "ex:A a owl:Class . ex:thing a owl:NamedIndividual ."
     result = Linter(graph(data), graph("ex:S sh:targetClass ex:thing ."), base=NS).execute(["SHQ027"])
     assert list(result.findings) == []
+
+
+# --- SHQ014: a node that is only loosely a shape is judged (issue #138, decided: the permissive notion stays) --------
+
+
+def test_shq014_judges_any_subject_of_an_sh_predicate_a_loose_node_included() -> None:
+    # SHACL-SHACL does not check these nodes and pySHACL accepts two severities on them; the rule judges them anyway
+    # (the decision of #138, recorded in the SHQ014 specification and in docs/severity-decisions.md).
+    loose_class = "ex:C a owl:Class ; sh:severity sh:Warning, sh:Info ."
+    assert _messages("SHQ014", loose_class) == ["Shape has 2 sh:severity values; SHACL 2.1.4 allows one."]
+    annotation_only = 'ex:N sh:severity "warn" ; sh:message "x" .'
+    assert _foci("SHQ014", annotation_only) == ["N"]
+    # The boundary: a node with no ``sh:`` predicate and no shape type is not a shape here.
+    assert _foci("SHQ014", "ex:C a owl:Class ; rdfs:label 'C' .") == []
