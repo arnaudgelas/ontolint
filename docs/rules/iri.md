@@ -52,7 +52,7 @@ IRI and namespace quality rules: IRI004-IRI006, IRI008-IRI014 and IRI016-IRI019,
 
 IRI007 (dereferenceability) needs the network, so it stays proposed (issue #38).  IRI015 is implemented in ``iri_lexical_extras`` as a mixed-naming check (namespace hijacking would need ownership evidence). Every rule here inspects only the asserted IRIs.
 
-RFC 3986 is the URI generic syntax and RFC 3987 its extension to IRIs.  A *term* is an owned declared term (the terms ``--base`` or the ontology IRIs select: ``ontolint.ownership``); a *local name* is the text after the last ``/`` or ``#`` of an IRI; its *namespace* is the rest.  Every rule reads the IRI as the graph holds it: a parser has resolved a relative reference (RFC 3986 section 5) and ``--base`` selects terms, it does not resolve.  A focus or message that holds an IRI with a userinfo (RFC 3986 3.2.1) prints it masked by ``ontolint.redaction``, so IRIs that differ only in their userinfo give one finding.  The catalogue category of every rule here is heuristic; the findings of IRI006, IRI009, IRI010, IRI012, IRI016, IRI017 and IRI018 (and IRI001) say certain: category and confidence disagree, an open question.  The pinned cases, including every known gap, are in ``tests/test_iri_specification.py``; the per-rule fixtures in ``tests/rule_cases/iri_quality.py``.
+RFC 3986 is the URI generic syntax and RFC 3987 its extension to IRIs.  A *term* is an owned declared term (the terms ``--base`` or the ontology IRIs select: ``ontolint.ownership``); a *local name* is the text after the last ``/`` or ``#`` of an IRI; its *namespace* is the rest.  Every rule reads the IRI as the graph holds it: a parser has resolved a relative reference (RFC 3986 section 5) and ``--base`` selects terms, it does not resolve.  A focus or message that holds an IRI with a userinfo (RFC 3986 3.2.1) prints it masked by ``ontolint.redaction``, so IRIs that differ only in their userinfo give one finding.  The catalogue category of IRI009 is deterministic (its condition is an RFC 3986 syntax test); that of the others here is heuristic, though the findings of IRI006, IRI010, IRI012, IRI016, IRI017 and IRI018 say certain: category and confidence disagree, an open question (decision D1 would make those findings heuristic).  The pinned cases, including every known gap, are in ``tests/test_iri_specification.py``; the per-rule fixtures in ``tests/rule_cases/iri_quality.py``.
 
 *Specified under each rule: IRI004, IRI005, IRI006, IRI008, IRI009, IRI010, IRI011, IRI012, IRI013, IRI014, IRI016, IRI017, IRI018, IRI019.*
 
@@ -62,11 +62,11 @@ RFC 3986 is the URI generic syntax and RFC 3987 its extension to IRIs.  A *term*
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`identifiers`](#module-identifiers)
 - **Fix:** Use stable absolute IRIs; avoid whitespace in identifiers.
 
-**Specification.** Scope: every owned declared term and every ontology IRI.  Fires with certainty when the IRI text holds a character for which ``str.isspace`` is true, or when ``urlsplit`` finds no scheme ("IRI contains whitespace or is not absolute."), and, as a second message, when the scheme is ``http`` or ``https`` (any case) and the authority is empty (``http:example.org/x``, ``http:///x``: "has no '//' host").  RFC 3986 4.3 makes an absolute IRI begin with a scheme (3.1: a letter first) and RFC 3987 2.2 excludes the space.  Exclusions: any other scheme (``urn:``, ``file:///x``).  Gap: an empty host with a port (``http://:80/x``) is not reported because the authority is not empty.  Warning, because such an IRI is a different identifier from the one the author meant once a tool resolves or serialises it; certain, because the condition is a syntax test (the catalogue category is heuristic: confidence and category disagree, an open question).  Fixtures: ``tests/rule_cases/identifiers.py``.
+**Specification.** Scope: every owned declared term and every ontology IRI.  Fires with certainty when the IRI text holds a character for which ``str.isspace`` is true, or when ``urlsplit`` finds no scheme ("IRI contains whitespace or is not absolute."), and, as a second message, when the scheme is ``http`` or ``https`` (any case) and the authority is empty (``http:example.org/x``, ``http:///x``: "has no '//' host").  RFC 3986 4.3 makes an absolute IRI begin with a scheme (3.1: a letter first) and RFC 3987 2.2 excludes the space.  Exclusions: any other scheme (``urn:``, ``file:///x``).  Gap: an empty host with a port (``http://:80/x``) is not reported because the authority is not empty.  Warning, because such an IRI is a different identifier from the one the author meant once a tool resolves or serialises it; certain, because the condition is a syntax test (the category is deterministic).  Fixtures: ``tests/rule_cases/identifiers.py``.
 
 *Flagged:* `whitespace in IRI` (built programmatically; see `tests/rule_cases/`)
 
@@ -258,7 +258,7 @@ Reported: `Terms mix http and https IRIs.`
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Remove or percent-encode characters such as \< > " { } | \\ ^ and backtick.
 

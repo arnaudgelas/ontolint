@@ -154,7 +154,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B . ex:i a ex:A .
 
 - **Severity:** warning
 - **Scope:** vocabulary
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Review the asserted subclass cycle; an OWL subclass cycle is not by itself inconsistent.
 
@@ -186,7 +186,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:A rdfs:subClassOf ex:B .
 
 - **Severity:** info
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`classes`](#module-classes)
 - **Fix:** Remove a redundant asserted subclass axiom if it adds no documentation value.
 
@@ -540,7 +540,7 @@ ex:A a owl:Class . ex:Mother a owl:Class ; rdfs:subClassOf ex:A .
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove one of the superclass assertions or the disjointness; the class cannot have instances.
 
@@ -806,7 +806,7 @@ ex:A a owl:Class . ex:B a owl:Class . ex:C a owl:Class . ex:D a owl:Class . ex:A
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`hierarchy_quality`](#module-hierarchy_quality)
 - **Fix:** Remove the owl:Nothing assertion or the class if it is not meant to be unsatisfiable.
 

@@ -186,7 +186,7 @@ Linter options: `base='https://example.test/onto#'`.
 
 - **Severity:** error
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty.
 
@@ -232,7 +232,7 @@ ex:p a owl:ObjectProperty, owl:AnnotationProperty .
 
 - **Severity:** warning
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Review conjunction semantics of multiple rdfs:domain/rdfs:range; use owl:unionOf if intended.
 
@@ -444,7 +444,7 @@ Linter options: `base='https://example.test/onto#'`.
 
 - **Severity:** warning
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Replace self-inverse modeling with owl:SymmetricProperty when this is intentional.
 
@@ -534,7 +534,7 @@ ex:p a owl:ObjectProperty, owl:SymmetricProperty ; owl:inverseOf ex:p .
 
 - **Severity:** error
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Use object properties for owl:inverseOf and symmetric/transitive property semantics.
 
@@ -616,7 +616,7 @@ ex:o a owl:ObjectProperty ; owl:inverseOf ex:q . ex:q a owl:ObjectProperty .
 
 - **Severity:** warning
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Review an owl:propertyChainAxiom whose RDF list has only one element.
 
@@ -876,7 +876,7 @@ ex:A a owl:Class ; owl:equivalentClass ex:B . ex:B a owl:Class .
 
 - **Severity:** error
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** An object-property assertion should point to a resource, not a literal.
 
@@ -922,7 +922,7 @@ ex:i ex:p "text" .
 
 - **Severity:** error
 - **Scope:** axiom
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`owl`](#module-owl)
 - **Fix:** A datatype-property assertion should point to a literal.
 

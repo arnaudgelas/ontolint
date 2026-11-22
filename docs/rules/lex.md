@@ -690,7 +690,7 @@ ex:A a owl:Class ; skos:definition ex:d . ex:d rdf:value "An A." .
 
 - **Severity:** warning
 - **Scope:** term
-- **Category:** heuristic
+- **Category:** deterministic
 - **Module:** [`lexical_quality`](#module-lexical_quality)
 - **Fix:** Use plain or language-tagged string literals for labels.
 

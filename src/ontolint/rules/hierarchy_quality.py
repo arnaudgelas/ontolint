@@ -101,9 +101,15 @@ TOP_CLASSES = frozenset({OWL.Thing, RDFS.Resource})
 TOKEN = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+")
 
 
+_EXACT = frozenset({"CLS014", "CLS019"})
+"""The rules whose condition is exact and forbidden or given a fixed meaning by the cited specification: their findings
+are ``certain``, so their category is ``deterministic`` (decision D1 of ``docs/severity-decisions.md``, issue #180)."""
+
+
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
+    category = "deterministic" if rule_id in _EXACT else "heuristic"
     return RuleSpec(
-        rule_id, "CLS", title, severity, suggestion, "heuristic", RuleBackend.RDFLIB, scope, "hierarchy_quality"
+        rule_id, "CLS", title, severity, suggestion, category, RuleBackend.RDFLIB, scope, "hierarchy_quality"
     )
 
 

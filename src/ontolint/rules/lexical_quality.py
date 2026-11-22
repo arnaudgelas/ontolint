@@ -79,10 +79,14 @@ AGGREGATE_PERCENT = 50
 MINIMUM_AGGREGATE_LABELLED_TERMS = 10
 
 
+_EXACT = frozenset({"LEX014"})
+"""The rules whose condition is exact and forbidden or given a fixed meaning by the cited specification: their findings
+are ``certain``, so their category is ``deterministic`` (decision D1 of ``docs/severity-decisions.md``, issue #180)."""
+
+
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
-    return RuleSpec(
-        rule_id, "LEX", title, severity, suggestion, "heuristic", RuleBackend.RDFLIB, scope, "lexical_quality"
-    )
+    category = "deterministic" if rule_id in _EXACT else "heuristic"
+    return RuleSpec(rule_id, "LEX", title, severity, suggestion, category, RuleBackend.RDFLIB, scope, "lexical_quality")
 
 
 SPECS: tuple[RuleSpec, ...] = (

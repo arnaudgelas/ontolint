@@ -63,9 +63,13 @@ All rows are the recommendations of this record, except the departures above and
 * `category` still disagrees with the finding confidence for OWL004, OWL007, OWL009, OWL010, OWL013, OWL014 (category
   `heuristic`, findings `certain`): a catalogue-wide alignment is a follow-up, not part of #63. Its first step is done
   (issue #180): no `deterministic` rule reports a `heuristic` finding (SKOS011, SKOS015, SKOS017, SKOS019, SKOS020,
-  SKOS021, ALIGN015 and DATA003 became `heuristic`; `tests/test_category_confidence.py`). What remains is the other
-  direction, about 35 rules whose category is `heuristic` and whose findings are `certain`, per family: OWL, CLS, LEX,
-  IRI, ONT. `context-dependent` rules (FAIR, OBO, ALIGN009) are outside the check.
+  SKOS021, ALIGN015 and DATA003 became `heuristic`; `tests/test_category_confidence.py`). Its second step is done: the 14 rules
+  whose `certain` findings rest on a condition the specification forbids or gives a fixed meaning (OWL003, OWL004, OWL007,
+  OWL009, OWL010, OWL013, OWL014, CLS003, CLS004, CLS014, CLS019, IRI001, IRI009, LEX014) are `deterministic`, and held so
+  by `ALIGNED` in the test. What remains is 16 rules whose category is `heuristic` and whose findings are `certain`:
+  those that rest on a convention (IRI006, IRI010, IRI012, IRI016, IRI017, IRI018, LEX001, LEX002, LEX005, LEX011, LEX019,
+  LEX025: by D1 their findings would be `heuristic`, which a consumer filtering on confidence would see) and ONT001, ONT003,
+  ALIGN002 and LEX013, which this step did not decide. `context-dependent` rules (FAIR, OBO, ALIGN009) are outside the check.
 * Counts that need corpora this record does not have: OWL035 and SKOS001's widening. SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
 * METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 found no further case (3 true positives, no false positive, on proposed labels).
 
