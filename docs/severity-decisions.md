@@ -51,6 +51,7 @@ All rows are the recommendations of this record, except the departures above and
 | SKOS001, SKOS002 | category `deterministic` | SKOS pull request #202 (#180, category) |
 | SHQ003 | keep the widened condition; the docstring states both figures | scope pull request #203 (closes #181) |
 | SHQ001, SHQ002 | include directly targeted property shapes | scope pull request #203 (closes #181) |
+| SHQ014 on a node that is only loosely a shape | keep the permissive notion (any subject of an `sh:` predicate is judged); stated in the SHQ014 specification and pinned in `tests/test_shq_specification.py` | docs pull request of #138 |
 | SKOS001 scope (S14) | deferred: needs a count ("Count the widened SKOS001 scope", v0.18.0) | none |
 | METRIC001, METRIC002 | keep warning (no curated file fails; the calibration sweep of #163 does not reopen it) | none |
 | METRIC011 | `heuristic`; a catalogue invariant for the METRIC family | METRIC pull request #204 (closes #183) |

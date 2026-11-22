@@ -41,15 +41,17 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   shape with a path is a gap SHQ023 keeps), and a property shape without a path, which SHQ023 reports.  The
   decision is to report it here, not in a rule of its own (the defect is the same parameter in the wrong place),
   and not to leave the gap (a lint run that said nothing about a shapes graph no engine accepts).
-* **SHQ014.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity
-  ... is an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and
-  ``sh:Violation``; and every shape with more than one distinct value (2.1.4: "a shape has at most one value for
-  sh:severity"), reported once as "several" whatever the values are (as SHQ023 does for ``sh:path``), on top of
-  the finding of each value that is not a severity.  Excluded: any IRI outside ``sh:`` ("any IRI can be used as
-  a severity"); one value named twice, which is one RDF triple.  A node with ``sh:severity`` and no other
-  triple counts as a shape here, though SHACL-SHACL does not check it.  Warning: a literal or several values
-  make the shape ill-formed (SHACL-SHACL rejects the shapes graph: SHACL001 fails); an unknown ``sh:`` IRI is
-  most likely a typo, but processors accept it.
+* **SHQ014.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity ... is
+  an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and ``sh:Violation``; and
+  every shape with more than one distinct value (2.1.4: "a shape has at most one value for sh:severity"), reported
+  once as "several" whatever the values are (as SHQ023 does for ``sh:path``), on top of the finding of each value
+  that is not a severity. Excluded: any IRI outside ``sh:`` ("any IRI can be used as a severity"); one value named
+  twice, which is one RDF triple. Decided (issue #138): any subject of an ``sh:`` predicate counts as a shape here,
+  a node whose only ``sh:`` triple is ``sh:severity`` and an ``owl:Class`` that carries a severity included, though
+  SHACL-SHACL does not check such a node and pySHACL accepts two values on it; the strict reading would need a list
+  of what makes a shape (SHACL 2.1.3) kept in step with the specification, for a finding that costs one warning on a
+  node that uses the SHACL vocabulary. Warning: a literal or several values make the shape ill-formed (SHACL-SHACL
+  rejects the shapes graph: SHACL001 fails); an unknown ``sh:`` IRI is most likely a typo, but processors accept it.
 * **SHQ015.** Every value of ``sh:flags`` on a shape that is not a literal made only of ``s``, ``m``, ``i``,
   ``x`` and ``q`` (F&O 3.1 5.6.2; ``q`` is XPath 3.0, ``s``, ``m``, ``i`` and ``x`` XPath 2.0, which SPARQL
   1.1 REGEX cites), and every shape with ``sh:flags`` but no ``sh:pattern`` (4.4.3: an optional parameter of
