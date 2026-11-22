@@ -27,7 +27,9 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   datatype other than ``xsd:string`` (4.4.4: "each member ... is a literal with datatype xsd:string"); one
   finding per member, an IRI or blank member is "not a well-formed language tag".  Excluded: an empty list,
   a malformed list, a literal value; the registry of BCP 47 subtags is not consulted (``xx-YY`` passes).
-  Warning: a malformed range matches no tag, so every value node fails.
+  A member repeated verbatim gives one finding.  Warning: a malformed range matches no tag, so it admits
+  nothing; the list rejects every value node only when none of its members is well formed (``('en' 'e1')``
+  still accepts ``"en"``).
 * **SHQ012.** Two defects.  (1) Every shape with ``sh:uniqueLang true`` (an ``xsd:boolean`` literal whose value
   is true) and an IRI ``sh:datatype`` other than ``rdf:langString``; one finding per datatype.  Excluded:
   ``sh:uniqueLang`` ``"true"`` (a string), no ``sh:datatype``, a literal datatype.  Info: the constraint only
@@ -37,10 +39,13 @@ SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-
   because 4.4.5 allows the parameter in property shapes only and SHACL-SHACL (``shsh:NodeShapeShape``,
   ``uniqueLang-scope``) rejects it on any other shape, so SHACL001 fails with ``the shapes graph does not
   conform to SHACL-SHACL`` and no engine run accepts the shapes graph; one finding per shape, and the MetaSHACL
-  result line carries ``(SHQ012)``.  Excluded: a shape with a path, which is a property shape (a typed node
-  shape with a path is a gap SHQ023 keeps), and a property shape without a path, which SHQ023 reports.  The
+  result line carries ``(SHQ012)``.  Excluded: a shape with a path, which is a property shape (a typed
+  node shape with a path is SHQ023's: it reports the path), and a property shape without a path, which SHQ023
+  reports.  The
   decision is to report it here, not in a rule of its own (the defect is the same parameter in the wrong place),
-  and not to leave the gap (a lint run that said nothing about a shapes graph no engine accepts).
+  and not to leave the gap (a lint run that said nothing about a shapes graph no engine accepts).  Defect (2)
+  is reported at the rule's Info, like defect (1), although it makes SHACL001 fail; the finding passes no
+  severity of its own.
 * **SHQ014.** Every value of ``sh:severity`` on a shape that is not an IRI (2.1.4: "each value of sh:severity ... is
   an IRI"), or is an IRI in the ``sh:`` namespace other than ``sh:Info``, ``sh:Warning`` and ``sh:Violation``; and
   every shape with more than one distinct value (2.1.4: "a shape has at most one value for sh:severity"), reported
