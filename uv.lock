@@ -961,7 +961,7 @@ release = [
 
 [package.metadata]
 requires-dist = [
-    { name = "pyshacl", specifier = ">=0.40.2" },
+    { name = "pyshacl", specifier = ">=0.40.2,<0.41" },
     { name = "rdflib", specifier = ">=7.6.0" },
 ]
 
