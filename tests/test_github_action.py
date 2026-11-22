@@ -532,7 +532,7 @@ def _run_scripts() -> list[str]:
 
 def test_no_expression_is_interpolated_into_a_shell_script() -> None:
     scripts = _run_scripts()
-    assert len(scripts) == 2
+    assert len(scripts) == 3  # the refusal, the install, the run
     assert all("${{" not in script for script in scripts)
     assert len(re.findall(r"^ +run: ", ACTION, re.MULTILINE)) == len(scripts), "every run is a block scalar"
 
@@ -685,3 +685,42 @@ def test_the_observation_page_names_the_workflow_and_the_readme_points_to_the_pa
     assert "docs/sarif-fingerprints-observation.md" in readme and "stays opt-in in 0.17.0" in readme
     for category in re.findall(r"`(ontolint-observe-\w+)`", page):
         assert f"category: {category}" in OBSERVE
+
+
+# -- runners the Action refuses ------------------------------------------------------------------
+
+
+def _steps() -> list[str]:
+    """The text of each step of ``action.yml``, in order."""
+    return ACTION.split("  steps:\n", 1)[1].split("    - name: ")[1:]
+
+
+def test_a_windows_runner_is_refused_before_anything_is_installed() -> None:
+    step = _steps()[0]
+    assert step.startswith("Refuse Windows runners")
+    assert "if: runner.os == 'Windows'" in step  # the other systems never reach it
+    assert "uses:" not in step  # nothing is downloaded to refuse
+    assert ACTION.index("Refuse Windows runners") < ACTION.index("astral-sh/setup-uv")
+
+
+def test_no_other_step_is_conditioned_on_the_operating_system() -> None:
+    assert [s for s in _steps()[1:] if "runner.os" in s] == []
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="the step's script is bash")
+def test_the_refusal_prints_one_error_annotation_and_fails() -> None:
+    script = _steps()[0].split("      run: |\n", 1)[1]
+    script = "\n".join(line[8:] for line in script.splitlines())  # the block's indentation
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)  # noqa: S603, S607
+    lines = result.stdout.splitlines()
+    assert result.returncode == 1
+    assert len(lines) == 1
+    assert lines[0].startswith("::error title=ontolint Action::")
+    assert "Linux and macOS" in lines[0]
+    assert "Windows" in lines[0]
+
+
+def test_the_readme_says_what_the_action_refuses() -> None:
+    readme = (ROOT / "README.md").read_text()
+    assert "It runs on Linux and macOS runners only" in readme
+    assert "on a Windows runner the Action stops with one error" in readme
