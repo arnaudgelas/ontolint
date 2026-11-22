@@ -1,0 +1,624 @@
+{
+  "command": [
+    "ontolint",
+    "<inputs>",
+    "<run arguments>",
+    "--format",
+    "json",
+    "--fail-on",
+    "never"
+  ],
+  "ontolint_version": "0.16.0",
+  "runs": {
+    "automatce-base.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "automatce-base.ttl": {
+          "counts": {
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI002": 1,
+            "IRI004": 1,
+            "IRI019": 5,
+            "LEX002": 56,
+            "LEX009": 3,
+            "LEX015": 2,
+            "LEX016": 1,
+            "LEX020": 15,
+            "METRIC006": 1,
+            "METRIC010": 1,
+            "ONT003": 1,
+            "ONT005": 1
+          }
+        }
+      }
+    },
+    "bfo-2020-core.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "bfo-2020-core.ttl": {
+          "counts": {
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI019": 1,
+            "ONT005": 1,
+            "OWL011": 31
+          }
+        }
+      }
+    },
+    "cco-merged.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "cco-merged.ttl": {
+          "counts": {
+            "CLS011": 2,
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "LEX002": 301,
+            "LEX009": 5,
+            "LEX016": 23,
+            "ONT005": 1,
+            "OWL005": 3,
+            "OWL006": 2
+          }
+        }
+      }
+    },
+    "cco-umbrella/modules": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "src/cco-modules/AgentOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/ArtifactOntology.ttl": {
+          "counts": {
+            "CLS011": 4,
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "LEX016": 43,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/CurrencyUnitOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "LEX002": 128,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/EventOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/ExtendedRelationOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "METRIC010": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/FacilityOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/GeospatialOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "LEX009": 27,
+            "METRIC010": 1,
+            "ONT005": 1,
+            "OWL005": 27,
+            "OWL006": 9
+          }
+        },
+        "src/cco-modules/InformationEntityOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "LEX002": 264,
+            "ONT005": 1,
+            "OWL006": 8
+          }
+        },
+        "src/cco-modules/QualityOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/TimeOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "METRIC010": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/UnitsOfMeasureOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "LEX002": 140,
+            "LEX009": 2,
+            "ONT005": 1
+          }
+        }
+      }
+    },
+    "cco-umbrella/umbrella": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "src/cco-merged/AllCoreOntology.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV017": 1,
+            "IRI004": 1,
+            "ONT005": 1
+          }
+        },
+        "src/cco-modules/ArtifactOntology.ttl": {
+          "counts": {
+            "CLS011": 2,
+            "LEX016": 22
+          }
+        },
+        "src/cco-modules/CurrencyUnitOntology.ttl": {
+          "counts": {
+            "LEX002": 128
+          }
+        },
+        "src/cco-modules/GeospatialOntology.ttl": {
+          "counts": {
+            "LEX009": 3,
+            "OWL005": 3,
+            "OWL006": 1
+          }
+        },
+        "src/cco-modules/InformationEntityOntology.ttl": {
+          "counts": {
+            "LEX002": 33,
+            "OWL006": 1
+          }
+        },
+        "src/cco-modules/QualityOntology.ttl": {
+          "counts": {
+            "LEX016": 1
+          }
+        },
+        "src/cco-modules/UnitsOfMeasureOntology.ttl": {
+          "counts": {
+            "LEX002": 140,
+            "LEX009": 2
+          }
+        }
+      }
+    },
+    "dcterms.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "dcterms.ttl": {
+          "counts": {
+            "CLS001": 1,
+            "CLS023": 3,
+            "IRI019": 1,
+            "LEX020": 1,
+            "ONT001": 1,
+            "OWL005": 51,
+            "OWL006": 19
+          }
+        }
+      }
+    },
+    "food-traceability.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "food-traceability.ttl": {
+          "counts": {
+            "CLS015": 2,
+            "DATA003": 45,
+            "GOV004": 1,
+            "LEX001": 74,
+            "LEX002": 74,
+            "METRIC001": 1,
+            "METRIC002": 1,
+            "METRIC003": 1,
+            "METRIC008": 1,
+            "ONT003": 1,
+            "ONT004": 1,
+            "ONT005": 1,
+            "ONT006": 1,
+            "OWL005": 31,
+            "OWL006": 31,
+            "OWL011": 15,
+            "OWL039": 10
+          }
+        }
+      }
+    },
+    "iao.owl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "iao.owl": {
+          "counts": {
+            "GOV008": 1,
+            "GOV011": 1,
+            "GOV012": 125,
+            "GOV017": 1,
+            "IRI019": 2,
+            "LEX002": 26,
+            "LEX009": 5,
+            "LEX019": 1,
+            "LEX020": 1,
+            "LEX025": 9,
+            "ONT005": 1,
+            "OWL005": 7,
+            "OWL006": 7,
+            "OWL011": 5
+          }
+        }
+      }
+    },
+    "ids-ontology.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "ids-ontology.ttl": {
+          "counts": {
+            "GOV002": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI019": 1,
+            "METRIC011": 1,
+            "SEC007": 1
+          }
+        }
+      }
+    },
+    "mfto.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "mfto.ttl": {
+          "counts": {
+            "CLS001": 4,
+            "GOV004": 1,
+            "IRI004": 1,
+            "IRI018": 1,
+            "LEX002": 20,
+            "METRIC002": 1,
+            "METRIC010": 1,
+            "ONT003": 1,
+            "ONT004": 1,
+            "ONT005": 1,
+            "ONT006": 1,
+            "OWL005": 2,
+            "OWL006": 2,
+            "SEC007": 1
+          }
+        }
+      }
+    },
+    "mod.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "mod.ttl": {
+          "counts": {
+            "CLS008": 3,
+            "CLS012": 1,
+            "IRI019": 2,
+            "LEX004": 2,
+            "LEX009": 3,
+            "LEX012": 1,
+            "LEX020": 3,
+            "OWL004": 24,
+            "OWL005": 10,
+            "OWL006": 9,
+            "OWL013": 33,
+            "OWL014": 12,
+            "OWL022": 3,
+            "OWL023": 1
+          }
+        }
+      }
+    },
+    "pao.owl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "pao.owl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI019": 1,
+            "LEX001": 2,
+            "LEX002": 23,
+            "LEX003": 1,
+            "LEX006": 1,
+            "LEX007": 1,
+            "LEX012": 2,
+            "LEX019": 2,
+            "LEX025": 2,
+            "METRIC003": 1,
+            "METRIC004": 1,
+            "METRIC008": 1,
+            "ONT003": 1,
+            "ONT005": 1,
+            "OWL005": 10,
+            "OWL006": 12,
+            "OWL019": 1,
+            "SEC007": 1
+          }
+        }
+      }
+    },
+    "pato-base.owl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "pato-base.owl": {
+          "counts": {
+            "CLS011": 7,
+            "GOV004": 1,
+            "GOV008": 872,
+            "GOV011": 1,
+            "GOV017": 1,
+            "LEX002": 959,
+            "LEX009": 14,
+            "LEX020": 10,
+            "METRIC006": 1,
+            "METRIC009": 1,
+            "ONT005": 1
+          }
+        }
+      }
+    },
+    "prov-o.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "prov-o.ttl": {
+          "counts": {
+            "CLS008": 1,
+            "CLS017": 1,
+            "GOV004": 2,
+            "GOV011": 1,
+            "GOV017": 1,
+            "LEX001": 15,
+            "LEX002": 10,
+            "LEX010": 1,
+            "LEX020": 3,
+            "LEX025": 6,
+            "METRIC009": 1,
+            "ONT002": 1,
+            "ONT003": 2,
+            "ONT004": 1,
+            "ONT005": 2,
+            "ONT006": 1,
+            "OWL004": 2,
+            "OWL005": 1,
+            "OWL006": 2,
+            "OWL030": 2
+          }
+        }
+      }
+    },
+    "rights-ontology.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "rights-ontology.ttl": {
+          "counts": {
+            "CLS001": 1,
+            "GOV004": 1,
+            "IRI001": 13,
+            "IRI019": 2,
+            "METRIC006": 1,
+            "ONT003": 1,
+            "ONT004": 1,
+            "ONT005": 1
+          }
+        }
+      }
+    },
+    "ro-core.owl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "ro-core.owl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV008": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI019": 2,
+            "LEX001": 1,
+            "LEX002": 2,
+            "LEX009": 2,
+            "LEX020": 1,
+            "ONT005": 1,
+            "ONT006": 1,
+            "OWL004": 2,
+            "OWL005": 12,
+            "OWL006": 11
+          }
+        }
+      }
+    },
+    "schemaorg-30.1.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "schemaorg-30.1.ttl": {
+          "counts": {
+            "ALIGN009": 2,
+            "ALIGN013": 19,
+            "CLS004": 8,
+            "CLS011": 3,
+            "CLS023": 16,
+            "CLS024": 10,
+            "LEX010": 1,
+            "LEX020": 34,
+            "LEX025": 99,
+            "METRIC009": 1,
+            "ONT001": 1,
+            "OWL001": 22,
+            "OWL005": 1,
+            "OWL006": 1
+          }
+        }
+      }
+    },
+    "sdo-1.9.0.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "sdo-1.9.0.ttl": {
+          "counts": {
+            "CLS008": 1,
+            "GOV017": 1,
+            "ONT005": 1,
+            "OWL005": 2,
+            "OWL006": 2,
+            "OWL043": 1
+          }
+        }
+      }
+    },
+    "skos-core.rdf/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "skos-core.rdf": {
+          "counts": {
+            "LEX020": 1,
+            "METRIC008": 1,
+            "ONT003": 1,
+            "ONT004": 1,
+            "ONT005": 1,
+            "OWL005": 13,
+            "OWL006": 12
+          }
+        }
+      }
+    },
+    "sosa.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "sosa.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "LEX025": 3,
+            "ONT004": 1,
+            "OWL006": 1
+          }
+        }
+      }
+    },
+    "ssn.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "ssn.ttl": {
+          "counts": {
+            "GOV004": 1,
+            "GOV011": 1,
+            "GOV017": 1,
+            "IRI019": 1,
+            "METRIC008": 1,
+            "OWL005": 15,
+            "OWL006": 15,
+            "OWL011": 14,
+            "SEC007": 1
+          }
+        }
+      }
+    },
+    "tractusx-ontology.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "tractusx-ontology.ttl": {
+          "counts": {
+            "CLS008": 1,
+            "DATA004": 8,
+            "GOV004": 1,
+            "IRI003": 13,
+            "LEX001": 2,
+            "LEX002": 2,
+            "LEX004": 6,
+            "LEX012": 5,
+            "LEX017": 1,
+            "LEX020": 5,
+            "LEX025": 1,
+            "ONT003": 1,
+            "ONT004": 1,
+            "ONT005": 1,
+            "OWL002": 2,
+            "OWL003": 6,
+            "OWL004": 4,
+            "OWL006": 4,
+            "OWL007": 2,
+            "OWL023": 1,
+            "OWL030": 1
+          }
+        }
+      }
+    },
+    "tractusx-taxonomy.ttl/default": {
+      "exit_status": 0,
+      "expected_exit_status": 0,
+      "files": {
+        "tractusx-taxonomy.ttl": {
+          "counts": {
+            "LEX010": 2,
+            "LEX020": 1,
+            "LEX025": 1,
+            "ONT001": 1,
+            "SKOS005": 51
+          }
+        }
+      }
+    }
+  }
+}

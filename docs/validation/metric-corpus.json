@@ -591,5 +591,14 @@
         }
       ]
     }
-  ]
+  ],
+  "counts": {
+    "command": [
+      "--format",
+      "json",
+      "--fail-on",
+      "never"
+    ],
+    "file": "rule-counts.json"
+  }
 }

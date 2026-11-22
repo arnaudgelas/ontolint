@@ -46,3 +46,29 @@ and its second run lints the modules with their own catalog.
 
 `fetch` is the one step that needs the network. A file already in `DIR` with the right checksum is not downloaded
 again, and two fetches give trees that `tree` prints identically.
+
+## Per-rule counts
+
+`scripts/corpus_counts.py` lints every run of the manifest with the fixed arguments it states
+(`counts.command`: `--format json --fail-on never`) and keeps the findings per rule and per file in
+[`rule-counts.json`](rule-counts.json), so a release that doubles one rule's findings on CCO is visible.
+
+```bash
+uv run python scripts/corpus_counts.py record DIR     # rewrite rule-counts.json from the corpus in DIR
+uv run python scripts/corpus_counts.py check DIR      # exit 1 and print the diff when the counts differ
+uv run python scripts/corpus_counts.py diff OLD NEW   # a Markdown report of two counts files
+```
+
+* `DIR` is a directory `scripts/corpus.py fetch` made; it is verified against the manifest first, so the counts are of
+  the pinned corpus or of nothing.
+* Per run: the `exit_status` ontolint ended with (and the one the manifest expects), and per file the counts per rule
+  and the rules that `failed` or were `unsupported`, which are not counted as zero. A file ontolint refuses ends the
+  run with exit 2 and an `error` in place of counts: that is a status change in `diff`, not a count of zero.
+* Deterministic: sorted keys, paths relative to the source with `/`, no timing, the same bytes from any working
+  directory. The ontolint version is recorded beside the counts and is not part of what `check` compares.
+* `record` writes nothing when a run ends otherwise than the manifest expects, and every file a finding is about must be
+  inside its source's directory: an import that resolves elsewhere is refused (its absolute path would be the host's),
+  so a source must carry what its closure needs.
+* `diff` flags a rule whose total doubled. It is a flag for the reviewer, not a failure.
+
+The first recording is ontolint 0.16.0 (the tag), so 0.17.0 shows a diff against it.
