@@ -59,6 +59,16 @@ outputs:
 runs:
   using: composite
   steps:
+    # Linux and macOS only: the install step builds POSIX venv paths (`bin/python`), a Windows venv has
+    # `Scripts\python.exe`. This step comes first, so that a Windows job fails here, with one annotation, not
+    # in a later step with a path error. tests/test_github_action.py runs this step's script.
+    - name: Refuse Windows runners
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        echo "::error title=ontolint Action::This Action runs on Linux and macOS runners only, and this runner is Windows. Install ontolint from PyPI and run the ontolint command in your own step instead."
+        exit 1
+
     - name: Set up uv
       uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
