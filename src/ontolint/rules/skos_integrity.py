@@ -509,7 +509,8 @@ def _uniqueness(ctx: RuleContext, schemes: dict[URIRef, set[URIRef]]) -> None:
         for scheme in its:
             for n in ctx.g.objects(concept, SKOS.notation):
                 if isinstance(n, Literal):
-                    notations[scheme, f"{n}^^{n.datatype}"].add(concept)
+                    # RDF 1.1: "1" and "1"^^xsd:string are one term; the plain form keeps its identity.
+                    notations[scheme, f"{n}^^{None if n.datatype == XSD.string else n.datatype}"].add(concept)
             for label in ctx.g.objects(concept, SKOS.prefLabel):
                 if isinstance(label, Literal) and str(label).strip():
                     labels[scheme, (label.language or "").lower(), str(label).strip().casefold()].add(concept)
