@@ -1,8 +1,78 @@
-"""IRI and namespace quality rules: IRI004-IRI006, IRI008-IRI014 and IRI016-IRI019.
+"""IRI and namespace quality rules: IRI004-IRI006, IRI008-IRI014 and IRI016-IRI019, specified here.
 
-IRI007 (dereferenceability) needs the network, so it stays proposed.  IRI015 is implemented in
+IRI007 (dereferenceability) needs the network, so it stays proposed (issue #38).  IRI015 is implemented in
 ``iri_lexical_extras`` as a mixed-naming check (namespace hijacking would need ownership evidence).
 Every rule here inspects only the asserted IRIs.
+
+RFC 3986 is the URI generic syntax and RFC 3987 its extension to IRIs.  A *term* is an owned declared term (the
+terms ``--base`` or the ontology IRIs select: ``ontolint.ownership``); a *local name* is the text after the last
+``/`` or ``#`` of an IRI; its *namespace* is the rest.  Every rule reads the IRI as the graph holds it: a parser
+has resolved a relative reference (RFC 3986 section 5) and ``--base`` selects terms, it does not resolve.  A focus
+or message that holds an IRI with a userinfo (RFC 3986 3.2.1) prints it masked by ``ontolint.redaction``, so IRIs that
+differ only in their userinfo give one finding.  The catalogue category of every rule here is heuristic; the
+findings of IRI006, IRI009, IRI010, IRI012, IRI016, IRI017 and IRI018 (and IRI001) say certain: category and
+confidence disagree, an open question.  The pinned cases, including every known gap, are in
+``tests/test_iri_specification.py``; the per-rule fixtures in ``tests/rule_cases/iri_quality.py``.
+
+* **IRI004.** Scope: the ontology, when the file has exactly one ``owl:Ontology`` IRI, that is absolute, not under
+  ``http://purl.obolibrary.org/obo/``, and at least one term has a local name.  Fires when no term IRI starts with
+  the ontology IRI minus its trailing ``#`` or ``/`` (a plain string prefix: ``o`` also covers ``ontology/A``).
+  Convention: terms are minted under the ontology IRI.  Gap: a file extension, a query or a version is not
+  removed from the ontology IRI, so ``o.owl`` with terms in ``o#`` is reported although ownership derives the namespace
+  ``o#`` from it, and ``http`` terms under an ``https`` ontology are unrelated.  Info.
+* **IRI005.** Scope: the vocabulary.  Fires once (focus ``(vocabulary)``) when terms with a local name include both
+  an IRI with a ``#`` (hash-style) and one without (slash-style, a URN included).  An IRI that ends in
+  a separator is not counted.  The ``#`` terms under ``http://purl.obolibrary.org/obo/`` are exempt in a file whose
+  ontology IRI is an OBO one (subset annotations).  Convention: one style per vocabulary.  Info.
+* **IRI006.** Scope: every term.  Fires, with certainty, when ``urlsplit`` finds a query or the IRI holds a ``?``
+  anywhere (so an empty query ``x?`` is reported).  RFC 3986 3.4 starts the query at the first ``?`` and ends it at
+  ``#``.  Gap: a ``?`` inside a fragment (``#a?b``, allowed by 3.5) holds no query and is reported.  Ontology
+  IRIs are IRI016's.  Warning: a query is not a stable identifier.
+* **IRI008.** Scope: the vocabulary.  Fires once when terms with a local name have both an ``http`` and an
+  ``https`` scheme (compared lower-cased; other schemes ignored).  The same name under both schemes is two terms.
+  Convention: one scheme per vocabulary.  Info.
+* **IRI009.** Scope: every term (an ontology IRI is not read: gap).  Fires, with certainty, when the IRI holds one of
+  the characters ``<``, ``>``, ``"``, ``{``, ``}``, ``|``, ``\\``, ``^`` or the backtick, which RFC 3986 2.2 and
+  2.3 do not allow and RFC 3987 2.2 does not either.  Exclusions: the space, which is IRI001's,
+  and non-ASCII characters (``ucschar`` is what an IRI allows).  Gap: a control character, a character outside
+  ``ucschar`` and a ``%`` not followed by two hex digits (RFC 3986 2.1) are not reported by any rule.  Warning.
+* **IRI010.** Scope: every term.  Fires, with certainty, when the local name is empty, that is when the IRI ends in
+  ``#`` or ``/`` (``ns#``, ``ns/``, ``ns#A/``).  Gap: the IRI of an authority alone (``https://a.test``) has the host
+  as its local name, and a URN's final colon is not read, since only ``/`` and ``#`` separate.
+  Warning: a namespace names no term.
+* **IRI011.** Scope: every term.  Fires when the local name holds ``%`` followed by two hex digits.  Escapes in
+  the namespace, and a ``%`` that starts no escape, are not read.  Gap: an escape of an unreserved character
+  (RFC 3986 2.3: ``%41`` is ``A``) is reported like any other.  Convention: a readable name.  Info.
+* **IRI012.** Scope: every term.  Fires, with certainty, when the host (after any userinfo, so ``localhost@a.test`` is
+  ``a.test``), lower-cased, is exactly ``localhost``, ``127.0.0.1`` or ``::1`` (an IPv6 literal in brackets, with or
+  without a port).  Gap: RFC 6761 6.3 reserves ``localhost.`` and ``*.localhost``, ``127.0.0.0/8`` is all loopback and
+  ``[0:0:0:0:0:0:0:1]`` is ``::1``; none is reported.  Warning: a loopback IRI cannot be resolved by another reader.
+* **IRI013.** Scope: every term.  A path segment (the whole path is split on ``/``, a local name after the last
+  ``/`` included, the fragment excluded) that is ``v`` and digits with optional dotted parts, dotted numbers, or
+  ``yyyy-mm`` or ``yyyy-mm-dd`` (case-insensitive) is a version or a date.  One finding per namespace of such terms,
+  focused on the namespace, naming the count and the first IRI.  A year alone and a loosely written date are not
+  versions.  Gap: a version in the fragment is not read, and a local name such as ``1.0`` in a slash namespace is.
+  Convention: ``owl:versionIRI`` carries versions (OWL 2 Structural Specification 3.1).  Info.
+* **IRI014.** Scope: every term with a local name.  Fires when the local name starts or ends with ``_`` or ``-`` or
+  holds ``__`` or ``--``.  The mixed ``_-``, ``.`` and ``:`` are not separators here.  Convention.  Info.
+* **IRI016.** Scope: every ontology IRI.  Fires, with certainty, when ``urlsplit`` finds a non-empty query or
+  fragment.  Boundary, accepted by design: an empty fragment (``o#``) is the usual hash-terminated ontology IRI.
+  Gap: an empty query (``o?``) passes although RFC 3986 3.4 makes it a query and IRI006 reports it on a term.
+  An ontology IRI is a document identifier (OWL 2 Structural Specification 3.1, with the version IRI).  Warning.
+* **IRI017.** Scope: every ontology IRI.  Fires, with certainty, when it is also asserted as an ``owl:Class``,
+  ``rdfs:Class``, an object, datatype or annotation property, ``rdf:Property``, a ``skos:Concept``,
+  ``skos:ConceptScheme``, ``skos:Collection`` or ``owl:NamedIndividual``.  Exclusion: a term under the ontology IRI
+  (``o#A``).  Convention: the ontology and its entities are distinct things.  Warning.
+* **IRI018.** Scope: every ontology IRI of the file (the root, not an imported module).  Fires, with certainty, when
+  the IRI ends in ``/untitled-ontology-<digits>`` with an optional ``/`` (message one), or starts with
+  ``http://www.semanticweb.org/<user>/ontologies/`` (``https`` too; message two), Protege's defaults.  Gap: the
+  match is case-sensitive although RFC 3986 3.2.2 makes the host case-insensitive, and a userinfo in the authority
+  hides it.  Warning: the author does not control that namespace.
+* **IRI019.** Scope: the vocabulary.  A declared prefix (the file's own declarations, else the graph's bindings that
+  are not rdflib's defaults, one prefix per namespace) fires, once per prefix, focused on its namespace, when
+  no IRI of the graph or datatype starts with the namespace and the namespace without a final ``#`` or
+  ``/`` is no IRI of the graph.  Exclusions: the editor boilerplate namespaces (rdf, rdfs, owl, xsd, xml).  The
+  namespace itself counts as a use.  Info: an unused declaration is a convention violation, harmless to a reader.
 """
 
 from __future__ import annotations

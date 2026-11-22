@@ -2,12 +2,17 @@
 
 All three inspect only the asserted graph and never leave the process.  Their specifications:
 
-* **IRI015.** Group the owned declared terms by namespace (the IRI minus its local name).  A local name
-  is *opaque* when it is an optional prefix of up to eight letters, an optional ``_``, ``:`` or ``-``,
-  then at least three digits (``T0001234``, ``BFO_0000001``); it is *readable* when it is letters,
-  ``_`` and ``-`` only, starting with a letter, with three lower-case letters in a row (``hasPart``).
-  Other names (``ab12``, empty) are not classified.  One finding per namespace that holds both kinds,
-  focused on the namespace, unless the smaller kind is under 10% of the classified names.
+* **IRI015.** Group the owned declared terms by namespace (the IRI minus its local name, the text after the last
+  ``/`` or ``#``).  A local name is *opaque* when it is an optional prefix of up to eight letters, an optional
+  ``_``, ``:`` or ``-``, then at least three digits (``T0001234``, ``BFO_0000001``); it is *readable* when it is
+  letters, ``_`` and ``-`` only, starting with a letter, with three lower-case letters in a row (``hasPart``).
+  Other names (``ab12``, ``ABC``, ``abcdefghi123``, empty) are not classified.  One finding per namespace that
+  holds both kinds, focused on the namespace and naming the counts and up to three examples of each, unless the
+  smaller kind is under 10% of the classified names (exactly 10% fires).  Terms the file does not own (``--base``)
+  are not grouped; ontology IRIs are not read.  Convention, no standard: an identifier scheme is
+  one per namespace (RFC 3986 and 3987 give a local name no meaning).  Info at heuristic confidence: a mix may be
+  a deliberate scheme.  Fixtures: ``tests/rule_cases/iri_lexical_extras.py``, ``tests/test_precision_lex_iri.py`` and
+  ``tests/test_iri_specification.py``.
 * **LEX018.** A label of an owned term (``rdfs:label``, ``skos:prefLabel``, ``skos:altLabel`` and any
   configured extra label predicate) containing an XML/HTML tag (``<b>``, ``</b>``) or a named, decimal or
   hexadecimal character entity (``&amp;``, ``&#233;``).  A bare ``<``, ``>`` or ``&`` is plain text, and

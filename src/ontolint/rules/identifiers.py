@@ -1,4 +1,36 @@
-"""Identifier hygiene rules: IRI001-IRI003."""
+"""Identifier hygiene rules: IRI001-IRI003, specified here.
+
+RFC 3986 is the URI generic syntax and RFC 3987 its extension to IRIs.  The rules read the IRIs the graph holds:
+every parser resolves a relative reference against the document (RFC 3986 section 5) before a rule runs, and
+``--base`` (``Linter(base=...)``) is an ownership prefix that selects the terms judged, never a resolution base.
+They inspect the declared terms the file owns and the ``owl:Ontology`` IRIs, and nothing leaves the process.  A
+focus or message that holds an IRI with a userinfo prints it masked (``ontolint.redaction``).  The pinned cases,
+including every known gap, are in ``tests/test_iri_specification.py``.
+
+* **IRI001.** Scope: every owned declared term and every ontology IRI.  Fires with certainty when the IRI text holds a
+  character for which ``str.isspace`` is true, or when ``urlsplit`` finds no scheme ("IRI contains whitespace or
+  is not absolute."), and, as a second message, when the scheme is ``http`` or ``https`` (any case) and the
+  authority is empty (``http:example.org/x``, ``http:///x``: "has no '//' host").  RFC 3986 4.3 makes an
+  absolute IRI begin with a scheme (3.1: a letter first) and RFC 3987 2.2 excludes the space.  Exclusions: any other
+  scheme (``urn:``, ``file:///x``).  Gap: an empty host with a port (``http://:80/x``) is not reported because the
+  authority is not empty.  Warning, because such an IRI is a different identifier from the one the author meant
+  once a tool resolves or serialises it; certain, because the condition is a syntax test (the catalogue category
+  is heuristic: confidence and category disagree, an open question).  Fixtures: ``tests/rule_cases/identifiers.py``.
+* **IRI002.** Scope: every ontology IRI except those under ``http://purl.obolibrary.org/obo/``.  Fires when the
+  path (not the query or fragment) ends in ``.owl``, ``.ttl``, ``.n3``, ``.rdf`` or ``.rdfxml``, in any case.
+  Convention, not a standard: an ontology IRI names the ontology, not a serialisation of it.  Gap: ``.jsonld``,
+  ``.json``, ``.nt``, ``.obo``, ``.ofn``, ``.omn`` and ``.owx`` (which ownership strips) are not read.
+  Warning at heuristic confidence, as the suggestion says the choice is policy-dependent.  Fixtures:
+  ``tests/rule_cases/identifiers.py`` and ``tests/test_precision_lex_iri.py``.
+* **IRI003.** Scope: the owned declared terms that are not ``owl:deprecated true``.  Groups them by the case-folded
+  local name (the text after the last ``/`` or ``#``) and by kind (``class``, ``property`` or ``other``: a term of
+  two kinds is in two groups); one finding per group with two or more IRIs, focused on the smallest IRI, naming
+  at most five.  A class and a property, or a class and a concept, that share a name are ordinary style and are
+  not reported.  Ontology IRIs are not read.  Gap: the title says across namespaces, but two names that differ only
+  in case in one namespace are reported, and so are two empty local names.  Info at heuristic confidence:
+  a convention that duplicate names confuse readers, no standard.  Fixtures: ``tests/rule_cases/identifiers.py`` and
+  ``tests/test_precision_lex_iri.py``.
+"""
 
 from __future__ import annotations
 
