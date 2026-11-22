@@ -56,6 +56,12 @@ timestamp unless the environment sets `SOURCE_DATE_EPOCH` (a whole number of sec
 unset; anything else is a tool failure, exit 2), which dates the run (`prov:endedAtTime`) and each
 measurement (`prov:generatedAtTime`). Every IRI and reason has its userinfo masked, as everywhere else.
 
+No text of the file holds a control, format (bidi, zero-width), surrogate, private-use or separator
+character other than a space. A reason is written with each of them as an escape, `\u001B` for ESC and
+`\u000A` for a line break, as the text report shows it (the JSON report and the quality snapshot use JSON's own escapes); an IRI (the
+ontology's) has each of them, and each character a Turtle IRI cannot hold (a space, `<>"{}|\^` and a backtick),
+percent-encoded by its UTF-8 bytes, so that the file always parses. Ordinary text and IRIs are written as they are.
+
 ## Failures
 
 Exit 2 (`TOOL001`) and no file: the ontology has no single `owl:Ontology` IRI (or more than one

@@ -25,6 +25,7 @@ from typing import Any
 
 from ._version import package_version
 from .dqv import Subject
+from .escaping import one_line
 from .models import (
     Evidence,
     ExecutionStatus,
@@ -481,32 +482,6 @@ def _where(f: Finding, file: FileReport) -> str:
     if names:
         parts.append(("module " if len(names) == 1 else "modules ") + ", ".join(map(one_line, names)))
     return f"\n    In: {', '.join(parts)}" if parts else ""
-
-
-_ESCAPED_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Co", "Zl", "Zp", "Zs"})
-"""The Unicode general categories an evidence line escapes (U+0020 excepted): controls, format characters (bidi
-controls, zero-width characters), surrogates, private use, and line, paragraph and space separators.  A fixed set,
-not :meth:`str.isprintable`, which also refuses unassigned code points (Cn), a set each Unicode version changes."""
-
-
-def _escape(char: str) -> str:
-    """``char`` as an N-Triples escape: ``\\uXXXX`` up to U+FFFF, ``\\UXXXXXXXX`` above, in uppercase hex."""
-    code = ord(char)
-    return f"\\u{code:04X}" if code <= 0xFFFF else f"\\U{code:08X}"  # noqa: PLR2004 -- the BMP's last code point
-
-
-def one_line(text: str) -> str:
-    """``text`` with each character of :data:`_ESCAPED_CATEGORIES` but a space escaped (:func:`_escape`).
-
-    The line then survives ``str.splitlines`` whole, encodes as strict UTF-8 (a lone surrogate is written as its
-    code unit) and shows bidi and zero-width characters.  A literal in N-Triples stays a term that parses back to
-    itself, except for a lone surrogate: an escaped high and low surrogate side by side read back as one character.
-    """
-    if text.isprintable():  # False for every escaped character (C* and Z*, but a space), so nothing to escape
-        return text
-    return "".join(
-        _escape(char) if char != " " and unicodedata.category(char) in _ESCAPED_CATEGORIES else char for char in text
-    )
 
 
 def _text_value(evidence: Evidence, key: str) -> str | None:
