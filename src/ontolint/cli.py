@@ -1434,11 +1434,17 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
         if failure is not None:
             print(failure, file=sys.stderr)
         for path, x in report.broken:
-            print(f"TOOL001: rule {x.rule_id} {x.status.value} for {path}: {x.detail}", file=sys.stderr)
+            print(
+                f"TOOL001: rule {x.rule_id} {x.status.value} for {one_line(path)}: {one_line(x.detail)}",
+                file=sys.stderr,
+            )
             for line in x.results:  # one per result, escaped to one visible line each
                 print(f"  {one_line(line)}", file=sys.stderr)
         for path, measurement_id, reason in report.failed_measurements:
-            print(f"TOOL001: measurement {measurement_id} failed for {path}: {one_line(reason)}", file=sys.stderr)
+            print(
+                f"TOOL001: measurement {measurement_id} failed for {one_line(path)}: {one_line(reason)}",
+                file=sys.stderr,
+            )
     except BrokenPipeError:  # the report is out and the exit status says what these lines would have: keep it
         _release(sys.stderr)
     return EXIT_PIPE_CLOSED if closed and code != TOOL_FAILURE_EXIT else code

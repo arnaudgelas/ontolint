@@ -127,14 +127,33 @@ def test_an_ascii_stdout_escapes_everything_that_is_not_ascii(source: Path, monk
     assert NOTE in err
 
 
-def test_a_lone_surrogate_in_a_report_is_escaped_on_stdout_like_json_does(
+def _with_a_lone_surrogate(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make the text report end in a lone surrogate, which no renderer of ontolint writes any more (#125)."""
+    from ontolint import cli  # noqa: PLC0415
+
+    real = cli.render_report
+    monkeypatch.setattr(cli, "render_report", lambda *args, **kwargs: real(*args, **kwargs) + "\ud800\n")
+
+
+def test_a_lone_surrogate_in_a_module_name_is_escaped_by_the_report_not_by_the_console(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The module name is a literal the text report prints as it is; utf-8 cannot hold a lone surrogate either."""
+    """The text report writes a module name through ``one_line`` (#125): nothing reaches the console unencodable."""
     (tmp_path / "s.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
     code, out, err, _ = _run_with(
         "utf-8", tmp_path, monkeypatch, "s.ttl", "--module-annotation", MODULE, "--fail-on", "never"
     )
+    assert code == 0, err
+    assert "\\uD800" in out and NOTE not in err
+
+
+def test_a_lone_surrogate_in_a_report_is_escaped_on_stdout_like_json_does(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Were one to reach stdout, utf-8 could not hold it either: it is written escaped, with the note."""
+    (tmp_path / "s.ttl").write_text(SURROGATE_TTL, encoding="utf-8")
+    _with_a_lone_surrogate(monkeypatch)
+    code, out, err, _ = _run_with("utf-8", tmp_path, monkeypatch, "s.ttl", "--fail-on", "never")
     assert code == 0, err
     assert "\\ud800" in out and NOTE in err
 

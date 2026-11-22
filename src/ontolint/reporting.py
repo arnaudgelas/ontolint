@@ -8,7 +8,8 @@ The Markdown summary (:func:`render_markdown`) is a bounded view of a run for a 
 in which no text of the report can become markup.
 JSON and SARIF carry a finding's ``evidence`` in full; text prints its path, value and nested causes on lines of
 their own after ``Fix:`` (and any ``In:``), each escaped to one visible line (:func:`one_line`), as is the focus and
-the message of a finding's header; ``Finding.message``, JSON, SARIF and the fingerprints keep the raw text.
+the message of a finding's header, a file's heading, the names of an ``In:`` line and of the module summary, and a
+rule execution's file and detail; ``Finding.message``, JSON, SARIF and the fingerprints keep the raw text.
 """
 
 from __future__ import annotations
@@ -472,13 +473,13 @@ def render_sarif(report: RunReport, exit_status: int | None = None) -> str:
 
 def _where(f: Finding, file: FileReport) -> str:
     """The ``In:`` line: the imported module's file, the named graphs and the modules inside the file, if any."""
-    parts = [file.origins[f].path] if f in file.origins else []
+    parts = [one_line(file.origins[f].path)] if f in file.origins else []
     graphs = file.graphs.get(f, ())
     if graphs:
-        parts.append(("graph " if len(graphs) == 1 else "graphs ") + ", ".join(graphs))
+        parts.append(("graph " if len(graphs) == 1 else "graphs ") + ", ".join(map(one_line, graphs)))
     names = file.modules.get(f, ())
     if names:
-        parts.append(("module " if len(names) == 1 else "modules ") + ", ".join(names))
+        parts.append(("module " if len(names) == 1 else "modules ") + ", ".join(map(one_line, names)))
     return f"\n    In: {', '.join(parts)}" if parts else ""
 
 
@@ -559,7 +560,7 @@ def _finding_lines(file: FileReport) -> list[str]:
     if summary:
         lines.append("Findings by module:")
         lines.extend(
-            f"    {name}: " + ", ".join(f"{counts[s]} {s}" for s in SEVERITY_ORDER if s in counts)
+            f"    {one_line(name)}: " + ", ".join(f"{counts[s]} {s}" for s in SEVERITY_ORDER if s in counts)
             for name, counts in summary.items()
         )
     return lines
@@ -572,7 +573,7 @@ def render_text(report: RunReport) -> str:
         return "\n".join([f"Ontology linter: {len(only.findings)} finding(s)", *_finding_lines(only)])
     lines = [f"Ontology linter: {len(report.findings)} finding(s) in {len(report.files)} file(s)"]
     for r in report.files:
-        lines.append(f"== {r.path}: {len(r.findings)} finding(s)")
+        lines.append(f"== {one_line(r.path)}: {len(r.findings)} finding(s)")
         lines.extend(_finding_lines(r))
     return "\n".join(lines)
 
@@ -587,7 +588,7 @@ def render_executions(executions: Sequence[RuleExecution]) -> str:
     """Render rule execution outcomes as text, listing every rule that did not execute with its reason."""
     lines = [_execution_counts(executions)]
     lines.extend(
-        f"[{x.status.value.upper():11}] {x.rule_id}: {x.detail}"
+        f"[{x.status.value.upper():11}] {x.rule_id}: {one_line(x.detail)}"
         for x in executions
         if x.status != ExecutionStatus.EXECUTED
     )
@@ -840,7 +841,9 @@ def render_report(report: RunReport, output_format: str, exit_status: int | None
     text = render_text(report)
     if text_needs_executions(report):
         text += "\n" + "\n".join(
-            f"{r.path}: {render_executions(r.executions)}" if len(report.files) > 1 else render_executions(r.executions)
+            f"{one_line(r.path)}: {render_executions(r.executions)}"
+            if len(report.files) > 1
+            else render_executions(r.executions)
             for r in report.files
         )
     if report.stale_baseline:
