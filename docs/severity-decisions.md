@@ -1,12 +1,12 @@
 # Severity and confidence decisions (issue #63): decision record
 
-**Status: proposed, not yet decided.** The decisions below were prepared by Claude from this record's recommendations. They
-become the maintainer's decisions only when the maintainer merges pull request #198, which carries them, and each one is applied
-only when its pull request of "Where each decision ships" merges (#199 to #204); until then nothing here is in force, and
-`TODO.md` keeps listing the rows as pending. "Decisions taken" records what is proposed, including the three places where it
-departs from a recommendation. A row marked "maintainer" is not decided here. The maintainer's approval, the date and the
-merge commit of each pull request are the evidence of a decision; the audit item in `TODO.md` drops a row when the pull request
-that ships it merges.
+**Status: decided; shipped in 0.17.0.** The decisions below were prepared by Claude from this record's recommendations
+and became the maintainer's decisions when the maintainer merged pull request #198 (21 November 2026, `a20b015`), which
+carried them. Each was applied by its own pull request of "Where each decision ships" (#199 to #204, merged the same
+day), and the release notes of 0.17.0 list the changes a user can see. "Decisions taken" records what was decided,
+including the three places where it departs from a recommendation. A row marked "maintainer" is not decided here. The
+maintainer's approval, the date and the merge commit of each pull request are the evidence of a decision; the audit item
+in `TODO.md` drops a row when the pull request that ships it merges.
 
 ## Decisions taken
 

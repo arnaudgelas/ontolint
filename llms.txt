@@ -18,6 +18,10 @@ Install and run: `uv tool install ontolint`, then `ontolint ontology.ttl`. Machi
 - [Quality budgets](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality-budgets.md): the `quality_budgets` policy key, explicit bounds over measurements, and `METRIC014`.
 - [Quality snapshots](https://github.com/arnaudgelas/ontolint/blob/main/docs/quality.md): the versioned snapshot file (`--write-quality-snapshot`), a committed quality baseline (`--quality-baseline`) and the trend between two snapshots (`--compare-quality`).
 - [Measurements as DQV](https://github.com/arnaudgelas/ontolint/blob/main/docs/dqv.md): `--write-dqv`, the measurements as W3C DQV Turtle, and its mapping.
+- [Severity and confidence decisions](https://github.com/arnaudgelas/ontolint/blob/main/docs/severity-decisions.md): the decision record of issue #63 (what `certain` means, which rules are errors, warnings or info, and why), and the approval of the OWL, METRIC and SHQ specifications.
+- [METRIC calibration](https://github.com/arnaudgelas/ontolint/blob/main/docs/metric-calibration.md): the labelled corpus, the sweep and the evidence behind each METRIC default.
+- [SARIF partialFingerprints](https://github.com/arnaudgelas/ontolint/blob/main/docs/sarif-fingerprints-observation.md): why `--sarif-fingerprints` stays opt-in.
+- [Dropped rules](https://github.com/arnaudgelas/ontolint/blob/main/docs/dropped-rules.md): catalogue entries removed because they cannot be specified soundly.
 - [Performance](https://github.com/arnaudgelas/ontolint/blob/main/docs/performance.md): resource budgets and benchmarks.
 - [Changelog](https://github.com/arnaudgelas/ontolint/blob/main/CHANGELOG.md): releases, with upgrade notes.
 - [Security policy](https://github.com/arnaudgelas/ontolint/blob/main/SECURITY.md): supported versions and how to report a vulnerability.
