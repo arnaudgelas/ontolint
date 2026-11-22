@@ -301,11 +301,6 @@
       "sha256": "c5054058bde7cdea52eed59567a606a73243a5dd5a2abc3af3812406ef27a7be",
       "bytes": 9039,
       "labels": {
-        "*": {
-          "expect": "unassessed",
-          "basis": "none",
-          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
-        },
         "METRIC001": {
           "expect": "silent",
           "basis": "checked",
@@ -316,10 +311,60 @@
           "basis": "checked",
           "why": "No class has a definition (18 of 18)."
         },
+        "METRIC003": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "2 properties, below metric_min_sample (10): the gate silences the rule, and two properties cannot support a conclusion. Both are undocumented."
+        },
+        "METRIC004": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "None of its 14 subclass assertions points to an owned class (every parent is a BFO class), so there is no fan-out to measure."
+        },
+        "METRIC005": {
+          "expect": "unknown",
+          "basis": "checked",
+          "why": "4 of 18 classes (22%) have no parent or subclass (sex, process of birth, two MFQ variables): unfinished alignment under BFO or deliberate, and the limit 0.3 is the question, so the label is the maintainer's."
+        },
+        "METRIC006": {
+          "expect": "unknown",
+          "basis": "checked",
+          "why": "2 relation properties for 18 classes (0.11, limit 0.1) and neither has a domain or a range: a survey-variable model that may need no relations, or an unfinished one."
+        },
+        "METRIC007": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "0.11 relation properties per class, far below the upper limit of 5."
+        },
+        "METRIC008": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "2 properties, below metric_min_sample (10): the gate silences the rule. Both lack a domain and a range."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "All 18 labels carry the language tag @en."
+        },
         "METRIC010": {
           "expect": "silent",
           "basis": "checked",
           "why": "Every class sits under a BFO class: alignment to an upper ontology is the intended reuse."
+        },
+        "METRIC011": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "2 imports (BFO classes-only and RO core)."
+        },
+        "METRIC012": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No class has a definition, so there is no length to measure; the defect is METRIC002's, labelled fire."
+        },
+        "METRIC013": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "Every blank-node subject (13 of 35 subjects) is structural; the rule counts none of them (measured 0)."
         }
       }
     },
@@ -335,11 +380,6 @@
       "sha256": "667710d4e9a2f33ddc729216207ee8c10684c8f969a9abb0db0e5b5bc602da7a",
       "bytes": 17280,
       "labels": {
-        "*": {
-          "expect": "unassessed",
-          "basis": "none",
-          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
-        },
         "METRIC001": {
           "expect": "silent",
           "basis": "checked",
@@ -350,10 +390,60 @@
           "basis": "checked",
           "why": "Every class is defined."
         },
-        "METRIC006": {
-          "expect": "unknown",
+        "METRIC003": {
+          "expect": "silent",
           "basis": "checked",
-          "why": "Twelve classes and no relation: a taxonomy of Hohfeld's incidents may be intended, or unfinished."
+          "why": "No owned property, so no population."
+        },
+        "METRIC004": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "2.5 subclasses per parent on average over 4 parents, far below 8."
+        },
+        "METRIC005": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "1 of 12 classes is unconnected."
+        },
+        "METRIC006": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No owned relation by design: its 28 restrictions all use one property, BFO has part (BFO_0000051), from the upper ontology it imports. The same reuse as PATO's, checked in the file."
+        },
+        "METRIC007": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No owned relation, ratio 0."
+        },
+        "METRIC008": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No owned object or datatype property, so no population."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "All 12 labels carry the language tag @en."
+        },
+        "METRIC010": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No subclass, domain or range reference to a foreign namespace."
+        },
+        "METRIC011": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No owl:imports."
+        },
+        "METRIC012": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "All 12 classes are defined, 22.7 words on average, far above 4."
+        },
+        "METRIC013": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "Every blank-node subject (99 of 112) is structural, restriction and list nodes; the rule counts none of them (measured 0)."
         }
       }
     },
@@ -369,11 +459,6 @@
       "sha256": "adbff3603a0e69fc783b70e9da102d43be433e7e21f06836edfdd2b9b4cb9196",
       "bytes": 162675,
       "labels": {
-        "*": {
-          "expect": "unassessed",
-          "basis": "none",
-          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
-        },
         "METRIC001": {
           "expect": "silent",
           "basis": "checked",
@@ -390,14 +475,54 @@
           "why": "None of its 13 owned properties is documented."
         },
         "METRIC004": {
-          "expect": "unknown",
+          "expect": "silent",
           "basis": "checked",
-          "why": "50 named questionnaires under one parent: a catalogue may be flat on purpose, or want grouping by construct."
+          "why": "The 50 subclasses of one parent are named questionnaires (Absorption, Achievement via Independence, Adjective, ... Questionnaire) and its next two parents have 9 and 8: a catalogue of instruments is flat by nature, so a default that fires on it (13.57) is a false positive. Verified in the file; a different reading is legitimate."
+        },
+        "METRIC005": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No orphan class."
+        },
+        "METRIC006": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "13 owned relation properties for 103 classes (0.126), and 132 restrictions in the file: relations exist, though the limit 0.1 is close."
+        },
+        "METRIC007": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "0.126 relation properties per class, far below 5."
         },
         "METRIC008": {
-          "expect": "unknown",
+          "expect": "fire",
           "basis": "checked",
-          "why": "10 of its 13 owned object and datatype properties have no signature, in a small research ontology: unfinished or deliberately open."
+          "why": "15 of the 18 declared properties have neither a domain nor a range, and 9 of those appear in no restriction either, so they carry no signature at all: an unfinished research ontology (the rule counts 10 of 13 owned). Counted in the file."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "All labels carry a language tag but one class (112 of 113)."
+        },
+        "METRIC010": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "12 of 107 references are foreign (0.11), against a limit of 0.5."
+        },
+        "METRIC011": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "2 imports."
+        },
+        "METRIC012": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "The 93 defined classes average 12.1 words, above 4."
+        },
+        "METRIC013": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "Every blank-node subject (138 of 272) is structural, restriction and list nodes; the rule counts none of them (measured 0)."
         }
       }
     },
@@ -475,11 +600,6 @@
       "sha256": "9307dd169cf295709113c34a3be761f3fcba1dc3b2e693a590580a769ae878e8",
       "bytes": 59596,
       "labels": {
-        "*": {
-          "expect": "unassessed",
-          "basis": "none",
-          "why": "Not assessed: only the rules whose gap or absence is visible in the file were labelled."
-        },
         "METRIC001": {
           "expect": "fire",
           "basis": "checked",
@@ -495,10 +615,55 @@
           "basis": "checked",
           "why": "No property is documented."
         },
+        "METRIC004": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "6.0 subclasses per parent on average over 3 parents, below 8."
+        },
+        "METRIC005": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No orphan class."
+        },
+        "METRIC006": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "31 relation properties for 43 classes (0.72): relations are the content of this model."
+        },
+        "METRIC007": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "0.72 relation properties per class, far below 5."
+        },
         "METRIC008": {
           "expect": "silent",
           "basis": "checked",
           "why": "MOMo states its signatures as scoped restrictions (109 of them) instead of global domains and ranges, by design."
+        },
+        "METRIC009": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No class has a label, so there is no labelled population; the defect is METRIC001's, labelled fire."
+        },
+        "METRIC010": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No foreign reference."
+        },
+        "METRIC011": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No owl:imports."
+        },
+        "METRIC012": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "No class has a definition, so there is no length to measure; the defect is METRIC002's, labelled fire."
+        },
+        "METRIC013": {
+          "expect": "silent",
+          "basis": "checked",
+          "why": "58 of 137 subjects (0.42, limit 0.6) are non-structural blank nodes: 42 are CoModIDE diagram-layout annotations (entityPositionX and Y) and 16 are anonymous inverse-property expressions. A tool artefact, not a hidden individual; counted in the file."
         }
       }
     },

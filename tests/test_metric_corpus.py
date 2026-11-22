@@ -146,11 +146,11 @@ def test_measure_never_reads_outside_its_directory(tmp_path: Path) -> None:
 
 def test_an_entry_that_leaves_a_rule_unlabelled_is_refused(tmp_path: Path) -> None:
     data = _manifest()
-    mfto = next(entry for entry in data["entries"] if entry["id"] == "mfto.ttl")
-    del mfto["labels"]["*"]
+    entry = next(entry for entry in data["entries"] if "*" in entry["labels"] and entry["id"] == "bfo-2020-core.ttl")
+    del entry["labels"]["*"]
     path = tmp_path / "manifest.json"
     path.write_text(json.dumps(data), encoding="utf-8")
-    with pytest.raises(ValueError, match=r"mfto\.ttl: METRIC003 has no label"):
+    with pytest.raises(ValueError, match=r"bfo-2020-core\.ttl: METRIC001 has no label"):
         metric_corpus.load_manifest(path)
 
 
@@ -248,7 +248,9 @@ def test_the_pages_quote_the_label_counts_of_the_manifest() -> None:
     assert f"`unknown` (assessed, left to the maintainer: {open_} pairs)" in calibration
     assert f"`unassessed` (not looked at: {unassessed} pairs" in calibration
     fired = {rule for entry in entries for rule in metric_corpus.RULES if entry.expect(rule) == "fire"}
-    assert fired == {"METRIC001", "METRIC002", "METRIC003"}, "the pages say recall is unmeasured for METRIC004-013"
+    assert fired == {"METRIC001", "METRIC002", "METRIC003", "METRIC008"}, (
+        "the pages say recall is unmeasured for the rest"
+    )
 
 
 def test_a_forced_and_a_default_run_measure_a_known_fixture(tmp_path: Path) -> None:
