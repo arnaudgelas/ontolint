@@ -149,6 +149,11 @@ results after upgrading.
 
 ### Fixed
 
+- **SHACL001:** a shapes graph with a shape typed both `sh:NodeShape` and `sh:PropertyShape`, or with a shape typed
+  `sh:PropertyShape` and no `sh:path`, that SHACL-SHACL accepts and pySHACL's loader refuses, is no longer reported as
+  pySHACL's raw `ShapeLoadError: ...` with no shape named: the rule-execution line says what is wrong and the `TOOL001`
+  lines name each shape, as for a node shape with `sh:path` (SHQ023 pointer where it reports the same defect). The run
+  still exits 2; nothing else changes (issue #137).
 - **IRI006:** a `?` inside the fragment of a term IRI (`https://a.test/x#a?b`) is no longer reported as "contains a
   query string": RFC 3986 3.4 ends the query at `#` and 3.5 lets a fragment hold `?`. A query before the fragment, and an
   empty query (`x?`), are still reported. Fewer findings only; no identity changes, and none on the pinned corpora.

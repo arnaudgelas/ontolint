@@ -467,16 +467,27 @@ def _metashacl_verdict(sg: Graph) -> ShapesNotWellFormed | None:
 
 NODE_SHAPE_PATH_SUMMARY = "the shapes graph has a node shape with sh:path, which SHACL forbids"
 """The summary of a shapes graph that pySHACL's loader refuses for a node shape with ``sh:path`` (SHACL 2.2)."""
+DUAL_TYPE_SUMMARY = "the shapes graph has a shape typed both sh:NodeShape and sh:PropertyShape, which pySHACL refuses"
+"""The summary when the loader refuses a shape typed as both kinds and without ``sh:path`` (issue #137)."""
+PROPERTY_SHAPE_NO_PATH_SUMMARY = "the shapes graph has a property shape with no sh:path, which pySHACL refuses"
+"""The summary when the loader refuses a shape typed ``sh:PropertyShape`` for its missing ``sh:path``."""
+LOADER_REFUSAL_SUMMARY = "the shapes graph has shapes that pySHACL refuses to load"
+"""The summary when the shapes graph holds more than one of the three kinds."""
 
 
-def _node_shape_path_failure(sg: Graph, failure: Exception) -> ShapesNotWellFormed | None:
+def _loader_refusal(sg: Graph, failure: Exception) -> ShapesNotWellFormed | None:
     """``failure`` as a :class:`ShapesNotWellFormed` when it is pySHACL's ``ShapeLoadError`` and the shapes graph has
-    a node shape with an ``sh:path``; ``None`` otherwise.
+    a shape of one of the three kinds the loader refuses and SHACL-SHACL accepts; ``None`` otherwise.
 
-    SHACL-SHACL accepts such a shape, so MetaSHACL does not see it, but pySHACL's loader refuses every one before it
-    validates any data.  The shapes graph, not the exception's text, tells that defect from another load error (and
-    from a bug): the loader refuses exactly the shapes :func:`is_node_shape_with_path` selects, and SHQ023 reports
-    them.  Another ``ShapeLoadError`` on a graph without one keeps its own detail.
+    * a node shape with an ``sh:path`` (SHACL 2.2 forbids it; SHQ023 reports it, the pointer on its line);
+    * a shape typed both ``sh:NodeShape`` and ``sh:PropertyShape`` without ``sh:path`` (issue #137): no pointer, since
+      SHQ023 reports the missing path and a path gives the first refusal;
+    * a shape typed ``sh:PropertyShape`` with no ``sh:path`` (a bare one, a targeted one, a deactivated one; SHACL-SHACL
+      only sees one that carries a constraint): SHQ023 reports the same defect, the pointer on its line.
+
+    The shapes graph, not the exception's text, tells these from another load error (and from a bug): the loader
+    refuses exactly these shapes.  Another ``ShapeLoadError`` on a graph without one keeps its own detail.  One kind
+    gives its own summary; several kinds give :data:`LOADER_REFUSAL_SUMMARY` and every line, sorted and capped.
     """
     try:
         from pyshacl.errors import ShapeLoadError  # noqa: PLC0415 -- the same package as ``validate``.
@@ -484,12 +495,26 @@ def _node_shape_path_failure(sg: Graph, failure: Exception) -> ShapesNotWellForm
         return None
     if not isinstance(failure, ShapeLoadError):
         return None
-    lines = []
+    summaries: dict[str, list[str]] = {}
+
+    def line(shape: Node, text: str, pointer: bool) -> str:
+        return f"{clip(f'{_name(sg, shape)}: {text}', MAX_RESULT_LINE, ELLIPSIS)}{' (SHQ023)' if pointer else ''}"
+
     for shape in set(sg.subjects(RDF.type, SH.NodeShape)):
         if is_node_shape_with_path(sg, shape):
-            line = clip(f"{_name(sg, shape)}: sh:path: a node shape must not have sh:path", MAX_RESULT_LINE, ELLIPSIS)
-            lines.append(f"{line} (SHQ023)")
-    return ShapesNotWellFormed(_capped(lines), NODE_SHAPE_PATH_SUMMARY) if lines else None
+            text = "sh:path: a node shape must not have sh:path"
+            summaries.setdefault(NODE_SHAPE_PATH_SUMMARY, []).append(line(shape, text, True))
+        elif (shape, RDF.type, SH.PropertyShape) in sg:
+            text = "a shape must not be typed both sh:NodeShape and sh:PropertyShape"
+            summaries.setdefault(DUAL_TYPE_SUMMARY, []).append(line(shape, text, False))
+    for shape in set(sg.subjects(RDF.type, SH.PropertyShape)):
+        if (shape, RDF.type, SH.NodeShape) not in sg and (shape, SH.path, None) not in sg:
+            text = "sh:path: a property shape must have one sh:path"
+            summaries.setdefault(PROPERTY_SHAPE_NO_PATH_SUMMARY, []).append(line(shape, text, True))
+    if not summaries:
+        return None
+    summary = next(iter(summaries)) if len(summaries) == 1 else LOADER_REFUSAL_SUMMARY
+    return ShapesNotWellFormed(_capped([text for lines in summaries.values() for text in lines]), summary)
 
 
 def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, object]:
@@ -524,7 +549,7 @@ def _pyshacl(validate: Callable[..., Any], g: Graph, sg: Graph) -> tuple[bool, o
         raise not_well_formed
     if failure is None:
         return bool(conforms), report
-    if (not_loadable := _node_shape_path_failure(sg, failure)) is not None:
+    if (not_loadable := _loader_refusal(sg, failure)) is not None:
         raise not_loadable from failure
     if not isinstance(failure, ShapesRejected):
         # The data graph may hold large enumerations, odd IRIs (IRI001 reports those) or malformed lists, and
