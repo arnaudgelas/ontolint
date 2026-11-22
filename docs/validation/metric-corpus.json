@@ -1,6 +1,6 @@
 {
   "description": "The METRIC calibration corpus (issue #8). Files are fetched by URL and checked by SHA-256; none is committed. Every rule of every entry has a label, named or through '*' (the rules the entry does not name). 'expect' is 'fire' or 'silent' (counted), 'unknown' (assessed, left to the maintainer's judgement) or 'unassessed' (not looked at). 'basis' is 'checked' (the reason was verified in the file), 'presumed' (inferred from the file's standing, not checked) or 'none'. See docs/validation/metric-calibration.md. `sources` are repositories pinned by commit with their files, catalogs and runs (scripts/corpus.py, issue #167); metric_corpus.py reads only `entries`.",
-  "label_status": "proposed",
+  "label_status": "approved",
   "entries": [
     {
       "id": "bfo-2020-core.ttl",
