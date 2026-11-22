@@ -1,10 +1,12 @@
-"""OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002.
+"""OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002 (specified at the end).
 
 OWL012 (self-equivalence) is emitted by :mod:`ontolint.rules.classes`.
 
 All rules read the asserted graph only: no import is followed and nothing is inferred (no
 ``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means
-``ctx.local`` (:mod:`ontolint.ownership`); "declared" means typed by the named class in an asserted
+``ctx.local`` (:mod:`ontolint.ownership`), which is the ``--base`` or the ontology header's namespace;
+when that owns no declared term and no namespace holds most of them, every IRI that is not an RDF, RDFS,
+OWL or XSD term is owned, a foreign one included.  "Declared" means typed by the named class in an asserted
 ``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``,
 ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs
 typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its
@@ -31,8 +33,10 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   intended, so the finding asks for review.
 * **OWL005 / OWL006.** Every property in ``ctx.properties`` with no ``rdfs:domain`` (``rdfs:range``)
   triple and no ``schema:domainIncludes`` (``schema:rangeIncludes``, ``http`` or ``https``) or
-  ``dcam:domainIncludes`` (``dcam:rangeIncludes``) triple.  Excluded: a property with ``owl:deprecated``
-  ``true`` or ``1``, and one typed ``owl:AnnotationProperty`` but neither object nor datatype property.
+  ``dcam:domainIncludes`` (``dcam:rangeIncludes``) triple.  Excluded: a property with an
+  ``owl:deprecated`` literal whose text, trimmed and lowercased, is ``true`` or ``1`` (whatever its
+  datatype: ``"TRUE"`` and ``"1"^^xsd:boolean`` count, ``"yes"`` and ``false`` do not), and one typed
+  ``owl:AnnotationProperty`` but neither object nor datatype property.
   A domain implied through ``owl:inverseOf`` or a superproperty is not considered.  Info, heuristic: a
   missing domain or range is legal and often deliberate.
 * **OWL007.** Every subject of an ``owl:inverseOf`` triple whose object is the same node, declared or
@@ -40,8 +44,8 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   triple is exact but probably a mistake or an indirect ``owl:SymmetricProperty``.
 * **OWL008.** For every ``owl:inverseOf`` triple between two different nodes, each of the two that is
   typed ``owl:SymmetricProperty`` (the axiom is symmetric, so the symmetric property may be on either
-  side); the message names the other one.  A self-inverse is OWL007's.  Warning, heuristic: valid OWL 2,
-  but it makes the two properties equivalent, which is rarely intended.
+  side); the message names the other one.  A self-inverse is OWL007's.  Ownership is not checked.  Warning,
+  heuristic: valid OWL 2, but it makes the two properties equivalent, which is rarely intended.
 * **OWL009.** Every subject of an ``owl:inverseOf`` triple where either side is typed
   ``owl:DatatypeProperty``, and every node typed ``owl:DatatypeProperty`` and one of
   ``owl:SymmetricProperty``, ``owl:TransitiveProperty``, ``owl:AsymmetricProperty`` or
@@ -52,10 +56,10 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
 * **OWL010.** Every subject of an ``owl:propertyChainAxiom`` whose object is not a list of two or more
   members, one finding per kind of defect: a well-formed RDF list of exactly one member; the empty list
   (``rdf:nil``); or no well-formed RDF list at all (a literal, an IRI or blank node without exactly one
-  ``rdf:first`` and one ``rdf:rest``, a cyclic list), as :func:`~.support.list_items` reads it.
-  Ownership is not checked.  Warning, certain: SS 9.2.1 and MAP Table 16 require at least two chain
-  members, so the axiom is not OWL 2; one severity covers the three kinds (a one-member chain is only
-  redundant, an empty or malformed one is dropped by a parser).
+  ``rdf:first`` and one ``rdf:rest``, a cyclic list, or a list of more than 500 members), as
+  :func:`~.support.list_items` reads it.  Ownership is not checked.  Warning, certain: SS 9.2.1 and MAP
+  Table 16 require at least two chain members, so the axiom is not OWL 2; one severity covers the three
+  kinds (a one-member chain is only redundant, an empty or malformed one is dropped by a parser).
 * **OWL011.** Every node with an ``owl:allValuesFrom`` value that does not also carry
   ``owl:someValuesFrom``, unless: the filler is a datatype (an IRI in the XSD namespace or one of the
   other datatype IRIs OWL022 and OWL040 know, :data:`~.support.LITERAL_RANGES`: ``rdfs:Literal``,
@@ -71,8 +75,10 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
   the owning term (the first IRI reached upwards through incoming triples, at most eight hops) is a
   foreign IRI.  Siblings are the other ``rdfs:subClassOf`` / ``owl:equivalentClass`` objects of a class
   holding the restriction that way, the other members of an ``owl:intersectionOf`` list holding it, and
-  the superclasses and equivalents of the classes defined by that intersection; inherited existentials
-  are not followed.  The focus is the owning term; for a restriction no IRI holds, the smallest IRI it
+  the superclasses and equivalents of the classes defined by that intersection, and the members of an
+  ``owl:intersectionOf`` that is itself a sibling; inherited existentials are not followed.  An
+  ``owl:intersectionOf`` list of more than 500 members is read as malformed, so its members are not
+  siblings.  The focus is the owning term; for a restriction no IRI holds, the smallest IRI it
   is ``rdfs:subClassOf`` / ``owl:equivalentClass`` of (a general class axiom), else the blank node
   itself.  Info, heuristic: ``ObjectAllValuesFrom`` is satisfied vacuously by an individual with no
   value (DS Table 4), which is legal but often not what the modeller meant.
@@ -89,6 +95,32 @@ RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
 * **OWL015.** Only when an explicit ``base`` is configured: every owned predicate of the graph not in
   ``ctx.properties`` (built-in and foreign predicates are not owned).  Warning, heuristic: SS 5.8.1
   wants the declaration, and locality is the configured base's judgement.
+* **DATA001.** Every subject, an IRI or a blank node, of a triple ``s p o`` where ``p`` is typed
+  ``owl:DatatypeProperty`` (owned or not), ``p`` has exactly one distinct ``rdfs:range`` object, that range is an IRI in
+  the XSD namespace, and ``o`` is a literal whose datatype is not that range; one finding per subject, property and
+  datatype of the literal (the message prints ``None`` for a plain or language-tagged literal).  Not reported: a plain
+  or language-tagged literal against ``xsd:string``; a literal typed ``xsd:integer`` or another of the thirteen integer
+  types (``xsd:nonNegativeInteger``, ``xsd:positiveInteger``, ``xsd:nonPositiveInteger``, ``xsd:negativeInteger``,
+  ``xsd:long``, ``xsd:int``, ``xsd:short``, ``xsd:byte`` and the four ``xsd:unsigned`` types) whose lexical form,
+  trimmed, reads as an integer, against ``xsd:decimal`` or against an integer type whose bounds hold that value
+  (compared by value, so ``1`` is a valid ``xsd:positiveInteger`` and ``0`` is not); a range that is not an XSD IRI
+  (``rdfs:Literal``, a class, a blank node) or that is one of several distinct ranges; a property not typed
+  ``owl:DatatypeProperty`` (an object, annotation or ``rdf:Property`` alone, or undeclared); and an ill-typed literal
+  whose datatype is the range (``"abc"^^xsd:integer`` against ``xsd:integer``, which DATA003 judges).  Reported: a
+  decimal literal against an integer range, even a whole one (``"1.0"^^xsd:decimal``); ``xsd:normalizedString`` against
+  ``xsd:string``; ``xsd:date`` against ``xsd:dateTime``; a plain literal against any range but ``xsd:string``; a literal
+  whose datatype is outside XSD against ``xsd:string``; an ill-typed integer literal against another integer range
+  (``"abc"^^xsd:integer`` against ``xsd:positiveInteger``).  Warning, heuristic: the datatype of the literal is compared
+  with the range by name, except for the integer family and ``xsd:string``, which are compared by value as above.
+* **DATA002.** Every node ``s`` that is the subject of a triple with predicate ``p`` where ``p`` is in
+  ``ctx.properties`` (owned; typed object, datatype, annotation or ``rdf:Property``), ``p`` has an
+  ``rdfs:domain`` ``D``, and ``s`` has an asserted ``rdf:type`` ``T`` such that ``T owl:disjointWith D`` or
+  ``D owl:disjointWith T`` is asserted directly; one finding per subject, property, domain and type.  A class
+  declared disjoint with itself, used as both the domain and the type, is reported; a domain or type that is
+  a blank node is compared as that node.  Nothing is inferred: no subclass closure, no
+  ``owl:AllDisjointClasses``, no member of a union domain, no domain through a superproperty, and an
+  undeclared or foreign ``p`` is not examined.  Warning, heuristic: only the asserted domain, the asserted types and the
+  asserted disjointness are compared.
 """
 
 from __future__ import annotations

@@ -36,13 +36,13 @@ DATA003 asks RDFLib whether a lexical form is valid (``Literal.ill_typed``), and
 
 Source: `src/ontolint/rules/owl.py`.
 
-OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002.
+OWL modelling rules: OWL001-OWL011, OWL013-OWL015, DATA001, DATA002 (specified at the end).
 
 OWL012 (self-equivalence) is emitted by `ontolint.rules.classes`.
 
-All rules read the asserted graph only: no import is followed and nothing is inferred (no ``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means ``ctx.local`` (`ontolint.ownership`); "declared" means typed by the named class in an asserted ``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``, ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
+All rules read the asserted graph only: no import is followed and nothing is inferred (no ``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means ``ctx.local`` (`ontolint.ownership`), which is the ``--base`` or the ontology header's namespace; when that owns no declared term and no namespace holds most of them, every IRI that is not an RDF, RDFS, OWL or XSD term is owned, a foreign one included.  "Declared" means typed by the named class in an asserted ``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``, ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
 
-*Specified under each rule: [OWL001](owl.md), [OWL002](owl.md), [OWL003](owl.md), [OWL004](owl.md), [OWL005](owl.md), [OWL006](owl.md), [OWL007](owl.md), [OWL008](owl.md), [OWL009](owl.md), [OWL010](owl.md), [OWL011](owl.md), [OWL012](owl.md), [OWL013](owl.md), [OWL014](owl.md), [OWL015](owl.md).*
+*Specified under each rule: [OWL001](owl.md), [OWL002](owl.md), [OWL003](owl.md), [OWL004](owl.md), [OWL005](owl.md), [OWL006](owl.md), [OWL007](owl.md), [OWL008](owl.md), [OWL009](owl.md), [OWL010](owl.md), [OWL011](owl.md), [OWL012](owl.md), [OWL013](owl.md), [OWL014](owl.md), [OWL015](owl.md), DATA001, DATA002.*
 
 ## Rules
 
@@ -54,7 +54,7 @@ All rules read the asserted graph only: no import is followed and nothing is inf
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Check a property assertion for range/type confusion.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Every subject, an IRI or a blank node, of a triple ``s p o`` where ``p`` is typed ``owl:DatatypeProperty`` (owned or not), ``p`` has exactly one distinct ``rdfs:range`` object, that range is an IRI in the XSD namespace, and ``o`` is a literal whose datatype is not that range; one finding per subject, property and datatype of the literal (the message prints ``None`` for a plain or language-tagged literal).  Not reported: a plain or language-tagged literal against ``xsd:string``; a literal typed ``xsd:integer`` or another of the thirteen integer types (``xsd:nonNegativeInteger``, ``xsd:positiveInteger``, ``xsd:nonPositiveInteger``, ``xsd:negativeInteger``, ``xsd:long``, ``xsd:int``, ``xsd:short``, ``xsd:byte`` and the four ``xsd:unsigned`` types) whose lexical form, trimmed, reads as an integer, against ``xsd:decimal`` or against an integer type whose bounds hold that value (compared by value, so ``1`` is a valid ``xsd:positiveInteger`` and ``0`` is not); a range that is not an XSD IRI (``rdfs:Literal``, a class, a blank node) or that is one of several distinct ranges; a property not typed ``owl:DatatypeProperty`` (an object, annotation or ``rdf:Property`` alone, or undeclared); and an ill-typed literal whose datatype is the range (``"abc"^^xsd:integer`` against ``xsd:integer``, which DATA003 judges).  Reported: a decimal literal against an integer range, even a whole one (``"1.0"^^xsd:decimal``); ``xsd:normalizedString`` against ``xsd:string``; ``xsd:date`` against ``xsd:dateTime``; a plain literal against any range but ``xsd:string``; a literal whose datatype is outside XSD against ``xsd:string``; an ill-typed integer literal against another integer range (``"abc"^^xsd:integer`` against ``xsd:positiveInteger``).  Warning, heuristic: the datatype of the literal is compared with the range by name, except for the integer family and ``xsd:string``, which are compared by value as above.
 
 *Flagged:* `string where xsd:integer is the range`
 
@@ -222,7 +222,7 @@ ex:d a owl:DatatypeProperty ; rdfs:range xsd:decimal . ex:i ex:d 7 .
 - **Module:** [`owl`](#module-owl)
 - **Fix:** Check a property assertion for datatype/object-property confusion.
 
-*No rule-level specification yet; see the module notes above.*
+**Specification.** Every node ``s`` that is the subject of a triple with predicate ``p`` where ``p`` is in ``ctx.properties`` (owned; typed object, datatype, annotation or ``rdf:Property``), ``p`` has an ``rdfs:domain`` ``D``, and ``s`` has an asserted ``rdf:type`` ``T`` such that ``T owl:disjointWith D`` or ``D owl:disjointWith T`` is asserted directly; one finding per subject, property, domain and type.  A class declared disjoint with itself, used as both the domain and the type, is reported; a domain or type that is a blank node is compared as that node.  Nothing is inferred: no subclass closure, no ``owl:AllDisjointClasses``, no member of a union domain, no domain through a superproperty, and an undeclared or foreign ``p`` is not examined.  Warning, heuristic: only the asserted domain, the asserted types and the asserted disjointness are compared.
 
 *Flagged:* `usage implies a disjoint domain`
 
