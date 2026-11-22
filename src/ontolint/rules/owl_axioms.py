@@ -22,7 +22,7 @@ restricted to owned terms: every subject of the graph is checked, imported or no
   ``owl:IrreflexiveProperty`` or ``owl:AsymmetricProperty`` that is non-simple; one finding per
   characteristic.  Non-simple is OWL 2 Structural Specification (SS) section 11.1: a property is
   *composite* when it or its inverse is typed ``owl:TransitiveProperty`` or is the subject of an
-  ``owl:propertyChainAxiom`` whose well-formed list has at least two operands, or when it is
+  ``owl:propertyChainAxiom`` whose well-formed list (of at most 500 members) has at least two operands, or when it is
   ``owl:topObjectProperty`` or ``owl:bottomObjectProperty``; it is *non-simple* when a composite
   property reaches it through the hierarchy ``→*``, built from ``rdfs:subPropertyOf`` (upwards only),
   ``owl:equivalentProperty`` and ``owl:inverseOf`` (both ways), where a blank ``[ owl:inverseOf x ]``
@@ -59,7 +59,9 @@ restricted to owned terms: every subject of the graph is checked, imported or no
   ``rdf:XMLLiteral``, ``rdf:HTML``, ``rdf:JSON``, ``rdf:PlainLiteral``, ``owl:real``, ``owl:rational``
   (:data:`~.support.LITERAL_RANGES`, shared with OWL011 and OWL040) or any node typed
   ``rdfs:Datatype``.  For a datatype property: ``owl:Thing`` or a node typed ``owl:Class``.  A range
-  typed both ``owl:Class`` and ``rdfs:Datatype`` (OWL030's) and a blank-node range are not reported.
+  typed both ``owl:Class`` and ``rdfs:Datatype`` (OWL030's) is not reported for either kind, and for an
+  object property a range typed ``owl:Class`` is not a datatype whatever its IRI (an ``xsd:`` IRI typed
+  ``owl:Class`` is not reported); a blank-node range is not reported.
   *Error:* an object property's range is a class expression and a datatype property's a data range;
   not OWL 2 DL.
 * **OWL023.** An IRI related by ``owl:inverseOf``, in either direction, to two or more other IRIs; one
@@ -69,9 +71,11 @@ restricted to owned terms: every subject of the graph is checked, imported or no
 * **OWL024.** Two properties declared disjoint, by ``owl:propertyDisjointWith`` or as members of one
   ``owl:AllDisjointProperties`` list, that are also related by an asserted ``rdfs:subPropertyOf`` or
   ``owl:equivalentProperty`` in either direction, or a property declared disjoint with itself
-  (including a member repeated in a group).  One finding per unordered pair, on its lexically first
-  member.  Pairs involving ``owl:bottomObjectProperty`` or ``owl:bottomDataProperty`` are skipped, as is
-  a group whose ``owl:members`` list is malformed or longer than 200 members.
+  (including a member repeated in a group).  One finding per unordered pair, on the member written first:
+  the subject of the ``owl:propertyDisjointWith`` triple or the earlier member of the group list; when a
+  pair is written in both orders, the order whose first member comes first in the text of its IRI.  Pairs
+  involving ``owl:bottomObjectProperty`` or ``owl:bottomDataProperty`` are skipped, as is a group whose
+  ``owl:members`` list is malformed or longer than 200 members.
   *Error:* the sub-property (or both equivalents) can hold between nothing: an unsatisfiable property.
 * **OWL025.** The same as OWL024 for classes: ``owl:disjointWith`` and ``owl:AllDisjointClasses``
   against ``rdfs:subClassOf`` and ``owl:equivalentClass``, skipping pairs with ``owl:Nothing``.  An

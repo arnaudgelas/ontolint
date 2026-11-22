@@ -15,8 +15,9 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
 ``"x"@en``; a line break is escaped), never as Python reprs.  The specifications:
 
 * **OWL031.** For every subject of ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or
-  ``owl:disjointUnionOf`` (named or anonymous, class or data range), one finding per triple whose
-  object is a malformed list or the empty list (``()``, ``rdf:nil``), focused on that subject.  Error:
+  ``owl:disjointUnionOf`` (named or anonymous, class or data range), one finding per subject,
+  operator and kind (a malformed list, or the empty list ``()``, ``rdf:nil``), focused on that subject: two
+  malformed triples of one operator on one subject give one finding.  Error:
   OWL 2 requires at least two operands for unions, intersections and disjoint unions and at least one
   for enumerations (Structural Specification sections 8, 7 and 9.1.4), so the triple does not map to
   an OWL 2 DL expression or axiom.  A one-member list is OWL032's.
@@ -90,8 +91,8 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   namespace; ``rdfs:Literal``, ``rdf:langString``, ``rdf:PlainLiteral``, ``rdf:XMLLiteral``,
   ``rdf:HTML``, ``rdf:JSON``, ``owl:real`` or ``owl:rational``, the OWL 2 datatype map's, RDF 1.1's and
   JSON-LD 1.1's datatypes outside it, as OWL011 and OWL022 read them; or a node typed
-  ``rdfs:Datatype``; an untyped ``owl:onDatatype`` node is not, as MAP types every data range
-  ``rdfs:Datatype``); any ``owl:onDataRange``.  On a
+  ``rdfs:Datatype``, even when it is also typed ``owl:Class``, as OWL022 exempts such a range; an untyped
+  ``owl:onDatatype`` node is not, as MAP types every data range ``rdfs:Datatype``); any ``owl:onDataRange``.  On a
   datatype property: a non-literal ``owl:hasValue``; a filler that is class-like (``owl:Thing``,
   ``owl:Nothing``, an owned declared class, or a node typed ``owl:Class`` or ``owl:Restriction``) and
   not datatype-like; any ``owl:onClass``.  One finding per offending value; fillers of unknown kind
@@ -100,8 +101,10 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
 * **OWL041.** Treat each ``owl:complementOf`` triple with a non-literal object as an undirected edge
   (``A = not B`` iff ``B = not A``) and two-colour every connected component iteratively (no depth
   bound); one finding per component that contains an odd cycle, a self-loop included, focused on the
-  first node, in a depth-first walk over sorted nodes (a blank node sorts by its stable identity, never its
-  label), with an edge to a node of its own colour.  Even cycles (``A = not B``, ``B = not A``)
+  first node of the walk, when it is scanned, that has an already coloured neighbour of its own colour.  The
+  walk starts at the least node (a blank node sorts by its stable identity, never its label) and uses a
+  stack, so it goes on with the greatest unvisited neighbour first: the triangle ``a``, ``b``, ``c`` is
+  focused on ``c``, not ``a``.  Even cycles (``A = not B``, ``B = not A``)
   are consistent and not reported; ``owl:equivalentClass`` edges are not part of the graph.  Error, certain: an
   odd cycle entails ``X = not X`` for a class in it, which has no model, so the ontology is
   inconsistent under the Direct Semantics.
@@ -116,7 +119,9 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   direction); and a finding for a union containing ``owl:Thing`` or an intersection containing
   ``owl:Nothing``.  Disjointness from ``owl:AllDisjointClasses`` or ``owl:disjointUnionOf``, nested
   operands and ``owl:oneOf`` are not considered.  The focus is the owning named term of the expression
-  and the message names where it is used (``in the rdfs:subClassOf of ex:C``).  Warning: the union is
+  and, when that term uses the expression directly, the message names where it is used (``in the
+  rdfs:subClassOf of ex:C``); an expression nested in another (a union inside an intersection) is
+  reported on the owning term without that clause.  Warning: the union is
   equivalent to ``owl:Thing`` or the intersection is unsatisfiable; this is valid OWL but almost
   always a modelling slip.  The two operands of a pair are written in lexical order, a blank node by its
   content-stable identity rather than a parser's label.  Disjoint classes linked by a subclass or equivalence
@@ -125,14 +130,17 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   so chains through blank nodes and through a shared individual count).  Report each ``a
   owl:differentFrom b`` (``b`` not a literal) whose ends are in one class, focused on ``a``, except a
   direct conflict (``a = b``, or ``owl:sameAs`` asserted between them in either direction), which is
-  OWL026's.  Also report, on the axiom, each pair of distinct members of an ``owl:AllDifferent`` list
-  (``owl:members`` or ``owl:distinctMembers``) that are in one class, including directly
-  ``owl:sameAs`` members; repeated members and malformed lists are OWL045's.  Error: ``owl:sameAs``
+  OWL026's.  Also report, on the axiom, each member of an ``owl:AllDifferent`` list
+  (``owl:members`` or ``owl:distinctMembers``) that is in the same class as an earlier member of the list,
+  including directly ``owl:sameAs`` members, naming the first member of that class in the list (a class
+  of three members gives two findings, not three); repeated members and malformed lists are OWL045's.
+  Error: ``owl:sameAs``
   is an equivalence relation, so the ontology is inconsistent under the Direct Semantics.
 * **OWL045.** For each node typed ``owl:AllDifferent`` (member lists on ``owl:members`` or
   ``owl:distinctMembers``) or ``owl:AllDisjointClasses`` (``owl:members`` only), focused on the
   axiom: no member list; more than one; and per list, malformed, fewer than two members, or a
-  repeated member.  ``owl:AllDisjointProperties`` and untyped nodes are not judged.  Error, as OWL031: an
+  repeated member; one finding per axiom and kind, so two malformed lists give one.
+  ``owl:AllDisjointProperties`` and untyped nodes are not judged.  Error, as OWL031: an
   OWL 2 parser cannot map the axiom (RDF mapping section 3.2) and drops it, so the intended
   distinctness or disjointness silently disappears.  One severity covers the five kinds: the first four
   make a parser drop the axiom; a repeated member does not, but ``AllDifferent(a a)`` asserts ``a`` different
