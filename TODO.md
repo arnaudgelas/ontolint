@@ -900,7 +900,7 @@ Validation corpus (public; licences per repository):
     Left open: the OWL035 count on OWL 1 era ontologies; SKOS001 on any owned resource with a `skos:prefLabel`
     (S14), which needs a count first; the catalogue categories of OWL004, OWL007, OWL009, OWL010, OWL013 and OWL014
     (`heuristic`, with `certain` findings), after which `tests/test_metric_confidence.py` widens to every family;
-    the maintainer's approval of the OWL, METRIC and SHQ specifications (issue #182).
+    the approval of the OWL, METRIC and SHQ specifications (issue #182) is recorded in `docs/severity-decisions.md`.
   - *Defects that change an exit code, a focus or a message:* all fixed in 0.11.0 (see
     "Recently done", AUDIT-DEFECTS): an unwritable or unencodable report is TOOL001 and exit 2
     (`db56b3f`); OWL034, OWL036 and OWL040 print N3, not Python reprs (`77b8f84`), and so does
