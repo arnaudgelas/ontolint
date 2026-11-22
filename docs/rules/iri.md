@@ -222,7 +222,7 @@ Reported: `1 hash-style and 1 slash-style term IRIs, e.g. https://a.test/ns#A an
 - **Module:** [`iri_quality`](#module-iri_quality)
 - **Fix:** Avoid '?query' parts in term IRIs; they are not stable identifiers.
 
-**Specification.** Scope: every term.  Fires, with certainty, when ``urlsplit`` finds a query or the IRI holds a ``?`` anywhere (so an empty query ``x?`` is reported).  RFC 3986 3.4 starts the query at the first ``?`` and ends it at ``#``.  Gap: a ``?`` inside a fragment (``#a?b``, allowed by 3.5) holds no query and is reported.  Ontology IRIs are IRI016's.  Warning: a query is not a stable identifier.
+**Specification.** Scope: every term.  Fires, with certainty, when the IRI holds a ``?`` before its first ``#`` (so an empty query ``x?`` is reported).  RFC 3986 3.4 starts the query at the first ``?`` and ends it at ``#``; a ``?`` inside a fragment (``#a?b``, allowed by 3.5) is no query and is not reported.  Ontology IRIs are IRI016's. Warning: a query is not a stable identifier.
 
 *Flagged:* `query string` (built programmatically; see `tests/rule_cases/`)
 
