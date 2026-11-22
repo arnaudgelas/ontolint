@@ -788,7 +788,9 @@ ontolint ontology.ttl --shapes shapes.ttl
 The integration meta-validates the shapes graph once (ontolint calls pySHACL's `meta_validate`, then
 `validate` with `meta_shacl=False`), with `advanced=True`, `inference="none"` and the
 network disabled (see "Input safety" for what that admits). Newer SHACL draft
-features are not guaranteed to be supported. Shapes can make validation run for a long time;
+features are not guaranteed to be supported. ontolint supports pySHACL `>=0.40.2,<0.41` (the declared range): the meta-validation calls
+`pyshacl.entrypoints.meta_validate`, which is not pySHACL's public API, so a new pySHACL series is
+adopted by raising the bound after the tests, including the canaries, pass on it. Shapes can make validation run for a long time;
 `--max-validation-seconds` (or `max_validation_seconds` in the policy) stops it, and `SHACL001`
 then fails (exit `2`).
 

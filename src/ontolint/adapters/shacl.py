@@ -10,6 +10,7 @@ are named by their content, never by their label.
 from __future__ import annotations
 
 import contextlib
+import inspect
 import json
 from collections import Counter
 from collections.abc import Callable
@@ -447,11 +448,17 @@ def _metashacl_verdict(sg: Graph) -> ShapesNotWellFormed | None:
     verdict), and then ``validate(meta_shacl=False)`` does the same check once.  It also judges the shapes graph,
     which ``validate``'s ``shacl_graph or data_graph`` does not when that graph is empty.  A report that is no graph
     still refuses the shapes graph, with the summary only.  The price is an import
-    from ``pyshacl.entrypoints`` (``meta_validate`` is not in ``pyshacl.__all__``); ``tests/test_metashacl_once.py``
-    fails when an upgrade moves it or changes what it judges.  Without it the caller has ``meta_shacl=True``.
+    from ``pyshacl.entrypoints`` (``meta_validate`` is not in ``pyshacl.__all__``), which is why pyproject bounds
+    pySHACL to the series it was verified on (``>=0.40.2,<0.41``) and ``tests/test_metashacl_once.py`` fails when an
+    upgrade moves it or changes what it judges.  A missing entry point or one whose signature does not take our
+    arguments raises :class:`ImportError` and the caller has ``meta_shacl=True``; any other fault is not caught here.
     """
     from pyshacl.entrypoints import meta_validate  # noqa: PLC0415 -- the same module as ``validate``.
 
+    try:
+        inspect.signature(meta_validate).bind(sg, inference="none", advanced=True, abort_on_first=False)
+    except TypeError as exc:  # a changed signature is a missing entry point, not a fault to report
+        raise ImportError("pyshacl.entrypoints.meta_validate no longer takes the arguments ontolint passes") from exc
     conforms, report, _ = meta_validate(sg, inference="none", advanced=True, abort_on_first=False)
     if conforms:
         return None

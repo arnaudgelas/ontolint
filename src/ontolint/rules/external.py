@@ -70,8 +70,11 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   has no pointer otherwise.  JSON and SARIF carry the lines as
   ``results`` of the execution (``executions[].results``, the notification's ``properties.results``), only when
   there are some.  The shapes graph is meta-validated once, a conforming one included, inside the worker and the
-  ``max_validation_seconds`` budget when there is one; a pySHACL without ``meta_validate`` is asked for
-  ``meta_shacl=True`` instead, and then a refusal keeps pySHACL's own text as its detail.  A
+  ``max_validation_seconds`` budget when there is one; a pySHACL without ``meta_validate``, or whose
+  ``meta_validate`` does not take the arguments ontolint passes, is asked for ``meta_shacl=True`` instead (a
+  fallback for those two cases only: any other fault propagates; the supported range is pyproject's
+  ``pyshacl>=0.40.2,<0.41``, because ``meta_validate`` is not pySHACL's public API), and then a refusal keeps
+  pySHACL's own text as its detail.  A
   failure that is not a verdict on the shapes graph (a crash, pySHACL's own load errors) keeps its
   ``<ExceptionType>: <message>`` detail.  One load error is a verdict: a shape typed ``sh:NodeShape`` with
   ``sh:path`` (SHACL 2.2 forbids it, SHACL-SHACL accepts it, pySHACL's loader refuses it).  When pySHACL raises
