@@ -789,7 +789,8 @@ Pass a shapes graph with `--shapes` to enable pySHACL validation:
 ontolint ontology.ttl --shapes shapes.ttl
 ```
 
-The integration uses `meta_shacl=True` and `advanced=True`, with `inference="none"` and the
+The integration meta-validates the shapes graph once (ontolint calls pySHACL's `meta_validate`, then
+`validate` with `meta_shacl=False`), with `advanced=True`, `inference="none"` and the
 network disabled (see "Input safety" for what that admits). Newer SHACL draft
 features are not guaranteed to be supported. Shapes can make validation run for a long time;
 `--max-validation-seconds` (or `max_validation_seconds` in the policy) stops it, and `SHACL001`
@@ -797,7 +798,7 @@ then fails (exit `2`).
 
 A shapes graph that breaks SHACL-SHACL (SHACL's own shapes for shapes graphs: a property shape
 without `sh:path`, a non-IRI `sh:targetClass`, a `sh:minCount` that is not an `xsd:integer`, ...) is
-refused by pySHACL before any data is validated, so `SHACL001` has no verdict: it is `failed` and the
+refused before any data is validated, so `SHACL001` has no verdict: it is `failed` and the
 run exits `2`, as for any rule run without a verdict. The rule-execution line says only
 `the shapes graph does not conform to SHACL-SHACL`; stderr has the `TOOL001` line and, under it, one
 line per MetaSHACL result (`<shape>: <path>: <message>`, at most 20 then a count, each cut at 300

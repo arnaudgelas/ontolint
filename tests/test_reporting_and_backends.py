@@ -63,7 +63,7 @@ def test_shacl_adapter_rejects_an_unexpected_report_type(monkeypatch: pytest.Mon
 def test_shacl_adapter_uses_fixed_validation_options_and_fallback_message(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_validate(*_args: object, **kwargs: object) -> tuple[bool, Graph, None]:
         assert kwargs.pop("shacl_graph") is not None
-        assert kwargs == {"inference": "none", "advanced": True, "meta_shacl": True, "abort_on_first": False}
+        assert kwargs == {"inference": "none", "advanced": True, "meta_shacl": False, "abort_on_first": False}
         return False, Graph(), None
 
     monkeypatch.setitem(sys.modules, "pyshacl", SimpleNamespace(validate=fake_validate))

@@ -14,7 +14,8 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   ontology the shapes import, keeping only results whose focus, or the focus of a result nested in their
   ``detail`` at any depth, the linted file mentions, as a subject or an object; one whose walk of the nested
   results passes 100,000 in all is kept) is validated with
-  ``inference="none"``, ``advanced=True``, ``meta_shacl=True``, with the network disabled (a socket or DNS attempt,
+  ``inference="none"``, ``advanced=True``, after one MetaSHACL run of the shapes graph (``meta_shacl=False``:
+  ontolint calls pySHACL's ``meta_validate`` itself), with the network disabled (a socket or DNS attempt,
   even one pySHACL catches, makes the rule ``failed``).  One finding per value of the report's ``sh:result``
   (SHACL 3.6.1.2) of the report node that is the object of no triple (a blank data value shaped like a report,
   which pySHACL copies into its report, adds no finding), or, only when the report holds no
@@ -55,9 +56,9 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   time budget of <s> seconds (max_validation_seconds)``, the report written, exit ``2``.  Confidence ``certain``:
   the verdict is pySHACL's, on the user's own shapes.
   Why error: a violated shape is a contract the user wrote; a shape that means less says so with ``sh:severity``.
-  A shapes graph that breaks SHACL-SHACL (pySHACL's ``meta_shacl=True`` refuses it before any data is validated)
+  A shapes graph that breaks SHACL-SHACL (ontolint's one MetaSHACL run refuses it before any data is validated)
   gives no verdict on the data: the rule is ``failed`` and the exit code ``2``, as for any crash, but the run
-  does not print pySHACL's report (which it prints in the exception and logs at ERROR).  The rule-execution line
+  does not print pySHACL's report.  The rule-execution line
   reads ``the shapes graph does not conform to SHACL-SHACL``; the ``TOOL001`` line is followed by one two-space
   indented line per MetaSHACL result, sorted, ``<focus>: <path>: <message>`` (no path for a node-level result),
   masked and cut at 300 characters, with control, format and separator characters escaped, at most 20 and then
@@ -68,8 +69,9 @@ in ``--select`` or ``--ignore`` (by id, or as the ``INPUT`` or ``TOOL`` family) 
   ``sh:severity`` values, a non-IRI ``sh:targetClass``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), and
   has no pointer otherwise.  JSON and SARIF carry the lines as
   ``results`` of the execution (``executions[].results``, the notification's ``properties.results``), only when
-  there are some.  The shapes graph is meta-validated a second time, to read the results, only when pySHACL
-  reported the failure, inside the worker and the ``max_validation_seconds`` budget when there is one.  A
+  there are some.  The shapes graph is meta-validated once, a conforming one included, inside the worker and the
+  ``max_validation_seconds`` budget when there is one; a pySHACL without ``meta_validate`` is asked for
+  ``meta_shacl=True`` instead, and then a refusal keeps pySHACL's own text as its detail.  A
   failure that is not a verdict on the shapes graph (a crash, pySHACL's own load errors) keeps its
   ``<ExceptionType>: <message>`` detail.  One load error is a verdict: a shape typed ``sh:NodeShape`` with
   ``sh:path`` (SHACL 2.2 forbids it, SHACL-SHACL accepts it, pySHACL's loader refuses it).  When pySHACL raises
