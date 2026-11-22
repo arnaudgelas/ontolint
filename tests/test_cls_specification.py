@@ -27,8 +27,8 @@ def _foci(rule: str, turtle: str, **policy: int) -> list[str]:
 
 
 def test_cls014_reports_a_class_below_disjoint_classes_inside_a_subclass_cycle() -> None:
-    # OWL 2 Direct Semantics 9.1.3 (DisjointClasses): A subClassOf B and A disjoint with B leave A empty, and
-    # a cycle is a set of equivalent classes (9.1.2), so no member of it is exempt from the check.
+    # OWL 2 Structural Specification 9.1.3 (DisjointClasses): A subClassOf B and A disjoint with B leave A empty,
+    # and the members of a subclass cycle are equivalent (9.1.2, 9.1.1), so none of them is exempt from the check.
     cycle = f"ex:A {C}; rdfs:subClassOf ex:B . ex:B {C}; rdfs:subClassOf ex:A ."
     assert _foci("CLS014", cycle + " ex:A owl:disjointWith ex:B .") == ["A"]
     # The disjoint pair is above the cycle: it is reported once, at the representative of the cycle.
@@ -39,7 +39,7 @@ def test_cls014_reports_a_class_below_disjoint_classes_inside_a_subclass_cycle()
 
 
 def test_cls019_reads_equivalent_class_in_both_directions() -> None:
-    # OWL 2 Structural Specification 9.1.1: EquivalentClasses is symmetric, and the RDF triple has no direction,
+    # OWL 2 Structural Specification 9.1.2: EquivalentClasses is symmetric, and the RDF triple has no direction,
     # so "owl:Nothing owl:equivalentClass ex:A" asserts ex:A equal to owl:Nothing as much as the reverse.
     assert _foci("CLS019", f"ex:A {C} ; owl:equivalentClass owl:Nothing .") == ["A"]
     assert _foci("CLS019", f"ex:A {C} . owl:Nothing owl:equivalentClass ex:A .") == ["A"]
