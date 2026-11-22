@@ -86,9 +86,14 @@ def test_owl029_reports_once_on_the_lesser_node() -> None:
     assert [f.focus for f in _run("OWL029", data)] == [str(_ex("a"))]
 
 
-def test_owl029_same_text_distinct_nodes_are_not_a_pair() -> None:
+def test_owl029_same_text_distinct_nodes_are_a_pair_reported_once() -> None:
+    """An IRI and a blank node whose label spells that IRI are two nodes: both directions asserted is one pair.
+
+    The pair used to go unreported, because the lesser node was picked by comparing the two texts, which are equal;
+    the nodes are ordered by identity now (#126), so the tie is no tie.
+    """
     data = graph("ex:p a owl:AsymmetricProperty .")
     uri, blank = _ex("n"), BNode(str(_ex("n")))
     data.add((uri, _ex("p"), blank))
     data.add((blank, _ex("p"), uri))
-    assert _run("OWL029", data) == []
+    assert len(_run("OWL029", data)) == 1

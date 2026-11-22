@@ -9,10 +9,9 @@ label left in a message, or a label ``2`` rewriting a count).
 
 The renaming keeps the order of the labels among themselves and against every IRI of the strategies (all the new
 labels sort after ``""`` and before ``h``, as the generators' ``QBNA<n>`` do).  A relabelling that changes that order
-may still change a finding: OWL029 focuses the smaller of two nodes asserted in both directions and OWL043 orders
-its two operands, each by the text of the nodes, a defect older than #54 and not fixed with it (OWL041's walk over
-sorted nodes orders a blank node by its stable identity since #108).  The last test pins OWL029's case, as a strict
-expected failure, so that a fix of that order makes it pass and fail the run until the mark goes.
+may still change a finding unless every rule that orders blank nodes orders them by identity: OWL041's walk since #108,
+OWL029's focus and OWL043's operands since #126.  The last test swaps the labels of the two nodes of an OWL029 pair;
+``tests/test_blank_node_identity.py`` does the same for OWL043 and writes both in every syntax.
 """
 
 from __future__ import annotations
@@ -90,7 +89,6 @@ def asymmetric_pair(first: str, second: str) -> list[Triple]:
     ]
 
 
-@pytest.mark.xfail(strict=True, reason="OWL029 focuses the node whose label sorts first, not the one by content")
 def test_swapping_two_blank_labels_changes_no_owl029_finding() -> None:
     """RELATION (blank-node relabelling, order reversed): swapping the labels of the two nodes changes no finding."""
     original, swapped = (lint_all(build(asymmetric_pair(*labels))) for labels in (("x", "y"), ("y", "x")))

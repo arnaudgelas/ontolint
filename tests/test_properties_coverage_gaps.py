@@ -45,6 +45,10 @@ Expression = tuple[URIRef, bool]  # a property, and whether the expression is it
 Axiom = tuple[str, Expression, Expression]
 
 
+RESTRICTION_ON_NON_SIMPLE = r"Restriction on non-simple property (\S+) \(.*\) uses owl:maxCardinality\."
+MERGED_NODES = r"(?: \(reported once for \d+ blank nodes with the same content\))?"  # identical restrictions are one
+
+
 def _expression() -> st.SearchStrategy[Expression]:
     return st.tuples(st.sampled_from(PROPERTIES), st.booleans())
 
@@ -164,7 +168,7 @@ def test_owl019_reports_the_restrictions_on_exactly_the_properties_ss_11_1_makes
     on_restrictions = {
         m.group(1).removeprefix("ObjectInverseOf(").removesuffix(")")
         for message in messages
-        if (m := re.fullmatch(r"Restriction on non-simple property (\S+) \(.*\) uses owl:maxCardinality\.", message))
+        if (m := re.fullmatch(RESTRICTION_ON_NON_SIMPLE + MERGED_NODES, message))
     }
     non_simple = {str(iri) for iri in specified_non_simple(axioms)}
     assert on_restrictions == {str(iri) for iri, _inverted in restricted} & non_simple

@@ -2136,7 +2136,7 @@ ex:p a owl:IrreflexiveProperty . ex:q rdfs:subPropertyOf ex:p . ex:a ex:q ex:a .
 - **Module:** [`owl_axioms`](#module-owl_axioms)
 - **Fix:** Remove one direction (or a self-assertion) or drop owl:AsymmetricProperty.
 
-**Specification.** For ``p`` typed ``owl:AsymmetricProperty``: a triple ``a p a``, or both ``a p b`` and ``b p a`` (reported once, on the lexically lesser node).  Literal objects are ignored. *Error:* inconsistent.
+**Specification.** For ``p`` typed ``owl:AsymmetricProperty``: a triple ``a p a``, or both ``a p b`` and ``b p a`` (reported once, on the lesser node: by its text for an IRI, by its content-stable identity for a blank node, never by a parser's label).  Literal objects are ignored. *Error:* inconsistent.
 
 *Flagged:* `both directions`
 
@@ -3603,7 +3603,7 @@ ex:A owl:complementOf "x" ; rdfs:subClassOf "x" .
 - **Module:** [`owl_expressions`](#module-owl_expressions)
 - **Fix:** Review an intersection of complements/disjoint classes or a union of a class and its complement.
 
-**Specification.** For every ``owl:unionOf`` or ``owl:intersectionOf`` with a well-formed, non-empty list (one-member lists included): one finding per pair of members where one is asserted ``owl:complementOf`` the other, or, for an intersection only, ``owl:disjointWith`` the other (either direction); and a finding for a union containing ``owl:Thing`` or an intersection containing ``owl:Nothing``.  Disjointness from ``owl:AllDisjointClasses`` or ``owl:disjointUnionOf``, nested operands and ``owl:oneOf`` are not considered.  The focus is the owning named term of the expression and the message names where it is used (``in the rdfs:subClassOf of ex:C``).  Warning: the union is equivalent to ``owl:Thing`` or the intersection is unsatisfiable; this is valid OWL but almost always a modelling slip.  Disjoint classes linked by a subclass or equivalence axiom are OWL025's.
+**Specification.** For every ``owl:unionOf`` or ``owl:intersectionOf`` with a well-formed, non-empty list (one-member lists included): one finding per pair of members where one is asserted ``owl:complementOf`` the other, or, for an intersection only, ``owl:disjointWith`` the other (either direction); and a finding for a union containing ``owl:Thing`` or an intersection containing ``owl:Nothing``.  Disjointness from ``owl:AllDisjointClasses`` or ``owl:disjointUnionOf``, nested operands and ``owl:oneOf`` are not considered.  The focus is the owning named term of the expression and the message names where it is used (``in the rdfs:subClassOf of ex:C``).  Warning: the union is equivalent to ``owl:Thing`` or the intersection is unsatisfiable; this is valid OWL but almost always a modelling slip.  The two operands of a pair are written in lexical order, a blank node by its content-stable identity rather than a parser's label.  Disjoint classes linked by a subclass or equivalence axiom are OWL025's.
 
 *Flagged:* `intersection with complement`
 

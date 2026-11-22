@@ -118,7 +118,9 @@ stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/X
   operands and ``owl:oneOf`` are not considered.  The focus is the owning named term of the expression
   and the message names where it is used (``in the rdfs:subClassOf of ex:C``).  Warning: the union is
   equivalent to ``owl:Thing`` or the intersection is unsatisfiable; this is valid OWL but almost
-  always a modelling slip.  Disjoint classes linked by a subclass or equivalence axiom are OWL025's.
+  always a modelling slip.  The two operands of a pair are written in lexical order, a blank node by its
+  content-stable identity rather than a parser's label.  Disjoint classes linked by a subclass or equivalence
+  axiom are OWL025's.
 * **OWL044.** Build the ``owl:sameAs`` equivalence classes (union-find over all non-literal objects,
   so chains through blank nodes and through a shared individual count).  Report each ``a
   owl:differentFrom b`` (``b`` not a literal) whose ends are in one class, focused on ``a``, except a
@@ -150,7 +152,7 @@ from rdflib.term import Node
 
 from ontolint.models import RuleBackend, RuleScope, RuleSpec, Severity
 
-from .support import is_datatype_iri, list_items, owning_term, stable_blank_id, term_text, value_text
+from .support import is_datatype_iri, list_items, owning_term, term_text, value_text
 
 if TYPE_CHECKING:
     from .runtime import RuleContext
@@ -383,7 +385,7 @@ def _operands(ctx: RuleContext, subject: Node, predicate: Node, items: list[Node
         others = [*g.objects(member, OWL.complementOf), *([] if union else g.objects(member, OWL.disjointWith))]
         for other in others:
             if other in members:
-                first, second = sorted((member, other), key=term_text)
+                first, second = sorted((member, other), key=ctx.order_key)
                 pairs[term_text(first), term_text(second)] = (first, second)
     effect = "is equivalent to owl:Thing" if union else "is unsatisfiable"
     for (left, right), nodes in sorted(pairs.items()):
@@ -715,10 +717,7 @@ def _complements(ctx: RuleContext) -> None:
 
 
 def _odd_cycles(ctx: RuleContext, adjacent: dict[Node, set[Node]]) -> None:
-    def order(node: Node) -> tuple[str, str]:
-        # A blank node sorts by its stable identity, not its label, which each syntax chooses: the walk, and so
-        # the culprit it names, is then the same in every serialisation of the graph.
-        return (stable_blank_id(ctx.g, node) if isinstance(node, BNode) else str(node), str(node))
+    order = ctx.order_key  # by identity, not label: the walk and its culprit are the same in every syntax
 
     color: dict[Node, int] = {}
     for start in sorted(adjacent, key=order):

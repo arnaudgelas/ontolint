@@ -88,7 +88,8 @@ restricted to owned terms: every subject of the graph is checked, imported or no
 * **OWL028.** A triple ``a p a`` where ``p`` is typed ``owl:IrreflexiveProperty``; reported on ``a``.
   *Error:* inconsistent.
 * **OWL029.** For ``p`` typed ``owl:AsymmetricProperty``: a triple ``a p a``, or both ``a p b`` and
-  ``b p a`` (reported once, on the lexically lesser node).  Literal objects are ignored.
+  ``b p a`` (reported once, on the lesser node: by its text for an IRI, by its content-stable identity
+  for a blank node, never by a parser's label).  Literal objects are ignored.
   *Error:* inconsistent.
 * **OWL030.** A node typed both ``owl:Class`` and ``rdfs:Datatype``, or ``owl:AnnotationProperty`` and
   ``owl:ObjectProperty`` or ``owl:DatatypeProperty``.  Object with datatype property is OWL003's; class
@@ -746,7 +747,7 @@ def _asymmetric_usage(ctx: RuleContext) -> None:
                     confidence="certain",
                     subject=(p,),
                 )
-            elif str(s) < str(o) and (o, p, s) in g:
+            elif ctx.order_key(s) < ctx.order_key(o) and (o, p, s) in g:
                 ctx.add(
                     "OWL029",
                     s,
