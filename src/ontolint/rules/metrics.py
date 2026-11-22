@@ -9,13 +9,14 @@ closure.  Common to every rule:
 
 * The population is the terms owned by the linted ontology (see :mod:`ontolint.ownership`), except
   METRIC011 and METRIC013, which count the whole graph.
-* A rule needs a population of at least ``metric_min_sample`` (default 10) terms, so tiny ontologies
-  never fire; METRIC011 has no such gate.  A ratio over an empty population is 0, never a division.
+* A rule needs at least ``metric_min_sample`` (default 10) items in the denominator its bullet names (the
+  gated quantity is not always terms: METRIC010 gates on structural references and METRIC013 on subjects),
+  so tiny ontologies never fire; METRIC011 has no such gate.  A ratio over an empty population is 0, never a division.
   The measurement is read before the gate: one that could not be taken fails the rule (exit 2), on a
   tiny ontology too, and never passes.
 * Comparisons are strict: a value equal to its limit never fires (:func:`~ontolint.rules.bounds.breached`, the one
-  comparison of a METRIC limit and of a budget, METRIC014).  The message prints the value and
-  the limit with 2 decimals, or as many more (up to 6) as it takes to tell them apart.
+  comparison of a METRIC limit and of a budget, METRIC014).  The message prints a ratio, a mean or a limit
+  with 2 decimals, or as many more (up to 6) as it takes to tell them apart; METRIC011 prints integers.
 * The focus is the lexically first ontology IRI of the graph (``ctx.ontologies``: the root headers
   of a closure, SHACL prefix declarations dropped), else ``urn:ontolint:graph``.  The finding's
   identity is its rule and focus, so counts and thresholds never change a baseline entry.
@@ -32,7 +33,8 @@ specifications:
   ``rdfs:Class``); the numerator is the classes LEX001 reports: no ``Literal`` object of a label
   predicate (``ctx.labels``: ``rdfs:label``, ``skos:prefLabel``, the configured extras and the
   predicates below them through ``rdfs:subPropertyOf`` and ``owl:equivalentProperty``) and not
-  ``owl:deprecated true``.  Fires when missing / classes exceeds the limit.  Exclusions: an IRI-valued
+  ``owl:deprecated true``.  Fires when missing / classes exceeds the limit,
+  gated on the owned-class count.  Exclusions: an IRI-valued
   label does not count, a deprecated class counts as labelled, an empty literal counts as a label
   (LEX005's), ``skos:altLabel`` and ``skos:hiddenLabel`` (and the predicates below them) do not count
   and the language is ignored.  Reads ``class_label_coverage``: missing is the population minus
@@ -44,32 +46,36 @@ specifications:
   built-in definition predicates, ``extra_definition_predicates`` and the predicates below them
   through asserted ``rdfs:subPropertyOf`` and ``owl:equivalentProperty`` triples.  Exclusions:
   ``skos:note``, ``skos:scopeNote`` and the predicates below them do not count, unlike LEX002's; a
-  definition whose value is an IRI or an empty literal counts.  Reads ``class_definition_coverage``.
+  definition whose value is an IRI or an empty literal counts.  Gated on the owned-class count.  Reads
+  ``class_definition_coverage``.
   *Warning:* a class nobody defined cannot be understood or reused.
 * **METRIC003.** (``metric_max_undocumented_property_ratio``, 0.5.)  The same for owned properties,
-  annotation properties included (the property-documentation counterpart of METRIC002).  Reads
-  ``property_documentation_coverage``.
+  annotation properties included (the property-documentation counterpart of METRIC002), gated on the
+  owned-property count.  Reads ``property_documentation_coverage``.
   *Info:* property documentation is secondary to class definitions.
-* **METRIC004.** (``metric_max_mean_fanout``, 8.0.)  Gated on the owned-class count.  The mean
+* **METRIC004.** (``metric_max_mean_fanout``, 8.0.)  Gated on the owned-class count, not on the parents
+  the mean is taken over; at the default limits the gate never decides, as a mean above 8 needs a parent
+  with 9 owned subclasses, so at least 10 owned classes.  The mean
   number of direct asserted subclasses over the owned classes that have at least one owned
   subclass.  Exclusions: external or blank superclasses and self-loops are not edges; no parent
   means no finding.  The per-class counterpart is CLS011.  Reads ``class_fanout``.
   *Info:* a flat list of more than about 7 siblings is hard to browse, but a taxonomy may be
   legitimately flat.
-* **METRIC005.** (``metric_max_orphan_ratio``, 0.3.)  Owned classes; the numerator is the classes
-  CLS001 reports: no asserted local super- or subclass, no typed instance, not used as a domain,
-  range (``domainIncludes`` and ``rangeIncludes`` of schema.org and dcam included) or restriction
-  filler, no ``owl:equivalentClass`` link, not ``rdfs:subClassOf owl:Thing``
-  and not deprecated.  A restriction or external superclass connects.  Exclusions: disjointness,
-  membership of a union or intersection list do not connect, nor does being the subject of a
-  ``domainIncludes`` or ``rangeIncludes`` triple.  Reads
+* **METRIC005.** (``metric_max_orphan_ratio``, 0.3.)  Owned classes; the numerator is the classes CLS001
+  reports: no ``rdfs:subClassOf`` triple with the class as its subject or its object (the other end may be
+  external, a restriction, or the class itself), no typed instance, not the object of ``rdfs:domain``,
+  ``rdfs:range``, ``domainIncludes`` or ``rangeIncludes`` (schema.org and dcam included),
+  ``owl:someValuesFrom``, ``owl:allValuesFrom`` or ``owl:onClass``, no ``owl:equivalentClass`` link, not
+  ``rdfs:subClassOf owl:Thing`` and not deprecated.  Not connecting: disjointness, membership of a union,
+  intersection, complement or disjoint-union list, ``owl:hasValue``, ``rdfs:seeAlso`` and being the subject
+  of a ``domainIncludes`` or ``rangeIncludes`` triple.  Gated on the owned-class count.  Reads
   ``orphan_classes``.
   *Info:* a class connected to nothing is usually unfinished, but vocabularies list isolated terms.
 * **METRIC006.** (``metric_min_property_class_ratio``, 0.1.)  Gated on the owned-class count.  Owned
   relation properties per owned class: the owned properties that are not annotation-only
   (``owl:AnnotationProperty`` without an object or datatype type).  Fires below the limit.
-  Exclusions: annotation properties; properties typed only ``rdf:Property`` count.  Reads
-  ``relation_properties_per_class``.
+  Exclusions: annotation properties; properties typed only ``rdf:Property`` count.  The message counts
+  relation properties, though it says "properties".  Reads ``relation_properties_per_class``.
   *Info:* below one relation per ten classes the ontology is a taxonomy, which may be intended.
 * **METRIC007.** (``metric_max_property_class_ratio``, 5.0.)  The same ratio, firing above the
   limit, with the same population and exclusions.  Reads ``relation_properties_per_class``.
@@ -78,26 +84,31 @@ specifications:
   ``owl:DatatypeProperty`` nodes; the numerator is those that both OWL005 and OWL006 report: no
   ``rdfs:domain`` or ``domainIncludes`` and no ``rdfs:range`` or ``rangeIncludes`` (schema.org and
   dcam), not deprecated.  Exclusions: annotation-only and ``rdf:Property``-only properties; a
-  domain reached through an inverse or a superproperty is not looked for.  Reads
-  ``unsigned_properties``.
+  domain reached through an inverse or a superproperty is not looked for.  Gated on the number of these
+  object and datatype properties.  Reads ``unsigned_properties``.
   *Info:* signatures are optional in RDFS and often left open on purpose.
 * **METRIC009.** (``metric_min_language_coverage``, 0.5.)  Owned classes and properties with at
   least one ``Literal`` label (``ctx.labels``, as METRIC001); a term is tagged when at least one of
   its labels has a language tag.  Fires when tagged / labelled falls below the limit.  Exclusions:
-  unlabelled terms are not in the population; ``policy.languages`` is LEX008's job; ``xsd:string`` counts as untagged.
-  Reads ``label_language_coverage``.
+  unlabelled terms are not in the population; ``policy.languages`` is LEX008's job; ``xsd:string`` counts as
+  untagged.  Gated on the number of labelled terms.  Reads ``label_language_coverage``.
   *Info:* untagged labels still work, they cannot be localised.
 * **METRIC010.** (``metric_max_foreign_reference_ratio``, 0.5.)  References are
   ``rdfs:subClassOf`` from owned classes and ``rdfs:domain`` and ``rdfs:range`` from owned
   properties to IRIs outside the RDF, RDFS, OWL and XSD namespaces.  A reference is foreign when the
   target's namespace (the text up to the last ``#`` or ``/``) differs from the subject's and the
-  target is not owned.  Ownership comes from the ontology header's IRI or ``--base``; a graph with
-  neither has no owned namespace, so the namespace comparison alone decides.  Exclusions: blank
-  targets, ``owl:equivalentClass``, restriction fillers and OBO reuse of another OBO ontology (one
-  shared namespace); SKOS, DC and similar targets are foreign.  Reads ``foreign_references``.
+  target is not owned.  Ownership comes from the ontology header's IRI or ``--base``; when no term is owned
+  that way (no header, or a header that owns no declared term while no namespace holds most of them:
+  ``OwnershipMode.ALL`` in :mod:`ontolint.ownership`), ownership is not consulted and the namespace
+  comparison alone decides.  Gated on the number of structural references, not of terms.  Not read:
+  ``owl:equivalentClass``, restriction fillers and every other predicate.  Not counted: blank targets and
+  targets in the RDF, RDFS, OWL and XSD namespaces.  A target in the subject's namespace is not foreign,
+  which includes the reuse of another OBO ontology (one shared namespace); SKOS, DC and similar targets are
+  foreign.  Reads ``foreign_references``.
   *Info:* a mostly foreign ontology is a thin layer over others, which may be its purpose.
-* **METRIC011.** (``metric_max_imports``, 10.)  The distinct IRI objects of ``owl:imports`` in the
-  graph, of every header, minus ``policy.resolved_imports``.  Fires above the limit; no sample gate.
+* **METRIC011.** (``metric_max_imports``, 10.)  The distinct IRI objects of ``owl:imports`` triples of the
+  graph, whatever their subject, minus ``policy.resolved_imports``; literal and blank-node objects do not
+  count.  Fires above the limit; no sample gate.
   Reads ``unresolved_imports``.
   *Info, heuristic:* the count is exact; the limit is a convention, and the one flag on the calibration corpus
   (an IDS header whose 80 imports are its own modules) is a false positive.
@@ -105,10 +116,11 @@ specifications:
   description (``ctx.descriptions``, as METRIC002); each scores the ``\\w+`` token count of its
   longest description and the value is their mean.  Fires below the limit.  Exclusions: IRI
   descriptions; a long ``rdfs:comment`` masks a short ``skos:definition``; properties are not
-  measured.  Reads ``definition_length``.
+  measured.  Gated on the number of classes with a literal description.  Reads ``definition_length``.
   *Info:* a definition shorter than "An X that Y" cannot say what distinguishes the class.
-* **METRIC013.** (``metric_max_blank_node_ratio``, 0.6.)  The distinct subjects of the graph that
-  are not structural blank nodes; the value is blank / all.  Structural blank nodes encode an axiom,
+* **METRIC013.** (``metric_max_blank_node_ratio``, 0.6.)  The population is the distinct subjects of the
+  graph other than structural blank nodes, gated on its size; the value is the blank ones of them over all
+  of them.  Structural blank nodes encode an axiom,
   restriction, class expression, list cell, reified statement or SHACL structure: typed
   ``owl:Axiom``, ``owl:Annotation``, ``owl:Restriction``, ``owl:Class``, ``rdfs:Datatype``,
   ``owl:DataRange``, ``rdf:Statement`` or an ``owl:All*`` / ``owl:NegativePropertyAssertion`` axiom

@@ -111,14 +111,16 @@ concepts and individuals are in no population.
   `rdfs:subClassOf` from owned classes and `rdfs:domain` and `rdfs:range` from owned properties, to
   IRIs outside the RDF, RDFS, OWL and XSD namespaces. A reference is foreign when the target's
   namespace (the text up to its last `#` or `/`) differs from the subject's and the target is not
-  owned; a graph with no ownership information compares namespaces only. Exclusions: blank targets,
-  `owl:equivalentClass`, restriction fillers, OBO reuse of another OBO ontology (one shared
-  namespace). `by_namespace` gives the foreign references per target namespace, sorted; their counts
+  owned; when no term is owned by the header or `--base` (no header, or a header that owns no declared
+  term while no namespace holds most of them), ownership is not consulted and namespaces alone are
+  compared. Not read: `owl:equivalentClass`, restriction fillers and every other predicate. Not counted:
+  blank targets. A target in the subject's namespace is not foreign, which includes the reuse of another
+  OBO ontology (one shared namespace). `by_namespace` gives the foreign references per target namespace, sorted; their counts
   sum to the numerator. A namespace is cut from the target with its userinfo masked, so two targets
   that differ only in their userinfo share one entry.
 - **`unresolved_imports`.** Not a term population: the distinct IRI objects of `owl:imports` in the
-  whole graph, of every header (the whole closure under `--follow-imports`), minus those the closure
-  loaded. This is `METRIC011`'s count. It differs from `SEC007`'s list, which also lists a
+  whole graph, whatever the subject of the triple (the whole closure under `--follow-imports`), minus
+  those the closure loaded; literal and blank-node objects are not counted. This is `METRIC011`'s count. It differs from `SEC007`'s list, which also lists a
   non-IRI `owl:imports` object and names `file:` imports by their display text.
 - **`definition_length`.** The population is the owned classes with a `Literal` description (as for
   `class_definition_coverage`); each scores the `\w+` token count of its longest description, and the
