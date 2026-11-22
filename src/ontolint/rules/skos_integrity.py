@@ -136,10 +136,14 @@ MINIMUM_SHARED = 2
 _LINK_TARGETS = (SKOS.broader, SKOS.narrower, SKOS.related, *_MAPPING)
 
 
+_CONVENTIONS = frozenset({"SKOS011", "SKOS015", "SKOS017", "SKOS019", "SKOS020", "SKOS021"})
+"""The rules whose condition is exact but rests on a convention, not on an integrity condition of the Reference: their
+findings are ``heuristic``, so their category is too (issue #180)."""
+
+
 def _spec(rule_id: str, title: str, severity: Severity, suggestion: str, scope: RuleScope) -> RuleSpec:
-    return RuleSpec(
-        rule_id, "SKOS", title, severity, suggestion, "deterministic", RuleBackend.RDFLIB, scope, "skos_integrity"
-    )
+    category = "heuristic" if rule_id in _CONVENTIONS else "deterministic"
+    return RuleSpec(rule_id, "SKOS", title, severity, suggestion, category, RuleBackend.RDFLIB, scope, "skos_integrity")
 
 
 SPECS: tuple[RuleSpec, ...] = (

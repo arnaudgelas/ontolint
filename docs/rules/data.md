@@ -30,6 +30,8 @@ Literal and datatype rules: DATA003 (ill-typed literal) and DATA004 (datatype ou
 
 OWL 2 (Structural Specification, Section 5.7) requires the lexical form of every literal in an OWL 2 DL ontology to belong to the lexical space of its datatype, and (Section 5.2) every datatype to be ``rdfs:Literal``, a member of the OWL 2 datatype map (Section 4), or a datatype the ontology defines. ``rdfs:Literal`` itself has no lexical space, so no literal can be typed with it.
 
+DATA003 asks RDFLib whether a lexical form is valid (``Literal.ill_typed``), and RDFLib's answer differs from XSD 1.1 in both directions (it accepts ``"1_0"^^xsd:integer`` and ``"inf"^^xsd:double``, and rejects ``"24:00:00"^^xsd:time``), so its findings are ``heuristic`` and its category is too.
+
 ### Module owl
 
 Source: `src/ontolint/rules/owl.py`.
@@ -248,7 +250,7 @@ ex:p a owl:ObjectProperty ; rdfs:domain ex:A . ex:i a ex:B ; ex:p ex:j .
 
 - **Severity:** warning
 - **Scope:** axiom
-- **Category:** deterministic
+- **Category:** heuristic
 - **Module:** [`literals`](#module-literals)
 - **Fix:** Correct the value or its datatype ('2004'^^xsd:gYear, not xsd:date); type plain text as xsd:string.
 

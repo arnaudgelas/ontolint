@@ -138,7 +138,7 @@ SPECS: tuple[RuleSpec, ...] = (
             "Declared mapping set without version, creator or licence",
             Severity.INFO,
             "Add a version, a creator and a licence to the sssom:MappingSet.",
-            "deterministic",
+            "heuristic",
         ),
         scope=RuleScope.ONTOLOGY,
     ),
