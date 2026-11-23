@@ -274,6 +274,8 @@ def test_a_failing_computation_is_published_absent_and_fails_the_run(
         "reason": "failed: ValueError: boom https://****@example.test/x",
     }
     assert vector[1:] == KITCHEN_VECTOR[1:]
+    reasons = document.pop("exit")["reasons"]  # why the run exited 2 (issue #175): the one key the plain run lacks
+    assert [r["measurement"] for r in reasons] == [vector[0]["id"]]
     assert _without_measurements(document) == json.loads(plain[1])  # findings and everything else are unchanged
 
 

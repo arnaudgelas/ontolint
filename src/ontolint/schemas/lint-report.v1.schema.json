@@ -70,17 +70,43 @@
     },
     "timing": {
       "$ref": "#/$defs/timing"
+    },
+    "exit": {
+      "$ref": "#/$defs/exit"
     }
   },
   "$defs": {
     "timing": {
       "type": "object",
-      "required": ["total_ms", "load_ms", "units_ms", "rules_ms"],
+      "required": [
+        "total_ms",
+        "load_ms",
+        "units_ms",
+        "rules_ms"
+      ],
       "properties": {
-        "total_ms": {"type": "integer", "minimum": 0},
-        "load_ms": {"type": "integer", "minimum": 0},
-        "units_ms": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-        "rules_ms": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        "total_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "load_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "units_ms": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "rules_ms": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
       },
       "description": "Present only with --timing. Integer milliseconds; a rule's time is its unit's, so rules_ms values must not be added up (src/ontolint/timing.py)."
     },
@@ -667,6 +693,57 @@
           "type": "integer",
           "minimum": 0,
           "description": "Findings of the rule a baseline removed from the report; 0 without a baseline."
+        }
+      }
+    },
+    "exit": {
+      "type": "object",
+      "required": [
+        "code",
+        "reasons"
+      ],
+      "description": "Present only when the run exits 2 (a tool failure): the code and why. A run that exits 0 or 1 has no `exit` key.",
+      "properties": {
+        "code": {
+          "const": 2,
+          "description": "The process exit status; always 2 here."
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/exitReason"
+          },
+          "description": "Broken rule executions in report order, then failed measurements in report order."
+        }
+      }
+    },
+    "exitReason": {
+      "type": "object",
+      "required": [
+        "kind",
+        "message"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Open enumeration: rule_failed, rule_timeout, rule_unsupported, budget_unmeasured, measurement_failed. A consumer treats a kind it does not know as some other tool failure."
+        },
+        "message": {
+          "type": "string",
+          "description": "One line, without IRI userinfo."
+        },
+        "rule": {
+          "type": "string",
+          "description": "The rule, for a rule reason."
+        },
+        "path": {
+          "type": "string",
+          "description": "The report path of the file the reason is about."
+        },
+        "measurement": {
+          "type": "string",
+          "description": "The measurement id, for a measurement_failed reason."
         }
       }
     }

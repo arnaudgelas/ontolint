@@ -34,6 +34,7 @@ from .adapters.robot import robot_convert
 from .catalogue import planned_rows
 from .datasets import finding_graphs, term_graphs
 from .declarations import Place, Shared, shared_identities
+from .exit_reasons import TOOL_FAILURE_EXIT, ExitReason, UsageParser, refuse
 from .imports import (
     CATALOG_NAME,
     Catalog,
@@ -61,7 +62,6 @@ from .prof import ProfileError, shapes_files
 from .profiles import PROFILES, Profile
 from .redaction import REDACTED_USERINFO, RedactingStream, redact_rendered, redact_userinfo
 from .reporting import (
-    TOOL_FAILURE_EXIT,
     FileReport,
     Location,
     Origin,
@@ -116,7 +116,7 @@ def _positive_seconds(text: str) -> float:
 
 def build_parser() -> argparse.ArgumentParser:
     """Create the ``ontolint`` argument parser."""
-    ap = argparse.ArgumentParser(description="Ontology anti-pattern linter. No automatic network/import access.")
+    ap = UsageParser(description="Ontology anti-pattern linter. No automatic network/import access.")
     ap.add_argument(
         "ontology",
         nargs="*",
@@ -722,11 +722,9 @@ def _quality(
     if args.write_quality_snapshot:
         failure = _write_text(args.write_quality_snapshot, quality.dumps(snapshot), what="quality snapshot")
         if failure is not None:
-            print(failure, file=sys.stderr)
-            return TOOL_FAILURE_EXIT
+            return refuse(ExitReason("output_failed", failure))
     if args.write_dqv and (failure := _write_dqv(args.write_dqv, snapshot, files[0].dqv)) is not None:
-        print(failure, file=sys.stderr)
-        return TOOL_FAILURE_EXIT
+        return refuse(ExitReason("output_failed", failure))
     return quality.compare(accepted, snapshot) if accepted is not None else None
 
 
@@ -746,15 +744,13 @@ def _compare_quality(args: argparse.Namespace) -> int:
     try:
         old, new = (_read_quality(path) for path in args.compare_quality)
     except quality.SnapshotError as exc:
-        print(f"TOOL001: {exc}", file=sys.stderr)
-        return TOOL_FAILURE_EXIT
+        return refuse(ExitReason("snapshot_unreadable", f"TOOL001: {exc}"))
     try:
         failure = _emit(render_comparison(quality.compare(old, new), args.format), args)
     except _StdoutClosed:
         return EXIT_PIPE_CLOSED
     if failure is not None:
-        print(failure, file=sys.stderr)
-        return TOOL_FAILURE_EXIT
+        return refuse(ExitReason("output_failed", failure))
     return 0
 
 
@@ -1090,14 +1086,12 @@ def _info_command(args: argparse.Namespace) -> int | None:
             try:
                 _write_stdout(render_explanation(explain_rule(args.explain, registry), kind) + "\n")
             except UnknownRuleError:
+                message = f"TOOL001: unknown rule {args.explain!r}; use --list-rules to see valid identifiers"
                 try:
-                    print(
-                        f"TOOL001: unknown rule {args.explain!r}; use --list-rules to see valid identifiers",
-                        file=sys.stderr,
-                    )
+                    return refuse(ExitReason("unknown_rule", message))
                 except BrokenPipeError:  # nobody reads it; the exit status still says what happened
                     _release(sys.stderr)
-                return 2
+                    return refuse(ExitReason("unknown_rule", message), announce=False)
         else:
             return None
     except _StdoutClosed:
@@ -1264,29 +1258,25 @@ def _lint(args: argparse.Namespace, stage: list[str], clock: timing.Clock | None
     try:  # read catalogs and import dirs before parsing: a broken one is a configuration error
         imports = _import_options(args, limits)
     except InputRejected as exc:
-        print(f"{exc.rule_id}: {exc.message}", file=sys.stderr)
-        return 2
+        return refuse(ExitReason("input_rejected", f"{exc.rule_id}: {exc.message}"))
     stage[0] = "RDF input parsing"
     try:  # likewise: a quality baseline that cannot be read is no reason to parse anything
         accepted = _read_quality(args.quality_baseline) if args.quality_baseline else None
     except quality.SnapshotError as exc:
-        print(f"TOOL001: {exc}", file=sys.stderr)
-        return TOOL_FAILURE_EXIT
+        return refuse(ExitReason("snapshot_unreadable", f"TOOL001: {exc}"))
     inputs = resolve_inputs(args.ontology, Path.cwd())
     _LOADER_POLICY.set(limits)
     timer = timing.Recorder(clock or time.perf_counter) if args.timing else None
     with timer.load() if timer else contextlib.nullcontext():
         graphs, errors = _parse_inputs(inputs, imports)
     if errors:
-        print("\n".join(errors), file=sys.stderr)
-        return 2
+        return refuse(ExitReason("input_unparseable", "\n".join(errors)))
     try:
         with timer.load() if timer else contextlib.nullcontext():
             shapes, background = _load_shapes(args, limits, imports)
             library = _library(args, limits, imports, inputs)
     except (InputRejected, _ShapesParseFailure, ProfileError) as exc:
-        print(_secondary_input_error(exc), file=sys.stderr)
-        return 2
+        return refuse(ExitReason("input_rejected", _secondary_input_error(exc)))
     stage[0] = "lint execution"
     plan = replace(
         _plan(args, config, shapes, registry), shacl_background=background, quality_baseline=accepted, timer=timer
@@ -1343,9 +1333,9 @@ def main(argv: Sequence[str] | None = None, *, clock: timing.Clock | None = None
     except BrokenPipeError:
         _release(sys.stderr)
         return EXIT_PIPE_CLOSED
-    except Exception:  # noqa: BLE001 -- printed masked, see above
+    except Exception as exc:  # noqa: BLE001 -- printed masked, see above
         traceback.print_exc()
-        return TOOL_FAILURE_EXIT
+        return refuse(ExitReason("internal_error", f"{type(exc).__name__}: {exc}"), announce=False)
     finally:
         if redacting is not None:
             with contextlib.suppress(OSError, ValueError):  # a closed stderr: the flush below releases it
@@ -1420,16 +1410,15 @@ def _lint_and_finish(args: argparse.Namespace, clock: timing.Clock | None = None
     except (UnknownSelectorError, SelectorSyntaxError, PipelineSelectorError, BudgetGateDropped) as exc:
         proposed = frozenset(row.rule_id for row in planned_rows())
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)
-        print(f"TOOL001: configuration failed: {type(exc).__name__}: {message}", file=sys.stderr)
-        return 2
+        return refuse(ExitReason("config_invalid", f"TOOL001: configuration failed: {type(exc).__name__}: {message}"))
     except (PolicyVersionError, PolicyBudgetError, UnknownPolicyRuleError) as exc:
-        print(f"GOV020: policy file rejected: {exc}", file=sys.stderr)
-        return 2
+        return refuse(ExitReason("policy_rejected", f"GOV020: policy file rejected: {exc}"))
     except Exception as exc:
         # Parser/configuration errors are tool failures, not SHACL conformance results.
-        code = "INPUT001" if stage[0] == "RDF input parsing" else "TOOL001"
-        print(f"{code}: {stage[0]} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
-        return 2
+        detail = f"{stage[0]} failed: {type(exc).__name__}: {exc}"
+        if stage[0] == "RDF input parsing":
+            return refuse(ExitReason("input_unparseable", f"INPUT001: {detail}"))
+        return refuse(ExitReason("execution_failed", f"TOOL001: {detail}"))
     if isinstance(outcome, int):
         return outcome
     return _finish(outcome, args)
@@ -1446,8 +1435,8 @@ def _finish(report: RunReport, args: argparse.Namespace) -> int:
         failure = _emit(render_report(report, args.format, code), args)
     except _StdoutClosed:
         failure, closed = None, True
-    if failure is not None:
-        code = TOOL_FAILURE_EXIT
+    if failure is not None:  # set before the lines below: they may hit a closed stderr
+        code = refuse(ExitReason("output_failed", failure), announce=False)
     try:
         if failure is not None:
             print(failure, file=sys.stderr)

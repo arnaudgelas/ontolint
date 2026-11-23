@@ -182,7 +182,7 @@ def _broken_file(path: str) -> FileReport:
 def test_text_executions_are_path_prefixed_only_for_multiple_files() -> None:
     single = render_report(RunReport((_broken_file("a.ttl"),)), "text")
     assert "a.ttl: Rule execution" not in single
-    assert single.splitlines()[-2].startswith("Rule execution")
+    assert single.splitlines()[-4].startswith("Rule execution")  # then its FAILED line and the exit reasons
     pair = render_report(RunReport((_broken_file("a.ttl"), _broken_file("b.ttl"))), "text")
     assert "a.ttl: Rule execution" in pair
     assert "b.ttl: Rule execution" in pair

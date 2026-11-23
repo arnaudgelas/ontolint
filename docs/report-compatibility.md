@@ -47,6 +47,7 @@ open (`additionalProperties` is not `false`) for exactly this reason.
 | rule-count status | `rule_counts[].status`, `ontolintRuleCounts[].status` | `executed`, `skipped`, `unsupported`, `failed`, `not_selected` | **breaking** (closed) |
 | rule category | `rules[].category` | as the catalogue says | additive (open) |
 | backend, scope, requires, family | `rules[]` | as the catalogue says | additive (open) |
+| exit reason kind | `exit.reasons[].kind`, SARIF `ontolintExit` | `rule_failed`, `rule_timeout`, `rule_unsupported`, `budget_unmeasured`, `measurement_failed` | additive (open) |
 
 A rule the user ignored is `skipped` in `executions` and `not_selected` in `rule_counts`; `not_selected` also covers a rule no selector, profile or opt-in family chose.
 
@@ -101,6 +102,20 @@ The same samples also validate against the shipped JSON Schema of the lint repor
 since ontolint itself reads it; the reader also checks cross-field invariants a schema cannot express) and `baseline.v2` (open: its reader ignores sections it does not know), all in `ontolint/schemas/`
 (`tests/test_document_schemas.py`).
 
+## Why a run exits 2
+
+Exit status 2 (a tool failure) never changes. When the run wrote a report, the report says why (issue #175): the `exit` object of the JSON lint
+report (`code`, and `reasons`, each with a `kind`, a one-line `message`, and the `rule`, `path` or `measurement` it is about), the same object as
+the SARIF `invocation.properties.ontolintExit`, a `toolExecutionNotifications` entry for each failed rule and each failed measurement (and
+`executionSuccessful` is `false` for both), and an `Exit status 2:` block under the text report. A run that exits 0 or 1 has none of these, so its
+output keeps its shape. The reasons are listed rules first (in report order), then measurements.
+
+The `kind` is an open enumeration (table above). A run that stops before it has a report (an input that does not parse, a policy rejected as
+`GOV020`, an unknown rule, a usage error, an internal error, an output that cannot be written) has nothing to put a reason in: it prints it on
+stderr, and the kinds it uses are `input_unparseable`, `input_rejected`, `config_invalid`, `policy_rejected`, `snapshot_unreadable`,
+`output_failed`, `unknown_rule`, `usage`, `execution_failed` and `internal_error`. `measurement` is in a reason only for `measurement_failed`; no
+0.16.0 sample has one, so the ledger below does not list it.
+
 ### Ledger: additions since the 0.16.0 samples
 
 One row per added key path; copy the rows into the changelog under the document's name at release. The keys of 0.17.0 are the same as 0.16.0's; the rows below are the catalogue identity and the per-rule counts of #173 (`catalogue`, `rule_counts`; SARIF `ontolintCatalogue`, `ontolintRuleCounts`). The `timing` rows are #174 (`--timing`: present only with the flag).
@@ -142,3 +157,11 @@ One row per added key path; copy the rows into the changelog under the document'
 | sarif | `$.runs[].invocations[].properties.ontolintTiming.units_ms.{*}` | 0.18.0 (`--timing`, #174) |
 | sarif | `$.runs[].invocations[].properties.ontolintTiming.rules_ms` | 0.18.0 (`--timing`, #174) |
 | sarif | `$.runs[].invocations[].properties.ontolintTiming.rules_ms.{*}` | 0.18.0 (`--timing`, #174) |
+| `lint` | `$.exit` | 0.18.0 |
+| `lint` | `$.exit.code` | 0.18.0 |
+| `lint` | `$.exit.reasons` | 0.18.0 |
+| `lint` | `$.exit.reasons[]` | 0.18.0 |
+| `lint` | `$.exit.reasons[].kind` | 0.18.0 |
+| `lint` | `$.exit.reasons[].message` | 0.18.0 |
+| `lint` | `$.exit.reasons[].rule` | 0.18.0 |
+| `lint` | `$.exit.reasons[].path` | 0.18.0 |
