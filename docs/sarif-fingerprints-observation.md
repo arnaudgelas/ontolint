@@ -24,10 +24,19 @@ gh workflow run observe-sarif-fingerprints.yml --ref observe-sarif-fingerprints
 gh run watch
 ```
 
-The closing steps run after a failed step too (`!cancelled()` is a status check, so no implicit `success()` applies); they
-are skipped only when the run is cancelled or `cleanup` is `false`. After a cancellation, close the alerts by hand: upload an
+Every upload is a job of its own (`plain`, `fp`, `reserialized`, `pair`), chained with `needs`, because
+`github/codeql-action/upload-sarif` accepts **one upload per category per job** ("only one run of the codeql/analyze or
+codeql/upload-sarif actions is allowed per job per tool/category"): the experiment re-uploads to the `fp` category to see whether
+its alerts stay, and closes each category it opened, which no single job can do. The last job, `cleanup`, closes the three
+categories with empty reports. It runs after a failed job too (`!cancelled()` is a status check, so no implicit `success()` applies)
+and is skipped only when the run is cancelled or `cleanup` is `false`. After a cancellation, close the alerts by hand: upload an
 empty SARIF report (`runs[0].results: []`) once per category (`ontolint-observe-plain`, `ontolint-observe-fp`,
 `ontolint-observe-pair`), or re-run the workflow from the same branch with `cleanup` left on.
+
+The first run (run 45125513939, 2026-11-23) failed twice before it observed anything: the Action cannot run twice in one job
+(`uv venv` refused the environments the first use left in `$RUNNER_TEMP`; fixed in the Action), and the closing upload to a category
+already uploaded to in the same job was refused (fixed by this layout). It left the alerts of the `plain` category open on the
+branch it ran from; a run of this workflow from that branch, once the branch carries the fix, closes them.
 
 It lints `tests/fixtures/kitchen_sink.ttl` with the Action of the checkout (which installs the release its `pyproject.toml`
 names, so that release must carry the flag: 0.16.0 does), uploads four SARIF reports, queries the alerts API after each and

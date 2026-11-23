@@ -4,10 +4,12 @@ name: Observe SARIF fingerprints
 # tests/fixtures/kitchen_sink.ttl to code scanning and records what GitHub does with `partialFingerprints`, so that the
 # decision of issue #191 (stay opt-in, or default on) rests on an observation and not on the documentation.
 #
-# Run it from a throwaway branch (`gh workflow run observe-sarif-fingerprints.yml --ref <branch>`): the alerts it opens
+# Every upload is a job of its own, because codeql-action/upload-sarif accepts one upload per category per job; the
+# last job closes what the others opened.  Run it from a throwaway branch
+# (`gh workflow run observe-sarif-fingerprints.yml --ref <branch>`): the alerts it opens
 # belong to that ref and to categories that start with `ontolint-observe-`, and the last step closes them by uploading
 # empty reports.  The Action under test is the one of the checkout (`uses: ./`), which installs the ontolint release the
-# checkout's pyproject.toml names from PyPI, so that release must carry `--sarif-fingerprints` (0.16.0 does).
+# checkout's pyproject.toml names from PyPI, so that release must carry `--sarif-fingerprints` (0.16.0 and every later release do).
 on:
   workflow_dispatch:
     inputs:
@@ -24,27 +26,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  observe:
-    name: Upload and compare
+  prepare:
+    name: Prepare the files
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 10
     permissions:
       contents: read
-      security-events: write
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Set up uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
           version: "0.13.7"
-
       - name: Prepare the files
         run: |
           set -euo pipefail
@@ -66,7 +63,32 @@ jobs:
           PY
           cmp -s obs/original.ttl obs/reserialized.ttl && { echo "the re-serialized file is the original"; exit 1; }
           rm obs/original.ttl
+      - name: Keep the files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: observation-files
+          path: obs/
+          retention-days: 1
 
+  plain:
+    name: Upload without the flag
+    needs:
+      - prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fetch the files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: observation-files
+          path: obs
       # 1. Without the flag: GitHub computes its own fingerprints.
       - name: Lint without fingerprints
         id: plain
@@ -81,7 +103,35 @@ jobs:
         with:
           sarif_file: obs-plain.sarif
           category: ontolint-observe-plain
+      - name: Keep the report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sarif-plain
+          path: |
+            obs-plain.sarif
+          retention-days: 30
 
+  fp:
+    name: Upload with the flag
+    needs:
+      - plain
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fetch the files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: observation-files
+          path: obs
       # 2. With the flag.
       - name: Lint with fingerprints
         id: fp
@@ -103,8 +153,37 @@ jobs:
           gh api --paginate "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=ontolint&ref=$GITHUB_REF&per_page=100&state=open" \
             | jq -s 'add // []' > alerts-fp-1.json
           jq 'length' alerts-fp-1.json
+      - name: Keep the report and the alerts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sarif-fp
+          path: |
+            obs-fp.sarif
+            alerts-fp-1.json
+          retention-days: 30
 
-      # 3. The same graph re-serialized, same path, same category: the alerts must stay the same alerts.
+  reserialized:
+    name: Upload the re-serialized file
+    needs:
+      - fp
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fetch the files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: observation-files
+          path: obs
+      # 3. The same graph re-serialized, same path, same category (in a job of its own): the alerts must stay the same alerts.
       - name: Re-serialize the file
         run: |
           cp obs/reserialized.ttl obs/kitchen.ttl
@@ -128,7 +207,35 @@ jobs:
             | jq -s 'add // []' > alerts-fp-2.json
           gh api --paginate "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=ontolint&ref=$GITHUB_REF&per_page=100&state=fixed" \
             | jq -s 'add // []' > alerts-fixed-2.json
+      - name: Keep the alerts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sarif-reserialized
+          path: |
+            obs-fp-reserialized.sarif
+            alerts-fp-2.json
+            alerts-fixed-2.json
+          retention-days: 30
 
+  pair:
+    name: Upload the pair
+    needs:
+      - reserialized
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fetch the files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: observation-files
+          path: obs
       # 4. Two files with one identity.
       - name: Lint the pair with fingerprints
         uses: ./
@@ -145,7 +252,32 @@ jobs:
         with:
           sarif_file: obs-pair.sarif
           category: ontolint-observe-pair
+      - name: Keep the report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sarif-pair
+          path: |
+            obs-pair.sarif
+          retention-days: 30
 
+  summarize:
+    name: Summarize what GitHub did
+    needs:
+      - pair
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Fetch the reports and the alert lists
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: sarif-*
+          merge-multiple: true
+          path: .
       - name: Summarize what GitHub did
         run: |
           set -euo pipefail
@@ -184,26 +316,38 @@ jobs:
           path: evidence/
           retention-days: 30
 
-      # 5. Leave no alert behind.
+  cleanup:
+    name: Close the alerts the experiment opened
+    needs:
+      - prepare
+      - plain
+      - fp
+      - reserialized
+      - pair
+      - summarize
+    if: ${{ inputs.cleanup && !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      # 5. Leave no alert behind: one empty report per category, one upload per category in this job.
       - name: Write empty reports
-        if: ${{ inputs.cleanup && !cancelled() }}
         run: |
           set -euo pipefail
           jq -n '{version: "2.1.0", "$schema": "https://json.schemastore.org/sarif-2.1.0.json", runs: [{tool: {driver: {name: "ontolint"}}, results: []}]}' > empty.sarif
       - name: Close the plain alerts
-        if: ${{ inputs.cleanup && !cancelled() }}
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: empty.sarif
           category: ontolint-observe-plain
       - name: Close the fingerprint alerts
-        if: ${{ inputs.cleanup && !cancelled() }}
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: empty.sarif
           category: ontolint-observe-fp
       - name: Close the pair alerts
-        if: ${{ inputs.cleanup && !cancelled() }}
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: empty.sarif
