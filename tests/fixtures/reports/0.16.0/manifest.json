@@ -1,0 +1,224 @@
+{
+  "tool": "ontolint 0.16.0",
+  "generated_from": "git tag v0.16.0",
+  "cwd": "tests/fixtures",
+  "samples": [
+    {
+      "file": "quality-snapshot.json",
+      "kind": "quality-snapshot",
+      "args": [
+        "clean.ttl",
+        "--write-quality-snapshot",
+        "{out}",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "baseline.json",
+      "kind": "baseline",
+      "args": [
+        "kitchen_sink.ttl",
+        "--write-baseline",
+        "{out}",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-default.json",
+      "kind": "lint",
+      "args": [
+        "kitchen_sink.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-clean.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-empty.json",
+      "kind": "lint",
+      "args": [
+        "reports/inputs/empty.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-measurements.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--measurements"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-quality-comparison.json",
+      "kind": "lint",
+      "args": [
+        "populated.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--quality-baseline",
+        "reports/0.16.0/quality-snapshot.json"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-baseline-stale.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--baseline",
+        "reports/0.16.0/baseline.json"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-shapes.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--shapes",
+        "clean_shapes.ttl"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-failed-rule.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--shapes",
+        "reports/inputs/illformed_shapes.ttl"
+      ],
+      "exit": 2
+    },
+    {
+      "file": "lint-multi-file.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "populated.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-modules.json",
+      "kind": "lint",
+      "args": [
+        "populated.ttl",
+        "--format",
+        "json",
+        "--fail-on",
+        "never",
+        "--module-by",
+        "namespace"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "lint-profile-obo.json",
+      "kind": "lint",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "json",
+        "--profile",
+        "obo",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "rules-list.json",
+      "kind": "rules-list",
+      "args": [
+        "--list-rules",
+        "--format",
+        "json"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "rule-explain.json",
+      "kind": "rule-explain",
+      "args": [
+        "--explain",
+        "OWL004",
+        "--format",
+        "json"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "sarif-default.sarif",
+      "kind": "sarif",
+      "args": [
+        "clean.ttl",
+        "--format",
+        "sarif",
+        "--fail-on",
+        "never"
+      ],
+      "exit": 0
+    },
+    {
+      "file": "sarif-shapes.sarif",
+      "kind": "sarif",
+      "args": [
+        "populated.ttl",
+        "--format",
+        "sarif",
+        "--fail-on",
+        "never",
+        "--shapes",
+        "clean_shapes.ttl"
+      ],
+      "exit": 0
+    }
+  ]
+}

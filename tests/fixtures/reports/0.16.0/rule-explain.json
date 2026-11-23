@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "rule": {
+    "id": "OWL004",
+    "family": "OWL",
+    "title": "Multiple domains or ranges mean intersection",
+    "severity": "warning",
+    "category": "heuristic",
+    "backend": "rdflib",
+    "scope": "axiom",
+    "requires": "none",
+    "status": "implemented",
+    "selectable": true,
+    "suggestion": "Review conjunction semantics of multiple rdfs:domain/rdfs:range; use owl:unionOf if intended.",
+    "test_requirement": "domain/range fixtures: two domains, two ranges, named plus anonymous; one each, one union, undeclared and foreign properties"
+  }
+}

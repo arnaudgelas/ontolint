@@ -1,0 +1,199 @@
+{
+  "format": "ontolint-quality-snapshot",
+  "version": 1,
+  "policy": {
+    "base": null,
+    "extra_label_predicates": [],
+    "extra_definition_predicates": [],
+    "imports": []
+  },
+  "measurements": [
+    {
+      "id": "class_label_coverage",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_classes",
+      "numerator": 2,
+      "denominator": 2,
+      "better": "higher",
+      "numerator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1"
+      ],
+      "denominator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1"
+      ]
+    },
+    {
+      "id": "class_definition_coverage",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_classes",
+      "numerator": 2,
+      "denominator": 2,
+      "better": "higher",
+      "numerator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1"
+      ],
+      "denominator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1"
+      ]
+    },
+    {
+      "id": "property_documentation_coverage",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_properties",
+      "numerator": 1,
+      "denominator": 1,
+      "better": "higher",
+      "numerator_terms": [
+        "https://example.test/clean#hasName"
+      ],
+      "denominator_terms": [
+        "https://example.test/clean#hasName"
+      ]
+    },
+    {
+      "id": "class_fanout",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_parent_classes",
+      "numerator": 1,
+      "denominator": 1
+    },
+    {
+      "id": "orphan_classes",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_classes",
+      "numerator": 0,
+      "denominator": 2,
+      "better": "lower",
+      "numerator_terms": [],
+      "denominator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1"
+      ]
+    },
+    {
+      "id": "relation_properties_per_class",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_classes",
+      "numerator": 1,
+      "denominator": 2
+    },
+    {
+      "id": "unsigned_properties",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_object_and_datatype_properties",
+      "numerator": 0,
+      "denominator": 1,
+      "better": "lower",
+      "numerator_terms": [],
+      "denominator_terms": [
+        "https://example.test/clean#hasName"
+      ]
+    },
+    {
+      "id": "label_language_coverage",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "labelled_owned_terms",
+      "numerator": 3,
+      "denominator": 3,
+      "better": "higher",
+      "numerator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1",
+        "https://example.test/clean#hasName"
+      ],
+      "denominator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1",
+        "https://example.test/clean#hasName"
+      ]
+    },
+    {
+      "id": "foreign_references",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "structural_references",
+      "numerator": 0,
+      "denominator": 2,
+      "by_namespace": []
+    },
+    {
+      "id": "unresolved_imports",
+      "definition_version": 1,
+      "kind": "count",
+      "population": "graph",
+      "value": 0
+    },
+    {
+      "id": "definition_length",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "defined_owned_classes",
+      "numerator": 4,
+      "denominator": 2
+    },
+    {
+      "id": "blank_subjects",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "non_structural_subjects",
+      "numerator": 0,
+      "denominator": 5
+    },
+    {
+      "id": "class_depth",
+      "definition_version": 1,
+      "kind": "histogram",
+      "population": "acyclic_owned_classes",
+      "buckets": [
+        {
+          "value": 1,
+          "count": 1
+        },
+        {
+          "value": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "cyclic_classes",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_classes",
+      "numerator": 0,
+      "denominator": 2,
+      "better": "lower",
+      "numerator_terms": [],
+      "denominator_terms": [
+        "https://example.test/clean#SubThing",
+        "https://example.test/clean#Thing1"
+      ]
+    },
+    {
+      "id": "hierarchy_components",
+      "definition_version": 1,
+      "kind": "count",
+      "population": "owned_classes",
+      "value": 1
+    },
+    {
+      "id": "shacl_class_target_coverage",
+      "definition_version": 1,
+      "kind": "ratio",
+      "population": "owned_classes",
+      "reason": "no SHACL shapes graph was supplied"
+    }
+  ]
+}
