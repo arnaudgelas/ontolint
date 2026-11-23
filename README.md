@@ -81,7 +81,8 @@ file and any imports you point it at.
 
 For scripts, CI and AI agents. Each interface is described in the section named in the last
 column. The JSON report carries `schema_version` (currently `1`), but ontolint is still Alpha and
-the report has no published JSON Schema yet, so pin the version you parse against.
+the report has no published JSON Schema yet, so pin the version you parse against. What may change in a
+report without a version bump, and what is breaking, is the [report compatibility policy](docs/report-compatibility.md).
 
 | You want | Run or read | Where it is described |
 | --- | --- | --- |

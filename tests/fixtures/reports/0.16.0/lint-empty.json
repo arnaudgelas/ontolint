@@ -1,0 +1,3866 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "warning": 1
+  },
+  "findings": [
+    {
+      "rule": "ONT001",
+      "severity": "warning",
+      "focus": "(ontology)",
+      "message": "Missing owl:Ontology declaration.",
+      "suggestion": "Declare a stable ontology IRI using rdf:type owl:Ontology.",
+      "confidence": "certain",
+      "path": "reports/inputs/empty.ttl"
+    }
+  ],
+  "execution_summary": {
+    "executed": 193,
+    "skipped": 32,
+    "unsupported": 0,
+    "failed": 0
+  },
+  "rules": [
+    {
+      "id": "ALIGN002",
+      "family": "ALIGN",
+      "title": "Misspelt SKOS or OWL mapping predicate",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use the exact SKOS or OWL mapping property IRI (for example skos:exactMatch); the asserted one is unknown."
+    },
+    {
+      "id": "ALIGN003",
+      "family": "ALIGN",
+      "title": "exactMatch chain conflicting with broadMatch, narrowMatch or relatedMatch",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "skos:exactMatch is transitive and disjoint with broad/narrowMatch; drop one mapping of the chain."
+    },
+    {
+      "id": "ALIGN004",
+      "family": "ALIGN",
+      "title": "Contradictory hierarchical or associative mapping strengths",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep one mapping strength per pair: broadMatch, narrowMatch and relatedMatch exclude each other."
+    },
+    {
+      "id": "ALIGN005",
+      "family": "ALIGN",
+      "title": "Term with several distinct exactMatch targets in one namespace",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "context-dependent",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep one exactMatch per target namespace, or relate the targets to each other if they are the same thing."
+    },
+    {
+      "id": "ALIGN007",
+      "family": "ALIGN",
+      "title": "Symmetric SKOS mapping asserted in one direction only",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "context-dependent",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Assert the inverse skos:exactMatch/closeMatch too, since both terms are described in this file."
+    },
+    {
+      "id": "ALIGN009",
+      "family": "ALIGN",
+      "title": "Mapping between a class and a property",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "context-dependent",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Map classes to classes and properties to properties; the declared kinds are incompatible."
+    },
+    {
+      "id": "ALIGN012",
+      "family": "ALIGN",
+      "title": "Mapping target outside the declared alignment namespaces",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Map to a term inside one of alignment_namespaces, or add the target's namespace to the policy file."
+    },
+    {
+      "id": "ALIGN013",
+      "family": "ALIGN",
+      "title": "Duplicate mapping through several predicates",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "context-dependent",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep the most precise mapping predicate; the same pair is related by several equivalent assertions."
+    },
+    {
+      "id": "ALIGN014",
+      "family": "ALIGN",
+      "title": "broadMatch or narrowMatch contradicting the asserted hierarchy",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Reverse the mapping or fix the hierarchy; the file places the broader term below the narrower one."
+    },
+    {
+      "id": "ALIGN015",
+      "family": "ALIGN",
+      "title": "Declared mapping set without version, creator or licence",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add a version, a creator and a licence to the sssom:MappingSet."
+    },
+    {
+      "id": "ALIGN016",
+      "family": "ALIGN",
+      "title": "Mapping coverage below the expected ratio",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "context-dependent",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Align more classes and properties (skos:exactMatch, owl:equivalentClass) or lower alignment_min_coverage."
+    },
+    {
+      "id": "CLS001",
+      "family": "CLS",
+      "title": "Disconnected class",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Inspect whether the class is intentional: it has no sub/superclass or equivalence link, is not deprecated and is never used as a domain, range, restriction filler or type."
+    },
+    {
+      "id": "CLS002",
+      "family": "CLS",
+      "title": "Class without instances or subclasses",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check whether this class is intentionally uninstantiated, abstract, or imported."
+    },
+    {
+      "id": "CLS003",
+      "family": "CLS",
+      "title": "Asserted subclass cycle",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Review the asserted subclass cycle; an OWL subclass cycle is not by itself inconsistent."
+    },
+    {
+      "id": "CLS004",
+      "family": "CLS",
+      "title": "Transitively redundant subclass axiom",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove a redundant asserted subclass axiom if it adds no documentation value."
+    },
+    {
+      "id": "CLS005",
+      "family": "CLS",
+      "title": "Excessive hierarchy depth",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Review unusually deep asserted hierarchy and possible re-modeling."
+    },
+    {
+      "id": "CLS006",
+      "family": "CLS",
+      "title": "Excessive direct superclasses",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Review the intended meaning of multiple direct superclasses."
+    },
+    {
+      "id": "CLS007",
+      "family": "CLS",
+      "title": "Long single-child taxonomic chain",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check long single-child taxonomic chains for needless subdivisions."
+    },
+    {
+      "id": "CLS008",
+      "family": "CLS",
+      "title": "Class with excessive asserted properties",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Consider splitting classes or using property groups/shapes where appropriate."
+    },
+    {
+      "id": "CLS009",
+      "family": "CLS",
+      "title": "Equivalent classes with identical labels",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check whether class equivalence is purposeful and not merely a duplicate name."
+    },
+    {
+      "id": "CLS010",
+      "family": "CLS",
+      "title": "Sibling classes with identical labels",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Give each sibling class a distinct label, or merge the classes if they mean the same thing."
+    },
+    {
+      "id": "CLS011",
+      "family": "CLS",
+      "title": "Excessive direct subclasses",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Introduce intermediate classes to structure a flat fan-out of direct subclasses."
+    },
+    {
+      "id": "CLS012",
+      "family": "CLS",
+      "title": "Instantiated class with only unused leaf subclasses",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check whether the unused leaf subclasses are needed or whether instances should use them."
+    },
+    {
+      "id": "CLS013",
+      "family": "CLS",
+      "title": "Miscellaneous remainder class",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Replace the catch-all 'Other' subclass with specific classes or an open-world note on its parent."
+    },
+    {
+      "id": "CLS014",
+      "family": "CLS",
+      "title": "Class below two asserted-disjoint classes",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove one of the superclass assertions or the disjointness; the class cannot have instances."
+    },
+    {
+      "id": "CLS015",
+      "family": "CLS",
+      "title": "Unlabelled class with several subclasses",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add an rdfs:label or skos:prefLabel to the class that heads a subtree."
+    },
+    {
+      "id": "CLS016",
+      "family": "CLS",
+      "title": "Generic is-a style property",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use rdfs:subClassOf or rdf:type, or a semantically specific property, instead of a generic 'is' property."
+    },
+    {
+      "id": "CLS017",
+      "family": "CLS",
+      "title": "Class also used as an individual",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check whether the class/individual punning is intended; otherwise model the individual separately."
+    },
+    {
+      "id": "CLS018",
+      "family": "CLS",
+      "title": "Redundant owl:Thing superclass",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Drop the explicit owl:Thing or rdfs:Resource superclass; the class already has another superclass."
+    },
+    {
+      "id": "CLS019",
+      "family": "CLS",
+      "title": "Class asserted equal to or below owl:Nothing",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove the owl:Nothing assertion or the class if it is not meant to be unsatisfiable."
+    },
+    {
+      "id": "CLS020",
+      "family": "CLS",
+      "title": "Subclass labelled like its superclass",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Give the subclass a label that says how it specializes its superclass."
+    },
+    {
+      "id": "CLS021",
+      "family": "CLS",
+      "title": "Equivalent class that is also an asserted ancestor",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check whether the subclass chain between equivalent classes is intended; it collapses the chain."
+    },
+    {
+      "id": "CLS022",
+      "family": "CLS",
+      "title": "Class named like a property",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Name classes with nouns; a has/is-style name usually denotes a property."
+    },
+    {
+      "id": "CLS023",
+      "family": "CLS",
+      "title": "Class name encodes a conjunction",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Split the class, or use owl:unionOf / owl:intersectionOf instead of 'And'/'Or' in the name."
+    },
+    {
+      "id": "CLS024",
+      "family": "CLS",
+      "title": "Sibling class breaking the naming pattern",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Check whether the class belongs under this parent or should follow its siblings' naming pattern."
+    },
+    {
+      "id": "CLS025",
+      "family": "CLS",
+      "title": "Instance typed with a class and its ancestor",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove the redundant type assertion for the ancestor class."
+    },
+    {
+      "id": "DATA001",
+      "family": "DATA",
+      "title": "Value datatype conflicts with property range",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Check a property assertion for range/type confusion."
+    },
+    {
+      "id": "DATA002",
+      "family": "DATA",
+      "title": "Property usage conflicts with subject type",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Check a property assertion for datatype/object-property confusion."
+    },
+    {
+      "id": "DATA003",
+      "family": "DATA",
+      "title": "Literal whose lexical form is not valid for its datatype",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Correct the value or its datatype ('2004'^^xsd:gYear, not xsd:date); type plain text as xsd:string."
+    },
+    {
+      "id": "DATA004",
+      "family": "DATA",
+      "title": "Datatype outside the OWL 2 datatype map",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Use a datatype of the OWL 2 datatype map (xsd:dateTime rather than xsd:date), or rdfs:Literal."
+    },
+    {
+      "id": "GOV001",
+      "family": "GOV",
+      "title": "Reference to a deprecated term",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Migrate non-annotation references to deprecated terms or justify them."
+    },
+    {
+      "id": "GOV002",
+      "family": "GOV",
+      "title": "Unpinned or invalid ontology import",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Pin or resolve imported ontology versions in an explicit import manifest."
+    },
+    {
+      "id": "GOV003",
+      "family": "GOV",
+      "title": "Undeclared local vocabulary term",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review references to local undeclared vocabulary terms."
+    },
+    {
+      "id": "GOV004",
+      "family": "GOV",
+      "title": "Ontology without a contact or maintainer",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add a dcterms:publisher, dcat:contactPoint or foaf:maintainer so users know whom to contact."
+    },
+    {
+      "id": "GOV008",
+      "family": "GOV",
+      "title": "Deprecated term without a replacement or reason",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add dcterms:isReplacedBy or an obsolescence reason (rdfs:comment, skos:historyNote) to deprecated terms."
+    },
+    {
+      "id": "GOV009",
+      "family": "GOV",
+      "title": "Term without creator attribution",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add dcterms:creator or dcterms:contributor to the terms that lack attribution."
+    },
+    {
+      "id": "GOV010",
+      "family": "GOV",
+      "title": "Term without creation or modification date",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add dcterms:created or dcterms:modified to the terms that lack a date."
+    },
+    {
+      "id": "GOV011",
+      "family": "GOV",
+      "title": "Versioned ontology without change history",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Record changes with skos:changeNote, vann:changes or owl:priorVersion."
+    },
+    {
+      "id": "GOV012",
+      "family": "GOV",
+      "title": "Term without a status",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add a status such as vs:term_status to the terms that lack one."
+    },
+    {
+      "id": "GOV013",
+      "family": "GOV",
+      "title": "Obsolete term still used in axioms",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Replace references to owl:DeprecatedClass/owl:DeprecatedProperty terms or retire the referencing axiom."
+    },
+    {
+      "id": "GOV014",
+      "family": "GOV",
+      "title": "Term defined outside the base namespace",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Move the definition to the owning vocabulary or keep only an import stub for external terms."
+    },
+    {
+      "id": "GOV016",
+      "family": "GOV",
+      "title": "Term missing the annotations the policy requires",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add the missing annotations, or drop them from required_annotations in the policy file."
+    },
+    {
+      "id": "GOV017",
+      "family": "GOV",
+      "title": "Versioned ontology without review or approval metadata",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Record review or approval with dcterms:dateAccepted, schema:reviewedBy or pav:curatedBy."
+    },
+    {
+      "id": "GOV020",
+      "family": "GOV",
+      "title": "Policy file invalid or for a different policy-pack version",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Remove or fix the unknown keys; the policy file only supports the documented keys and policy_version 1."
+    },
+    {
+      "id": "IRI001",
+      "family": "IRI",
+      "title": "Whitespace or non-absolute IRI",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use stable absolute IRIs; avoid whitespace in identifiers."
+    },
+    {
+      "id": "IRI002",
+      "family": "IRI",
+      "title": "Ontology IRI contains a file extension",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Consider an extension-independent ontology identifier (policy-dependent)."
+    },
+    {
+      "id": "IRI003",
+      "family": "IRI",
+      "title": "Local-name collision across namespaces",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Check whether duplicate local identifiers across namespaces confuse users."
+    },
+    {
+      "id": "IRI004",
+      "family": "IRI",
+      "title": "Term namespaces unrelated to the ontology IRI",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Mint term IRIs under the ontology IRI, or document why the namespace differs."
+    },
+    {
+      "id": "IRI005",
+      "family": "IRI",
+      "title": "Mixed hash and slash term namespaces",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Use one namespace style (hash or slash) for the terms of a vocabulary."
+    },
+    {
+      "id": "IRI006",
+      "family": "IRI",
+      "title": "Term IRI contains a query string",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Avoid '?query' parts in term IRIs; they are not stable identifiers."
+    },
+    {
+      "id": "IRI008",
+      "family": "IRI",
+      "title": "Mixed http and https term IRIs",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Use a single URI scheme for the terms of one vocabulary."
+    },
+    {
+      "id": "IRI009",
+      "family": "IRI",
+      "title": "IRI contains characters that are not allowed",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove or percent-encode characters such as < > \" { } | \\ ^ and backtick."
+    },
+    {
+      "id": "IRI010",
+      "family": "IRI",
+      "title": "Term IRI has an empty local name",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Give the term a local name; an IRI ending in '#' or '/' names a namespace."
+    },
+    {
+      "id": "IRI011",
+      "family": "IRI",
+      "title": "Percent-encoded characters in a term local name",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Prefer readable local names without percent escapes."
+    },
+    {
+      "id": "IRI012",
+      "family": "IRI",
+      "title": "Term IRI uses a loopback host",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Publish terms under a resolvable, persistent host instead of localhost."
+    },
+    {
+      "id": "IRI013",
+      "family": "IRI",
+      "title": "Version or date embedded in a term IRI",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep term IRIs persistent; put versions in owl:versionIRI instead."
+    },
+    {
+      "id": "IRI014",
+      "family": "IRI",
+      "title": "Leading, trailing or repeated separators in a local name",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Avoid leading/trailing or doubled '_' and '-' in local names."
+    },
+    {
+      "id": "IRI015",
+      "family": "IRI",
+      "title": "Opaque and readable local names mixed in one namespace",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Use one naming scheme per namespace: either opaque numeric identifiers or readable names."
+    },
+    {
+      "id": "IRI016",
+      "family": "IRI",
+      "title": "Ontology IRI has a query string or fragment",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Use an ontology IRI without '?query' or '#fragment' parts."
+    },
+    {
+      "id": "IRI017",
+      "family": "IRI",
+      "title": "Ontology IRI also used as a term",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Do not reuse the ontology IRI as a class, property, concept or individual."
+    },
+    {
+      "id": "IRI018",
+      "family": "IRI",
+      "title": "Placeholder ontology IRI",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Give the ontology a permanent IRI under a namespace you control, such as a w3id.org or purl.org PURL."
+    },
+    {
+      "id": "IRI019",
+      "family": "IRI",
+      "title": "Declared prefix that no IRI uses",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Remove the prefix declaration, or import the vocabulary it was declared for."
+    },
+    {
+      "id": "LEX001",
+      "family": "LEX",
+      "title": "Term without label",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add rdfs:label or an accepted alternative to the declared local term."
+    },
+    {
+      "id": "LEX002",
+      "family": "LEX",
+      "title": "Term without definition",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add a natural-language definition (rdfs:comment, skos:definition, or dcterms:description)."
+    },
+    {
+      "id": "LEX003",
+      "family": "LEX",
+      "title": "Multiple labels in one language",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use one language-specific primary label per term and language."
+    },
+    {
+      "id": "LEX004",
+      "family": "LEX",
+      "title": "Duplicate label across terms",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Differentiate labels or formally document and link genuinely equivalent concepts."
+    },
+    {
+      "id": "LEX005",
+      "family": "LEX",
+      "title": "Blank or whitespace-padded label",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Trim whitespace or replace empty labels."
+    },
+    {
+      "id": "LEX006",
+      "family": "LEX",
+      "title": "Mixed plain and language-tagged labels",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Use a consistent label language-tag policy."
+    },
+    {
+      "id": "LEX007",
+      "family": "LEX",
+      "title": "Mixed identifier naming styles",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Use one configured naming convention for comparable term identifiers."
+    },
+    {
+      "id": "LEX008",
+      "family": "LEX",
+      "title": "Missing label in a required language",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add the required preferred language label."
+    },
+    {
+      "id": "LEX009",
+      "family": "LEX",
+      "title": "Label capitalization inconsistent with term kind",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Review capitalization and wording relative to the namespace policy."
+    },
+    {
+      "id": "LEX010",
+      "family": "LEX",
+      "title": "Label is a verbatim identifier",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Write a human-readable label (words separated by spaces) instead of repeating the identifier."
+    },
+    {
+      "id": "LEX011",
+      "family": "LEX",
+      "title": "Label contains line breaks, tabs or repeated whitespace",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use single spaces inside labels."
+    },
+    {
+      "id": "LEX012",
+      "family": "LEX",
+      "title": "Label ends with punctuation",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove trailing punctuation such as '.', ':', ';' or ',' from labels."
+    },
+    {
+      "id": "LEX013",
+      "family": "LEX",
+      "title": "Label or definition is not a literal",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use a literal value for labels and definitions; link resources with a different property."
+    },
+    {
+      "id": "LEX014",
+      "family": "LEX",
+      "title": "Label literal has a non-string datatype",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use plain or language-tagged string literals for labels."
+    },
+    {
+      "id": "LEX015",
+      "family": "LEX",
+      "title": "Alternative label repeats the preferred label",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove alternative labels that equal the term's own label in the same language."
+    },
+    {
+      "id": "LEX016",
+      "family": "LEX",
+      "title": "Alternative label is another term's label",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Resolve the overlap: relate the terms or remove the conflicting synonym."
+    },
+    {
+      "id": "LEX017",
+      "family": "LEX",
+      "title": "Definition repeats the label",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Write a definition that says more than the label."
+    },
+    {
+      "id": "LEX018",
+      "family": "LEX",
+      "title": "Label contains markup or character entities",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Store labels as plain text; remove HTML/XML tags and character entities."
+    },
+    {
+      "id": "LEX019",
+      "family": "LEX",
+      "title": "Blank definition",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Provide definition text or remove the empty annotation."
+    },
+    {
+      "id": "LEX020",
+      "family": "LEX",
+      "title": "Identical definition on several terms",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Write a distinguishing definition for each term."
+    },
+    {
+      "id": "LEX021",
+      "family": "LEX",
+      "title": "Label is not Unicode NFC-normalized",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Normalize labels to Unicode NFC so equal-looking labels compare equal."
+    },
+    {
+      "id": "LEX022",
+      "family": "LEX",
+      "title": "Label in a language outside the configured languages",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use a configured language tag or extend the language policy."
+    },
+    {
+      "id": "LEX023",
+      "family": "LEX",
+      "title": "Missing definition in a required language",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Add the definition in every configured language, or none."
+    },
+    {
+      "id": "LEX024",
+      "family": "LEX",
+      "title": "Several skos:definition values in one language",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep one skos:definition per language and term."
+    },
+    {
+      "id": "LEX025",
+      "family": "LEX",
+      "title": "Whitespace-padded annotation value",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Trim the leading and trailing whitespace of the annotation value."
+    },
+    {
+      "id": "LIB001",
+      "family": "LIB",
+      "title": "Pattern library index entry names no member ontology",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "pattern-library",
+      "suggestion": "Give the entry the member's ontology IRI, or link it to the member (for example with rdfs:isDefinedBy)."
+    },
+    {
+      "id": "LIB002",
+      "family": "LIB",
+      "title": "Pattern library member missing from the index",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "pattern-library",
+      "suggestion": "Add an index entry for the pattern ontology, or remove the file from the library."
+    },
+    {
+      "id": "LIB003",
+      "family": "LIB",
+      "title": "Pattern library member refers to a pattern the library lacks",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "pattern-library",
+      "suggestion": "Correct the IRI, or add the pattern ontology it names to the library."
+    },
+    {
+      "id": "METRIC001",
+      "family": "METRIC",
+      "title": "Low class label coverage",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add an rdfs:label or skos:prefLabel to the unlabelled classes."
+    },
+    {
+      "id": "METRIC002",
+      "family": "METRIC",
+      "title": "Low class definition coverage",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add rdfs:comment, skos:definition or dcterms:description to the undefined classes."
+    },
+    {
+      "id": "METRIC003",
+      "family": "METRIC",
+      "title": "Low property documentation coverage",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Document properties with rdfs:comment, skos:definition or dcterms:description."
+    },
+    {
+      "id": "METRIC004",
+      "family": "METRIC",
+      "title": "High mean class fan-out",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Introduce intermediate classes where parents have many direct subclasses on average."
+    },
+    {
+      "id": "METRIC005",
+      "family": "METRIC",
+      "title": "High orphan class ratio",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Connect orphan classes to the hierarchy, properties or instances, or remove them."
+    },
+    {
+      "id": "METRIC006",
+      "family": "METRIC",
+      "title": "Low property-to-class ratio",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Check whether relations between the classes are missing; the ontology may be only a taxonomy."
+    },
+    {
+      "id": "METRIC007",
+      "family": "METRIC",
+      "title": "High property-to-class ratio",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Check for property proliferation: generalise properties or add the classes they should describe."
+    },
+    {
+      "id": "METRIC008",
+      "family": "METRIC",
+      "title": "Low property signature coverage",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Declare rdfs:domain or rdfs:range on object and datatype properties where the intent is clear."
+    },
+    {
+      "id": "METRIC009",
+      "family": "METRIC",
+      "title": "Low label language-tag coverage",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Tag labels with their language (for example rdfs:label \"x\"@en)."
+    },
+    {
+      "id": "METRIC010",
+      "family": "METRIC",
+      "title": "High cross-namespace reference ratio",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Check that the ontology is not mostly a thin layer over external vocabularies; consider importing instead."
+    },
+    {
+      "id": "METRIC011",
+      "family": "METRIC",
+      "title": "Excessive number of imports",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Reduce owl:imports to the ontologies actually needed, or use import modules."
+    },
+    {
+      "id": "METRIC012",
+      "family": "METRIC",
+      "title": "Terse class definitions",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Expand very short class definitions so that they state what distinguishes the class."
+    },
+    {
+      "id": "METRIC013",
+      "family": "METRIC",
+      "title": "High blank node ratio",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Check whether anonymous resources could be named, or are restrictions that should be reviewed."
+    },
+    {
+      "id": "METRIC014",
+      "family": "METRIC",
+      "title": "Quality budget breached",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Bring the measurement within its quality_budgets bound, or change the budget in the policy file."
+    },
+    {
+      "id": "ONT001",
+      "family": "ONT",
+      "title": "Missing ontology declaration",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Declare a stable ontology IRI using rdf:type owl:Ontology."
+    },
+    {
+      "id": "ONT002",
+      "family": "ONT",
+      "title": "Multiple ontology declarations",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Prefer one primary owl:Ontology declaration per standalone ontology document."
+    },
+    {
+      "id": "ONT003",
+      "family": "ONT",
+      "title": "Missing ontology license",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add dcterms:license (or an agreed equivalent) to the ontology."
+    },
+    {
+      "id": "ONT004",
+      "family": "ONT",
+      "title": "Missing ontology version",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add owl:versionIRI or owl:versionInfo according to your release policy."
+    },
+    {
+      "id": "ONT005",
+      "family": "ONT",
+      "title": "Missing ontology creator or creation date",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Add creator and creation date provenance (e.g. dcterms:creator and dcterms:created)."
+    },
+    {
+      "id": "ONT006",
+      "family": "ONT",
+      "title": "Missing ontology description",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Describe the ontology with dcterms:description or rdfs:comment."
+    },
+    {
+      "id": "ONT007",
+      "family": "ONT",
+      "title": "Ontology or version IRI declared by several documents with different content",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "set",
+      "requires": "none",
+      "suggestion": "Keep one document per release: remove the stale copy, give every release its own version IRI, and give a fork its own ontology IRI."
+    },
+    {
+      "id": "ONT008",
+      "family": "ONT",
+      "title": "Identical copies of one ontology in several documents",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "set",
+      "requires": "none",
+      "suggestion": "Keep one copy, or generate the others from it (robot mirror, a release step) so they cannot drift apart."
+    },
+    {
+      "id": "ONT009",
+      "family": "ONT",
+      "title": "Imported file does not declare the imported IRI",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Correct the catalog entry (or the owl:imports IRI) so the file declares the imported IRI, or give the file that ontology or version IRI."
+    },
+    {
+      "id": "OWL001",
+      "family": "OWL",
+      "title": "Undeclared class in subclass axiom",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Explicitly declare local classes used in class axioms."
+    },
+    {
+      "id": "OWL002",
+      "family": "OWL",
+      "title": "Undeclared property in domain or range axiom",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Explicitly declare local properties used in schema axioms."
+    },
+    {
+      "id": "OWL003",
+      "family": "OWL",
+      "title": "Property typed as both object and datatype property",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Do not simultaneously declare a property as both owl:ObjectProperty and owl:DatatypeProperty."
+    },
+    {
+      "id": "OWL004",
+      "family": "OWL",
+      "title": "Multiple domains or ranges mean intersection",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review conjunction semantics of multiple rdfs:domain/rdfs:range; use owl:unionOf if intended."
+    },
+    {
+      "id": "OWL005",
+      "family": "OWL",
+      "title": "Property without domain",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Consider declaring domain or explaining why a global domain is inappropriate."
+    },
+    {
+      "id": "OWL006",
+      "family": "OWL",
+      "title": "Property without range",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Consider declaring range or explaining why a global range is inappropriate."
+    },
+    {
+      "id": "OWL007",
+      "family": "OWL",
+      "title": "Property declared inverse of itself",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Replace self-inverse modeling with owl:SymmetricProperty when this is intentional."
+    },
+    {
+      "id": "OWL008",
+      "family": "OWL",
+      "title": "Symmetric property also declared with an inverse",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review redundant or unintended inverse axioms on symmetric properties."
+    },
+    {
+      "id": "OWL009",
+      "family": "OWL",
+      "title": "Datatype property with object-property characteristic",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Use object properties for owl:inverseOf and symmetric/transitive property semantics."
+    },
+    {
+      "id": "OWL010",
+      "family": "OWL",
+      "title": "Property chain with fewer than two operands",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review an owl:propertyChainAxiom whose RDF list has only one element."
+    },
+    {
+      "id": "OWL011",
+      "family": "OWL",
+      "title": "Universal restriction without existence",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Check intended allValuesFrom semantics; it does not imply existence of a value."
+    },
+    {
+      "id": "OWL012",
+      "family": "OWL",
+      "title": "Class equivalent to itself",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review the use of owl:equivalentClass on the class itself."
+    },
+    {
+      "id": "OWL013",
+      "family": "OWL",
+      "title": "Object property asserted with a literal value",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "An object-property assertion should point to a resource, not a literal."
+    },
+    {
+      "id": "OWL014",
+      "family": "OWL",
+      "title": "Datatype property asserted with a resource value",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "A datatype-property assertion should point to a literal."
+    },
+    {
+      "id": "OWL015",
+      "family": "OWL",
+      "title": "Undeclared local predicate",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Declare a local predicate as a property (or exclude it from schema-only policy)."
+    },
+    {
+      "id": "OWL016",
+      "family": "OWL",
+      "title": "Reflexivity characteristic on datatype property",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove owl:ReflexiveProperty/owl:IrreflexiveProperty; they apply to object properties only."
+    },
+    {
+      "id": "OWL017",
+      "family": "OWL",
+      "title": "Property both symmetric and asymmetric",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Keep only one of owl:SymmetricProperty and owl:AsymmetricProperty; together they leave the property empty."
+    },
+    {
+      "id": "OWL018",
+      "family": "OWL",
+      "title": "Reflexive property also irreflexive or asymmetric",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the contradictory characteristic; a reflexive property cannot be irreflexive or asymmetric."
+    },
+    {
+      "id": "OWL019",
+      "family": "OWL",
+      "title": "Non-simple property in simple-property axiom",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Drop functional, inverse-functional, irreflexive or asymmetric from transitive or chain-defined properties."
+    },
+    {
+      "id": "OWL020",
+      "family": "OWL",
+      "title": "Property subPropertyOf cycle",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Break the owl:subPropertyOf cycle or replace it with owl:equivalentProperty if the properties are equivalent."
+    },
+    {
+      "id": "OWL021",
+      "family": "OWL",
+      "title": "Sub-property or equivalent property of a different kind",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Relate object properties only to object properties and datatype properties only to datatype properties."
+    },
+    {
+      "id": "OWL022",
+      "family": "OWL",
+      "title": "Property range conflicts with property kind",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Use datatype ranges for datatype properties and class ranges for object properties."
+    },
+    {
+      "id": "OWL023",
+      "family": "OWL",
+      "title": "Property with several distinct inverses",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review owl:inverseOf axioms; distinct inverses of one property are equivalent to each other."
+    },
+    {
+      "id": "OWL024",
+      "family": "OWL",
+      "title": "Disjoint properties that are sub-property or equivalent",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the disjointness or the sub-property/equivalence axiom; the property can have no assertions."
+    },
+    {
+      "id": "OWL025",
+      "family": "OWL",
+      "title": "Disjoint classes that are subclass or equivalent",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the disjointness or the subclass/equivalence axiom; the class cannot have instances."
+    },
+    {
+      "id": "OWL026",
+      "family": "OWL",
+      "title": "Individuals both same and different",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove either the owl:sameAs or the owl:differentFrom assertion; the ontology is inconsistent."
+    },
+    {
+      "id": "OWL027",
+      "family": "OWL",
+      "title": "Negative property assertion contradicts a positive assertion",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the NegativePropertyAssertion or the contradicting positive triple."
+    },
+    {
+      "id": "OWL028",
+      "family": "OWL",
+      "title": "Irreflexive property used reflexively",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the assertion relating an individual to itself or drop owl:IrreflexiveProperty."
+    },
+    {
+      "id": "OWL029",
+      "family": "OWL",
+      "title": "Asymmetric property asserted in both directions",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove one direction (or a self-assertion) or drop owl:AsymmetricProperty."
+    },
+    {
+      "id": "OWL030",
+      "family": "OWL",
+      "title": "Illegal punning of declaration kinds",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Do not declare one IRI as both class and datatype, or as annotation property and object/datatype property."
+    },
+    {
+      "id": "OWL031",
+      "family": "OWL",
+      "title": "Malformed or empty class-expression list",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Give owl:unionOf, owl:intersectionOf, owl:oneOf and owl:disjointUnionOf a well-formed, non-empty RDF list."
+    },
+    {
+      "id": "OWL032",
+      "family": "OWL",
+      "title": "Single-operand union, intersection or disjoint union",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Replace an owl:unionOf or owl:intersectionOf with one operand by that operand."
+    },
+    {
+      "id": "OWL033",
+      "family": "OWL",
+      "title": "Duplicate operand in class-expression list",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the repeated member from the owl:unionOf, owl:intersectionOf or owl:oneOf list."
+    },
+    {
+      "id": "OWL034",
+      "family": "OWL",
+      "title": "Restriction with missing or invalid owl:onProperty",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Give every owl:Restriction exactly one owl:onProperty (or owl:onProperties) pointing to a property."
+    },
+    {
+      "id": "OWL035",
+      "family": "OWL",
+      "title": "Restriction without exactly one valid constraint",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Add an owl:someValuesFrom, owl:allValuesFrom, owl:hasValue, owl:hasSelf or cardinality constraint."
+    },
+    {
+      "id": "OWL036",
+      "family": "OWL",
+      "title": "Invalid cardinality restriction",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Use a non-negative integer for cardinalities and add owl:onClass/owl:onDataRange to qualified ones."
+    },
+    {
+      "id": "OWL037",
+      "family": "OWL",
+      "title": "Minimum cardinality exceeds maximum cardinality",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Make the lower cardinality bound at most the upper bound within one restriction."
+    },
+    {
+      "id": "OWL038",
+      "family": "OWL",
+      "title": "Existential restriction on owl:Nothing",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the restriction or use a satisfiable filler; no individual can be an instance of owl:Nothing."
+    },
+    {
+      "id": "OWL039",
+      "family": "OWL",
+      "title": "Vacuous restriction",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove a restriction that every individual satisfies (allValuesFrom owl:Thing, minimum cardinality 0)."
+    },
+    {
+      "id": "OWL040",
+      "family": "OWL",
+      "title": "Restriction mixes object and datatype property kinds",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Use class fillers and resources with object properties, and datatypes and literals with datatype properties."
+    },
+    {
+      "id": "OWL041",
+      "family": "OWL",
+      "title": "Contradictory owl:complementOf cycle",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Break the odd-length owl:complementOf cycle; a class cannot be the complement of itself."
+    },
+    {
+      "id": "OWL042",
+      "family": "OWL",
+      "title": "Class subclass of or equivalent to its own complement",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the axiom relating a class to its own owl:complementOf expression."
+    },
+    {
+      "id": "OWL043",
+      "family": "OWL",
+      "title": "Contradictory or tautological operands in union or intersection",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Review an intersection of complements/disjoint classes or a union of a class and its complement."
+    },
+    {
+      "id": "OWL044",
+      "family": "OWL",
+      "title": "Individuals identical through owl:sameAs chains but asserted different",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Remove the conflicting owl:sameAs or owl:differentFrom assertion; nothing differs from itself."
+    },
+    {
+      "id": "OWL045",
+      "family": "OWL",
+      "title": "Malformed owl:AllDifferent or owl:AllDisjointClasses",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "axiom",
+      "requires": "none",
+      "suggestion": "Give the axiom one well-formed member list with at least two distinct members."
+    },
+    {
+      "id": "SEC004",
+      "family": "SEC",
+      "title": "Deeply nested or very long blank-node structure",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "input",
+      "requires": "none",
+      "suggestion": "Flatten the structure or give intermediate nodes IRIs; recursive consumers can exhaust their stack on it."
+    },
+    {
+      "id": "SEC005",
+      "family": "SEC",
+      "title": "Unreasonably large literal value",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "input",
+      "requires": "none",
+      "suggestion": "Store large payloads outside the ontology and reference them by IRI."
+    },
+    {
+      "id": "SEC007",
+      "family": "SEC",
+      "title": "owl:imports not followed",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "ontology",
+      "requires": "none",
+      "suggestion": "Map the imports to local files with --follow-imports and a catalog-v001.xml (or --catalog), or put local copies in a folder (for example with robot mirror) and pass --import-dir; ontolint never fetches imports from the network. Use --ignore SEC007 to silence this note."
+    },
+    {
+      "id": "SEC008",
+      "family": "SEC",
+      "title": "IRI with an unsafe scheme",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "input",
+      "requires": "none",
+      "suggestion": "Use http(s), urn or another resolvable-by-design scheme instead of file:, javascript:, data: or similar."
+    },
+    {
+      "id": "SEC012",
+      "family": "SEC",
+      "title": "Control or bidirectional-override characters",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "input",
+      "requires": "none",
+      "suggestion": "Remove control and bidirectional-override characters; they can disguise the text a reader sees."
+    },
+    {
+      "id": "SEC014",
+      "family": "SEC",
+      "title": "Credentials embedded in an IRI",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "input",
+      "requires": "none",
+      "suggestion": "Remove the user:password@ part of the IRI and rotate the exposed credential; the report masks it, so find it at the SARIF region or in the source."
+    },
+    {
+      "id": "SEC016",
+      "family": "SEC",
+      "title": "User name embedded in an IRI",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "context-dependent",
+      "backend": "rdflib",
+      "scope": "input",
+      "requires": "none",
+      "suggestion": "Remove the user@ part of the IRI; if it is a token, rotate it and keep it out of the ontology. The report masks it, so find it at the SARIF region or in the source."
+    },
+    {
+      "id": "SEM001",
+      "family": "SEM",
+      "title": "OWL profile violation reported by ROBOT",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "robot-docker",
+      "scope": "ontology",
+      "requires": "owl-profile",
+      "suggestion": "Correct the reported OWL profile violations, or select the intended OWL profile."
+    },
+    {
+      "id": "SHACL001",
+      "family": "SHACL",
+      "title": "SHACL validation violation",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "pyshacl",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Fix the supplied SHACL shapes or data, and inspect the SHACL report."
+    },
+    {
+      "id": "SHQ001",
+      "family": "SHQ",
+      "title": "Property shape without sh:name",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add sh:name to property shapes to support generated forms and documentation."
+    },
+    {
+      "id": "SHQ002",
+      "family": "SHQ",
+      "title": "Property shape without sh:description",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add sh:description to non-trivial property shapes."
+    },
+    {
+      "id": "SHQ003",
+      "family": "SHQ",
+      "title": "Constraint-bearing shape without sh:message",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add sh:message to constraint-bearing shapes for better diagnostics."
+    },
+    {
+      "id": "SHQ004",
+      "family": "SHQ",
+      "title": "Node shape without label or comment",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add label and comment to published node shapes."
+    },
+    {
+      "id": "SHQ005",
+      "family": "SHQ",
+      "title": "Multiple shape annotations in one language",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Use one annotation per language for each SHACL name/description/message."
+    },
+    {
+      "id": "SHQ006",
+      "family": "SHQ",
+      "title": "Instantiated class without shape target",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add a shape targeting this class, or exempt it from data-quality validation."
+    },
+    {
+      "id": "SHQ007",
+      "family": "SHQ",
+      "title": "Shape with sh:minCount greater than sh:maxCount",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Make sh:minCount <= sh:maxCount."
+    },
+    {
+      "id": "SHQ008",
+      "family": "SHQ",
+      "title": "Cardinality or length value is not a non-negative xsd:integer",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Use a non-negative xsd:integer."
+    },
+    {
+      "id": "SHQ009",
+      "family": "SHQ",
+      "title": "sh:in list that is empty or repeats members",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Remove duplicate members; an empty sh:in list can never be satisfied."
+    },
+    {
+      "id": "SHQ010",
+      "family": "SHQ",
+      "title": "sh:languageIn with a malformed language tag",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "List well-formed BCP 47 language tags as plain literals, for example \"en\" or \"fr-CA\"."
+    },
+    {
+      "id": "SHQ011",
+      "family": "SHQ",
+      "title": "Invalid sh:pattern regular expression",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Fix the sh:pattern expression (and sh:flags) so it compiles."
+    },
+    {
+      "id": "SHQ012",
+      "family": "SHQ",
+      "title": "sh:uniqueLang on a shape with a non-language-tagged datatype or outside a property shape",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Drop sh:uniqueLang or use sh:datatype rdf:langString; other datatypes never carry a language tag. Put sh:uniqueLang in a property shape (one with sh:path)."
+    },
+    {
+      "id": "SHQ013",
+      "family": "SHQ",
+      "title": "Shape combining sh:datatype and sh:class",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Remove one: a literal cannot be an instance of a class, so the shape cannot be satisfied."
+    },
+    {
+      "id": "SHQ014",
+      "family": "SHQ",
+      "title": "sh:severity outside the SHACL severity vocabulary or with several values",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Give a shape one sh:severity: sh:Info, sh:Warning or sh:Violation, or a custom IRI outside sh:."
+    },
+    {
+      "id": "SHQ015",
+      "family": "SHQ",
+      "title": "Invalid sh:flags value or sh:flags without sh:pattern",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Use only the flags s, m, i, x and q, and put sh:flags next to the sh:pattern it modifies."
+    },
+    {
+      "id": "SHQ016",
+      "family": "SHQ",
+      "title": "Shape that is part of a recursive reference cycle",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Break the cycle: recursive shape references have implementation-defined validation behaviour."
+    },
+    {
+      "id": "SHQ017",
+      "family": "SHQ",
+      "title": "Shape with sh:minLength greater than sh:maxLength",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Make sh:minLength <= sh:maxLength."
+    },
+    {
+      "id": "SHQ018",
+      "family": "SHQ",
+      "title": "Shape with an empty numeric range",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Make the lower bound smaller than the upper bound (min/max Inclusive/Exclusive)."
+    },
+    {
+      "id": "SHQ019",
+      "family": "SHQ",
+      "title": "sh:node or sh:property refers to an undefined shape",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Define the referenced shape in the shapes graph or correct the IRI."
+    },
+    {
+      "id": "SHQ020",
+      "family": "SHQ",
+      "title": "Deactivated shape left in the shapes graph",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Remove the shape or re-enable it; sh:deactivated true silently disables validation."
+    },
+    {
+      "id": "SHQ021",
+      "family": "SHQ",
+      "title": "Node shape that is neither targeted nor referenced",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add a target (for example sh:targetClass) or reference the shape from another shape."
+    },
+    {
+      "id": "SHQ022",
+      "family": "SHQ",
+      "title": "Shape target value that is not an IRI",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Use an IRI for sh:targetClass, sh:targetSubjectsOf and sh:targetObjectsOf."
+    },
+    {
+      "id": "SHQ023",
+      "family": "SHQ",
+      "title": "Property shape without exactly one sh:path",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Give every property shape exactly one sh:path."
+    },
+    {
+      "id": "SHQ024",
+      "family": "SHQ",
+      "title": "Closed shape that does not ignore rdf:type",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Add rdf:type to sh:ignoredProperties, otherwise every typed focus node violates the closed shape."
+    },
+    {
+      "id": "SHQ025",
+      "family": "SHQ",
+      "title": "sh:and, sh:or or sh:xone with fewer than two members",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Inline the single member or add the missing alternatives; an empty sh:or can never hold."
+    },
+    {
+      "id": "SHQ026",
+      "family": "SHQ",
+      "title": "Node shape with several property shapes for the same path",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Merge the property shapes that constrain the same sh:path."
+    },
+    {
+      "id": "SHQ027",
+      "family": "SHQ",
+      "title": "Shape targets a local class the ontology does not declare",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "shapes",
+      "requires": "shapes",
+      "suggestion": "Fix the sh:targetClass IRI or declare the class in the ontology."
+    },
+    {
+      "id": "SKOS001",
+      "family": "SKOS",
+      "title": "Multiple preferred labels in one language",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep only one skos:prefLabel per language tag for a given resource."
+    },
+    {
+      "id": "SKOS002",
+      "family": "SKOS",
+      "title": "Same literal in disjoint SKOS label properties",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Do not reuse the same literal across prefLabel, altLabel and hiddenLabel of one resource."
+    },
+    {
+      "id": "SKOS003",
+      "family": "SKOS",
+      "title": "Cycle in skos:broader hierarchy",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "vocabulary",
+      "requires": "none",
+      "suggestion": "Inspect hierarchical cycles; SKOS does not universally prohibit them."
+    },
+    {
+      "id": "SKOS004",
+      "family": "SKOS",
+      "title": "Concept without preferred label",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Give a concept a preferred label in your supported language(s)."
+    },
+    {
+      "id": "SKOS005",
+      "family": "SKOS",
+      "title": "Concept not in a concept scheme",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use skos:Concept with skos:inScheme and an appropriate scheme policy."
+    },
+    {
+      "id": "SKOS006",
+      "family": "SKOS",
+      "title": "Top concept with a broader concept",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "heuristic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Review whether a scheme top concept should also have a broader concept."
+    },
+    {
+      "id": "SKOS007",
+      "family": "SKOS",
+      "title": "Resource typed as both skos:Concept and skos:ConceptScheme",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Split the resource: skos:Concept and skos:ConceptScheme are disjoint classes."
+    },
+    {
+      "id": "SKOS008",
+      "family": "SKOS",
+      "title": "skos:Collection typed as concept or concept scheme",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Do not type a skos:Collection as skos:Concept or skos:ConceptScheme; the classes are disjoint."
+    },
+    {
+      "id": "SKOS009",
+      "family": "SKOS",
+      "title": "skos:related between concepts that are also hierarchically linked",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove skos:related or the broader/narrower link: associative and hierarchical relations are disjoint."
+    },
+    {
+      "id": "SKOS010",
+      "family": "SKOS",
+      "title": "Concept related to itself",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove the reflexive skos:related statement."
+    },
+    {
+      "id": "SKOS011",
+      "family": "SKOS",
+      "title": "SKOS mapping property between concepts of the same scheme",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use skos:broader/narrower/related inside a scheme; reserve mapping properties for cross-scheme links."
+    },
+    {
+      "id": "SKOS012",
+      "family": "SKOS",
+      "title": "skos:exactMatch combined with broadMatch, narrowMatch or relatedMatch",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep one mapping type per concept pair: skos:exactMatch is disjoint with broad/narrow/relatedMatch."
+    },
+    {
+      "id": "SKOS013",
+      "family": "SKOS",
+      "title": "SKOS label that is not a plain or language-tagged string literal",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Use a plain or language-tagged string literal for skos:prefLabel, altLabel and hiddenLabel."
+    },
+    {
+      "id": "SKOS014",
+      "family": "SKOS",
+      "title": "SKOS label that is empty or has surrounding whitespace",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Trim the label and do not leave it empty."
+    },
+    {
+      "id": "SKOS015",
+      "family": "SKOS",
+      "title": "Concept scheme with concepts but no top concept",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Declare entry points with skos:hasTopConcept or skos:topConceptOf."
+    },
+    {
+      "id": "SKOS016",
+      "family": "SKOS",
+      "title": "SKOS relation with a literal value",
+      "severity": "error",
+      "default_severity": "error",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "SKOS semantic, mapping and scheme relations link resources; replace the literal with an IRI."
+    },
+    {
+      "id": "SKOS017",
+      "family": "SKOS",
+      "title": "SKOS relation to an undescribed local resource",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Describe the target concept in the vocabulary or correct the link."
+    },
+    {
+      "id": "SKOS018",
+      "family": "SKOS",
+      "title": "Redundant skos:broader shortcut",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Remove the direct broader link that is already implied through an asserted intermediate concept (vocabularies with a parallel classification keep such shortcuts on purpose: use --ignore SKOS018)."
+    },
+    {
+      "id": "SKOS019",
+      "family": "SKOS",
+      "title": "Hierarchical link between concepts of different schemes",
+      "severity": "info",
+      "default_severity": "info",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Keep broader/narrower inside one scheme and use mapping properties across schemes."
+    },
+    {
+      "id": "SKOS020",
+      "family": "SKOS",
+      "title": "Same skos:notation on several concepts of one scheme",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Make notations unique within a concept scheme."
+    },
+    {
+      "id": "SKOS021",
+      "family": "SKOS",
+      "title": "Same preferred label on several concepts of one scheme",
+      "severity": "warning",
+      "default_severity": "warning",
+      "category": "deterministic",
+      "backend": "rdflib",
+      "scope": "term",
+      "requires": "none",
+      "suggestion": "Give concepts of one scheme distinguishable preferred labels per language."
+    }
+  ],
+  "files": [
+    {
+      "path": "reports/inputs/empty.ttl",
+      "summary": {
+        "warning": 1
+      },
+      "execution_summary": {
+        "executed": 193,
+        "skipped": 32,
+        "unsupported": 0,
+        "failed": 0
+      },
+      "executions": [
+        {
+          "rule": "ALIGN002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN015",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ALIGN016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS015",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS017",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS018",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS019",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS020",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS021",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS022",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS023",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS024",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "CLS025",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "DATA001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "DATA002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "DATA003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "DATA004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV017",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "GOV020",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI015",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI017",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI018",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "IRI019",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX015",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX017",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX018",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX019",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX020",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX021",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX022",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX023",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX024",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LEX025",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "LIB001",
+          "status": "skipped",
+          "detail": "no pattern library was supplied (--pattern-library)"
+        },
+        {
+          "rule": "LIB002",
+          "status": "skipped",
+          "detail": "no pattern library was supplied (--pattern-library)"
+        },
+        {
+          "rule": "LIB003",
+          "status": "skipped",
+          "detail": "no pattern library was supplied (--pattern-library)"
+        },
+        {
+          "rule": "METRIC001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "METRIC014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "ONT009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL015",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL017",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL018",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL019",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL020",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL021",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL022",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL023",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL024",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL025",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL026",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL027",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL028",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL029",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL030",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL031",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL032",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL033",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL034",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL035",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL036",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL037",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL038",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL039",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL040",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL041",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL042",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL043",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL044",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "OWL045",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEC016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SEM001",
+          "status": "skipped",
+          "detail": "OWL profile validation was not requested"
+        },
+        {
+          "rule": "SHACL001",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ001",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ002",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ003",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ004",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ005",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ006",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ007",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ008",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ009",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ010",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ011",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ012",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ013",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ014",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ015",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ016",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ017",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ018",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ019",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ020",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ021",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ022",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ023",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ024",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ025",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ026",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SHQ027",
+          "status": "skipped",
+          "detail": "no SHACL shapes graph was supplied"
+        },
+        {
+          "rule": "SKOS001",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS002",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS003",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS004",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS005",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS006",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS007",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS008",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS009",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS010",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS011",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS012",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS013",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS014",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS015",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS016",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS017",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS018",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS019",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS020",
+          "status": "executed",
+          "detail": ""
+        },
+        {
+          "rule": "SKOS021",
+          "status": "executed",
+          "detail": ""
+        }
+      ]
+    }
+  ]
+}

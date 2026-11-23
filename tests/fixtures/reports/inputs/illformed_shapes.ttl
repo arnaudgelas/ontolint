@@ -1,0 +1,3 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ex: <https://example.test/onto#> .
+ex:S a sh:NodeShape ; sh:targetClass ex:A ; sh:property [ sh:minCount 1 ] .
