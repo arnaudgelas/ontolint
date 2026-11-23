@@ -687,6 +687,22 @@ def test_the_observation_page_names_the_workflow_and_the_readme_points_to_the_pa
         assert f"category: {category}" in OBSERVE
 
 
+def test_the_observation_page_quotes_the_results_the_fixture_gives(capsys: pytest.CaptureFixture[str]) -> None:
+    """The page says how many results the kitchen sink makes and how many have no region; a rule change moved the first
+    from 136 to 138 (LEX004, issue #155) without the page, and the experiment's numbers are read against it."""
+    page = (ROOT / "docs" / "sarif-fingerprints-observation.md").read_text()
+    assert main([str(ROOT / "tests" / "fixtures" / "kitchen_sink.ttl"), "--format", "sarif", "--fail-on", "never"]) == 0
+    results = [r for run in json.loads(capsys.readouterr().out)["runs"] for r in run["results"]]
+    quoted = re.search(r"from (\d+) results on its own", page)
+    assert quoted and int(quoted.group(1)) == len(results)
+    without_region = [
+        r for r in results if not any("region" in loc.get("physicalLocation", {}) for loc in r.get("locations", []))
+    ]
+    stated = re.search(r"SEC007 in the fixture: (\d+)\)", page)
+    assert stated and int(stated.group(1)) == len(without_region)
+    assert sorted({r["ruleId"] for r in without_region}) == ["LEX007", "ONT002", "SEC007"]
+
+
 # -- runners the Action refuses ------------------------------------------------------------------
 
 
