@@ -1,18 +1,17 @@
 """OWL class-expression, restriction and individual-assertion rules: OWL031-OWL045.
 
-Every rule is purely graph-local and sound without a reasoner: each reports a structural defect or a
-direct contradiction visible in the asserted triples (no entailment is materialised, so nothing is
-inferred through ``rdfs:subClassOf`` chains, equivalences or imports that are not in the graph).
-Scope is the whole graph: ownership (``ctx.local``) is not consulted, so imported or borrowed axioms
-present in the graph are checked too.  "Restriction" below means a subject with an asserted
-``rdf:type owl:Restriction``; a restriction-shaped node without that type is not judged.  RDF lists
-are read with :func:`~.support.list_items`: a list is *malformed* when its head is neither
-``rdf:nil`` nor a node with exactly one ``rdf:first`` and one ``rdf:rest`` (this includes literal and
-plain-IRI heads), when it is cyclic, or when it exceeds a million cells; list cells may be IRIs.
-Every finding is certain.
-A blank-node focus is printed as its stable content-based identity.  Terms in messages print as IRIs, ``_:``
-stable ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/XMLSchema#integer>``,
-``"x"@en``; a line break is escaped), never as Python reprs.  The specifications:
+Every rule is purely graph-local and sound without a reasoner: each reports a structural defect or a direct
+contradiction visible in the asserted triples (no entailment is materialised, so nothing is inferred through
+``rdfs:subClassOf`` chains, equivalences or imports that are not in the graph). Scope is the whole graph: ownership
+(``ctx.local``) is not consulted, so imported or borrowed axioms present in the graph are checked too. "Restriction"
+below means a subject with an asserted ``rdf:type owl:Restriction``; a restriction-shaped node without that type is
+not judged. RDF lists are read with :func:`~.support.list_items`: a list is *malformed* when its head is neither
+``rdf:nil`` nor a node with exactly one ``rdf:first`` and one ``rdf:rest`` (this includes literal and plain-IRI
+heads), when it is cyclic, or when it exceeds a million cells; list cells may be IRIs. Every finding is certain. A
+blank-node focus is printed as its stable content-based identity. Terms in messages print as IRIs, ``_:`` stable
+ids, or literals in one-line N-Triples (``"-1"^^<http://www.w3.org/2001/XMLSchema#integer>``, ``"x"@en``; a line
+break is escaped), never as Python reprs. Section and table numbers and quoted phrases of the cited specifications
+were not independently verified (issues #182 and #247). The specifications:
 
 * **OWL031.** For every subject of ``owl:unionOf``, ``owl:intersectionOf``, ``owl:oneOf`` or
   ``owl:disjointUnionOf`` (named or anonymous, class or data range), one finding per subject,

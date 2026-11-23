@@ -11,10 +11,13 @@ complements, and never repeats, the checks of ``shapes`` (SHQ001-006) and ``shac
 rules are skipped when no shapes graph is supplied; ``run`` is also a no-op then.  The data graph is never read.
 
 A *shape* here is a node typed ``sh:NodeShape`` or ``sh:PropertyShape``, an IRI or blank node value of
-``sh:property``, or an IRI or blank node subject of any ``sh:`` predicate.  A *list* is a well-formed RDF list as
+``sh:property``, or an IRI or blank node subject of any ``sh:`` predicate. A *list* is a well-formed RDF list as
 :func:`~.support.list_items` reads it (at most 500 members, no cycle); a value that is no list is not judged by
-SHQ009, SHQ010 and SHQ016.  References are to the SHACL Recommendation (2017-07-20).  Every finding is recorded
-``heuristic``, the default confidence, although most conditions are exact.  Specifications:
+SHQ009, SHQ010 and SHQ016. References are to the SHACL Recommendation (2017-07-20); section and table numbers and
+quoted phrases of the cited specifications were not independently verified (issues #182 and #247). Statements about
+Apache Jena 4.10.0 were measured by hand (``docs/severity-decisions.md``, "Reproduce") and are not committed as
+fixtures or run in CI (issue #207). Every finding is recorded ``heuristic``, the default confidence, although most
+conditions are exact. Specifications:
 
 * **SHQ009.** Every value of ``sh:in`` on a shape that is a list with no member ("empty"), or with a member
   repeated, compared as RDF terms ("repeats n member(s)": the number of surplus members, ``"a"`` and
