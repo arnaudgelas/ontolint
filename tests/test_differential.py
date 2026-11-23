@@ -37,6 +37,13 @@ real violation list (it wrote "profile problem", which is exactly the ROBOT fail
 a finding), and SEM001's focus is ``(ontology)`` instead of the file's path.  Only ``json_robot_fail``
 changed: its exit code and every other finding were shown identical before it was re-pinned.
 
+Deliberate golden update (catalogue identity and rule counts, issue #173): the JSON report gained the
+optional-for-consumers keys ``catalogue`` and ``rule_counts``, and the SARIF run gained the property bag
+``ontolintCatalogue`` and ``ontolintRuleCounts``.  They are additive, so the legacy view drops them and
+``legacy_rules.json`` did not move.  Only full-output hashes of JSON and SARIF cases changed (40 lines of
+``differential.json``, every changed line a ``sha256:`` value); no message, focus, severity, fingerprint,
+text report or exit code moved.
+
 Deliberate golden update (SHACL001 evidence): each SHACL001 finding gained the optional JSON key
 ``evidence``, every field of its SHACL validation result.  It is additive, like ``path``, so the
 legacy view drops both and ``legacy_rules.json`` did not move; neither did any message, focus,

@@ -20,7 +20,10 @@ Two contracts guard that:
   Regenerated for ONT007 and ONT008 (issue #25): the JSON and SARIF reports list the two rules and
   their executions; rendered with the 0.12.0 sources and the new ones, they were equal once those
   entries and the execution counts were left out, and neither rule has a finding (one file, no named
-  graph); text reports and exit codes did not move.
+  graph); text reports and exit codes did not move.  Regenerated for the catalogue identity and the
+  per-rule counts (issue #173): every JSON and SARIF hash changed, and the reports were equal once the
+  ``catalogue`` and ``rule_counts`` keys (SARIF: the run's ``properties``) were left out; the text
+  reports and exit codes did not move.
 """
 
 from __future__ import annotations

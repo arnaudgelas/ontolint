@@ -87,6 +87,11 @@ what may change in a report without a version bump, and what is breaking, is the
 quality snapshot and the baseline file have schemas beside it (`rule-listing.v1`, `rule-detail.v1`, `quality-snapshot.v1`,
 `baseline.v2`); the last two describe what ontolint writes, and the readers check more than a schema can (`--compare-quality` validates a snapshot fully).
 
+A lint report also names the rule catalogue it ran with and counts every rule: `catalogue` (`ontolint_version`, `rule_count`, and `sha256`, the hash of the
+packaged `rule_catalogue.csv` rows, sorted, each as a JSON array of its seven columns) and `rule_counts` (per rule, sorted by id: `status`, `findings`,
+`baselined`; `status` is `executed`, `skipped`, `unsupported`, `failed` or `not_selected`, the worst over the files). SARIF carries the same under the run's
+`properties` as `ontolintCatalogue` and `ontolintRuleCounts`. A rule with no finding and `executed` is a pass; one that is `not_selected` did not run.
+
 | You want | Run or read | Where it is described |
 | --- | --- | --- |
 | Every rule, with its id, status, severity, family, scope and backend | `ontolint --list-rules --format json` | [Discovering rules](#discovering-rules) |
