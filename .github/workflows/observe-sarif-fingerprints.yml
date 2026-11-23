@@ -7,7 +7,7 @@ name: Observe SARIF fingerprints
 # Run it from a throwaway branch (`gh workflow run observe-sarif-fingerprints.yml --ref <branch>`): the alerts it opens
 # belong to that ref and to categories that start with `ontolint-observe-`, and the last step closes them by uploading
 # empty reports.  The Action under test is the one of the checkout (`uses: ./`), which installs the ontolint release the
-# checkout's pyproject.toml names from PyPI, so that release must carry `--sarif-fingerprints` (0.16.0 does).
+# checkout's pyproject.toml names from PyPI, so that release must carry `--sarif-fingerprints` (0.16.0 and every later release do).
 on:
   workflow_dispatch:
     inputs:

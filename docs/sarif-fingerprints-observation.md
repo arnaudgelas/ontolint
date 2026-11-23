@@ -30,12 +30,12 @@ empty SARIF report (`runs[0].results: []`) once per category (`ontolint-observe-
 `ontolint-observe-pair`), or re-run the workflow from the same branch with `cleanup` left on.
 
 It lints `tests/fixtures/kitchen_sink.ttl` with the Action of the checkout (which installs the release its `pyproject.toml`
-names, so that release must carry the flag: 0.16.0 does), uploads four SARIF reports, queries the alerts API after each and
+names, so that release must carry the flag: 0.16.0 and every later release do), uploads four SARIF reports, queries the alerts API after each and
 writes a table to the job summary, with the reports and the alert lists kept as an artifact for 30 days:
 
 | Upload | Category | What it answers |
 | --- | --- | --- |
-| the file, no flag | `ontolint-observe-plain` | how many alerts GitHub makes from 136 results on its own |
+| the file, no flag | `ontolint-observe-plain` | how many alerts GitHub makes from 138 results on its own |
 | the file, with the flag | `ontolint-observe-fp` | whether the alert count follows the results or the identities |
 | the same graph re-serialized, same path and category | `ontolint-observe-fp` | whether the alerts stay the same alerts (numbers) or are closed and reopened |
 | two files with one rule, focus, subject and message | `ontolint-observe-pair` | whether identical fingerprints with different artifact URIs stay two alerts |
