@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/arnaudgelas/ontolint/main/src/ontolint/schemas/rule-detail.v1.schema.json",
+  "title": "ontolint rule detail, schema_version 1",
+  "description": "The document `ontolint --explain RULE --format json` writes: one rule of the listing with its suggestion and test requirement. Objects are open (docs/report-compatibility.md).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "rule"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "rule": {
+      "$ref": "#/$defs/detail"
+    }
+  },
+  "$defs": {
+    "severity": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "description": "Closed enumeration: a new value is a breaking change (docs/report-compatibility.md)."
+    },
+    "detail": {
+      "type": "object",
+      "required": [
+        "id",
+        "family",
+        "title",
+        "severity",
+        "category",
+        "backend",
+        "scope",
+        "requires",
+        "status",
+        "selectable",
+        "suggestion",
+        "test_requirement"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/severity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null for a rule that is only proposed."
+        },
+        "category": {
+          "type": "string",
+          "description": "Open enumeration."
+        },
+        "backend": {
+          "type": "string",
+          "description": "Open enumeration. An implemented rule names its backend (rdflib, pyshacl, robot-docker, cli); a proposed rule the catalogue's text."
+        },
+        "scope": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Open enumeration; null for a proposed rule."
+        },
+        "requires": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Open enumeration; null for a proposed rule."
+        },
+        "status": {
+          "type": "string",
+          "description": "The planning state of the rule in the catalogue: implemented or proposed. Not classified as closed by the policy, so a consumer must tolerate another value."
+        },
+        "selectable": {
+          "type": "boolean",
+          "description": "False for a proposed rule and for the pipeline rules (backend cli), which --select and --ignore reject."
+        },
+        "opt_in": {
+          "const": true,
+          "description": "Present, and true, only for the rules of an opt-in family."
+        },
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The fix the rule suggests; null for a proposed rule."
+        },
+        "test_requirement": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What the catalogue requires of the rule's tests; null when the rule has no catalogue row."
+        }
+      }
+    }
+  }
+}

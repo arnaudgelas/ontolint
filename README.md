@@ -83,7 +83,9 @@ For scripts, CI and AI agents. Each interface is described in the section named 
 column. The JSON report carries `schema_version` (currently `1`) and is described by a JSON Schema (draft 2020-12) shipped in the
 wheel, `ontolint/schemas/lint-report.v1.schema.json` (`importlib.resources.files("ontolint") / "schemas"`). ontolint is still Alpha:
 what may change in a report without a version bump, and what is breaking, is the
-[report compatibility policy](docs/report-compatibility.md); pin the version you parse against.
+[report compatibility policy](docs/report-compatibility.md); pin the version you parse against. The rule listing, the rule detail, the
+quality snapshot and the baseline file have schemas beside it (`rule-listing.v1`, `rule-detail.v1`, `quality-snapshot.v1`,
+`baseline.v2`).
 
 | You want | Run or read | Where it is described |
 | --- | --- | --- |

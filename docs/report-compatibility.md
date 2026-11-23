@@ -94,7 +94,9 @@ The SARIF `partialFingerprints` keys are not sampled yet (both SARIF samples are
 3. the samples, the manifest and the ledger agree, and this page is linked from the README.
 
 The same samples also validate against the shipped JSON Schema of the lint report, `ontolint/schemas/lint-report.v1.schema.json`
-(`tests/test_report_schema.py`, issue #171); the schemas of the other documents are issue #172.
+(`tests/test_report_schema.py`, issue #171); the other documents have their own (issue #172): `rule-listing.v1`, `rule-detail.v1`, `quality-snapshot.v1` (closed where its reader is,
+since ontolint itself reads it) and `baseline.v2` (open: its reader ignores sections it does not know), all in `ontolint/schemas/`
+(`tests/test_document_schemas.py`).
 
 ### Ledger: additions since the 0.16.0 samples
 

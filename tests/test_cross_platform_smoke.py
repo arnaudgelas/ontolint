@@ -328,3 +328,18 @@ def test_the_built_wheel_installs_and_starts_through_its_script_and_python_m(tmp
         check=False,
     )
     assert schema.stdout.strip() == "1", schema.stderr  # the JSON Schema of the report ships in the wheel (issue #171)
+    others = subprocess.run(  # noqa: S603
+        [
+            str(python),
+            "-c",
+            "import importlib.resources as r, json; "
+            "names = ['rule-listing.v1', 'rule-detail.v1', 'quality-snapshot.v1', 'baseline.v2']; "
+            "files = [r.files('ontolint').joinpath('schemas', n + '.schema.json') for n in names]; "
+            "print(all(json.loads(f.read_text())['$id'].endswith(f.name) for f in files))",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert others.stdout.strip() == "True", others.stderr  # and the schemas of the other documents (issue #172)
