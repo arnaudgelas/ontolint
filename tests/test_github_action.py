@@ -634,10 +634,12 @@ def test_the_observation_workflow_is_manual_and_can_be_run_only_from_a_dispatch(
     assert not re.search(r"^  (push|pull_request|schedule|workflow_run|issue_comment)", triggers, re.MULTILINE)
 
 
-def test_the_observation_workflow_asks_for_write_access_to_code_scanning_in_its_one_job_only() -> None:
+def test_the_observation_workflow_asks_for_write_access_to_code_scanning_only_in_the_jobs_that_upload() -> None:
     top = OBSERVE.split("\njobs:\n", 1)[0]
     assert "security-events" not in top and "contents: read" in top
-    assert OBSERVE.count("security-events: write") == 1
+    for name, text in _observe_jobs().items():
+        assert ("security-events: write" in text) == ("upload-sarif" in text), name
+        assert "contents: read" in text, name
 
 
 def _observe_jobs() -> dict[str, str]:
@@ -684,14 +686,13 @@ def test_the_observation_only_writes_categories_it_owns() -> None:
         assert categories.count(f"ontolint-observe-{owned}") >= 2
 
 
-def test_every_cleanup_step_runs_after_a_failure_but_not_after_a_cancellation() -> None:
-    # `!cancelled()` is a status-check function, so GitHub does not add the implicit `success()`: the step runs after a
-    # failed step and is skipped only when the run is cancelled.  A bare `inputs.cleanup` would add `success()` back.
-    cleanup = OBSERVE.split("# 5. Leave no alert behind.", 1)[1]
-    conditions = re.findall(r"^\s+if: (.+)$", cleanup, re.MULTILINE)
-    assert len(conditions) == 4  # the empty report, then one close per category
-    assert set(conditions) == {"${{ inputs.cleanup && !cancelled() }}"}
-    assert OBSERVE.count("inputs.cleanup") == 4, "nothing before the cleanup is conditional on it"
+def test_the_cleanup_job_runs_after_a_failure_but_not_after_a_cancellation() -> None:
+    # `!cancelled()` is a status-check function, so GitHub does not add the implicit `success()`: the job runs after a
+    # failed job and is skipped only when the run is cancelled.  A bare `inputs.cleanup` would add `success()` back.
+    cleanup = _observe_jobs()["cleanup"]
+    assert re.findall(r"^    if: (.+)$", cleanup, re.MULTILINE) == ["${{ inputs.cleanup && !cancelled() }}"]
+    assert not re.search(r"^        if: ", cleanup, re.MULTILINE), "no step of the cleanup job is conditional"
+    assert OBSERVE.count("inputs.cleanup") == 1, "nothing before the cleanup is conditional on it"
 
 
 def test_no_expression_is_interpolated_into_a_shell_script_of_the_observation() -> None:
