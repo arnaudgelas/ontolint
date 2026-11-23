@@ -122,8 +122,9 @@ concepts and individuals are in no population.
   whole graph, whatever the subject of the triple (the whole closure under `--follow-imports`), minus
   those the closure loaded; literal and blank-node objects are not counted. This is `METRIC011`'s count. It differs from `SEC007`'s list, which also lists a
   non-IRI `owl:imports` object and names `file:` imports by their display text.
-- **`definition_length`.** The population is the owned classes with a `Literal` description (as for
-  `class_definition_coverage`); each scores the `\w+` token count of its longest description, and the
+- **`definition_length`.** The population is the owned classes with a `Literal` description (the same
+  description predicates as `class_definition_coverage`, which counts any value, an IRI included; here only a
+  literal does, and an empty literal scores 0 words); each scores the `\w+` token count of its longest description, and the
   numerator is their sum, so the mean is numerator over denominator. An IRI description is not
   measured; a long `rdfs:comment` masks a short `skos:definition`; properties are not measured.
 - **`blank_subjects`.** Not a term population: the distinct subjects of the whole graph that are not

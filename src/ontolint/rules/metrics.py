@@ -113,7 +113,8 @@ specifications:
   *Info, heuristic:* the count is exact; the limit is a convention, and the one flag on the calibration corpus
   (an IDS header whose 80 imports are its own modules) is a false positive.
 * **METRIC012.** (``metric_min_definition_words``, 4.0.)  Owned classes with a ``Literal``
-  description (``ctx.descriptions``, as METRIC002); each scores the ``\\w+`` token count of its
+  description (``ctx.descriptions``; METRIC002 counts any value, an IRI included, this rule only literals, and an
+  empty literal is one and scores 0 words); each scores the ``\\w+`` token count of its
   longest description and the value is their mean.  Fires below the limit.  Exclusions: IRI
   descriptions; a long ``rdfs:comment`` masks a short ``skos:definition``; properties are not
   measured.  Gated on the number of classes with a literal description.  Reads ``definition_length``.

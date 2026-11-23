@@ -8,15 +8,16 @@ then.  Each check is deliberately conservative: it flags constructs that are inv
 according to the SHACL specification, or well-known authoring pitfalls, and stays silent when a value
 cannot be interpreted with certainty.
 
-A *shape* below is any subject in the shapes graph (``--shapes``) typed ``sh:NodeShape`` or
-``sh:PropertyShape``, any object of ``sh:property``, or any subject of a shape parameter (``sh:path``,
-``sh:minCount``, ``sh:pattern``, ``sh:minInclusive`` ...), so node and property shapes alike; the data
-graph is never read.  A *natural* is a literal whose RDFLib value is a Python ``int`` other than a
-boolean and is ``>= 0``: ``xsd:integer`` and its derived types (``xsd:int``, ``xsd:nonNegativeInteger``
-...) in any valid XSD lexical form (``"01"``, ``"+1"``, ``" 2 "``); an ill-typed literal
-(``"abc"^^xsd:integer``, ``"1.0"^^xsd:integer``), an ``xsd:decimal`` or ``xsd:double`` (``1.0``,
-``1e0``), a string, a boolean and an IRI are not naturals.  References are to the SHACL Recommendation
-(2017-07-20).  Specifications:
+A *shape* below is any subject in the shapes graph (``--shapes``) typed ``sh:NodeShape`` or ``sh:PropertyShape``,
+any object of ``sh:property``, or any subject of a shape parameter (``sh:path``, ``sh:minCount``, ``sh:pattern``,
+``sh:minInclusive`` ...), so node and property shapes alike; the data graph is never read. A *natural* is a literal
+whose RDFLib value is a Python ``int`` other than a boolean and is ``>= 0``: ``xsd:integer`` and its derived types
+(``xsd:int``, ``xsd:nonNegativeInteger`` ...) in any valid XSD lexical form (``"01"``, ``"+1"``, ``" 2 "``); an
+ill-typed literal (``"abc"^^xsd:integer``, ``"1.0"^^xsd:integer``), an ``xsd:decimal`` or ``xsd:double`` (``1.0``,
+``1e0``), a string, a boolean and an IRI are not naturals. References are to the SHACL Recommendation (2017-07-20);
+section and table numbers and quoted phrases of the cited specifications were not independently verified (issues
+#182 and #247). Statements about Apache Jena 4.10.0 were measured by hand (``docs/severity-decisions.md``,
+"Reproduce") and are not committed as fixtures or run in CI (issue #207). Specifications:
 
 * **SHQ007.** A shape with exactly one ``sh:minCount`` and exactly one ``sh:maxCount``, both naturals,
   where the minimum is greater than the maximum (``3`` and ``2``; ``1`` and ``0``), derived integer

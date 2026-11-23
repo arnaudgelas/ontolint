@@ -2,15 +2,15 @@
 
 OWL012 (self-equivalence) is emitted by :mod:`ontolint.rules.classes`.
 
-All rules read the asserted graph only: no import is followed and nothing is inferred (no
-``rdfs:subPropertyOf``, ``rdfs:subClassOf`` or ``owl:inverseOf`` closure).  "Owned" means
-``ctx.local`` (:mod:`ontolint.ownership`), which is the ``--base`` or the ontology header's namespace;
-when that owns no declared term and no namespace holds most of them, every IRI that is not an RDF, RDFS,
-OWL or XSD term is owned, a foreign one included.  "Declared" means typed by the named class in an asserted
-``rdf:type`` triple.  ``ctx.properties`` is the set of owned IRIs typed ``owl:ObjectProperty``,
-``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes`` the owned IRIs
-typed ``owl:Class`` or ``rdfs:Class``.  The OWL 2 references are the Structural Specification (SS), its
-RDF mapping (MAP) and the Direct Semantics (DS).  Specifications:
+All rules read the asserted graph only: no import is followed and nothing is inferred (no ``rdfs:subPropertyOf``,
+``rdfs:subClassOf`` or ``owl:inverseOf`` closure). "Owned" means ``ctx.local`` (:mod:`ontolint.ownership`), which is
+the ``--base`` or the ontology header's namespace; when that owns no declared term and no namespace holds most of
+them, every IRI that is not an RDF, RDFS, OWL or XSD term is owned, a foreign one included. "Declared" means typed
+by the named class in an asserted ``rdf:type`` triple. ``ctx.properties`` is the set of owned IRIs typed
+``owl:ObjectProperty``, ``owl:DatatypeProperty``, ``owl:AnnotationProperty`` or ``rdf:Property``; ``ctx.classes``
+the owned IRIs typed ``owl:Class`` or ``rdfs:Class``. The OWL 2 references are the Structural Specification (SS),
+its RDF mapping (MAP) and the Direct Semantics (DS); section and table numbers and quoted phrases of the cited
+specifications were not independently verified (issues #182 and #247). Specifications:
 
 * **OWL001.** Every IRI that is the subject or the object of an ``rdfs:subClassOf`` triple, is owned,
   is not in ``ctx.classes`` and is neither ``owl:Thing`` nor ``owl:Nothing``; one finding per IRI.

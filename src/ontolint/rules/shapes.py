@@ -1,20 +1,20 @@
 """Quality rules for a user-supplied SHACL shapes graph: SHQ001-SHQ006.
 
-The rules read the asserted shapes graph (``--shapes``) and, for SHQ006 only, the data graph (the
-linted ontology, the whole closure under ``--follow-imports``).  No SHACL engine runs, nothing is
-entailed, ``rdfs:subClassOf`` in the shapes graph is not followed (so a shape typed by a subclass of
-``sh:NodeShape`` is not one) and ``owl:imports`` of the shapes graph are not loaded.  The rules are
-skipped when no shapes graph is supplied.  References are to the SHACL Recommendation (2017-07-20).
-In this module a *node shape* is a node typed ``sh:NodeShape``; a *property shape* is a node typed
-``sh:PropertyShape`` or an IRI or blank node that is a value of ``sh:property``.  That is narrower than
-SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the property shapes a form
-shows, not a property shape used as a condition inside ``sh:or``.  They also judge a *directly targeted* property
-shape: a subject of ``sh:path``, not typed ``sh:NodeShape``, with a target of its own (``sh:targetClass``,
-``sh:targetNode``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), which is a stand-alone form field.  SHQ003 and
-SHQ005 keep the narrower set.  The two definitions overlap: a node typed both ``sh:NodeShape`` and
-``sh:PropertyShape``, or typed ``sh:NodeShape`` and a value of ``sh:property``, is a node shape and a property
-shape at once, and SHQ001, SHQ002 and SHQ004 judge it each in turn.  Every finding is ``heuristic``: the
-documentation rules are conventions, and SHQ005 and SHQ006 read "should" statements.  Specifications:
+The rules read the asserted shapes graph (``--shapes``) and, for SHQ006 only, the data graph (the linted ontology,
+the whole closure under ``--follow-imports``). No SHACL engine runs, nothing is entailed, ``rdfs:subClassOf`` in the
+shapes graph is not followed (so a shape typed by a subclass of ``sh:NodeShape`` is not one) and ``owl:imports`` of
+the shapes graph are not loaded. The rules are skipped when no shapes graph is supplied. References are to the SHACL
+Recommendation (2017-07-20); section and table numbers and quoted phrases of the cited specifications were not
+independently verified (issues #182 and #247). In this module a *node shape* is a node typed ``sh:NodeShape``; a
+*property shape* is a node typed ``sh:PropertyShape`` or an IRI or blank node that is a value of ``sh:property``.
+That is narrower than SHACL 2.3 (any subject of ``sh:path``) on purpose: SHQ001 and SHQ002 judge the property shapes
+a form shows, not a property shape used as a condition inside ``sh:or``. They also judge a *directly targeted*
+property shape: a subject of ``sh:path``, not typed ``sh:NodeShape``, with a target of its own (``sh:targetClass``,
+``sh:targetNode``, ``sh:targetSubjectsOf`` or ``sh:targetObjectsOf``), which is a stand-alone form field. SHQ003 and
+SHQ005 keep the narrower set. The two definitions overlap: a node typed both ``sh:NodeShape`` and
+``sh:PropertyShape``, or typed ``sh:NodeShape`` and a value of ``sh:property``, is a node shape and a property shape
+at once, and SHQ001, SHQ002 and SHQ004 judge it each in turn. Every finding is ``heuristic``: the documentation
+rules are conventions, and SHQ005 and SHQ006 read "should" statements. Specifications:
 
 * **SHQ001.** Every property shape without an ``sh:name`` triple (any object: an IRI or an untagged
   literal counts).  Excluded: a literal value of ``sh:property`` (SHACL 2.1: a shape is an IRI or a
@@ -23,35 +23,35 @@ documentation rules are conventions, and SHQ005 and SHQ006 read "should" stateme
   ``sh:node`` or ``sh:qualifiedValueShape`` has no target of its own).  Info: ``sh:name``
   is non-validating (2.3.2.1) and only helps forms and documentation.
 * **SHQ002.** The same for ``sh:description``.  Info, for the same reason.
-* **SHQ003.** Every node or property shape that declares a constraint able to produce a validation
-  result and has no ``sh:message`` triple: 2.1.5 copies a shape's messages into its validation results
-  and has no other use for them.  A shape declares a constraint when it has values for all mandatory
-  parameters of a constraint component (2.1.1).  The components are those of SHACL Core section 4 whose
-  validation results name the shape itself as ``sh:sourceShape``, and SHACL-SPARQL's (section 5).  Each
-  of these parameters counts with any value: ``sh:class``, ``sh:datatype``, ``sh:nodeKind``,
-  ``sh:minCount``, ``sh:maxCount``, ``sh:minExclusive``, ``sh:minInclusive``, ``sh:maxExclusive``,
-  ``sh:maxInclusive``, ``sh:minLength``, ``sh:maxLength``, ``sh:pattern``, ``sh:languageIn``,
-  ``sh:equals``, ``sh:disjoint``, ``sh:lessThan``, ``sh:lessThanOrEquals``, ``sh:not``, ``sh:and``,
-  ``sh:or``, ``sh:xone``, ``sh:node``, ``sh:hasValue``, ``sh:in`` and ``sh:sparql``.
-  ``sh:qualifiedValueShape`` counts only with an ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount``
-  (4.7.3 makes both of a pair mandatory).  ``sh:closed`` and ``sh:uniqueLang`` count unless they are
-  false (an ``xsd:boolean`` literal: ``false`` or ``"0"^^xsd:boolean``), as 4.8.1 and 4.4.5 produce a
-  validation result only "if $closed is true" and "if $uniqueLang is true"; any other value is true,
-  the ``sh:ByTypes`` of the SHACL 1.2 draft, or ill-formed (3.4.2: the results are undefined).
-  Excluded: a shape with ``sh:deactivated`` true (``true`` or ``"1"^^xsd:boolean``; 2.1.6: all RDF
-  terms conform to it, and 3.4: its validation results are empty); ``sh:property`` (its results are
-  the property shape's, 4.7.2); a parameter without its mandatory partner (``sh:qualifiedValueShape``
-  alone, ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` alone); the optional parameters alone
-  (``sh:flags``, ``sh:ignoredProperties``, ``sh:qualifiedValueShapesDisjoint``); ``sh:closed false``
-  and ``sh:uniqueLang false``; targets, ``sh:severity`` and the non-validating properties; a message
-  on another shape.  Known gap: other values that make a constraint vacuous (``sh:minCount 0``, an
-  empty ``sh:and`` list) still count, as the values are not evaluated.  Info: without ``sh:message`` a
-  processor still reports the violation with its own text (2.1.5).  The condition is deliberately the wide one:
-  against the nine parameters 0.12.0 listed (and without the ``sh:deactivated`` exclusion) it reports more shapes,
-  +42% (878 to 1,244 findings, +122 files) on the 930 readable shapes files of ``docs/severity-decisions.md``
-  (W3C ``data-shapes`` and DCAT-AP 3.0.1), +46% (+1,072) on the corpus of PR #46 and +29% (+902) on 126 files of five
-  production repositories (``docs/validation/shq-scope.md``); the narrow subset has no principled boundary, the cost is
-  info noise, and no exit code changes under any profile (issue #63).
+* **SHQ003.** Every node or property shape that declares a constraint able to produce a validation result and has no
+  ``sh:message`` triple: 2.1.5 copies a shape's messages into its validation results and has no other use for them.
+  A shape declares a constraint when it has values for all mandatory parameters of a constraint component (2.1.1).
+  The components are those of SHACL Core section 4 whose validation results name the shape itself as
+  ``sh:sourceShape``, and SHACL-SPARQL's (section 5). Each of these parameters counts with any value: ``sh:class``,
+  ``sh:datatype``, ``sh:nodeKind``, ``sh:minCount``, ``sh:maxCount``, ``sh:minExclusive``, ``sh:minInclusive``,
+  ``sh:maxExclusive``, ``sh:maxInclusive``, ``sh:minLength``, ``sh:maxLength``, ``sh:pattern``, ``sh:languageIn``,
+  ``sh:equals``, ``sh:disjoint``, ``sh:lessThan``, ``sh:lessThanOrEquals``, ``sh:not``, ``sh:and``, ``sh:or``,
+  ``sh:xone``, ``sh:node``, ``sh:hasValue``, ``sh:in`` and ``sh:sparql``. ``sh:qualifiedValueShape`` counts only
+  with an ``sh:qualifiedMinCount`` or ``sh:qualifiedMaxCount`` (4.7.3 makes both of a pair mandatory). ``sh:closed``
+  and ``sh:uniqueLang`` count unless they are false (an ``xsd:boolean`` literal: ``false`` or ``"0"^^xsd:boolean``),
+  as 4.8.1 and 4.4.5 produce a validation result only "if $closed is true" and "if $uniqueLang is true"; any other
+  value is true, the ``sh:ByTypes`` of the SHACL 1.2 draft, or ill-formed (3.4.2: the results are undefined).
+  Excluded: a shape with ``sh:deactivated`` true (``true`` or ``"1"^^xsd:boolean``; 2.1.6: all RDF terms conform to
+  it, and 3.4: its validation results are empty); ``sh:property`` (its results are the property shape's, 4.7.2); a
+  parameter without its mandatory partner (``sh:qualifiedValueShape`` alone, ``sh:qualifiedMinCount`` or
+  ``sh:qualifiedMaxCount`` alone); the optional parameters alone (``sh:flags``, ``sh:ignoredProperties``,
+  ``sh:qualifiedValueShapesDisjoint``); ``sh:closed false`` and ``sh:uniqueLang false``; targets, ``sh:severity``
+  and the non-validating properties; a message on another shape. Known gap: other values that make a constraint
+  vacuous (``sh:minCount 0``, an empty ``sh:and`` list) still count, as the values are not evaluated. Info: without
+  ``sh:message`` a processor still reports the violation with its own text (2.1.5). The condition is deliberately
+  the wide one: against the nine parameters 0.12.0 listed (and without the ``sh:deactivated`` exclusion) it reports
+  more shapes, +42% (878 to 1,244 findings, +122 files) on the 930 readable shapes files of
+  ``docs/severity-decisions.md`` (W3C ``data-shapes`` and DCAT-AP 3.0.1; measured on 2026-11-19 on the files whose
+  checksums that page records, not reproduced by a script), +46% (+1,072) on the corpus of PR #46 (not pinned, not
+  reproducible) and +29% (+902: 4,034 findings against 3,132) on 126 files of five production repositories, which
+  ``scripts/shq_scope_count.py check`` reproduces (``docs/validation/shq-scope.md``, re-checked on 2026-11-22); the
+  narrow subset has no principled boundary, the cost is info noise, and no exit code changes under any profile
+  (issue #63).
 * **SHQ004.** Every node shape without an ``rdfs:label`` triple or without an ``rdfs:comment`` triple
   (both are needed).  Excluded: untyped node shapes; ``skos:prefLabel``, ``sh:name`` and
   ``dcterms:description`` do not count, as a shape is not an ontology term.  Info: documentation only.

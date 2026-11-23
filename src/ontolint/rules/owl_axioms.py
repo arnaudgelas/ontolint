@@ -1,12 +1,12 @@
 """OWL axiom and property-characteristic rules: OWL016-OWL030.
 
-All rules are asserted-graph checks; nothing is entailed and no reasoner is involved.  Subproperty,
-subclass and equivalence relations are read as asserted, never closed transitively, except that OWL019
-walks the property hierarchy that the OWL 2 definition of a simple property is stated over.  A property's kind
-is read from its explicit ``rdf:type owl:ObjectProperty`` / ``owl:DatatypeProperty`` only (a
-characteristic such as ``owl:TransitiveProperty`` does not make it an object property).  No rule is
-restricted to owned terms: every subject of the graph is checked, imported or not.  Every finding is
-``certain``.  Their specifications:
+All rules are asserted-graph checks; nothing is entailed and no reasoner is involved. Subproperty, subclass and
+equivalence relations are read as asserted, never closed transitively, except that OWL019 walks the property
+hierarchy that the OWL 2 definition of a simple property is stated over. A property's kind is read from its explicit
+``rdf:type owl:ObjectProperty`` / ``owl:DatatypeProperty`` only (a characteristic such as ``owl:TransitiveProperty``
+does not make it an object property). No rule is restricted to owned terms: every subject of the graph is checked,
+imported or not. Every finding is ``certain``. Section and table numbers and quoted phrases of the cited
+specifications were not independently verified (issues #182 and #247). Their specifications:
 
 * **OWL016.** A node typed ``owl:DatatypeProperty`` and ``owl:ReflexiveProperty`` or
   ``owl:IrreflexiveProperty``; one finding per characteristic.  The other object-only characteristics
