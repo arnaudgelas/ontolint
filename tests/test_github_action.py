@@ -13,6 +13,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -693,6 +694,25 @@ def test_the_observation_page_names_the_workflow_and_the_readme_points_to_the_pa
 def _steps() -> list[str]:
     """The text of each step of ``action.yml``, in order."""
     return ACTION.split("  steps:\n", 1)[1].split("    - name: ")[1:]
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="uv is not installed")
+def test_the_install_step_makes_its_environments_again_when_the_action_runs_twice_in_one_job(tmp_path: Path) -> None:
+    """Issue #149: the observation workflow uses the Action several times in one job, and the second use failed with
+    ``error: Failed to create virtual environment ... A virtual environment already exists``: ``uv venv`` refuses an
+    existing directory (uv 0.13), and the two environments live in ``$RUNNER_TEMP``, which a job keeps.  The step's own
+    ``uv venv`` lines are run twice on one directory."""
+    step = next(s for s in _steps() if s.startswith("Install the pinned ontolint"))
+    lines = [line.strip() for line in step.splitlines() if line.strip().startswith("uv venv")]
+    assert len(lines) == 2  # the verifier's environment and ontolint's
+    directories = {'"$verify"': tmp_path / "verify", '"$venv"': tmp_path / "venv"}
+    for _use in range(2):
+        for line in lines:
+            command = line
+            for variable, directory in directories.items():
+                command = command.replace(variable, str(directory))
+            done = subprocess.run(shlex.split(command), capture_output=True, text=True, check=False)  # noqa: S603 -- the step's own line
+            assert done.returncode == 0, done.stderr
 
 
 def test_a_windows_runner_is_refused_before_anything_is_installed() -> None:
