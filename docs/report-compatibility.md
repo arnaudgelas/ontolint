@@ -103,7 +103,7 @@ since ontolint itself reads it; the reader also checks cross-field invariants a 
 
 ### Ledger: additions since the 0.16.0 samples
 
-One row per added key path; copy the rows into the changelog under the document's name at release. The keys of 0.17.0 are the same as 0.16.0's; the rows below are the catalogue identity and the per-rule counts of #173 (`catalogue`, `rule_counts`; SARIF `ontolintCatalogue`, `ontolintRuleCounts`).
+One row per added key path; copy the rows into the changelog under the document's name at release. The keys of 0.17.0 are the same as 0.16.0's; the rows below are the catalogue identity and the per-rule counts of #173 (`catalogue`, `rule_counts`; SARIF `ontolintCatalogue`, `ontolintRuleCounts`). The `timing` rows are #174 (`--timing`: present only with the flag).
 
 | Document | Key path | Added in |
 | --- | --- | --- |
@@ -128,3 +128,17 @@ One row per added key path; copy the rows into the changelog under the document'
 | sarif | `$.runs[].properties.ontolintRuleCounts[].findings` | 0.18.0 |
 | sarif | `$.runs[].properties.ontolintRuleCounts[].rule` | 0.18.0 |
 | sarif | `$.runs[].properties.ontolintRuleCounts[].status` | 0.18.0 |
+| lint | `$.timing` | 0.18.0 (`--timing`, #174) |
+| lint | `$.timing.total_ms` | 0.18.0 (`--timing`, #174) |
+| lint | `$.timing.load_ms` | 0.18.0 (`--timing`, #174) |
+| lint | `$.timing.units_ms` | 0.18.0 (`--timing`, #174) |
+| lint | `$.timing.units_ms.{*}` | 0.18.0 (`--timing`, #174) |
+| lint | `$.timing.rules_ms` | 0.18.0 (`--timing`, #174) |
+| lint | `$.timing.rules_ms.{*}` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming.total_ms` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming.load_ms` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming.units_ms` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming.units_ms.{*}` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming.rules_ms` | 0.18.0 (`--timing`, #174) |
+| sarif | `$.runs[].invocations[].properties.ontolintTiming.rules_ms.{*}` | 0.18.0 (`--timing`, #174) |

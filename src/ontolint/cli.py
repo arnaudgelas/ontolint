@@ -15,6 +15,7 @@ import logging
 import math
 import os
 import sys
+import time
 import traceback
 from collections.abc import Mapping, Sequence
 from contextvars import ContextVar
@@ -27,7 +28,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 
-from . import baseline, dqv, engine, quality
+from . import baseline, dqv, engine, quality, timing
 from ._version import package_version
 from .adapters.robot import robot_convert
 from .catalogue import planned_rows
@@ -212,6 +213,13 @@ def build_parser() -> argparse.ArgumentParser:
         "METRIC rules and more, as numerators and denominators); requires --format json",
     )
     ap.add_argument(
+        "--timing",
+        action="store_true",
+        help="Add the run's timing in integer milliseconds: JSON `timing`, SARIF invocation property "
+        "`ontolintTiming`, a footer in the text report (see docs/report-compatibility.md); never in a baseline, "
+        "fingerprint, snapshot or Markdown summary",
+    )
+    ap.add_argument(
         "--sarif-fingerprints",
         action="store_true",
         help="Add partialFingerprints to every SARIF result (ontolintIdentity/v2, the baseline identity, and "
@@ -308,6 +316,7 @@ class RunPlan:
     registry: RuleRegistry
     shacl_background: Graph | None = None
     quality_baseline: quality.Snapshot | None = None  # what a delta budget of METRIC014 is judged against
+    timer: timing.Recorder | None = None  # with --timing: where the loading and each unit of rules record their time
 
 
 _SHAPE_TYPES = (SH.NodeShape, SH.PropertyShape)
@@ -405,7 +414,7 @@ def _lint_file(
     findings: tuple[Finding, ...] = ()
     run_ids = [s.rule_id for s in plan.selection.run]
     if run_ids:
-        result = engine.execute(ctx, run_ids, registry=plan.registry, robot=robot)
+        result = engine.execute(ctx, run_ids, registry=plan.registry, robot=robot, timer=plan.timer)
         findings, executions = result.findings, list(result.executions)
     executions += [
         RuleExecution(s.rule_id, ExecutionStatus.SKIPPED, "ignored by --ignore or profile")
@@ -1237,7 +1246,7 @@ def _check_quality_baseline_use(args: argparse.Namespace, config: Policy) -> Non
         )
 
 
-def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
+def _lint(args: argparse.Namespace, stage: list[str], clock: timing.Clock | None = None) -> RunReport | int:
     """Run the whole lint; ``stage`` tracks progress for error messages. Returns a report or an exit code."""
     registry = default_registry()
     config = Policy.from_mapping(json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {})
@@ -1264,18 +1273,23 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         return TOOL_FAILURE_EXIT
     inputs = resolve_inputs(args.ontology, Path.cwd())
     _LOADER_POLICY.set(limits)
-    graphs, errors = _parse_inputs(inputs, imports)
+    timer = timing.Recorder(clock or time.perf_counter) if args.timing else None
+    with timer.load() if timer else contextlib.nullcontext():
+        graphs, errors = _parse_inputs(inputs, imports)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2
     try:
-        shapes, background = _load_shapes(args, limits, imports)
-        library = _library(args, limits, imports, inputs)
+        with timer.load() if timer else contextlib.nullcontext():
+            shapes, background = _load_shapes(args, limits, imports)
+            library = _library(args, limits, imports, inputs)
     except (InputRejected, _ShapesParseFailure, ProfileError) as exc:
         print(_secondary_input_error(exc), file=sys.stderr)
         return 2
     stage[0] = "lint execution"
-    plan = replace(_plan(args, config, shapes, registry), shacl_background=background, quality_baseline=accepted)
+    plan = replace(
+        _plan(args, config, shapes, registry), shacl_background=background, quality_baseline=accepted, timer=timer
+    )
     if library is not None:
         plan = replace(plan, policy=replace(plan.policy, library=library))
     shared = (
@@ -1300,10 +1314,11 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         quality=trend,
         sarif_fingerprints=args.sarif_fingerprints,
         ignored=tuple(spec.rule_id for spec in plan.selection.ignored),
+        timing=timer.finish() if timer else None,
     )
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None, *, clock: timing.Clock | None = None) -> int:
     """Run the linter CLI and return its process exit code.
 
     0 is clean, 1 gated findings, 2 a tool failure, and 141 (``EXIT_PIPE_CLOSED``) that the reader of stdout or
@@ -1322,7 +1337,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if redacting is not None:
         sys.stderr = cast("TextIO", redacting)
     try:
-        return _main(argv)
+        return _main(argv, clock)
     except BrokenPipeError:
         _release(sys.stderr)
         return EXIT_PIPE_CLOSED
@@ -1382,7 +1397,7 @@ def _quality_usage_problem(args: argparse.Namespace) -> str | None:
     return None
 
 
-def _main(argv: Sequence[str] | None) -> int:
+def _main(argv: Sequence[str] | None, clock: timing.Clock | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     # RDFLib logs its own warnings (and tracebacks) while parsing; ontolint reports input problems itself.
@@ -1392,14 +1407,14 @@ def _main(argv: Sequence[str] | None) -> int:
         return info
     if (problem := _usage_problem(args)) is not None:
         parser.error(problem)
-    return _compare_quality(args) if args.compare_quality else _lint_and_finish(args)
+    return _compare_quality(args) if args.compare_quality else _lint_and_finish(args, clock)
 
 
-def _lint_and_finish(args: argparse.Namespace) -> int:
+def _lint_and_finish(args: argparse.Namespace, clock: timing.Clock | None = None) -> int:
     """Lint the inputs, report, and return the exit status; configuration and input failures are exit 2."""
     stage = ["configuration"]
     try:
-        outcome = _lint(args, stage)
+        outcome = _lint(args, stage, clock)
     except (UnknownSelectorError, SelectorSyntaxError, PipelineSelectorError, BudgetGateDropped) as exc:
         proposed = frozenset(row.rule_id for row in planned_rows())
         message = unknown_selector_help(exc, proposed) if isinstance(exc, UnknownSelectorError) else str(exc)

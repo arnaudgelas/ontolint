@@ -21,11 +21,11 @@ from typing import Any
 
 import pytest
 from jsonschema.validators import validator_for
-from ontolint.timing import Recorder
 from test_differential import FIXTURES
 
 from ontolint import engine
 from ontolint.cli import main
+from ontolint.timing import Recorder
 
 ROOT = Path(__file__).parent.parent
 SCHEMA = json.loads(
@@ -178,7 +178,10 @@ def test_the_timing_is_in_no_baseline_snapshot_dqv_or_markdown_file(
         _code, stdout = _run(argv, monkeypatch)
         return stdout, out.read_text(encoding="utf-8") if out.exists() else ""
 
-    assert written(False) == written(True)
+    plain, timed = written(False), written(True)
+    assert plain[1] == timed[1]  # the file, when the option writes one
+    if "markdown" in extra[-1]:
+        assert plain[0] == timed[0]  # the Markdown summary
 
 
 # --- failures still have a time ---
