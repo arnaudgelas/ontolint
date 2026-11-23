@@ -86,11 +86,11 @@ runs:
         index=https://pypi.org/simple
         # The program that checks the attestation has its own environment, installed by hash.
         verify="$RUNNER_TEMP/ontolint-verify-venv"
-        uv venv --python 3.13 "$verify"
+        uv venv --clear --python 3.13 "$verify"
         uv pip install --python "$verify/bin/python" --default-index "$index" \
           --require-hashes --no-deps -r "$ACTION_PATH/action/verify-requirements.txt"
         venv="$RUNNER_TEMP/ontolint-venv"
-        uv venv --python 3.13 "$venv"
+        uv venv --clear --python 3.13 "$venv"
         uv pip install --python "$venv/bin/python" --default-index "$index" \
           --require-hashes --no-deps -r "$ACTION_PATH/action/requirements.txt"
         ONTOLINT_ACTION_ROOT="$ACTION_PATH" ONTOLINT_VERIFIER="$verify/bin/pypi-attestations" \
