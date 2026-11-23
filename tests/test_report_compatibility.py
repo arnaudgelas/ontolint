@@ -36,8 +36,15 @@ MAPS = frozenset(
         "$.findings[].evidence",
         "$.identities",
         "$.identities.{*}",
+        "$.timing.units_ms",
+        "$.timing.rules_ms",
+        "$.runs[].invocations[].properties.ontolintTiming.units_ms",
+        "$.runs[].invocations[].properties.ontolintTiming.rules_ms",
     }
 )
+
+# Keys that only an option adds, which no sample command passes: (sample to compare with, extra arguments).
+OPTION_RUNS: dict[str, tuple[str, ...]] = {"lint-clean.json": ("--timing",), "sarif-default.sarif": ("--timing",)}
 
 type Shape = set[tuple[str, str]]
 
@@ -141,6 +148,13 @@ def test_every_key_a_report_adds_is_in_the_ledger(name: str, tmp_path: Path, mon
     assert not added, f"{name}: added without a ledger row in docs/report-compatibility.md: {added}"
 
 
+@pytest.mark.parametrize("name", sorted(OPTION_RUNS))
+def test_every_key_an_option_adds_is_in_the_ledger(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    entry = {**ENTRIES[name], "args": [*ENTRIES[name]["args"], *OPTION_RUNS[name]]}
+    added = unnamed_additions(name, current_document(entry, tmp_path, monkeypatch))
+    assert not added, f"{name} {OPTION_RUNS[name]}: added without a ledger row in docs/report-compatibility.md: {added}"
+
+
 def test_a_key_added_to_a_report_without_a_ledger_row_fails_the_check() -> None:
     document = json.loads((SAMPLES / "lint-clean.json").read_text(encoding="utf-8"))
     assert unnamed_additions("lint-clean.json", document) == []
@@ -158,6 +172,11 @@ def test_the_ledger_has_no_row_for_a_key_that_is_not_there(tmp_path: Path, monke
         old = shape_of(json.loads((SAMPLES / name).read_text(encoding="utf-8")))
         new = shape_of(current_document(entry, tmp_path, monkeypatch))
         present |= {(entry["kind"], path) for path, _type in new - old}
+    for name, extra in OPTION_RUNS.items():
+        entry = {**ENTRIES[name], "args": [*ENTRIES[name]["args"], *extra]}
+        old = shape_of(json.loads((SAMPLES / name).read_text(encoding="utf-8")))
+        new = shape_of(current_document(entry, tmp_path, monkeypatch))
+        present |= {(ENTRIES[name]["kind"], path) for path, _type in new - old}
     assert ledger() <= present
 
 

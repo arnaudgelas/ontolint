@@ -67,9 +67,23 @@
       "items": {
         "$ref": "#/$defs/ruleCount"
       }
+    },
+    "timing": {
+      "$ref": "#/$defs/timing"
     }
   },
   "$defs": {
+    "timing": {
+      "type": "object",
+      "required": ["total_ms", "load_ms", "units_ms", "rules_ms"],
+      "properties": {
+        "total_ms": {"type": "integer", "minimum": 0},
+        "load_ms": {"type": "integer", "minimum": 0},
+        "units_ms": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "rules_ms": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      },
+      "description": "Present only with --timing. Integer milliseconds; a rule's time is its unit's, so rules_ms values must not be added up (src/ontolint/timing.py)."
+    },
     "severity": {
       "enum": [
         "error",

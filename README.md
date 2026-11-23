@@ -100,6 +100,7 @@ packaged `rule_catalogue.csv` rows, sorted, each as a JSON array of its seven co
 | Findings for GitHub code scanning | `ontolint FILE --format sarif` (SARIF 2.1.0) | [Run the linter](#run-the-linter), [GitHub Action](#github-action) |
 | Which rules ran, were skipped or failed | `files[].executions` in the JSON report, and `--format text` | [Rule execution status](#rule-execution-status) |
 | The measurements behind the METRIC rules, as numerators and denominators | `ontolint FILE --format json --measurements` (`files[].measurements`) | [Measurements](#measurements) |
+| How long the run took, in integer milliseconds | `--timing` (JSON `timing`, SARIF `invocation.properties.ontolintTiming`, a text footer) | [Timing](#timing) |
 | One run's measurements with their term sets, a committed quality baseline, a trend between two snapshots | `--write-quality-snapshot FILE`, `--quality-baseline FILE`, `--compare-quality OLD NEW` | [Quality snapshots and trends](#quality-snapshots-and-trends) |
 | The measurements as W3C DQV Turtle | `--write-dqv FILE` | [Measurements as DQV](#measurements-as-dqv) |
 | A pass or fail for CI | the exit code: `0` pass, `1` findings, `2` tool failure | [Run the linter](#run-the-linter) |
@@ -369,6 +370,22 @@ case a `Rule execution:` block is appended.
   case for a blank-node label that may run on past what the scan reads (an inner dot, a non-ASCII
   letter) and for an RDF/XML file in an encoding other than UTF-8 or ASCII. Findings, fingerprints
   and baselines are unaffected: only the `region` of a located result gained two keys.
+
+### Timing
+
+`--timing` adds the run's timing, in integer milliseconds (each duration rounded to the nearest). It is off by default, and
+without it the output is unchanged. With it, the JSON report has a `timing` object (`schema_version` stays 1), the SARIF run has the
+property `ontolintTiming` in `invocations[0].properties`, and the text report ends with a `Timing:` line. The Markdown summary, baselines,
+fingerprints, quality snapshots and DQV files never hold it. In the [Action](#github-action), pass it as `args`.
+
+- `total_ms`: from the start of the run to the end of the last rule; writing the report is not counted.
+- `load_ms`: reading the ontologies, the shapes graph and the pattern library.
+- `units_ms`: the time of each unit that ran rules, failed or timed out included. A unit is a rule module (`owl`, `shacl`, ...) for the graph
+  rules, and one adapter (`adapter:SHACL001`) for an adapter rule. Units do not overlap, so these values can be added.
+- `rules_ms`: each rule that ran, with the time of its unit. Rules of one module run together, so they share it: do not add them up. A skipped or
+  unsupported rule is absent.
+
+The values are wall-clock times of one run and vary from run to run: do not compare them with a threshold in a gate.
 
 ### Measurements
 

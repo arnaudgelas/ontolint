@@ -42,6 +42,9 @@ from .quality import CHANGES, Comparison, Result, Snapshot, show
 from .quality import render_text as render_quality_text
 from .redaction import clip, redact_rendered
 from .rules.registry import default_registry
+from .timing import Timing
+from .timing import footer as timing_footer
+from .timing import to_dict as timing_dict
 
 SEVERITY_ORDER = ("error", "warning", "info")
 SARIF_LEVELS = {"error": "error", "warning": "warning", "info": "note"}
@@ -153,6 +156,8 @@ class RunReport:
     # The ids of the rules the run selected and then ignored (``--ignore``, the profile's ``ignore``, the policy's
     # ``ignored_rules``): their execution record says ``skipped``, their rule count ``not_selected``.
     ignored: tuple[str, ...] = ()
+    # With --timing: the run's timing (see :mod:`ontolint.timing`); JSON, SARIF and the text footer only.
+    timing: Timing | None = None
 
     @property
     def findings(self) -> tuple[Finding, ...]:
@@ -362,6 +367,8 @@ def to_json(report: RunReport) -> dict[str, Any]:
         ),
         # Present only with --quality-baseline: the trend against the committed quality snapshot.
         **({"quality_comparison": report.quality.to_dict()} if report.quality is not None else {}),
+        # Present only with --timing, and never in a baseline, fingerprint, snapshot or the Markdown summary.
+        **({"timing": timing_dict(report.timing)} if report.timing is not None else {}),
     }
 
 
@@ -479,7 +486,10 @@ def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, A
                 else []
             ),
         ],
-        "properties": {"executionSummary": summarise_executions(_all_executions(report))},
+        "properties": {
+            "executionSummary": summarise_executions(_all_executions(report)),
+            **({"ontolintTiming": timing_dict(report.timing)} if report.timing is not None else {}),
+        },
     }
     if exit_status is not None:
         invocation["exitCode"] = exit_status
@@ -879,6 +889,8 @@ def render_report(report: RunReport, output_format: str, exit_status: int | None
         )
     if report.stale_baseline:
         text += "\n" + stale_baseline_message(len(report.stale_baseline))
+    if report.timing is not None:
+        text += "\n" + timing_footer(report.timing)
     return text
 
 

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import shutil
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from importlib.util import find_spec
 from pathlib import Path
@@ -37,6 +38,7 @@ from .rules.builtin import RULE_MODULES, module_name, module_runners, module_spe
 from .rules.registry import RuleRegistry, default_registry
 from .rules.runtime import RuleContext
 from .rules.support import ntriples_literal, stable_blank_id
+from .timing import Recorder
 from .worker import WorkerFailed
 
 type RuleFamily = Callable[[RuleContext], None]
@@ -198,13 +200,18 @@ def _run_adapter(spec: RuleSpec, ctx: RuleContext, robot: RobotRequest | None) -
     return RuleExecution(spec.rule_id, ExecutionStatus.EXECUTED), found
 
 
-def _run_modules(ctx: RuleContext, modules: set[str]) -> dict[str, str]:
-    """Run the needed rule modules in contract order; return ``module -> failure detail``."""
+def _run_modules(
+    ctx: RuleContext, modules: set[str], timer: Recorder | None = None, rules: Mapping[str, Iterable[str]] | None = None
+) -> dict[str, str]:
+    """Run the needed rule modules in contract order; return ``module -> failure detail``.
+
+    With a ``timer``, each module's time is recorded, a failed one included, for its ``rules``."""
     failures: dict[str, str] = {}
     for module, runner in FAMILY_RUNNERS.items():
         if module in modules:
             try:
-                _run_family(module, runner, ctx)
+                with timer.unit(module, (rules or {}).get(module, ())) if timer else contextlib.nullcontext():
+                    _run_family(module, runner, ctx)
             except Exception as exc:  # noqa: BLE001 -- one broken rule module must not abort the run.
                 failures[module] = _failure(exc)
     return failures
@@ -216,6 +223,7 @@ def execute(
     *,
     registry: RuleRegistry | None = None,
     robot: RobotRequest | None = None,
+    timer: Recorder | None = None,
 ) -> RunResult:
     """Run the selected rules and record an execution outcome for each of them.
 
@@ -233,7 +241,10 @@ def execute(
         else:
             runnable.append(spec)
     graph_specs = [s for s in runnable if s.backend is RuleBackend.RDFLIB]
-    failures = _run_modules(ctx, {s.module for s in graph_specs})
+    by_module: dict[str, list[str]] = {}
+    for s in graph_specs:
+        by_module.setdefault(s.module, []).append(s.rule_id)
+    failures = _run_modules(ctx, set(by_module), timer, by_module)
     accepted = {s.rule_id for s in graph_specs if s.module not in failures}
     for spec in graph_specs:
         failure = failures.get(spec.module)
@@ -244,6 +255,7 @@ def execute(
         )
     findings = [f for f in ctx.findings if f.rule in accepted]
     for spec in (s for s in runnable if s.backend is not RuleBackend.RDFLIB):
-        outcomes[spec.rule_id], extra = _run_adapter(spec, ctx, robot)
+        with timer.unit(f"adapter:{spec.rule_id}", [spec.rule_id]) if timer else contextlib.nullcontext():
+            outcomes[spec.rule_id], extra = _run_adapter(spec, ctx, robot)
         findings += extra
     return RunResult(tuple(sort_findings(findings)), tuple(outcomes[s.rule_id] for s in specs))
