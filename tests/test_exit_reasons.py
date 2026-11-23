@@ -419,7 +419,7 @@ def test_a_usage_problem_found_after_parsing(run: Run, refusals: list[ExitReason
 
 
 def test_an_internal_error(monkeypatch: pytest.MonkeyPatch, run: Run, refusals: list[ExitReason]) -> None:
-    def boom(_argv: object) -> int:
+    def boom(_argv: object, _clock: object = None) -> int:
         raise RuntimeError("a bug")
 
     monkeypatch.setattr(cli, "_main", boom)
