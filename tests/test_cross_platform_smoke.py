@@ -314,3 +314,17 @@ def test_the_built_wheel_installs_and_starts_through_its_script_and_python_m(tmp
         check=False,
     )
     assert catalogue.stdout.strip() == "True", catalogue.stderr
+    schema = subprocess.run(  # noqa: S603
+        [
+            str(python),
+            "-c",
+            "import importlib.resources as r, json; "
+            "d = json.loads(r.files('ontolint').joinpath('schemas', 'lint-report.v1.schema.json').read_text()); "
+            "print(d['properties']['schema_version']['const'])",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert schema.stdout.strip() == "1", schema.stderr  # the JSON Schema of the report ships in the wheel (issue #171)

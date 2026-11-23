@@ -1,0 +1,593 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/arnaudgelas/ontolint/main/src/ontolint/schemas/lint-report.v1.schema.json",
+  "title": "ontolint lint report, schema_version 1",
+  "description": "The document `ontolint FILE... --format json` writes. Objects are open: a consumer ignores keys it does not know (docs/report-compatibility.md). Closed enumerations (severity, confidence, execution status) are enums here.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "summary",
+    "findings",
+    "execution_summary",
+    "rules",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "summary": {
+      "$ref": "#/$defs/severityCounts"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "execution_summary": {
+      "$ref": "#/$defs/executionSummary"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/file"
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "required": [
+        "stale_fingerprints"
+      ],
+      "properties": {
+        "stale_fingerprints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Present only when a baseline was read."
+    },
+    "quality_comparison": {
+      "$ref": "#/$defs/qualityComparison"
+    }
+  },
+  "$defs": {
+    "severity": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "description": "Closed enumeration: a new value is a breaking change (docs/report-compatibility.md)."
+    },
+    "confidence": {
+      "enum": [
+        "certain",
+        "heuristic"
+      ],
+      "description": "Closed enumeration."
+    },
+    "executionStatus": {
+      "enum": [
+        "executed",
+        "skipped",
+        "unsupported",
+        "failed"
+      ],
+      "description": "Closed enumeration."
+    },
+    "measurementKind": {
+      "enum": [
+        "ratio",
+        "count",
+        "histogram"
+      ]
+    },
+    "severityCounts": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/severity"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "Findings per severity; a severity with no finding is absent."
+    },
+    "executionSummary": {
+      "type": "object",
+      "required": [
+        "executed",
+        "skipped",
+        "unsupported",
+        "failed"
+      ],
+      "properties": {
+        "executed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "description": "Rule executions per status; every status is present."
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "rule",
+        "severity",
+        "focus",
+        "message",
+        "suggestion",
+        "confidence",
+        "path"
+      ],
+      "properties": {
+        "rule": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "focus": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "suggestion": {
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "path": {
+          "type": "string",
+          "description": "The report path of the file the finding is reported on."
+        },
+        "details": {
+          "type": "string",
+          "description": "Full tool output behind a summarised message; present only when there is some."
+        },
+        "evidence": {
+          "type": "object",
+          "description": "The backend's structured result (SHACL001); its keys are the SHACL result properties, in the backend's order."
+        },
+        "graphs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": [
+        "id",
+        "family",
+        "title",
+        "severity",
+        "default_severity",
+        "category",
+        "backend",
+        "scope",
+        "requires",
+        "suggestion"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "default_severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "category": {
+          "type": "string",
+          "description": "Open enumeration (docs/report-compatibility.md)."
+        },
+        "backend": {
+          "type": "string",
+          "description": "Open enumeration."
+        },
+        "scope": {
+          "type": "string",
+          "description": "Open enumeration."
+        },
+        "requires": {
+          "type": "string",
+          "description": "Open enumeration."
+        },
+        "suggestion": {
+          "type": "string"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "rule",
+        "status",
+        "detail"
+      ],
+      "properties": {
+        "rule": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/executionStatus"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "One line per backend result, only when there are some."
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "required": [
+        "id",
+        "definition_version",
+        "kind",
+        "population"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "definition_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/measurementKind"
+        },
+        "population": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Present, with no value field, when the measurement could not be taken."
+        },
+        "numerator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "by_namespace": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "namespace",
+              "count"
+            ],
+            "properties": {
+              "namespace": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "buckets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "value",
+              "count"
+            ],
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "reason"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "numerator"
+                  ]
+                },
+                {
+                  "required": [
+                    "denominator"
+                  ]
+                },
+                {
+                  "required": [
+                    "value"
+                  ]
+                },
+                {
+                  "required": [
+                    "buckets"
+                  ]
+                }
+              ]
+            }
+          },
+          "else": {
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "ratio"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "numerator",
+                    "denominator"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "count"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "histogram"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "buckets"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "measurementPartition": {
+      "type": "object",
+      "required": [
+        "by",
+        "measurements"
+      ],
+      "properties": {
+        "by": {
+          "enum": [
+            "file",
+            "graph",
+            "module"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "measurements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/measurement"
+          }
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "required": [
+        "path",
+        "summary",
+        "execution_summary",
+        "executions"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "summary": {
+          "$ref": "#/$defs/severityCounts"
+        },
+        "execution_summary": {
+          "$ref": "#/$defs/executionSummary"
+        },
+        "executions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/execution"
+          }
+        },
+        "module_summary": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/severityCounts"
+          },
+          "description": "Present only with module grouping; keyed by module name."
+        },
+        "measurements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/measurement"
+          },
+          "description": "Present only with --measurements."
+        },
+        "measurement_partitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/measurementPartition"
+          }
+        }
+      }
+    },
+    "qualityComparison": {
+      "type": "object",
+      "required": [
+        "format",
+        "version",
+        "notes",
+        "measurements"
+      ],
+      "properties": {
+        "format": {
+          "const": "ontolint-quality-comparison"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "measurements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "compared",
+                  "not_comparable"
+                ]
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "definition_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "kind": {
+                "$ref": "#/$defs/measurementKind"
+              },
+              "population": {
+                "type": "string"
+              },
+              "before": {
+                "type": "object"
+              },
+              "after": {
+                "type": "object"
+              },
+              "delta": {
+                "type": [
+                  "integer",
+                  "string",
+                  "null"
+                ],
+                "description": "A count's difference, or a ratio's as a signed four-place decimal string; null when a denominator is 0."
+              },
+              "changed": {
+                "type": "boolean"
+              },
+              "coverage": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "description": "Present only with --quality-baseline."
+    }
+  }
+}

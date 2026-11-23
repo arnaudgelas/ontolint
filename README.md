@@ -80,9 +80,10 @@ file and any imports you point it at.
 ## Machine-readable interfaces
 
 For scripts, CI and AI agents. Each interface is described in the section named in the last
-column. The JSON report carries `schema_version` (currently `1`), but ontolint is still Alpha and
-the report has no published JSON Schema yet, so pin the version you parse against. What may change in a
-report without a version bump, and what is breaking, is the [report compatibility policy](docs/report-compatibility.md).
+column. The JSON report carries `schema_version` (currently `1`) and is described by a JSON Schema (draft 2020-12) shipped in the
+wheel, `ontolint/schemas/lint-report.v1.schema.json` (`importlib.resources.files("ontolint") / "schemas"`). ontolint is still Alpha:
+what may change in a report without a version bump, and what is breaking, is the
+[report compatibility policy](docs/report-compatibility.md); pin the version you parse against.
 
 | You want | Run or read | Where it is described |
 | --- | --- | --- |

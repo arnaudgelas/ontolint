@@ -93,7 +93,8 @@ The SARIF `partialFingerprints` keys are not sampled yet (both SARIF samples are
 2. **every key path the current output adds is listed in the ledger below**, so an addition cannot ship without being named;
 3. the samples, the manifest and the ledger agree, and this page is linked from the README.
 
-When #171 lands, the same samples also validate against the shipped JSON Schema.
+The same samples also validate against the shipped JSON Schema of the lint report, `ontolint/schemas/lint-report.v1.schema.json`
+(`tests/test_report_schema.py`, issue #171); the schemas of the other documents are issue #172.
 
 ### Ledger: additions since the 0.16.0 samples
 
