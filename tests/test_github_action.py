@@ -639,6 +639,35 @@ def test_the_observation_workflow_asks_for_write_access_to_code_scanning_in_its_
     assert OBSERVE.count("security-events: write") == 1
 
 
+def _observe_jobs() -> dict[str, str]:
+    """The text of each job of the observation workflow, by name."""
+    parts = re.split(r"^  ([a-z][\w-]*):\n", OBSERVE.split("\njobs:\n", 1)[1], flags=re.MULTILINE)
+    return dict(zip(parts[1::2], parts[2::2], strict=True))
+
+
+def test_no_job_of_the_observation_uploads_twice_to_one_category() -> None:
+    """The first real run (issue #149) failed at 'Close the plain alerts': codeql-action/upload-sarif refuses a second
+    upload to one category in one job ('only one run of the codeql/analyze or codeql/upload-sarif actions is allowed per
+    job per tool/category').  The experiment re-uploads to a category to see whether its alerts stay, and closes each
+    category it opened, so the uploads cannot share a job."""
+    jobs = _observe_jobs()
+    assert len(jobs) > 1
+    for name, text in jobs.items():
+        categories = re.findall(r"^\s+category: (\S+)$", text, re.MULTILINE)
+        assert len(categories) == len(set(categories)), f"job {name} uploads twice to one category: {categories}"
+
+
+def test_the_observation_closes_what_it_opened_in_a_job_that_runs_last_and_after_a_failure() -> None:
+    jobs = _observe_jobs()
+    assert "cleanup" in jobs
+    cleanup = jobs["cleanup"]
+    opened = {c for name, text in jobs.items() if name != "cleanup" for c in re.findall(r"category: (\S+)", text)}
+    assert opened == set(re.findall(r"^\s+category: (\S+)$", cleanup, re.MULTILINE)), "each category opened is closed"
+    needs = set(re.findall(r"^\s+- (\S+)$", cleanup.split("needs:", 1)[1].split("\n    if:", 1)[0], re.MULTILINE))
+    assert needs == set(jobs) - {"cleanup"}, "it waits for every other job"
+    assert "if: ${{ inputs.cleanup && !cancelled() }}" in cleanup  # runs after a failure, not after a cancellation
+
+
 def test_every_action_the_observation_uses_is_pinned_to_a_commit_or_is_the_checkout() -> None:
     used = re.findall(r"^\s+uses: (\S+)(?: # (\S+))?$", OBSERVE, re.MULTILINE)
     assert used
