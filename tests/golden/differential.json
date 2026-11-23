@@ -270,14 +270,14 @@
    "legacy_json_view": "sha256:7c2413e8e904a665b27b9fd935db23f70a6cf5a88a43ebf9c8527a50f949b588 (45343 chars)",
    "to_file": {
     "exit": 2,
-    "file": "sha256:c11b71fcd8f8f2e54c231e50f674dcf00b3522172a493a72aef895b802a6a297 (192070 chars)",
+    "file": "sha256:4cffa65dd37ae61ff1e0f1354954e73b106f69205f7cfb12880954bac76473be (192304 chars)",
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
     "stdout": ""
    },
    "to_stdout": {
     "exit": 2,
     "stderr": "TOOL001: rule SEM001 unsupported for kitchen_sink.ttl: the docker executable was not found on PATH\n",
-    "stdout": "sha256:c11b71fcd8f8f2e54c231e50f674dcf00b3522172a493a72aef895b802a6a297 (192070 chars)"
+    "stdout": "sha256:4cffa65dd37ae61ff1e0f1354954e73b106f69205f7cfb12880954bac76473be (192304 chars)"
    }
   },
   "json_shapes": {
