@@ -1,0 +1,332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/arnaudgelas/ontolint/main/src/ontolint/schemas/quality-snapshot.v1.schema.json",
+  "title": "ontolint quality snapshot, version 1",
+  "description": "The file `ontolint --write-quality-snapshot FILE` writes and `--quality-baseline` and `--compare-quality` read. ontolint's own reader is closed (quality.loads refuses a key or a version it does not know), so this schema is closed exactly where the reader is: the top level, the policy, a measurement, and its pairs; any change to the format increments `version` (docs/report-compatibility.md).",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "policy",
+    "measurements"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "ontolint-quality-snapshot"
+    },
+    "version": {
+      "const": 1
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "base",
+        "extra_label_predicates",
+        "extra_definition_predicates",
+        "imports"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "base": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "extra_label_predicates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "extra_definition_predicates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/measurement"
+      }
+    }
+  },
+  "$defs": {
+    "measurement": {
+      "type": "object",
+      "required": [
+        "id",
+        "definition_version",
+        "kind",
+        "population"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "definition_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "enum": [
+            "ratio",
+            "count",
+            "histogram"
+          ]
+        },
+        "population": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "numerator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "by_namespace": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "namespace",
+              "count"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "namespace": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "buckets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "value",
+              "count"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "better": {
+          "enum": [
+            "higher",
+            "lower"
+          ]
+        },
+        "numerator_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "denominator_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "dependentRequired": {
+        "better": [
+          "numerator_terms",
+          "denominator_terms"
+        ],
+        "numerator_terms": [
+          "better",
+          "denominator_terms"
+        ],
+        "denominator_terms": [
+          "better",
+          "numerator_terms"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "reason"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "numerator"
+                  ]
+                },
+                {
+                  "required": [
+                    "denominator"
+                  ]
+                },
+                {
+                  "required": [
+                    "value"
+                  ]
+                },
+                {
+                  "required": [
+                    "buckets"
+                  ]
+                },
+                {
+                  "required": [
+                    "by_namespace"
+                  ]
+                }
+              ]
+            }
+          },
+          "else": {
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "ratio"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "numerator",
+                    "denominator"
+                  ],
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "value"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "buckets"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "count"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "numerator"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "denominator"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "by_namespace"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "buckets"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "histogram"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "buckets"
+                  ],
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "numerator"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "denominator"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "by_namespace"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "value"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

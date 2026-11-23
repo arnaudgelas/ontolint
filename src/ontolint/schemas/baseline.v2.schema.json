@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/arnaudgelas/ontolint/main/src/ontolint/schemas/baseline.v2.schema.json",
+  "title": "ontolint baseline file, version 2",
+  "description": "The file `ontolint --write-baseline FILE` writes and `--baseline` reads. The reader accepts any positive `version` and ignores sections it does not know (this is what makes an added section additive), so objects are open; this schema describes version 2, which ontolint writes. Version 1 (0.10: `fingerprints` only) is still read and is not described here.",
+  "type": "object",
+  "required": [
+    "version",
+    "files",
+    "fingerprints",
+    "identities"
+  ],
+  "properties": {
+    "version": {
+      "const": 2
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The report paths of the run that wrote the file, sorted."
+    },
+    "fingerprints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "description": "The version 1 hash of every accepted finding, sorted."
+    },
+    "identities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "propertyNames": {
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "description": "Per report path, the identity of each unshared finding mapped to its version 1 hash."
+    }
+  }
+}
