@@ -341,7 +341,7 @@ def test_the_execution_lines_of_a_multi_file_run_escape_the_file_name_too() -> N
     text = render_report(report, "text")
 
     assert f"{HOSTILE_ESCAPED}: Rule execution:" in text
-    _no_added_line(text, (*OWN_LINES, "b.ttl:", HOSTILE_ESCAPED))
+    _no_added_line(text, (*OWN_LINES, "b.ttl:", HOSTILE_ESCAPED, "Exit status 2:", "  - "))
 
 
 def test_json_and_sarif_keep_the_raw_names_and_details() -> None:

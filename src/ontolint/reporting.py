@@ -27,6 +27,7 @@ from ._version import package_version
 from .catalogue import catalogue_sha256, load_catalogue
 from .dqv import Subject
 from .escaping import one_line
+from .exit_reasons import TOOL_FAILURE_EXIT, exit_object, text_lines
 from .models import (
     Evidence,
     ExecutionStatus,
@@ -50,7 +51,6 @@ SEVERITY_ORDER = ("error", "warning", "info")
 SARIF_LEVELS = {"error": "error", "warning": "warning", "info": "note"}
 FAIL_THRESHOLDS = {"error": 0, "warning": 1, "info": 2, "never": -1}
 SCHEMA_VERSION = 1
-TOOL_FAILURE_EXIT = 2
 # Statuses that mean a requested rule did not deliver a verdict; they gate like a tool failure.
 BROKEN = (ExecutionStatus.FAILED, ExecutionStatus.UNSUPPORTED)
 NOTIFICATION_LEVELS = {
@@ -369,6 +369,8 @@ def to_json(report: RunReport) -> dict[str, Any]:
         **({"quality_comparison": report.quality.to_dict()} if report.quality is not None else {}),
         # Present only with --timing, and never in a baseline, fingerprint, snapshot or the Markdown summary.
         **({"timing": timing_dict(report.timing)} if report.timing is not None else {}),
+        # Present only when the run exits 2, with why (issue #175): a run that exits 0 or 1 keeps its shape.
+        **({"exit": exit_object(report)} if exit_object(report) is not None else {}),
     }
 
 
@@ -460,6 +462,15 @@ def _sarif_notification(file: FileReport, x: RuleExecution) -> dict[str, Any]:
     }
 
 
+def _sarif_measurement_notification(file: FileReport, measurement_id: str, reason: str) -> dict[str, Any]:
+    return {
+        "level": "error",
+        "message": {"text": f"Measurement {measurement_id} failed: {one_line(reason)}"},
+        "locations": [{"physicalLocation": {"artifactLocation": {"uri": file.uri}}}],
+        "properties": {"measurement": measurement_id},
+    }
+
+
 def _sarif_location_notification(file: FileReport) -> dict[str, Any]:
     return {
         "level": "note",
@@ -471,7 +482,7 @@ def _sarif_location_notification(file: FileReport) -> dict[str, Any]:
 def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, Any]:
     """Execution outcome; non-executed rules are notifications, so they never read as a clean pass."""
     invocation: dict[str, Any] = {
-        "executionSuccessful": not report.broken,
+        "executionSuccessful": not report.broken and not report.failed_measurements,
         "toolExecutionNotifications": [
             *(
                 _sarif_notification(r, x)
@@ -479,6 +490,7 @@ def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, A
                 for x in r.executions
                 if x.status != ExecutionStatus.EXECUTED
             ),
+            *(_sarif_measurement_notification(r, i, why) for r in report.files for i, why in r.failed_measurements),
             *(_sarif_location_notification(r) for r in report.files if r.location_problem),
             *(
                 [{"level": "note", "message": {"text": stale_baseline_message(len(report.stale_baseline))}}]
@@ -489,6 +501,7 @@ def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, A
         "properties": {
             "executionSummary": summarise_executions(_all_executions(report)),
             **({"ontolintTiming": timing_dict(report.timing)} if report.timing is not None else {}),
+            **({"ontolintExit": exit_object(report)} if exit_object(report) is not None else {}),
         },
     }
     if exit_status is not None:
@@ -891,7 +904,7 @@ def render_report(report: RunReport, output_format: str, exit_status: int | None
         text += "\n" + stale_baseline_message(len(report.stale_baseline))
     if report.timing is not None:
         text += "\n" + timing_footer(report.timing)
-    return text
+    return "\n".join([text, *text_lines(report)])
 
 
 def exit_code(findings: Sequence[Finding], fail_on: str) -> int:

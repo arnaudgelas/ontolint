@@ -25,8 +25,15 @@ from test_report_schema import SCHEMA
 
 from ontolint import cli, engine, exit_reasons
 from ontolint.cli import main
-from ontolint.exit_reasons import KINDS, ExitReason, report_reasons
-from ontolint.models import ExecutionStatus
+from ontolint.exit_reasons import (
+    KINDS,
+    REPORT_KINDS,
+    TOOL_FAILURE_EXIT,
+    ExitReason,
+    execution_reason,
+    report_reasons,
+)
+from ontolint.models import ExecutionStatus, RuleExecution
 from ontolint.reporting import (
     FileReport,
     RunReport,
@@ -43,7 +50,9 @@ FIXTURES = ROOT / "tests" / "fixtures"
 KITCHEN = str(FIXTURES / "kitchen_sink.ttl")
 QUALITY = str(FIXTURES / "quality" / "before.ttl")
 CLI_SOURCE = ROOT / "src" / "ontolint" / "cli.py"
-SECRET = "https://user:hunter2@example.test/x"
+MINIMUM_REFUSALS = 12
+PATH = "tests/fixtures/kitchen_sink.ttl"  # as given on the command line, from the repository root
+SECRET = "https://user:hunter2@example.test/x"  # noqa: S105
 
 type Run = Callable[..., tuple[int, str, str]]
 
@@ -63,13 +72,14 @@ def run(capsys: pytest.CaptureFixture[str]) -> Run:
 def refusals(monkeypatch: pytest.MonkeyPatch) -> list[ExitReason]:
     """Every reason the CLI refuses with, in order: the helper is wrapped, not replaced."""
     seen: list[ExitReason] = []
-    real = cli.refuse
+    real = exit_reasons.refuse
 
     def spy(reason: ExitReason, **kwargs: Any) -> int:
         seen.append(reason)
         return real(reason, **kwargs)
 
     monkeypatch.setattr(cli, "refuse", spy)
+    monkeypatch.setattr(exit_reasons, "refuse", spy)  # the usage parser lives with the helper
     return seen
 
 
@@ -85,6 +95,11 @@ def _break_measurement(monkeypatch: pytest.MonkeyPatch) -> None:
         raise ValueError(f"boom {SECRET}")
 
     monkeypatch.setattr(measurements, "is_unlabelled", boom)
+
+
+def _snapshot(tmp_path: Path) -> tuple[str, str]:
+    """Options that compute the measurements in any format (``--measurements`` is JSON only)."""
+    return "--write-quality-snapshot", str(tmp_path / "quality.json")
 
 
 def _json(out: str) -> dict[str, Any]:
@@ -103,16 +118,16 @@ def _reasons(document: dict[str, Any]) -> list[dict[str, Any]]:
 def test_a_rule_that_raises_is_a_rule_failed_reason(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
     _break_rule_module(monkeypatch, "LEX004", "it broke")
     code, out, _ = run(KITCHEN, "--format", "json", "--fail-on", "never")
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     document = _json(out)
-    assert document["exit"]["code"] == 2
+    assert document["exit"]["code"] == TOOL_FAILURE_EXIT
     reasons = [r for r in _reasons(document) if r["rule"] == "LEX004"]
     assert reasons == [
         {
             "kind": "rule_failed",
             "message": "ValueError: it broke",
             "rule": "LEX004",
-            "path": "kitchen_sink.ttl",
+            "path": PATH,
         }
     ]
 
@@ -120,7 +135,7 @@ def test_a_rule_that_raises_is_a_rule_failed_reason(run: Run, monkeypatch: pytes
 def test_an_unsupported_backend_is_a_rule_unsupported_reason(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("ontolint.engine.shutil.which", lambda _: None)
     code, out, _ = run(KITCHEN, "--owl-profile", "EL", "--format", "json", "--fail-on", "never")
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     (reason,) = _reasons(_json(out))
     assert reason["kind"] == "rule_unsupported"
     assert reason["rule"] == "SEM001"
@@ -135,28 +150,28 @@ def test_a_robot_timeout_is_a_rule_timeout_reason(run: Run, monkeypatch: pytest.
 
     monkeypatch.setattr("ontolint.adapters.robot.subprocess.run", slow)
     code, out, _ = run(KITCHEN, "--owl-profile", "EL", "--format", "json", "--fail-on", "never")
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     (reason,) = _reasons(_json(out))
     assert reason["kind"] == "rule_timeout"
     assert reason["rule"] == "SEM001"
-    assert "did not finish" in reason["message"]
+    assert "timed out after 1 seconds" in reason["message"]
 
 
 def test_a_failed_measurement_is_a_measurement_failed_reason(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
     _break_measurement(monkeypatch)
     code, out, _ = run(KITCHEN, "--format", "json", "--ignore", "METRIC", "--measurements")
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     reasons = _reasons(_json(out))
     assert reasons
     assert {r["kind"] for r in reasons} == {"measurement_failed"}
-    assert all(r["measurement"] and r["path"] == "kitchen_sink.ttl" for r in reasons)
+    assert all(r["measurement"] and r["path"] == PATH for r in reasons)
 
 
 def test_a_budget_on_an_untaken_measurement_is_a_budget_unmeasured_reason(tmp_path: Path, run: Run) -> None:
     policy = tmp_path / "policy.json"
     policy.write_text(json.dumps({"quality_budgets": {"shacl_class_target_coverage": {"minimum": 0}}}), "utf-8")
     code, out, _ = run("--config", str(policy), "--select", "METRIC014", "--format", "json", KITCHEN)
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     (reason,) = _reasons(_json(out))
     assert reason["kind"] == "budget_unmeasured"
     assert reason["rule"] == "METRIC014"
@@ -204,34 +219,34 @@ def test_exit_reasons_exist_exactly_when_the_report_says_exit_2(run: Run, monkey
     _, out, _ = run(KITCHEN, "--format", "json", "--fail-on", "never")
     document = _json(out)
     assert document["execution_summary"]["failed"] >= 1
-    assert document["exit"] == {"code": 2, "reasons": document["exit"]["reasons"]}
+    assert document["exit"] == {"code": TOOL_FAILURE_EXIT, "reasons": document["exit"]["reasons"]}
 
 
 # --- the same reasons in SARIF, in text, and on stderr --------------------------------------------------------------
 
 
 def test_sarif_carries_the_reasons_and_a_failed_measurement_is_not_a_successful_execution(
-    run: Run, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, run: Run, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Bug (#175): ``executionSuccessful`` stayed true when the run exited 2 for a measurement that failed."""
     _break_measurement(monkeypatch)
-    code, out, _ = run(KITCHEN, "--format", "sarif", "--ignore", "METRIC", "--measurements")
-    assert code == 2
+    code, out, _ = run(KITCHEN, "--format", "sarif", "--ignore", "METRIC", *_snapshot(tmp_path))
+    assert code == TOOL_FAILURE_EXIT
     invocation = _json(out)["runs"][0]["invocations"][0]
-    assert invocation["exitCode"] == 2
+    assert invocation["exitCode"] == TOOL_FAILURE_EXIT
     assert invocation["executionSuccessful"] is False
     errors = [n for n in invocation["toolExecutionNotifications"] if n["level"] == "error"]
     assert errors
-    assert all("measurement" in n["message"]["text"] for n in errors)
+    assert all("measurement" in n["message"]["text"].lower() for n in errors)
     exit_property = invocation["properties"]["ontolintExit"]
-    assert exit_property["code"] == 2
+    assert exit_property["code"] == TOOL_FAILURE_EXIT
     assert {r["kind"] for r in exit_property["reasons"]} == {"measurement_failed"}
 
 
-def test_sarif_and_json_state_the_same_reasons(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_sarif_and_json_state_the_same_reasons(tmp_path: Path, run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
     _break_rule_module(monkeypatch, "LEX004", "it broke")
     _break_measurement(monkeypatch)
-    argv = (KITCHEN, "--measurements", "--fail-on", "never")
+    argv = (KITCHEN, *_snapshot(tmp_path), "--fail-on", "never")
     from_json = _json(run(*argv, "--format", "json")[1])["exit"]
     from_sarif = _json(run(*argv, "--format", "sarif")[1])["runs"][0]["invocations"][0]["properties"]["ontolintExit"]
     assert from_json == from_sarif
@@ -240,10 +255,11 @@ def test_sarif_and_json_state_the_same_reasons(run: Run, monkeypatch: pytest.Mon
 def test_text_lists_the_reasons_after_the_findings(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
     _break_rule_module(monkeypatch, "LEX004", "it broke")
     code, out, err = run(KITCHEN, "--fail-on", "never")
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     assert "Exit status 2: " in out
-    assert "  - rule_failed: LEX004 for kitchen_sink.ttl: ValueError: it broke" in out
-    assert "TOOL001: rule LEX004 failed for kitchen_sink.ttl: ValueError: it broke" in err  # stderr is unchanged
+    assert f"  - rule_failed: LEX004 for {PATH}\n" in out
+    assert out.count("ValueError: it broke") == out.count("[FAILED     ] ")  # said once, by the execution line
+    assert f"TOOL001: rule LEX004 failed for {PATH}: ValueError: it broke" in err  # stderr is unchanged
 
 
 def test_the_text_of_a_run_that_exits_0_or_1_is_unchanged(run: Run) -> None:
@@ -260,11 +276,11 @@ def test_every_stderr_tool_line_has_a_reason(run: Run, monkeypatch: pytest.Monke
     assert len(tool_lines) == len(_reasons(_json(out)))
 
 
-def test_a_message_never_carries_a_credential(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_message_never_carries_a_credential(tmp_path: Path, run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
     _break_rule_module(monkeypatch, "LEX004", f"cannot read {SECRET}")
     _break_measurement(monkeypatch)
     for fmt in ("json", "sarif", "text", "markdown"):
-        _, out, err = run(KITCHEN, "--measurements", "--format", fmt, "--fail-on", "never")
+        _, out, err = run(KITCHEN, *_snapshot(tmp_path), "--format", fmt, "--fail-on", "never")
         assert "hunter2" not in out + err, fmt
     assert "hunter2" not in repr(report_reasons(_report_with(failed=("m", f"x {SECRET}"))))
 
@@ -276,7 +292,7 @@ def _report_with(*, failed: tuple[str, str]) -> RunReport:
 
 def test_reasons_are_one_line_each() -> None:
     reasons = report_reasons(_report_with(failed=("m", "first\nsecond\x1b[31m")))
-    assert [r.message for r in reasons] == ["first\\nsecond\\x1b[31m"]
+    assert [r.message for r in reasons] == ["first\\u000Asecond\\u001B[31m"]
 
 
 def test_the_exit_object_validates_against_the_schema(run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -295,7 +311,7 @@ def test_report_reasons_follow_run_exit_code() -> None:
     assert report_reasons(clean) == ()
     assert run_exit_code(clean, "error") == 0
     broken = _report_with(failed=("m", "why"))
-    assert run_exit_code(broken, "error") == 2
+    assert run_exit_code(broken, "error") == TOOL_FAILURE_EXIT
     assert [r.kind for r in report_reasons(broken)] == ["measurement_failed"]
     assert "exit" in to_json(broken)
     assert "ontolintExit" in to_sarif_report(broken)["runs"][0]["invocations"][0]["properties"]
@@ -303,9 +319,6 @@ def test_report_reasons_follow_run_exit_code() -> None:
 
 
 def test_unsupported_is_never_a_timeout_and_a_timeout_never_unsupported() -> None:
-    from ontolint.exit_reasons import execution_reason
-    from ontolint.models import RuleExecution
-
     timed_out = RuleExecution("SHQ010", ExecutionStatus.FAILED, "ValidationTimeout: SHACL validation did not finish")
     gone = RuleExecution("SHQ010", ExecutionStatus.FAILED, "WorkerGone: the validation worker exited")
     unsupported = RuleExecution("SEM001", ExecutionStatus.UNSUPPORTED, "the docker executable was not found")
@@ -321,44 +334,53 @@ def test_an_unparseable_file(tmp_path: Path, run: Run, refusals: list[ExitReason
     bad = tmp_path / "bad.ttl"
     bad.write_text("this is not turtle {", encoding="utf-8")
     code, out, err = run(str(bad))
-    assert (code, out) == (2, "")
+    assert (code, out) == (TOOL_FAILURE_EXIT, "")
     assert err.startswith("INPUT001: RDF input parsing failed")
     assert [r.kind for r in refusals] == ["input_unparseable"]
 
 
 def test_a_policy_rejected_as_gov020(tmp_path: Path, run: Run, refusals: list[ExitReason]) -> None:
     policy = tmp_path / "policy.json"
-    policy.write_text(json.dumps({"version": 99}), encoding="utf-8")
+    policy.write_text(json.dumps({"policy_version": 99}), encoding="utf-8")
     code, out, err = run("--config", str(policy), KITCHEN)
-    assert (code, out) == (2, "")
+    assert (code, out) == (TOOL_FAILURE_EXIT, "")
     assert err.startswith("GOV020: policy file rejected:")
     assert [r.kind for r in refusals] == ["policy_rejected"]
 
 
 def test_an_unknown_selector_is_a_configuration_failure(run: Run, refusals: list[ExitReason]) -> None:
     code, _, err = run("--select", "NOPE999", KITCHEN)
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     assert err.startswith("TOOL001: configuration failed:")
     assert [r.kind for r in refusals] == ["config_invalid"]
 
 
 def test_an_unknown_rule_to_explain(run: Run, refusals: list[ExitReason]) -> None:
     code, out, err = run("--explain", "NOPE999")
-    assert (code, out) == (2, "")
+    assert (code, out) == (TOOL_FAILURE_EXIT, "")
     assert err.startswith("TOOL001: unknown rule 'NOPE999'")
     assert [r.kind for r in refusals] == ["unknown_rule"]
 
 
-def test_a_missing_shapes_file(run: Run, refusals: list[ExitReason]) -> None:
+def test_a_missing_shapes_file_stops_the_input_stage(run: Run, refusals: list[ExitReason]) -> None:
     code, _, err = run("--shapes", "/nonexistent/shapes.ttl", KITCHEN)
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
+    assert err.startswith("INPUT001: RDF input parsing failed: ")
+    assert [r.kind for r in refusals] == ["input_unparseable"]
+
+
+def test_shapes_that_do_not_parse_are_a_rejected_input(tmp_path: Path, run: Run, refusals: list[ExitReason]) -> None:
+    shapes = tmp_path / "shapes.ttl"
+    shapes.write_text("this is not turtle {", encoding="utf-8")
+    code, out, err = run("--shapes", str(shapes), KITCHEN)
+    assert (code, out) == (TOOL_FAILURE_EXIT, "")
     assert err
     assert [r.kind for r in refusals] == ["input_rejected"]
 
 
 def test_an_unreadable_quality_baseline(run: Run, refusals: list[ExitReason]) -> None:
-    code, _, err = run("--quality-baseline", "/nonexistent/quality.json", KITCHEN)
-    assert code == 2
+    code, _, err = run("--quality-baseline", "/nonexistent/quality.json", "--format", "json", KITCHEN)
+    assert code == TOOL_FAILURE_EXIT
     assert err.startswith("TOOL001:")
     assert [r.kind for r in refusals] == ["snapshot_unreadable"]
 
@@ -366,7 +388,7 @@ def test_an_unreadable_quality_baseline(run: Run, refusals: list[ExitReason]) ->
 def test_a_snapshot_that_cannot_be_written(tmp_path: Path, run: Run, refusals: list[ExitReason]) -> None:
     target = tmp_path / "missing" / "snapshot.json"
     code, _, err = run("--write-quality-snapshot", str(target), QUALITY)
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     assert err.startswith("TOOL001:")
     assert [r.kind for r in refusals] == ["output_failed"]
 
@@ -374,7 +396,7 @@ def test_a_snapshot_that_cannot_be_written(tmp_path: Path, run: Run, refusals: l
 def test_a_report_that_cannot_be_written(tmp_path: Path, run: Run, refusals: list[ExitReason]) -> None:
     target = tmp_path / "missing" / "report.json"
     code, _, err = run("--output", str(target), "--format", "json", KITCHEN, "--fail-on", "never")
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     assert err.startswith("TOOL001:")
     assert [r.kind for r in refusals] == ["output_failed"]
 
@@ -382,7 +404,7 @@ def test_a_report_that_cannot_be_written(tmp_path: Path, run: Run, refusals: lis
 def test_a_usage_error(capsys: pytest.CaptureFixture[str], refusals: list[ExitReason]) -> None:
     with pytest.raises(SystemExit) as raised:
         main(["--no-such-option", KITCHEN])
-    assert raised.value.code == 2
+    assert raised.value.code == TOOL_FAILURE_EXIT
     err = capsys.readouterr().err
     assert "error: unrecognized arguments: --no-such-option" in err
     assert err.startswith("usage: ")
@@ -391,8 +413,8 @@ def test_a_usage_error(capsys: pytest.CaptureFixture[str], refusals: list[ExitRe
 
 def test_a_usage_problem_found_after_parsing(run: Run, refusals: list[ExitReason]) -> None:
     with pytest.raises(SystemExit) as raised:
-        run("--write-dqv", "/tmp/x.ttl", KITCHEN)
-    assert raised.value.code == 2
+        run("--measurements", KITCHEN)
+    assert raised.value.code == TOOL_FAILURE_EXIT
     assert [r.kind for r in refusals] == ["usage"]
 
 
@@ -402,7 +424,7 @@ def test_an_internal_error(monkeypatch: pytest.MonkeyPatch, run: Run, refusals: 
 
     monkeypatch.setattr(cli, "_main", boom)
     code, _, err = run(KITCHEN)
-    assert code == 2
+    assert code == TOOL_FAILURE_EXIT
     assert "RuntimeError: a bug" in err  # the traceback, as before
     assert [r.kind for r in refusals] == ["internal_error"]
 
@@ -411,7 +433,7 @@ def test_a_refusal_prints_its_message_through_the_redaction(
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr("sys.stderr", cli.RedactingStream(__import__("sys").stderr))
-    assert exit_reasons.refuse(ExitReason("input_rejected", f"INPUT001: cannot read {SECRET}")) == 2
+    assert exit_reasons.refuse(ExitReason("input_rejected", f"INPUT001: cannot read {SECRET}")) == TOOL_FAILURE_EXIT
     assert "hunter2" not in capsys.readouterr().err
 
 
@@ -436,13 +458,13 @@ def _calls(tree: ast.AST, name: str) -> Iterator[ast.Call]:
 
 
 def _is_exit_2(node: ast.expr | None) -> bool:
-    return (isinstance(node, ast.Constant) and node.value == 2 and not isinstance(node.value, bool)) or (
-        isinstance(node, ast.Name) and node.id in {"TOOL_FAILURE_EXIT", "TOOL_FAILURE"}
-    )
+    return (
+        isinstance(node, ast.Constant) and node.value == TOOL_FAILURE_EXIT and not isinstance(node.value, bool)
+    ) or (isinstance(node, ast.Name) and node.id in {"TOOL_FAILURE_EXIT", "TOOL_FAILURE"})
 
 
 def test_cli_leaves_with_2_only_through_refuse() -> None:
-    """The enumeration the issue asks for: no ``return 2``, no ``code = 2``, no ``SystemExit(2)``, no ``parser.error``."""
+    """The issue's enumeration: cli.py has no bare exit 2, no stock ArgumentParser."""
     tree = ast.parse(CLI_SOURCE.read_text(encoding="utf-8"))
     bare: list[int] = []
     for node in ast.walk(tree):
@@ -452,7 +474,11 @@ def test_cli_leaves_with_2_only_through_refuse() -> None:
             bare.append(node.lineno)
         if isinstance(node, ast.IfExp) and (_is_exit_2(node.body) or _is_exit_2(node.orelse)):
             bare.append(node.lineno)
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in {"error", "exit"}:
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "exit":
+            bare.append(node.lineno)
+        if (
+            isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "ArgumentParser"
+        ):  # build_parser makes a UsageParser
             bare.append(node.lineno)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "SystemExit":
             bare.append(node.lineno)
@@ -462,7 +488,7 @@ def test_cli_leaves_with_2_only_through_refuse() -> None:
 def test_every_refuse_call_names_a_known_kind() -> None:
     tree = ast.parse(CLI_SOURCE.read_text(encoding="utf-8"))
     calls = list(_calls(tree, "refuse"))
-    assert len(calls) >= 12  # every exit-2 path found in the survey of #175
+    assert len(calls) >= MINIMUM_REFUSALS  # every exit-2 path found in the survey of #175
     kinds: set[str] = set()
     for call in calls:
         assert call.args, f"line {call.lineno}: refuse() takes a reason"
@@ -471,8 +497,20 @@ def test_every_refuse_call_names_a_known_kind() -> None:
         assert isinstance(reason.func, ast.Name) and reason.func.id == "ExitReason"
         first = reason.args[0]
         assert isinstance(first, ast.Constant), f"line {call.lineno}: the kind is a literal"
+        assert isinstance(first.value, str)
         kinds.add(first.value)
     assert kinds <= KINDS
-    # Each kind the CLI refuses with is exercised above; the rest come from reports.
-    assert kinds == KINDS - {"rule_failed", "rule_timeout", "rule_unsupported", "budget_unmeasured", "measurement_failed"}
+    # The report kinds come from a report; ``usage`` is raised by the parser class, which lives with the helper.
+    assert kinds == KINDS - REPORT_KINDS - {"usage"}
 
+
+def test_the_sarif_of_a_run_that_exits_2_validates_against_the_sarif_schema(
+    tmp_path: Path, run: Run, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sarif_schema = json.loads((ROOT / "tests" / "schemas" / "sarif-schema-2.1.0.json").read_text(encoding="utf-8"))
+    _break_rule_module(monkeypatch, "LEX004", "it broke")
+    _break_measurement(monkeypatch)
+    document = _json(run(KITCHEN, *_snapshot(tmp_path), "--format", "sarif", "--fail-on", "never")[1])
+    assert document["runs"][0]["invocations"][0]["properties"]["ontolintExit"]["reasons"]
+    validator = validator_for(sarif_schema)(sarif_schema)
+    assert not list(validator.iter_errors(document))

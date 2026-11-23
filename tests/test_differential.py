@@ -61,6 +61,12 @@ every CLI output of the snapshot was rendered unhashed on the commit before the 
 the two were equal once each old title was replaced by its new one, the linter snapshots were equal, and
 no finding, message, fingerprint, exit code or text report moved.  ``legacy_rules.json`` did not move.
 
+Deliberate golden update (exit reasons, #175): a run that exits 2 and writes a report gained the optional JSON
+key ``exit`` (``code`` and ``reasons``).  It is additive, like ``path`` and ``evidence``, and absent from a run that
+exits 0 or 1.  The only pinned case that exits 2 with a report is ``json_robot_unsupported``, so only its two
+full-output hashes (``to_file.file`` and ``to_stdout.stdout``) changed, by the 234 characters of the ``exit`` object;
+a diff of the two snapshots showed nothing else, and ``legacy_rules.json`` did not move.
+
 Deliberate golden update (METRIC-SPEC, METRIC005): METRIC005 now counts exactly the classes CLS001
 reports, so ``kitchen_sink.ttl`` no longer has a METRIC005 finding ("10 of 33 classes are orphans ...
 (0.30 > 0.30)"; CLS001 reports 6 of them, and 6/33 is below the limit).  A diff of the two snapshots
