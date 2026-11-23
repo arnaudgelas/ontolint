@@ -144,14 +144,11 @@ def test_every_key_a_report_adds_is_in_the_ledger(name: str, tmp_path: Path, mon
 def test_a_key_added_to_a_report_without_a_ledger_row_fails_the_check() -> None:
     document = json.loads((SAMPLES / "lint-clean.json").read_text(encoding="utf-8"))
     assert unnamed_additions("lint-clean.json", document) == []
-    document["catalogue"] = {"rule_count": 1}
+    document["forecast"] = {"rule_count": 1}
     document["files"][0]["timing"] = {"seconds": 0.1}
-    assert unnamed_additions("lint-clean.json", document) == [
-        "$.catalogue",
-        "$.catalogue.rule_count",
-        "$.files[].timing",
-        "$.files[].timing.seconds",
-    ]
+    assert unnamed_additions("lint-clean.json", document) == sorted(
+        ["$.forecast", "$.forecast.rule_count", "$.files[].timing", "$.files[].timing.seconds"]
+    )
 
 
 def test_the_ledger_has_no_row_for_a_key_that_is_not_there(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

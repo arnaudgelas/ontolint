@@ -10,6 +10,9 @@ that the two never drift).
 from __future__ import annotations
 
 import csv
+import hashlib
+import json
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import cache
 from importlib import resources
@@ -75,3 +78,32 @@ def implemented_rows() -> tuple[CatalogueRow, ...]:
 def planned_rows() -> tuple[CatalogueRow, ...]:
     """Rows that are proposed but not yet implemented."""
     return tuple(row for row in load_catalogue() if row.status is not CatalogueStatus.IMPLEMENTED)
+
+
+CATALOGUE_COLUMNS = ("rule_id", "family", "title", "status", "category", "backend", "test_requirement")
+"""The columns of the catalogue, in file order: the fields of a row in :func:`canonical_catalogue`."""
+
+
+def _packaged_rows() -> list[dict[str, str]]:
+    text = resources.files("ontolint").joinpath("data/rule_catalogue.csv").read_text(encoding="utf-8")
+    return list(csv.DictReader(text.splitlines()))
+
+
+def canonical_catalogue(rows: Iterable[Mapping[str, str]] | None = None) -> bytes:
+    """The canonical text of the catalogue, whose hash identifies the rule set of a report (issue #173).
+
+    One line per row, the rows sorted by rule id (then by their fields), each line the JSON array of the row's
+    :data:`CATALOGUE_COLUMNS` (a missing column is the empty string) written without spaces and with the characters
+    of the text kept as they are, the lines ending in ``\n``, the whole encoded as UTF-8.  The order of the rows in
+    the file, the quoting and the line endings of the CSV, and the ontolint version do not matter; any field of any
+    row does, and so does a row added or removed.  ``rows`` defaults to the packaged ``rule_catalogue.csv``.
+    """
+    lines = sorted(
+        [row.get(column, "") for column in CATALOGUE_COLUMNS] for row in (_packaged_rows() if rows is None else rows)
+    )
+    return "".join(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n" for line in lines).encode("utf-8")
+
+
+def catalogue_sha256(rows: Iterable[Mapping[str, str]] | None = None) -> str:
+    """The sha256, in lower-case hexadecimal, of :func:`canonical_catalogue`."""
+    return hashlib.sha256(canonical_catalogue(rows)).hexdigest()

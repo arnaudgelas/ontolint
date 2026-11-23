@@ -57,6 +57,16 @@
     },
     "quality_comparison": {
       "$ref": "#/$defs/qualityComparison"
+    },
+    "catalogue": {
+      "$ref": "#/$defs/catalogueIdentity"
+    },
+    "rule_counts": {
+      "type": "array",
+      "description": "Sorted by rule id; the findings of all rules add up to the report's findings.",
+      "items": {
+        "$ref": "#/$defs/ruleCount"
+      }
     }
   },
   "$defs": {
@@ -588,6 +598,63 @@
         }
       },
       "description": "Present only with --quality-baseline."
+    },
+    "catalogueIdentity": {
+      "type": "object",
+      "required": [
+        "ontolint_version",
+        "sha256",
+        "rule_count"
+      ],
+      "description": "Which rule set produced the report (docs/report-compatibility.md, issue #173). The hash is the sha256 of the canonical catalogue (ontolint.catalogue.canonical_catalogue).",
+      "properties": {
+        "ontolint_version": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rule_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Rows of the catalogue, implemented and proposed."
+        }
+      }
+    },
+    "ruleCount": {
+      "type": "object",
+      "required": [
+        "rule",
+        "status",
+        "findings",
+        "baselined"
+      ],
+      "description": "What happened to one implemented rule in this run.",
+      "properties": {
+        "rule": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "executed",
+            "skipped",
+            "unsupported",
+            "failed",
+            "not_selected"
+          ],
+          "description": "Closed enumeration. The worst execution status over the files, or not_selected when no file ran the rule or the run ignored it."
+        },
+        "findings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "baselined": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Findings of the rule a baseline removed from the report; 0 without a baseline."
+        }
+      }
     }
   }
 }

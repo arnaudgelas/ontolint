@@ -44,6 +44,7 @@ open (`additionalProperties` is not `false`) for exactly this reason.
 | severity | `findings[].severity`, `rules[].severity`, `default_severity`, `summary` keys | `error`, `warning`, `info` | **breaking** (closed) |
 | confidence | `findings[].confidence` | `certain`, `heuristic` | **breaking** (closed) |
 | execution status | `executions[].status`, `execution_summary` keys | `executed`, `skipped`, `unsupported`, `failed` | **breaking** (closed) |
+| rule-count status | `rule_counts[].status`, `ontolintRuleCounts[].status` | `executed`, `skipped`, `unsupported`, `failed`, `not_selected` | **breaking** (closed) |
 | rule category | `rules[].category` | as the catalogue says | additive (open) |
 | backend, scope, requires, family | `rules[]` | as the catalogue says | additive (open) |
 
@@ -100,7 +101,28 @@ since ontolint itself reads it; the reader also checks cross-field invariants a 
 
 ### Ledger: additions since the 0.16.0 samples
 
-One row per added key path; copy the rows into the changelog under the document's name at release. The keys of 0.17.0 are the same as 0.16.0's.
+One row per added key path; copy the rows into the changelog under the document's name at release. The keys of 0.17.0 are the same as 0.16.0's; the rows below are the catalogue identity and the per-rule counts of #173 (`catalogue`, `rule_counts`; SARIF `ontolintCatalogue`, `ontolintRuleCounts`).
 
 | Document | Key path | Added in |
 | --- | --- | --- |
+| lint | `$.catalogue` | 0.18.0 |
+| lint | `$.catalogue.ontolint_version` | 0.18.0 |
+| lint | `$.catalogue.rule_count` | 0.18.0 |
+| lint | `$.catalogue.sha256` | 0.18.0 |
+| lint | `$.rule_counts` | 0.18.0 |
+| lint | `$.rule_counts[]` | 0.18.0 |
+| lint | `$.rule_counts[].baselined` | 0.18.0 |
+| lint | `$.rule_counts[].findings` | 0.18.0 |
+| lint | `$.rule_counts[].rule` | 0.18.0 |
+| lint | `$.rule_counts[].status` | 0.18.0 |
+| sarif | `$.runs[].properties` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintCatalogue` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintCatalogue.ontolint_version` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintCatalogue.rule_count` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintCatalogue.sha256` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintRuleCounts` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintRuleCounts[]` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintRuleCounts[].baselined` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintRuleCounts[].findings` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintRuleCounts[].rule` | 0.18.0 |
+| sarif | `$.runs[].properties.ontolintRuleCounts[].status` | 0.18.0 |

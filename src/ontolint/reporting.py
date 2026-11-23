@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ._version import package_version
+from .catalogue import catalogue_sha256, load_catalogue
 from .dqv import Subject
 from .escaping import one_line
 from .models import (
@@ -149,6 +150,9 @@ class RunReport:
     quality: Comparison | None = None
     # With --sarif-fingerprints: SARIF results carry ``partialFingerprints`` (see :func:`sarif_fingerprints`).
     sarif_fingerprints: bool = False
+    # The ids of the rules the run selected and then ignored (``--ignore``, the profile's ``ignore``, the policy's
+    # ``ignored_rules``): their execution record says ``skipped``, their rule count ``not_selected``.
+    ignored: tuple[str, ...] = ()
 
     @property
     def findings(self) -> tuple[Finding, ...]:
@@ -263,6 +267,53 @@ def _all_executions(report: RunReport) -> list[RuleExecution]:
     return [x for r in report.files for x in r.executions]
 
 
+CATALOGUE_STATUS_ORDER = (
+    ExecutionStatus.FAILED,
+    ExecutionStatus.UNSUPPORTED,
+    ExecutionStatus.SKIPPED,
+    ExecutionStatus.EXECUTED,
+)
+"""The worst status first: the status of a rule over several files is the first of these that any file has."""
+NOT_SELECTED = "not_selected"
+"""The status of a rule the run did not select (a selector, an ignore, a profile or an opt-in family left it out)."""
+
+
+def catalogue_identity() -> dict[str, Any]:
+    """Which rule set produced a report: the ontolint version, the sha256 of the canonical catalogue, its row count."""
+    return {"ontolint_version": package_version(), "sha256": catalogue_sha256(), "rule_count": len(load_catalogue())}
+
+
+def rule_counts(report: RunReport) -> list[dict[str, Any]]:
+    """What happened to every implemented rule in this run, sorted by rule id (issue #173).
+
+    ``status`` is the worst execution status of the rule over the files (failed, unsupported, skipped,
+    executed), or ``not_selected`` when no file ran it or the run ignored it (its execution record says
+    ``skipped``); a rule with a finding but no execution record is ``executed``, as the finding proves it ran.
+    ``findings`` counts the findings in the report, ``baselined`` those a baseline removed from it, so the
+    ``findings`` of all rules add up to the report's findings and each count is of its own set.
+    """
+    statuses: dict[str, set[ExecutionStatus]] = {}
+    for file_report in report.files:
+        for execution in file_report.executions:
+            statuses.setdefault(execution.rule_id, set()).add(execution.status)
+    found = Counter(f.rule for f in report.findings)
+    accepted = Counter(f.rule for findings in report.baselined or () for f in findings)
+    rules = {spec.rule_id for spec in default_registry().all()} | statuses.keys() | found.keys() | accepted.keys()
+    counts: list[dict[str, Any]] = []
+    for rule in sorted(rules):
+        seen = statuses.get(rule, set())
+        worst = None if rule in report.ignored else next((s.value for s in CATALOGUE_STATUS_ORDER if s in seen), None)
+        counts.append(
+            {
+                "rule": rule,
+                "status": worst or ("executed" if found[rule] else NOT_SELECTED),
+                "findings": found[rule],
+                "baselined": accepted[rule],
+            }
+        )
+    return counts
+
+
 def to_json(report: RunReport) -> dict[str, Any]:
     """The JSON document: the historical ``summary``/``findings`` keys plus schema, rules and executions."""
     return {
@@ -281,6 +332,8 @@ def to_json(report: RunReport) -> dict[str, Any]:
         ],
         "execution_summary": summarise_executions(_all_executions(report)),
         "rules": [rule_metadata(s, report.severity_overrides) for s in report.rules],
+        "catalogue": catalogue_identity(),
+        "rule_counts": rule_counts(report),
         "files": [
             {
                 "path": r.path,
@@ -449,6 +502,7 @@ def to_sarif_report(report: RunReport, exit_status: int | None = None) -> dict[s
             for f in r.findings
         ],
     }
+    run["properties"] = {"ontolintCatalogue": catalogue_identity(), "ontolintRuleCounts": rule_counts(report)}
     if report.findings:
         # SARIF requires the column unit when a run processes text artifacts and has results.
         run["columnKind"] = "unicodeCodePoints"

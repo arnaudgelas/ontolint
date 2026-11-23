@@ -246,7 +246,7 @@ def test_a_measurement_must_match_its_kind_and_a_reason_excludes_a_value(monkeyp
 def test_an_unknown_key_is_accepted_at_every_level(monkeypatch: pytest.MonkeyPatch) -> None:
     """Additive evolution: a consumer's schema check must not break when a later release adds a key."""
     document = _document(monkeypatch, "--measurements")
-    document["catalogue"] = {"rule_count": 1}
+    document["forecast"] = {"rule_count": 1}
     document["findings"][0]["tags"] = ["x"]
     document["rules"][0]["owner"] = "y"
     document["files"][0]["timing"] = {"seconds": 0.1}

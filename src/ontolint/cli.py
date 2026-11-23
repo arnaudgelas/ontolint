@@ -1299,6 +1299,7 @@ def _lint(args: argparse.Namespace, stage: list[str]) -> RunReport | int:
         baselined=baselined,
         quality=trend,
         sarif_fingerprints=args.sarif_fingerprints,
+        ignored=tuple(spec.rule_id for spec in plan.selection.ignored),
     )
 
 

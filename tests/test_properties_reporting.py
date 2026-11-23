@@ -10,6 +10,7 @@ from argparse import Namespace
 from collections import Counter
 from dataclasses import replace
 from pathlib import Path
+from typing import Any
 
 import pytest
 from hypothesis import given
@@ -363,20 +364,36 @@ def test_bare_findings_sarif_and_text_render_for_any_findings(items: list[Findin
     assert all(f.rule in text for f in items)
 
 
+def _without_baselined_counts(document: dict[str, Any]) -> dict[str, Any]:
+    """``document`` with the ``baselined`` column of the per-rule counts removed (the one thing a baseline changes)."""
+    stripped = json.loads(json.dumps(document))
+    tables = [stripped.get("rule_counts")]
+    for run in stripped.get("runs", []):
+        tables.append(run.get("properties", {}).get("ontolintRuleCounts"))
+    for table in tables:
+        for row in table or []:
+            del row["baselined"]
+    return stripped
+
+
 @budget(1)
 @given(run_reports(), st.data(), st.one_of(st.none(), st.integers(0, 2)))
-def test_the_findings_a_baseline_accepted_change_no_text_json_or_sarif_report(
+def test_the_findings_a_baseline_accepted_change_only_the_baselined_count_of_a_json_or_sarif_report(
     report: RunReport, data: st.DataObject, status: int | None
 ) -> None:
-    """INVARIANT: ``RunReport.baselined`` is read by the Markdown summary only; text, JSON and SARIF ignore it."""
+    """INVARIANT: ``RunReport.baselined`` is read by the Markdown summary and by the ``baselined`` column of the
+    per-rule counts (issue #173); the text report and every other part of JSON and SARIF ignore it."""
     baselined = tuple(tuple(data.draw(finding_lists)) for _ in report.files)
     accepted = replace(report, baselined=baselined, stale_baseline=data.draw(st.one_of(st.none(), st.just(()))))
     plain = replace(accepted, baselined=None)
 
     assert accepted.baselined == baselined
-    assert to_json(accepted) == to_json(plain)
-    for fmt in ("text", "json", "sarif"):
-        assert render_report(accepted, fmt, status) == render_report(plain, fmt, status)
+    assert _without_baselined_counts(to_json(accepted)) == _without_baselined_counts(to_json(plain))
+    assert render_report(accepted, "text", status) == render_report(plain, "text", status)
+    for fmt in ("json", "sarif"):
+        got = _without_baselined_counts(json.loads(render_report(accepted, fmt, status)))
+        want = _without_baselined_counts(json.loads(render_report(plain, fmt, status)))
+        assert got == want
 
 
 # --- exit codes --------------------------------------------------------------------------------------
