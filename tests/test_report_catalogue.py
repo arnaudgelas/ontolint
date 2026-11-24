@@ -108,6 +108,13 @@ def test_there_is_one_count_per_implemented_rule_sorted_by_rule(monkeypatch: pyt
         assert entry["findings"] >= 0 and entry["baselined"] >= 0
 
 
+def test_the_counts_cover_the_implemented_rules_the_catalogue_covers_every_row(monkeypatch: pytest.MonkeyPatch) -> None:
+    document = _json(monkeypatch)
+    assert len(document["rule_counts"]) == len(IMPLEMENTED)
+    assert document["catalogue"]["rule_count"] == len(load_catalogue())
+    assert len(document["rule_counts"]) != document["catalogue"]["rule_count"]  # proposed rows have no count
+
+
 def test_the_counts_add_up_to_the_findings(monkeypatch: pytest.MonkeyPatch) -> None:
     document = _json(monkeypatch)
     assert sum(entry["findings"] for entry in document["rule_counts"]) == len(document["findings"])
@@ -205,6 +212,14 @@ def test_a_finding_of_a_rule_that_has_no_execution_record_still_counts_as_execut
     counts = _counts(to_json(RunReport((FileReport("a.ttl", "a.ttl", (finding,)),))))
     assert counts["OWL001"]["status"] == "executed" and counts["OWL001"]["findings"] == 1
     assert sum(e["findings"] for e in counts.values()) == 1
+
+
+def test_an_ignored_rule_with_a_finding_is_executed_as_the_finding_proves_it_ran() -> None:
+    finding = Finding("OWL001", "warning", "https://example.test/A", "m", "s")
+    report = RunReport((FileReport("a.ttl", "a.ttl", (finding,)),), ignored=("OWL001",))
+    assert _counts(to_json(report))["OWL001"]["status"] == "executed"  # cannot occur: an ignored rule does not run
+    quiet = RunReport((FileReport("a.ttl", "a.ttl", ()),), ignored=("OWL001",))
+    assert _counts(to_json(quiet))["OWL001"]["status"] == "not_selected"
 
 
 # --- the schema and SARIF -----------------------------------------------------------------------------------------
