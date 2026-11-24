@@ -502,6 +502,6 @@ the repository, edit the spec's severity (or confidence, or category) in the rul
 ## Limits of this record
 
 * No count exists for real OWL 1 era ontologies (OWL035). Production shapes graphs are counted in [`validation/shq-scope.md`](validation/shq-scope.md): five repositories, which is a sample, not the population.
-* The Jena measurements follow from the command above, but no fixture or scheduled job commits them: only pySHACL's behaviour is a test. Reproducing them in CI is a separate issue (with the weekly Jena round-trip check of #165).
+* The Jena measurements of SHQ008, SHQ011 and SHQ015 are committed in [`tests/fixtures/jena_shacl/`](../tests/fixtures/jena_shacl/README.md) (the shapes graphs, what Jena 4.10.0 did and what ontolint reports) and checked every week by `.github/workflows/jena.yml`, so a Jena upgrade that changes one fails visibly (issue #207). pySHACL's side is `tests/test_shacl_evidence.py`.
 * One version of each engine (pySHACL 0.40.2, Jena 4.10.0 on Java 11). Jena 5 needs Java 17 and was not run; TopBraid and the OWL API were not run.
 * The per-row file list of an accepted change is the union measured in fact 5, not a per-row split.
