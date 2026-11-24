@@ -163,3 +163,40 @@ def test_the_schedule_page_gives_the_commands_that_reproduce_a_run_without_the_a
         "scripts/shq_scope_count.py check DIR_SHQ",
     ):
         assert command in section, command
+
+
+BENCHMARKS = (WORKFLOWS / "benchmarks.yml").read_text(encoding="utf-8")
+
+
+def test_the_benchmark_job_is_weekly_manual_read_only_and_switched_on() -> None:
+    assert "workflow_dispatch:" in BENCHMARKS
+    assert re.search(r"^permissions:\n  contents: read\n", BENCHMARKS, re.MULTILINE)
+    assert "pull_request" not in BENCHMARKS and "push:" not in BENCHMARKS
+    assert 'ONTOLINT_BENCH: "1"' in BENCHMARKS
+    assert "-m benchmark tests/benchmarks" in BENCHMARKS
+    assert "benchmarks.yml" in SCHEDULE
+
+
+def test_the_benchmark_job_keeps_the_profiles_and_the_log_even_when_the_run_fails() -> None:
+    upload = BENCHMARKS[BENCHMARKS.index("name: Upload the logs and profiles") :]
+
+    assert "if: ${{ !cancelled() }}" in upload  # the profiles of a red run are the evidence of a regression
+    assert "actions/upload-artifact@" in upload
+    assert "retention-days: 30" in upload
+    assert "tee benchmark-out/benchmarks.log" in BENCHMARKS
+    assert BENCHMARKS.count("set -o pipefail") == 2, "a failing pytest must not be hidden by tee"
+
+
+def test_every_action_the_benchmark_job_uses_is_pinned_by_commit() -> None:
+    uses = re.findall(r"uses: (\S+)", BENCHMARKS)
+
+    assert uses
+    for action in uses:
+        assert re.fullmatch(r"[\w./-]+@[0-9a-f]{40}", action), action
+
+
+def test_no_benchmark_asserts_a_number_of_seconds() -> None:
+    source = (ROOT / "tests" / "benchmarks" / "test_linter_benchmarks.py").read_text(encoding="utf-8")
+
+    assert "perf_counter" not in source
+    assert "seconds=" not in source

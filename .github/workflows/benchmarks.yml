@@ -1,0 +1,67 @@
+name: Benchmarks
+
+# The opt-in large-ontology benchmarks (tests/benchmarks, ONTOLINT_BENCH=1), which no pull request runs: a peak-memory
+# budget per scenario and, for time, a growth ratio between two sizes (tests/scaling_support.py), never a number of
+# seconds.  The profile of each scenario is kept as an artifact.  See docs/ci-schedule.md and docs/performance.md.
+on:
+  schedule:
+    - cron: "27 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.13.7"
+
+jobs:
+  benchmarks:
+    name: Large-ontology benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run the benchmarks
+        env:
+          ONTOLINT_BENCH: "1"
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-out
+          uv run pytest -m benchmark tests/benchmarks --no-cov -p no:randomly -rA --durations=0 2>&1 | tee benchmark-out/benchmarks.log
+
+      - name: Profile each scenario
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          for scenario in chain tree dag labels; do
+            uv run python tests/benchmarks/profile_linter.py "$scenario" 2>&1 | tee "benchmark-out/profile-$scenario.txt"
+          done
+
+      - name: Upload the logs and profiles
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmarks-${{ github.run_number }}
+          path: benchmark-out/
+          retention-days: 30
+          if-no-files-found: warn

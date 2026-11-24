@@ -50,3 +50,11 @@ measured on the commit `1f4698e` code (cProfile roughly doubles wall time).
 
 The `benchmark` marker is registered in `pyproject.toml`. The benchmarks are skipped
 unless `ONTOLINT_BENCH=1` is set (a `skipif` in `tests/benchmarks/test_linter_benchmarks.py`).
+
+They run every Monday and on demand in `.github/workflows/benchmarks.yml` (`docs/ci-schedule.md`), with the
+profile of each scenario kept as an artifact for 30 days. Memory is asserted as a budget, because the peak of Python
+allocations does not depend on the machine. Time is asserted only as a **growth ratio**: the whole linter runs at two
+sizes (the second eight times the first) and the larger run must cost under 32 times the smaller (a linear step costs
+about 8, a quadratic one 64 or more), so the check holds on any runner. There is no budget in seconds: a hosted runner
+cannot promise one, and the seconds of each run are in the job log (`--durations=0`). A step that should be linear and
+is not is added to `tests/test_scaling.py`, which runs in the normal suite.
