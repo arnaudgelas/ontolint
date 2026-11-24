@@ -114,7 +114,7 @@ The `kind` is an open enumeration (table above). A run that stops before it has 
 `GOV020`, an unknown rule, a usage error, an internal error, an output that cannot be written) has nothing to put a reason in: it prints it on
 stderr, and the kinds it uses are `input_unparseable`, `input_rejected`, `config_invalid`, `policy_rejected`, `snapshot_unreadable`,
 `output_failed`, `unknown_rule`, `usage`, `execution_failed` and `internal_error`. `measurement` is in a reason only for `measurement_failed`; no
-0.16.0 sample has one, so the ledger below does not list it.
+0.16.0 sample has one, so the ledger below does not list it (nor the `measurement` property of a failed measurement's SARIF notification).
 
 ### Ledger: additions since the 0.16.0 samples
 
@@ -165,3 +165,13 @@ One row per added key path; copy the rows into the changelog under the document'
 | `lint` | `$.exit.reasons[].message` | 0.18.0 |
 | `lint` | `$.exit.reasons[].rule` | 0.18.0 |
 | `lint` | `$.exit.reasons[].path` | 0.18.0 |
+| sarif | `$.runs[].invocations[].properties.ontolintExit` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.code` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.reasons` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.reasons[]` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.reasons[].kind` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.reasons[].message` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.reasons[].rule` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].properties.ontolintExit.reasons[].path` | 0.18.0 (#175) |
+| sarif | `$.runs[].invocations[].toolExecutionNotifications[].properties.results` | 0.16.0 (not in the samples: a failed rule's notification, #175) |
+| sarif | `$.runs[].invocations[].toolExecutionNotifications[].properties.results[]` | 0.16.0 (not in the samples: a failed rule's notification, #175) |
