@@ -378,7 +378,7 @@ without it the output is unchanged. With it, the JSON report has a `timing` obje
 property `ontolintTiming` in `invocations[0].properties`, and the text report ends with a `Timing:` line. The Markdown summary, baselines,
 fingerprints, quality snapshots and DQV files never hold it. In the [Action](#github-action), pass it as `args`.
 
-- `total_ms`: from the start of the run to the end of the last rule; writing the report is not counted.
+- `total_ms`: from the start of loading to the end of the last rule, so baseline and quality comparison and writing the report are not counted. It is at least `load_ms` plus the sum of `units_ms`, not equal to it: the rest is what runs between them.
 - `load_ms`: reading the ontologies, the shapes graph and the pattern library.
 - `units_ms`: the time of each unit that ran rules, failed or timed out included. A unit is a rule module (`owl`, `shacl`, ...) for the graph
   rules, and one adapter (`adapter:SHACL001`) for an adapter rule. Units do not overlap, so these values can be added.
