@@ -288,7 +288,8 @@ def rule_counts(report: RunReport) -> list[dict[str, Any]]:
 
     ``status`` is the worst execution status of the rule over the files (failed, unsupported, skipped,
     executed), or ``not_selected`` when no file ran it or the run ignored it (its execution record says
-    ``skipped``); a rule with a finding but no execution record is ``executed``, as the finding proves it ran.
+    ``skipped``); a rule with a finding but no execution record is ``executed``, as the finding proves it ran
+    (a finding outranks the ignore, a case that cannot occur since an ignored rule does not run).
     ``findings`` counts the findings in the report, ``baselined`` those a baseline removed from it, so the
     ``findings`` of all rules add up to the report's findings and each count is of its own set.
     """
