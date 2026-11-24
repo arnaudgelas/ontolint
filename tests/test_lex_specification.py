@@ -14,6 +14,7 @@ from ontolint import Linter
 from ontolint.policy import Policy
 
 NS = "https://example.test/onto#"
+OIO = "http://www.geneontology.org/formats/oboInOwl#"
 
 
 def _messages(rule: str, turtle: str, *languages: str) -> list[str]:
@@ -341,3 +342,39 @@ def test_lex025_padded_annotation_values_except_labels_and_blank_definitions() -
     assert _foci("LEX025", 'ex:A a owl:Class ; ex:note " n " .') == []  # undeclared custom predicate: gap
     assert _foci("LEX025", 'ex:note a owl:AnnotationProperty . ex:A a owl:Class ; ex:note " n " .') == ["A"]
     assert _foci("LEX025", 'ex:A a owl:Class ; rdfs:comment " d"^^xsd:integer .') == []
+
+
+def _padded(turtle: str, **policy: object) -> list[str]:
+    result = Linter(graph(turtle), policy=Policy.from_mapping(policy)).execute(["LEX025"])
+    return sorted(f.focus.removeprefix(NS) for f in result.findings)
+
+
+def test_lex025_a_value_typed_xsd_string_is_a_string() -> None:
+    # RDF 1.1 Concepts 3.3: a simple literal is an xsd:string; the datatype makes no difference to the lexical form.
+    assert _foci("LEX025", 'ex:A a owl:Class ; rdfs:comment " d"^^xsd:string .') == ["A"]
+    assert _foci("LEX025", 'ex:A a owl:Class ; rdfs:comment "d"^^xsd:string .') == []
+
+
+def test_lex025_a_no_break_space_is_padding() -> None:
+    # str.strip() removes U+00A0 as it removes U+0020, and so does the rule: a text matcher sees two values.
+    assert _foci("LEX025", 'ex:A a owl:Class ; rdfs:comment "\\u00a0d" .') == ["A"]
+    assert _foci("LEX025", 'ex:A a owl:Class ; rdfs:comment "d\\u00a0" .') == ["A"]
+    assert _foci("LEX025", 'ex:A a owl:Class ; rdfs:comment "d\\u00a0e" .') == []  # inside the value: not padding
+
+
+def test_lex025_every_built_in_obo_synonym_predicate_is_judged() -> None:
+    for name in ("hasSynonym", "hasExactSynonym", "hasBroadSynonym", "hasNarrowSynonym", "hasRelatedSynonym"):
+        assert _foci("LEX025", f'ex:A a owl:Class ; <{OIO}{name}> " s" .') == ["A"], name
+        assert _foci("LEX025", f'ex:A a owl:Class ; <{OIO}{name}> "s" .') == [], name
+
+
+def test_lex025_a_configured_definition_predicate_and_its_subproperties_are_judged() -> None:
+    extra = f"{NS}define"
+    body = 'ex:define a owl:AnnotationProperty . ex:sub rdfs:subPropertyOf ex:define . ex:A a owl:Class ; ex:sub " d" .'
+    # A subproperty of a configured definition predicate is judged because of the configuration, declared or not.
+    assert _padded(body, extra_definition_predicates=[extra]) == ["A"]
+    undeclared = body.replace("ex:define a owl:AnnotationProperty . ", "")
+    assert _padded(undeclared) == []
+    assert _padded(undeclared, extra_definition_predicates=[extra]) == ["A"]
+    # A blank value of a definition predicate is LEX019's.
+    assert _padded(undeclared.replace('" d"', '"  "'), extra_definition_predicates=[extra]) == []
