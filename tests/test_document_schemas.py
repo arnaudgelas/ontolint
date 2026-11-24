@@ -294,23 +294,31 @@ def _snapshot_mutations(document: dict[str, Any]) -> dict[str, dict[str, Any]]:
     make("a better without its term sets", lambda d: d["measurements"][ratio].pop("numerator_terms"))
     make("a negative numerator", lambda d: d["measurements"][ratio].update(numerator=-1))
     make("a definition version of 0", lambda d: d["measurements"][ratio].update(definition_version=0))
+    make("an empty id", lambda d: d["measurements"][ratio].update(id=""))
+    make("an empty population", lambda d: d["measurements"][ratio].update(population=""))
     return cases
 
 
-def test_a_snapshot_the_reader_would_refuse_is_refused_by_the_schema() -> None:
+def test_a_snapshot_with_an_unknown_key_a_wrong_shape_or_an_empty_name_is_refused_by_the_schema() -> None:
+    """The schema refuses the shapes the reader refuses, not every snapshot the reader refuses: counts that disagree
+    with the term sets, duplicate ids, buckets out of order and an integral float are cross-field or type-width rules
+    that only ``quality.loads`` (``--compare-quality``) checks."""
     document = _snapshot()
     assert _valid("snapshot", document)
     assert [name for name, bad in _snapshot_mutations(document).items() if _valid("snapshot", bad)] == []
 
 
 def test_every_snapshot_the_schema_refuses_here_is_refused_by_the_reader_too() -> None:
-    """The schema is closed where the reader is: what it refuses for a closed-object reason, the reader refuses."""
+    """What the schema refuses as a closed object, a version or an empty name, the reader refuses too (the reader
+    refuses more, never less, than the schema)."""
     for name, bad in _snapshot_mutations(_snapshot()).items():
         if name in {
             "an unknown top-level key",
             "an unknown policy key",
             "an unknown measurement key",
             "another version",
+            "an empty id",
+            "an empty population",
         }:
             with pytest.raises(quality.SnapshotError):
                 quality.loads(json.dumps(bad))
@@ -343,7 +351,7 @@ def test_the_0_16_0_baseline_validates_and_round_trips() -> None:
     assert baseline.dumps(baseline.loads(text)) == text
 
 
-def test_a_baseline_with_a_missing_section_a_wrong_type_or_a_short_hash_is_refused() -> None:
+def test_a_baseline_with_a_missing_section_a_wrong_type_a_short_hash_or_a_duplicate_is_refused() -> None:
     document = json.loads((SAMPLES / "baseline.json").read_text(encoding="utf-8"))
     assert _valid("baseline", document)
     path = next(iter(document["identities"]))
@@ -357,6 +365,7 @@ def test_a_baseline_with_a_missing_section_a_wrong_type_or_a_short_hash_is_refus
         lambda d: d.update(files="a.ttl"),
         lambda d: d["fingerprints"].append("abc"),
         lambda d: d["fingerprints"].append(3),
+        lambda d: d["fingerprints"].append(d["fingerprints"][0]),  # the writer emits a set
         lambda d: d["identities"][path].update({"not-a-hash": d["identities"][path][identity]}),
         lambda d: d["identities"][path].update({identity: "short"}),
         lambda d: d["identities"].update({path: []}),
