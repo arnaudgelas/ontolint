@@ -41,7 +41,10 @@ pytest-gremlins runs the whole suite for its mutant, in collection order, stoppi
 failure. That test used to come after most of the suite, so the run reached the 30 s mutant timeout
 first and reported an error. `tests/conftest.py` now collects it first, and the mutants are killed
 in about 12 s (issue #71). A frozen decorator needs neither a pardon nor a longer timeout; it needs
-a test of that name that lists its class.
+a test of that name that lists its class, and `test_every_frozen_dataclass_of_the_mutation_scope_is_listed_in_the_frozen_test`
+reads the scope of `pyproject.toml` and fails when a `frozen=True` class of it is not in that list (issue #187).
+The `compare=False` fields of the scope are listed the same way in `COMPARE_IGNORED`, each with a test that two objects
+differing in it alone are equal: nothing else in the suite compares such objects.
 
 ## Audits
 
