@@ -239,6 +239,7 @@ def test_the_jena_job_pins_the_version_the_checksum_the_jdk_and_the_test_it_runs
     assert "distribution: temurin" in JENA
     assert 'java-version: "11"' in JENA, "4.10.0 is the last Jena release that runs on Java 11"
     assert "-k riot" in JENA
+    assert "tests/test_jena_shacl.py" in JENA
     assert "def test_a_java_jsonld_fixture_is_what_riot_writes_today" in SOURCE_LOCATIONS_TESTS
 
 

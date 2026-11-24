@@ -1,0 +1,124 @@
+{
+  "engine": "Apache Jena 4.10.0, `shacl validate --shapes F --data F`, Temurin OpenJDK 11.0.33",
+  "recorded": "2026-11-24",
+  "cases": [
+    {
+      "file": "pattern_escaped_slash.ttl",
+      "about": "sh:pattern \"\\\\/\" : an escaped slash, invalid XPath",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": [
+        [
+          "SHQ011",
+          "warning"
+        ]
+      ]
+    },
+    {
+      "file": "pattern_bracket_close_first.ttl",
+      "about": "sh:pattern \"[]a]\" : a class that starts with a closing bracket, invalid XPath",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": [
+        [
+          "SHQ011",
+          "warning"
+        ]
+      ]
+    },
+    {
+      "file": "pattern_nested_class.ttl",
+      "about": "sh:pattern \"[[a]\" : a class opened inside a class",
+      "jena": {
+        "exit": 1,
+        "outcome": "error",
+        "message": "PatternSyntaxException: Unclosed character class"
+      },
+      "ontolint": [
+        [
+          "SHQ011",
+          "error"
+        ]
+      ]
+    },
+    {
+      "file": "flags_unknown_letter.ttl",
+      "about": "sh:flags \"z\" : a letter XPath does not define (FORX0001)",
+      "jena": {
+        "exit": 2,
+        "outcome": "error",
+        "message": "Unsupported flag in regex modifiers: z"
+      },
+      "ontolint": [
+        [
+          "SHQ015",
+          "error"
+        ]
+      ]
+    },
+    {
+      "file": "flags_q.ttl",
+      "about": "sh:flags \"q\" : a letter XPath defines (literal matching)",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": []
+    },
+    {
+      "file": "mincount_non_negative_integer.ttl",
+      "about": "sh:minCount \"1\"^^xsd:nonNegativeInteger : a derived integer type",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": [
+        [
+          "SHQ008",
+          "error"
+        ]
+      ]
+    },
+    {
+      "file": "mincount_int.ttl",
+      "about": "sh:minCount \"1\"^^xsd:int : a derived integer type",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": [
+        [
+          "SHQ008",
+          "error"
+        ]
+      ]
+    },
+    {
+      "file": "mincount_decimal.ttl",
+      "about": "sh:minCount 1.0 : a decimal",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": [
+        [
+          "SHQ008",
+          "error"
+        ]
+      ]
+    },
+    {
+      "file": "pattern_violation_control.ttl",
+      "about": "a pattern the value does not match: the control that a violation is reported",
+      "jena": {
+        "exit": 0,
+        "outcome": "violations"
+      },
+      "ontolint": []
+    }
+  ]
+}

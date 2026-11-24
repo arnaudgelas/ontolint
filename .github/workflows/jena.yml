@@ -1,8 +1,10 @@
 name: Jena
 
-# The one test that needs Java: test_a_java_jsonld_fixture_is_what_riot_writes_today (tests/test_source_locations.py, #69)
+# The tests that need Java.  test_a_java_jsonld_fixture_is_what_riot_writes_today (tests/test_source_locations.py, #69)
 # checks that Apache Jena 4.10.0's own `riot` still writes the committed JSON-LD fixtures of tests/fixtures/java_jsonld
-# (up to the order the writers leave open).  The pull-request gate has no Java, so only this job runs it.  The Jena
+# (up to the order the writers leave open); tests/test_jena_shacl.py (#207) checks that its `shacl validate` still does
+# what tests/fixtures/jena_shacl/cases.json records for the values behind SHQ008, SHQ011 and SHQ015.  The pull-request
+# gate has no Java, so only this job runs them.  The Jena
 # zip is checked against the SHA-512 Apache publishes before anything is unpacked, and the test then checks each jar.
 # To move to another Jena version, follow tests/fixtures/java_jsonld/README.md ("Regenerating") and change JENA_VERSION and
 # JENA_SHA512 here together with the digests in the test.  See docs/ci-schedule.md.
@@ -66,3 +68,6 @@ jobs:
 
       - name: Run the riot round-trip test
         run: uv run pytest tests/test_source_locations.py -k riot --no-cov -p no:randomly -rA
+
+      - name: Run the SHACL engine checks
+        run: uv run pytest tests/test_jena_shacl.py --no-cov -p no:randomly -rA
