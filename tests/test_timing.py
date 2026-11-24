@@ -3,10 +3,9 @@
 What is measured: ``load_ms`` is the time spent reading the inputs (ontologies, shapes graph, pattern library);
 ``units_ms`` is the time of each unit that ran rules (a rule module for the graph rules, one adapter per adapter
 rule), failed or not; ``rules_ms`` gives each rule that ran the time of its unit (rules of one module share it: do
-not add them up); ``total_ms`` is the wall time from the start of loading to the end of the last rule (at least ``load_ms`` plus the sum of
-``units_ms``), writing the
-report and comparing the baselines and the quality excluded; it is at least ``load_ms`` plus the sum of ``units_ms``, not
-equal to it.  All integers, milliseconds, rounded to the nearest.  The flag is off by default and the output
+not add them up); ``total_ms`` is the wall time from the start of loading to the end of the last rule, writing the
+report and comparing the baselines and the quality excluded; it is at least ``load_ms`` plus the sum of ``units_ms``,
+not equal to it.  All integers, milliseconds, rounded to the nearest.  The flag is off by default and the output
 without it is byte for byte what it was; the timing is in no baseline, fingerprint, quality snapshot, DQV file or
 Markdown summary.  The clock is a parameter (``main(argv, clock=...)``), so these tests are deterministic.
 """
@@ -25,7 +24,7 @@ import pytest
 from jsonschema.validators import validator_for
 from test_differential import FIXTURES
 
-from ontolint import engine
+from ontolint import cli, engine
 from ontolint.cli import main
 from ontolint.timing import Recorder
 
@@ -107,8 +106,6 @@ def test_the_total_ends_with_the_last_rule_and_not_after_the_baseline_and_qualit
 ) -> None:
     clock = FakeClock()
     plain = _json([*LINT, "--timing"], monkeypatch, FakeClock())["timing"]["total_ms"]
-
-    import ontolint.cli as cli
 
     original = cli._apply_baselines
 

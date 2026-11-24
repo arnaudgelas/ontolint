@@ -9,8 +9,9 @@ All values are integer milliseconds, each duration rounded to the nearest millis
   (``"adapter:SHACL001"``).  Units never overlap, so their times can be added.
 * ``rules_ms``: for each rule that ran, the time of its unit.  Rules of one module share their module's time, so these
   values must not be added up.  A rule that was skipped or unsupported did not run and is absent, never zero.
-* ``total_ms``: the wall time from the start of loading to the end of the last rule; the baseline and quality comparison and
-  writing the report are excluded.  It is at least ``load_ms`` plus the sum of ``units_ms``, not equal to it.
+* ``total_ms``: the wall time from the start of loading to the end of the last rule; the baseline and quality
+  comparison and writing the report are excluded.  It is at least ``load_ms`` plus the sum of ``units_ms``, not equal
+  to it.
 
 The clock is injected (default :func:`time.perf_counter`, monotonic), and nothing patches :mod:`time`.  The timing is
 never part of a baseline, a fingerprint, a quality snapshot, a DQV file or the Markdown summary.
