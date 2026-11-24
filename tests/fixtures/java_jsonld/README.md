@@ -15,7 +15,8 @@ Both files are committed as `riot` wrote them; do not reformat them. What the te
   writer's layout that the table lists, plus spaces-only indentation and `@context` after `@graph`
   (a fingerprint, not a model of the printer); and that it loads to the same graph as `pets.ttl`,
   with each node written once;
-- only with `ONTOLINT_JENA_HOME` set (CI has no Java, and nothing runs it on a schedule yet, #30):
+- only with `ONTOLINT_JENA_HOME` set (the pull-request gate has no Java; `.github/workflows/jena.yml` runs it every
+  Monday and on demand, `docs/ci-schedule.md`):
   that every file of the installation's `lib/`, and its `log4j2.properties`, has the SHA-256 it has
   in the 4.10.0 zip (one digest over the 46 files, so a changed, missing or extra jar fails). The
   test then runs Java itself on exactly those jars, as `bin/riot` would, and never runs `bin/riot`;
@@ -25,7 +26,7 @@ Both files are committed as `riot` wrote them; do not reformat them. What the te
   the same context and the same nodes, each written once, with the nodes and each node's values in
   any order (only an `@list` keeps its order).
 
-  This corroborates the files' origin for whoever runs it. It is not enforced. It trusts the JVM
+  This corroborates the files' origin for whoever runs it. The pull-request gate does not run it; the weekly job does. It trusts the JVM
   (`JAVA_HOME`, else `java` on `PATH`), as the tests trust their Python. It does not prove the
   bytes, which neither writer reproduces (see below).
 

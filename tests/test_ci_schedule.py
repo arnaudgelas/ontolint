@@ -200,3 +200,57 @@ def test_no_benchmark_asserts_a_number_of_seconds() -> None:
 
     assert "perf_counter" not in source
     assert "seconds=" not in source
+
+
+JENA = (WORKFLOWS / "jena.yml").read_text(encoding="utf-8")
+JAVA_JSONLD_README = (ROOT / "tests" / "fixtures" / "java_jsonld" / "README.md").read_text(encoding="utf-8")
+SOURCE_LOCATIONS_TESTS = (ROOT / "tests" / "test_source_locations.py").read_text(encoding="utf-8")
+
+
+def test_the_jena_job_is_weekly_manual_and_read_only() -> None:
+    assert "workflow_dispatch:" in JENA
+    assert re.search(r"^permissions:\n  contents: read\n", JENA, re.MULTILINE)
+    assert "pull_request" not in JENA and "push:" not in JENA
+    assert "jena.yml" in SCHEDULE
+
+
+def test_the_jena_zip_is_checked_against_its_published_sha512_before_it_is_unpacked_or_used() -> None:
+    step = JENA[JENA.index("name: Download Apache Jena") : JENA.index("name: Run the riot round-trip test")]
+
+    assert "set -euo pipefail" in step, "a failed download or checksum must stop the step"
+    assert (
+        step.index("curl --fail")
+        < step.index("sha512sum --check")
+        < step.index("unzip")
+        < step.index("ONTOLINT_JENA_HOME")
+    )
+    assert JENA.index("name: Download Apache Jena") < JENA.index("uv run pytest"), "no test runs before the check"
+    assert "archive.apache.org/dist/jena/binaries/" in step
+
+
+def test_the_jena_job_pins_the_version_the_checksum_the_jdk_and_the_test_it_runs() -> None:
+    sha = re.search(r'JENA_SHA512: "([0-9a-f]{128})"', JENA)
+    version = re.search(r'JENA_VERSION: "([\d.]+)"', JENA)
+
+    assert sha and version
+    assert sha[1] in JAVA_JSONLD_README, "the workflow and the fixture README give the same SHA-512"
+    assert f"apache-jena-{version[1]}.zip" in JAVA_JSONLD_README
+    assert f"Apache Jena RIOT version {version[1]}" in SOURCE_LOCATIONS_TESTS
+    assert "distribution: temurin" in JENA
+    assert 'java-version: "11"' in JENA, "4.10.0 is the last Jena release that runs on Java 11"
+    assert "-k riot" in JENA
+    assert "def test_a_java_jsonld_fixture_is_what_riot_writes_today" in SOURCE_LOCATIONS_TESTS
+
+
+def test_the_riot_test_is_skipped_without_the_switch_the_job_sets() -> None:
+    assert 'skipif("ONTOLINT_JENA_HOME" not in os.environ' in SOURCE_LOCATIONS_TESTS
+    assert 'echo "ONTOLINT_JENA_HOME=' in JENA
+    assert "jena.yml" in JAVA_JSONLD_README, "the fixture README says what runs the check"
+
+
+def test_every_action_the_jena_job_uses_is_pinned_by_commit() -> None:
+    uses = re.findall(r"uses: (\S+)", JENA)
+
+    assert len(uses) >= 3
+    for action in uses:
+        assert re.fullmatch(r"[\w./-]+@[0-9a-f]{40}", action), action

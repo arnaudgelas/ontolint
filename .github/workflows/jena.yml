@@ -1,0 +1,68 @@
+name: Jena
+
+# The one test that needs Java: test_a_java_jsonld_fixture_is_what_riot_writes_today (tests/test_source_locations.py, #69)
+# checks that Apache Jena 4.10.0's own `riot` still writes the committed JSON-LD fixtures of tests/fixtures/java_jsonld
+# (up to the order the writers leave open).  The pull-request gate has no Java, so only this job runs it.  The Jena
+# zip is checked against the SHA-512 Apache publishes before anything is unpacked, and the test then checks each jar.
+# To move to another Jena version, follow tests/fixtures/java_jsonld/README.md ("Regenerating") and change JENA_VERSION and
+# JENA_SHA512 here together with the digests in the test.  See docs/ci-schedule.md.
+on:
+  schedule:
+    - cron: "47 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.13.7"
+  JENA_VERSION: "4.10.0"
+  JENA_SHA512: "dff0de98ca829f90cda3b8ec2c665414444e9d7b546c049160f2ffcf822750fa77c8e76d083aaa2c9d926303fb2653250097fcded59a49e968814930537eead9"
+
+jobs:
+  riot:
+    name: Jena riot round trip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Set up Java
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      - name: Download Apache Jena and check its SHA-512
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/jena"
+          cd "$RUNNER_TEMP/jena"
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "apache-jena-$JENA_VERSION.zip" \
+            "https://archive.apache.org/dist/jena/binaries/apache-jena-$JENA_VERSION.zip"
+          echo "$JENA_SHA512  apache-jena-$JENA_VERSION.zip" | sha512sum --check -
+          unzip -q "apache-jena-$JENA_VERSION.zip"
+          echo "ONTOLINT_JENA_HOME=$PWD/apache-jena-$JENA_VERSION" >> "$GITHUB_ENV"
+
+      - name: Run the riot round-trip test
+        run: uv run pytest tests/test_source_locations.py -k riot --no-cov -p no:randomly -rA
