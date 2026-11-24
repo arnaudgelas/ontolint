@@ -3,7 +3,8 @@
 What is measured: ``load_ms`` is the time spent reading the inputs (ontologies, shapes graph, pattern library);
 ``units_ms`` is the time of each unit that ran rules (a rule module for the graph rules, one adapter per adapter
 rule), failed or not; ``rules_ms`` gives each rule that ran the time of its unit (rules of one module share it: do
-not add them up); ``total_ms`` is the wall time from the start of the run to the end of the last rule, writing the
+not add them up); ``total_ms`` is the wall time from the start of loading to the end of the last rule (at least ``load_ms`` plus the sum of
+``units_ms``), writing the
 report and comparing the baselines and the quality excluded; it is at least ``load_ms`` plus the sum of ``units_ms``, not
 equal to it.  All integers, milliseconds, rounded to the nearest.  The flag is off by default and the output
 without it is byte for byte what it was; the timing is in no baseline, fingerprint, quality snapshot, DQV file or

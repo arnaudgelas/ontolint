@@ -217,7 +217,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add the run's timing in integer milliseconds: JSON `timing`, SARIF invocation property "
         "`ontolintTiming`, a footer in the text report (see docs/report-compatibility.md); never in a baseline, "
-        "fingerprint, snapshot or Markdown summary",
+        "fingerprint, snapshot or Markdown summary; the `rules_ms` values repeat the time of their unit, so they must "
+        "not be added up (`units_ms` can be)",
     )
     ap.add_argument(
         "--sarif-fingerprints",
@@ -1300,6 +1301,7 @@ def _lint(args: argparse.Namespace, stage: list[str], clock: timing.Clock | None
     # gremlin: pardon[equivalent] shared holds one entry per input, like graphs, so strict never fires
     rows = zip(inputs, graphs, shared, strict=True)
     files = [_lint_file(item, graph, plan, args, found) for item, graph, found in rows]
+    finished = timer.finish() if timer else None  # the last rule is done: baselines and quality are not timed
     files, stale, baselined = _apply_baselines(files, args)
     trend = _quality(files, args, accepted)
     if isinstance(trend, int):
@@ -1314,7 +1316,7 @@ def _lint(args: argparse.Namespace, stage: list[str], clock: timing.Clock | None
         quality=trend,
         sarif_fingerprints=args.sarif_fingerprints,
         ignored=tuple(spec.rule_id for spec in plan.selection.ignored),
-        timing=timer.finish() if timer else None,
+        timing=finished,
     )
 
 
