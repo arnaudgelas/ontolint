@@ -23,12 +23,12 @@ import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, NoReturn
 
+from .escaping import one_line
 from .models import ExecutionStatus, RuleExecution
 from .redaction import redact_userinfo
 
 if TYPE_CHECKING:
     from .reporting import RunReport
-from .escaping import one_line
 
 TOOL_FAILURE_EXIT = 2
 
