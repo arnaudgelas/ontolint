@@ -253,3 +253,98 @@ def test_an_unknown_key_is_accepted_at_every_level(monkeypatch: pytest.MonkeyPat
     document["files"][0]["executions"][0]["seconds"] = 0.1
     document["files"][0]["measurements"][0]["unit"] = "terms"
     assert not _invalid(document)
+
+
+def _sample(name: str) -> dict[str, Any]:
+    return json.loads((SAMPLES / name).read_text(encoding="utf-8"))
+
+
+def _partitioned() -> dict[str, Any]:
+    """The measurements sample with its measurements also given as one partition per module."""
+    document = _sample("lint-measurements.json")
+    file = document["files"][0]
+    file["measurement_partitions"] = [
+        {"by": "module", "name": "https://example.test/m#", "measurements": copy.deepcopy(file["measurements"])}
+    ]
+    return document
+
+
+def _optional_section_mutations() -> dict[str, dict[str, Any]]:
+    """Documents valid but for one change in a section that only some reports carry."""
+    cases: dict[str, dict[str, Any]] = {}
+
+    def make(name: str, document: dict[str, Any], change: Callable[[dict[str, Any]], None]) -> None:
+        change(document)
+        cases[name] = document
+
+    quality = "lint-quality-comparison.json"
+    make("a quality comparison without its format", _sample(quality), lambda d: d["quality_comparison"].pop("format"))
+    make(
+        "a quality comparison of another format",
+        _sample(quality),
+        lambda d: d["quality_comparison"].update(format="something-else"),
+    )
+    make("a quality comparison without its notes", _sample(quality), lambda d: d["quality_comparison"].pop("notes"))
+    make(
+        "a quality comparison measurement without its status",
+        _sample(quality),
+        lambda d: d["quality_comparison"]["measurements"][0].pop("status"),
+    )
+    make(
+        "a quality comparison measurement of an unknown status",
+        _sample(quality),
+        lambda d: d["quality_comparison"]["measurements"][0].update(status="unknown"),
+    )
+    stale = "lint-baseline-stale.json"
+    make("stale fingerprints that are integers", _sample(stale), lambda d: d["baseline"].update(stale_fingerprints=[1]))
+    make(
+        "stale fingerprints that are not a list", _sample(stale), lambda d: d["baseline"].update(stale_fingerprints="x")
+    )
+    make("a baseline without its stale fingerprints", _sample(stale), lambda d: d["baseline"].pop("stale_fingerprints"))
+    modules = "lint-modules.json"
+    make(
+        "a module summary with an unknown severity",
+        _sample(modules),
+        lambda d: next(iter(d["files"][0]["module_summary"].values())).update(fatal=1),
+    )
+    make(
+        "a module summary with a negative count",
+        _sample(modules),
+        lambda d: next(iter(d["files"][0]["module_summary"].values())).update(info=-1),
+    )
+    make(
+        "finding modules that are not strings",
+        _sample(modules),
+        lambda d: next(f for f in d["findings"] if "modules" in f).update(modules=[1]),
+    )
+    make(
+        "finding graphs that are not a list",
+        _sample(modules),
+        lambda d: d["findings"][0].update(graphs="https://example.test/g"),
+    )
+    make("a partition without its by", _partitioned(), lambda d: d["files"][0]["measurement_partitions"][0].pop("by"))
+    make(
+        "a partition by an unknown axis",
+        _partitioned(),
+        lambda d: d["files"][0]["measurement_partitions"][0].update(by="tenant"),
+    )
+    make(
+        "a partition without its measurements",
+        _partitioned(),
+        lambda d: d["files"][0]["measurement_partitions"][0].pop("measurements"),
+    )
+    make(
+        "a partition measurement of an unknown kind",
+        _partitioned(),
+        lambda d: d["files"][0]["measurement_partitions"][0]["measurements"][0].update(kind="histogramme"),
+    )
+    return cases
+
+
+def test_the_optional_sections_are_valid_unchanged_and_refused_once_broken() -> None:
+    """Each shape below only has valid inputs elsewhere: loosening its definition to {} must fail here."""
+    for name in ("lint-quality-comparison.json", "lint-baseline-stale.json", "lint-modules.json"):
+        assert not _invalid(_sample(name)), name
+    assert not _invalid(_partitioned())
+    accepted = [name for name, document in _optional_section_mutations().items() if not _invalid(document)]
+    assert accepted == []
