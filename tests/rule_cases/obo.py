@@ -411,6 +411,8 @@ CASES = {
             _ttl("blank definition", 'ex:A a owl:Class ; obo:IAO_0000115 "  " .'),
             _ttl("obsolete term", 'ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "a thing." .'),
             _ttl("elucidation is not judged", 'ex:A a owl:Class ; obo:IAO_0000600 "a thing." .'),
+            _ttl("titlecase letter is not lowercase", 'ex:A a owl:Class ; obo:IAO_0000115 "\u01c5 thing." .'),
+            _ttl("Hebrew is uncased", 'ex:A a owl:Class ; obo:IAO_0000115 "\u05d3\u05d1\u05e8" .'),
         ],
     ),
     "OBO014": rule_cases(
