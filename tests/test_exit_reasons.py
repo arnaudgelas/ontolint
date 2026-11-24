@@ -167,6 +167,15 @@ def test_a_failed_measurement_is_a_measurement_failed_reason(run: Run, monkeypat
     assert all(r["measurement"] and r["path"] == PATH for r in reasons)
 
 
+def test_markdown_names_a_failed_measurement(tmp_path: Path, run: Run, monkeypatch: pytest.MonkeyPatch) -> None:
+    _break_measurement(monkeypatch)
+    code, out, _ = run(KITCHEN, *_snapshot(tmp_path), "--format", "markdown", "--fail-on", "never")
+    assert code == TOOL_FAILURE_EXIT
+    assert "### Measurements that failed" in out
+    assert f"` {PATH} `" in out.split("### Measurements that failed", 1)[1]
+    assert "hunter2" not in out
+
+
 def test_a_budget_on_an_untaken_measurement_is_a_budget_unmeasured_reason(tmp_path: Path, run: Run) -> None:
     policy = tmp_path / "policy.json"
     policy.write_text(json.dumps({"quality_budgets": {"shacl_class_target_coverage": {"minimum": 0}}}), "utf-8")
