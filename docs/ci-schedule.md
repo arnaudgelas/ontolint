@@ -32,7 +32,22 @@ uv run python scripts/shq_scope_count.py check DIR_SHQ > shq-scope.txt
 explained but not yet recorded, it stays red every week until `record`, `measure` or `count` is committed. A run that
 is cancelled or times out still uploads what the checks had written; the job log has the rest.
 
+### Switches
+
+A test that is skipped unless an `ONTOLINT_*` switch is set proves nothing until something sets it. Each switch the
+suite skips on is here with the scheduled workflow that sets it (`tests/test_skip_inventory.py` fails when a `skipif`
+reads a switch with no row, when a row names a workflow that does not exist, is not on a schedule or does not contain
+the text in the last column, and when a row names no workflow without being a developer tool). The platform skips
+(Windows, POSIX permissions) are guarded by `tests/test_platform_skips.py`; a missing tool (`actionlint`, `docker`, `uv`) is
+neither.
+
+| Switch | What it turns on | Workflow | Text the workflow holds |
+| --- | --- | --- | --- |
+| `ONTOLINT_BENCH` | the large-ontology benchmarks (`tests/benchmarks`) | [`benchmarks.yml`](../.github/workflows/benchmarks.yml) | `ONTOLINT_BENCH` |
+| `ONTOLINT_FUZZ` | `test_long_fuzz`, the fuzz targets for 60 s each; `fuzz.yml` runs the same targets through the same driver for longer, not through pytest | [`fuzz.yml`](../.github/workflows/fuzz.yml) | `tests.fuzz.fuzzer` |
+| `ONTOLINT_JENA_HOME` | the Jena `riot` round-trip test (needs Java) | [`jena.yml`](../.github/workflows/jena.yml) | `ONTOLINT_JENA_HOME` |
+| `ONTOLINT_ROBOT_IMAGE` | the ROBOT conversion test (needs Docker) | [`validation.yml`](../.github/workflows/validation.yml) | `ONTOLINT_ROBOT_IMAGE` |
+| `ONTOLINT_UPDATE_GOLDEN` | regenerating the golden snapshots; a normal run compares them and skips nothing it needs: a developer tool, not a schedule | none | none |
+
 The workflows that run on a push or a pull request (`ci.yml`, `smoke.yml`, `release.yml`) are not listed: they are not
-on a timer. Tests that are skipped unless an `ONTOLINT_*` switch is set (`ONTOLINT_FUZZ`, `ONTOLINT_BENCH`,
-`ONTOLINT_JENA_HOME`, `ONTOLINT_ROBOT_IMAGE`) get their rows when the table that issue #166 asks for covers them; this
-one holds the scheduled workflows that exist.
+on a timer. The tests that a switch skips are in the table above.
