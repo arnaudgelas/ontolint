@@ -43,8 +43,20 @@ MAPS = frozenset(
     }
 )
 
-# Keys that only an option adds, which no sample command passes: (sample to compare with, extra arguments).
-OPTION_RUNS: dict[str, tuple[str, ...]] = {"lint-clean.json": ("--timing",), "sarif-default.sarif": ("--timing",)}
+# Keys that only an option adds, which no sample command passes: (sample to compare with, extra arguments, exit status).
+# The ill-formed shapes make a SARIF run exit 2, which is the only way to see ``ontolintExit`` (#175).
+SHAPES_FAIL = ("--shapes", "reports/inputs/illformed_shapes.ttl")
+OPTION_RUNS: list[tuple[str, tuple[str, ...], int]] = [
+    ("lint-clean.json", ("--timing",), 0),
+    ("sarif-default.sarif", ("--timing",), 0),
+    ("sarif-shapes.sarif", SHAPES_FAIL, 2),
+]
+
+
+def option_entry(name: str, extra: tuple[str, ...], code: int) -> dict[str, Any]:
+    """The sample command of ``name`` with ``extra`` arguments, and the exit status they give."""
+    return {**ENTRIES[name], "args": [*ENTRIES[name]["args"], *extra], "exit": code}
+
 
 type Shape = set[tuple[str, str]]
 
@@ -148,11 +160,12 @@ def test_every_key_a_report_adds_is_in_the_ledger(name: str, tmp_path: Path, mon
     assert not added, f"{name}: added without a ledger row in docs/report-compatibility.md: {added}"
 
 
-@pytest.mark.parametrize("name", sorted(OPTION_RUNS))
-def test_every_key_an_option_adds_is_in_the_ledger(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    entry = {**ENTRIES[name], "args": [*ENTRIES[name]["args"], *OPTION_RUNS[name]]}
-    added = unnamed_additions(name, current_document(entry, tmp_path, monkeypatch))
-    assert not added, f"{name} {OPTION_RUNS[name]}: added without a ledger row in docs/report-compatibility.md: {added}"
+@pytest.mark.parametrize(("name", "extra", "code"), OPTION_RUNS)
+def test_every_key_an_option_adds_is_in_the_ledger(
+    name: str, extra: tuple[str, ...], code: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    added = unnamed_additions(name, current_document(option_entry(name, extra, code), tmp_path, monkeypatch))
+    assert not added, f"{name} {extra}: added without a ledger row in docs/report-compatibility.md: {added}"
 
 
 def test_a_key_added_to_a_report_without_a_ledger_row_fails_the_check() -> None:
@@ -172,8 +185,8 @@ def test_the_ledger_has_no_row_for_a_key_that_is_not_there(tmp_path: Path, monke
         old = shape_of(json.loads((SAMPLES / name).read_text(encoding="utf-8")))
         new = shape_of(current_document(entry, tmp_path, monkeypatch))
         present |= {(entry["kind"], path) for path, _type in new - old}
-    for name, extra in OPTION_RUNS.items():
-        entry = {**ENTRIES[name], "args": [*ENTRIES[name]["args"], *extra]}
+    for name, extra, code in OPTION_RUNS:
+        entry = option_entry(name, extra, code)
         old = shape_of(json.loads((SAMPLES / name).read_text(encoding="utf-8")))
         new = shape_of(current_document(entry, tmp_path, monkeypatch))
         present |= {(ENTRIES[name]["kind"], path) for path, _type in new - old}
