@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import dataclasses
 import signal
+import tomllib
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from rdflib import Graph, URIRef
@@ -39,6 +42,64 @@ FROZEN = [
 def test_value_objects_are_frozen(cls: type) -> None:
     assert dataclasses.is_dataclass(cls)
     assert cls.__dataclass_params__.frozen  # type: ignore[attr-defined]
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _scope_files() -> list[Path]:
+    """The files the mutation run covers: ``[tool.pytest-gremlins] paths`` of ``pyproject.toml``."""
+    paths = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["pytest-gremlins"]["paths"]
+    return sorted(f for p in paths for f in ((ROOT / p).rglob("*.py") if (ROOT / p).is_dir() else [ROOT / p]))
+
+
+def _dataclasses_in(path: Path) -> list[tuple[str, ast.expr]]:
+    """Each ``dataclass`` decorator of ``path`` with its class's qualified name, nested and local classes too."""
+    found: list[tuple[str, ast.expr]] = []
+
+    def visit(node: ast.AST, prefix: str) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.ClassDef):
+                qualname = prefix + child.name
+                found.extend((qualname, d) for d in child.decorator_list if _is_dataclass(d))
+                visit(child, qualname + ".")
+            elif isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef):
+                visit(child, f"{prefix}{child.name}.<locals>.")
+
+    def _is_dataclass(decorator: ast.expr) -> bool:
+        target = decorator.func if isinstance(decorator, ast.Call) else decorator
+        return (target.attr if isinstance(target, ast.Attribute) else getattr(target, "id", "")) == "dataclass"
+
+    visit(ast.parse(path.read_text(encoding="utf-8")), "")
+    return found
+
+
+def _module_name(path: Path) -> str:
+    return ".".join(path.relative_to(ROOT / "src").with_suffix("").parts)
+
+
+def _frozen_by_decorator() -> set[tuple[str, str]]:
+    """(module, qualified name) of every ``@dataclass(frozen=True)`` class in the mutation scope."""
+    return {
+        (_module_name(path), qualname)
+        for path in _scope_files()
+        for qualname, decorator in _dataclasses_in(path)
+        if isinstance(decorator, ast.Call)
+        and any(k.arg == "frozen" and getattr(k.value, "value", None) is True for k in decorator.keywords)
+    }
+
+
+def test_every_frozen_dataclass_of_the_mutation_scope_is_listed_in_the_frozen_test() -> None:
+    """A ``frozen=True`` decorator the list does not name has a mutant no test kills quickly: in a mutation run it
+    selects the whole suite and times out as an error (issues #71, #151, #187).  The list is the registry, so a
+    new frozen dataclass is a failing test here until it is added to ``FROZEN``."""
+    listed = {(cls.__module__, cls.__qualname__) for cls in FROZEN}
+    found = _frozen_by_decorator()
+
+    assert not {q for _, q in found if "<locals>" in q}, "a frozen dataclass defined in a function cannot be listed"
+    assert sorted(found - listed) == []
+    # The scan reads the scope: one that found nothing would make the check above pass for nothing.
+    assert ("ontolint.reporting", "Origin") in found
 
 
 class _Closed:
