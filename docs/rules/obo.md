@@ -2197,3 +2197,19 @@ ex:A a owl:Class ; owl:deprecated true ; obo:IAO_0000115 "a thing." .
 @prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
 ex:A a owl:Class ; obo:IAO_0000600 "a thing." .
 ```
+
+*Clean:* `titlecase letter is not lowercase`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "ǅ thing." .
+```
+
+*Clean:* `Hebrew is uncased`
+
+```turtle
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+ex:A a owl:Class ; obo:IAO_0000115 "דבר" .
+```
