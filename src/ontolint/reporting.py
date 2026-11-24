@@ -370,7 +370,7 @@ def to_json(report: RunReport) -> dict[str, Any]:
         # Present only with --timing, and never in a baseline, fingerprint, snapshot or the Markdown summary.
         **({"timing": timing_dict(report.timing)} if report.timing is not None else {}),
         # Present only when the run exits 2, with why (issue #175): a run that exits 0 or 1 keeps its shape.
-        **({"exit": exit_object(report)} if exit_object(report) is not None else {}),
+        **({"exit": e} if (e := exit_object(report)) is not None else {}),
     }
 
 
@@ -501,7 +501,7 @@ def _sarif_invocation(report: RunReport, exit_status: int | None) -> dict[str, A
         "properties": {
             "executionSummary": summarise_executions(_all_executions(report)),
             **({"ontolintTiming": timing_dict(report.timing)} if report.timing is not None else {}),
-            **({"ontolintExit": exit_object(report)} if exit_object(report) is not None else {}),
+            **({"ontolintExit": e} if (e := exit_object(report)) is not None else {}),
         },
     }
     if exit_status is not None:
@@ -776,6 +776,22 @@ def _markdown_broken(report: RunReport) -> list[str]:
     return blocks
 
 
+def _markdown_failed_measurements(report: RunReport) -> list[str]:
+    """The first :data:`MARKDOWN_BROKEN_SHOWN` measurements that could not be computed, the other cause of exit 2."""
+    failed = report.failed_measurements
+    if not failed:
+        return []
+    items = [
+        f"- {markdown_code(measurement_id, _QUOTE_LIMITS['rule'])} for {markdown_code(path, _QUOTE_LIMITS['path'])}: "
+        f"{markdown_code(reason, _QUOTE_LIMITS['detail'])}"
+        for path, measurement_id, reason in failed[:MARKDOWN_BROKEN_SHOWN]
+    ]
+    blocks = ["### Measurements that failed", "\n".join(items)]
+    if len(failed) > MARKDOWN_BROKEN_SHOWN:
+        blocks.append(f"{len(failed) - MARKDOWN_BROKEN_SHOWN} more not shown.")
+    return blocks
+
+
 def _markdown_finding(file: FileReport, f: Finding, several: bool) -> str:
     """One finding's list item; its file is named when the run has several or the finding is an import's."""
     where = f" in {markdown_code(file.path_of(f), _QUOTE_LIMITS['path'])}" if several or f in file.origins else ""
@@ -875,7 +891,7 @@ def render_markdown(report: RunReport, exit_status: int | None = None) -> str:
     if exit_status is not None:
         blocks.append(_markdown_verdict(report, exit_status))
     blocks += [_markdown_counts(report), _execution_counts(_all_executions(report))]
-    blocks += [*_markdown_broken(report), *_markdown_findings(report)]
+    blocks += [*_markdown_broken(report), *_markdown_failed_measurements(report), *_markdown_findings(report)]
     if report.quality is not None:
         blocks += _markdown_quality(report.quality, "Quality against the baseline")
     if report.stale_baseline:

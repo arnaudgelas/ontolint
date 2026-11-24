@@ -107,7 +107,7 @@ since ontolint itself reads it; the reader also checks cross-field invariants a 
 Exit status 2 (a tool failure) never changes. When the run wrote a report, the report says why (issue #175): the `exit` object of the JSON lint
 report (`code`, and `reasons`, each with a `kind`, a one-line `message`, and the `rule`, `path` or `measurement` it is about), the same object as
 the SARIF `invocation.properties.ontolintExit`, a `toolExecutionNotifications` entry for each failed rule and each failed measurement (and
-`executionSuccessful` is `false` for both), and an `Exit status 2:` block under the text report. A run that exits 0 or 1 has none of these, so its
+`executionSuccessful` is `false` for both), an `Exit status 2:` block under the text report, and the `Rules that delivered no verdict` and `Measurements that failed` blocks of the Markdown summary. A run that exits 0 or 1 has none of these, so its
 output keeps its shape. The reasons are listed rules first (in report order), then measurements.
 
 The `kind` is an open enumeration (table above). A run that stops before it has a report (an input that does not parse, a policy rejected as
