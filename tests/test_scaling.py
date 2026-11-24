@@ -14,7 +14,6 @@ larger input more.
 
 from __future__ import annotations
 
-import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -22,6 +21,7 @@ import pytest
 from rdflib import BNode, Graph, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SKOS
 from rdflib.plugins.stores.memory import Memory
+from scaling_support import GROWTH, MAX_RATIO, Step, assert_grows_linearly, best_times
 
 from ontolint import Linter, cli
 from ontolint.datasets import build_graph_index, finding_graphs
@@ -39,24 +39,8 @@ from ontolint.source_locations import build_source_index
 
 pytestmark = pytest.mark.slow
 
-GROWTH = 8  # a wide step keeps linear and quadratic times apart when a busy machine inflates both
 SMALL = 10_000
 LARGE = GROWTH * SMALL
-MAX_RATIO = GROWTH**2 / 2  # a quadratic step gives at least 64; a linear one 8, up to 24 as its dicts outgrow the cache
-
-
-Step = Callable[[], object]
-
-
-def _best_times(small: Step, large: Step) -> tuple[float, float]:
-    """The fastest of several runs of each step, alternating them so both see the same load on a busy machine."""
-    best = [float("inf"), float("inf")]
-    for _attempt in range(5):  # the fastest run discards scheduling noise from a loaded machine
-        for side, step in enumerate((small, large)):
-            started = time.process_time()
-            step()
-            best[side] = min(best[side], time.process_time() - started)
-    return best[0], best[1]
 
 
 def _classes(count: int) -> tuple[str, Graph]:
@@ -219,7 +203,7 @@ def _measurement_partitions(count: int) -> Step:
     ],
 )
 def test_the_step_grows_linearly_with_the_number_of_classes(step: Callable[[int], Step]) -> None:
-    small, large = _best_times(step(SMALL), step(LARGE))
+    small, large = best_times(step(SMALL), step(LARGE))
     assert large / small < MAX_RATIO, f"{SMALL} classes: {small:.3f} s, {LARGE} classes: {large:.3f} s"
 
 
@@ -234,5 +218,23 @@ def test_the_sh_pattern_judgement_grows_linearly_with_the_pattern(unit: str) -> 
         text = unit * (size // len(unit))
         return lambda: pattern_problem(text, "")
 
-    small, large = _best_times(judge(PATTERN_SMALL), judge(PATTERN_LARGE))
+    small, large = best_times(judge(PATTERN_SMALL), judge(PATTERN_LARGE))
     assert large / small < MAX_RATIO, f"{PATTERN_SMALL} chars: {small:.3f} s, {PATTERN_LARGE} chars: {large:.3f} s"
+
+
+# --- the check itself: the weekly benchmarks assert this ratio and never a number of seconds (#164) ---------------
+
+
+def _quadratic(count: int) -> Step:
+    """A deliberately quadratic stand-in: every item against every other."""
+    return lambda: sum(1 for i in range(count) for j in range(count) if i == j)
+
+
+def _linear(count: int) -> Step:
+    return lambda: sum(1 for i in range(count))
+
+
+def test_the_ratio_check_fails_a_quadratic_step_and_passes_a_linear_one() -> None:
+    assert_grows_linearly(_linear(100_000), _linear(GROWTH * 100_000), "linear", attempts=3)
+    with pytest.raises(AssertionError, match="quadratic"):
+        assert_grows_linearly(_quadratic(300), _quadratic(GROWTH * 300), "quadratic", attempts=3)
