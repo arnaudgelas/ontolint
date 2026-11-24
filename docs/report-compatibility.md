@@ -76,7 +76,7 @@ SARIF 2.1.0 fields keep their standard meaning: ontolint never changes the meani
 through property bags (`run.properties`, `result.properties`, `reportingDescriptor.properties`, `invocation.properties`,
 `notification.properties`) and `partialFingerprints`. Names already in use (`details`, `evidence`, `graphs`, `modules`, `category`,
 `backend`, `scope`, `executionSummary`, `status`, `results`) keep their names and meanings. **A new property name starts with `ontolint`**
-(`ontolintCatalogue`), so it can never collide with a property name SARIF or a consumer reserves. Fingerprint keys carry a version in their
+(for example a future `ontolintCatalogue`), so it can never collide with a property name SARIF or a consumer reserves. Fingerprint keys carry a version in their
 name (`ontolintIdentity/v2`, `ontolintFingerprint/v1`): a changed meaning is a new name with a new version, and the old one is deprecated as above.
 A new `ontolint*` property is additive; the report still validates against the SARIF 2.1.0 schema (`tests/test_sarif_schema.py`).
 
@@ -84,7 +84,8 @@ A new `ontolint*` property is additive; the report still validates against the S
 
 `tests/fixtures/reports/0.16.0/` holds real 0.16.0 outputs, generated from the `v0.16.0` tag (`manifest.json` records each command): the lint report in
 eleven shapes (default, clean, empty ontology, `--measurements`, `--quality-baseline`, `--baseline` with stale entries, `--shapes`, a failed
-rule (exit 2), several files, module grouping, a profile), the rule listing, the rule detail, a quality snapshot, a baseline file and two SARIF reports. They are never regenerated.
+rule (exit 2), several files, module grouping, a profile), the rule listing, the rule detail, a quality snapshot, a baseline file and two SARIF reports. They are never regenerated from newer code; a missing shape gets a new sample from its own tag.
+The SARIF `partialFingerprints` keys are not sampled yet (both SARIF samples are generated without `--sarif-fingerprints`), so nothing here protects them until a sample is added.
 `tests/test_report_compatibility.py` runs the same commands with the current code and requires that:
 
 1. **every key path and type of a sample is still there** (nothing removed, renamed or retyped; keys that hold data, such as the severity
