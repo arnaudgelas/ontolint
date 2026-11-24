@@ -292,6 +292,7 @@ def rule_counts(report: RunReport) -> list[dict[str, Any]]:
     (a finding outranks the ignore, a case that cannot occur since an ignored rule does not run).
     ``findings`` counts the findings in the report, ``baselined`` those a baseline removed from it, so the
     ``findings`` of all rules add up to the report's findings and each count is of its own set.
+    A baselined finding comes from a rule that ran, so a baseline adds no row: it changes only the ``baselined`` column.
     """
     statuses: dict[str, set[ExecutionStatus]] = {}
     for file_report in report.files:
@@ -299,7 +300,7 @@ def rule_counts(report: RunReport) -> list[dict[str, Any]]:
             statuses.setdefault(execution.rule_id, set()).add(execution.status)
     found = Counter(f.rule for f in report.findings)
     accepted = Counter(f.rule for findings in report.baselined or () for f in findings)
-    rules = {spec.rule_id for spec in default_registry().all()} | statuses.keys() | found.keys() | accepted.keys()
+    rules = {spec.rule_id for spec in default_registry().all()} | statuses.keys() | found.keys()
     counts: list[dict[str, Any]] = []
     for rule in sorted(rules):
         seen = statuses.get(rule, set())
