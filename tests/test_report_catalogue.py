@@ -222,6 +222,15 @@ def test_an_ignored_rule_with_a_finding_is_executed_as_the_finding_proves_it_ran
     assert _counts(to_json(quiet))["OWL001"]["status"] == "not_selected"
 
 
+def test_a_baseline_changes_only_the_baselined_column_never_the_rows() -> None:
+    """A baselined finding comes from a rule that ran, so it adds no row; found by the property test of #173."""
+    kept = Finding("OWL001", "warning", "https://example.test/A", "m", "s")
+    odd = Finding("ZZZ999", "error", "", "", "")
+    plain = RunReport((FileReport("a.ttl", "a.ttl", (kept,)),))
+    accepted = replace(plain, baselined=((odd,),))
+    assert [r["rule"] for r in to_json(accepted)["rule_counts"]] == [r["rule"] for r in to_json(plain)["rule_counts"]]
+
+
 # --- the schema and SARIF -----------------------------------------------------------------------------------------
 
 
