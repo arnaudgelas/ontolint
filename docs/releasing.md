@@ -30,7 +30,7 @@ section by hand if a subject reads badly; the script will not touch earlier sect
    `git diff vPREV..HEAD -- tests/golden/identities.json` lists the changed identities, SHACL001's
    included; it does not cover the probe cases of SEM001, INPUT001 and TOOL001, so check a change
    to their subject by hand.
-   Copy the rows of the ledger of `docs/report-compatibility.md` ("Additions since the 0.16.0 samples") into the changelog under the name of each
+   Copy the rows of the ledger of `docs/report-compatibility.md` ("Ledger: additions since the 0.16.0 samples") into the changelog under the name of each
    report, and increment a document's version key for any breaking change the policy lists; `tests/test_report_compatibility.py` fails for a key that
    is added without a ledger row or removed from a frozen sample.
 2. **Review the corpus diff.** The release owner fetches the pinned corpus and runs the three checks; each needs the
