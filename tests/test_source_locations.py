@@ -911,7 +911,8 @@ def test_a_java_jsonld_fixture_is_what_riot_writes_today(fixture: str, variant: 
 
     Neither writer reproduces its bytes (member and node order vary between runs), so the bytes are compared
     as data, and the layout by the same test as the committed file. The jars are the distribution's, checked
-    file by file; the JVM is trusted, as the Python running the tests is. Not run in CI, which has no Java.
+    file by file; the JVM is trusted, as the Python running the tests is. The pull-request gate has no Java;
+    ``jena.yml`` runs it every week (``docs/ci-schedule.md``).
     """
     home = Path(os.environ["ONTOLINT_JENA_HOME"])
     assert _riot(home, "--version").strip() == "Apache Jena RIOT version 4.10.0"
