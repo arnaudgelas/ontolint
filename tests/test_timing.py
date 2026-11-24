@@ -4,7 +4,8 @@ What is measured: ``load_ms`` is the time spent reading the inputs (ontologies, 
 ``units_ms`` is the time of each unit that ran rules (a rule module for the graph rules, one adapter per adapter
 rule), failed or not; ``rules_ms`` gives each rule that ran the time of its unit (rules of one module share it: do
 not add them up); ``total_ms`` is the wall time from the start of the run to the end of the last rule, writing the
-report excluded.  All integers, milliseconds, rounded to the nearest.  The flag is off by default and the output
+report and comparing the baselines and the quality excluded; it is at least ``load_ms`` plus the sum of ``units_ms``, not
+equal to it.  All integers, milliseconds, rounded to the nearest.  The flag is off by default and the output
 without it is byte for byte what it was; the timing is in no baseline, fingerprint, quality snapshot, DQV file or
 Markdown summary.  The clock is a parameter (``main(argv, clock=...)``), so these tests are deterministic.
 """
@@ -96,6 +97,27 @@ def test_a_fake_clock_gives_exact_values(monkeypatch: pytest.MonkeyPatch) -> Non
     assert timing["load_ms"] >= 1
     assert all(ms >= 1 for ms in timing["units_ms"].values())  # a unit is read twice, 1 ms apart at least
     assert set(timing["rules_ms"].values()) <= set(timing["units_ms"].values())
+    # the total covers the loading and the units, and also what runs between them: at least their sum, not equal to it
+    assert timing["total_ms"] >= timing["load_ms"] + sum(timing["units_ms"].values())
+
+
+def test_the_total_ends_with_the_last_rule_and_not_after_the_baseline_and_quality_comparison(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clock = FakeClock()
+    plain = _json([*LINT, "--timing"], monkeypatch, FakeClock())["timing"]["total_ms"]
+
+    import ontolint.cli as cli
+
+    original = cli._apply_baselines
+
+    def slow(*args: Any, **kwargs: Any) -> Any:
+        for _ in range(50):
+            clock()  # the baseline comparison takes fifty readings of the clock
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(cli, "_apply_baselines", slow)
+    assert _json([*LINT, "--timing"], monkeypatch, clock)["timing"]["total_ms"] == plain
 
 
 def test_a_rule_that_ran_has_the_time_of_its_unit_and_a_rule_that_did_not_run_has_none(
