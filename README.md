@@ -90,7 +90,7 @@ quality snapshot and the baseline file have schemas beside it (`rule-listing.v1`
 A lint report also names the rule catalogue it ran with and counts every rule: `catalogue` (`ontolint_version`, `rule_count`, and `sha256`, the hash of the
 packaged `rule_catalogue.csv` rows, sorted, each as a JSON array of its seven columns) and `rule_counts` (per rule, sorted by id: `status`, `findings`,
 `baselined`; `status` is `executed`, `skipped`, `unsupported`, `failed` or `not_selected`, the worst over the files). SARIF carries the same under the run's
-`properties` as `ontolintCatalogue` and `ontolintRuleCounts`. A rule with no finding and `executed` is a pass; one that is `not_selected` did not run.
+`properties` as `ontolintCatalogue` and `ontolintRuleCounts`. `catalogue.rule_count` counts every catalogue row, implemented and proposed, while `rule_counts` has one entry per implemented rule, so the two lengths differ. A rule with no finding and `executed` is a pass; one that is `not_selected` did not run.
 
 | You want | Run or read | Where it is described |
 | --- | --- | --- |

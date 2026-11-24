@@ -63,7 +63,7 @@
     },
     "rule_counts": {
       "type": "array",
-      "description": "Sorted by rule id; the findings of all rules add up to the report's findings.",
+      "description": "One entry per implemented rule (not per catalogue row, so its length is not catalogue.rule_count, which also counts proposed rules), sorted by rule id; the findings of all rules add up to the report's findings.",
       "items": {
         "$ref": "#/$defs/ruleCount"
       }

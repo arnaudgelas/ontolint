@@ -48,6 +48,8 @@ open (`additionalProperties` is not `false`) for exactly this reason.
 | rule category | `rules[].category` | as the catalogue says | additive (open) |
 | backend, scope, requires, family | `rules[]` | as the catalogue says | additive (open) |
 
+A rule the user ignored is `skipped` in `executions` and `not_selected` in `rule_counts`; `not_selected` also covers a rule no selector, profile or opt-in family chose.
+
 A consumer that switches on a closed enumeration may treat an unknown value as an error; on an open one it must not.
 
 ## What is breaking (version bump, changelog "Breaking changes")
