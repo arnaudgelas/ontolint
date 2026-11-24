@@ -4,19 +4,38 @@ from __future__ import annotations
 
 import ast
 import dataclasses
+import importlib
 import signal
 import tomllib
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from rdflib import Graph, URIRef
 from rule_harness import BASE, graph
 
-from ontolint import Linter, cli, context, declarations, imports, loader, models, prof, reporting, worker
+from ontolint import (
+    Linter,
+    baseline,
+    cli,
+    context,
+    datasets,
+    declarations,
+    dqv,
+    engine,
+    imports,
+    loader,
+    models,
+    prof,
+    quality,
+    reporting,
+    worker,
+)
 from ontolint.adapters import shacl
-from ontolint.rules import shacl_quality
-from ontolint.source_locations import _iri_end, _skip_string, build_source_index
+from ontolint.datasets import EMPTY_INDEX, GraphIndex
+from ontolint.rules import bounds, hierarchy_quality, measurements, shacl_quality
+from ontolint.source_locations import SourceIndex, _iri_end, _skip_string, build_source_index
 
 # Value objects handed between pipeline stages, cached or shared with a worker: their immutability is
 # a contract (a stage must not change what another reads), not an accident of the decorator.
@@ -35,6 +54,36 @@ FROZEN = [
     declarations.Place,
     declarations.Shared,
     declarations._Facts,
+    # The rest of the mutation scope (test_every_frozen_dataclass_of_the_mutation_scope_is_listed_in_the_frozen_test).
+    baseline.Baseline,
+    cli.RunPlan,
+    datasets.Content,
+    datasets.GraphIndex,
+    dqv.Subject,
+    engine.RobotRequest,
+    loader.LoadedGraph,
+    loader.Module,
+    quality.Change,
+    quality.Comparison,
+    quality.Coverage,
+    quality.Entry,
+    quality.Result,
+    quality.Shaping,
+    quality.Snapshot,
+    reporting.FileReport,
+    reporting.Location,
+    reporting.RunReport,
+    shacl.ShaclResult,
+    shacl._Report,
+    bounds.BuiltIn,
+    hierarchy_quality.Hierarchy,
+    measurements.Absent,
+    measurements.Count,
+    measurements.CountRatio,
+    measurements.MeasurementSpec,
+    measurements.TermRatio,
+    measurements.TermValues,
+    measurements._Hierarchy,
 ]
 
 
@@ -100,6 +149,55 @@ def test_every_frozen_dataclass_of_the_mutation_scope_is_listed_in_the_frozen_te
     assert sorted(found - listed) == []
     # The scan reads the scope: one that found nothing would make the check above pass for nothing.
     assert ("ontolint.reporting", "Origin") in found
+
+
+def _compare_ignored() -> set[tuple[str, str, str]]:
+    """(module, class, field) of every field of a scope dataclass declared with ``compare=False``."""
+    found: set[tuple[str, str, str]] = set()
+    for path in _scope_files():
+        module = importlib.import_module(_module_name(path))
+        for qualname, _ in _dataclasses_in(path):
+            cls: Any = module
+            for part in qualname.split("."):
+                cls = getattr(cls, part)
+            found |= {(module.__name__, qualname, f.name) for f in dataclasses.fields(cls) if not f.compare}
+    return found
+
+
+_INDEX = SourceIndex()  # one object: a SourceIndex compares by identity
+_GRAPH = Graph()
+
+
+def _module(graphs: GraphIndex) -> loader.Module:
+    return loader.Module("a.ttl", "file:///a.ttl", frozenset(), _INDEX, graphs=graphs)
+
+
+def _loaded(graphs: GraphIndex) -> loader.LoadedGraph:
+    return loader.LoadedGraph(_GRAPH, _INDEX, graphs=graphs)
+
+
+_NAMED = GraphIndex({(URIRef(f"{BASE}s"), URIRef(f"{BASE}p"), URIRef(f"{BASE}o")): ("urn:g",)})
+# Each ``compare=False`` field of the scope with a way to build an object holding a given value in it.
+COMPARE_IGNORED: dict[tuple[str, str, str], Callable[[GraphIndex], object]] = {
+    ("ontolint.loader", "Module", "graphs"): _module,
+    ("ontolint.loader", "LoadedGraph", "graphs"): _loaded,
+}
+
+
+def test_every_compare_false_field_of_the_mutation_scope_is_listed() -> None:
+    """``compare=False`` to ``True`` is a mutant of its own: the field then takes part in ``==`` and in the hash, and
+    nothing else in the suite compares two objects that differ in it alone."""
+    assert sorted(_compare_ignored() ^ COMPARE_IGNORED.keys()) == []
+
+
+@pytest.mark.parametrize("key", sorted(COMPARE_IGNORED), ids=".".join)
+def test_a_compare_false_field_does_not_take_part_in_equality(key: tuple[str, str, str]) -> None:
+    make = COMPARE_IGNORED[key]
+    plain, named = make(EMPTY_INDEX), make(_NAMED)
+
+    assert getattr(plain, key[2]) != getattr(named, key[2])
+    assert plain == named
+    assert hash(plain) == hash(named)
 
 
 class _Closed:
