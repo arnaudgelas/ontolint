@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/arnaudgelas/ontolint/main/src/ontolint/schemas/baseline.v2.schema.json",
   "title": "ontolint baseline file, version 2",
-  "description": "The file `ontolint --write-baseline FILE` writes and `--baseline` reads. The reader accepts any positive `version` and ignores sections it does not know (this is what makes an added section additive), so objects are open; this schema describes version 2, which ontolint writes. Version 1 (0.10: `fingerprints` only) is still read and is not described here.",
+  "description": "The file `ontolint --write-baseline FILE` writes and `--baseline` reads. The reader accepts any positive `version` and ignores sections it does not know (this is what makes an added section additive), so objects are open; this schema describes what ontolint writes (version 2). Version 1 (0.10: `fingerprints` only) is still read and is not described here. The reader also requires every path of `identities` to appear in `files`, which a schema cannot express.",
   "type": "object",
   "required": [
     "version",
@@ -23,6 +23,7 @@
     },
     "fingerprints": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "string",
         "pattern": "^[0-9a-f]{64}$"

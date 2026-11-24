@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/arnaudgelas/ontolint/main/src/ontolint/schemas/quality-snapshot.v1.schema.json",
   "title": "ontolint quality snapshot, version 1",
-  "description": "The file `ontolint --write-quality-snapshot FILE` writes and `--quality-baseline` and `--compare-quality` read. ontolint's own reader is closed (quality.loads refuses a key or a version it does not know), so this schema is closed exactly where the reader is: the top level, the policy, a measurement, and its pairs; any change to the format increments `version` (docs/report-compatibility.md).",
+  "description": "The file `ontolint --write-quality-snapshot FILE` writes and `--quality-baseline` and `--compare-quality` read. ontolint's own reader is closed (quality.loads refuses a key or a version it does not know), so this schema is closed to unknown keys exactly where the reader is: the top level, the policy, a measurement, and its pairs. The reader also checks what a schema cannot express (a count equal to its term set, unique measurement ids, buckets in ascending order, integer counts), so run `--compare-quality` to validate a snapshot fully. Any change to the format increments `version` (docs/report-compatibility.md).",
   "type": "object",
   "required": [
     "format",
@@ -73,7 +73,8 @@
       "additionalProperties": false,
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "definition_version": {
           "type": "integer",
@@ -87,7 +88,8 @@
           ]
         },
         "population": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "reason": {
           "type": "string"

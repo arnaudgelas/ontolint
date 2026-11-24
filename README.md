@@ -85,7 +85,7 @@ wheel, `ontolint/schemas/lint-report.v1.schema.json` (`importlib.resources.files
 what may change in a report without a version bump, and what is breaking, is the
 [report compatibility policy](docs/report-compatibility.md); pin the version you parse against. The rule listing, the rule detail, the
 quality snapshot and the baseline file have schemas beside it (`rule-listing.v1`, `rule-detail.v1`, `quality-snapshot.v1`,
-`baseline.v2`).
+`baseline.v2`); the last two describe what ontolint writes, and the readers check more than a schema can (`--compare-quality` validates a snapshot fully).
 
 | You want | Run or read | Where it is described |
 | --- | --- | --- |
