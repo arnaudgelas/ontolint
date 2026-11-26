@@ -5,7 +5,7 @@ for the SARIF report.  This script builds the very two commands the Action runs 
 inputs it writes itself, and reports:
 
 * the wall time and the peak memory of one run and of the Action's two, over several repetitions (the median);
-* whether the reports of the repetitions are byte-identical (they should be, except for a run a time budget limits);
+* whether the reports of the repetitions are byte-identical (expected, unless a time budget limits a run);
 * with a SHACL validation budget (``--max-validation-seconds``) set near the validation time, how often the Markdown run
   and the SARIF run of one Action invocation disagree about whether SHACL001 failed.
 
@@ -163,6 +163,25 @@ def action_pair(entry: object, scenario: Scenario, directory: Path) -> tuple[Run
     return markdown, sarif
 
 
+def checked_pair(entry: object, scenario: Scenario, directory: Path) -> tuple[Run, Run]:
+    """An Action invocation whose two runs both exited 0 and wrote their report (the cost measurement needs that)."""
+    markdown, sarif = action_pair(entry, scenario, directory)
+    both = commands(entry, scenario, directory)
+    return (
+        require_success(markdown, f"{scenario.name}, Markdown run", both["markdown"]),
+        require_success(sarif, f"{scenario.name}, SARIF run", both["sarif"]),
+    )
+
+
+def require_success(run: Run, label: str, argv: Sequence[str] = ()) -> Run:
+    """``run`` itself, or a SystemExit saying which command failed or wrote no report: no number from a broken run."""
+    if run.exit != 0:
+        raise SystemExit(f"{label}: exited {run.exit}, expected 0: {' '.join(argv)}")
+    if not run.reports:
+        raise SystemExit(f"{label}: exited 0 but wrote no report: {' '.join(argv)}")
+    return run
+
+
 def digest(run: Run) -> str:
     return hashlib.sha256(b"".join(run.reports[name] for name in sorted(run.reports))).hexdigest()[:12]
 
@@ -186,7 +205,7 @@ class Cost:
 
 
 def measure(entry: object, scenario: Scenario, directory: Path, repetitions: int) -> Cost:
-    pairs = [action_pair(entry, scenario, directory) for _ in range(repetitions)]
+    pairs = [checked_pair(entry, scenario, directory) for _ in range(repetitions)]
     firsts = [markdown for markdown, _ in pairs]
     sarifs = [sarif for _, sarif in pairs]
     return Cost(
@@ -210,7 +229,10 @@ def threshold(entry: object, directory: Path, nodes: int, steps: int = 7) -> flo
         middle = (low * high) ** 0.5  # geometric: budgets span orders of magnitude
         scenario = shacl_run(directory, nodes, round(middle, 3))
         sarif = commands(entry, scenario, directory)["sarif"]
-        failed = run_one(sarif, directory, directory / "out" / "ontolint.sarif").exit == TOOL_FAILURE
+        run = run_one(sarif, directory, directory / "out" / "ontolint.sarif")
+        if run.exit not in (0, TOOL_FAILURE):
+            raise SystemExit(f"budget {middle:.3f} s: exited {run.exit}, expected 0 or {TOOL_FAILURE}")
+        failed = run.exit == TOOL_FAILURE
         low, high = (middle, high) if failed else (low, middle)
     return high
 
@@ -226,6 +248,17 @@ def disagreement(entry: object, directory: Path, nodes: int, pairs: int) -> list
         budget = max(round(edge * factor, 3), 0.05)
         scenario = shacl_run(directory, nodes, budget)
         said = [action_pair(entry, scenario, directory) for _ in range(pairs)]
+        for (
+            markdown,
+            sarif,
+        ) in said:  # exit 2 is the experiment's subject; any other failure, or a missing report, is not
+            for label, run in (("Markdown", markdown), ("SARIF", sarif)):
+                if run.exit not in (0, TOOL_FAILURE):
+                    raise SystemExit(
+                        f"budget {budget:g} s, {label} run: exited {run.exit}, expected 0 or {TOOL_FAILURE}"
+                    )
+                if run.exit == 0 and not run.reports:
+                    raise SystemExit(f"budget {budget:g} s, {label} run: exited 0 but wrote no report")
         in_markdown = sum(m.exit == TOOL_FAILURE for m, _ in said)
         in_sarif = sum(s.exit == TOOL_FAILURE for _, s in said)
         differ = sum(m.exit != s.exit for m, s in said)
