@@ -1,10 +1,12 @@
-"""Every test that an ``ONTOLINT_*`` switch skips is named in ``docs/ci-schedule.md`` with what runs it (issue #166).
+"""Every test that an ``ONTOLINT_*`` switch skips is named in ``docs/ci-schedule.md`` with its scheduled job (#166).
 
-A test that is skipped unless a switch is set proves nothing until something sets the switch.  The platform skips
-are guarded by ``test_platform_skips.py``; this guards the other kind: a ``skipif`` (or a ``pytest.skip``) whose
-condition or reason reads an ``ONTOLINT_*`` name.  Each such switch must have a row in the "Switches" table of
-``docs/ci-schedule.md``, whose workflow exists, is a scheduled one and mentions the switch (or the entry point the row
-names), or whose row says it is a developer tool that never skips a check in a normal run.
+A test that is skipped unless a switch is set proves nothing until something sets the switch or runs the same code.
+The platform skips are guarded by ``test_platform_skips.py``; this guards the other kind: a ``skipif`` (or a
+``pytest.skip``) whose condition or reason reads an ``ONTOLINT_*`` name.  Each such switch must have a row in the
+"Switches" table of ``docs/ci-schedule.md``.  The row names a workflow that exists, is a scheduled one and mentions,
+outside a comment, the switch (or the entry point the row names); or it says the switch is a developer tool that never
+skips a check in a normal run.  That is textual association, not proof of execution: ``fuzz.yml`` does not set
+``ONTOLINT_FUZZ``, it runs the same targets through ``tests.fuzz.fuzzer``, and the row says so.
 
 This is a source-level lint, like the platform one: a skip decided through a helper in another module, or with the
 switch's name built at run time, is not seen.  A tool that may be missing (``actionlint``, ``docker``, ``uv``) is not a
@@ -66,6 +68,11 @@ def skip_switches_of_the_suite() -> set[str]:
     }
 
 
+def _without_comments(workflow: str) -> str:
+    """``workflow`` without its whole-line comments: a token that appears only in one is no evidence."""
+    return "\n".join(line for line in workflow.splitlines() if not line.lstrip().startswith("#"))
+
+
 def problems(found: set[str], table: str, workflows: dict[str, str], scheduled: set[str]) -> list[str]:
     """What is wrong between the switches the suite skips on, the table that names them and the workflows."""
     rows = {m["switch"]: m for m in ROW.finditer(table)}
@@ -84,7 +91,7 @@ def problems(found: set[str], table: str, workflows: dict[str, str], scheduled: 
         if file not in scheduled:
             out.append(f"{switch} names {file}, which is not on a schedule")
         token = row["evidence"].strip().strip("`")
-        if token not in workflows[file]:
+        if token not in _without_comments(workflows[file]):
             out.append(f"{switch}: {file} does not contain {token!r}")
     return out
 
@@ -100,7 +107,7 @@ def _scheduled(workflows: dict[str, str]) -> set[str]:
 TABLE = SCHEDULE.read_text(encoding="utf-8")
 
 
-def test_every_switch_the_suite_skips_on_is_named_with_the_workflow_that_sets_it() -> None:
+def test_every_switch_the_suite_skips_on_is_named_with_the_scheduled_workflow_that_covers_it() -> None:
     workflows = _workflows()
 
     assert problems(skip_switches_of_the_suite(), TABLE, workflows, _scheduled(workflows)) == []
@@ -148,6 +155,14 @@ def test_a_row_naming_a_workflow_that_is_not_scheduled_or_does_not_set_the_switc
         "ONTOLINT_X names x.yml, which is not on a schedule"
     ]
     assert problems(both, NEW_TABLE, {"x.yml": "- cron: x\n"}, {"x.yml"}) == [
+        "ONTOLINT_X: x.yml does not contain 'ONTOLINT_X'"
+    ]
+
+
+def test_a_token_that_only_a_comment_of_the_workflow_holds_is_no_evidence() -> None:
+    both = {"ONTOLINT_X", "ONTOLINT_UPDATE_GOLDEN"}
+
+    assert problems(both, NEW_TABLE, {"x.yml": "# ONTOLINT_X\n- cron: x\n"}, {"x.yml"}) == [
         "ONTOLINT_X: x.yml does not contain 'ONTOLINT_X'"
     ]
 

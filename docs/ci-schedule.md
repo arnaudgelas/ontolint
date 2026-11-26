@@ -34,11 +34,12 @@ is cancelled or times out still uploads what the checks had written; the job log
 
 ### Switches
 
-A test that is skipped unless an `ONTOLINT_*` switch is set proves nothing until something sets it. Each switch the
-suite skips on is here with the scheduled workflow that sets it (`tests/test_skip_inventory.py` fails when a `skipif`
-reads a switch with no row, when a row names a workflow that does not exist, is not on a schedule or does not contain
-the text in the last column, and when a row names no workflow without being a developer tool). The platform skips
-(Windows, POSIX permissions) are guarded by `tests/test_platform_skips.py`; a missing tool (`actionlint`, `docker`, `uv`) is
+A test that is skipped unless an `ONTOLINT_*` switch is set proves nothing until something sets it or runs the same
+code. Each switch the suite skips on is here with the scheduled workflow that covers it: sets it, or, for
+`ONTOLINT_FUZZ`, runs the same targets by another route (`tests/test_skip_inventory.py` fails when a `skipif`
+reads a switch with no row, when a row names a workflow that does not exist, is not on a schedule or does not contain,
+outside a comment, the text in the last column, and when a row names no workflow without being a developer tool; it checks
+the text, not that the step runs). The platform skips (Windows, POSIX permissions) are guarded by `tests/test_platform_skips.py`; a missing tool (`actionlint`, `docker`, `uv`) is
 neither.
 
 | Switch | What it turns on | Workflow | Text the workflow holds |
