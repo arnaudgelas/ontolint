@@ -14,7 +14,8 @@ from typing import Any
 
 import pytest
 from jena_support import run_jena
-from rdflib import Graph
+from rdflib import Graph, Literal
+from rdflib.namespace import SH
 
 from ontolint import Linter
 
@@ -69,6 +70,10 @@ def test_jena_still_does_what_the_record_says(case: dict[str, Any]) -> None:
 
     assert done.returncode == expected["exit"], done.stderr
     if expected["outcome"] == "error":
-        assert expected["message"] in done.stdout + done.stderr
-    else:
-        assert f"sh:conforms  {str(expected['outcome'] == 'conforms').lower()}" in done.stdout
+        assert done.stdout.strip() == "", "an error writes no report"
+        assert expected["message"] in done.stderr
+        return
+    report = Graph().parse(data=done.stdout, format="turtle")  # the report as RDF, not as Jena's current spacing
+    assert (None, SH.conforms, Literal(expected["outcome"] == "conforms")) in report
+    assert (None, SH.conforms, Literal(expected["outcome"] != "conforms")) not in report
+    assert len(list(report.subjects(SH.resultSeverity, SH.Violation))) == (expected["outcome"] == "violations")

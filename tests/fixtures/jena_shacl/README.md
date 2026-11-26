@@ -27,7 +27,7 @@ control: a pattern that the value does not match, so that "conforms" elsewhere i
 
 Run the command above with Apache Jena 4.10.0 (see `tests/fixtures/java_jsonld/README.md` for the archive and its SHA-512)
 on each file, update `cases.json` with what it printed, and run `ONTOLINT_JENA_HOME=... uv run pytest tests/test_jena_shacl.py`.
-A change of what Jena does is a change of the evidence of `docs/severity-decisions.md`: say so there too.
+A change of what Jena does is a change of the evidence of `docs/severity-decisions.md`: say so there too. A change of a rule's severity edits only the `ontolint` half of a record, and its rationale goes in `docs/severity-decisions.md` ("Limits of this record").
 
 ## Limits
 
