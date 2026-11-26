@@ -50,9 +50,10 @@ Disagreement trial (one Action invocation = a Markdown run then a SARIF run, sam
 - **Memory does not add up.** The runs are sequential, so the peak is the larger of the two (it rises from 168 to
   237 MiB on the closure because the SARIF run holds the source locations the Markdown run does not need).
 - **The reports are deterministic.** The five Markdown reports and the five SARIF reports of each input are byte-identical,
-  so two runs cannot disagree on their own (test case 1 of the issue).
+  so with no time budget the two runs did not disagree on these inputs (test case 1 of the issue). Every run counted
+  exited 0 and wrote its report; the tool stops otherwise instead of measuring a failure.
 - **A validation budget makes them disagree.** With `--max-validation-seconds` at the budget SHACL001 just meets
-  (found by bisection), 2 of the 10 invocations ended with one run exiting 2 (the validation timed out: TOOL001) and the other
+  (found by bisection between two assumed bounds: one edge observed, not a universal threshold), 2 of the 10 invocations ended with one run exiting 2 (the validation timed out: TOOL001) and the other
   exiting 0: the Markdown summary then says the validation failed and the SARIF report of the same job says it did not, or
   the reverse. At half or at double that budget all 10 invocations agree. This is the constructed case of test case 2,
   not a hypothetical: it needs a budget close to the validation time, which a user who sets one on a slow input can reach.

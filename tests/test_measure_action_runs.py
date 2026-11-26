@@ -78,3 +78,55 @@ def test_a_small_run_reports_every_column_and_the_reports_repeat_byte_for_byte(
     assert len(rows) == len(scenarios)
     assert all(line.endswith("| yes |") for line in rows), "the reports of the repetitions are byte-identical"
     assert "NO" not in text
+
+
+def _fake_run(script: ModuleType, exit_code: int, reports: dict[str, bytes]) -> object:
+    return script.Run(0.1, 1, exit_code, reports)
+
+
+def test_a_command_that_fails_or_writes_no_report_is_not_measured() -> None:
+    script = _script()
+
+    script.require_success(_fake_run(script, 0, {"summary.md": b"x"}), "ok")
+    with pytest.raises(SystemExit, match="exited 2, expected 0"):
+        script.require_success(_fake_run(script, 2, {"summary.md": b"x"}), "failing", ["ontolint"])
+    with pytest.raises(SystemExit, match="wrote no report"):
+        script.require_success(_fake_run(script, 0, {}), "silent", ["ontolint"])
+
+
+def test_measure_stops_when_the_command_exits_non_zero(tmp_path: Path) -> None:
+    script = _script()
+    entry = script._entrypoint()  # noqa: SLF001
+    scenario = script.large_file(tmp_path, 5)
+    scenario = script.Scenario(scenario.name, ["missing.ttl"], scenario.extra)  # ontolint cannot read this file
+
+    with pytest.raises(SystemExit, match="expected 0"):
+        script.measure(entry, scenario, tmp_path, 1)
+
+
+def test_measure_stops_when_the_report_is_not_written(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    script = _script()
+    entry = script._entrypoint()  # noqa: SLF001
+    scenario = script.large_file(tmp_path, 5)
+    monkeypatch.setattr(script, "run_one", lambda *_a, **_k: script.Run(0.1, 1, 0, {}))
+
+    with pytest.raises(SystemExit, match="wrote no report"):
+        script.measure(entry, scenario, tmp_path, 1)
+
+
+def test_the_disagreement_experiment_asserts_each_exit_0_side_wrote_its_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    script = _script()
+    entry = script._entrypoint()  # noqa: SLF001
+    monkeypatch.setattr(script, "threshold", lambda *_a, **_k: 1.0)
+    monkeypatch.setattr(script, "action_pair", lambda *_a, **_k: (_fake_run(script, 2, {}), _fake_run(script, 0, {})))
+
+    with pytest.raises(SystemExit, match="SARIF run: exited 0 but wrote no report"):
+        script.disagreement(entry, tmp_path, 5, 1)
+
+    monkeypatch.setattr(
+        script, "action_pair", lambda *_a, **_k: (_fake_run(script, 1, {}), _fake_run(script, 0, {"a": b"x"}))
+    )
+    with pytest.raises(SystemExit, match="Markdown run: exited 1"):
+        script.disagreement(entry, tmp_path, 5, 1)
