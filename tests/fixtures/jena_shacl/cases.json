@@ -70,6 +70,20 @@
       "ontolint": []
     },
     {
+      "file": "flags_without_pattern.ttl",
+      "about": "sh:flags \"i\" with no sh:pattern : the flags are ignored",
+      "jena": {
+        "exit": 0,
+        "outcome": "conforms"
+      },
+      "ontolint": [
+        [
+          "SHQ015",
+          "warning"
+        ]
+      ]
+    },
+    {
       "file": "mincount_non_negative_integer.ttl",
       "about": "sh:minCount \"1\"^^xsd:nonNegativeInteger : a derived integer type",
       "jena": {
