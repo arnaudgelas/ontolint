@@ -1,0 +1,29 @@
+{
+  "description": "OWL 1 era RDF files counted for OWL035 (issue #196). Nothing is vendored: each repository is checked out at its commit by `scripts/owl_restriction_count.py fetch`, which refuses any other commit. Only the listed directories are checked out. The files are the test data of three OWL tools; the page says what that does and does not show.",
+  "repositories": [
+    {
+      "id": "jena-core-testing",
+      "url": "https://github.com/apache/jena.git",
+      "commit": "2e5edcc58e038910fb50d73e782734ea1cf6b334",
+      "licence": "Apache-2.0",
+      "paths": ["jena-core/testing"],
+      "domain": "Apache Jena core test data (W3C OWL 1 test cases, wine, food and other ontologies)"
+    },
+    {
+      "id": "owlapi-contract",
+      "url": "https://github.com/owlcs/owlapi.git",
+      "commit": "dee53400f3da0fe009bd50af1285b28095fa5178",
+      "licence": "LGPL-3.0-only OR Apache-2.0",
+      "paths": ["contract/src/test/resources"],
+      "domain": "OWL API contract test resources"
+    },
+    {
+      "id": "pellet-tests",
+      "url": "https://github.com/clarkparsia/pellet.git",
+      "commit": "4c7d16bd1811ec04117fa4cd96ed592c6cfa956b",
+      "licence": "AGPL-3.0-only (dual-licensed with a commercial licence)",
+      "paths": ["test/src/test/resources"],
+      "domain": "Pellet reasoner test data (OWL 1 test suites, SWRL, Liebig tests)"
+    }
+  ]
+}
