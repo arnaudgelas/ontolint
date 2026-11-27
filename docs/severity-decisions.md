@@ -40,7 +40,7 @@ All rows are the recommendations of this record, except the departures above and
 | OWL010, OWL032 | warning (the whole rule) | OWL pull request #199 (closes #178) |
 | OWL045 | error (the whole rule; a repeated member is inconsistent or empties a class, see the OWL specification) | OWL pull request #199 (closes #178) |
 | OWL038 | keep error | none |
-| OWL035 | keep error; the count is the issue "Count OWL035 ... on OWL 1 era ontologies" (v0.18.0) | none |
+| OWL035 | keep error; 0 of 8,258 restrictions in OWL 1 era test data carry a minimum and a maximum together ([`validation/owl-restrictions.md`](validation/owl-restrictions.md), #196) | OWL pull request for #196 |
 | OWL041, OWL023 | `certain` | OWL pull request #199 (#180, confidence) |
 | OWL004, OWL007 | no change (the TODO proposal is dropped) | none |
 | SHQ011 | `\/` and `[]a]` warning, `[[a]` and every other malformed pattern error | SHQ pull request #201 (closes #179) |
@@ -71,7 +71,7 @@ All rows are the recommendations of this record, except the departures above and
   those that rest on a convention (IRI006, IRI010, IRI012, IRI016, IRI017, IRI018, LEX001, LEX002, LEX005, LEX011, LEX019,
   LEX025: by D1 their findings would be `heuristic`, which a consumer filtering on confidence would see) and ONT001, ONT003,
   ALIGN002 and LEX013, which this step did not decide. `context-dependent` rules (FAIR, OBO, ALIGN009) are outside the check.
-* Counts that need corpora this record does not have: OWL035 and SKOS001's widening. SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
+* Counts that need corpora this record does not have: SKOS001's widening. OWL035 is counted on OWL 1 era test data in [`validation/owl-restrictions.md`](validation/owl-restrictions.md) (issue #196). SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
 * METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 found no further case (3 true positives, no false positive, on proposed labels).
 
 ### Where each decision ships
@@ -247,9 +247,13 @@ SHQ003 1,244 / 412.
 * Today: error. Proposed: "count on the corpus first".
 * Evidence: of 1,075 restrictions in corpus A, **0 carry both a minimum and a maximum cardinality**; 0 findings from the rule. The CCO,
   BFO and RO counts of the coverage-gaps page are 0 too. The idiom is an OWL 1 and Protégé 3 habit, so these OWL 2 era files cannot
-  show it. *Needs corpus count* on OWL 1 era ontologies; none was available.
-* **Recommendation: keep error and defer; do not choose before the count. Confidence: low.** The MAP argument (every pattern consumes
-  one constraint triple) supports error; the real cost is unknown.
+  show it. Counted on OWL 1 era test data (issue #196, [`validation/owl-restrictions.md`](validation/owl-restrictions.md)): **0 of 8,258
+  restrictions** (3 repositories, 3,448 files parsed) carry both; the same bounds appear as two restrictions of one `owl:intersectionOf`
+  (19 cases), which the rule accepts. The ten findings the rule reports there are malformed restrictions, not the idiom. This is no
+  estimate of how often published ontologies use the idiom (tool test data, not a random sample).
+* **Recommendation: keep error. Confidence: medium.** The MAP argument (every pattern consumes one constraint triple) supports error, and
+  the count finds no file the error would punish for the idiom. Lowering would only hide a restriction OWL 2 parsers cannot map. The
+  corpus is tool test data, not published ontologies (limits on the page), so the confidence is not high.
 
 ### SHQ015: invalid `sh:flags`
 
@@ -465,7 +469,7 @@ section numbers and quoted phrases), the Jena 4.10 statements of SHQ008, SHQ011 
 | 4 | OWL032 to warning | yes (medium-low) | warning |
 | 5 | OWL045 to error | whole rule (medium) | error, whole rule |
 | 6 | OWL038 | keep error (medium) | keep error |
-| 7 | OWL035 | keep, count first (low) | keep error; count in v0.18.0 |
+| 7 | OWL035 | keep error (medium) | keep error |
 | 8 | SHQ015 | error for unknown letter (medium) | as recommended, option A |
 | 9 | SHQ013 | `certain`, keep warning (high / medium) | as recommended |
 | 10 | SHQ011 | warning for `\/`, `[]a]`; mechanism A (medium) | as recommended |
@@ -501,7 +505,7 @@ the repository, edit the spec's severity (or confidence, or category) in the rul
 
 ## Limits of this record
 
-* No count exists for real OWL 1 era ontologies (OWL035). Production shapes graphs are counted in [`validation/shq-scope.md`](validation/shq-scope.md): five repositories, which is a sample, not the population.
+* The OWL035 count is on the test data of three OWL tools, not on published OWL 1 ontologies ([`validation/owl-restrictions.md`](validation/owl-restrictions.md), "Limits"). Production shapes graphs are counted in [`validation/shq-scope.md`](validation/shq-scope.md): five repositories, which is a sample, not the population.
 * The Jena measurements of SHQ008, SHQ011 and SHQ015 are committed in [`tests/fixtures/jena_shacl/`](../tests/fixtures/jena_shacl/README.md) (the shapes graphs, what Jena 4.10.0 did and what ontolint reports) and checked every week by `.github/workflows/jena.yml`, so a Jena upgrade that changes one fails visibly (issue #207). pySHACL's side is `tests/test_shacl_evidence.py`. The `ontolint` half of `cases.json` records today's severities, not the evidence: a change of the severity of SHQ008, SHQ011 or SHQ015 edits that record in the same commit and gives its rationale in this document (the Jena result itself has not changed).
 * One version of each engine (pySHACL 0.40.2, Jena 4.10.0 on Java 11). Jena 5 needs Java 17 and was not run; TopBraid and the OWL API were not run.
 * The per-row file list of an accepted change is the union measured in fact 5, not a per-row split.

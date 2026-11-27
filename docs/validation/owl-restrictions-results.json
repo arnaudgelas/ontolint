@@ -1,0 +1,4603 @@
+{
+ "ontolint": "0.17.0",
+ "rdflib": "7.6.0",
+ "repositories": [
+  {
+   "commit": "2e5edcc58e038910fb50d73e782734ea1cf6b334",
+   "files": {
+    "jena-core/testing/Turtle/RaptorTurtle/test-09.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/arp/gc/someWordNet.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/arp/wineRenamed.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 174,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/basicq/test_19.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/basicq/test_20.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/basicq/test_4.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/basicq/test_5.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/basicq/test_7.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/basicq/test_8.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_10.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_11.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_12.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_13.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_14.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_15.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_8.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/cl/test_9.source.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/dig/owl/test1.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/owl/ClassExpression/test-restriction.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/owl/Wine/food.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/owl/Wine/wine.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 174,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/owl/list-syntax/owlDemoSchema.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/owl/list-syntax/test-with-import.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/ontology/owl/list-syntax/test.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/bad-intersection.owl": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/cardFPTest.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/cceTest.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/dtValidation.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/equivalentClassTest.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/food.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/layeredValidation.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/loop.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/sbug.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/terrorism.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/test.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/userDatatypes.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/bugs/wine.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 174,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/owl/inconsistent5.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/reasoners/owl/tbox.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/regression/testWriterAndReader/t4000.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/FunctionalProperty/conclusions005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/FunctionalProperty/premises005-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I3.2/bad001.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I3.2/bad002.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I3.2/bad003.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I4.5/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I4.5/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.1/consistent010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.2/consistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.2/consistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.2/consistent005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.2/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.2/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.2/premises006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.21/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.24/conclusions003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.24/premises003-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.24/premises004-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.24/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.26/conclusions009.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.26/conclusions010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/consistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/consistent012.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/inconsistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/inconsistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/I5.8/premises010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/OWLManifest.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/conclusions006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/consistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/consistent004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/inconsistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/nonconclusions005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/Restriction/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/TransitiveProperty/conclusions002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/allValuesFrom/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/allValuesFrom/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/conclusions001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/conclusions002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/conclusions003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/conclusions004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/conclusions005-mod.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/conclusions005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/conclusions006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/premises001-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/premises002-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/premises003-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/premises004-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises005-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/cardinality/premises006-mod.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/cardinality/premises006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/description-logic/conclusions901.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/conclusions903.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent009.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent016.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent018.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent020.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent021.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent024.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent025.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent028.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent031.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent034.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent605.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent606.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 17,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent609.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent616.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent624.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent625.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent628.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent631.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent634.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent905.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent906.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent907.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/consistent908.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent007.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent008.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent011.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent012.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent013.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent014.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent015.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent017.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent019.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent022.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent023.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent026.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent027.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent029.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent030.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent032.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent033.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent035.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent040.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent102.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent105.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/description-logic/inconsistent106.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent107.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent108.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent109.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/description-logic/inconsistent110.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent111.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent601.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 14,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent602.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent603.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent604.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent608.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 17,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent610.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent611.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent612.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent613.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent614.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent615.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent617.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent623.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 15,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent626.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent627.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent629.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent630.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent632.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent633.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent641.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent642.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent643.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent644.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent646.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent650.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent909.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/inconsistent910.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/nonconclusions902.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/nonconclusions904.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises007.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises008.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises009.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises011.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises012.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises013.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises014.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises015.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises016.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises017.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises018.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises019.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises020.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises021.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises022.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises023.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises024.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises025.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises026.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises027.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises028.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises029.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises030.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises031.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises032.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises033.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises034.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises102.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises105.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/description-logic/premises106.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises107.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises108.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises109.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "jena-core/testing/wg/description-logic/premises110.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises111.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises201.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 16,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises202.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 34,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises203.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 42,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises204.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 59,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises205.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises206.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 64,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises207.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises208.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 69,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises209.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 69,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises661.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 94,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises662.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 82,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises663.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 98,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises664.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 153,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises665.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 12,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises667.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/description-logic/premises905.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 1,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/disjointWith/inconsistent010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/equivalentClass/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/equivalentClass/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/equivalentProperty/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/equivalentProperty/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/extra-credit/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/extra-credit/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/extra-credit/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/localtests/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/localtests/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/localtests/premises006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/localtests/premisesHv1.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/localtests/premisesHv2.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/localtests/premisesRestriction001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/maxCardinality/inconsistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/maxCardinality/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/conclusions010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/consistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 174,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/consistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/consistent102.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/consistent103.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/example001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 174,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/example002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/old-consistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 175,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/miscellaneous/old-consistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/oneOf/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/someValuesFrom/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/someValuesFrom/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/someValuesFrom/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "jena-core/testing/wg/testOntology.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    }
+   },
+   "id": "jena-core-testing",
+   "parsed": 1940,
+   "skipped": [],
+   "unparsed": 198
+  },
+  {
+   "commit": "dee53400f3da0fe009bd50af1285b28095fa5178",
+   "files": {
+    "contract/src/test/resources/DataAllValuesFrom.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/DataHasValue.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/DataMaxCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/DataMinCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/DataSomeValuesFrom.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectAllValuesFrom.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectHasSelf.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectHasValue.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectMaxCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectMaxQualifiedCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectMinCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectMinQualifiedCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectQualifiedCardinality.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/ObjectSomeValuesFrom.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/TestParser06.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/TestParser07.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/cardinalitywithwhitespace.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/importscyclic/reprMath.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/koala.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 15,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/modularity-comparison/koala.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 15,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/modularity-comparison/pizza.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 188,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/caro_2_merged.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 26,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/dangling_owl2_obo_test.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/dangling_restriction_test.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/nesting.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/ro.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/untranslatable_axioms.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/obo/untranslatable_axioms2.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/owl11/family/family.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 18,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/owlapi/cardinality.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/pizza.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 188,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/primer.rdfxml.xml": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 14,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "contract/src/test/resources/rdfParserReservedPropertiesAnnotations.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    }
+   },
+   "id": "owlapi-contract",
+   "parsed": 100,
+   "skipped": [],
+   "unparsed": 14
+  },
+  {
+   "commit": "4c7d16bd1811ec04117fa4cd96ed592c6cfa956b",
+   "files": {
+    "test/src/test/resources/test/data/liebig-tests/10a.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 19,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/10b.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 19,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/13.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/14.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/15.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/16.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/19-2.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/19.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/1a.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/1b.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/20.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/21.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/22.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/23Lite.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/24.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 19,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/25.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/26.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/27.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/28.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 149,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/28b.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 147,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/2a.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 16,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "test/src/test/resources/test/data/liebig-tests/2b.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 16,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "test/src/test/resources/test/data/liebig-tests/30.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 30,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/31.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/3a.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/3b.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/4.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/5.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/6.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/7.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/7a.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/7b.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/8.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/liebig-tests/9.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/ClosedUniverse.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/ESG1.1.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/agencies.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/all_datatypes.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 43,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/anon_inverse.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/cardinality_parsing.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/cyclic_transitive.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/datatypeDefinition.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/decimal_test.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/dl-safe-constants.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/dl-safe.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/family-ages.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/family-mindswap.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/family.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 19,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/float_intervals.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/float_test.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/food.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/food2.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/infiniteChain.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/infiniteChainDP.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/int_test.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/invalidTransitivity.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/longitude.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/longitude2.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/nominals.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/one+one-consistent-and-all-inf-sat.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/one+one-consistent-but-all-unsat.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/one+one-inconsistent.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/owl2.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/owl2_owlapi2.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/parents.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/parts-classes.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/parts-individuals.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/pizza.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 188,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/propertyChain.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/propertyChainDeprecated.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/qcr.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/reflexive.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/rules.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/set-theory.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 50,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/sibling.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/teams.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/test-commands.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/ticket-210-test-case.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/ticket-421-test-case.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/ticket-96-test-case.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/misc/transitiveSub.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/MechanicalEngineering.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 92,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/OWL2Primer.owl": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 14,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/SWEET.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 565,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/koala.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 15,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/miniTambis.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/sio.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 91,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/modularity/wine.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 326,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/FunctionalProperty/conclusions005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I3.2/bad001.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I3.2/bad002.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I3.2/bad003.rdf": {
+     "OWL035": 1,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I4.5/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I4.5/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.1/consistent010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.2/consistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.2/consistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.2/consistent005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.2/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.2/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.2/premises006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.21/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.24/conclusions003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.24/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.26/conclusions009.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.26/conclusions010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/consistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/consistent012.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/inconsistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/inconsistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/I5.8/premises010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/conclusions006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/consistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/consistent004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/inconsistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/nonconclusions005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/Restriction/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/TransitiveProperty/conclusions002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/allValuesFrom/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/allValuesFrom/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/conclusions001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/conclusions002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/conclusions003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/conclusions004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/conclusions006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "test/src/test/resources/test/data/owl-test/cardinality/premises006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/conclusions901.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/conclusions903.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent006.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent009.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent016.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent018.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent020.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent021.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent024.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent025.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent028.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent031.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent034.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent605.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent606.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 17,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent609.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent616.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent624.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent625.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent628.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 11,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent631.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent634.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent905.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent906.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent907.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/consistent908.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent007.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent008.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent011.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent012.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent013.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent014.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent015.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent017.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent019.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent022.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent023.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 13,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent026.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent027.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent029.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent030.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent032.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent033.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent035.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent040.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent102.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent105.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent106.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent107.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent108.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 10,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent109.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 1
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent110.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent111.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent601.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 14,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent602.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent603.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent604.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent608.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 17,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent610.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent611.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent612.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent613.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent614.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent615.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent617.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent623.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 15,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent626.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 7,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent627.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent629.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent630.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent632.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent633.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent641.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent642.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent643.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent644.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent646.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent650.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent909.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 8,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/inconsistent910.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/nonconclusions902.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/nonconclusions904.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises201.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 16,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises202.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 34,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises203.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 42,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises204.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 59,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises205.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises206.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 64,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises207.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 3,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises208.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 69,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises209.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 69,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises661.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 94,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises662.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 82,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises663.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 98,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises664.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 153,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises665.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 12,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/description-logic/premises667.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 9,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/disjointWith/inconsistent010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/equivalentClass/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/equivalentClass/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/equivalentProperty/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/equivalentProperty/premises005.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/extra-credit/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/extra-credit/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/extra-credit/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/maxCardinality/inconsistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/maxCardinality/inconsistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/miscellaneous/conclusions010.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 6,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/miscellaneous/consistent001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 174,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/miscellaneous/consistent002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 152,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/miscellaneous/consistent102.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/miscellaneous/consistent103.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 2,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/oneOf/premises004.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/someValuesFrom/premises001.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/someValuesFrom/premises002.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/owl-test/someValuesFrom/premises003.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/sparqldl-tests/other-tests/data-02.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/sparqldl-tests/other-tests/data-11.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/sparqldl-tests/paper-sparqldl-tests/paper-sparqldl-data.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-classAtom/complex-premise.rdf": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-test/classAtoms/001-premise.n3": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-test/dataProperties/005-premise.n3": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-test/dl-safe/dl-safe.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-test/equalities/005-premise.n3": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 1,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-test/misc/basicFamilyReference.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 5,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/swrl-test/misc/family.swrl.owl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 0,
+     "restrictions": 16,
+     "several": 0,
+     "split_pairs": 0
+    },
+    "test/src/test/resources/test/data/trans-tree-tests/ontology-010.ttl": {
+     "OWL035": 0,
+     "min_max": 0,
+     "owl2": 1,
+     "restrictions": 4,
+     "several": 0,
+     "split_pairs": 0
+    }
+   },
+   "id": "pellet-tests",
+   "parsed": 1408,
+   "skipped": [
+    "test/src/test/resources/test/data/concurrency/vicodi.ttl"
+   ],
+   "unparsed": 20
+  }
+ ]
+}
