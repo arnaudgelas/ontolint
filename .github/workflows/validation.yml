@@ -12,6 +12,10 @@ on:
         type: choice
         options: [advisory, blocking]
         default: advisory
+      paths:
+        description: "Narrow the mutation run: comma-separated files or directories under src/ontolint (empty: the whole scope). Advisory only"
+        type: string
+        default: ""
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, labeled]
@@ -101,12 +105,31 @@ jobs:
     name: Mutation testing
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # Run 46122669870 (3104 mutants) needed a 15 minute coverage pre-scan and 95 minutes of mutants, and was cut by
+    # the former 120 minute limit with the reports unwritten.  180 minutes is that run plus half again.
+    timeout-minutes: 180
     env:
       # Scheduled runs use the repository variable MUTATION_GATE_MODE (default
       # advisory); manual runs choose explicitly. See docs/mutation-policy.md.
       MUTATION_GATE_MODE: ${{ inputs.mutation_mode || vars.MUTATION_GATE_MODE || 'advisory' }}
+      MUTATION_PATHS: ${{ inputs.paths }}
     steps:
+      # The input reaches the shell only by the environment.  A narrowed run reports a part of the scope, so it
+      # cannot gate: refuse blocking mode with it.
+      - name: Check the mutation targets
+        run: |
+          if [ -z "$MUTATION_PATHS" ]; then
+            exit 0
+          fi
+          if ! [[ "$MUTATION_PATHS" =~ ^src/ontolint/[A-Za-z0-9_./-]+(,src/ontolint/[A-Za-z0-9_./-]+)*$ ]] || [[ "$MUTATION_PATHS" == *..* ]]; then
+            echo "::error::paths must be comma-separated files or directories under src/ontolint, got '$MUTATION_PATHS'"
+            exit 1
+          fi
+          if [ "$MUTATION_GATE_MODE" = blocking ]; then
+            echo "::error::a run narrowed by paths measures part of the scope, so it cannot be blocking"
+            exit 1
+          fi
+
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -129,9 +152,13 @@ jobs:
         # pytest's own status is evaluated by the policy gate below.
         run: |
           set +e
+          targets=()
+          if [ -n "$MUTATION_PATHS" ]; then
+            targets=(--gremlin-targets="$MUTATION_PATHS")
+          fi
           uv run pytest -p no:randomly -m 'not slow' --gremlins --no-cov --gremlin-parallel --gremlin-cache \
             --gremlin-report=console,json,html --gremlin-max-pardons-pct=5 \
-            --gremlin-audit-pardons 2>&1 | tee mutation.log
+            --gremlin-audit-pardons "${targets[@]}" 2>&1 | tee mutation.log
           echo "PYTEST_STATUS=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
 
       - name: Enforce mutation policy

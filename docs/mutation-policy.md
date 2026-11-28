@@ -16,9 +16,17 @@ mutation run should be repeatable.
 
 On a large suite the coverage pre-scan can exceed its default 120 s limit, which
 disables coverage-guided test selection: every mutant then runs the whole suite, and
-the scheduled run does not finish within the job's two-hour timeout. `pyproject.toml`
+the scheduled run does not finish within the job's timeout. `pyproject.toml`
 therefore sets `coverage_timeout = 900`; raise it if the warning
 `coverage pre-scan exceeded` appears in `mutation.log`.
+
+The job's timeout is 180 minutes. Run 46122669870 (3104 mutants, 2026-11-28) spent 15 minutes on the
+pre-scan and 95 on the mutants, and the former 120 minute limit cut it before the reports were written, so
+there was no `gremlins.json`. The count of mutants only grows: raise the timeout before a run is
+cut again. To measure a few modules, dispatch with `paths` (for example `src/ontolint/imports.py,src/ontolint/worker.py`);
+the run passes them as `--gremlin-targets`, reports that part of the scope only, and cannot be `blocking`.
+The incremental cache is not kept between runs: pytest-gremlins 1.13.2 batches the verdicts and commits them
+when the session closes, so a run that is cut writes none of them.
 
 The command excludes the tests marked `slow` (the Hypothesis property tests and the
 fuzz tests). They exercise every rule, so gremlins would select them for almost every
