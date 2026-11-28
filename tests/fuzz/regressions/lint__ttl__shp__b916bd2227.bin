@@ -1,0 +1,1 @@
+@prefix ex:<>.@prefix sh:<http://www.w3.org/ns/shacl#>.@px xsd:<>.: a sh:NodeShape;: ex:;sh:path ex:;sh: 1.
