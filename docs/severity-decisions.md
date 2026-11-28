@@ -52,7 +52,7 @@ All rows are the recommendations of this record, except the departures above and
 | SHQ003 | keep the widened condition; the docstring states both figures | scope pull request #203 (closes #181) |
 | SHQ001, SHQ002 | include directly targeted property shapes | scope pull request #203 (closes #181) |
 | SHQ014 on a node that is only loosely a shape | keep the permissive notion (any subject of an `sh:` predicate is judged); stated in the SHQ014 specification and pinned in `tests/test_shq_specification.py` | docs pull request of #138 |
-| SKOS001 scope (S14) | deferred: needs a count ("Count the widened SKOS001 scope", v0.18.0) | none |
+| SKOS001 scope (S14) | undecided: counted (#195, [`validation/skos-preflabel.md`](validation/skos-preflabel.md)), 0 findings added on 13 vocabularies; recommended: widen, non-concepts at warning (D2) | none |
 | METRIC001, METRIC002 | keep warning (no curated file fails; the calibration sweep of #163 does not reopen it) | none |
 | METRIC011 | `heuristic`; a catalogue invariant for the METRIC family | METRIC pull request #204 (closes #183) |
 | Approval of the OWL, METRIC and SHQ specifications | approved at `10c33e5` by merging the pull request that records it ("Review and approval record") | docs pull request of #182 |
@@ -71,7 +71,7 @@ All rows are the recommendations of this record, except the departures above and
   those that rest on a convention (IRI006, IRI010, IRI012, IRI016, IRI017, IRI018, LEX001, LEX002, LEX005, LEX011, LEX019,
   LEX025: by D1 their findings would be `heuristic`, which a consumer filtering on confidence would see) and ONT001, ONT003,
   ALIGN002 and LEX013, which this step did not decide. `context-dependent` rules (FAIR, OBO, ALIGN009) are outside the check.
-* Counts that need corpora this record does not have: SKOS001's widening. OWL035 is counted on OWL 1 era test data in [`validation/owl-restrictions.md`](validation/owl-restrictions.md) (issue #196). SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
+* Counts on corpora outside the metric corpus: SKOS001's widening is counted on 13 public SKOS vocabularies in [`validation/skos-preflabel.md`](validation/skos-preflabel.md) (issue #195). OWL035 is counted on OWL 1 era test data in [`validation/owl-restrictions.md`](validation/owl-restrictions.md) (issue #196). SHQ001, SHQ002 and SHQ003 on production shapes are counted in [`validation/shq-scope.md`](validation/shq-scope.md) (issue #208).
 * METRIC001 and METRIC002 rest on two flagged files; the sweep of #163 found no further case (3 true positives, no false positive, on proposed labels).
 
 ### Where each decision ships
@@ -381,11 +381,18 @@ SHQ003 1,244 / 412.
 
 * Corpus A: 68 resources carry a `skos:prefLabel`, 17 are not typed `skos:Concept`; **0 resources of any kind have two prefLabels in one language**.
   So the widening would add 0 findings here and the corpus cannot decide.
+* Counted on **13 vocabularies** (public repositories with a stated licence, pinned by commit; issue #195,
+  [`validation/skos-preflabel.md`](validation/skos-preflabel.md)): 25,941 labelled resources, of which 180 not typed `skos:Concept`
+  (68 schemes, 108 collections, 1 `owl:Class`, 2 of another type, 1 untyped), and **0 of them have two preferred labels in one
+  language**; the 2 pairs found belong to concepts and SKOS001 already reports them. A widened rule adds 0 findings and newly fails 0 of
+  the 694 files with a preferred label. The sample has one class, so the OWL-style case is not covered, and no rate is derived from it.
 * The SKOS Reference states S14 for any resource ("A resource has no more than one value of skos:prefLabel per language tag", quoted from memory, not
   re-read here); the rule reads asserted `skos:Concept` typing only. Widening also changes the rule's blast radius: the finding
   is an error, so a non-concept with two prefLabels (a scheme, an `owl:Class`) would start failing `--fail-on error`.
-* **Recommendation: widen, after a count. Confidence: low** (0 hits; the spec argument favours widening, the error severity calls for evidence).
-  Alternative: widen and report the non-concept kind as a warning (needs the per-finding mechanism). *Needs corpus count.*
+* **Recommendation: widen, reporting the non-concept kinds as warnings through D2's per-finding severity. Confidence: medium**
+  (the measured cost is zero findings and zero newly failing files; the specification binds any resource; the benefit is not measured,
+  since no instance exists in the sample, and the OWL-style case is one resource). *Status: undecided, awaiting the maintainer; the
+  count no longer blocks it. Commit if accepted: `fix: apply SKOS001 to every resource with a skos:prefLabel, non-concepts as warnings`.*
 
 ## Approval checklist for the specifications
 
@@ -479,7 +486,7 @@ section numbers and quoted phrases), the Jena 4.10 statements of SHQ008, SHQ011 
 | 14 | SKOS001, SKOS002 category | deterministic (high) | deterministic |
 | 15 | SHQ003 | keep widened (medium-high) | keep |
 | 16 | SHQ001, SHQ002 direct targets | include (low-medium) | include |
-| 17 | SKOS001 scope | widen after a count (low) | deferred until the count |
+| 17 | SKOS001 scope | widen, non-concepts at warning (medium) | undecided: counted (#195), awaiting the maintainer |
 | 18 | Approve the OWL, METRIC, SHQ specifications | after the inconsistencies above are corrected | approved at `10c33e5` by merging the pull request that records it ("Review and approval record") |
 | 19 | METRIC001, METRIC002 severity | keep warning | keep warning |
 | 20 | METRIC011 confidence | keep `certain` (calibration page) | `heuristic` (D1) |
