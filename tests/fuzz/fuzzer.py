@@ -54,10 +54,10 @@ from rdflib import Graph
 from rdflib.exceptions import Error as RdflibError
 
 from ontolint import cli
-from ontolint.adapters.shacl import ShapesNotWellFormed
+from ontolint.adapters.shacl import SHAPES_REFUSAL_SUMMARIES
 from ontolint.linter import Linter
 from ontolint.loader import InputRejected, load_graph
-from ontolint.models import ExecutionStatus
+from ontolint.models import ExecutionStatus, RuleExecution
 from ontolint.paths import resolve_inputs
 from ontolint.policy import Policy
 from ontolint.profiles import PROFILES
@@ -662,7 +662,19 @@ _SHAPES_ERRORS = frozenset(
     {"ReportableRuntimeError", "ShapeLoadError", "ConstraintLoadError", "ValidationFailure", "ShapesRejected"}
 )
 """pySHACL's own refusals of malformed shapes (and ontolint's pre-check): a reported FAILED execution, not a crash.
-A shapes graph that breaks SHACL-SHACL is one too: its detail is :attr:`ShapesNotWellFormed.summary`."""
+A shapes graph that breaks SHACL-SHACL, or that the loader refuses, is one too: its detail is one of
+:data:`ontolint.adapters.shacl.SHAPES_REFUSAL_SUMMARIES` (issue #284)."""
+
+
+def is_shapes_refusal(execution: RuleExecution) -> bool:
+    """Whether ``execution`` is SHACL001 refusing the user's shapes graph, which is reported, not a crash.
+
+    A refusal is recognised by its exact summary or by the name of pySHACL's error before the first colon, never by
+    parsing a summary: the summaries are sentences that contain ``sh:path``."""
+    if execution.rule_id != "SHACL001":
+        return False
+    return execution.detail in SHAPES_REFUSAL_SUMMARIES or execution.detail.split(":", 1)[0] in _SHAPES_ERRORS
+
 
 _LINT_KWARGS: dict[str, dict[str, Any]] = {
     "ont": {},
@@ -694,8 +706,7 @@ def _run_lint(case: Case, work: Workdir) -> str:
     first = Linter(graph, shapes, **kwargs).execute()
     for execution in first.with_status(ExecutionStatus.FAILED):
         error = execution.detail.split(":", 1)[0]
-        refused = error in _SHAPES_ERRORS or execution.detail == ShapesNotWellFormed.summary
-        if not (execution.rule_id == "SHACL001" and refused):
+        if not is_shapes_refusal(execution):
             raise InvariantViolation(f"lint:rule-failed:{_family(execution.rule_id)}:{error}", execution.detail[:300])
     if Linter(graph, shapes, **kwargs).execute() != first:
         raise InvariantViolation("lint:execute-nondeterministic")

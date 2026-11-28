@@ -473,6 +473,17 @@ PROPERTY_SHAPE_NO_PATH_SUMMARY = "the shapes graph has a property shape with no 
 """The summary when the loader refuses a shape typed ``sh:PropertyShape`` for its missing ``sh:path``."""
 LOADER_REFUSAL_SUMMARY = "the shapes graph has shapes that pySHACL refuses to load"
 """The summary when the shapes graph holds more than one of the three kinds."""
+SHAPES_REFUSAL_SUMMARIES = frozenset(
+    {
+        ShapesNotWellFormed.summary,
+        NODE_SHAPE_PATH_SUMMARY,
+        DUAL_TYPE_SUMMARY,
+        PROPERTY_SHAPE_NO_PATH_SUMMARY,
+        LOADER_REFUSAL_SUMMARY,
+    }
+)
+"""Every detail SHACL001 reports for a shapes graph it refuses as the user's defect (``failed``, not a crash).
+A new ``*_SUMMARY`` belongs here; ``tests/test_fuzz_workflow.py`` fails when one is missing."""
 
 
 def _loader_refusal(sg: Graph, failure: Exception) -> ShapesNotWellFormed | None:
