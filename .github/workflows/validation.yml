@@ -13,7 +13,7 @@ on:
         options: [advisory, blocking]
         default: advisory
       paths:
-        description: "Narrow the mutation run: comma-separated files or directories under src/ontolint (empty: the whole scope). Advisory only"
+        description: "Narrow the mutation run: up to 20 existing .py files or directories, comma-separated, each within the scope of [tool.pytest-gremlins].paths in pyproject.toml (empty: the whole scope). Advisory only"
         type: string
         default: ""
   pull_request:
@@ -114,26 +114,16 @@ jobs:
       MUTATION_GATE_MODE: ${{ inputs.mutation_mode || vars.MUTATION_GATE_MODE || 'advisory' }}
       MUTATION_PATHS: ${{ inputs.paths }}
     steps:
-      # The input reaches the shell only by the environment.  A narrowed run reports a part of the scope, so it
-      # cannot gate: refuse blocking mode with it.
-      - name: Check the mutation targets
-        run: |
-          if [ -z "$MUTATION_PATHS" ]; then
-            exit 0
-          fi
-          if ! [[ "$MUTATION_PATHS" =~ ^src/ontolint/[A-Za-z0-9_./-]+(,src/ontolint/[A-Za-z0-9_./-]+)*$ ]] || [[ "$MUTATION_PATHS" == *..* ]]; then
-            echo "::error::paths must be comma-separated files or directories under src/ontolint, got '$MUTATION_PATHS'"
-            exit 1
-          fi
-          if [ "$MUTATION_GATE_MODE" = blocking ]; then
-            echo "::error::a run narrowed by paths measures part of the scope, so it cannot be blocking"
-            exit 1
-          fi
-
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # The input reaches the script and the command only by the environment.  pytest-gremlins takes a target that
+      # exists nowhere for "No gremlins found" (exit 0, no report), so each item is checked, and named when bad, before
+      # anything is installed.  A narrowed run measures part of the scope, so it is refused in blocking mode.
+      - name: Check the mutation targets
+        run: python3 .github/scripts/mutation_targets.py
 
       - name: Set up uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
