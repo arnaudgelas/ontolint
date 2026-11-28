@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -27,6 +28,9 @@ def _script() -> str:
     return match["script"]
 
 
+needs_bash = pytest.mark.skipif(shutil.which("bash") is None, reason="the workflow step is a bash script")
+
+
 def _check(seconds: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(  # noqa: S603 -- the fixed script of the workflow, a test value in the environment
         ["bash", "-c", _script()],  # noqa: S607
@@ -37,11 +41,13 @@ def _check(seconds: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+@needs_bash
 @pytest.mark.parametrize("seconds", ["1", "600", str(MAX_SECONDS)])
 def test_a_budget_that_fits_the_job_is_accepted(seconds: str) -> None:
     assert _check(seconds).returncode == 0
 
 
+@needs_bash
 @pytest.mark.parametrize("seconds", ["6000", str(MAX_SECONDS + 1), "0", "", "-5", "10m", "1.5", "99999999999999999999"])
 def test_a_budget_that_does_not_fit_or_is_not_a_number_is_refused_with_a_reason(seconds: str) -> None:
     result = _check(seconds)
@@ -54,7 +60,9 @@ def test_the_check_runs_before_anything_is_installed_or_fuzzed() -> None:
 
 
 def test_the_largest_accepted_budget_fits_the_job_timeout() -> None:
-    assert str(MAX_SECONDS) in _script()
+    bound = re.search(r"-gt (\d+) \]", _script())  # the test of the script, not the figure in its message
+    assert bound, "the step has no upper bound"
+    assert int(bound[1]) == MAX_SECONDS
     assert MAX_SECONDS + OVERHEAD_SECONDS <= TIMEOUT_MINUTES * 60
 
 
