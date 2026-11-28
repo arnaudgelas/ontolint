@@ -42,6 +42,15 @@ jobs:
       FUZZ_SECONDS: ${{ inputs.seconds || '600' }}
       FUZZ_SEED: ${{ inputs.seed || github.run_number }}
     steps:
+      # Each job is cut at timeout-minutes, and a run cut short reports nothing (#285): refuse a budget that cannot
+      # fit before anything is installed.  1800 s leaves ten minutes for setup, shrinking a crasher and the upload.
+      - name: Check the time budget
+        run: |
+          if ! [[ "$FUZZ_SECONDS" =~ ^[0-9]{1,5}$ ]] || [ "$FUZZ_SECONDS" -lt 1 ] || [ "$FUZZ_SECONDS" -gt 1800 ]; then
+            echo "::error::seconds must be a whole number from 1 to 1800 (each job is cut at 40 minutes), got '$FUZZ_SECONDS'"
+            exit 1
+          fi
+
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

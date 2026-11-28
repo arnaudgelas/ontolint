@@ -1,4 +1,4 @@
-"""The fuzz workflow refuses a time budget its jobs cannot honour, and the fuzzer's oracle knows every refusal (#284, #285)."""
+"""The fuzz workflow refuses a budget its jobs cannot honour; the fuzzer's oracle knows every refusal (#284, #285)."""
 
 # ruff: noqa: PLR2004
 
@@ -9,10 +9,10 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from fuzz import fuzzer
 
 from ontolint.adapters import shacl
 from ontolint.models import ExecutionStatus, RuleExecution
-from fuzz import fuzzer
 
 WORKFLOW = (Path(__file__).parent.parent / ".github" / "workflows" / "fuzz.yml").read_text(encoding="utf-8")
 STEP = re.compile(r"- name: Check the time budget\n\s+run: \|\n(?P<script>(?:\s{10}.*\n)+)")
