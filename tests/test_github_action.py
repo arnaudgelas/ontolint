@@ -732,6 +732,9 @@ def test_the_observation_page_quotes_the_results_the_fixture_gives(capsys: pytes
     stated = re.search(r"SEC007 in the fixture: (\d+)\)", page)
     assert stated and int(stated.group(1)) == len(without_region)
     assert sorted({r["ruleId"] for r in without_region}) == ["LEX007", "ONT002", "SEC007"]
+    # Run 46123087281 observed this many results; a fixture change makes the recorded numbers another experiment.
+    observed = re.search(r"The kitchen sink gave (\d+) results", page)
+    assert observed and int(observed.group(1)) == len(results)
 
 
 # -- runners the Action refuses ------------------------------------------------------------------
