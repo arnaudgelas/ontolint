@@ -1,0 +1,2 @@
+@prefix ex:<>.@prefix sh:<http://www.w3.org/ns/shacl#>.@refix :<>.ex: sh: ex:;sh: ex:.
+ex: a sh:PropertyShape;sh: 1.
