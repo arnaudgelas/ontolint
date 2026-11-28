@@ -61,5 +61,35 @@ those rules, which is the answer to whether a result without a location becomes 
 | the pair becomes one alert | identical fingerprints collapse | keep `ontolintFingerprint/v1` out of the shared case or add the occurrence index; observe again |
 | results without a region have no alerts | expected: code scanning needs a location | document it; no change |
 
-Record the outcome as a comment on issue #149 with the run's URL, and apply the decision of the table in a pull request that
-closes issue #191's follow-up. Until then the answer to "should it be the default?" is no.
+## Result
+
+One run observed it: [run 46123087281](https://github.com/arnaudgelas/ontolint/actions/runs/46123087281), dispatched on
+2026-11-28 from a throwaway branch at commit `26ddd42`, every job green. The kitchen sink gave 138 results, 3 of them without a
+region (ONT002, LEX007, SEC007). The job summary, and the reports and alert lists kept as the run's artifact, say:
+
+| Observation | Value |
+| --- | --- |
+| open alerts, category `ontolint-observe-plain` (no flag) | 135 |
+| open alerts, category `ontolint-observe-fp`, after the first upload | 138 |
+| open alerts, category `ontolint-observe-fp`, after the re-serialized upload | 138 |
+| alert numbers after the re-serialized upload that were also open before it | 3 (31, 109, 138: the three results without a region) |
+| alert numbers it opened | 135 (142 to 276) |
+| alerts listed as fixed after the re-serialized upload | 0 |
+| open alerts, category `ontolint-observe-pair` (15 results in two files) | 15 |
+
+What it shows, each point read from those lists:
+
+* **GitHub ignored `ontolintIdentity/v2`.** The two reports carry the same 138 identities, yet 135 of the 138 alerts of the
+  re-serialized upload are new alerts. The three that kept their numbers are the results without a region, whose location
+  (line 1) did not move. This is the second row of the table in "Read it": write `primaryLocationLineHash` instead, observe again, and
+  only then consider a default. The flag stays **opt-in**.
+* **A result without a region has no alert without the flag** (135 alerts for 138 results) **and has one at line 1 with it**
+  (138 for 138): the fourth row of that table expected no alert, and the flag changes that.
+* **Identical fingerprints in two files stayed two alerts** (15 results, 15 alerts), so its third row does not apply.
+
+Not shown: the 135 alerts the re-serialized upload replaced are no longer open, but the query for fixed alerts returned none, so
+what state GitHub gave them is not recorded. The run did not try a result that moves inside its file without a re-serialization,
+two results of one rule on one line, or a sibling finding added or removed (the experiments 1, 5 and 6 of the matrix on issue #149).
+
+The outcome is recorded on issue #149 with the run's URL. Until a run that writes `primaryLocationLineHash` shows alerts that
+stay, the answer to "should it be the default?" is no.
