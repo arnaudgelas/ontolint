@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -208,6 +209,33 @@ def test_a_file_over_the_size_cap_or_a_link_is_listed_as_skipped_not_dropped(
 
     assert count.skipped_files(tmp_path) == ["large.owl", "link.rdf"]
     assert count.count_repository(tmp_path)["skipped"] == ["large.owl", "link.rdf"]
+
+
+def test_reading_a_repository_leaves_the_callers_logging_as_it_found_it(tmp_path: Path) -> None:
+    """The reader silences rdflib's conversion warnings for its own run only: a utility, not a process setting."""
+    (tmp_path / "good.ttl").write_text(
+        PREFIXES + f"ex:A owl:equivalentClass {_restriction('owl:someValuesFrom ex:B')} ."
+    )
+    logging.disable(logging.WARNING)
+    try:
+        count.count_repository(tmp_path)
+
+        assert logging.root.manager.disable == logging.WARNING
+    finally:
+        logging.disable(logging.NOTSET)
+
+
+def test_reading_a_repository_restores_logging_when_a_counter_raises(tmp_path: Path) -> None:
+    (tmp_path / "a.ttl").write_text(PREFIXES + "ex:A a owl:Class .")
+
+    def broken(_graph: Any) -> dict[str, Any] | None:
+        raise ValueError("a cross-check failed")
+
+    before = logging.root.manager.disable
+    with pytest.raises(ValueError, match="cross-check"):
+        pinned.read_repository(tmp_path, broken)
+
+    assert logging.root.manager.disable == before
 
 
 # --- the pinned fetch --------------------------------------------------------------------------------------------

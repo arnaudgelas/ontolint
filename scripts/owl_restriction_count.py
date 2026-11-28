@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import sys
 from collections import Counter
 from pathlib import Path
@@ -46,8 +45,8 @@ MANIFEST = ROOT / "docs" / "validation" / "owl-restrictions-corpus.json"
 RESULTS = ROOT / "docs" / "validation" / "owl-restrictions-results.json"
 PAGE = ROOT / "docs" / "validation" / "owl-restrictions.md"
 BEGIN, END = "<!-- owl_restriction_count.py: begin -->", "<!-- owl_restriction_count.py: end -->"
-MAX_BYTES = 5 * 1024 * 1024
-FORMATS = {".owl": "xml", ".rdf": "xml", ".xml": "xml", ".ttl": "turtle", ".n3": "n3", ".nt": "nt"}
+MAX_BYTES = pinned_repos.MAX_BYTES
+FORMATS = pinned_repos.FORMATS
 VERSIONS = ("ontolint", "rdflib")  # recorded with the counts, named when a check fails, not compared
 FIELDS = ("restrictions", "several", "min_max", "split_pairs", "OWL035")
 NO_CONSTRAINT = "Restriction has no value, cardinality or self constraint."
@@ -174,45 +173,17 @@ def count_graph(graph: Any) -> dict[str, Any] | None:
 
 def rdf_files(root: Path) -> list[Path]:
     """The RDF files under ``root`` outside ``.git``, sorted, none a link or over the size cap."""
-    return sorted(
-        p
-        for p in root.rglob("*")
-        if p.suffix.lower() in FORMATS
-        and ".git" not in p.parts
-        and p.is_file()
-        and not p.is_symlink()
-        and p.stat().st_size <= MAX_BYTES
-    )
+    return pinned_repos.rdf_files(root, MAX_BYTES)
 
 
 def skipped_files(root: Path) -> list[str]:
     """The files named like RDF that :func:`rdf_files` leaves out (over the size cap or links), relative to ``root``."""
-    read = set(rdf_files(root))
-    return sorted(
-        p.relative_to(root).as_posix()
-        for p in root.rglob("*")
-        if p.suffix.lower() in FORMATS and ".git" not in p.parts and p not in read
-    )
+    return pinned_repos.skipped_files(root, MAX_BYTES)
 
 
 def count_repository(root: Path) -> dict[str, Any]:
     """The counts of every RDF file of ``root`` with a restriction, how many did not parse, and which were skipped."""
-    from rdflib import Graph  # noqa: PLC0415
-
-    logging.disable(logging.CRITICAL)  # rdflib logs a lexical form it cannot convert; the corpus is data, not ours
-    files: dict[str, dict[str, Any]] = {}
-    parsed = unparsed = 0
-    for path in rdf_files(root):
-        graph = Graph()
-        try:
-            graph.parse(path, format=FORMATS[path.suffix.lower()])
-        except Exception:  # noqa: BLE001 -- not RDF that rdflib reads in the format its name says: counted as unparsed
-            unparsed += 1
-            continue
-        parsed += 1
-        if (counted := count_graph(graph)) is not None:
-            files[path.relative_to(root).as_posix()] = counted
-    return {"parsed": parsed, "unparsed": unparsed, "skipped": skipped_files(root), "files": files}
+    return pinned_repos.read_repository(root, count_graph, MAX_BYTES)
 
 
 def measure(directory: Path, repositories: list[dict[str, Any]]) -> dict[str, Any]:

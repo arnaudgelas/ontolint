@@ -1,0 +1,96 @@
+{
+  "description": "SKOS vocabularies counted for what a widened SKOS001 would report (issue #195). Nothing is vendored: each repository is checked out at its commit by `scripts/skos_preflabel_count.py fetch`, which refuses any other commit. Every RDF file of at most 5 MiB is read.",
+  "repositories": [
+    {
+      "id": "skosify",
+      "url": "https://github.com/NatLibFi/Skosify.git",
+      "commit": "5e396d880046b03c9739088834fef8781b9e0527",
+      "licence": "MIT",
+      "domain": "Skosify's test vocabularies"
+    },
+    {
+      "id": "skohub-vocabs",
+      "url": "https://github.com/skohub-io/skohub-vocabs.git",
+      "commit": "3a976b887493d383fb226265b014389813c3c172",
+      "licence": "Apache-2.0",
+      "domain": "SkoHub Vocabs example vocabularies"
+    },
+    {
+      "id": "skos-play",
+      "url": "https://github.com/sparna-git/skos-play.git",
+      "commit": "e6a5d946cee05339da88a5bdfac4804646b01d27",
+      "licence": "LGPL-3.0-only",
+      "domain": "SKOS Play example vocabularies"
+    },
+    {
+      "id": "ga-vocabs",
+      "url": "https://github.com/GeoscienceAustralia/ga-vocabs.git",
+      "commit": "fce324b4bf3c816ef797995808906b85085e3f8d",
+      "licence": "CC-BY-4.0",
+      "domain": "Geoscience Australia vocabularies"
+    },
+    {
+      "id": "voc4cat",
+      "url": "https://github.com/nfdi4cat/voc4cat.git",
+      "commit": "c2f6586d380778044f0b925a3bee1e2dc1687293",
+      "licence": "CC0-1.0",
+      "domain": "NFDI4Cat catalysis vocabulary"
+    },
+    {
+      "id": "tate-skos",
+      "url": "https://github.com/catalink-eu/tate-skos.git",
+      "commit": "9a69c2397785765b24774d080e18968927072262",
+      "licence": "Apache-2.0",
+      "domain": "a SKOS thesaurus (tate-skos)"
+    },
+    {
+      "id": "universalevidence-interventions",
+      "url": "https://github.com/SteveHedden/universalevidence-interventions-thesaurus.git",
+      "commit": "bc126aad56d238460e1ae04d628110fa7c467724",
+      "licence": "CC-BY-4.0",
+      "domain": "Universal Evidence interventions thesaurus"
+    },
+    {
+      "id": "universalevidence-conditions-outcomes",
+      "url": "https://github.com/SteveHedden/universalevidence-conditions-outcomes-thesaurus.git",
+      "commit": "bded45d3b43733009aae5317176d2009f41f7af9",
+      "licence": "CC-BY-4.0",
+      "domain": "Universal Evidence conditions and outcomes thesaurus"
+    },
+    {
+      "id": "togaf-content-metamodel",
+      "url": "https://github.com/cadmiumkitty/togaf-content-metamodel-ontology.git",
+      "commit": "80ca26a0acdde4d26b0fcbc89dc5cefba6036af7",
+      "licence": "CC-BY-SA-4.0",
+      "domain": "TOGAF content metamodel ontology"
+    },
+    {
+      "id": "vocprez",
+      "url": "https://github.com/RDFLib/VocPrez.git",
+      "commit": "ce3c0ea42fe9f03f9bd94cb27ee6e34399b2517f",
+      "licence": "GPL-3.0-only",
+      "domain": "VocPrez test vocabularies"
+    },
+    {
+      "id": "skosprovider",
+      "url": "https://github.com/OnroerendErfgoed/skosprovider.git",
+      "commit": "e5484c5b110045b16f0d1b87dd32d79724987747",
+      "licence": "MIT",
+      "domain": "skosprovider test data"
+    },
+    {
+      "id": "vocview",
+      "url": "https://github.com/ternaustralia/vocview.git",
+      "commit": "006ad7b8998fe9adc142cc23125d931b12e446b9",
+      "licence": "MIT",
+      "domain": "VocView test data"
+    },
+    {
+      "id": "sweet",
+      "url": "https://github.com/ESIPFed/sweet.git",
+      "commit": "db60c8ddb1b781fbadae176f69286a2cdd5099a0",
+      "licence": "CC0-1.0",
+      "domain": "SWEET earth-science ontologies (owl:Class with skos:prefLabel)"
+    }
+  ]
+}

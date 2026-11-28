@@ -1,0 +1,24 @@
+# Preferred labels on resources that are not concepts (issue #195).
+# SKOS integrity condition S14 binds any resource; SKOS001 reads owned skos:Concept resources only.
+# tests/test_skos_preflabel_count.py counts what a widened rule would add and pins what SKOS001 reports today.
+@prefix ex: <https://example.test/skos#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.test/skos> a owl:Ontology .
+
+# Two preferred labels in one language: the one SKOS001 reports today, then one resource of each kind it does not read.
+ex:conceptTwo a skos:Concept ; skos:prefLabel "Cat"@en, "Feline"@en .
+ex:scheme a skos:ConceptScheme ; skos:prefLabel "Animals"@en, "Fauna"@en .
+ex:collection a skos:Collection ; skos:prefLabel "Pets"@en, "Companions"@en .
+ex:ordered a skos:OrderedCollection ; skos:prefLabel "Ranked"@en, "Ordered"@en .
+ex:Cls a owl:Class ; skos:prefLabel "Mammal"@en, "Mammalia"@en .
+ex:other a ex:Thing ; skos:prefLabel "Thing"@en, "Item"@en .
+ex:untyped skos:prefLabel "Nameless"@en, "Anonymous"@en .
+
+# Not a pair: other languages, one label spelled twice, one tag spelled in two cases.
+ex:conceptOk a skos:Concept ; skos:prefLabel "Cat"@en, "Chat"@fr .
+ex:sameLabelTwice a skos:ConceptScheme ; skos:prefLabel "Same", "Same"^^xsd:string .
+ex:tagCase a skos:Collection ; skos:prefLabel "Tag"@en, "Tag"@EN .
+ex:otherLanguages a owl:Class ; skos:prefLabel "Dog"@en, "Chien"@fr .

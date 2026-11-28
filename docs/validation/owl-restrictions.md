@@ -23,8 +23,8 @@ leaves out is listed as skipped (the results name it), so none is dropped. The s
 reports "more than one constraint" for some restriction exactly when one has several constraint triples, and never for more than there are.
 The second table keeps the files that use no OWL 2 vocabulary (qualified cardinalities, `owl:hasSelf`, `owl:NamedIndividual`, property
 chains and so on), so an OWL 1 only reading does not depend on the repository's date. The results are of one ontolint and one rdflib version
-([`owl-restrictions-results.json`](owl-restrictions-results.json) records both, and `check` names them when it fails); `check` needs the network and the checkouts, so it is not
-in the mandatory CI.
+([`owl-restrictions-results.json`](owl-restrictions-results.json) records both, and `check` names them when it fails). `check` itself runs offline on the checkouts, but reproducing it means first fetching
+the three external pinned repositories (`fetch`), so it is not part of the mandatory CI.
 
 ## Results
 
