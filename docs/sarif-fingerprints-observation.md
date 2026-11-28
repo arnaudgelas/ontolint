@@ -64,32 +64,45 @@ those rules, which is the answer to whether a result without a location becomes 
 ## Result
 
 One run observed it: [run 46123087281](https://github.com/arnaudgelas/ontolint/actions/runs/46123087281), dispatched on
-2026-11-28 from a throwaway branch at commit `26ddd42`, every job green. The kitchen sink gave 138 results, 3 of them without a
-region (ONT002, LEX007, SEC007). The job summary, and the reports and alert lists kept as the run's artifact, say:
+2026-11-28 from the branch `observe-sarif-fingerprints` at commit `26ddd42`, every job green. The kitchen sink gave 138 results,
+3 of them without a region (ONT002, LEX007, SEC007). The job summary, and the reports and alert lists kept as the run's
+artifact, say (a category is that of an alert's most recent instance):
 
 | Observation | Value |
 | --- | --- |
+| alerts already open when the run started | 138 (numbers 4 to 141, created 2026-11-23 by the failed first run: 135 last seen in `ontolint-observe-plain`, 3 in `ontolint-observe-fp`) |
 | open alerts, category `ontolint-observe-plain` (no flag) | 135 |
-| open alerts, category `ontolint-observe-fp`, after the first upload | 138 |
+| open alerts, category `ontolint-observe-fp`, after the first upload | 138 (the numbers 4 to 141: none new) |
 | open alerts, category `ontolint-observe-fp`, after the re-serialized upload | 138 |
-| alert numbers after the re-serialized upload that were also open before it | 3 (31, 109, 138: the three results without a region) |
-| alert numbers it opened | 135 (142 to 276) |
+| of those, numbers that were also in `ontolint-observe-fp` after the first upload | 3 (31, 109, 138: the three results without a region) |
+| of those, new alerts | 135 (numbers 142 to 276) |
+| alerts still open after the re-serialized upload, last seen in `ontolint-observe-plain` | 135 (the numbers 4 to 141 except 31, 109 and 138) |
 | alerts listed as fixed after the re-serialized upload | 0 |
 | open alerts, category `ontolint-observe-pair` (15 results in two files) | 15 |
 
 What it shows, each point read from those lists:
 
-* **GitHub ignored `ontolintIdentity/v2`.** The two reports carry the same 138 identities, yet 135 of the 138 alerts of the
-  re-serialized upload are new alerts. The three that kept their numbers are the results without a region, whose location
-  (line 1) did not move. This is the second row of the table in "Read it": write `primaryLocationLineHash` instead, observe again, and
-  only then consider a default. The flag stays **opt-in**.
-* **A result without a region has no alert without the flag** (135 alerts for 138 results) **and has one at line 1 with it**
-  (138 for 138): the fourth row of that table expected no alert, and the flag changes that.
-* **Identical fingerprints in two files stayed two alerts** (15 results, 15 alerts), so its third row does not apply.
+* **GitHub did not use `ontolintIdentity/v2` to match alerts.** The two reports carry the same 138 identities, yet 135 of the 138
+  alerts of the re-serialized upload are new alerts. The three that kept their numbers are the results without a region, whose
+  location (line 1) did not move. This is the second row of the table in "Read it": write `primaryLocationLineHash` instead,
+  observe again, and only then consider a default. The flag stays **opt-in**. The report carries no `primaryLocationLineHash`;
+  the alerts were matched on a value GitHub computed itself (the upload prints "Adding fingerprints to SARIF file"), which this
+  run did not read back.
+* **The 135 alerts the re-serialized upload did not match are still open**, with their latest instance in the `plain` category, which
+  that run did not upload again. That is why none was listed as fixed. The alerts of the two categories are therefore not
+  independent: one alert can hold an instance of each, and a category's count is not the number of alerts that upload created.
+* **The first upload with the flag did not reopen anything**: its 138 alerts are the 138 that were already open, with their numbers,
+  including the 135 an upload without the flag had made. In this run the flag changed no alert number, but the upload went to another
+  category than the alerts' last instance; adopting the flag in one category of an existing repository was **not** observed, so the
+  README's "the next upload closes the old alerts and opens new ones once" is neither confirmed nor refuted here.
+* **A result without a region is not in the 135 alerts of the upload without the flag, and is one of the 138 of the upload with it**
+  (alerts 31, 109 and 138, at line 1): the fourth row of the table expected no alert, and the flag changes that. The alerts existed
+  before the run, so this reads the categories of the alerts, not what one upload alone creates.
+* **Identical fingerprints in two files stayed two alerts** (15 results, 15 alerts), so the third row does not apply.
 
-Not shown: the 135 alerts the re-serialized upload replaced are no longer open, but the query for fixed alerts returned none, so
-what state GitHub gave them is not recorded. The run did not try a result that moves inside its file without a re-serialization,
-two results of one rule on one line, or a sibling finding added or removed (the experiments 1, 5 and 6 of the matrix on issue #149).
+Not shown: the run did not try a result that moves inside its file without a re-serialization, two results of one rule on one
+line, or a sibling finding added or removed (the experiments 1, 5 and 6 of the matrix on issue #149), and it started from alerts a
+previous run had left open, so it does not isolate what one upload does to an empty branch.
 
 The outcome is recorded on issue #149 with the run's URL. Until a run that writes `primaryLocationLineHash` shows alerts that
 stay, the answer to "should it be the default?" is no.

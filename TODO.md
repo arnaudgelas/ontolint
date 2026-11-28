@@ -1142,7 +1142,7 @@ GITHUB-ACTION ships them. DUPLICATE-ONTOLOGY-ID is independent of the rest and c
 
   Built (issue #92, opt-in): `--sarif-fingerprints` and the Action input `sarif-fingerprints` write
   `ontolintIdentity/v2` and the conditional `ontolintFingerprint/v1`; the default SARIF and its goldens are
-  unchanged. Observed (issue #149, run 46123087281): code scanning ignored both keys and reopened 135 of 138 alerts after a
+  unchanged. Observed (issue #149, run 46123087281): code scanning did not use either key and opened 135 new alerts for 138 results after a
   re-serialization, so the flag stays opt-in. Not done: writing `primaryLocationLineHash` and observing again, which alone
   could justify a default.
 

@@ -803,7 +803,7 @@ the Action's `sarif-fingerprints: true`) writes `partialFingerprints` on every r
 It is off by default because adopting it changes the fingerprints of every alert that already exists: GitHub
 matches alerts by fingerprint, so the next upload closes the old alerts and opens new ones once. Whether code
 scanning uses these keys (its documentation names `primaryLocationLineHash` as the one it uses) was observed
-on an upload (issue #149): code scanning ignored both keys, so the flag stays opt-in in 0.17.0 and later (issue #191), see [docs/sarif-fingerprints-observation.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/sarif-fingerprints-observation.md);
+on an upload (issue #149): code scanning did not use either key to match alerts, so the flag stays opt-in in 0.17.0 and later (issue #191), see [docs/sarif-fingerprints-observation.md](https://github.com/arnaudgelas/ontolint/blob/main/docs/sarif-fingerprints-observation.md);
 `TODO.md` (GITHUB-ACTION) says what is and is not verified.
 
 ### Optional SHACL validation
