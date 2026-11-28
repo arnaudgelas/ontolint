@@ -16,9 +16,30 @@ mutation run should be repeatable.
 
 On a large suite the coverage pre-scan can exceed its default 120 s limit, which
 disables coverage-guided test selection: every mutant then runs the whole suite, and
-the scheduled run does not finish within the job's two-hour timeout. `pyproject.toml`
+the scheduled run does not finish within the job's timeout. `pyproject.toml`
 therefore sets `coverage_timeout = 900`; raise it if the warning
 `coverage pre-scan exceeded` appears in `mutation.log`.
+
+The job's timeout is 180 minutes. Run 46122669870 (3104 mutants, 2026-11-28) spent 15 minutes on the
+pre-scan and 95 on the mutants, and the former 120 minute limit cut it before the reports were written, so
+there was no `gremlins.json`. The count of mutants only grows: raise the timeout before a run is
+cut again.
+
+To measure a few modules, dispatch with `paths` (for example
+`src/ontolint/imports.py,src/ontolint/worker.py`). `.github/scripts/mutation_targets.py` checks it after the
+checkout and before anything is installed, and names the bad item: at most 20 items and 500 characters, each
+`src/ontolint/` and plain path segments, an existing directory or `.py` file (not a symbolic link), and within
+the scope of `[tool.pytest-gremlins].paths` (a module outside it is judged by a gate and pardons written for
+another scope, so it is refused). The check exists because pytest-gremlins takes a target that exists nowhere for
+"No gremlins found": it exits 0 after the whole coverage pre-scan and writes no report. A narrowed run is
+advisory (`blocking` is refused) and still runs the whole coverage pre-scan, so it saves the mutants, not the
+15 minutes. Read its gate output with that in mind: the per-operator minimums apply to a handful of mutants, and
+`--gremlin-max-pardons-pct` is a share of the narrowed total, so a narrowed run can exit 1 on it after
+`gremlins.json` is written.
+
+The incremental cache is not kept between runs: pytest-gremlins 1.13.2 batches the verdicts and commits them
+when the session closes, so a run that is cut writes none of them. Whether an interrupt before the timeout lets
+the session close is not established.
 
 The command excludes the tests marked `slow` (the Hypothesis property tests and the
 fuzz tests). They exercise every rule, so gremlins would select them for almost every
